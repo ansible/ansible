@@ -8,49 +8,31 @@ __metaclass__ = type
 import traceback
 import json
 
-try:
-    import requests
-    from requests.auth import HTTPBasicAuth
-    from requests.adapters import HTTPAdapter
-    import urllib3
-    from urllib3.util.retry import Retry
-    from urllib3.exceptions import InsecureRequestWarning
-    urllib3.disable_warnings(InsecureRequestWarning)
-    HAS_REQUESTS = True
-except:
-    HAS_REQUESTS = False
+from ansible.module_utils.urls import fetch_url
 
 
 def irmc_redfish_get(module, uri):
-    if not HAS_REQUESTS:
-        return 90, "Python 'requests' module not found.", "iRMC module requires 'requests' Module"
-
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json"
     }
     url = "https://{0}/{1}".format(module.params['irmc_url'], uri)
 
-    session = requests.Session()
-    retries = Retry(total=5, backoff_factor=0.1)
-    session.mount('http://', HTTPAdapter(max_retries=retries))
-    session.mount('https://', HTTPAdapter(max_retries=retries))
-
     msg = "OK"
     try:
-        data = session.get(url, headers=headers, verify=module.params['validate_certs'],
-                           auth=HTTPBasicAuth(module.params['irmc_username'], module.params['irmc_password']))
-        data.connection.close()
+        module.params['url_username'] = module.params['irmc_username']
+        module.params['url_password'] = module.params['irmc_password']
+        data, info = fetch_url(module, method="GET", url=url, headers=headers)
 
-        status = data.status_code
+        status = info["status"]
         if status != 200:
             try:
                 msg = "GET request was not successful ({0}): status {1}, '{2}'". \
-                      format(url, status, data.json()['error']['message'])
+                      format(url, status, info["msg"])
             except Exception:
                 msg = "GET request was not successful ({0}), status {1}.".format(url, status)
         else:
-            data = data.json()
+            data = json.loads(data.read())
 
     except Exception as e:
         status = 99
@@ -61,9 +43,6 @@ def irmc_redfish_get(module, uri):
 
 
 def irmc_redfish_patch(module, uri, body, etag):
-    if not HAS_REQUESTS:
-        return 90, "Python 'requests' module not found.", "iRMC access requires 'requests' Module"
-
     etag = str(etag)
     if not etag.isdigit():
         msg = "etag is no number: {0}".format(etag)
@@ -85,26 +64,21 @@ def irmc_redfish_patch(module, uri, body, etag):
     }
     url = "https://{0}/{1}".format(module.params['irmc_url'], uri)
 
-    session = requests.Session()
-    retries = Retry(total=5, backoff_factor=0.1)
-    session.mount('http://', HTTPAdapter(max_retries=retries))
-    session.mount('https://', HTTPAdapter(max_retries=retries))
-
     msg = "OK"
     try:
-        data = session.patch(url, headers=headers, data=body, verify=module.params['validate_certs'],
-                             auth=HTTPBasicAuth(module.params['irmc_username'], module.params['irmc_password']))
-        data.connection.close()
+        module.params['url_username'] = module.params['irmc_username']
+        module.params['url_password'] = module.params['irmc_password']
+        data, info = fetch_url(module, method="GET", url=url, headers=headers, data=body)
 
-        status = data.status_code
+        status = info["status"]
         if status != 200:
             try:
                 msg = "PATCH request was not successful ({0}): status {1}, '{2}'". \
-                      format(url, status, data.json()['error']['message'])
+                      format(url, status, info["msg"])
             except Exception:
                 msg = "PATCH request was not successful ({0}), status {1}.".format(url, status)
         else:
-            data = data.json()
+            data = data.read()
 
     except Exception as e:
         status = 99

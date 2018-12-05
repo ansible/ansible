@@ -39,35 +39,36 @@ options:
         required: true
     irmc_username:
         description: iRMC user for basic authentication.
-        required:    true
+        required: true
     irmc_password:
         description: Password for iRMC user for basic authentication.
-        required:    true
+        required: true
     validate_certs:
-        description: If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
-        type:        bool
-        required:    false
-        default:     true
+        description: If C(no), SSL certificates will not be validated.
+                      This should only be used on personally controlled sites using self-signed certificates.
+        type: bool
+        required: false
+        default: true
     command:
         description: How to access server facts.
-        required:    false
-        default:     get
-        choices:     ['get', 'set']
+        required: false
+        default: get
+        choices: ['get', 'set']
     asset_tag:
         description: Server asset tag.
-        required:    false
+        required: false
     location:
         description: Server location.
-        required:    false
+        required: false
     description:
         description: Server description.
-        required:    false
+        required: false
     contact:
         description: System contact.
-        required:    false
+        required: false
     helpdesk_message:
         description: Help desk message.
-        required:    false
+        required: false
 
 notes:
     - See http://manuals.ts.fujitsu.com/file/13371/irmc-restful-spec-en.pdf
@@ -277,18 +278,19 @@ def irmc_facts(module):
         status=0
     )
 
-    if module.check_mode:
-        result['msg'] = "module was not run"
-        module.exit_json(**result)
-
     # parameter check
-    if module.params['command'] == "set" and \
-       module.params['asset_tag'] is None and module.params['description'] is None and \
-       module.params['helpdesk_message'] is None and module.params['location'] is None and \
-       module.params['contact'] is None:
-        result['msg'] = "Command 'set' requires at least one parameter to be set!"
-        result['status'] = 10
-        module.fail_json(**result)
+    if module.params['command'] == "set":
+        if module.params['asset_tag'] is None and module.params['description'] is None and \
+           module.params['helpdesk_message'] is None and module.params['location'] is None and \
+           module.params['contact'] is None:
+            result['msg'] = "Command 'set' requires at least one parameter to be set!"
+            result['status'] = 10
+            module.fail_json(**result)
+        elif module.check_mode:
+            result['msg'] = "Check mode: Any of the following properties might have been changed: " + \
+                            "'asset_tag', 'description', 'helpdesk_message', 'location', 'contact'"
+            result['changed'] = True
+            module.exit_json(**result)
 
     # Get iRMC OEM system data
     status, oemdata, msg = irmc_redfish_get(module, "redfish/v1/Systems/0/Oem/ts_fujitsu/System")
@@ -508,7 +510,7 @@ def main():
     )
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     irmc_facts(module)
