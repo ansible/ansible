@@ -298,10 +298,8 @@ def main():
         # Make sure minutes is a number
         try:
             m = int(minutes)
-            if not isinstance(m, types.IntType):
-                module.fail_json(msg='minutes must be a number')
         except Exception:
-            module.fail_json(msg='invalid entry for minutes')
+            module.fail_json(msg='minutes is not a valid integer')
 
     ######################################################################
     if action == 'delete_downtime':
@@ -318,10 +316,8 @@ def main():
         # Make sure minutes is a number
         try:
             m = int(minutes)
-            if not isinstance(m, types.IntType):
-                module.fail_json(msg='minutes must be a number')
         except Exception:
-            module.fail_json(msg='invalid entry for minutes')
+            module.fail_json(msg='minutes is not a valid integer')
 
     ##################################################################
     if action in ['enable_alerts', 'disable_alerts']:
