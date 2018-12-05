@@ -1,0 +1,6 @@
+---
+subversion_packages:
+- mod_dav_svn
+- subversion
+apache_user: apache
+apache_group: apache
