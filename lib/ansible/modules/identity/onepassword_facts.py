@@ -192,20 +192,28 @@ class OnePasswordFacts(object):
 
         else:
             # This is not a document, let's try to find the requested field
-            if section_title is None:
-                for field_data in data['details'].get('fields', []):
-                    if field_data.get('name').lower() == field_name.lower():
-                        return {field_name: field_data.get('value', '')}
 
-            # Not found it yet, so now lets see if there are any sections defined
-            # and search through those for the field. If a section was given, we skip
-            # any non-matching sections, otherwise we search them all until we find the field.
-            for section_data in data['details'].get('sections', []):
-                if section_title is not None and section_title.lower() != section_data['title'].lower():
-                    continue
-                for field_data in section_data.get('fields', []):
-                    if field_data.get('t').lower() == field_name.lower():
-                        return {field_name: field_data.get('v', '')}
+            # Some types of 1Password items have a 'password' field directly alongside the 'fields' attribute,
+            # not inside it, so we need to check there first.
+            if (field_name in data['details']):
+                return {field_name: data['details'][field_name]}
+
+            # Otherwise we continue looking inside the 'fields' attribute for the specified field.
+            else:
+                if section_title is None:
+                    for field_data in data['details'].get('fields', []):
+                        if field_data.get('name').lower() == field_name.lower():
+                            return {field_name: field_data.get('value', '')}
+
+                # Not found it yet, so now lets see if there are any sections defined
+                # and search through those for the field. If a section was given, we skip
+                # any non-matching sections, otherwise we search them all until we find the field.
+                for section_data in data['details'].get('sections', []):
+                    if section_title is not None and section_title.lower() != section_data['title'].lower():
+                        continue
+                    for field_data in section_data.get('fields', []):
+                        if field_data.get('t').lower() == field_name.lower():
+                            return {field_name: field_data.get('v', '')}
 
         # We will get here if the field could not be found in any section and the item wasn't a document to be downloaded.
         optional_section_title = '' if section_title is None else " in the section '%s'" % section_title
