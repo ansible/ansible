@@ -251,7 +251,7 @@ class AzureRMImage(AzureRMModuleBase):
         if blob_uri or disk or snapshot:
             snapshot_resource = self.compute_models.SubResource(id=snapshot) if snapshot else None
             managed_disk = self.compute_models.SubResource(id=disk) if disk else None
-            return self.compute_models.ImageDataDisk(lun,
+            return self.compute_models.ImageDataDisk(lun=lun,
                                                      blob_uri=blob_uri,
                                                      snapshot=snapshot_resource,
                                                      managed_disk=managed_disk)
