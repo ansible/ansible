@@ -191,7 +191,7 @@ import os
 import traceback
 from distutils.version import LooseVersion
 
-MINIMAL_PYSOPENSSL_VERSION = '0.6'
+MINIMAL_PYOPENSSL_VERSION = '0.6'
 MINIMAL_CRYPTOGRAPHY_VERSION = '0.5'
 
 try:
@@ -594,7 +594,7 @@ def main():
     if backend == 'auto':
         # Detection what is possible
         can_use_cryptography = CRYPTOGRAPHY_FOUND and CRYPTOGRAPHY_VERSION >= LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION)
-        can_use_pyopenssl = PYOPENSSL_FOUND and PYOPENSSL_VERSION >= LooseVersion(MINIMAL_PYSOPENSSL_VERSION)
+        can_use_pyopenssl = PYOPENSSL_FOUND and PYOPENSSL_VERSION >= LooseVersion(MINIMAL_PYOPENSSL_VERSION)
 
         # Decision
         if module.params['cipher'] and module.params['passphrase'] and module.params['cipher'] != 'auto':
@@ -615,7 +615,7 @@ def main():
             module.fail_json(msg=('Can detect none of the Python libraries '
                                   'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
-                                      MINIMAL_PYSOPENSSL_VERSION))
+                                      MINIMAL_PYOPENSSL_VERSION))
     if backend == 'pyopenssl':
         if not PYOPENSSL_FOUND:
             module.fail_json(msg='The Python pyOpenSSL library is required')
