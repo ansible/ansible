@@ -135,6 +135,14 @@ options:
     description:
       - Specifies the user connection limit.
     version_added: '2.4'
+  role_grant:
+    description:
+      - Grant membership in role to user.
+    version_added: '2.8'
+  role_revoke:
+    description:
+      - Revoke membership in role from user.
+    version_added: '2.8'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -200,6 +208,11 @@ EXAMPLES = '''
     db: test
     user: test
     password: ""
+
+# Create asm user and grant role hello to him
+- postgresql_user:
+    name: asm
+    role_grant: hello
 '''
 
 import itertools
@@ -257,7 +270,7 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_limit):
+def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_limit, role_grant):
     """Create a new database user (role)."""
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
@@ -274,6 +287,16 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
     query.append(role_attr_flags)
     query = ' '.join(query)
     cursor.execute(query, query_password_data)
+
+    if role_grant:
+        if not user_exists(cursor, role_grant):
+            module.fail_json(msg='Role %s does not exist' % role_grant,
+                             exception=traceback.format_exc())
+            return True
+        query = 'GRANT %s TO %s' % (
+            pg_quote_identifier(role_grant, 'role'), pg_quote_identifier(user, 'role'))
+        cursor.execute(query)
+
     return True
 
 
@@ -313,7 +336,8 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
     return pwchanging
 
 
-def user_alter(db_connection, module, user, password, role_attr_flags, encrypted, expires, no_password_changes, conn_limit):
+def user_alter(db_connection, module, user, password, role_attr_flags, encrypted, expires, no_password_changes, conn_limit,
+               role_grant, role_revoke):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
@@ -458,6 +482,42 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         # Detect any differences between current_ and new_role_attrs.
         changed = current_role_attrs != new_role_attrs
 
+    # Grant or revoke role from user.
+    if role_grant or role_revoke:
+        if role_grant and not user_exists(cursor, role_grant):
+            module.fail_json(msg='Role %s does not exist' % role_grant)
+            return changed
+
+        if role_revoke and not user_exists(cursor, role_revoke):
+            module.fail_json(msg='Role %s does not exist' % role_revoke)
+            return changed
+
+        if role_grant and check_membership(cursor, user, role_grant):
+            return changed
+
+        if role_revoke and not check_membership(cursor, user, role_revoke):
+            return changed
+
+        try:
+            if role_grant:
+                query = 'GRANT %s TO %s' % (
+                    pg_quote_identifier(role_grant, 'role'), pg_quote_identifier(user, 'role'))
+                cursor.execute(query)
+            if role_revoke:
+                query = 'REVOKE %s FROM %s' % (
+                    pg_quote_identifier(role_revoke, 'role'), pg_quote_identifier(user, 'role'))
+                cursor.execute(query)
+            changed = True
+        except psycopg2.InternalError as e:
+            if e.pgcode == '25006':
+                # Handle errors due to read-only transactions indicated by pgcode 25006
+                # ERROR:  cannot execute ALTER ROLE in a read-only transaction
+                changed = False
+                module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
+                return changed
+            else:
+                raise psycopg2.InternalError(e)
+
     return changed
 
 
@@ -473,6 +533,22 @@ def user_delete(cursor, user):
 
     cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
     return True
+
+
+def check_membership(cursor, user, role):
+    query = "SELECT ARRAY(SELECT b.rolname FROM\
+             pg_catalog.pg_auth_members m\
+             JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\
+             WHERE m.member = r.oid)\
+             FROM pg_catalog.pg_roles r WHERE r.rolname = '%s'" % user
+    cursor.execute(query)
+    membership = cursor.fetchone()[0]
+    if not membership:
+        return False
+    if role in membership:
+        return True
+
+    return False
 
 
 def has_table_privileges(cursor, user, table, privs):
@@ -742,7 +818,9 @@ def main():
         ssl_mode=dict(default='prefer', choices=[
             'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(default=None),
-        conn_limit=dict(default=None)
+        conn_limit=dict(default=None),
+        role_grant=dict(default=None),
+        role_revoke=dict(default=None)
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -765,6 +843,8 @@ def main():
     expires = module.params["expires"]
     sslrootcert = module.params["ssl_rootcert"]
     conn_limit = module.params["conn_limit"]
+    role_grant = module.params["role_grant"]
+    role_revoke = module.params["role_revoke"]
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -820,13 +900,14 @@ def main():
         if user_exists(cursor, user):
             try:
                 changed = user_alter(db_connection, module, user, password,
-                                     role_attr_flags, encrypted, expires, no_password_changes, conn_limit)
+                                     role_attr_flags, encrypted, expires, no_password_changes, conn_limit,
+                                     role_grant, role_revoke)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         else:
             try:
                 changed = user_add(cursor, user, password,
-                                   role_attr_flags, encrypted, expires, conn_limit)
+                                   role_attr_flags, encrypted, expires, conn_limit, role_grant)
             except psycopg2.ProgrammingError as e:
                 module.fail_json(msg="Unable to add user with given requirement "
                                      "due to : %s" % to_native(e),
