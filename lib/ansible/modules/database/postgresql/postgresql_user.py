@@ -421,7 +421,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         conn_limit_changing = (conn_limit is not None and conn_limit != current_role_attrs['rolconnlimit'])
 
         if (not pwchanging and not role_attr_flags_changing and not membership_changing and
-            not expires_changing and not conn_limit_changing and not comment_changing):
+                not expires_changing and not conn_limit_changing and not comment_changing):
             return False
 
         alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
