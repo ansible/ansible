@@ -132,6 +132,26 @@ options:
     default: null
     required: false
 
+  scope:
+    version_added: 2.8
+    description:
+      - Specify the network's scope.
+    type: str
+    default: null
+    required: false
+    choices:
+      - local
+      - global
+      - swarm
+
+  attachable:
+    version_added: 2.8
+    description:
+      - If enabled, and the network is in the global scope, non-service containers on worker nodes will be able to connect to the network.
+    type: bool
+    default: null
+    required: false
+
 extends_documentation_fragment:
     - docker
 
@@ -264,6 +284,8 @@ class TaskParameters(DockerBaseClass):
         self.internal = None
         self.debug = None
         self.enable_ipv6 = None
+        self.scope = None
+        self.attachable = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -294,6 +316,7 @@ def get_ip_version(cidr):
 
 
 def get_driver_options(driver_options):
+    # TODO: Move this and the same from docker_prune.py to docker_common.py
     result = dict()
     if driver_options is not None:
         for k, v in driver_options.items():
@@ -310,6 +333,59 @@ def get_driver_options(driver_options):
 
 class DockerNetworkManager(object):
 
+    def _get_minimal_versions(self):
+        # TODO: Move this and the same from docker_container.py to docker_common.py
+        self.option_minimal_versions = dict()
+        for option, data in self.client.module.argument_spec.items():
+            self.option_minimal_versions[option] = dict()
+        self.option_minimal_versions.update(dict(
+            scope=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
+            attachable=dict(docker_py_version='2.0.0', docker_api_version='1.26'),
+        ))
+
+        for option, data in self.option_minimal_versions.items():
+            # Test whether option is supported, and store result
+            support_docker_py = True
+            support_docker_api = True
+            if 'docker_py_version' in data:
+                support_docker_py = self.client.docker_py_version >= LooseVersion(data['docker_py_version'])
+            if 'docker_api_version' in data:
+                support_docker_api = self.client.docker_api_version >= LooseVersion(data['docker_api_version'])
+            data['supported'] = support_docker_py and support_docker_api
+            # Fail if option is not supported but used
+            if not data['supported']:
+                # Test whether option is specified
+                if 'detect_usage' in data:
+                    used = data['detect_usage']()
+                else:
+                    used = self.client.module.params.get(option) is not None
+                    if used and 'default' in self.client.module.argument_spec[option]:
+                        used = self.client.module.params[option] != self.client.module.argument_spec[option]['default']
+                if used:
+                    # If the option is used, compose error message.
+                    if 'usage_msg' in data:
+                        usg = data['usage_msg']
+                    else:
+                        usg = 'set %s option' % (option, )
+                    if not support_docker_api:
+                        msg = 'docker API version is %s. Minimum version required is %s to %s.'
+                        msg = msg % (self.client.docker_api_version_str, data['docker_api_version'], usg)
+                    elif not support_docker_py:
+                        if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
+                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
+                                   "Consider switching to the 'docker' package if you do not require Python 2.6 support.")
+                        elif self.client.docker_py_version < LooseVersion('2.0.0'):
+                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
+                                   "You have to switch to the Python 'docker' package. First uninstall 'docker-py' before "
+                                   "installing 'docker' to avoid a broken installation.")
+                        else:
+                            msg = "docker version is %s. Minimum version required is %s to %s."
+                        msg = msg % (docker_version, data['docker_py_version'], usg)
+                    else:
+                        # should not happen
+                        msg = 'Cannot %s with your configuration.' % (usg, )
+                    self.client.fail(msg)
+
     def __init__(self, client):
         self.client = client
         self.parameters = TaskParameters(client)
@@ -321,6 +397,8 @@ class DockerNetworkManager(object):
         self.diff = self.client.module._diff
         self.diff_tracker = DifferenceTracker()
         self.diff_result = dict()
+
+        self._get_minimal_versions()
 
         self.existing_network = self.get_existing_network()
 
@@ -418,17 +496,21 @@ class DockerNetworkManager(object):
                             parameter=self.parameters.enable_ipv6,
                             active=net.get('EnableIPv6', False))
 
-        if self.parameters.internal is not None:
-            if self.parameters.internal:
-                if not net.get('Internal'):
-                    differences.add('internal',
-                                    parameter=self.parameters.internal,
-                                    active=net.get('Internal'))
-            else:
-                if net.get('Internal'):
-                    differences.add('internal',
-                                    parameter=self.parameters.internal,
-                                    active=net.get('Internal'))
+        if self.parameters.internal is not None and self.parameters.internal != net.get('Internal', False):
+            differences.add('internal',
+                            parameter=self.parameters.internal,
+                            active=net.get('Internal'))
+
+        if self.parameters.scope is not None and self.parameters.scope != net.get('Scope'):
+            differences.add('scope',
+                            parameter=self.parameters.scope,
+                            active=net.get('Scope'))
+
+        if self.parameters.attachable is not None and self.parameters.attachable != net.get('Attachable', False):
+            differences.add('attachable',
+                            parameter=self.parameters.attachable,
+                            active=net.get('Attachable'))
+
         return not differences.empty, differences
 
     def create_network(self):
@@ -462,6 +544,10 @@ class DockerNetworkManager(object):
                 params['enable_ipv6'] = self.parameters.enable_ipv6
             if self.parameters.internal is not None:
                 params['internal'] = self.parameters.internal
+            if self.parameters.scope is not None:
+                params['scope'] = self.parameters.scope
+            if self.parameters.attachable is not None:
+                params['attachable'] = self.parameters.attachable
 
             if not self.check_mode:
                 resp = self.client.create_network(self.parameters.network_name, **params)
@@ -573,7 +659,9 @@ def main():
         )),
         enable_ipv6=dict(type='bool'),
         internal=dict(type='bool'),
-        debug=dict(type='bool', default=False)
+        debug=dict(type='bool', default=False),
+        scope=dict(type='str', choices=['local', 'global', 'swarm']),
+        attachable=dict(type='bool'),
     )
 
     mutually_exclusive = [
@@ -584,7 +672,8 @@ def main():
         argument_spec=argument_spec,
         mutually_exclusive=mutually_exclusive,
         supports_check_mode=True,
-        min_docker_version='1.10.0'
+        min_docker_version='1.10.0',
+        min_docker_api_version='1.22'
         # "The docker server >= 1.10.0"
     )
 
