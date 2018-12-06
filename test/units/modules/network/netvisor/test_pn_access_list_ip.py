@@ -17,8 +17,6 @@ class TestAccessListIpModule(TestNvosModule):
     module = pn_access_list_ip
 
     def setUp(self):
-        super(TestNvosModule, self).setUp()
-
         self.mock_run_nvos_commands = patch('ansible.modules.network.netvisor.pn_access_list_ip.run_cli')
         self.run_nvos_commands = self.mock_run_nvos_commands.start()
 
@@ -26,7 +24,6 @@ class TestAccessListIpModule(TestNvosModule):
         self.run_check_cli = self.mock_run_check_cli.start()
 
     def tearDown(self):
-        super(TestNvosModule, self).tearDown()
         self.mock_run_nvos_commands.stop()
 
     def run_cli_patch(self, module, cli, state_map):
