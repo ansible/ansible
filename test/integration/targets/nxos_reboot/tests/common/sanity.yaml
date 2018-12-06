@@ -23,4 +23,4 @@
       delay: 60
       host: "{{ inventory_hostname }}"
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_acl sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_reboot sanity test"
