@@ -330,7 +330,7 @@ def main():
     # convert members to python list if it's a commas seperated string
     if isinstance(members, str):
         temp = []
-        temp = members.split(',').strip("]['")
+        temp = members.strip("]['").split(',')
         members = deepcopy(temp)
     else:
         raise UserWarning("'members' must be a comma-separated string or a yaml list.")
