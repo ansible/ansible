@@ -103,8 +103,7 @@ class GcpSession(object):
             self.module.fail_json(msg=inst.message)
 
     def session(self):
-        return AuthorizedSession(
-            self._credentials().with_scopes(self.module.params['scopes']))
+        return AuthorizedSession(self._credentials())
 
     def _validate(self):
         if not HAS_REQUESTS:
@@ -126,11 +125,11 @@ class GcpSession(object):
     def _credentials(self):
         cred_type = self.module.params['auth_kind']
         if cred_type == 'application':
-            credentials, project_id = google.auth.default()
+            credentials, project_id = google.auth.default(scopes=self.module.params['scopes'])
             return credentials
         elif cred_type == 'serviceaccount':
             path = os.path.realpath(os.path.expanduser(self.module.params['service_account_file']))
-            return service_account.Credentials.from_service_account_file(path)
+            return service_account.Credentials.from_service_account_file(path).with_scopes(self.module.params['scopes'])
         elif cred_type == 'machineaccount':
             return google.auth.compute_engine.Credentials(
                 self.module.params['service_account_email'])
