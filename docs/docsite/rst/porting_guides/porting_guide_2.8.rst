@@ -216,6 +216,7 @@ Plugins
   ``CLIARGS.get('tags')`` and ``CLIARGS['tags']`` work as expected but you won't be able to modify
   the cli arguments at all.
 
+* The ``default`` callback plugin now has two additional stat counters in play recap: ``ignored`` for tasks that failed but had set ``ignore_errors: yes`` and ``rescued`` for tasks that failed initially but the rescue section was executed. Note that ``rescued`` tasks are no longer counted as ``failed`` as in Ansible 2.7 (and earlier).
 
 Porting custom scripts
 ======================
