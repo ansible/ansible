@@ -86,6 +86,13 @@ Add-CSharpType -References $become_def, $process_def -TempPath $new_tmp -Include
 
 $username = $Payload.become_user
 $password = $Payload.become_password
+# We need to set password to the value of NullString so a null password is preserved when crossing the .NET
+# boundary. If we pass $null it will automatically be converted to "" and we need to keep the distinction for
+# accounts that don't have a password and when someone wants to become without knowing the password.
+if ($null -eq $password) {
+    $password = [NullString]::Value
+}
+
 try {
     $logon_type, $logon_flags = Get-BecomeFlags -flags $Payload.become_flags
 } catch {

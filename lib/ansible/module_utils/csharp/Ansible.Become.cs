@@ -508,7 +508,9 @@ namespace Ansible.Become
             {
                 if (becomeSid == "S-1-5-18")
                     userTokens.Add(systemToken);
-                else if (!SERVICE_SIDS.Contains(becomeSid) && String.IsNullOrEmpty(password) && logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
+                // Cannot use String.IsEmptyOrNull() as an empty string is an account that doesn't have a pass.
+                // We only use S4U if no password was defined or it was null
+                else if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
                 {
                     // If no password was specified, try and duplicate an existing token for that user or use S4U to
                     // generate one without network credentials

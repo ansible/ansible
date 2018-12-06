@@ -550,6 +550,10 @@ the ``Run whether user is logged on or not`` with the ``Do not store password``
 option for a Scheduled Task. In this scenario, the become process will not be
 able to access any network resources like a normal WinRM process.
 
+To make a distinction between using become with no password and becoming an
+account that has no password make sure to keep ``ansible_become_pass`` as
+undefined, set ``ansible_become_pass: ``, or set ``ansible_become_pass: null``.
+
 .. Note:: Because there are no guarantees an existing token will exist for a
   user when Ansible runs, there's a high change the become process will only
   have access to local resources. Use become with a password if the task needs
@@ -562,8 +566,7 @@ Accounts without a Password
 
 Ansible can be used to become an account that does not have a password (like the
 ``Guest`` account). To become an account without a password, set up the
-variables like normal but either do not define ``ansible_become_pass`` or set
-``ansible_become_pass: ''``.
+variables like normal but set ``ansible_become_pass: ''``.
 
 Before become can work on an account like this, the local policy
 `Accounts: Limit local account use of blank passwords to console logon only <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/jj852174(v=ws.11)>`_

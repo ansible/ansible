@@ -739,7 +739,7 @@ $tests = @{
     }
 
     "Logon without password with standard" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $null, "LOGON_WITH_PROFILE",
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, [NullString]::Value, "LOGON_WITH_PROFILE",
             "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
@@ -759,7 +759,7 @@ $tests = @{
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $null, "LOGON_WITH_PROFILE",
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, [NullString]::Value, "LOGON_WITH_PROFILE",
             "LOGON32_LOGON_NETWORK", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
@@ -838,8 +838,26 @@ $tests = @{
         $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
     }
 
+    "Fail to logon with null or empty password" = {
+        $failed = $false
+        try {
+            # Having $null or an empty string means we are trying to become a user with a blank password and not
+            # become without setting the password. This is confusing as $null gets converted to "" and we need to
+            # use [NullString]::Value instead if we want that behaviour. This just tests to see that an empty
+            # string won't go the S4U route.
+            [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $null, "LOGON_WITH_PROFILE",
+                    "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
+        } catch {
+            $failed = $true
+            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "Ansible.Process.Win32Exception"
+            # Server 2008 has a slightly different error msg, just assert we get the error 1326
+            ($_.Exception.Message.Contains("Win32ErrorCode 1326")) | Assert-Equals -Expected $true
+        }
+        $failed | Assert-Equals -Expected $true
+    }
+
     "Logon without password with admin" = {
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $null, "LOGON_WITH_PROFILE",
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, [NullString]::Value, "LOGON_WITH_PROFILE",
             "LOGON32_LOGON_INTERACTIVE", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
@@ -859,7 +877,7 @@ $tests = @{
         if ([System.Environment]::OSVersion.Version -lt [Version]"6.1") {
             continue
         }
-        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $null, "LOGON_WITH_PROFILE",
+        $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, [NullString]::Value, "LOGON_WITH_PROFILE",
             "LOGON32_LOGON_NETWORK", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
