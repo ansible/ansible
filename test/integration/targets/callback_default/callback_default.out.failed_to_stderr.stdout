@@ -21,7 +21,7 @@ changed: [testhost] => (item=foo-1)
 changed: [testhost] => (item=foo-2)
 changed: [testhost] => (item=foo-3)
 
-TASK [Failed task to be rescued] ***********************************************
+TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
 
 TASK [Rescue task] *************************************************************
 changed: [testhost]

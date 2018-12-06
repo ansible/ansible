@@ -35,7 +35,7 @@
         label: foo-{{ item }}
 
     - block:
-        - name: Failed task to be rescued
+        - name: EXPECTED FAILURE Failed task to be rescued
           fail:
       rescue:
         - name: Rescue task
