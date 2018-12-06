@@ -43,7 +43,3 @@
   when:
     - ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 29
     - ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8
-
-- include: 'python3and2.yml'
-  when:
-    - ansible_pkg_mgr == 'dnf'
