@@ -472,6 +472,10 @@ class Difference(object):
     def description(self):
         return cmp_str_with_none(self.want.description, self.have.description)
 
+    @property
+    def receive_disable(self):
+        return cmp_str_with_none(self.want.receive_disable, self.have.receive_disable)
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
@@ -699,7 +703,7 @@ class ArgumentSpec(object):
             description=dict(),
             send=dict(),
             receive=dict(),
-            receive_disable=dict(required=False),
+            receive_disable=dict(),
             ip=dict(),
             port=dict(),
             interval=dict(type='int'),
