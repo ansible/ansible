@@ -96,6 +96,7 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 
 * ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+* ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
 
 
 Noteworthy module changes
