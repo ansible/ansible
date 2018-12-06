@@ -197,7 +197,7 @@ def create_or_update_bucket(s3_client, module, location):
         if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays is not None:
             module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     else:
-        if requester_pays is not None:
+        if requester_pays is not False:
             payer = 'Requester' if requester_pays else 'BucketOwner'
             if requester_pays_status != payer:
                 put_bucket_request_payment(s3_client, name, payer)
