@@ -39,7 +39,7 @@ Function Add-Route {
   if (!($Route)){
     try {
       # Find Interface Index
-      $InterfaceIndex = Find-NetRoute -RemoteIPAddress $IpAddress | Select -First 1 -ExpandProperty InterfaceIndex
+      $InterfaceIndex = Find-NetRoute -RemoteIPAddress $Gateway | Select -First 1 -ExpandProperty InterfaceIndex
 
       # Add network route
       New-NetRoute -DestinationPrefix $Destination -NextHop $Gateway -InterfaceIndex $InterfaceIndex -RouteMetric $Metric -ErrorAction Stop -WhatIf:$CheckMode|out-null 
