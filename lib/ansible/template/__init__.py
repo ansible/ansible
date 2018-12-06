@@ -741,11 +741,12 @@ class Templar:
                     return data
 
             if disable_lookups:
-                t.globals['query'] = t.globals['q'] = t.globals['lookup'] = t.globals['now'] = self._fail_lookup
+                t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
             else:
                 t.globals['lookup'] = self._lookup
                 t.globals['query'] = t.globals['q'] = self._query_lookup
-                t.globals['now'] = self._now_datetime
+
+            t.globals['now'] = self._now_datetime
 
             t.globals['finalize'] = self._finalize
 
