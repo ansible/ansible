@@ -296,7 +296,7 @@ def main():
             login_host=dict(default="localhost"),
             login_port=dict(default=27017),
             replica_set=dict(default="rs0"),
-            members=dict(required=False, default=None),
+            members=dict(required=False, default=None, type='raw'),
             arbiter_at_index=dict(required=False, default=None, type='int'),
             validate=dict(required=False, default=True, type='bool'),
             ssl=dict(default=False, type='bool'),
