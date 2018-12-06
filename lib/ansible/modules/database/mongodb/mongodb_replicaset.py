@@ -51,7 +51,7 @@ options:
         default: rs0
     members:
         description:
-            - A comma-separated consisting of the replicaset members.
+            - A comma-separated string or a yaml list consisting of the replicaset members.
             - Supply as a simple csv string, i.e. mongodb1:27017,mongodb2:27017,mongodb3:27017.
     validate:
         description:
@@ -137,6 +137,44 @@ EXAMPLES = '''
     replica_set: "rs1"
     members: "localhost:3002"
   validate: no
+
+# Use yaml list
+- name: Ensure replicaset exists
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "rs0"
+    members:
+     - "localhost:3001"
+     - "localhost:3002"
+     - "localhost:3003"
+
+# Another list format
+- name: Ensure replicaset exists
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "rs0"
+    members: [ "localhost:3001",
+               "localhost:3002",
+               "localhost:3003" ]
+
+# Using a variable
+- name: Ensure replicaset exists
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "rs0"
+    members: "{{ members }}"
 '''
 
 RETURN = '''
