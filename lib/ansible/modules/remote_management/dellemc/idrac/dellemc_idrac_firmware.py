@@ -107,8 +107,7 @@ update_status:
   type: dict
   description: Firmware Update job and progress details from the iDRAC.
   returned: success
-  sample:
-    sample: {
+  sample: {
         'InstanceID': 'JID_XXXXXXXXXXXX',
         'JobState': 'Completed',
         'Message': 'Job completed successfully.',
@@ -175,10 +174,7 @@ def update_firmware(idrac, module):
             if module.params['job_wait']:
                 msg['changed'] = True
         else:
-            err_msg = "Failed to update firmware."
-            if msg['update_status']['Message']:
-                err_msg = "{0} Message: {1}".format(err_msg, msg['update_status']['Message'])
-            module.fail_json(msg=err_msg)
+            module.fail_json(msg="Failed to update firmware.", update_status=msg['update_status'])
     return msg
 
 
