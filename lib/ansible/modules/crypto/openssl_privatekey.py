@@ -274,8 +274,10 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         if not self.check(module, perms_required=False) or self.force:
             privatekey_data = self._generate_private_key_data()
             try:
-                privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
-                os.close(privatekey_file)
+                if not os.path.exists(self.path):
+                    privatekey_file = os.open(
+                        self.path, os.O_WRONLY | os.O_CREAT, mode=0o600)
+                    os.close(privatekey_file)
                 if isinstance(self.mode, string_types):
                     try:
                         self.mode = int(self.mode, 8)
@@ -285,9 +287,13 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
                             self.mode = AnsibleModule._symbolic_mode_to_octal(st, self.mode)
                         except ValueError as e:
                             module.fail_json(msg="%s" % to_native(e), exception=traceback.format_exc())
-                os.chmod(self.path, self.mode)
                 privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, self.mode)
-                os.write(privatekey_file, privatekey_data)
+                os.chmod(self.path, self.mode)
+                if self.cipher and self.passphrase:
+                    os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey,
+                                                                     self.cipher, to_bytes(self.passphrase)))
+                else:
+                    os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey))
                 os.close(privatekey_file)
                 self.changed = True
             except IOError as exc:
@@ -625,6 +631,14 @@ def main():
         private_key = PrivateKeyCryptography(module)
 
     if private_key.state == 'present':
+        # A value of 'path' should be a regular file.
+        # It should be failed if symblic link specified as a 'path' value.
+        if os.path.islink(module.params['path']) and not module.params['force']:
+            module.fail_json(
+                msg=(
+                    'The symbolic link is unable to specify'
+                    ' as a value of `path`: %s'
+                ) % module.params['path'])
 
         if module.check_mode:
             result = private_key.dump()
