@@ -53,7 +53,7 @@ def get_distribution_version():
 
 def get_all_subclasses(cls):
     '''
-    used by modules like Hardware or Network fact classes to recursively retrieve all 
+    used by modules like Hardware or Network fact classes to recursively retrieve all
     subclasses of a given class not only the direct sub classes.
     '''
     # Retrieve direct subclasses
