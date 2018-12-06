@@ -75,9 +75,19 @@
       - result is not changed
       - result is not failed
 
+- name: Get a temp directory
+  tempfile:
+    state: directory
+  register: my_temp_dir
+
+- name: Deploy the bogus_ca.pem file
+  copy:
+    src: "bogus_ca.pem"
+    dest: "{{ my_temp_dir.path }}/bogus_ca.pem"
+
 - name: Get servers certificate comparing it to an invalid ca_cert file
   get_certificate:
-    ca_certs: 'bogus_ca.pem'
+    ca_certs: '{{ my_temp_dir.path }}/bogus_ca.pem'
     host: "{{ httpbin_host }}"
     port: 443
   register: result
