@@ -276,7 +276,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             try:
                 if not os.path.exists(self.path):
                     privatekey_file = os.open(
-                        self.path, os.O_WRONLY | os.O_CREAT, mode=0o600)
+                        self.path, os.O_WRONLY | os.O_CREAT, 0o600)
                     os.close(privatekey_file)
                 if isinstance(self.mode, string_types):
                     try:
