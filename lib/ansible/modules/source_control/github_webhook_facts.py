@@ -51,15 +51,15 @@ author:
 '''
 
 EXAMPLES = '''
-# list hooks for a repository (password auth)
-- github_webhook_facts:
+- name: list hooks for a repository (password auth)
+  github_webhook_facts:
     repository: ansible/ansible
     user: "{{ github_user }}"
     password: "{{ github_password }}"
   register: ansible_webhooks
 
-# list hooks for a repository on github enterprise (token auth)
-- github_webhook_facts:
+- name: list hooks for a repository on GitHub Enterprise (token auth)
+  github_webhook_facts:
     repository: myorg/myrepo
     user: "{{ github_user }}"
     token: "{{ github_user_api_token }}"
