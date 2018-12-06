@@ -397,7 +397,7 @@ Ansible Galaxy
 
 The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles. 
 
-Read the Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>_ page for more information
+Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information
 
 .. seealso::
 
