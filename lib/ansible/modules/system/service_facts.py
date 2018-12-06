@@ -29,10 +29,6 @@ notes:
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
     using the string value of the service name as the key in order to obtain
     the fact data value like C(ansible_facts.services['zuul-gateway'])
-  - When collecting facts on a C(systemd) based system, this module will collect
-    data from both C(list-units) and C(list-unit-files) and aggregate that data,
-    with the active/inactive states provided by C(list-units) taking precedent.
-
 
 author:
   - Adam Miller (@maxamillion)
@@ -64,10 +60,15 @@ ansible_facts:
           type: string
           sample: sysv
         state:
-          description: State of the service. Either C(running) or C(stopped).
+          description: State of the service. Either C(running), C(stopped), or C(unknown).
           returned: always
           type: string
           sample: running
+        status:
+          description: State of the service. Either C(enabled), C(disabled), or C(unknown).
+          returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart
+          type: string
+          sample: enabled
         name:
           description: Name of the service.
           returned: always
@@ -159,19 +160,21 @@ class ServiceScanService(BaseService):
                 if m:
                     service_name = m.group('service')
                     service_state = 'stopped'
+                    service_status = "disabled"
                     if m.group('rl3') == 'on':
-                        rc, stdout, stderr = self.module.run_command('%s %s status' % (service_path, service_name), use_unsafe_shell=True)
-                        service_state = rc
-                        if rc in (0,):
-                            service_state = 'running'
-                        # elif rc in (1,3):
+                        service_status = "enabled"
+                    rc, stdout, stderr = self.module.run_command('%s %s status' % (service_path, service_name), use_unsafe_shell=True)
+                    service_state = rc
+                    if rc in (0,):
+                        service_state = 'running'
+                    # elif rc in (1,3):
+                    else:
+                        if 'root' in stderr or 'permission' in stderr.lower() or 'not in sudoers' in stderr.lower():
+                            self.incomplete_warning = True
+                            continue
                         else:
-                            if 'root' in stderr or 'permission' in stderr.lower() or 'not in sudoers' in stderr.lower():
-                                self.incomplete_warning = True
-                                continue
-                            else:
-                                service_state = 'stopped'
-                    service_data = {"name": service_name, "state": service_state, "source": "sysv"}
+                            service_state = 'stopped'
+                    service_data = {"name": service_name, "state": service_state, "status": service_status, "source": "sysv"}
                     services[service_name] = service_data
         return services
 
@@ -206,15 +209,17 @@ class SystemctlScanService(BaseService):
                 if 'failed' in line:
                     service_name = line.split()[1]
                 state_val = "stopped"
-            services[service_name] = {"name": service_name, "state": state_val, "source": "systemd"}
+            services[service_name] = {"name": service_name, "state": state_val, "status": "unknown", "source": "systemd"}
         rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
         for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line and 'not-found' not in svc_line]:
             try:
-                service_name, state_val = line.split()
+                service_name, status_val = line.split()
             except ValueError:
                 self.module.fail_json(msg="Malformed output discovered from systemd list-unit-files: {0}".format(line))
             if service_name not in services:
-                services[service_name] = {"name": service_name, "state": state_val, "source": "systemd"}
+                services[service_name] = {"name": service_name, "state": "unknown", "status": status_val, "source": "systemd"}
+            else:
+                services[service_name]["status"] = status_val
         return services
 
 
