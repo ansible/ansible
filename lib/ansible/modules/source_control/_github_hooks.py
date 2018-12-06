@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -17,6 +17,10 @@ DOCUMENTATION = '''
 ---
 module: github_hooks
 short_description: Manages GitHub service hooks.
+deprecated:
+  removed_in: "2.12"
+  why: Replaced by more granular modules
+  alternative: Use M(github_webhook) and M(github_webhook_facts) instead.
 description:
      - Adds service hooks and removes service hooks that have an error status.
 version_added: "1.4"
