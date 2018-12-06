@@ -78,8 +78,8 @@ class PlaybookExecutor:
         entry = {}
         try:
             # preload become/connecition/shell to set config defs cached
-            connection_loader.all(class_only=True)
-            shell_loader.all(class_only=True)
+            list(connection_loader.all(class_only=True))
+            list(shell_loader.all(class_only=True))
 
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
