@@ -108,8 +108,6 @@ EXAMPLES = '''
   gcp_pubsub_subscription:
       name: "test_object"
       topic: "{{ topic }}"
-      push_config:
-        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "test_project"
       auth_kind: "serviceaccount"

@@ -60,7 +60,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length >= 1
+      - "'webstore' in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a database that already exists
   gcp_spanner_database:
@@ -101,7 +101,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - "'webstore' not in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a database that does not exist
   gcp_spanner_database:
@@ -118,6 +118,7 @@
       - result.changed == false
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a instance
   gcp_spanner_instance:
       name: "instance-database"
@@ -131,3 +132,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: instance
+  ignore_errors: true

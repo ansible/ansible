@@ -165,8 +165,8 @@ EXAMPLES = '''
         raw_key: SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=
       region: us-central1
       replica_zones:
-      - us-central1-a
-      - us-central1-f
+      - https://www.googleapis.com/compute/v1/projects/google.com:graphite-playground/zones/us-central1-a
+      - https://www.googleapis.com/compute/v1/projects/google.com:graphite-playground/zones/us-central1-b
       project: "test_project"
       auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
