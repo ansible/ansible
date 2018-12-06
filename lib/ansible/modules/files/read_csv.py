@@ -49,6 +49,10 @@ options:
     - Whether the C(key) used is expected to be unique.
     type: bool
     default: yes
+todo:
+- Make it possible to add a custom dialect
+notes:
+- Ansible also ships with the C(csvfile) lookup plugin, which can be used to do selective lookups in CSV files from Jinja.
 '''
 
 EXAMPLES = r'''
