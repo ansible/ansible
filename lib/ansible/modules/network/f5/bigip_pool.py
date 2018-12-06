@@ -358,6 +358,7 @@ try:
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -368,6 +369,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -440,6 +442,12 @@ class Parameters(AnsibleF5Parameters):
 
 class ApiParameters(Parameters):
     @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
+    @property
     def quorum(self):
         if self._values['monitors'] is None:
             return None
@@ -489,6 +497,14 @@ class ApiParameters(Parameters):
 
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def monitors_list(self):
         if self._values['monitors'] is None:
@@ -625,6 +641,10 @@ class Difference(object):
             return None
         else:
             return want
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
     def _monitors_and_quorum(self):
         if self.want.monitor_type is None:
