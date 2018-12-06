@@ -320,7 +320,7 @@ class DistributionFiles:
             # nothing else to do, SteamOS gets correct info from python functions
         elif 'Devuan' in data:
             debian_facts['distribution'] = 'Devuan'
-            release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+            release = re.search(r"PRETTY_NAME=\"?[^(\"]+ \(?([^) \"]+)\)?", data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
             version = re.search(r"VERSION_ID=\"(.*)\"", data)
