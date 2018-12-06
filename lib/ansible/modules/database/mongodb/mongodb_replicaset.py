@@ -242,8 +242,8 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
     for member in members:
         if ':' not in member:  # No port supplied. Assume 27017
             member += ":27017"
-        member = member.replace('[', '').replace(']', '').replace("\\", '').replace('"', '')
-        members_dict_list.append(OrderedDict([("_id", index), ("host", str(member))]))
+        member = member.replace('[', '').replace(']', '')
+        members_dict_list.append(OrderedDict([("_id", index), ("host", str(member).replace("\\", '').replace('"', ''))]))
         if index == arbiter_at_index:
             members_dict_list[index]['arbiterOnly'] = True
         index += 1
