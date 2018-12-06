@@ -17,6 +17,7 @@ version_added: "2.7"
 short_description: Get status and parameters from WTI OOB and PDU devices.
 description:
     - "Get various status and parameters from WTI OOB and PDU devices."
+
 options:
   _terms:
     description:
