@@ -15,7 +15,8 @@ about: Ask us about docs
 - Documentation Report
 
 ##### COMPONENT NAME
-<!--- Write the name of the rst file, module, plugin, task or feature below -->
+<!--- Write the short name of the module, plugin, task or feature below,
+      use your best guess or leave empty if unsure -->
 
 ##### ANSIBLE VERSION
 <!--- Paste verbatim output from "ansible --version" between quotes -->
