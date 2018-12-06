@@ -99,11 +99,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.remote_management.lxca.common import LXCA_COMMON_ARGS, has_pylxca, connection_object
 try:
     from pylxca import cmms
-except Exception:
+except ImportError:
     pass
 
 
-UUID_REQUIRED = 'UUID of device is required for nodes_by_uuid command.'
+UUID_REQUIRED = 'UUID of device is required for cmms_by_uuid command.'
 CHASSIS_UUID_REQUIRED = 'UUID of chassis is required for cmms_by_chassis_uuid command.'
 SUCCESS_MSG = "Success %s result"
 
