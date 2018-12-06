@@ -354,6 +354,63 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
 
+
+.. _using_multiple_inventory_sources:
+
+Using multiple inventory sources
+================================
+
+As an advanced use case you can target multiple inventory sources (directories, dynamic inventory scripts 
+or files supported by inventory plugins) at same time by giving multiple inventory parameters from command 
+line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally 
+separate environments, like staging and production, at the same time for a specific action.
+
+Target two sources from the command line like this::
+
+    ansible-playbook get_logs.yml -i staging -i production
+
+Keep in mind that if there are variable conflicts in the inventories, they are resolved according
+to the rules described in :ref:`how_we_merge` and :ref:`ansible_variable_precedence`.
+The merging order is controlled by the order of the inventory source parameters.
+If `[all:vars]` in staging inventory defines `myvar = 1`, but production inventory defines `myvar = 2`,
+the playbook will be run with `myvar = 2`. The result would be reversed if the playbook was run with
+`-i production -i staging`.
+
+**Aggregating inventory sources with a directory**
+
+You can also create an inventory by combining multiple inventory sources and source types under a directory.
+This can be useful for combining static and dynamic hosts and manage them as one inventory.
+The following inventory combines an inventory plugin source, a dynamic inventory script,
+and a file with static hosts::
+
+    inventory/
+      openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      dynamic-inventory.py   # add additional hosts with dynamic inventory script
+      static-inventory       # add static hosts and groups
+      group_vars/
+        all.yml              # assign variables to all hosts
+
+You can target this inventory directory simply like this::
+
+    ansible-playbook example.yml -i inventory
+
+It can be useful to control the merging order of the inventory sources if there's variable
+conflicts or group of groups dependencies to the other inventory sources. The inventories
+are merged in alphabetical order according to the filenames so the result can
+be controller by adding prefixes to the files::
+
+    inventory/
+      01-openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      02-dynamic-inventory.py   # add additional hosts with dynamic inventory script
+      03-static-inventory       # add static hosts
+      group_vars/
+        all.yml                 # assign variables to all hosts
+
+If the openstack inventory source defines `myvar = 1` for the group `all`, dynamic inventory source defines `myvar = 2`,
+and `03-static-inventory` defines `myvar = 3`, the playbook will be run with `myvar = 3`.
+
+For more details on inventory plugins and dynamic inventory scripts see :ref:`inventory_plugins` and :ref:`intro_dynamic_inventory`.
+
 .. _behavioral_parameters:
 
 Connecting to hosts: behavioral inventory parameters
@@ -505,98 +562,10 @@ Here is an example of how to instantly deploy to created containers::
 .. note:: If you're reading the docs from the beginning, this may be the first example you've seen of an Ansible playbook. This is not an inventory file.
           Playbooks will be covered in great detail later in the docs.
 
-.. _using_multiple_inventory_sources:
-
-Using multiple inventory sources
-++++++++++++++++++++++++++++++++
-
-You can use multiple inventory sources if you want to target multiple environments, multiple inventory source types
-or reuse common groups and variables across multiple environments. The sources are merged and run just like
-only one inventory was given. One inventory can depend on groups or group variables of another inventory.
-Variable defined in the last inventory wins in precedence in accordance with :ref:`ansible_variable_precedence`.
-
-In the following example the inventory sources are directories but could be any of the supported inventory plugins
-or dynamic inventory scripts. In the example we have two different environments: production and staging. Both have some
-common variables and groups but may also have some own environment specific configurations.
-To avoid copy pasting the commmon groups and variables the following directory layout is created::
-
-    inventories/
-       production/
-          hosts               # inventory file for production servers
-          group_vars/
-             db-servers.yml   # assign variables to db servers in production environment
-       staging
-          hosts               # inventory file for staging environment
-       common/
-          hosts               # inventory file for defining common groups for all environments
-          group_vars/
-             all-servers.yml  # assign variables to all servers in all environments
-
-The production inventory is defined like this:
-
-.. code-block:: guess
-
-    [web-servers]
-    web1.example.com
-
-    [db-servers]
-    db1.example.com
-
-The staging environment is very similar:
-
-.. code-block:: guess
-
-    [web-servers]
-    web1.staging.example.com
-
-    [db-servers]
-    db1.staging.example.com
-
-The common inventory composes a new group named all-servers:
-
-.. code-block:: guess
-
-    [web-servers]
-
-    [db-servers]
-
-    [all-servers:children]
-    web-servers
-    db-servers
-
-The inventories are merged, so when you target common and production
-inventories all-servers group will have web1.example.com and db1.example.com as members and
-db1.example.com will have host variables from both db-servers.yml and all-servers.yml.
-In case of conflict a variable defined in db-servers.yml wins over all-servers.yml's variable.
-
-Without the empty web-servers and db-servers groups the common inventory would have a dependency on those
-groups and would need to be read after the production inventory. This would make it harder for the 
-production inventory to override the common group variables.
-
-You can target these inventories like this (note the order of the inventory parameters)::
-
-    ansible-playbook example.yml -i inventories/common -i inventories/production
-
-It is also possible to configure :envvar:`ANSIBLE_INVENTORY` to use multiple inventories.
-
-**Aggregating inventory sources with a directory**
-
-You can combine multiple inventory sources under a directory. As an example the following inventory
-combines an inventory plugin source, a dynamic inventory script, and files with static hosts and groups::
-
-    inventory/
-      01-openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
-      02-dynamic-inventory.py   # add additional hosts with dynamic inventory script
-      03-static-inventory       # add static hosts
-      04-static-groups          # define static groups using groups from earlier inventory sources as children
-      group_vars/
-        all.yml                 # assign variables to all hosts
-
-The inventories are parsed in alphabetical order so number prefixes are used to make sure
-the parsing order is correct. For more details about inventory plugins see :ref:`inventory_plugins`.
-
 .. seealso::
 
+   :ref:`inventory_plugins`
+       Pulling inventory from dynamic or static sources
    :ref:`intro_dynamic_inventory`
        Pulling inventory from dynamic sources, such as cloud providers
    :ref:`intro_adhoc`
