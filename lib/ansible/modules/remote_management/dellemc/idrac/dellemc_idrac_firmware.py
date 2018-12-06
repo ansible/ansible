@@ -144,11 +144,6 @@ def update_firmware(idrac, module):
     msg['update_status'] = {}
 
     try:
-        _validate_catalog_file(module.params['catalog_file_name'])
-    except ValueError as e:
-        module.fail_json(msg=str(e))
-
-    try:
         upd_share = FileOnShare(remote=module.params['share_name'] + "/" + module.params['catalog_file_name'],
                                 mount_point=module.params['share_mnt'],
                                 isFolder=False,
@@ -199,6 +194,8 @@ def main():
         supports_check_mode=False)
 
     try:
+        # Validate the catalog file
+        _validate_catalog_file(module.params['catalog_file_name'])
         # Connect to iDRAC and update firmware
         with iDRACConnection(module.params) as idrac:
             update_status = update_firmware(idrac, module)
