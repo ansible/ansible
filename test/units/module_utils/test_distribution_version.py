@@ -515,18 +515,15 @@ ID=devuan
 HOME_URL="https://www.devuan.org/"
 SUPPORT_URL="https://devuan.org/os/community"
 BUG_REPORT_URL="https://bugs.devuan.org/"
-""",
-            "/etc/debian_version": """
-            9
-            """,
+"""
         },
         'platform.dist': ('', '', ''),
         'result': {
             'distribution': u'Devuan',
-            'distribution_major_version': u'9',
+            'distribution_major_version': u'NA',
             'distribution_release': u'ascii',
             'os_family': 'Debian',
-            'distribution_version': u'9'
+            'distribution_version': u'NA'
         }
     },
     {
