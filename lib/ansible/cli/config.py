@@ -10,6 +10,9 @@ import subprocess
 import yaml
 
 from ansible import context
+import ansible.plugins.loader as plugin_loader
+
+from ansible import constants as C
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting, find_ini_config_file
@@ -45,6 +48,11 @@ class ConfigCLI(CLI):
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
+        self.parser.add_option("-t", "--type", action="store", default=None, dest='type', type='choice',
+                               help='Indicate which plugin type when you are querying the configuration for a specific plugin'
+                                    'Available plugin types are : {0}\n'
+                                    'This also requires a plugin name as an argument'.format(C.CONFIGURABLE_PLUGINS),
+                               choices=C.CONFIGURABLE_PLUGINS)
 
         list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common])
         list_parser.set_defaults(func=self.execute_list)
@@ -85,8 +93,7 @@ class ConfigCLI(CLI):
             else:
                 raise AnsibleOptionsError('The provided configuration file is missing or not accessible: %s' % to_native(self.config_file))
         else:
-            self.config = ConfigManager()
-            self.config_file = find_ini_config_file()
+            self.config = C.config
 
         if self.config_file:
             try:
@@ -159,7 +166,23 @@ class ConfigCLI(CLI):
         '''
         list all current configs reading lib/constants.py and shows env and config file setting names
         '''
-        self.pager(to_text(yaml.dump(self.config.get_configuration_definitions(ignore_private=True), Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+        config_entries = {}
+        if self.options.type is not None:
+            loader = getattr(plugin_loader, '%s_loader' % self.options.type)
+            for plugin in loader.all(class_only=True):
+                finalname = name = plugin._load_name
+                if name.startswith('_'):
+                    # alias or deprecated
+                    if os.path.islink(plugin._original_path):
+                        continue
+                    else:
+                        finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
+                config_entries[finalname] = self.config.get_configuration_definitions(self.options.type, name)
+        else:
+            # this dumps main/common configs
+            config_entries = self.config.get_configuration_definitions(ignore_private=True)
+
+        self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
     def execute_dump(self):
         '''
