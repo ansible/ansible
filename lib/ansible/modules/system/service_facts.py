@@ -29,6 +29,9 @@ notes:
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
     using the string value of the service name as the key in order to obtain
     the fact data value like C(ansible_facts.services['zuul-gateway'])
+  - When collecting facts on a C(systemd) based system, this module will collect
+    data from both C(list-units) and C(list-unit-files) and aggregate that data,
+    with the active/inactive states provided by C(list-units) taking precedent.
 
 
 author:
@@ -204,6 +207,14 @@ class SystemctlScanService(BaseService):
                     service_name = line.split()[1]
                 state_val = "stopped"
             services[service_name] = {"name": service_name, "state": state_val, "source": "systemd"}
+        rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line and 'not-found' not in svc_line]:
+            try:
+                service_name, state_val = line.split()
+            except ValueError:
+                self.module.fail_json(msg="Malformed output discovered from systemd list-unit-files: {0}".format(line))
+            if service_name not in services:
+                services[service_name] = {"name": service_name, "state": state_val, "source": "systemd"}
         return services
 
 
