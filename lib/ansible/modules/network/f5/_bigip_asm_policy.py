@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
@@ -19,6 +19,14 @@ short_description: Manage BIG-IP ASM policies
 description:
    - Manage BIG-IP ASM policies.
 version_added: 2.5
+deprecated:
+  removed_in: '2.12'
+  alternative: bigip_asm_policy_manage
+  why: >
+    The bigip_asm_policy module has been split into three new modules to handle import, export and general policy
+    management. This will allow scalability of the asm policy management as well as ease of maintenance.
+    Additionally to further reduce the burden of having multiple smaller module F5 has created asm_policy
+    role in Ansible Galaxy for a more declarative way of ASM policy management.
 options:
   active:
     description:
@@ -500,7 +508,16 @@ class BaseManager(object):
         changes = self.changes.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
+
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.client.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def _set_changed_options(self):
         changed = {}
