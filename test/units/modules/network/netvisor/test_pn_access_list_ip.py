@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # Copyright: (c) 2018, Pluribus Networks
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -33,15 +32,15 @@ class TestAccessListIpModule(TestNvosModule):
     def run_cli_patch(self, module, cli, state_map):
         if state_map['present'] == 'access-list-ip-add':
             results = dict(
-               changed=True,
-               cli_cmd=cli
+                changed=True,
+                cli_cmd=cli
             )
         elif state_map['absent'] == 'access-list-ip-remove':
             results = dict(
                 changed=True,
                 cli_cmd=cli
             )
-    module.exit_json(**results)
+        module.exit_json(**results)
 
     def load_fixtures(self, commands=None, state=None, transport='cli'):
         self.run_nvos_commands.side_effect = self.run_cli_patch

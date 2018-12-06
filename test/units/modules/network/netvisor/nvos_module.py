@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # Copyright: (c) 2018, Pluribus Networks
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -54,7 +53,6 @@ class TestNvosModule(unittest.TestCase):
         self.test_log = tempfile.mkstemp(prefix='ansible-test-nvos-module-', suffix='.log')[1]
 
     def tearDown(self):
-        #super(TestCnosModule, self).tearDown()
         super(TestNvosModule, self).tearDown()
 
         os.remove(self.test_log)
@@ -110,4 +108,3 @@ class TestNvosModule(unittest.TestCase):
 
     def load_fixtures(self, commands=None):
         pass
-
