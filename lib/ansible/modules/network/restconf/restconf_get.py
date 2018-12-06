@@ -38,13 +38,13 @@ options:
         value in C(path)
     required: false
     default: all
-    choices:['config', 'nonconfig', 'all']
+    choices: ['config', 'nonconfig', 'all']
   output:
-    fields:
+    description:
       - The output of response received.
     required: false
     default: json
-    choices:['json', 'xml']
+    choices: ['json', 'xml']
 """
 
 EXAMPLES = """
@@ -85,7 +85,6 @@ def main():
     argument_spec = dict(
         path=dict(required=True),
         content=dict(choices=['config', 'nonconfig', 'all'], default='all'),
-        fields=dict(),
         output=dict(choices=['json', 'xml'], default='json'),
     )
 
