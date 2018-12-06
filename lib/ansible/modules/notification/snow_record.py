@@ -164,9 +164,9 @@ def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(
-        instance=dict(default=None, type='str', required=True),
-        username=dict(default=None, type='str', required=True, no_log=True),
-        password=dict(default=None, type='str', required=True, no_log=True),
+        instance=dict(default=None, type='str', required=False),
+        username=dict(default=None, type='str', required=False, no_log=True),
+        password=dict(default=None, type='str', required=False, no_log=True),
         table=dict(type='str', required=False, default='incident'),
         state=dict(choices=['present', 'absent'],
                    type='str', required=True),
@@ -190,6 +190,27 @@ def run_module():
         module.fail_json(msg='pysnow module required')
 
     params = module.params
+    auth_params = [dict(name="instance", env="SN_INSTANCE"),
+                   dict(name="username", env="SN_USERNAME"),
+                   dict(name="password", env="SN_PASSWORD")]
+
+    # Check to see if these authentication variables are defined by a
+    # shell environment variable or an Ansible variable.
+    for index, auth_param in enumerate(auth_params):
+
+        if params[auth_param["name"]] is None:
+
+            if os.getenv(auth_param["env"]) is None:
+                module.fail_json(msg="No {} defined.".format(auth_param["name"]))
+            else:
+                params[auth_param["name"]] = os.getenv(auth_param["env"])
+
+        elif isinstance(params[auth_param["name"]], str):
+            params[auth_param["name"]] = params[auth_param["name"]]
+        else:
+            module.fail_json(msg="Incorrect data type provided by {}. Not a " +
+                                 "string.".format(auth_param["name"]))
+
     instance = params['instance']
     username = params['username']
     password = params['password']
