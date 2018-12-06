@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import call, patch
+from units.compat.mock import call, patch
 from ansible.modules.packaging.os import rhsm_repository_release
 from units.modules.utils import (
     AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args)
