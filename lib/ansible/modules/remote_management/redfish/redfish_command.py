@@ -146,8 +146,7 @@ from ansible.module_utils._text import to_native
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["PowerOn", "PowerForceOff", "PowerGracefulRestart",
-                "PowerGracefulShutdown", "SetOneTimeBoot",
-                "CreateBiosConfigJob"],
+                "PowerGracefulShutdown", "PowerReboot", "SetOneTimeBoot"],
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
                  "UpdateUserRole", "UpdateUserPassword"],
     "Manager": ["GracefulRestart", "ClearLogs"],
@@ -230,12 +229,6 @@ def main():
                 result = rf_utils.manage_system_power(command)
             elif command == "SetOneTimeBoot":
                 result = rf_utils.set_one_time_boot_device(module.params['bootdevice'])
-            elif command == "CreateBiosConfigJob":
-                # execute only if we find a Managers resource
-                result = rf_utils._find_managers_resource(rf_uri)
-                if result['ret'] is False:
-                    module.fail_json(msg=to_native(result['msg']))
-                result = rf_utils.create_bios_config_job()
 
     elif category == "Manager":
         MANAGER_COMMANDS = {
