@@ -725,17 +725,17 @@ def get_netplan_dict(params):
                 netplan_dict['network'][params.get('type')][params.get('interface-id')]['match'] = dict()
                 netplan_dict['network'][params.get('type')][params.get('interface-id')]['match'][match_option] = params.get(key)
             # dhcp4-overrides
-            if key in DHCP_OVERRIDES:
+            elif key in DHCP_OVERRIDES:
                 override_option = '{0}'.format(key.split('dhcp4-overrides-')[1])
                 if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('dhcp4-overrides'):
                     netplan_dict['network'][params.get('type')][params.get('interface-id')]['dhcp4-overrides'] = dict()
                 netplan_dict['network'][params.get('type')][params.get('interface-id')]['dhcp4-overrides'][override_option] = params.get(key)
-            if key in ROUTES:
+            elif key in ROUTES:
                 routes_option = '{0}'.format(key.split('routes-')[1])
                 if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('routes'):
                     netplan_dict['network'][params.get('type')][params.get('interface-id')]['routes'] = dict()
                 netplan_dict['network'][params.get('type')][params.get('interface-id')]['routes'][routes_option] = params.get(key)
-            if key in WIFIS:
+            elif key in WIFIS:
                 wifi_option = key.split('access-points-')[1]
                 if not netplan_dict['network'][params.get('type')][params.get('interface-id')].get('access-points'):
                     netplan_dict['network'][params.get('type')][params.get('interface-id')]['access-points'] = dict()
