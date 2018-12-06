@@ -92,7 +92,7 @@ author:
 '''
 
 EXAMPLES = '''
--name:  create a new webhook that triggers on push (password auth)
+- name:  create a new webhook that triggers on push (password auth)
   github_webhook:
     repository: ansible/ansible
     url: https://www.example.com/hooks/
