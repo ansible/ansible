@@ -38,7 +38,14 @@ class CmdLineFactCollector(BaseFactCollector):
                 if len(item) == 1:
                     cmdline_dict[item[0]] = True
                 else:
-                    cmdline_dict[item[0]] = item[1]
+                    if item[0] in cmdline_dict:
+                        if isinstance(cmdline_dict[item[0]], list):
+                            cmdline_dict[item[0]].append(item[1])
+                        else:
+                            new_list = [cmdline_dict[item[0]], item[1]]
+                            cmdline_dict[item[0]] = new_list
+                    else:
+                        cmdline_dict[item[0]] = item[1]
         except ValueError:
             pass
 
