@@ -328,11 +328,11 @@ def main():
     electionTimeoutMillis = int(module.params['electionTimeoutMillis'])
 
     # convert members to python list if it's a commas seperated string
-    if isinstance(str, members):
+    if isinstance(members, str):
         temp = []
         temp = members.split(",")
         members = deepcopy(temp)
-    elif isinstance(list, members):
+    elif isinstance(members, list):
         pass
     else:
         raise UserWarning("'members' must be a comma-separated string or a list.")
