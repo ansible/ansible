@@ -169,7 +169,7 @@ def update_firmware(idrac, module):
             if module.params['job_wait']:
                 msg['changed'] = True
         else:
-            module.fail_json(msg="Failed to update firmware.", update_status=msg['update_status'])
+            module.fail_json(msg='Failed to update firmware.', update_status=msg['update_status'])
     return msg
 
 
