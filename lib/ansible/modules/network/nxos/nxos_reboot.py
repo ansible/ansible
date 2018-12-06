@@ -68,6 +68,7 @@ def reboot(module):
     opts = {'ignore_timeout': True}
     load_config(module, cmds, False, opts)
 
+
 def main():
     argument_spec = dict(
         confirm=dict(default=False, type='bool')
