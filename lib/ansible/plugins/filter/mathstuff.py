@@ -62,12 +62,12 @@ def unique(environment, a, case_sensitive=False, attribute=None):
             else:
                 c = list(c)
     except TypeError as e:
+        error = e
         _do_fail(e)
     except Exception as e:
+        error = e
         _do_fail(e)
         display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
-    finally:
-        error = e
 
     if not HAS_UNIQUE or error:
 
