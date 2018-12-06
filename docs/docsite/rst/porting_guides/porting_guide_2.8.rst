@@ -27,6 +27,15 @@ The two facts used in playbooks most often, ``ansible_distribution`` and ``ansib
 difference.  However, other facts like ``ansible_distribution_release`` and
 ``ansible_distribution_version`` may change as erroneous information gets corrected.
 
+Imports as handlers
+-------------------
+
+Beginning in version 2.8, a task cannot notify ``import_tasks`` or a static ``include`` that is specified in ``handlers``.
+
+The goal of a static import is to act as a pre-processor, where the import is replaced by the tasks defined within the imported file. When
+using an import, a task can notify any of the named tasks within the imported file, but not the name of the import itself.
+
+To achieve the results of notifying a single name but running mulitple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
 
 Command Line
 ============
