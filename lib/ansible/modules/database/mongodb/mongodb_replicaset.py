@@ -242,7 +242,7 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
     for member in members:
         if ':' not in member:  # No port supplied. Assume 27017
             member += ":27017"
-        members_dict_list.append(OrderedDict([("_id", index), ("host", member.strip("'"))]))
+        members_dict_list.append(OrderedDict([("_id", index), ("host", member]))
         if index == arbiter_at_index:
             members_dict_list[index]['arbiterOnly'] = True
         index += 1
@@ -330,7 +330,7 @@ def main():
     # convert members to python list if it's a commas seperated string
     if isinstance(members, str):
         temp = []
-        temp = members.strip("]['").split(',')
+        temp = members.split(',').strip("]['")
         members = deepcopy(temp)
     else:
         raise UserWarning("'members' must be a comma-separated string or a yaml list.")
