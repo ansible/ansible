@@ -7,15 +7,20 @@
     state: present
   register: route
 
-- name: check if route successfully addedd
+- name: check if route successfully added
   win_shell: (Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '{{ destination_ip_address }}'").Caption
   register: route_added
 
-- name: test if route successfully addedd
+- name: check route default gateway
+  win_shell: (Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '{{ destination_ip_address }}'").NextHop
+  register: route_gateway
+
+- name: test if route successfully added
   assert:
     that:
       - route is changed
       - route_added.stdout_lines[0] == "{{ destination_ip_address }}"
+      - route_gateway.stdout_lines[0] == "{{ default_gateway }}"
 
 - name: add a static route to test idempotency
   win_route:
