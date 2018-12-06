@@ -26,7 +26,8 @@ options:
   file:
     description:
       - The name of the imported file is specified directly without any other option.
-      - Unlike M(import_tasks), most keywords, including loops and conditionals, apply to this statement.
+      - Unlike M(import_tasks), most keywords, including loop, with_items, and conditionals, apply to this statement.
+      - The do until loop is not supported on M(include_tasks).
     version_added: '2.7'
   apply:
     description:
