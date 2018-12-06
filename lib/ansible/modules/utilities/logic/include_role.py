@@ -22,7 +22,8 @@ short_description: Load and execute a role
 description:
   - Loads and executes a role as a task dynamically. This frees roles from the `roles:` directive and allows them to be
     treated more as tasks.
-  - Unlike M(import_role), most keywords, including loops and conditionals, apply to this statement.
+  - Unlike M(import_role), most keywords, including loop, with_items, and conditionals, apply to this statement.
+  - The do until loop is not supported on M(include_role).
   - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
