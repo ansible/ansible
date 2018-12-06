@@ -94,7 +94,7 @@ EXAMPLES = '''
         address: 1.2.3.4
         key: hello
         encrypt_type: 7
-        host:  inventory_hostname }}
+        host: "{{ inventory_hostname }}"
         username: "{{ un }}"
         password: "{{ pwd }}"
 
@@ -106,9 +106,9 @@ EXAMPLES = '''
         tacacs_port: 89
         host_timeout: 10
         address: 5.6.7.8
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
+        host: "{{ inventory_hostname }}"
+        username: "{{ un }}"
+        password: "{{ pwd }}"
 '''
 
 RETURN = '''
