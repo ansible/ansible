@@ -47,7 +47,6 @@ class AnsibleFailJson(Exception):
 
 class TestNvosModule(unittest.TestCase):
     def setUp(self):
-        super(TestCnosModule, self).setUp()
         super(TestNvosModule, self).setUp()
 
         self.test_log = tempfile.mkstemp(prefix='ansible-test-nvos-module-', suffix='.log')[1]
