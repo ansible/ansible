@@ -225,11 +225,13 @@
     - zip
     - tar
 
-- name: Unpack archive file excluding glob files.
+- name: Unpack archive file excluding regular and glob files.
   unarchive:
     src: "{{ output_dir }}/unarchive-00.{{item}}"
     dest: "{{ output_dir }}/exclude-{{item}}"
-    exclude: "exclude/exclude-*.txt"
+    exclude: 
+      - "exclude/exclude-*.txt"
+      - "other/exclude-1.ext"
   with_items:
     - zip
     - tar
@@ -245,6 +247,7 @@
   assert:
     that:
       - "'exclude/exclude-1.txt' not in item.stdout"
+      - "'other/exclude-1.ext' not in item.stdout"
   with_items:
     - "{{ unarchive00.results }}"
 
