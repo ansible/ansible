@@ -1,7 +1,12 @@
 ---
-name: 🐛 Bug report
+name: "\U0001F41B Bug report"
 about: Create a report to help us improve
+title: ''
+labels: ''
+assignees: ''
+
 ---
+
 <!--- Verify first that your issue is not already reported on GitHub -->
 <!--- Also test if the latest release and devel branch are affected too -->
 <!--- Complete *all* sections as described, this form is processed automatically -->

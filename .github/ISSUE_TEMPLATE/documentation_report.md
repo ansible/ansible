@@ -1,7 +1,12 @@
 ---
-name: 📝 Documentation Report
+name: "\U0001F4DD Documentation Report"
 about: Ask us about docs
+title: ''
+labels: docs
+assignees: ''
+
 ---
+
 <!--- Verify first that your improvement is not already reported on GitHub -->
 <!--- Also test if the latest release and devel branch are affected too -->
 <!--- Complete *all* sections as described, this form is processed automatically -->
