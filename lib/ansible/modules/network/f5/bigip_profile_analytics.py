@@ -649,7 +649,7 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 409]:
+        if 'code' in response and response['code'] in [400, 409, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
@@ -669,7 +669,7 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] == 400:
+        if 'code' in response and response['code'] in [400, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
