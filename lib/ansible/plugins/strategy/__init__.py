@@ -394,25 +394,6 @@ class StrategyBase:
                             continue
             return None
 
-        def parent_handler_match(target_handler, handler_name):
-            if target_handler:
-                if isinstance(target_handler, (TaskInclude, IncludeRole)) and not getattr(target_handler, 'statically_loaded', True):
-                    try:
-                        handler_vars = self._variable_manager.get_vars(play=iterator._play, task=target_handler)
-                        templar = Templar(loader=self._loader, variables=handler_vars)
-                        target_handler_name = templar.template(target_handler.name)
-                        if target_handler_name == handler_name:
-                            return True
-                        else:
-                            target_handler_name = templar.template(target_handler.get_name())
-                            if target_handler_name == handler_name:
-                                return True
-                    except (UndefinedError, AnsibleUndefinedVariable):
-                        pass
-                return parent_handler_match(target_handler._parent, handler_name)
-            else:
-                return False
-
         cur_pass = 0
         while True:
             try:
@@ -542,18 +523,6 @@ class StrategyBase:
                                     found = True
                                     if target_handler.notify_host(original_host):
                                         self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
-                                else:
-                                    # As there may be more than one handler with the notified name as the
-                                    # parent, so we just keep track of whether or not we found one at all
-                                    for target_handler_block in reversed(iterator._play.handlers):
-                                        for target_handler in target_handler_block.block:
-                                            if parent_handler_match(target_handler, handler_name):
-                                                found = True
-                                                if target_handler.notify_host(original_host):
-                                                    self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
-                                                break
-                                        if found:
-                                            break
 
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
