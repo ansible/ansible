@@ -332,7 +332,7 @@ def main():
         temp = []
         temp = members.strip("]['").split(',')
         members = deepcopy(temp)
-    else isinstance(members, list):
+    elif isinstance(members, list):
         pass
     else:
         raise UserWarning("'members' must be a comma-separated string or a yaml list.")
