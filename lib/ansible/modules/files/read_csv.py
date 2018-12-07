@@ -182,22 +182,20 @@ def main():
     fieldnames = module.params['fieldnames']
     unique = module.params['unique']
 
-    delimiter = module.params['delimiter']
-    skipinitialspace = module.params['skipinitialspace']
-    strict = module.params['strict']
-
     if dialect not in csv.list_dialects():
         module.fail_json(msg="Dialect '%s' is not supported by your version of python." % dialect)
 
-    if delimiter is not None or skipinitialspace is not None or strict is not None:
-        orig = csv.get_dialect(dialect)
+    dialect_options = dict(
+        delimiter=module.params['delimiter'],
+        skipinitialspace=module.params['skipinitialspace'],
+        strict=module.params['strict'],
+    )
+
+    # Create a dictionary from only set options
+    dialect_params = {k:v for k,v in dialect_options.items() if v is not None}
+    if dialect_params:
         try:
-            csv.register_dialect('custom',
-                                 delimiter=delimiter if delimiter is not None else orig.delimiter,
-                                 skipinitialspace=skipinitialspace if skipinitialspace is not None else orig.skipinitialspace,
-                                 strict=strict if strict is not None else orig.strict,
-                                 quoting=orig.quoting,
-                                )
+            csv.register_dialect('custom', dialect, **dialect_params)
         except TypeError as e:
             module.fail_json(msg="Unable to create custom dialect: %s" % to_text(e))
         dialect = 'custom'
