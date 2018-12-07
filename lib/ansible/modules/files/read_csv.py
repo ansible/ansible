@@ -192,7 +192,7 @@ def main():
     )
 
     # Create a dictionary from only set options
-    dialect_params = {k:v for k,v in dialect_options.items() if v is not None}
+    dialect_params = {k:v for k, v in dialect_options.items() if v is not None}
     if dialect_params:
         try:
             csv.register_dialect('custom', dialect, **dialect_params)
