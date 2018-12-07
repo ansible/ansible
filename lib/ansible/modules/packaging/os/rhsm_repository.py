@@ -39,6 +39,14 @@ options:
       - To operate on several repositories this can accept a comma separated
         list or a YAML list.
     required: True
+  purge:
+    description:
+      - Disable all currently enabled repositories that are not not specified in C(name).
+        Only set this to C(True) if passing in a list of repositories to the C(name) field.
+        Using this with C(loop) will most likely not have the desired result.
+    type: bool
+    default: False
+    version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -58,12 +66,8 @@ EXAMPLES = '''
 
 - name: Disable all repositories except rhel-7-server-rpms
   rhsm_repository:
-    name: "{{ item }}"
-    state: disabled
-  loop: "{{
-    rhsm_repository.repositories |
-    map(attribute='id') |
-    difference(['rhel-7-server-rpms']) }}"
+    name: rhel-7-server-rpms
+    purge: True
 '''
 
 RETURN = '''
@@ -161,7 +165,7 @@ def get_repository_list(module, list_parameter):
     return repo_result
 
 
-def repository_modify(module, state, name):
+def repository_modify(module, state, name, purge=False):
     name = set(name)
     current_repo_list = get_repository_list(module, 'list')
     updated_repo_list = deepcopy(current_repo_list)
@@ -200,6 +204,20 @@ def repository_modify(module, state, name):
                 results.append("Repository '%s' is enabled for this system" % repo['id'])
                 rhsm_arguments += ['--enable', repo['id']]
 
+    # Disable all enabled repos on the system that are not in the task and not
+    # marked as disabled by the task
+    if purge:
+        enabled_repo_ids = set(repo['id'] for repo in updated_repo_list if repo['enabled'])
+        matched_repoids_set = set(matched_existing_repo.keys())
+        difference = enabled_repo_ids.difference(matched_repoids_set)
+        if len(difference) > 0:
+            for repoid in difference:
+                changed = True
+                diff_before.join("Repository '{repoid}'' is enabled for this system\n".format(repoid=repoid))
+                diff_after.join("Repository '{repoid}' is disabled for this system\n".format(repoid=repoid))
+                results.append("Repository '{repoid}' is disabled for this system".format(repoid=repoid))
+                rhsm_arguments.extend(['--disable', repoid])
+
     diff = {'before': diff_before,
             'after': diff_after,
             'before_header': "RHSM repositories",
@@ -216,13 +234,15 @@ def main():
         argument_spec=dict(
             name=dict(type='list', required=True),
             state=dict(choices=['enabled', 'disabled', 'present', 'absent'], default='enabled'),
+            purge=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
     name = module.params['name']
     state = module.params['state']
+    purge = module.params['purge']
 
-    repository_modify(module, state, name)
+    repository_modify(module, state, name, purge)
 
 
 if __name__ == '__main__':
