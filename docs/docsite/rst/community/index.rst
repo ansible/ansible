@@ -47,7 +47,7 @@ Working with the Ansible repo
 * I want to code my first changes to Ansible. How do I :ref:`set up my Python development environment <environment_setup>`?
 * I'd like to get more efficient as a developer. How can I find :ref:`editors, linters, and other tools <other_tools_and_programs>` that will support my Ansible development efforts?
 * I want my PR to meet Ansible's guidelines. Where can I find  guidance on :ref:`coding in Ansible <developer_guide>`?
-* I want to learn more about Ansible roadmaps, releases, and projects. How do I find information on :ref:`the development cycle <community_development_process>`.
+* I want to learn more about Ansible roadmaps, releases, and projects. How do I find information on :ref:`the development cycle <community_development_process>`?
 * I'd like to connect Ansible to a new API or other resource. How do I :ref:`contribute a group of related modules <developing_modules_in_groups>`?
 * My pull request is marked ``needs_rebase``. How do I :ref:`rebase my PR <rebase_guide>`?
 * I'm using an older version of Ansible and want a bug fixed in my version that's already been fixed on the ``devel`` branch. How do I :ref:`backport a bugfix PR <backport_process>`?
