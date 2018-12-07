@@ -17,7 +17,7 @@ short_description: NetApp ONTAP network routes
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
 - Modify ONTAP network routes.
 options:
@@ -47,12 +47,15 @@ options:
   from_destination:
     description:
     - Specify the route destination that should be changed.
+    version_added: '2.8'
   from_gateway:
     description:
     - Specify the route gateway that should be changed.
+    version_added: '2.8'
   from_metric:
     description:
     - Specify the route metric that should be changed.
+    version_added: '2.8'
 '''
 
 EXAMPLES = """
