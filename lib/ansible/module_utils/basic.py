@@ -621,9 +621,8 @@ def bytes_to_human(size, isbits=False, unit=None):
 def human_to_bytes(number, default_unit=None, isbits=False):
 
     '''
-    Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument
-    ex:
-      human_to_bytes('10M') <=> human_to_bytes(10, 'M')
+    Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument.
+    example: human_to_bytes('10M') <=> human_to_bytes(10, 'M')
     '''
     m = re.search(r'^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
     if m is None:
@@ -802,9 +801,11 @@ class AnsibleModule(object):
                  required_if=None):
 
         '''
-        common code for quickly building an ansible module in Python
-        (although you can write modules in anything that can return JSON)
-        see library/* for examples
+        Common code for quickly building an ansible module in Python
+        (although you can write modules with anything that can return JSON).
+
+        See :ref:`developing_modules_general` for a general introduction
+        and :ref:`developing_program_flow_modules` for more detailed explanation.
         '''
 
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
@@ -2270,11 +2271,12 @@ class AnsibleModule(object):
 
     def get_bin_path(self, arg, required=False, opt_dirs=None):
         '''
-        find system executable in PATH.
-        Optional arguments:
-           - required:  if executable is not found and required is true, fail_json
-           - opt_dirs:  optional list of directories to search in addition to PATH
-        if found return full path; otherwise return None
+        Find system executable in PATH.
+
+        :param arg: The executable to find.
+        :param required: if executable is not found and required is ``True``, fail_json
+        :param opt_dirs: optional list of directories to search in addition to ``PATH``
+        :returns: if found return full path; otherwise return None
         '''
 
         bin_path = None
@@ -2286,7 +2288,7 @@ class AnsibleModule(object):
         return bin_path
 
     def boolean(self, arg):
-        ''' return a bool for the arg '''
+        '''Convert the argument to a boolean'''
         if arg is None:
             return arg
 
