@@ -156,7 +156,21 @@ from ansible.module_utils.common._collections_compat import (
     Set, MutableSet,
 )
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common.file import is_executable
+from ansible.module_utils.common.file import (
+    _PERM_BITS as PERM_BITS,
+    _EXEC_PERM_BITS as EXEC_PERM_BITS,
+    _DEFAULT_PERM as DEFAULT_PERM,
+    is_executable,
+    format_attributes,
+    get_flags_from_attributes,
+)
+from ansible.module_utils.common.sys_info import (
+    get_platform,
+    get_distribution,
+    get_distribution_version,
+    load_platform_subclass,
+    get_all_subclasses,
+)
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
@@ -249,11 +263,6 @@ MODE_OPERATOR_RE = re.compile(r'[+=-]')
 USERS_RE = re.compile(r'[^ugo]')
 PERMS_RE = re.compile(r'[^rwxXstugo]')
 
-
-PERM_BITS = 0o7777       # file mode permission bits
-EXEC_PERM_BITS = 0o0111  # execute permission bits
-DEFAULT_PERM = 0o0666    # default file permission bits
-
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 _PY3_MIN = sys.version_info[:2] >= (3, 5)
@@ -265,91 +274,6 @@ if not _PY_MIN:
         '"msg": "Ansible requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
     )
     sys.exit(1)
-
-
-def get_platform():
-    ''' what's the platform?  example: Linux is a platform. '''
-    return platform.system()
-
-
-def get_distribution():
-    ''' return the distribution name '''
-    if platform.system() == 'Linux':
-        try:
-            supported_dists = platform._supported_dists + ('arch', 'alpine', 'devuan')
-            distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
-            if not distribution and os.path.isfile('/etc/system-release'):
-                distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
-                if 'Amazon' in distribution:
-                    distribution = 'Amazon'
-                else:
-                    distribution = 'OtherLinux'
-        except:
-            # FIXME: MethodMissing, I assume?
-            distribution = platform.dist()[0].capitalize()
-    else:
-        distribution = None
-    return distribution
-
-
-def get_distribution_version():
-    ''' return the distribution version '''
-    if platform.system() == 'Linux':
-        try:
-            distribution_version = platform.linux_distribution()[1]
-            if not distribution_version and os.path.isfile('/etc/system-release'):
-                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
-        except:
-            # FIXME: MethodMissing, I assume?
-            distribution_version = platform.dist()[1]
-    else:
-        distribution_version = None
-    return distribution_version
-
-
-def get_all_subclasses(cls):
-    '''
-    used by modules like Hardware or Network fact classes to retrieve all subclasses of a given class.
-    __subclasses__ return only direct sub classes. This one go down into the class tree.
-    '''
-    # Retrieve direct subclasses
-    subclasses = cls.__subclasses__()
-    to_visit = list(subclasses)
-    # Then visit all subclasses
-    while to_visit:
-        for sc in to_visit:
-            # The current class is now visited, so remove it from list
-            to_visit.remove(sc)
-            # Appending all subclasses to visit and keep a reference of available class
-            for ssc in sc.__subclasses__():
-                subclasses.append(ssc)
-                to_visit.append(ssc)
-    return subclasses
-
-
-def load_platform_subclass(cls, *args, **kwargs):
-    '''
-    used by modules like User to have different implementations based on detected platform.  See User
-    module for an example.
-    '''
-
-    this_platform = get_platform()
-    distribution = get_distribution()
-    subclass = None
-
-    # get the most specific superclass for this platform
-    if distribution is not None:
-        for sc in get_all_subclasses(cls):
-            if sc.distribution is not None and sc.distribution == distribution and sc.platform == this_platform:
-                subclass = sc
-    if subclass is None:
-        for sc in get_all_subclasses(cls):
-            if sc.platform == this_platform and sc.distribution is None:
-                subclass = sc
-    if subclass is None:
-        subclass = cls
-
-    return super(cls, subclass).__new__(subclass)
 
 
 def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
@@ -743,22 +667,6 @@ def _lenient_lowercase(lst):
         except AttributeError:
             lowered.append(value)
     return lowered
-
-
-def format_attributes(attributes):
-    attribute_list = []
-    for attr in attributes:
-        if attr in FILE_ATTRIBUTES:
-            attribute_list.append(FILE_ATTRIBUTES[attr])
-    return attribute_list
-
-
-def get_flags_from_attributes(attributes):
-    flags = []
-    for key, attr in FILE_ATTRIBUTES.items():
-        if attr in attributes:
-            flags.append(key)
-    return ''.join(flags)
 
 
 def _json_encode_fallback(obj):
