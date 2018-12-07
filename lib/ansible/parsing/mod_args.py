@@ -145,8 +145,8 @@ class ModuleArgsParser:
                 if templar._contains_vars(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style "
-                                             "('{{var_name}}')")
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables (without Jinja2 delimiters), "
+                                             "and must use the full variable style ('{{var_name}}')")
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
             else:
