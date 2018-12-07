@@ -343,7 +343,7 @@ class Constructable(object):
                         key = self._compose(keyed.get('key'), variables)
                     except Exception as e:
                         if strict:
-                            raise AnsibleParserError("Could not generate group from %s entry: %s" % (keyed.get('key'), to_native(e)))
+                            raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
                         continue
 
                     if key:
