@@ -429,7 +429,7 @@ class VaultCLI(CLI):
             display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
-        ''' create and open a file in an editor that will be encryped with the provided vault secret when closed'''
+        ''' create and open a file in an editor that will be encrypted with the provided vault secret when closed'''
 
         if len(self.args) > 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
@@ -438,7 +438,7 @@ class VaultCLI(CLI):
                                 vault_id=self.encrypt_vault_id)
 
     def execute_edit(self):
-        ''' open and decrypt an existing vaulted file in an editor, that will be encryped again when closed'''
+        ''' open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed'''
         for f in self.args:
             self.editor.edit_file(f)
 
