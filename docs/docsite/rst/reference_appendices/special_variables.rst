@@ -25,6 +25,9 @@ ansible_inventory_sources
 ansible_limit
     Contents of the ``--limit`` CLI option for the current execution of Ansible
 
+ansible_loop
+    A dictionary/map containing extended loop information when enabled via ``loop_control.extended``
+
 ansible_play_batch
     List of active hosts in the current play run limited by the serial, aka 'batch'. Failed/Unreachable hosts are not considered 'active'.
 

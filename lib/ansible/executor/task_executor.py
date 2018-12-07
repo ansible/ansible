@@ -287,6 +287,7 @@ class TaskExecutor:
         index_var = None
         label = None
         loop_pause = 0
+        extended = False
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
 
         # FIXME: move this to the object itself to allow post_validate to take care of templating (loop_control.post_validate)
@@ -294,6 +295,7 @@ class TaskExecutor:
             loop_var = templar.template(self._task.loop_control.loop_var)
             index_var = templar.template(self._task.loop_control.index_var)
             loop_pause = templar.template(self._task.loop_control.pause)
+            extended = templar.template(self._task.loop_control.extended)
 
             # This may be 'None',so it is tempalted below after we ensure a value and an item is assigned
             label = self._task.loop_control.label
@@ -313,10 +315,29 @@ class TaskExecutor:
             items = self._squash_items(items, loop_var, task_vars)
 
         no_log = False
+        items_len = len(items)
         for item_index, item in enumerate(items):
             task_vars[loop_var] = item
             if index_var:
                 task_vars[index_var] = item_index
+
+            if extended:
+                task_vars['ansible_loop'] = {
+                    'allitems': items,
+                    'index': item_index + 1,
+                    'index0': item_index,
+                    'first': item_index == 0,
+                    'last': item_index + 1 == items_len,
+                    'length': items_len,
+                    'revindex': items_len - item_index,
+                    'revindex0': items_len - item_index - 1,
+                }
+                try:
+                    task_vars['ansible_loop']['nextitem'] = items[item_index + 1]
+                except IndexError:
+                    pass
+                if item_index - 1 >= 0:
+                    task_vars['ansible_loop']['previtem'] = items[item_index - 1]
 
             # Update template vars to reflect current loop iteration
             templar.set_available_variables(task_vars)
@@ -355,6 +376,9 @@ class TaskExecutor:
             res[loop_var] = item
             if index_var:
                 res[index_var] = item_index
+            if extended:
+                res['ansible_loop'] = task_vars['ansible_loop']
+
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
