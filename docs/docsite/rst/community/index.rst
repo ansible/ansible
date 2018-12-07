@@ -18,7 +18,7 @@ Getting started
 * I'd like to know what I'm agreeing to when I contribute to Ansible. Does Ansible have a :ref:`contributor_license_agreement`?
 * I'd like to contribute but I'm not sure how. Are there :ref:`easy ways to contribute <how_can_i_help>`?
 * I want to talk to other Ansible users. How do I find an `Ansible Meetup near me <https://www.meetup.com/topics/ansible/>`_?
-* I have a question. Which :ref:`Ansible email lists, IRC channels <communication>` will help me find answers?
+* I have a question. Which :ref:`Ansible email lists and IRC channels <communication>` will help me find answers?
 * I want to learn more about Ansible. What can I do?
 
   * `Read books <https://www.ansible.com/resources/ebooks>`_.
