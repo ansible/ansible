@@ -18,11 +18,11 @@ realimport = builtins.__import__
 class TestPlatform(ModuleTestCase):
     def test_module_utils_basic_get_platform(self):
         with patch('platform.system', return_value='foo'):
-            from ansible.module_utils.basic import get_platform
+            from ansible.module_utils.common.sys_info import get_platform
             self.assertEqual(get_platform(), 'foo')
 
     def test_module_utils_basic_get_distribution(self):
-        from ansible.module_utils.basic import get_distribution
+        from ansible.module_utils.common.sys_info import get_distribution
 
         with patch('platform.system', return_value='Foo'):
             self.assertEqual(get_distribution(), None)
@@ -55,7 +55,7 @@ class TestPlatform(ModuleTestCase):
                     self.assertEqual(get_distribution(), "Bar")
 
     def test_module_utils_basic_get_distribution_version(self):
-        from ansible.module_utils.basic import get_distribution_version
+        from ansible.module_utils.common.sys_info import get_distribution_version
 
         with patch('platform.system', return_value='Foo'):
             self.assertEqual(get_distribution_version(), None)
@@ -90,19 +90,19 @@ class TestPlatform(ModuleTestCase):
             platform = "Linux"
             distribution = "Bar"
 
-        from ansible.module_utils.basic import load_platform_subclass
+        from ansible.module_utils.common.sys_info import load_platform_subclass
 
         # match just the platform class, not a specific distribution
-        with patch('ansible.module_utils.basic.get_platform', return_value="Linux"):
-            with patch('ansible.module_utils.basic.get_distribution', return_value=None):
+        with patch('ansible.module_utils.common.sys_info.get_platform', return_value="Linux"):
+            with patch('ansible.module_utils.common.sys_info.get_distribution', return_value=None):
                 self.assertIs(type(load_platform_subclass(LinuxTest)), Foo)
 
         # match both the distribution and platform class
-        with patch('ansible.module_utils.basic.get_platform', return_value="Linux"):
-            with patch('ansible.module_utils.basic.get_distribution', return_value="Bar"):
+        with patch('ansible.module_utils.common.sys_info.get_platform', return_value="Linux"):
+            with patch('ansible.module_utils.common.sys_info.get_distribution', return_value="Bar"):
                 self.assertIs(type(load_platform_subclass(LinuxTest)), Bar)
 
         # if neither match, the fallback should be the top-level class
-        with patch('ansible.module_utils.basic.get_platform', return_value="Foo"):
-            with patch('ansible.module_utils.basic.get_distribution', return_value=None):
+        with patch('ansible.module_utils.common.sys_info.get_platform', return_value="Foo"):
+            with patch('ansible.module_utils.common.sys_info.get_distribution', return_value=None):
                 self.assertIs(type(load_platform_subclass(LinuxTest)), LinuxTest)
