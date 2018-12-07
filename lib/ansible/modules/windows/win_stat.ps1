@@ -28,7 +28,7 @@ $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $path = $module.Params.path
 $get_md5 = $module.Params.get_md5
 $get_checksum = $module.Params.checksum
-$checksum_algortihm = $module.Params.checksum_algorithm
+$checksum_algorithm = $module.Params.checksum_algorithm
 
 $module.Result.stat = @{ exists=$false }
 
