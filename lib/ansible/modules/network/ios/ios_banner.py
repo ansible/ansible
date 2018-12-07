@@ -104,6 +104,8 @@ from ansible.module_utils.network.ios.ios import load_config, run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 from ansible.module_utils.network.common.config import NetworkConfig
 import re
+
+
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
@@ -118,6 +120,8 @@ def map_obj_to_commands(updates, module):
             banner_cmd += '\n@'
             commands.append(banner_cmd)
     return commands
+
+  
 def map_config_to_obj(module):
     rc, out, err = exec_command(module, 'show banner %s' % module.params['banner'])
     if rc == 0:
@@ -135,6 +139,8 @@ def map_config_to_obj(module):
         obj['text'] = output
         obj['state'] = 'present'
     return obj
+  
+  
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
@@ -144,6 +150,8 @@ def map_params_to_obj(module):
         'text': text,
         'state': module.params['state']
     }
+  
+  
 def save_config(module, result):
     result['changed'] = True
     if not module.check_mode:
@@ -152,6 +160,8 @@ def save_config(module, result):
         module.warn('Skipping command `copy running-config startup-config` '
                     'due to check_mode.  Configuration not copied to '
                     'non-volatile storage')
+        
+        
 def main():
     """ main entry point for module execution
     """
@@ -193,5 +203,7 @@ def main():
         save_config(module, result)
 
     module.exit_json(**result)
+    
+    
 if __name__ == '__main__':
     main()
