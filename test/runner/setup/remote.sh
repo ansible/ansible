@@ -53,6 +53,9 @@ elif [ "${platform}" = "rhel" ]; then
         if [ ! -f /usr/bin/pip ]; then
             ln -s /usr/bin/pip3 /usr/bin/pip
         fi
+        if [ ! -f /usr/bin/virtualenv ]; then
+            ln -s /usr/bin/virtualenv-3 /usr/bin/virtualenv
+        fi
     else
         while true; do
             yum install -y \
