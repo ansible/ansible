@@ -298,30 +298,6 @@ def connect_to_api(module):
     password = module.params['password']
     validate_certs = module.params['validate_certs']
 
-    if not url:
-        module.fail_json(msg="Url parameter is missing."
-                             " Please specify this parameter in task or"
-                             " export environment variable like 'export SPACEWALK_URL=URL_API'")
-
-    if not login:
-        module.fail_json(msg="Login parameter is missing."
-                             " Please specify this parameter in task or"
-                             " export environment variable like 'export SPACEWALK_LOGIN=LOGIN'")
-
-    if not password:
-        module.fail_json(msg="Password parameter is missing."
-                             " Please specify this parameter in task or"
-                             " export environment variable like 'export SPACEWALK_PASSWORD=PASSWORD'")
-
-    if validate_certs and not hasattr(ssl, 'SSLContext'):
-        module.fail_json(msg='No support changing verification mode with Python < 2.7.9. Either update '
-                             'python or use validate_certs=false.')
-
-    ssl_context = None
-    if not validate_certs and hasattr(ssl, 'SSLContext'):
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        ssl_context.verify_mode = ssl.CERT_NONE
-
     try:
         client = xmlrpc_client.Server(url, context=ssl_context)
     except Exception as generic_exc:
