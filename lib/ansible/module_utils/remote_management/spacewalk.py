@@ -298,6 +298,11 @@ def connect_to_api(module):
     password = module.params['password']
     validate_certs = module.params['validate_certs']
 
+    ssl_context = None
+    if not validate_certs and hasattr(ssl, 'SSLContext'):
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        ssl_context.verify_mode = ssl.CERT_NONE
+
     try:
         client = xmlrpc_client.Server(url, context=ssl_context)
     except Exception as generic_exc:
