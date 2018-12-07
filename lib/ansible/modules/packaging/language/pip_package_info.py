@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: pip_package_facts
+module: pip_package_info
 short_description: pip package information as facts
 description:
   - Return information about installed pip packages as facts
@@ -35,61 +35,58 @@ author:
 
 EXAMPLES = '''
 - name: Just get the list from default pip
-  pip_package_facts:
+  pip_package_info:
 
 - name: get the facts for default pip, pip2 and pip3.6
-  pip_package_facts:
+  pip_package_info:
     clients: ['pip', 'pip2', 'pip3.6']
 
 - name: get from specific paths (virtualenvs?)
-  pip_package_facts:
+  pip_package_info:
     clients: '/home/me/projec42/python/pip3.5'
 '''
 
 RETURN = '''
-ansible_facts:
-  description: facts to add to ansible_facts
+packages:
+  description: a dictionary of installed package data
   returned: always
   type: dict
-  elements: dict
   contains:
-    python_packages:
-      description: A dictionary with each ppip client which then contains a list of dicts with package information
+    python:
+      description: A dictionary with each pip client which then contains a list of dicts with python package information
       returned: always
       type: dict
       sample:
-        "ansible_facts": {
-            "python_packages": {
-                "pip": {
-                    "Babel": [
-                        {
-                            "name": "Babel",
-                            "source": "pip",
-                            "version": "2.6.0"
-                        }
-                    ],
-                    "Flask": [
-                        {
-                            "name": "Flask",
-                            "source": "pip",
-                            "version": "1.0.2"
-                        }
-                    ],
-                    "Flask-SQLAlchemy": [
-                        {
-                            "name": "Flask-SQLAlchemy",
-                            "source": "pip",
-                            "version": "2.3.2"
-                        }
-                    ],
-                    "Jinja2": [
-                        {
-                            "name": "Jinja2",
-                            "source": "pip",
-                            "version": "2.10"
-                        }
-                    ],
-                },
+        "packages": {
+            "pip": {
+                "Babel": [
+                    {
+                        "name": "Babel",
+                        "source": "pip",
+                        "version": "2.6.0"
+                    }
+                ],
+                "Flask": [
+                    {
+                        "name": "Flask",
+                        "source": "pip",
+                        "version": "1.0.2"
+                    }
+                ],
+                "Flask-SQLAlchemy": [
+                    {
+                        "name": "Flask-SQLAlchemy",
+                        "source": "pip",
+                        "version": "2.3.2"
+                    }
+                ],
+                "Jinja2": [
+                    {
+                        "name": "Jinja2",
+                        "source": "pip",
+                        "version": "2.10"
+                    }
+                ],
             },
         }
 '''
@@ -125,7 +122,7 @@ def main():
     global module
     module = AnsibleModule(argument_spec=dict(clients={'type': 'list', 'default': ['pip']},), supports_check_mode=True)
     packages = {}
-    results = {'warnings': []}
+    results = {'warnings': [], 'packages': {}}
     clients = module.params['clients']
 
     found = 0
@@ -146,11 +143,8 @@ def main():
     if found == 0:
         module.fail_json(msg='Unable to use any of the supplied pip clients: %s' % clients)
 
-    results['ansible_facts'] = {}
-    # Set the facts, this will override the facts in ansible_facts that might exist from previous runs
-    # when using operating system level or distribution package managers
-    results['ansible_facts']['python_packages'] = packages
-
+    # return info
+    results['packages'] = packages
     module.exit_json(**results)
 
 
