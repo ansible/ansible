@@ -197,7 +197,7 @@ def main():
                                  skipinitialspace=skipinitialspace if skipinitialspace is not None else orig.skipinitialspace,
                                  strict=strict if strict is not None else orig.strict,
                                  quoting=orig.quoting,
-            )
+                                )
         except TypeError as e:
             module.fail_json(msg="Unable to create custom dialect: %s" % to_text(e))
         dialect = 'custom'
