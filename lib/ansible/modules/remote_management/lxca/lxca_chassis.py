@@ -85,14 +85,14 @@ result:
     type: dict
     sample:
       chassisList:
-        - machineType: ''
-          model: ''
-          type: 'Rack-TowerServer'
+        - machineType: '8721'
+          model: 'HC1'
+          type: 'chassis'
           uuid: '118D2C88C8FD11E4947B6EAE8B4BDCDF'
           # bunch of properties
-        - machineType: ''
-          model: ''
-          type: 'Rack-TowerServer'
+        - machineType: '8721'
+          model: 'HC1'
+          type: 'chassis'
           uuid: '223D2C88C8FD11E4947B6EAE8B4BDCDF'
           # bunch of properties
         # Multiple chassis details
