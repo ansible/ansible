@@ -36,6 +36,7 @@ options:
     description:
       - List of subnet IDs that make up the Elasticache subnet group.
 author: "Tim Mahoney (@timmahoney)"
+requirements: [ 'botocore', 'boto3' ]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -58,29 +59,25 @@ EXAMPLES = '''
 '''
 
 try:
-    import boto3
     import botocore
-    HAS_BOTO3 = True
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    HAS_BOTO3 = False
+    pass
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
+from ansible.module_utils.ec2 import get_aws_connection_info, HAS_BOTO3
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = (dict(
         state=dict(required=True, choices=['present', 'absent']),
         name=dict(required=True),
         description=dict(required=False),
         subnets=dict(required=False, type='list'),
     )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto required for this module')
 
     state = module.params.get('state')
     group_name = module.params.get('name').lower()
@@ -104,9 +101,7 @@ def main():
 
     """Get an elasticache connection"""
 
-    connection = boto3_conn(module, conn_type='client',
-                            resource='elasticache', region=region,
-                            endpoint=ec2_url, **aws_connect_kwargs)
+    connection = module.client('elasticache')
 
     try:
         changed = False
@@ -116,9 +111,10 @@ def main():
             matching_groups = connection.describe_cache_subnet_groups(
                 CacheSubnetGroupName=group_name, MaxRecords=100)
             exists = len(matching_groups) > 0
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] != 'CacheSubnetGroupNotFoundFault':
-                module.fail_json(msg=e.response['Error']['Message'])
+        except is_boto3_error_code('CacheSubnetGroupNotFoundFault'):
+            module.fail_json_aws(e, msg="Couldn't find ElastiCache Subnet Group %s" % group_name)
+        else:
+            return None
 
         if state == 'absent':
             if exists:
@@ -136,11 +132,11 @@ def main():
                                                                      SubnetIds=group_subnets)
                 changed = True
 
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Message'] != 'No modifications were requested.':
-            module.fail_json(msg=e.response['Error']['Message'])
-        else:
+    except ClientError as e:
+        if str(e) == 'No modifications were requested.':
             changed = False
+        else:
+            module.fail_json_aws(e, msg="Couldn't do any Modification to Elasti Cache Subnet Group")
 
     module.exit_json(changed=changed)
 
