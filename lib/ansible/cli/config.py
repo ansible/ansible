@@ -94,6 +94,7 @@ class ConfigCLI(CLI):
                 raise AnsibleOptionsError('The provided configuration file is missing or not accessible: %s' % to_native(self.config_file))
         else:
             self.config = C.config
+            self.config_file = self.config._config_file
 
         if self.config_file:
             try:
