@@ -15,55 +15,58 @@ DOCUMENTATION = '''
 ---
 module: snow_record
 
-short_description: Create/Delete/Update records in ServiceNow
+short_description: Create/Delete/Update records in ServiceNow.
 
 version_added: "2.5"
 
 description:
-    - Creates/Deletes/Updates a single record in ServiceNow
+    - Creates/Deletes/Updates a single record in ServiceNow.
 
 options:
     instance:
         description:
-            - The service now instance name
-        required: true
+            - ServiceNow instance name. Required if the environment variable
+              C(SN_INSTANCE) is not set.
+        required: false
     username:
         description:
-            - User to connect to ServiceNow as
-        required: true
+            - User to connect to ServiceNow as. Required if the environment
+              variable C(SN_USERNAME) is not set.
+        required: false
     password:
         description:
-            - Password for username
-        required: true
+            - Password for the user. Required if the environment variable
+              C(SN_PASSWORD) is not set.
+        required: false
     table:
         description:
-            - Table to query for records
+            - Table to query for records.
         required: false
         default: incident
     state:
         description:
             - If C(present) is supplied with a C(number)
               argument, the module will attempt to update the record with
-              the supplied data.  If no such record exists, a new one will
+              the supplied data. If no such record exists, a new one will
               be created.  C(absent) will delete a record.
         choices: [ present, absent ]
         required: true
     data:
         description:
-            - key, value pairs of data to load into the record.
-              See Examples. Required for C(state:present)
+            - Key, value pairs of data to load into the record.
+              See Examples. Required for C(state:present).
     number:
         description:
-            - Record number to update. Required for C(state:absent)
+            - Record number to update. Required for C(state:absent).
         required: false
     lookup_field:
         description:
-            - Changes the field that C(number) uses to find records
+            - Changes the field that C(number) uses to find records.
         required: false
         default: number
     attachment:
         description:
-            - Attach a file to the record
+            - Attach a file to the record.
         required: false
 
 requirements:
