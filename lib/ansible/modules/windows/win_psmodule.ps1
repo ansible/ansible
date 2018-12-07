@@ -84,12 +84,10 @@ Function Get-PsModule {
         [String]$MaximumVersion
     )
 
-    $props = @{
+    $ExistingModule = @{
         Exists = $false
         Version = ""
-        Versions = @("")
     }
-    $ExistingModule = New-Object -TypeName psobject -Property $props
 
     $ExistingModules = Get-Module -Listavailable | Where-Object {($_.name -eq $Name)}
     $ExistingModulesCount = $($ExistingModules | Measure-Object).Count
@@ -97,8 +95,6 @@ Function Get-PsModule {
     if ( $ExistingModulesCount -gt 0 ) {
 
         $ExistingModules | Add-Member -MemberType ScriptProperty -Name FullVersion -Value { "$($this.Version)-$(($this | Select-Object -ExpandProperty PrivateData).PSData.Prerelease)".TrimEnd('-') }
-
-        $ExistingModule.Versions = $ExistingModules.FullVersion
 
         if ( -not ($RequiredVersion -or
                 $MinimumVersion -or
