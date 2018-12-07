@@ -82,7 +82,6 @@
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
       name: "pip{{ rpfx }}"
-      format: curated
   register: pip
 
 - assert:

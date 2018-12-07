@@ -35,18 +35,6 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-    format:
-        description:
-            - Format of the data returned.
-            - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
-            - If C(curated) is selected the structure will be identical to input parameters of azure_rm_publicipaddress module.
-            - In Ansible 2.8 and lower facts are always returned in raw format.
-            - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
-        default: 'raw'
-        choices:
-            - 'curated'
-            - 'raw'
-        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -69,7 +57,9 @@ EXAMPLES = '''
 
 RETURN = '''
 azure_publicipaddresses:
-    description: List of public IP address dicts.
+    description:
+        - List of public IP address dicts.
+        - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
     returned: always
     type: list
     example: [{
@@ -186,8 +176,7 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list'),
-            format=dict(type='str', choices=['curated', 'raw'], default='raw')
+            tags=dict(type='list')
         )
 
         self.results = dict(
@@ -198,7 +187,6 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         self.name = None
         self.resource_group = None
         self.tags = None
-        self.format = None
 
         super(AzureRMPublicIPFacts, self).__init__(self.module_arg_spec,
                                                    supports_tags=False,
@@ -220,26 +208,24 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         else:
             result = self.list_all()
 
-        result = self.filter_and_format(result)
+        result = self.filter(result)
 
-        if self.format == 'curated':
-            self.results['publicipaddresses'] = result
-        else:
-            self.results['ansible_facts']['azure_publicipaddresses'] = result
+        self.results['publicipaddresses'] = result
+        self.results['ansible_facts']['azure_publicipaddresses'] = result
+        self.results['publicipaddresses'] = self.format(result)
 
         return self.results
 
-    def filter_and_format(self, response):
+    def format(self, raw):
+        return [self.pip_to_dict(item) for item in raw]
+
+    def filter(self, response):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                pip = dict()
-                if self.format == 'raw':
-                    pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                    pip['name'] = item.name
-                    pip['type'] = item.type
-                else:
-                    pip = self.pip_to_dict(item)
+                pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+                pip['name'] = item.name
+                pip['type'] = item.type
                 results.append(pip)
         return results
 
