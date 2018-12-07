@@ -31,13 +31,6 @@ $get_checksum = $module.Params.checksum
 $checksum_algortihm = $module.Params.checksum_algorithm
 
 $module.Result.stat = @{ exists=$false }
-$module.Result.args = $args
-
-# get_md5 will be an undocumented option in 2.9 to be removed at a later
-# date if possible (3.0+)
-if (Get-Member -inputobject $params -name "get_md5") {
-    $module.Deprecate("Parameter 'get_md5' has been deprecated along with the md5 return value, use 'get_checksum=True' and 'checksum_algorithm=md5' instead", '2.9')
-}
 
 $info = Get-AnsibleItem -Path $path -ErrorAction SilentlyContinue
 If ($null -ne $info) {
