@@ -23,18 +23,20 @@ options:
       - Since 2.8 this is a list and can support multiple package managers per system.
       - The 'portage', 'pkg' and pip options were added in version 2.8.
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pip', 'pip2', 'pip3', 'pip35', 'pip36', 'pip37']
+    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg']
     required: False
     type: list
   strategy:
     description:
-      - How to query the package managers on the system
+      - This option controls how the module queres the package managers on the system.
+        C(first) means it will return only informatino for the first supported package manager available.
+        C(all) will return information for all supported and available package managers on the system.
     choices: ['first', 'all']
     default: 'first'
     version_added: "2.8"
 version_added: "2.5"
 requirements:
-    - For 'portage' support it requires the `qlist` utility, which is part of the 'portage-utils' package.
+    - For 'portage' support it requires the `qlist` utility, which is part of 'app-portage/portage-utils'.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
@@ -227,7 +229,7 @@ class PKG(CLIMgr):
             if '_' in pkg['version']:
                 pkg['version'], pkg['revision'] = pkg['version'].split('_', 1)
             else:
-                pkg['revision'] = 0
+                pkg['revision'] = '0'
 
         if 'vital' in pkg:
             pkg['vital'] = bool(pkg['vital'])
@@ -242,7 +244,7 @@ class PORTAGE(CLIMgr):
 
     def list_installed(self):
         rc, out, err = module.run_command(' '.join([self._cli, '-Iv', '|', 'xargs', '-n', '1024', 'qatom']), use_unsafe_shell=True)
-        if rc != 0 or err:
+        if rc != 0:
             raise RuntimeError("Unable to list packages rc=%s : %s" % (rc, to_native(err)))
         return out.splitlines()
 
