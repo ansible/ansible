@@ -31,6 +31,8 @@ To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 #. Be patient while Ansibot, our automated script, adds labels, pings the docs maintainers, and kicks off a CI testing run.
 #. Keep an eye on your PR - the docs team may ask you for changes.
 
+.. _issues_and_prs:
+
 Reviewing open PRs and issues
 =============================
 
@@ -175,7 +177,7 @@ When you submit a documentation pull request, automated tests are run. Those sam
   bin/ansible-test sanity --test rstcheck
 
 Unfortunately, leftover rST-files from previous document-generating can occasionally confuse these tests. It is therefore safest to run them on a clean copy of the repository, which is the purpose of ``make clean``. If you type these three lines one at a time and manually check the success of each, you do not need the ``&&``.
-                
+
 Joining the documentation working group
 =======================================
 
