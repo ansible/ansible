@@ -314,7 +314,7 @@ def connect_to_api(module):
                              " export environment variable like 'export SPACEWALK_PASSWORD=PASSWORD'")
 
     if validate_certs and not hasattr(ssl, 'SSLContext'):
-        module.fail_json(msg='No support changing verification mode with python < 2.7.9. Either update '
+        module.fail_json(msg='No support changing verification mode with Python < 2.7.9. Either update '
                              'python or use validate_certs=false.')
 
     ssl_context = None
