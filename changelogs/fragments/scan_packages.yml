@@ -1,5 +1,5 @@
 minor_changes:
-    - rewrote scan_packages for easier support of  multiple package managers per system
-      by default it also tries to use any sysytem that it detects as present.
-    - scan_packages now supports Gentoo's portage with portage-utils installed,
-      as well as FreeBSD's pkg and Python's pip
+    - package_facts:
+        - now supports multiple package managers per system
+        - New systems supported include Gentoo's portage with portage-utils installed, as well as FreeBSD's pkg
+    - pip_package_info: new module that supports getting package information from pip installs.
