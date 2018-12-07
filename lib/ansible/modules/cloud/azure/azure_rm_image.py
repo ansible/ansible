@@ -32,15 +32,15 @@ options:
     source:
         description:
             - OS disk source from the same region.
-            - It can be a virtual machine, OS disk blob uri, managed OS disk, or OS snapshot.
-            - Each type of source expect for blob uri can be given as resource id, name or a dict contains C(resource_group), C(name) and C(types).
-            - If source type is blob uri, the source should be the full uri of the blob in string type.
-            - If you specify the C(type) in a dict, acceptable value constains C(disks), C(virtualMachines) and C(snapshots).
+            - It can be a virtual machine, OS disk blob URI, managed OS disk, or OS snapshot.
+            - Each type of source except for blob URI can be given as resource id, name or a dict contains C(resource_group), C(name) and C(types).
+            - If source type is blob URI, the source should be the full URI of the blob in string type.
+            - If you specify the C(type) in a dict, acceptable value constains C(disks), C(virtual_machines) and C(snapshots).
         type: raw
         required: true
     data_disk_sources:
         description:
-            - List of data disk sources, including unmanaged blob uri, managed disk id or name, or snapshot id or name.
+            - List of data disk sources, including unmanaged blob URI, managed disk id or name, or snapshot id or name.
         type: list
     location:
         description:
@@ -89,7 +89,7 @@ EXAMPLES = '''
     resource_group: Testing
     name: foobar
     source:
-        types: disks
+        type: disks
         resource_group: Testing
         name: disk001
     data_disk_sources:
@@ -226,7 +226,7 @@ class AzureRMImage(AzureRMModuleBase):
         blob_uri = None
         disk = None
         snapshot = None
-        # blob uri can only be given by str
+        # blob URI can only be given by str
         if isinstance(source, str) and source.lower().endswith('.vhd'):
             blob_uri = source
             return (blob_uri, disk, snapshot)
@@ -298,7 +298,9 @@ class AzureRMImage(AzureRMModuleBase):
         # self.resource can be a vm (id/name/dict), or not a vm. return the vm iff it is an existing vm.
         resource = dict()
         if isinstance(self.source, dict):
-            resource = dict(type=self.source.get('type', 'virtualMachines'),
+            if self.source.get('type') != 'virtual_machines':
+                return None
+            resource = dict(type='virtualMachines',
                             name=self.source['name'],
                             resource_group=self.source.get('resource_group') or self.resource_group)
         elif isinstance(self.source, str):
