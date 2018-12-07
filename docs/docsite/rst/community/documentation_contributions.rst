@@ -31,8 +31,6 @@ To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 #. Be patient while Ansibot, our automated script, adds labels, pings the docs maintainers, and kicks off a CI testing run.
 #. Keep an eye on your PR - the docs team may ask you for changes.
 
-.. _issues_and_prs:
-
 Reviewing open PRs and issues
 =============================
 
