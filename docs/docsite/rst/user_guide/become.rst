@@ -351,7 +351,7 @@ the user token, it will continue to use the limited token during execution.
 
 A user must have the ``SeDebugPrivilege`` to run a become process with elevated
 privileges. This privilege is assigned to Administrators by default. If the
-debug privilege is not available, the become process will run with a limmited
+debug privilege is not available, the become process will run with a limited
 set of privileges and groups.
 
 To determine the type of token that Ansible was able to get, run the following
