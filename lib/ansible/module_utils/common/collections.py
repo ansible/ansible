@@ -39,3 +39,18 @@ def is_sequence(seq, include_strings=False):
         return False
 
     return isinstance(seq, Sequence)
+
+
+def count(seq):
+    """Returns a dictionary with the number of appearances of each element of the iterable.
+
+    Resembles the collections.Counter class functionality. It is meant to be used when the
+    code is run on Python 2.6.* where collections.Counter is not available. It should be
+    deprecated and replaced when support for Python < 2.7 is dropped.
+    """
+    if not is_iterable(seq):
+        raise Exception('Argument provided  is not an iterable')
+    counters = dict()
+    for elem in seq:
+        counters[elem] = counters.get(elem, 0) + 1
+    return counters
