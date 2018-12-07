@@ -160,7 +160,7 @@ def main():
     argument_spec = dict(
         banner=dict(required=True, choices=['login', 'motd', 'exec', 'incoming', 'slip-ppp']),
         text=dict(),
-        state=dict(default='present', choices=['present', 'absent'],
+        state=dict(default='present', choices=['present', 'absent']),
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never')
     )
 
