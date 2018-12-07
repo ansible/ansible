@@ -161,7 +161,7 @@ def main():
         banner=dict(required=True, choices=['login', 'motd', 'exec', 'incoming', 'slip-ppp']),
         text=dict(),
         state=dict(default='present', choices=['present', 'absent'],
-        save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'))
+        save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never')
     )
 
     argument_spec.update(ios_argument_spec)
@@ -171,20 +171,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
                            supports_check_mode=True)
-
-    if module.params['save_when'] == 'always' or module.params['save']:
-        save_config(module, result)
-    elif module.params['save_when'] == 'modified':
-        output = run_commands(module, ['show running-config', 'show startup-config'])
-
-        running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
-        startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
-
-        if running_config.sha1 != startup_config.sha1:
-            save_config(module, result)
-    elif module.params['save_when'] == 'changed' and result['changed']:
-        save_config(module, result)
-
+      
     warnings = list()
     check_args(module, warnings)
 
@@ -202,9 +189,21 @@ def main():
             response = load_config(module, commands)
 
         result['changed'] = True
+      
+    if module.params['save_when'] == 'always' or module.params['save']:
+        save_config(module, result)
+    elif module.params['save_when'] == 'modified':
+        output = run_commands(module, ['show running-config', 'show startup-config'])
 
+        running_config = NetworkConfig(indent=1, contents=output[0])
+        startup_config = NetworkConfig(indent=1, contents=output[1])
+
+        if running_config.sha1 != startup_config.sha1:
+            save_config(module, result)
+    elif module.params['save_when'] == 'changed' and result['changed']:
+        save_config(module, result)
+      
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()
