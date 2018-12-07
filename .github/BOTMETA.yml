@@ -295,6 +295,7 @@ files:
   $modules/packaging/os/rhn_channel.py: alikins
   $modules/packaging/os/rhn_register.py: $team_rhn
   $modules/packaging/os/snap.py: angristan
+  $modules/packaging/os/swupd.py: hnanni
   $modules/packaging/os/yum.py:
     maintainers: $team_ansible kustodian
     ignored: skvidal
