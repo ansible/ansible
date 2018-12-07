@@ -99,16 +99,17 @@ EXAMPLES = r'''
 - debug:
     msg: 'User {{ users.list.1.name }} has UID {{ users.list.1.uid }} and GID {{ users.list.1.gid }}'
 
-# Example CSV file without header
+# Example CSV file without header and semi-colon delimiter
 #
-#   dag,500,500
-#   jeroen,501,500
+#   dag;500;500
+#   jeroen;501;500
 
 # Read a CSV file without headers
 - name: Read users from CSV file and return a list
   read_csv:
     path: users.csv
     fieldnames: name,uid,gid
+    delimiter: ';'
   register: users
   delegate_to: localhost
 '''
@@ -190,18 +191,21 @@ def main():
 
     if delimiter is not None or skipinitialspace is not None or strict is not None:
         orig = csv.get_dialect(dialect)
-        csv.register_dialect('custom',
-            delimiter=delimiter if delimiter is not None else orig.delimiter,
-            skipinitialspace=skipinitialspace if skipinitialspace is not None else orig.skipinitialspace,
-            strict=strict if strict is not None else orig.strict,
-            quoting=orig.quoting,
-        )
+        try:
+            csv.register_dialect('custom',
+                delimiter=delimiter if delimiter is not None else orig.delimiter,
+                skipinitialspace=skipinitialspace if skipinitialspace is not None else orig.skipinitialspace,
+                strict=strict if strict is not None else orig.strict,
+                quoting=orig.quoting,
+            )
+        except TypeError as e:
+            module.fail_json(msg="Unable to create custom dialect: %s" % to_text(e))
         dialect = 'custom'
 
     try:
         f = open(path, 'r')
     except (IOError, OSError) as e:
-        module.fail_json(msg="Unable to open file '%s': %s" % (path, to_text(e)))
+        module.fail_json(msg="Unable to open file: %s" % to_text(e))
 
     reader = csv.DictReader(f, fieldnames=fieldnames, dialect=dialect)
 
@@ -212,13 +216,19 @@ def main():
     data_list = list()
 
     if key is None:
-        for row in reader:
-            data_list.append(row)
+        try:
+            for row in reader:
+                data_list.append(row)
+        except csv.Error as e:
+            module.fail_json(msg="Unable to process file: %s" % to_text(e))
     else:
-        for row in reader:
-            if unique and row[key] in data_dict:
-                module.fail_json(msg="Key '%s' is not unique for value '%s'" % (key, row[key]))
-            data_dict[row[key]] = row
+        try:
+            for row in reader:
+                if unique and row[key] in data_dict:
+                    module.fail_json(msg="Key '%s' is not unique for value '%s'" % (key, row[key]))
+                data_dict[row[key]] = row
+        except csv.Error as e:
+            module.fail_json(msg="Unable to process file: %s" % to_text(e))
 
     module.exit_json(dict=data_dict, list=data_list)
 
