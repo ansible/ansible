@@ -576,10 +576,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.options, self.args = self.parser.parse_args(self.args[1:])
 
         # --limit must receive non-zero length string
-        if hasattr(self.options, 'subset') and  \
-                self.options.subset != C.DEFAULT_SUBSET and \
-                isinstance(self.options.subset, string_types) and \
-                len(self.options.subset) == 0:
+        limit = getattr(self.options, 'subset', C.DEFAULT_SUBSET)
+        if limit != C.DEFAULT_SUBSET and not limit:
             raise AnsibleOptionsError("Limit option requires non-zero length string")
 
         # process tags
