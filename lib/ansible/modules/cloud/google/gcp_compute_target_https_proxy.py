@@ -81,6 +81,18 @@ options:
       between users and the load balancer. Currently, exactly one SSL certificate
       must be specified.
     required: true
+  ssl_policy:
+    description:
+    - A reference to the SslPolicy resource that will be associated with the TargetHttpsProxy
+      resource. If not set, the TargetHttpsProxy resource will not have any SSL policy
+      configured.
+    - 'This field represents a link to a SslPolicy resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_compute_ssl_policy
+      task and then set this ssl_policy field to "{{ name-of-resource }}" Alternatively,
+      you can set this ssl_policy to a dictionary with the selfLink key where the
+      value is the selfLink of your SslPolicy'
+    required: false
+    version_added: 2.8
   url_map:
     description:
     - A reference to the UrlMap resource that defines the mapping from URL to the
@@ -232,6 +244,13 @@ sslCertificates:
     users and the load balancer. Currently, exactly one SSL certificate must be specified.
   returned: success
   type: list
+sslPolicy:
+  description:
+  - A reference to the SslPolicy resource that will be associated with the TargetHttpsProxy
+    resource. If not set, the TargetHttpsProxy resource will not have any SSL policy
+    configured.
+  returned: success
+  type: dict
 urlMap:
   description:
   - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
@@ -262,6 +281,7 @@ def main():
             name=dict(required=True, type='str'),
             quic_override=dict(type='str', choices=['NONE', 'ENABLE', 'DISABLE']),
             ssl_certificates=dict(required=True, type='list', elements='dict'),
+            ssl_policy=dict(type='dict'),
             url_map=dict(required=True, type='dict')
         )
     )
@@ -313,6 +333,8 @@ def update_fields(module, request, response):
         quic_override_update(module, request, response)
     if response.get('sslCertificates') != request.get('sslCertificates'):
         ssl_certificates_update(module, request, response)
+    if response.get('sslPolicy') != request.get('sslPolicy'):
+        ssl_policy_update(module, request, response)
     if response.get('urlMap') != request.get('urlMap'):
         url_map_update(module, request, response)
 
@@ -343,6 +365,19 @@ def ssl_certificates_update(module, request, response):
     )
 
 
+def ssl_policy_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/targetHttpsProxies/{name}/setSslPolicy"
+        ]).format(**module.params),
+        {
+            u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink')
+        }
+    )
+
+
 def url_map_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
@@ -368,6 +403,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'quicOverride': module.params.get('quic_override'),
         u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink'),
+        u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink'),
         u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink')
     }
     return_vals = {}
@@ -440,6 +476,7 @@ def response_to_hash(module, response):
         u'name': module.params.get('name'),
         u'quicOverride': response.get(u'quicOverride'),
         u'sslCertificates': response.get(u'sslCertificates'),
+        u'sslPolicy': response.get(u'sslPolicy'),
         u'urlMap': response.get(u'urlMap')
     }
 

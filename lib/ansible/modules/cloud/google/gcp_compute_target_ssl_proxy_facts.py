@@ -108,6 +108,13 @@ items:
         must be specified.
       returned: success
       type: list
+    sslPolicy:
+      description:
+      - A reference to the SslPolicy resource that will be associated with the TargetSslProxy
+        resource. If not set, the TargetSslProxy resource will not have any SSL policy
+        configured.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
