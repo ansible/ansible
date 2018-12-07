@@ -49,13 +49,35 @@ options:
     - Whether the C(key) used is expected to be unique.
     type: bool
     default: yes
-todo:
-- Make it possible to add a custom dialect
+  delimiter:
+    description:
+    - A one-character string used to separate fields.
+    - When using this parameter, you change the default value used by C(dialect).
+    - The default value depends on the dialect used.
+    type: str
+  skipinitialspace:
+    description:
+    - Whether to ignore any whitespaces immediately following the delimiter.
+    - When using this parameter, you change the default value used by C(dialect).
+    - The default value depends on the dialect used.
+    type: bool
+  strict:
+    description:
+    - Whether to raise an exception on bad CSV input.
+    - When using this parameter, you change the default value used by C(dialect).
+    - The default value depends on the dialect used.
+    type: bool
 notes:
 - Ansible also ships with the C(csvfile) lookup plugin, which can be used to do selective lookups in CSV files from Jinja.
 '''
 
 EXAMPLES = r'''
+# Example CSV file with header
+#
+#   name,uid,gid
+#   dag,500,500
+#   jeroen,501,500
+
 # Read a CSV file and access user 'dag'
 - name: Read users from CSV file and return a dictionary
   read_csv:
@@ -76,6 +98,19 @@ EXAMPLES = r'''
 
 - debug:
     msg: 'User {{ users.list.1.name }} has UID {{ users.list.1.uid }} and GID {{ users.list.1.gid }}'
+
+# Example CSV file without header
+#
+#   dag,500,500
+#   jeroen,501,500
+
+# Read a CSV file without headers
+- name: Read users from CSV file and return a list
+  read_csv:
+    path: users.csv
+    fieldnames: name,uid,gid
+  register: users
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -133,6 +168,9 @@ def main():
             key=dict(type='str'),
             fieldnames=dict(type='list'),
             unique=dict(type='bool', default=True),
+            delimiter=dict(type='str'),
+            skipinitialspace=dict(type='bool'),
+            strict=dict(type='bool'),
         ),
         supports_check_mode=True,
     )
@@ -143,8 +181,22 @@ def main():
     fieldnames = module.params['fieldnames']
     unique = module.params['unique']
 
+    delimiter = module.params['delimiter']
+    skipinitialspace = module.params['skipinitialspace']
+    strict = module.params['strict']
+
     if dialect not in csv.list_dialects():
         module.fail_json(msg="Dialect '%s' is not supported by your version of python." % dialect)
+
+    if delimiter is not None or skipinitialspace is not None or strict is not None:
+        orig = csv.get_dialect(dialect)
+        csv.register_dialect('custom',
+            delimiter=delimiter if delimiter is not None else orig.delimiter,
+            skipinitialspace=skipinitialspace if skipinitialspace is not None else orig.skipinitialspace,
+            strict=strict if strict is not None else orig.strict,
+            quoting=orig.quoting,
+        )
+        dialect = 'custom'
 
     try:
         f = open(path, 'r')
