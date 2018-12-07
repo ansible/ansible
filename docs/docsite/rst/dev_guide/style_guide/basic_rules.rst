@@ -42,7 +42,7 @@ Avoid redundant prepositional phrases
 Prepositional phrases, the combination of a preposition with a noun phrase, are among the worst offenders in making text long and tiresome to read. Often, it is possible to replace an entire phrase with a single word.
 
     Use now instead of at this point in time.
-    Use suddenly instead of all of the sudden. 
+    Use suddenly instead of all of a sudden. 
 
 Avoid verbosity
 ------------------------------------
