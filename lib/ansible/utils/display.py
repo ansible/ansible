@@ -205,7 +205,7 @@ class Display(with_metaclass(Singleton, object)):
             if host is None:
                 self.display(msg, color=C.COLOR_VERBOSE)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
