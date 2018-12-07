@@ -193,10 +193,10 @@ def main():
         orig = csv.get_dialect(dialect)
         try:
             csv.register_dialect('custom',
-                delimiter=delimiter if delimiter is not None else orig.delimiter,
-                skipinitialspace=skipinitialspace if skipinitialspace is not None else orig.skipinitialspace,
-                strict=strict if strict is not None else orig.strict,
-                quoting=orig.quoting,
+                                 delimiter=delimiter if delimiter is not None else orig.delimiter,
+                                 skipinitialspace=skipinitialspace if skipinitialspace is not None else orig.skipinitialspace,
+                                 strict=strict if strict is not None else orig.strict,
+                                 quoting=orig.quoting,
             )
         except TypeError as e:
             module.fail_json(msg="Unable to create custom dialect: %s" % to_text(e))
