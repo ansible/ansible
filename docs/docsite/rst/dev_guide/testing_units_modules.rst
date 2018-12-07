@@ -76,7 +76,7 @@ with integration tests, such as:
   failures and exceptions
 * Extensive testing of slow configuration APIs
 * Situations where the integration tests cannot be run as part of the main Ansible
-  continuous integraiton running in Shippable.
+  continuous integration running in Shippable.
 
 
 
@@ -110,7 +110,7 @@ Example:
 
 Another related use is in the situation where an API has versions which behave
 differently. A programmer working on a new version may change the module to work with the
-new API version and unintentially break the old version.  A test case
+new API version and unintentionally break the old version.  A test case
 which checks that the call happens properly for the old version can help avoid the
 problem.  In this situation it is very important to include version numbering in the test case
 name (see `Naming unit tests`_ below).
