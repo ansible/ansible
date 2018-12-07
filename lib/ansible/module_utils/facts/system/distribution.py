@@ -390,6 +390,9 @@ class DistributionFiles:
         release = re.search('ID=(.*)', data)
         if release:
             clear_facts['distribution_release'] = release.groups()[0]
+        pname = re.search('NAME="(.*)"', data)
+        if pname:
+            clear_facts['distribution'] = pname.groups()[0]
         return True, clear_facts
 
 
