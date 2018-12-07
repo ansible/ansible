@@ -145,7 +145,7 @@ def uninstall_flat(module, binary, name, method):
     """Remove an existing flatpak."""
     global result
     installed_flat_name = _match_installed_flat_name(module, binary, name, method)
-    command = "{0} uninstall --{1} {2}".format(binary, method, installed_flat_name)
+    command = "{0} uninstall -y --{1} {2}".format(binary, method, installed_flat_name)
     _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
