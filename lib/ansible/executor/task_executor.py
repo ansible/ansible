@@ -325,7 +325,7 @@ class TaskExecutor:
 
             if extended:
                 task_vars['ansible_loop'] = {
-                    'items': items,
+                    'allitems': items,
                     'index': item_index + 1,
                     'index0': item_index,
                     'first': item_index == 0,
@@ -338,10 +338,8 @@ class TaskExecutor:
                     task_vars['ansible_loop']['nextitem'] = items[item_index + 1]
                 except IndexError:
                     pass
-                try:
+                if item_index - 1 >= 0:
                     task_vars['ansible_loop']['previtem'] = items[item_index - 1]
-                except IndexError:
-                    pass
 
             # Update template vars to reflect current loop iteration
             templar.set_available_variables(task_vars)
