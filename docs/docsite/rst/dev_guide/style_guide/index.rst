@@ -120,11 +120,11 @@ The second example adds custom text for the link.
 Adding local TOCs
 ^^^^^^^^^^^^^^^^^
 
-This page includes a local TOC. If a page includes one, the local TOC should:
+This page includes a local TOC. If you include a local TOC:
 
-* appear below, not above, the main heading and (optionally) introductory text
+* place it below, not above, the main heading and (optionally) introductory text
 * use the ``:local:`` directive so the page's main header is not included
-* not include a title
+* do not include a title
 
 The syntax is::
 
