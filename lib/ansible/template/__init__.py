@@ -559,6 +559,18 @@ class Templar:
     def _fail_lookup(self, name, *args, **kwargs):
         raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
 
+    def _now_datetime(self, utc=False, fmt=None):
+        '''jinja2 global function to return current datetime, potentially formatted via strftime'''
+        if utc:
+            now = datetime.datetime.utcnow()
+        else:
+            now = datetime.datetime.now()
+
+        if fmt:
+            return now.strftime(fmt)
+
+        return now
+
     def _query_lookup(self, name, *args, **kwargs):
         ''' wrapper for lookup, force wantlist true'''
         kwargs['wantlist'] = True
@@ -668,6 +680,8 @@ class Templar:
             else:
                 t.globals['lookup'] = self._lookup
                 t.globals['query'] = t.globals['q'] = self._query_lookup
+
+            t.globals['now'] = self._now_datetime
 
             t.globals['finalize'] = self._finalize
 
