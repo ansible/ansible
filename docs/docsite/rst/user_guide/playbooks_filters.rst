@@ -777,6 +777,68 @@ is an XPath expression used to get the attributes of the ``vlan`` tag in output 
 
 .. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
 
+.. _xml_filters:
+
+XML filters
+```````````
+
+.. versionadded:: 2.8
+
+These filters are working on string representations of XML structures as input
+and XPath expressions as arguments.
+
+To extract text from an XML element use the ``xml_findtext`` filter::
+
+  {{ result.xml|xml_findtext('.//xpath') }}
+
+This filter expects an XPath expression and returns an empty string if nothing matched.
+
+.. code-block:: yaml
+
+   ---
+   - name: show version
+     junos_rpc:
+       rpc: get-software-information
+     register: junos_version
+
+   - debug:
+       msg: "{{ junos_version.xml|xml_findtext('.//package-information[name=\"os-kernel\"]/comment') }}"
+
+
+The ``xml_findall`` filter expects an XPath expression and returns a list of all matching xml elements as strings.
+This filter returns an empty list if there is no match for the given XPath expression.
+
+.. code-block:: yaml
+
+   ---
+   - name: XML filter tests
+     block:
+       - name: Use XML filter
+         set_fact:
+           result: "{{ xml_data|xml_find('.//c') }}"
+
+       - name: Verify XML filter results
+         assert:
+           that:
+             - result == ["<c><name>TEST1</name></c>", "<c><name>TEST2</name></c>"]
+
+     vars:
+       xml_data: "<r><c><name>TEST1</name></c><c><name>TEST2</name></c></r>"
+
+
+This filter allows to iterate over XML structures which is very powerful in combination with the ``xml_findtext`` filter
+as shown in the example below.
+
+.. code-block:: yaml
+
+   ---
+   - name: check isis adjacency
+     fail:
+       msg: "isis adjacency not up"
+     when: "item|xml_findtext('.//adjacency-state') != 'Up'"
+     with_items: "{{ isis_adjacency.xml|xml_findall('.//isis-adjacency') }}"
+
+
 .. _hash_filters:
 
 Hashing filters

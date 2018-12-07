@@ -253,3 +253,24 @@
     that:
       - "unions|type_debug == 'list'"
       - "unions|length == 4"
+
+
+- name: XML filter tests
+  block:
+    - name: Use XML filter
+      set_fact:
+        xml_result_findall: "{{ xml_data|xml_findall('.//c') }}"
+        xml_result_findall_not_found: "{{ xml_data|xml_findall('.//d') }}"
+        xml_result_text: "{{ xml_data|xml_findtext(\".//c[name='TEST2']/value\") }}"
+        xml_result_text_not_found: "{{ xml_data|xml_findtext('.//d') }}"
+
+    - name: Verify XML filter results
+      assert:
+        that:
+          - xml_result_findall == ["<c><name>TEST1</name><value>1</value></c>", "<c><name>TEST2</name><value>2</value></c>"]
+          - xml_result_findall_not_found == []
+          - xml_result_text == "2"
+          - xml_result_text_not_found == ""
+
+  vars:
+    xml_data: "<r><c><name>TEST1</name><value>1</value></c><c><name>TEST2</name><value>2</value></c></r>"
