@@ -208,26 +208,27 @@ class AzureRMPublicIPFacts(AzureRMModuleBase):
         else:
             result = self.list_all()
 
-        result = self.filter(result)
+        raw = self.filter(result)
 
-        self.results['publicipaddresses'] = result
-        self.results['ansible_facts']['azure_publicipaddresses'] = result
-        self.results['publicipaddresses'] = self.format(result)
+        self.results['ansible_facts']['azure_publicipaddresses'] = self.serialize(raw)
+        self.results['publicipaddresses'] = self.format(raw)
 
         return self.results
 
     def format(self, raw):
         return [self.pip_to_dict(item) for item in raw]
 
-    def filter(self, response):
+    def serialize(self, raw):
         results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                pip['name'] = item.name
-                pip['type'] = item.type
-                results.append(pip)
+        for item in raw:
+            pip = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+            pip['name'] = item.name
+            pip['type'] = item.type
+            results.append(pip)
         return results
+
+    def filter(self, response):
+        return [item for item in response if self.has_tags(item.tags, self.tags)]
 
     # duplicate with azure_rm_publicipaddress
     def pip_to_dict(self, pip):
