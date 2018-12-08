@@ -1,8 +1,8 @@
 Using Ansible and Windows
 =========================
 When using Ansible to manage Windows, many of the syntax and rules that apply
-for Unix/Linux hosts also apply to Windows, but there are still some differences 
-when it comes to components like path separators and OS-specific tasks. 
+for Unix/Linux hosts also apply to Windows, but there are still some differences
+when it comes to components like path separators and OS-specific tasks.
 This document covers details specific to using Ansible for Windows.
 
 .. contents:: Topics
@@ -10,7 +10,7 @@ This document covers details specific to using Ansible for Windows.
 
 Use Cases
 `````````
-Ansible can be used to orchestrate a multitude of tasks on Windows servers. 
+Ansible can be used to orchestrate a multitude of tasks on Windows servers.
 Below are some examples and info about common tasks.
 
 Installing Software
@@ -18,10 +18,10 @@ Installing Software
 There are three main ways that Ansible can be used to install software:
 
 * Using the ``win_chocolatey`` module. This sources the program data from the default
-  public `Chocolatey <https://chocolatey.org/>`_ repository. Internal repositories can 
-  be used instead by setting the ``source`` option. 
+  public `Chocolatey <https://chocolatey.org/>`_ repository. Internal repositories can
+  be used instead by setting the ``source`` option.
 
-* Using the ``win_package`` module. This installs software using an MSI or .exe installer 
+* Using the ``win_package`` module. This installs software using an MSI or .exe installer
   from a local/network path or URL.
 
 * Using the ``win_command`` or ``win_shell`` module to run an installer manually.
@@ -37,12 +37,12 @@ Below are some examples of using all three options to install 7-Zip:
       win_chocolatey:
         name: 7zip
         state: present
-    
+
     - name: Ensure 7-Zip is not installed via Chocolatey
       win_chocolatey:
         name: 7zip
         state: absent
-    
+
     # Install/uninstall with win_package
     - name: Download the 7-Zip package
       win_get_url:
@@ -53,7 +53,7 @@ Below are some examples of using all three options to install 7-Zip:
       win_package:
         path: C:\temp\7z.msi
         state: present
-    
+
     - name: Ensure 7-Zip is not installed via win_package
       win_package:
         path: C:\temp\7z.msi
@@ -64,16 +64,16 @@ Below are some examples of using all three options to install 7-Zip:
       win_get_url:
         url: https://www.7-zip.org/a/7z1701-x64.msi
         dest: C:\temp\7z.msi
-    
+
     - name: Check if 7-Zip is already installed
       win_reg_stat:
         name: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-1701-000001000000}
       register: 7zip_installed
-    
+
     - name: Ensure 7-Zip is installed via win_command
       win_command: C:\Windows\System32\msiexec.exe /i C:\temp\7z.msi /qn /norestart
       when: 7zip_installed.exists == false
-    
+
     - name: Ensure 7-Zip is uninstalled via win_command
       win_command: C:\Windows\System32\msiexec.exe /x {23170F69-40C1-2702-1701-000001000000} /qn /norestart
       when: 7zip_installed.exists == true
@@ -109,7 +109,7 @@ The following example shows how ``win_updates`` can be used:
         - SecurityUpdates
         state: installed
       register: update_result
-    
+
     - name: Reboot host if required
       win_reboot:
       when: update_result.reboot_required
@@ -123,14 +123,14 @@ update or hotfix:
       win_get_url:
         url: http://download.windowsupdate.com/d/msdownload/update/software/secu/2016/07/windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
         dest: C:\temp\KB3172729.msu
-    
+
     - name: Install hotfix
       win_hotfix:
         hotfix_kb: KB3172729
         source: C:\temp\KB3172729.msu
         state: present
       register: hotfix_result
-    
+
     - name: Reboot host if required
       win_reboot:
       when: hotfix_result.reboot_required
@@ -160,18 +160,18 @@ access a folder on the same host:
         password: '{{ item.password }}'
         groups: LocalGroup
         update_password: no
-        password_never_expired: yes
+        password_never_expires: yes
       loop:
       - name: User1
         password: Password1
       - name: User2
         password: Password2
-    
+
     - name: Create Development folder
       win_file:
         path: C:\Development
         state: directory
-    
+
     - name: Set ACL of Development folder
       win_acl:
         path: C:\Development
@@ -179,7 +179,7 @@ access a folder on the same host:
         state: present
         type: allow
         user: LocalGroup
-    
+
     - name: Remove parent inheritance of Development folder
       win_acl_inheritance:
         path: C:\Development
@@ -216,7 +216,7 @@ are created:
 Running Commands
 ----------------
 In cases where there is no appropriate module available for a task,
-a command or script can be run using the ``win_shell``, ``win_command``, ``raw``, and ``script`` modules. 
+a command or script can be run using the ``win_shell``, ``win_command``, ``raw``, and ``script`` modules.
 
 The ``raw`` module simply executes a Powershell command remotely. Since ``raw``
 has none of the wrappers that Ansible typically uses, ``become``, ``async``
@@ -235,8 +235,8 @@ The ``win_shell`` and ``win_command`` modules can both be used to execute a comm
 The ``win_shell`` module is run within a shell-like process like ``PowerShell`` or ``cmd``, so it has access to shell
 operators like ``<``, ``>``, ``|``, ``;``, ``&&``, and ``||``. Multi-lined commands can also be run in ``win_shell``.
 
-The ``win_command`` module simply runs a process outside of a shell. It can still 
-run a shell command like ``mkdir`` or ``New-Item`` by passing the shell commands 
+The ``win_command`` module simply runs a process outside of a shell. It can still
+run a shell command like ``mkdir`` or ``New-Item`` by passing the shell commands
 to a shell executable like ``cmd.exe`` or ``PowerShell.exe``.
 
 Here are some examples of using ``win_command`` and ``win_shell``:
@@ -245,22 +245,22 @@ Here are some examples of using ``win_command`` and ``win_shell``:
 
     - name: Run a command under PowerShell
       win_shell: Get-Service -Name service | Stop-Service
-    
+
     - name: Run a command under cmd
       win_shell: mkdir C:\temp
       args:
         executable: cmd.exe
-    
+
     - name: Run a multiple shell commands
       win_shell: |
         New-Item -Path C:\temp -ItemType Directory
         Remove-Item -Path C:\temp -Force -Recurse
         $path_info = Get-Item -Path C:\temp
         $path_info.FullName
-    
+
     - name: Run an executable using win_command
       win_command: whoami.exe
-    
+
     - name: Run a cmd command
       win_command: cmd.exe /c mkdir C:\temp
 
@@ -330,7 +330,7 @@ commands. One way to bypass these restrictions is to run a command through a
 scheduled task. A scheduled task is a Windows component that provides the
 ability to run an executable on a schedule and under a different account.
 
-Ansible version 2.5 added modules that make it easier to work with scheduled tasks in Windows. 
+Ansible version 2.5 added modules that make it easier to work with scheduled tasks in Windows.
 The following is an example of running a script as a scheduled task that deletes itself after
 running:
 
@@ -366,7 +366,7 @@ Path Formatting for Windows
 ```````````````````````````
 Windows differs from a traditional POSIX operating system in many ways. One of
 the major changes is the shift from ``/`` as the path separator to ``\``. This
-can cause major issues with how playbooks are written, since ``\`` is often used 
+can cause major issues with how playbooks are written, since ``\`` is often used
 as an escape character on POSIX systems.
 
 Ansible allows two different styles of syntax; each deals with path separators for Windows differently:
