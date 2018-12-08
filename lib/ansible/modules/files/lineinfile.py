@@ -247,13 +247,8 @@ def check_file_attrs(module, changed, message, diff):
 def present(module, dest, regexp, line, insertafter, insertbefore, create,
             backup, backrefs, firstmatch):
 
-    diff = {'before': '',
-            'after': '',
-            'before_header': '%s (content)' % dest,
-            'after_header': '%s (content)' % dest}
-
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
     flock = FileLock()
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
     if not os.path.exists(b_dest):
         if not create:
@@ -265,10 +260,24 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             except Exception as e:
                 module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
 
-        b_lines = []
+    if module.check_mode:
+        _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
+                                backup, backrefs, firstmatch)
 
-    if not module.check_mode:
-        flock.set_lock(dest)
+    with flock.lock_file(dest):
+        _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
+                                backup, backrefs, firstmatch)
+
+
+def _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
+                            backup, backrefs, firstmatch):
+
+    diff = {'before': '',
+            'after': '',
+            'before_header': '%s (content)' % dest,
+            'after_header': '%s (content)' % dest}
+
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
     with open(b_dest, 'rb') as f:
         b_lines = f.readlines()
@@ -402,7 +411,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if backup and os.path.exists(b_dest):
             backupdest = module.backup_local(dest)
         write_changes(module, b_lines, dest)
-        flock.unlock()
 
     if module.check_mode and not os.path.exists(b_dest):
         module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
@@ -419,20 +427,28 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
 def absent(module, dest, regexp, line, backup):
 
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
     flock = FileLock()
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
     if not os.path.exists(b_dest):
         module.exit_json(changed=False, msg="file not present")
+
+    if module.check_mode:
+        _absent_data_manipulator(module, dest, regexp, line, backup)
+
+    with flock.lock_file(dest):
+        _absent_data_manipulator(module, dest, regexp, line, backup)
+
+
+def _absent_data_manipulator(module, dest, regexp, line, backup):
+
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
     msg = ''
     diff = {'before': '',
             'after': '',
             'before_header': '%s (content)' % dest,
             'after_header': '%s (content)' % dest}
-
-    if not module.check_mode:
-        flock.set_lock(dest)
 
     with open(b_dest, 'rb') as f:
         b_lines = f.readlines()
@@ -466,7 +482,6 @@ def absent(module, dest, regexp, line, backup):
         if backup:
             backupdest = module.backup_local(dest)
         write_changes(module, b_lines, dest)
-        flock.unlock()
 
     if changed:
         msg = "%s line(s) removed" % len(found)
