@@ -457,7 +457,8 @@ class Distribution(object):
                      'AIX': ['AIX'],
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
-                     'FreeBSD': ['FreeBSD', 'TrueOS']}
+                     'FreeBSD': ['FreeBSD', 'TrueOS'],
+                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():

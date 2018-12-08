@@ -1008,7 +1008,7 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
         "distribution_release": "clear-linux-os",
         "distribution": "Clear Linux OS",
         "distribution_major_version": "26580",
-        "os_family": "Clear Linux OS",
+        "os_family": "ClearLinux",
         "distribution_version": "26580"
     }
 },
