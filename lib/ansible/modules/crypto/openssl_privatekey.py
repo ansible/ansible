@@ -60,40 +60,28 @@ options:
         required: false
         choices:
             - secp384r1
-            - NIST-P-384
             - secp521r1
-            - NIST-P-521
             - secp224r1
-            - NIST-P-224
             - secp192r1
-            - NIST-P-192
             - secp256k1
-            - brainpool-p256r1
-            - brainpool-p384r1
-            - brainpool-p512r1
+            - brainpoolP256r1
+            - brainpoolP384r1
+            - brainpoolP512r1
             - sect571k1
-            - NIST-K-571
             - sect409k1
-            - NIST-K-409
             - sect283k1
-            - NIST-K-283
             - sect233k1
-            - NIST-K-233
             - sect163k1
-            - NIST-K-163
             - sect571r1
-            - NIST-B-571
             - sect409r1
-            - NIST-B-409
             - sect283r1
-            - NIST-B-283
             - sect233r1
-            - NIST-B-233
             - sect163r2
-            - NIST-B-163
         description:
             - Note that not all curves are supported by all versions of C(cryptography).
-            - For maximal interoperability, C(secp256k1) or C(secp384r1) should be used.
+            - For maximal interoperability, C(secp384r1) or C(secp256k1) should be used.
+            - We use the curve names as defined in the
+              L(IANA registry for TLS,https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8).
         version_added: "2.8"
     force:
         required: false
@@ -429,37 +417,23 @@ class PrivateKeyCryptography(PrivateKeyBase):
 
         self.curves = dict()
         self._add_curve('secp384r1', 'SECP384R1')
-        self._add_curve('NIST-P-384', 'SECP384R1')  # alias
         self._add_curve('secp521r1', 'SECP521R1')
-        self._add_curve('NIST-P-521', 'SECP521R1')  # alias
         self._add_curve('secp224r1', 'SECP224R1')
-        self._add_curve('NIST-P-224', 'SECP224R1')  # alias
         self._add_curve('secp192r1', 'SECP192R1')
-        self._add_curve('NIST-P-192', 'SECP192R1')  # alias
         self._add_curve('secp256k1', 'SECP256K1')
-        self._add_curve('brainpool-p256r1', 'BrainpoolP256R1', deprecated=True)
-        self._add_curve('brainpool-p384r1', 'BrainpoolP384R1', deprecated=True)
-        self._add_curve('brainpool-p512r1', 'BrainpoolP512R1', deprecated=True)
+        self._add_curve('brainpoolP256r1', 'BrainpoolP256R1', deprecated=True)
+        self._add_curve('brainpoolP384r1', 'BrainpoolP384R1', deprecated=True)
+        self._add_curve('brainpoolP512r1', 'BrainpoolP512R1', deprecated=True)
         self._add_curve('sect571k1', 'SECT571K1', deprecated=True)
-        self._add_curve('NIST-K-571', 'SECT571K1', deprecated=True)  # alias
         self._add_curve('sect409k1', 'SECT409K1', deprecated=True)
-        self._add_curve('NIST-K-409', 'SECT409K1', deprecated=True)  # alias
         self._add_curve('sect283k1', 'SECT283K1', deprecated=True)
-        self._add_curve('NIST-K-283', 'SECT283K1', deprecated=True)  # alias
         self._add_curve('sect233k1', 'SECT233K1', deprecated=True)
-        self._add_curve('NIST-K-233', 'SECT233K1', deprecated=True)  # alias
         self._add_curve('sect163k1', 'SECT163K1', deprecated=True)
-        self._add_curve('NIST-K-163', 'SECT163K1', deprecated=True)  # alias
         self._add_curve('sect571r1', 'SECT571R1', deprecated=True)
-        self._add_curve('NIST-B-571', 'SECT571R1', deprecated=True)  # alias
         self._add_curve('sect409r1', 'SECT409R1', deprecated=True)
-        self._add_curve('NIST-B-409', 'SECT409R1', deprecated=True)  # alias
         self._add_curve('sect283r1', 'SECT283R1', deprecated=True)
-        self._add_curve('NIST-B-283', 'SECT283R1', deprecated=True)  # alias
         self._add_curve('sect233r1', 'SECT233R1', deprecated=True)
-        self._add_curve('NIST-B-233', 'SECT233R1', deprecated=True)  # alias
         self._add_curve('sect163r2', 'SECT163R2', deprecated=True)
-        self._add_curve('NIST-B-163', 'SECT163R2', deprecated=True)  # alias
 
         self.module = module
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
@@ -584,13 +558,10 @@ def main():
                 # 'X448', 'X25519',
             ], type='str'),
             curve=dict(choices=[
-                'secp384r1', 'NIST-P-384', 'secp521r1', 'NIST-P-521', 'secp224r1', 'NIST-P-224',
-                'secp192r1', 'NIST-P-192', 'secp256k1',
-                'brainpool-p256r1', 'brainpool-p384r1', 'brainpool-p512r1',
-                'sect571k1', 'NIST-K-571', 'sect409k1', 'NIST-K-409', 'sect283k1', 'NIST-K-283',
-                'sect233k1', 'NIST-K-233', 'sect163k1', 'NIST-K-163', 'sect571r1', 'NIST-B-571',
-                'sect409r1', 'NIST-B-409', 'sect283r1', 'NIST-B-283', 'sect233r1', 'NIST-B-233',
-                'sect163r2', 'NIST-B-163',
+                'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256k1',
+                'brainpoolP256r1', 'brainpoolP384r1', 'brainpoolP512r1',
+                'sect571k1', 'sect409k1', 'sect283k1', 'sect233k1', 'sect163k1',
+                'sect571r1', 'sect409r1', 'sect283r1', 'sect233r1', 'sect163r2',
             ], type='str'),
             force=dict(default=False, type='bool'),
             path=dict(required=True, type='path'),
