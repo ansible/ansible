@@ -53,7 +53,7 @@ options:
         description:
             - A comma-separated string or a yaml list consisting of the replicaset members.
             - Supply as a simple csv string, i.e. mongodb1:27017,mongodb2:27017,mongodb3:27017.
-            - If a port number is not provided 27017 is assumed.
+            - If a port number is not provided then 27017 is assumed.
     validate:
         description:
             - Performs some basic validation on the provided replicaset config.
