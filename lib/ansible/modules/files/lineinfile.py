@@ -262,15 +262,15 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
     if module.check_mode:
         _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
-                                backup, backrefs, firstmatch)
+                                  backup, backrefs, firstmatch)
 
     with flock.lock_file(dest):
         _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
-                                backup, backrefs, firstmatch)
+                                  backup, backrefs, firstmatch)
 
 
 def _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
-                            backup, backrefs, firstmatch):
+                              backup, backrefs, firstmatch):
 
     diff = {'before': '',
             'after': '',
