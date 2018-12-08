@@ -194,7 +194,7 @@ if ($state -eq 'absent') {
     # We cannot configure a CAP that was created above in check mode as it won't actually exist
     if($cap_exist) {
         $cap = Get-CAP -Name $name
-        $wmi_cap = Get-WmiObject -ClassName Win32_TSGatewayConnectionAuthorizationPolicy -Namespace Root\CIMv2\TerminalServices -Filter "name='$($name)'"
+        $wmi_cap = Get-CimInstance -ClassName Win32_TSGatewayConnectionAuthorizationPolicy -Namespace Root\CIMv2\TerminalServices -Filter "name='$($name)'"
 
         if ($state -in @('disabled', 'enabled')) {
             $cap_enabled = $state -ne 'disabled'
@@ -289,7 +289,7 @@ if ($state -eq 'absent') {
             $user_groups_diff = $null
             foreach($group in $groups_to_add) {
                 if (-not $check_mode) {
-                    $return = $wmi_cap.AddUserGroupNames($group)
+                    $return = $wmi_cap | Invoke-CimMethod -MethodName AddUserGroupNames -Arguments @{ UserGroupNames = $group }
                     if ($return.ReturnValue -ne 0) {
                         Fail-Json -obj $result -message "Failed to add user group $($group) (code: $($return.ReturnValue))"
                     }
@@ -300,7 +300,7 @@ if ($state -eq 'absent') {
 
             foreach($group in $groups_to_remove) {
                 if (-not $check_mode) {
-                    $return = $wmi_cap.RemoveUserGroupNames($group)
+                    $return = $wmi_cap | Invoke-CimMethod -MethodName RemoveUserGroupNames -Arguments @{ UserGroupNames = $group }
                     if ($return.ReturnValue -ne 0) {
                         Fail-Json -obj $result -message "Failed to remove user group $($group) (code: $($return.ReturnValue))"
                     }
@@ -321,7 +321,7 @@ if ($state -eq 'absent') {
             $computer_groups_diff = $null
             foreach($group in $groups_to_add) {
                 if (-not $check_mode) {
-                    $return = $wmi_cap.AddComputerGroupNames($group)
+                    $return = $wmi_cap | Invoke-CimMethod -MethodName AddComputerGroupNames -Arguments @{ ComputerGroupNames = $group }
                     if ($return.ReturnValue -ne 0) {
                         Fail-Json -obj $result -message "Failed to add computer group $($group) (code: $($return.ReturnValue))"
                     }
@@ -332,7 +332,7 @@ if ($state -eq 'absent') {
 
             foreach($group in $groups_to_remove) {
                 if (-not $check_mode) {
-                    $return = $wmi_cap.RemoveComputerGroupNames($group)
+                    $return = $wmi_cap | Invoke-CimMethod -MethodName RemoveComputerGroupNames -Arguments @{ ComputerGroupNames = $group }
                     if ($return.ReturnValue -ne 0) {
                         Fail-Json -obj $result -message "Failed to remove computer group $($group) (code: $($return.ReturnValue))"
                     }

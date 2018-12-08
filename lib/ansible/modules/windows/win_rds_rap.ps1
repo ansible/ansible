@@ -188,7 +188,7 @@ if ($state -eq 'absent') {
     # We cannot configure a RAP that was created above in check mode as it won't actually exist
     if($rap_exist) {
         $rap = Get-RAP -Name $name
-        $wmi_rap = Get-WmiObject -ClassName Win32_TSGatewayResourceAuthorizationPolicy -Namespace Root\CIMv2\TerminalServices -Filter "name='$($name)'"
+        $wmi_rap = Get-CimInstance -ClassName Win32_TSGatewayResourceAuthorizationPolicy -Namespace Root\CIMv2\TerminalServices -Filter "name='$($name)'"
 
         if ($state -in @('disabled', 'enabled')) {
             $rap_enabled = $state -ne 'disabled'
@@ -217,7 +217,10 @@ if ($state -eq 'absent') {
             if ($computer_group_type -ne "allow_any") {
                 $diff_text += "+ComputerGroup = $computer_group`n"
             }
-            $return = $wmi_rap.SetResourceGroup($computer_group, $computer_group_types_wmi.$($computer_group_type))
+            $return = $wmi_rap | Invoke-CimMethod -MethodName SetResourceGroup -Arguments @{
+                ResourceGroupName = $computer_group
+                ResourceGroupType = $computer_group_types_wmi.$($computer_group_type)
+            }
             if ($return.ReturnValue -ne 0) {
                 Fail-Json -obj $result -message "Failed to set computer group type to $($computer_group_type) (code: $($return.ReturnValue))"
             }
@@ -226,7 +229,10 @@ if ($state -eq 'absent') {
 
         } elseif ($null -ne $computer_group -and $computer_group -ne $rap.ComputerGroup) {
             $diff_text += "-ComputerGroup = $($rap.ComputerGroup)`n+ComputerGroup = $computer_group`n"
-            $return = $wmi_rap.SetResourceGroup($computer_group, $computer_group_types_wmi.$($rap.ComputerGroupType))
+            $return = $wmi_rap | Invoke-CimMethod -MethodName SetResourceGroup -Arguments @{
+                ResourceGroupName = $computer_group
+                ResourceGroupType = $computer_group_types_wmi.$($rap.ComputerGroupType)
+            }
             if ($return.ReturnValue -ne 0) {
                 Fail-Json -obj $result -message "Failed to set computer group name to $($computer_group) (code: $($return.ReturnValue))"
             }
@@ -240,7 +246,7 @@ if ($state -eq 'absent') {
             $user_groups_diff = $null
             foreach($group in $groups_to_add) {
                 if (-not $check_mode) {
-                    $return = $wmi_rap.AddUserGroupNames($group)
+                    $return = $wmi_rap | Invoke-CimMethod -MethodName AddUserGroupNames -Arguments @{ UserGroupNames = $group }
                     if ($return.ReturnValue -ne 0) {
                         Fail-Json -obj $result -message "Failed to add user group $($group) (code: $($return.ReturnValue))"
                     }
@@ -251,7 +257,7 @@ if ($state -eq 'absent') {
 
             foreach($group in $groups_to_remove) {
                 if (-not $check_mode) {
-                    $return = $wmi_rap.RemoveUserGroupNames($group)
+                    $return = $wmi_rap | Invoke-CimMethod -MethodName RemoveUserGroupNames -Arguments @{ UserGroupNames = $group }
                     if ($return.ReturnValue -ne 0) {
                         Fail-Json -obj $result -message "Failed to remove user group $($group) (code: $($return.ReturnValue))"
                     }
