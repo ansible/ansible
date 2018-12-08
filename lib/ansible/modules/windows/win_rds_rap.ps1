@@ -10,6 +10,7 @@ $ErrorActionPreference = "Stop"
 
 # List of authentication methods as string. Used for parameter validation and conversion to integer flag, so order is important!
 $computer_group_types = @("rdg_group", "ad_network_resource_group", "allow_any")
+$computer_group_types_wmi = @{rdg_group = "RG"; ad_network_resource_group = "CG"; allow_any = "ALL"}
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
@@ -36,6 +37,11 @@ function Get-RAP([string] $name) {
     $rap.Enabled = $rap.Status -eq 1
     $rap.Remove("Status")
 
+    # Convert computer group name from UPN to Down-Level Logon format
+    if($rap.ComputerGroupType -ne 2) {
+        $rap.ComputerGroup = Convert-FromSID -sid (Convert-ToSID -account_name $rap.ComputerGroup)
+    }
+
     # Convert multiple choices values
     $rap.ComputerGroupType = $computer_group_types[$rap.ComputerGroupType]
 
@@ -46,8 +52,12 @@ function Get-RAP([string] $name) {
         $rap.PortNumbers = @($rap.PortNumbers -split ',')
     }
 
-    # Fetch RAP user groups
-    $rap.UserGroups = @(Get-ChildItem -Path "$rap_path\UserGroups" | Select-Object -ExpandProperty Name)
+    # Fetch RAP user groups in Down-Level Logon format
+    $rap.UserGroups = @(
+        Get-ChildItem -Path "$rap_path\UserGroups" | 
+            Select-Object -ExpandProperty Name |
+            ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
+    )
 
     return $rap
 }
@@ -98,9 +108,8 @@ if ($null -ne $user_groups) {
             Fail-Json -obj $result -message "$group is not a valid user group on the host machine or domain."
         }
 
-        # Return the normalized group name in UPN format
-        $group_name = Convert-FromSID -sid $sid
-        ($group_name -split "\\")[1..0] -join "@"
+        # Return the normalized group name in Down-Level Logon format
+        Convert-FromSID -sid $sid
     }
     $user_groups = @($user_groups)
 }
@@ -115,9 +124,8 @@ if ($computer_group_type -eq "allow_any" -and $null -ne $computer_group) {
     if (!$sid) {
         Fail-Json -obj $result -message "$computer_group is not a valid computer group on the host machine or domain."
     }
-    # Ensure the group name is in UPN format
+    # Ensure the group name is in Down-Level Logon format
     $computer_group = Convert-FromSID -sid $sid
-    $computer_group = ($computer_group -split "\\")[1..0] -join "@"
 }
 
 # Validate port numbers
@@ -156,7 +164,19 @@ if ($state -eq 'absent') {
         }
 
         # Create a new RAP
-        New-Item -Path "RDS:\GatewayServer\RAP" -Name $name -UserGroups $user_groups -ComputerGroupType ([array]::IndexOf($computer_group_types, $computer_group_type)) -WhatIf:$check_mode
+        if (-not $check_mode) {
+            $RapArgs = @{
+                Name = $name
+                ResourceGroupType = 'ALL'
+                UserGroupNames = $user_groups -join ';'
+                ProtocolNames = 'RDP'
+                PortNumbers = '*'
+            }
+            $return = Invoke-CimMethod -Namespace Root\CIMV2\TerminalServices -ClassName Win32_TSGatewayResourceAuthorizationPolicy -MethodName Create -Arguments $RapArgs
+            if ($return.ReturnValue -ne 0) {
+                Fail-Json -obj $result -message "Failed to create RAP $name (code: $($return.ReturnValue))"
+            }
+        }
         $rap_exist = -not $check_mode
 
         $diff_text_added_prefix = '+'
@@ -168,6 +188,7 @@ if ($state -eq 'absent') {
     # We cannot configure a RAP that was created above in check mode as it won't actually exist
     if($rap_exist) {
         $rap = Get-RAP -Name $name
+        $wmi_rap = Get-WmiObject -ClassName Win32_TSGatewayResourceAuthorizationPolicy -Namespace Root\CIMv2\TerminalServices -Filter "name='$($name)'"
 
         if ($state -in @('disabled', 'enabled')) {
             $rap_enabled = $state -ne 'disabled'
@@ -193,26 +214,22 @@ if ($state -eq 'absent') {
 
         if ($null -ne $computer_group_type -and $computer_group_type -ne $rap.ComputerGroupType) {
             $diff_text += "-ComputerGroupType = $($rap.ComputerGroupType)`n+ComputerGroupType = $computer_group_type`n"
-            if ($computer_group_type -eq "allow_any") {
-                Set-RAPPropertyValue -Name $name -Property ComputerGroupType -Value ([array]::IndexOf($computer_group_types, $computer_group_type)) -ResultObj $result -WhatIf:$check_mode
-            } else {
-                try {
-                    Set-Item -Path "RDS:\GatewayServer\RAP\$name\ComputerGroupType" `
-                        -Value ([array]::IndexOf($computer_group_types, $computer_group_type)) `
-                        -ComputerGroup $computer_group `
-                        -ErrorAction Stop `
-                        -WhatIf:$check_mode
-                    $diff_text += "+ComputerGroup = $computer_group`n"
-                } catch {
-                    Fail-Json -obj $result -message "Failed to set property ComputerGroupType of RAP ${name}: $($_.Exception.Message)"
-                }
+            if ($computer_group_type -ne "allow_any") {
+                $diff_text += "+ComputerGroup = $computer_group`n"
+            }
+            $return = $wmi_rap.SetResourceGroup($computer_group, $computer_group_types_wmi.$($computer_group_type))
+            if ($return.ReturnValue -ne 0) {
+                Fail-Json -obj $result -message "Failed to set computer group type to $($computer_group_type) (code: $($return.ReturnValue))"
             }
 
             $result.changed = $true
 
         } elseif ($null -ne $computer_group -and $computer_group -ne $rap.ComputerGroup) {
             $diff_text += "-ComputerGroup = $($rap.ComputerGroup)`n+ComputerGroup = $computer_group`n"
-            Set-RAPPropertyValue -Name $name -Property ComputerGroup -Value $computer_group -ResultObj $result -WhatIf:$check_mode
+            $return = $wmi_rap.SetResourceGroup($computer_group, $computer_group_types_wmi.$($rap.ComputerGroupType))
+            if ($return.ReturnValue -ne 0) {
+                Fail-Json -obj $result -message "Failed to set computer group name to $($computer_group) (code: $($return.ReturnValue))"
+            }
             $result.changed = $true
         }
 
@@ -222,13 +239,23 @@ if ($state -eq 'absent') {
 
             $user_groups_diff = $null
             foreach($group in $groups_to_add) {
-                New-Item -Path "RDS:\GatewayServer\RAP\$name\UserGroups" -Name $group -WhatIf:$check_mode
+                if (-not $check_mode) {
+                    $return = $wmi_rap.AddUserGroupNames($group)
+                    if ($return.ReturnValue -ne 0) {
+                        Fail-Json -obj $result -message "Failed to add user group $($group) (code: $($return.ReturnValue))"
+                    }
+                }
                 $user_groups_diff += "  +$group`n"
                 $result.changed = $true
             }
 
             foreach($group in $groups_to_remove) {
-                Remove-Item -Path "RDS:\GatewayServer\RAP\$name\UserGroups\$group" -WhatIf:$check_mode
+                if (-not $check_mode) {
+                    $return = $wmi_rap.RemoveUserGroupNames($group)
+                    if ($return.ReturnValue -ne 0) {
+                        Fail-Json -obj $result -message "Failed to remove user group $($group) (code: $($return.ReturnValue))"
+                    }
+                }
                 $user_groups_diff += "  -$group`n"
                 $result.changed = $true
             }

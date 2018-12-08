@@ -57,9 +57,17 @@ function Get-CAP([string] $name) {
     $cap.DeviceRedirection = @{}
     Get-ChildItem -Path "$cap_path\DeviceRedirection" | ForEach-Object { $cap.DeviceRedirection.Add($_.Name, ($_.CurrentValue -eq 1)) }
 
-    # Fetch CAP user and computer groups
-    $cap.UserGroups = @(Get-ChildItem -Path "$cap_path\UserGroups" | Select-Object -ExpandProperty Name)
-    $cap.ComputerGroups = @(Get-ChildItem -Path "$cap_path\ComputerGroups" | Select-Object -ExpandProperty Name)
+    # Fetch CAP user and computer groups in Down-Level Logon format
+    $cap.UserGroups = @(
+        Get-ChildItem -Path "$cap_path\UserGroups" | 
+            Select-Object -ExpandProperty Name |
+            ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
+    )
+    $cap.ComputerGroups = @(
+        Get-ChildItem -Path "$cap_path\ComputerGroups" |
+            Select-Object -ExpandProperty Name |
+            ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
+    )
 
     return $cap
 }
@@ -110,9 +118,8 @@ if ($null -ne $user_groups) {
             Fail-Json -obj $result -message "$group is not a valid user group on the host machine or domain"
         }
 
-        # Return the normalized group name in UPN format
-        $group_name = Convert-FromSID -sid $sid
-        ($group_name -split "\\")[1..0] -join "@"
+        # Return the normalized group name in Down-Level Logon format
+        Convert-FromSID -sid $sid
     }
     $user_groups = @($user_groups)
 }
@@ -127,9 +134,8 @@ if ($null -ne $computer_groups) {
             Fail-Json -obj $result -message "$group is not a valid computer group on the host machine or domain"
         }
 
-        # Return the normalized group name in UPN format
-        $group_name = Convert-FromSID -sid $sid
-        ($group_name -split "\\")[1..0] -join "@"
+        # Return the normalized group name in Down-Level Logon format
+        Convert-FromSID -sid $sid
     }
     $computer_groups = @($computer_groups)
 }
@@ -166,7 +172,17 @@ if ($state -eq 'absent') {
         }
 
         # Create a new CAP
-        New-Item -Path "RDS:\GatewayServer\CAP" -Name $name -UserGroups $user_groups -AuthMethod ([array]::IndexOf($auth_methods_set, $auth_method)) -WhatIf:$check_mode
+        if (-not $check_mode) {
+            $CapArgs = @{
+                Name = $name
+                UserGroupNames = $user_groups -join ';'
+            }
+            $return = Invoke-CimMethod -Namespace Root\CIMV2\TerminalServices -ClassName Win32_TSGatewayConnectionAuthorizationPolicy -MethodName Create -Arguments $CapArgs
+            if ($return.ReturnValue -ne 0) {
+                Fail-Json -obj $result -message "Failed to create CAP $name (code: $($return.ReturnValue))"
+            }
+        }
+
         $cap_exist = -not $check_mode
 
         $diff_text_added_prefix = '+'
@@ -178,6 +194,7 @@ if ($state -eq 'absent') {
     # We cannot configure a CAP that was created above in check mode as it won't actually exist
     if($cap_exist) {
         $cap = Get-CAP -Name $name
+        $wmi_cap = Get-WmiObject -ClassName Win32_TSGatewayConnectionAuthorizationPolicy -Namespace Root\CIMv2\TerminalServices -Filter "name='$($name)'"
 
         if ($state -in @('disabled', 'enabled')) {
             $cap_enabled = $state -ne 'disabled'
@@ -271,13 +288,23 @@ if ($state -eq 'absent') {
 
             $user_groups_diff = $null
             foreach($group in $groups_to_add) {
-                New-Item -Path "RDS:\GatewayServer\CAP\$name\UserGroups" -Name $group -WhatIf:$check_mode
+                if (-not $check_mode) {
+                    $return = $wmi_cap.AddUserGroupNames($group)
+                    if ($return.ReturnValue -ne 0) {
+                        Fail-Json -obj $result -message "Failed to add user group $($group) (code: $($return.ReturnValue))"
+                    }
+                }
                 $user_groups_diff += "  +$group`n"
                 $result.changed = $true
             }
 
             foreach($group in $groups_to_remove) {
-                Remove-Item -Path "RDS:\GatewayServer\CAP\$name\UserGroups\$group" -WhatIf:$check_mode
+                if (-not $check_mode) {
+                    $return = $wmi_cap.RemoveUserGroupNames($group)
+                    if ($return.ReturnValue -ne 0) {
+                        Fail-Json -obj $result -message "Failed to remove user group $($group) (code: $($return.ReturnValue))"
+                    }
+                }
                 $user_groups_diff += "  -$group`n"
                 $result.changed = $true
             }
@@ -293,13 +320,23 @@ if ($state -eq 'absent') {
 
             $computer_groups_diff = $null
             foreach($group in $groups_to_add) {
-                New-Item -Path "RDS:\GatewayServer\CAP\$name\ComputerGroups" -Name $group -WhatIf:$check_mode
+                if (-not $check_mode) {
+                    $return = $wmi_cap.AddComputerGroupNames($group)
+                    if ($return.ReturnValue -ne 0) {
+                        Fail-Json -obj $result -message "Failed to add computer group $($group) (code: $($return.ReturnValue))"
+                    }
+                }
                 $computer_groups_diff += "  +$group`n"
                 $result.changed = $true
             }
 
             foreach($group in $groups_to_remove) {
-                Remove-Item -Path "RDS:\GatewayServer\CAP\$name\ComputerGroups\$group" -WhatIf:$check_mode
+                if (-not $check_mode) {
+                    $return = $wmi_cap.RemoveComputerGroupNames($group)
+                    if ($return.ReturnValue -ne 0) {
+                        Fail-Json -obj $result -message "Failed to remove computer group $($group) (code: $($return.ReturnValue))"
+                    }
+                }
                 $computer_groups_diff += "  -$group`n"
                 $result.changed = $true
             }
