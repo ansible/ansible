@@ -160,7 +160,8 @@
 - name: Test ECC key generation
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey-{{ item.curve }}.pem'
-    type: "{{ item.curve }}"
+    type: ECC
+    curve: "{{ item.curve }}"
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: |
     cryptography_version.stdout is version(item.min_cryptography_version, '>=') and
@@ -173,7 +174,8 @@
 - name: Test ECC key generation (idempotency)
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey-{{ item.curve }}.pem'
-    type: "{{ item.curve }}"
+    type: ECC
+    curve: "{{ item.curve }}"
     select_crypto_backend: '{{ select_crypto_backend }}'
   when: |
     cryptography_version.stdout is version(item.min_cryptography_version, '>=') and

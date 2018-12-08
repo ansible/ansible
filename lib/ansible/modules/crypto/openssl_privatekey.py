@@ -49,8 +49,16 @@ options:
         choices:
             - RSA
             - DSA
+            - ECC
             # - X448
             # - X25519
+        description:
+            - The algorithm used to generate the TLS/SSL private key
+            - "Note that C(ECC) requires the C(cryptography) backend. Depending on the curve, you need a newer
+               version of the cryptography backend."
+    curve:
+        required: false
+        choices:
             - secp384r1
             - NIST-P-384
             - secp521r1
@@ -84,10 +92,9 @@ options:
             - sect163r2
             - NIST-B-163
         description:
-            - The algorithm used to generate the TLS/SSL private key
-            - "Note that all elliptic curves (i.e. everything but C(RSA) and C(DSA)) require the
-               C(cryptography) backend. Depending on the curve, you need a newer version of the
-               cryptography backend."
+            - Note that not all curves are supported by all versions of C(cryptography).
+            - For maximal interoperability, C(secp256k1) or C(secp384r1) should be used.
+        version_added: "2.8"
     force:
         required: false
         default: False
@@ -167,14 +174,20 @@ type:
     returned: changed or success
     type: string
     sample: RSA
+curve:
+    description: Elliptic curve used to generate the TLS/SSL private key
+    returned: changed or success, and I(type) is C(ECC)
+    type: string
+    sample: secp256k1
 filename:
     description: Path to the generated TLS/SSL private key file
     returned: changed or success
     type: string
     sample: /etc/ssl/private/ansible.com.pem
 fingerprint:
-    description: The fingerprint of the public key. Fingerprint will be generated for each hashlib.algorithms available.
-                 Requires PyOpenSSL >= 16.0 for meaningful output.
+    description: The fingerprint of the public key. Fingerprint will be generated for
+                 each C(hashlib.algorithms) available.
+                 The PyOpenSSL backend requires PyOpenSSL >= 16.0 for meaningful output.
     returned: changed or success
     type: dict
     sample:
@@ -452,6 +465,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
 
         self.type = module.params['type']
+        self.curve = module.params['curve']
         if not CRYPTOGRAPHY_HAS_X25519 and self.type == 'X25519':
             self.module.fail_json(msg='Your cryptography version does not support X25519')
         if not CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
@@ -474,11 +488,11 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.generate()
             if CRYPTOGRAPHY_HAS_X448 and self.type == 'X448':
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey.generate()
-            if self.type in self.curves:
-                if self.curves[self.type]['deprecated']:
-                    self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.type))
+            if self.type == 'ECC' and self.curve in self.curves:
+                if self.curves[self.curve]['deprecated']:
+                    self.module.warn('Elliptic curves of type {0} should not be used for new keys!'.format(self.curve))
                 self.privatekey = cryptography.hazmat.primitives.asymmetric.ec.generate_private_key(
-                    curve=self.curves[self.type]['create'](self.size),
+                    curve=self.curves[self.curve]['create'](self.size),
                     backend=self.cryptography_backend
                 )
         except cryptography.exceptions.UnsupportedAlgorithm as e:
@@ -540,9 +554,11 @@ class PrivateKeyCryptography(PrivateKeyBase):
         if CRYPTOGRAPHY_HAS_X448 and isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.x448.X448PrivateKey):
             return self.type == 'X448'
         if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePrivateKey):
-            if self.type not in self.curves:
+            if self.type != 'ECC':
                 return False
-            return self.curves[self.type]['verify'](privatekey)
+            if self.curve not in self.curves:
+                return False
+            return self.curves[self.curve]['verify'](privatekey)
 
         return False
 
@@ -550,6 +566,8 @@ class PrivateKeyCryptography(PrivateKeyBase):
         """Serialize the object into a dictionary."""
         result = super(PrivateKeyCryptography, self).dump()
         result['type'] = self.type
+        if self.type == 'ECC':
+            result['curve'] = self.curve
         return result
 
 
@@ -560,10 +578,12 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             size=dict(default=4096, type='int'),
             type=dict(default='RSA', choices=[
-                'RSA', 'DSA',
+                'RSA', 'DSA', 'ECC',
                 # x25519 is missing serialization functions: https://github.com/pyca/cryptography/issues/4386
                 # x448 is also missing it: https://github.com/pyca/cryptography/pull/4580#issuecomment-437913340
                 # 'X448', 'X25519',
+            ], type='str'),
+            curve=dict(choices=[
                 'secp384r1', 'NIST-P-384', 'secp521r1', 'NIST-P-521', 'secp224r1', 'NIST-P-224',
                 'secp192r1', 'NIST-P-192', 'secp256k1',
                 'brainpool-p256r1', 'brainpool-p384r1', 'brainpool-p512r1',
@@ -580,7 +600,12 @@ def main():
         ),
         supports_check_mode=True,
         add_file_common_args=True,
-        required_together=[['cipher', 'passphrase']],
+        required_together=[
+            ['cipher', 'passphrase']
+        ],
+        required_if=[
+            ['type', 'ECC', ['curve']],
+        ],
     )
 
     base_dir = os.path.dirname(module.params['path'])
