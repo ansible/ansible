@@ -1076,6 +1076,9 @@ files:
   lib/ansible/utils/module_docs_fragments/acme.py:
     support: community
     maintainers: resmo felixfontein
+  lib/ansible/utils/module_docs_fragments/docker.py:
+    support: community
+    maintainers: $team_docker
   lib/ansible/utils/module_docs_fragments/xenserver.py:
     support: community
     maintainers: bvitnik
