@@ -1,0 +1,2 @@
+bugfixes:
+- "Fixed: Make sure that the files excluded when extracting the archive are not checked. https://github.com/ansible/ansible/pull/45122"
