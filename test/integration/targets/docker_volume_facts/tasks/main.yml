@@ -19,7 +19,7 @@
       that:
       - "not result.exists"
       - "'docker_volume' in result"
-      - "not result.docker_volume"
+      - "result.docker_volume is none"
 
   - name: Make sure volume exists
     docker_volume:

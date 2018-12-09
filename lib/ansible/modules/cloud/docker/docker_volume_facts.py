@@ -72,7 +72,9 @@ exists:
     returned: always
     sample: true
 docker_volume:
-    description: Volume inspection results for the affected volume.
+    description:
+      - Volume inspection results for the affected volume.
+      - Will be C(None) if volume does not exist.
     returned: success
     type: dict
     sample: '{
