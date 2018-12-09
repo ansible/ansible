@@ -27,7 +27,7 @@ options:
   force:
     description:
       - Forces volume group creation.
-    choices: [True, False]
+    type: bool
     default: "no"
   pp_size:
     description:
