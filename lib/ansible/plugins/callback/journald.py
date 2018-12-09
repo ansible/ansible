@@ -28,7 +28,13 @@ DOCUMENTATION = '''
 import logging
 import getpass
 import os
-from systemd.journal import JournalHandler
+
+try:
+    from systemd.journal import JournalHandler
+    HAS_SYSTEMD = True
+except ImportError:
+    HAS_SYSTEMD = False
+
 from ansible.plugins.callback import CallbackBase
 from ansible.playbook.task_include import TaskInclude
 
@@ -57,11 +63,13 @@ class CallbackModule(CallbackBase):
         self.logger_name = self.get_option('logger_name') or 'ansible'
 
         self.logger = logging.getLogger(self.logger_name)
-        self.logger.addHandler(JournalHandler())
+        if HAS_SYSTEMD:
+            self.logger.addHandler(JournalHandler())
         self.logger.setLevel(logging.INFO)
 
     def _send_log(self, status, message):
-        self.logger.info('%s - PlaybookId[%s] %s: %s', self.username, self.playbook_id, status, message)
+        if HAS_SYSTEMD:
+            self.logger.info('%s - PlaybookId[%s] %s: %s', self.username, self.playbook_id, status, message)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if ignore_errors:

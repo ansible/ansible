@@ -73,7 +73,13 @@ DOCUMENTATION = '''
 
 import getpass
 import os
-import boto3
+
+try:
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 from ansible.plugins.callback import CallbackBase
 from ansible.playbook.task_include import TaskInclude
 
@@ -114,56 +120,60 @@ class CallbackModule(CallbackBase):
         self.aws_secret_access_key = self.get_option('aws_secret_access_key')
         self.aws_kms_key_id = self.get_option('aws_kms_key_id')
 
-        if self.aws_secret_access_key and self.aws_access_key_id:
-            self.boto_client = boto3.client('logs',
-                                            region_name=self.aws_region_name,
-                                            aws_access_key_id=self.aws_access_key_id,
-                                            aws_secret_access_key=self.aws_secret_access_key)
-        else:
-            self.boto_client = boto3.client('logs',
-                                            region_name=self.aws_region_name)
+        if HAS_BOTO3:
+            if self.aws_secret_access_key and self.aws_access_key_id:
+                self.boto_client = boto3.client('logs',
+                                                region_name=self.aws_region_name,
+                                                aws_access_key_id=self.aws_access_key_id,
+                                                aws_secret_access_key=self.aws_secret_access_key)
+            else:
+                self.boto_client = boto3.client('logs',
+                                                region_name=self.aws_region_name)
 
-        if not LogGroupPaginator(self.boto_client, self.log_group_name).exists(self.log_group_name):
-            self.create_log_group(self.boto_client, self.log_group_name)
+            if not LogGroupPaginator(self.boto_client, self.log_group_name).exists(self.log_group_name):
+                self.create_log_group(self.boto_client, self.log_group_name)
 
-        log_stream_paginator = LogStreamPaginator(self.boto_client, self.log_group_name, self.log_stream_name)
-        if not log_stream_paginator.exists(self.log_stream_name):
-            self.create_log_stream(self.boto_client, self.log_group_name, self.log_stream_name)
+            log_stream_paginator = LogStreamPaginator(self.boto_client, self.log_group_name, self.log_stream_name)
+            if not log_stream_paginator.exists(self.log_stream_name):
+                self.create_log_stream(self.boto_client, self.log_group_name, self.log_stream_name)
 
-        self.next_sequence_token = log_stream_paginator.sequence_token
+            self.next_sequence_token = log_stream_paginator.sequence_token
 
     def create_log_group(self, client, log_group_name):
-        if self.aws_kms_key_id:
-            client.create_log_group(
-                logGroupName=log_group_name,
-                kmsKeyId=self.aws_kms_key_id,
-            )
-        else:
-            client.create_log_group(
-                logGroupName=log_group_name,
-            )
+        if HAS_BOTO3:
+            if self.aws_kms_key_id:
+                client.create_log_group(
+                    logGroupName=log_group_name,
+                    kmsKeyId=self.aws_kms_key_id,
+                )
+            else:
+                client.create_log_group(
+                    logGroupName=log_group_name,
+                )
 
     def create_log_stream(self, client, log_group_name, log_stream_name):
-        client.create_log_stream(
-            logGroupName=log_group_name,
-            logStreamName=log_stream_name
-        )
+        if HAS_BOTO3:
+            client.create_log_stream(
+                logGroupName=log_group_name,
+                logStreamName=log_stream_name
+            )
 
     def _send_log_to_cloudwatch(self):
-        if self.next_sequence_token:
-            response = self.boto_client.put_log_events(
-                logGroupName=self.log_group_name,
-                logStreamName=self.log_stream_name,
-                logEvents=self._pending_logs,
-                sequenceToken=self.next_sequence_token
-            )
-        else:
-            response = self.boto_client.put_log_events(
-                logGroupName=self.log_group_name,
-                logStreamName=self.log_stream_name,
-                logEvents=self._pending_logs,
-            )
-        self.next_sequence_token = response['nextSequenceToken']
+        if HAS_BOTO3:
+            if self.next_sequence_token:
+                response = self.boto_client.put_log_events(
+                    logGroupName=self.log_group_name,
+                    logStreamName=self.log_stream_name,
+                    logEvents=self._pending_logs,
+                    sequenceToken=self.next_sequence_token
+                )
+            else:
+                response = self.boto_client.put_log_events(
+                    logGroupName=self.log_group_name,
+                    logStreamName=self.log_stream_name,
+                    logEvents=self._pending_logs,
+                )
+            self.next_sequence_token = response['nextSequenceToken']
 
     def _send_log(self, status, message):
         self._pending_logs.append(
