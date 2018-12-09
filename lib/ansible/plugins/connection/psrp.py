@@ -207,7 +207,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         if not C.DEFAULT_DEBUG:
-            logging.getLogger('pypsrp').setLevel(logging.INFO)
+            logging.getLogger('pypsrp').setLevel(logging.WARNING)
             logging.getLogger('requests_credssp').setLevel(logging.INFO)
             logging.getLogger('urllib3').setLevel(logging.INFO)
 
