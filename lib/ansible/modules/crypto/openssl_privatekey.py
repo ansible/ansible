@@ -29,7 +29,7 @@ description:
        overridden with the I(select_crypto_backend) option."
 requirements:
     - "One of the following Python libraries:"
-    - "cryptography >= 0.5"
+    - "cryptography >= 1.2.3 (older versions might work as well)"
     - "pyOpenSSL"
 options:
     state:
@@ -193,7 +193,7 @@ import traceback
 from distutils.version import LooseVersion
 
 MINIMAL_PYOPENSSL_VERSION = '0.6'
-MINIMAL_CRYPTOGRAPHY_VERSION = '0.5'
+MINIMAL_CRYPTOGRAPHY_VERSION = '1.2.3'
 
 try:
     import OpenSSL
