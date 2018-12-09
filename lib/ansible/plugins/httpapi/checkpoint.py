@@ -105,7 +105,7 @@ class HttpApi(HttpApiBase):
             self._ignore_http_errors = False
 
     def send_request(self, path, body_params):
-        data = json.dumps(body_params) if body_params else None
+        data = json.dumps(body_params) if body_params else '{}'
         headers = {'Content-Type': 'application/json', 'X-chkp-sid': self.sid}
 
         try:
