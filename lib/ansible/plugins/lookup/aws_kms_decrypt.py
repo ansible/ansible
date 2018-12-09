@@ -16,7 +16,7 @@ from ansible.plugins.lookup import LookupBase
 DOCUMENTATION = """
 lookup: :aws_kms_decrypt
 author:
-    - Achintha Gunasekara <contact@achinthagunasekara.com>
+    - Achintha Gunasekara (@achinthagunasekara) <contact@achinthagunasekara.com>
 version_added: "2.7"
 requirements:
     - boto3
