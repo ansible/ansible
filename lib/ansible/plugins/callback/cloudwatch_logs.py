@@ -92,6 +92,7 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display=display)
+        self.disabled = True
         self.boto_client = None
         self.logger = None
 
@@ -138,25 +139,27 @@ class CallbackModule(CallbackBase):
                 self.create_log_stream(self.boto_client, self.log_group_name, self.log_stream_name)
 
             self.next_sequence_token = log_stream_paginator.sequence_token
+            self.disabled = False
+        else:
+            self.disabled = True
+            self._display.warning('WARNING:\nPlease, install boto3 Python Package: `pip install boto3`')
 
     def create_log_group(self, client, log_group_name):
-        if HAS_BOTO3:
-            if self.aws_kms_key_id:
-                client.create_log_group(
-                    logGroupName=log_group_name,
-                    kmsKeyId=self.aws_kms_key_id,
-                )
-            else:
-                client.create_log_group(
-                    logGroupName=log_group_name,
-                )
+        if self.aws_kms_key_id:
+            client.create_log_group(
+                logGroupName=log_group_name,
+                kmsKeyId=self.aws_kms_key_id,
+            )
+        else:
+            client.create_log_group(
+                logGroupName=log_group_name,
+            )
 
     def create_log_stream(self, client, log_group_name, log_stream_name):
-        if HAS_BOTO3:
-            client.create_log_stream(
-                logGroupName=log_group_name,
-                logStreamName=log_stream_name
-            )
+        client.create_log_stream(
+            logGroupName=log_group_name,
+            logStreamName=log_stream_name
+        )
 
     def _send_log_to_cloudwatch(self):
         if HAS_BOTO3:

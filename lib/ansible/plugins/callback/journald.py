@@ -47,6 +47,7 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display=display)
+        self.disabled = True
         self.logger = None
         self.logger_name = None
         self.username = getpass.getuser()
@@ -60,12 +61,15 @@ class CallbackModule(CallbackBase):
                                                 var_options=var_options,
                                                 direct=direct)
 
-        self.logger_name = self.get_option('logger_name') or 'ansible'
-
-        self.logger = logging.getLogger(self.logger_name)
         if HAS_SYSTEMD:
+            self.logger_name = self.get_option('logger_name') or 'ansible'
+            self.logger = logging.getLogger(self.logger_name)
             self.logger.addHandler(JournalHandler())
-        self.logger.setLevel(logging.INFO)
+            self.logger.setLevel(logging.INFO)
+            self.disabled = False
+        else:
+            self.disabled = True
+            self._display.warning('WARNING:\nPlease, install systemd Python Package: `pip install systemd-python`')
 
     def _send_log(self, status, message):
         if HAS_SYSTEMD:
