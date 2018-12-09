@@ -271,7 +271,10 @@ options:
   user:
     required: false
     default: root
-    description: username or UID
+    description:
+    - username or UID.
+    - "If set to C(none) the docker daemon default value (or the one already
+       set for the service) will be used"
 extends_documentation_fragment:
 - docker
 requirements:
