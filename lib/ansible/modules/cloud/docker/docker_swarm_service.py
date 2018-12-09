@@ -273,7 +273,7 @@ options:
     default: root
     description:
     - username or UID.
-    - "If set to C(none) the docker daemon default value (or the one already
+    - "If set to C(null) the image provided value (or the one already
        set for the service) will be used"
 extends_documentation_fragment:
 - docker
