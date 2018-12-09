@@ -24,7 +24,7 @@ options:
     description:
       - Name of the volume to inspect.
     required: true
-    type: dict
+    type: str
     aliases:
       - volume_name
 
@@ -106,7 +106,7 @@ def get_existing_volume(client, volume_name):
 
 def main():
     argument_spec = dict(
-        volume_name=dict(type='str', required=True, aliases=['name']),
+        name=dict(type='str', required=True, aliases=['volume_name']),
     )
 
     client = AnsibleDockerClient(
