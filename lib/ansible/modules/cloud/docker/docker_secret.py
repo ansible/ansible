@@ -23,19 +23,21 @@ version_added: "2.4"
 description:
      - Create and remove Docker secrets in a Swarm environment. Similar to `docker secret create` and `docker secret rm`.
      - Adds to the metadata of new secrets 'ansible_key', an encrypted hash representation of the data, which is then used
-     - in future runs to test if a secret has changed.
-     - If 'ansible_key is not present, then a secret will not be updated unless the C(force) option is set.
+       in future runs to test if a secret has changed. If 'ansible_key is not present, then a secret will not be updated
+       unless the C(force) option is set.
      - Updates to secrets are performed by removing the secret and creating it again.
 options:
   data:
     description:
-      - String. The value of the secret. Required when state is C(present).
+      - The value of the secret. Required when state is C(present).
     required: false
+    type: str
   labels:
     description:
       - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
       - If new meta data is provided, or existing meta data is modified, the secret will be updated by removing it and creating it again.
     required: false
+    type: dict
   force:
     description:
       - Use with state C(present) to always remove and recreate an existing secret.
@@ -46,6 +48,7 @@ options:
     description:
       - The name of the secret.
     required: true
+    type: str
   state:
     description:
       - Set to C(present), if the secret should exist, and C(absent), if it should not.
@@ -134,7 +137,7 @@ RETURN = '''
 secret_id:
   description:
     - The ID assigned by Docker to the secret object.
-  returned: success
+  returned: success and C(state == "present")
   type: str
   sample: 'hzehrmyjigmcp2gb6nlhmjqcv'
 '''
