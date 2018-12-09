@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: pip_package_info
-short_description: pip package information as facts
+short_description: pip package information
 description:
-  - Return information about installed pip packages as facts
+  - Return information about installed pip packages
 version_added: "2.8"
 options:
   clients:
@@ -122,7 +122,7 @@ def main():
     global module
     module = AnsibleModule(argument_spec=dict(clients={'type': 'list', 'default': ['pip']},), supports_check_mode=True)
     packages = {}
-    results = {'warnings': [], 'packages': {}}
+    results = {'packages': {}}
     clients = module.params['clients']
 
     found = 0

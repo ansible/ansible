@@ -264,7 +264,7 @@ def main():
                                               strategy={'choices': ['first', 'all'], 'default': 'first'}),
                            supports_check_mode=True)
     packages = {}
-    results = {'warnings': []}
+    results = {'ansible_facts': {}}
     managers = [x.lower() for x in module.params['manager']]
     strategy = module.params['strategy']
 
@@ -307,7 +307,6 @@ def main():
     if found == 0:
         module.fail_json(msg='Could not detect a supported package manager from the following list: %s' % managers)
 
-    results['ansible_facts'] = {}
     # Set the facts, this will override the facts in ansible_facts that might exist from previous runs
     # when using operating system level or distribution package managers
     results['ansible_facts']['packages'] = packages
