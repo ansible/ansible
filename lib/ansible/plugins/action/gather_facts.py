@@ -39,7 +39,14 @@ class ActionModule(ActionBase):
 
         jobs = {}
         modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
-        if not force_serialization:
+        if force_serialization or len(modules) == 1:
+            # serially execute each module
+            for fact_module in modules:
+                # just one module, no need for fancy async
+                mod_args = self._get_module_args(fact_module, task_vars)
+                result.update(self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False))
+        else:
+            # do it async
             for fact_module in modules:
 
                 mod_args = self._get_module_args(fact_module, task_vars)
@@ -76,11 +83,6 @@ class ActionModule(ActionBase):
                 result['msg'] += "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
                 for fail in failed:
                     result['msg'] += '  %s: %s\n' % (fail, failed[fail])
-        else:
-            for fact_module in modules:
-                # just one module, no need for fancy async
-                mod_args = self._get_module_args(fact_module, task_vars)
-                result.update(self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False))
 
         # tell executor facts were gathered
         result['ansible_facts']['_ansible_facts_gathered'] = True
