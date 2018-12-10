@@ -255,6 +255,7 @@ from ansible.module_utils.docker_common import (
     DockerBaseClass,
     docker_version,
     DifferenceTracker,
+    clean_booleans_for_docker_api,
 )
 
 try:
@@ -313,22 +314,6 @@ def get_ip_version(cidr):
     elif CIDR_IPV6.match(cidr):
         return 'ipv6'
     raise ValueError('"{0}" is not a valid CIDR'.format(cidr))
-
-
-def get_driver_options(driver_options):
-    # TODO: Move this and the same from docker_prune.py to docker_common.py
-    result = dict()
-    if driver_options is not None:
-        for k, v in driver_options.items():
-            # Go doesn't like 'True' or 'False'
-            if v is True:
-                v = 'true'
-            elif v is False:
-                v = 'false'
-            else:
-                v = str(v)
-            result[str(k)] = v
-    return result
 
 
 class DockerNetworkManager(object):
@@ -410,7 +395,7 @@ class DockerNetworkManager(object):
             self.parameters.ipam_config = [self.parameters.ipam_options]
 
         if self.parameters.driver_options:
-            self.parameters.driver_options = get_driver_options(self.parameters.driver_options)
+            self.parameters.driver_options = clean_booleans_for_docker_api(self.parameters.driver_options)
 
         state = self.parameters.state
         if state == 'present':

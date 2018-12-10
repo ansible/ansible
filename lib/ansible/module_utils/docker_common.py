@@ -741,3 +741,23 @@ class DifferenceTracker(object):
         '''
         result = [entry['name'] for entry in self._diff]
         return result
+
+
+def clean_booleans_for_docker_api(data):
+    '''
+    Go doesn't like Python booleans 'True' or 'False', while Ansible is just
+    fine with them in YAML. As such, they need to be converted in cases where
+    we pass dictionaries to the Docker API (e.g. docker_network's
+    driver_options and docker_prune's filters).
+    '''
+    result = dict()
+    if data is not None:
+        for k, v in data.items():
+            if v is True:
+                v = 'true'
+            elif v is False:
+                v = 'false'
+            else:
+                v = str(v)
+            result[str(k)] = v
+    return result
