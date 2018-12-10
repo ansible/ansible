@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "Fix if the route table changed to none (https://github.com/ansible/ansible/pull/49533)"

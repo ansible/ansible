@@ -221,6 +221,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         if self.security_group:
             nsg = self.parse_nsg()
 
+        route_table = dict()
         if self.route_table:
             route_table = self.parse_resource_to_dict(self.route_table)
             self.route_table = format_resource_id(val=route_table['name'],
@@ -256,7 +257,8 @@ class AzureRMSubnet(AzureRMModuleBase):
                 if self.route_table != results['route_table'].get('id'):
                     changed = True
                     results['route_table']['id'] = self.route_table
-                    self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table['name']))
+                    self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table.get('name')))
+
             elif self.state == 'absent':
                 changed = True
         except CloudError:
