@@ -24,29 +24,29 @@ We want reading the docs to feel like having an experienced, friendly colleague
 explain how Ansible works. This cheat-sheet illustrates a few rules that
 help achieve the "Ansible tone":
 
-+---------------------------+------------------------------+----------------------------------------+
-| Use                       | Good example                 | Bad example                            |
-+===========================+==============================+========================================+
-| Active voice              | You can run a task by        | A task can be run by                   |
-+---------------------------+------------------------------+----------------------------------------+
-| Present tense             | This command creates a       | This command will create a             |
-+---------------------------+------------------------------+----------------------------------------+
-| Direct address            | As you expand your inventory | When the number of managed nodes grows |
-+---------------------------+------------------------------+----------------------------------------+
-| Standard American English | Return to this page          | Hop back to this page                  |
-+---------------------------+------------------------------+----------------------------------------+
-
-Mechanical guidelines
-=====================
-
-The Ansible documentation is written in reStructuredText and processed by Sphinx.
-We follow these technical or mechanical guidelines on all rST pages:
++-------------------------------+------------------------------+----------------------------------------+
+| Rule                          | Good example                 | Bad example                            |
++===============================+==============================+========================================+
+| Use active voice              | You can run a task by        | A task can be run by                   |
++-------------------------------+------------------------------+----------------------------------------+
+| Use the present tense         | This command creates a       | This command will create a             |
++-------------------------------+------------------------------+----------------------------------------+
+| Address the reader            | As you expand your inventory | When the number of managed nodes grows |
++-------------------------------+------------------------------+----------------------------------------+
+| Use standard American English | Return to this page          | Hop back to this page                  |
++-------------------------------+------------------------------+----------------------------------------+
 
 Header case
 -----------
 
 Headers should be written in sentence case. For example, this section's title is
 ``Header case``, not ``Header Case`` or ``HEADER CASE``.
+
+reStructuredText guidelines
+===========================
+
+The Ansible documentation is written in reStructuredText and processed by Sphinx.
+We follow these technical or mechanical guidelines on all rST pages:
 
 Header notation
 ---------------
