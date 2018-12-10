@@ -78,7 +78,6 @@ RETURN = '''
 '''
 
 import time
-import urllib
 
 try:
     import ovh
@@ -89,6 +88,7 @@ except ImportError:
     HAS_OVH = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import quote_plus
 
 
 def getOvhClient(ansibleModule):
@@ -107,7 +107,7 @@ def getOvhClient(ansibleModule):
 
 def waitForNoTask(client, name, timeout):
     currentTimeout = timeout
-    while client.get('/ip/{0}/task'.format(urllib.quote_plus(name)),
+    while client.get('/ip/{0}/task'.format(quote_plus(name)),
                      function='genericMoveFloatingIp',
                      status='todo'):
         time.sleep(1)  # Delay for 1 sec
@@ -172,7 +172,7 @@ def main():
                 .format(apiError))
 
     try:
-        ipproperties = client.get('/ip/{0}'.format(urllib.quote_plus(name)))
+        ipproperties = client.get('/ip/{0}'.format(quote_plus(name)))
     except APIError as apiError:
         module.fail_json(
             msg='Unable to call OVH api for getting the properties '
@@ -182,8 +182,7 @@ def main():
 
     if ipproperties['routedTo']['serviceName'] != service:
         if not module.check_mode:
-            client.post('/ip/{0}/move'.format(urllib.quote_plus(name)), to=service)
-            time.sleep(3)  # Delay for 3 secs to wait for task created
+            client.post('/ip/{0}/move'.format(quote_plus(name)), to=service)
             if not waitForNoTask(client, name, timeout):
                 module.fail_json(
                     msg='Timeout of {0} seconds while waiting for completion '
