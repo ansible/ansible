@@ -33,7 +33,9 @@ help achieve the "Ansible tone":
 +-------------------------------+------------------------------+----------------------------------------+
 | Address the reader            | As you expand your inventory | When the number of managed nodes grows |
 +-------------------------------+------------------------------+----------------------------------------+
-| Use standard American English | Return to this page          | Hop back to this page                  |
+| Use standard English          | Return to this page          | Hop back to this page                  |
++-------------------------------+------------------------------+----------------------------------------+
+| Use American English          | The color of the output      | The colour of the output               |
 +-------------------------------+------------------------------+----------------------------------------+
 
 Header case
@@ -51,9 +53,10 @@ We follow these technical or mechanical guidelines on all rST pages:
 Header notation
 ---------------
 
-Headers in reStructuredText can use a variety of notations.
+`Section headers in reStructuredText <http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#sections>`_
+can use a variety of notations.
 Sphinx will 'learn on the fly' when creating a hierarchy of headers.
-To make our documents easy to read and to edit, we created a standard set of header notations.
+To make our documents easy to read and to edit, we follow a standard set of header notations.
 We use:
 
 * ``###`` with overline, for parts::
@@ -92,8 +95,11 @@ We use:
 Internal navigation
 -------------------
 
-Anchors and links work together to help users find related content. Local tables of contents also help users navigate quickly to the information they need.
-All internal links should use the ``:ref:`` syntax. Every page should have at least one anchor to support internal ``:ref:`` links.
+`Anchors (also called labels) and links <http://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_
+work together to help users find related content.
+Local tables of contents also help users navigate quickly to the information they need.
+All internal links should use the ``:ref:`` syntax.
+Every page should have at least one anchor to support internal ``:ref:`` links.
 Long pages, or pages with multiple levels of headers, can also include a local TOC.
 
 Adding anchors
@@ -120,7 +126,8 @@ The second example adds custom text for the link.
 Adding local TOCs
 ^^^^^^^^^^^^^^^^^
 
-This page includes a local TOC. If you include a local TOC:
+The page you're reading includes a `local TOC <http://docutils.sourceforge.net/docs/ref/rst/directives.html#table-of-contents>`_.
+If you include a local TOC:
 
 * place it below, not above, the main heading and (optionally) introductory text
 * use the ``:local:`` directive so the page's main header is not included
