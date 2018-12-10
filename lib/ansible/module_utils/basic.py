@@ -2745,6 +2745,9 @@ class AnsibleModule(object):
             after ``Popen`` object will be created
             but before communicating to the process.
             (``Popen`` object will be passed to callback as a first argument)
+        :kw raise_timeouts: This is a boolean, which when True, will allow the
+            caller to deal with timeout exceptions. When false we use the previous
+            behaviour of having run_command directly call fail_json when they occur.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
