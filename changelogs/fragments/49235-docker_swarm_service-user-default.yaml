@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - 'docker_swarm_service: fails because of default "user: root" (https://github.com/ansible/ansible/issues/49199)'
+minor_changes:
+  - 'docker_swarm_service: use docker defaults for the ``user`` parameter if it is set to ``null``'
