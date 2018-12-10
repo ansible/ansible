@@ -282,6 +282,11 @@ EXAMPLES = """
       - boot system flash bootflash:{{new_image}}
     host: "{{ inventory_hostname }}"
   when: ansible_net_version != version
+
+- name: render a Jinja2 template onto an IOS device
+  ios_config:
+    backup: yes
+    src: ios_template.j2
 """
 
 RETURN = """
