@@ -750,7 +750,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         security_groups_changed = self.security_groups_has_changed()
 
         # Volume data
-
         args_volume_update = {}
         root_disk_size = self.module.params.get('root_disk_size')
         root_disk_size_changed = False
@@ -824,13 +823,14 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                     if instance_state == 'running' and start_vm:
                         instance = self.start_instance()
             else:
-                self.module.warn("Changes won't be applied to running instances. " +
+                self.module.warn("Changes won't be applied to running instances. "
                                  "Use force=true to allow the instance %s to be stopped/started." % instance['name'])
 
         # migrate to other host
         host_changed = all([
-            instance['state'].lower() == 'running',
-            self.module.params.get('host'),
+            instance['state'].lower() in ['starting', 'running'],
+            instance.get('hostname') is not None,
+            self.module.params.get('host') is not None,
             self.module.params.get('host') != instance.get('hostname')
         ])
         if host_changed:
