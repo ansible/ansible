@@ -22,6 +22,11 @@ description:
      - This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks.
      - It can also be executed directly by C(/usr/bin/ansible) to check what variables are available to a host.
      - Ansible provides many I(facts) about the system, automatically.
+options:
+    force_serialization:
+        description: A toggle that forces fact modules to be executed serialy.
+        type: bool
+        default: False
 notes:
     - This module is mostly a wrapper around other fact gathering modules.
     - Options passed to this module must be supported by all the underlying fact modules configured.
