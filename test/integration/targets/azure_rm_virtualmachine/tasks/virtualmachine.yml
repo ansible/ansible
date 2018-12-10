@@ -395,7 +395,7 @@
   register: generalized_output
 
 - assert:
-      that: output.vms[0].power_state == 'generalized'
+      that: generalized_output.vms[0].power_state == 'generalized'
 
 - name: Delete dual NIC VM
   azure_rm_virtualmachine:
