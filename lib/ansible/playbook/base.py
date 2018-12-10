@@ -13,7 +13,6 @@ from functools import partial
 
 from jinja2.exceptions import UndefinedError
 
-from ansible import constants as C
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
@@ -349,6 +348,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         omit_value = templar._available_variables.get('omit')
 
         for (name, attribute) in iteritems(self._valid_attrs):
+
+            if attribute.static:
+                continue
 
             if getattr(self, name) is None:
                 if not attribute.required:
