@@ -21,13 +21,13 @@ description:
   - Create/remove Docker volumes.
   - Performs largely the same function as the "docker volume" CLI subcommand.
 options:
-  name:
+  volume_name:
     description:
       - Name of the volume to operate on.
     required: true
-    type: dict
+    type: str
     aliases:
-      - volume_name
+      - name
 
   driver:
     description:
