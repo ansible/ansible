@@ -24,11 +24,11 @@ version_added: "2.8"
 options:
   idxname:
     description:
-      - Name of the index to add or remove.
+      - Name of the index to create or drop.
     required: true
   db:
     description:
-      - Name of database where the index will be created/removed.
+      - Name of database where the index will be created/dropped.
   port:
     description:
       - Database port to connect.
@@ -67,7 +67,7 @@ options:
     choices: ["present", "absent"]
   table:
     description:
-      - Table of the index.
+      - Table to create index on it.
     required: true
   columns:
     description:
@@ -124,7 +124,7 @@ EXAMPLES = '''
 # Drop btree test_idx concurrently
 - postgresql_idx:
     db: mydb
-    idxname: test__idx
+    idxname: test_idx
     state: absent
 
 # Create btree index test_idx concurrently on columns id,comment where column id > 1
@@ -300,17 +300,17 @@ def main():
             module.fail_json(msg="At least one column must be specified")
     else:
         if table is not None:
-            module.fail_json(msg="Index is going to be removed, so "
-                                 "it does not make sence to pass a table name")
+            module.fail_json(msg="Index %s is going to be removed, so it does not "
+                                 "make sense to pass a table name" % idxname)
         if columns is not None:
-            module.fail_json(msg="Index is going to be removed, so "
-                                 "it does not make sence to pass column names")
+            module.fail_json(msg="Index %s is going to be removed, so it does not "
+                                 "make sense to pass column names" % idxname)
         if cond is not None:
-            module.fail_json(msg="Index is going to be removed, so "
-                                 "it does not make sence to pass any conditions")
+            module.fail_json(msg="Index %s is going to be removed, so it does not "
+                                 "make sense to pass any conditions" % idxname)
         if idxtype is not None:
-            module.fail_json(msg="Index is going to be removed, so "
-                                 "it does not make sence to pass an index type")
+            module.fail_json(msg="Index %s is going to be removed, so it does not "
+                                 "make sense to pass an index type" % idxname)
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -340,9 +340,9 @@ def main():
             msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
 
     if module.check_mode and concurrent:
-            module.fail_json(msg="Cannot concurrently create or drop index "
-                                 "inside the transaction block. "
-                                 "The check is possible in not concurrent mode only")
+            module.fail_json(msg="Cannot concurrently create or drop index %s "
+                                 "inside the transaction block. The check is possible "
+                                 "in not concurrent mode only" % idxname)
 
     try:
         db_connection = psycopg2.connect(**kw)
@@ -369,7 +369,8 @@ def main():
 
     if state == "present":
         if idxtype is not None and idxtype.upper() not in VALID_IDX_TYPES:
-            module.fail_json(msg="Index type is not in valid types" % idxname)
+            module.fail_json(msg="Index type '%s' of %s is not "
+                                 "in valid types" % (idxtype, idxname))
 
         try:
             changed = index_create(cursor, module, idxname, table,
@@ -378,8 +379,8 @@ def main():
         except SQLParseError as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         except psycopg2.ProgrammingError as e:
-            module.fail_json(msg="Unable to create index with given "
-                                 "requirement due to : %s" % to_native(e),
+            module.fail_json(msg="Unable to create %s index with given "
+                                 "requirement due to : %s" % (idxname, to_native(e)),
                              exception=traceback.format_exc())
     else:
         try:
@@ -388,7 +389,7 @@ def main():
         except SQLParseError as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         except psycopg2.ProgrammingError as e:
-            module.fail_json(msg="Unable to drop index due to : %s" % to_native(e),
+            module.fail_json(msg="Unable to drop index %s due to : %s" % (idxname, to_native(e)),
                              exception=traceback.format_exc())
 
     if not concurrent:
