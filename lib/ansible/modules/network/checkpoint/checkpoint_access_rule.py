@@ -2,7 +2,7 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
-from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.network.checkpoint.checkpoint import publish, install_policy
 import json
 
 
@@ -47,13 +47,6 @@ def delete_access_rule(module, connection):
 
     return res
 
-def publish(module, connection):
-    res = connection.send_request('/web_api/publish', None)
-
-def install_policy(module, connection):
-    payload = {'policy-package': 'standard'}
-    res = connection.send_request('/web_api/install-policy', payload)
-
 def main():
     argument_spec = dict(
         name=dict(type='str'),
@@ -73,8 +66,7 @@ def main():
     if module.params['state'] == 'present':
         if code == 200:
             # Handle update
-            result['changed'] = False
-            result['checkpoint_access_rules'] = response
+            pass
         else:
             response = create_access_rule(module, connection)
             publish(module, connection)
@@ -90,9 +82,9 @@ def main():
             install_policy(module, connection)
             result['changed'] = True
             result['checkpoint_access_rules'] = response
+            pass
         elif code == 404:
-            result['changed'] = False
-            result['checkpoint_access_rules'] = response
+            pass
 
     module.exit_json(**result)
 if __name__ == '__main__':
