@@ -278,7 +278,6 @@ def _ssh_retry(func):
                         msg += to_native(return_tuple[2])
                     raise AnsibleConnectionFailure(msg)
 
-
             except (AnsibleConnectionFailure, Exception) as e:
                 if attempt == remaining_tries - 1:
                     raise
