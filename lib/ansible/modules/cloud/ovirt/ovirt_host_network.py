@@ -78,8 +78,9 @@ options:
         type: bool
     sync_networks:
         description:
-            - "If I(true) networks will synchronize."
+            - "If I(true) all networks will be synchronized before modification"
         type: bool
+        default: false
         version_added: 2.8
 extends_documentation_fragment: ovirt
 '''
@@ -378,7 +379,7 @@ def main():
         nics_service = host_service.nics_service()
         nic = search_by_name(nics_service, nic_name)
 
-        if module.params["sync_networks"]:
+        if module.params["sync_networks"] and not module.check_mode:
             if needs_sync(nics_service):
                 host_service.sync_all_networks()
                 host_networks_module.changed = True
