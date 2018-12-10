@@ -79,31 +79,31 @@ notes:
 
 EXAMPLES = '''
 # Example git clone using https 
-name: git clone using https 
-win_git:
-  repo: "https://github.com/githubtraining/hellogitworld"
-  dest: "{{ ansible_env.TEMP }}\\hellogitworld"  
+- name: git clone using https 
+  win_git:
+    repo: "https://github.com/githubtraining/hellogitworld"
+    dest: "{{ ansible_env.TEMP }}\\hellogitworld"  
 
 # Example git clone using specific version
-name: git clone using specific version
-win_git:
-  repo: 'https://foosball.example.org/path/to/repo.git'
-  dest: "{{ ansible_env.TEMP }}\\hellogitworld"    
-  version: release-0.22     
+- name: git clone using specific version
+  win_git:
+    repo: 'https://foosball.example.org/path/to/repo.git'
+    dest: "{{ ansible_env.TEMP }}\\hellogitworld"    
+    version: release-0.22     
 
 # Example git clone using ssh. Also clean up existing directory
-name: git clone using ssh
-win_git:          
-  repo: git@github.com:githubtraining/hellogitworld.git          
-  dest: c:\windows\temp\hellogitworld_ssh     
-  replace_dest: yes
-  key_file: 'c:\windows\temp\id_rsa'
+- name: git clone using ssh
+  win_git:          
+    repo: git@github.com:githubtraining/hellogitworld.git          
+    dest: c:\windows\temp\hellogitworld_ssh     
+    replace_dest: yes
+    key_file: 'c:\windows\temp\id_rsa'
 
 # Example git clone using git protocol. Update if the folder already cloned
-name: git clone using git protocol
-win_git:          
-    repo: git://github.com/githubtraining/hellogitworld.git          
-    dest: c:\windows\temp\hellogitworld_git
-    update: yes       
+- name: git clone using git protocol
+  win_git:          
+      repo: git://github.com/githubtraining/hellogitworld.git          
+      dest: c:\windows\temp\hellogitworld_git
+      update: yes       
   
 '''
