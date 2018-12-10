@@ -78,6 +78,20 @@ EXAMPLES = '''
       scheduler_hints:
         same_host: 243e8d3c-8f47-4a61-93d6-7215c344b0c0
 '''
+
+RETURNS = '''
+id:
+  description: Cinder's unique ID for this volume
+  returned: always
+  type: str
+  sample: fcc4ac1c-e249-4fe7-b458-2138bfb44c06
+
+volume:
+  description: Cinder's representation of the volume object
+  returned: always
+  type: dict
+  sample: {'...'}
+'''
 from distutils.version import StrictVersion
 
 
