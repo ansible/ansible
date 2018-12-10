@@ -46,7 +46,7 @@ options:
     description:
     - Run independent of selinux runtime state
     type: bool
-    default: 'no'
+    default: false
     version_added: '2.8'
 notes:
    - The changes are persistent across reboots.

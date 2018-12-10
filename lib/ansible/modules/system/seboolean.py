@@ -36,7 +36,7 @@ options:
     description:
     - Run independent of selinux runtime state
     type: bool
-    default: 'no'
+    default: false
     version_added: '2.8'
 notes:
    - Not tested on any Debian based system.
