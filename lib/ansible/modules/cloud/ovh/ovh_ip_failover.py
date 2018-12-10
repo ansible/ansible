@@ -20,7 +20,7 @@ description:
     - Manage OVH (French European hosting provider) IP Failover Address. For now, this module can only be used to move
       an ip failover (or failover block) between services
 version_added: "2.8"
-author: "Pascal HERAUD @pascalheraud"
+author: "Pascal HERAUD (@pascalheraud)"
 notes:
     - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
       You have to create an application (a key and secret) with a consummer
