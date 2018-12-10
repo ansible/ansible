@@ -76,13 +76,19 @@ class AdHocCLI(CLI):
 
     def _play_ds(self, pattern, async_val, poll):
         check_raw = self.options.module_name in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
+
+        mytask = {'action': {'module': self.options.module_name, 'args': parse_kv(self.options.module_args, check_raw=check_raw)}}
+
+        # avoid adding to tasks that don't support it, unless set, then give user an error
+        if self.options.module_name not in ('include_role', 'include_tasks') or any(async_val, poll):
+            mytask['async_val'] = async_val
+            mytask['poll'] = poll
+
         return dict(
             name="Ansible Ad-Hoc",
             hosts=pattern,
             gather_facts='no',
-            tasks=[dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args, check_raw=check_raw)), async_val=async_val,
-                        poll=poll)]
-        )
+            tasks=[mytask])
 
     def run(self):
         ''' create and execute the single task playbook '''
