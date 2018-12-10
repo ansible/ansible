@@ -68,7 +68,7 @@ class HttpApi(HttpApiBase):
             if self._session_support:
                 return self._session_support
 
-            response = self.get('show configuration sessions')
+            response = self.send_request('show configuration sessions')
             self._session_support = 'error' not in response
 
         return self._session_support
@@ -114,7 +114,7 @@ class HttpApi(HttpApiBase):
         device_info['network_os_version'] = data['version']
         device_info['network_os_model'] = data['modelName']
 
-        reply = self.get('show hostname | json')
+        reply = self.send_request('show hostname | json')
         data = json.loads(reply)
 
         device_info['network_os_hostname'] = data['hostname']
@@ -125,16 +125,16 @@ class HttpApi(HttpApiBase):
     def get_device_operations(self):
         return {
             'supports_diff_replace': True,
-            'supports_commit': True if self.supports_sessions else False,
+            'supports_commit': bool(self.supports_sessions),
             'supports_rollback': False,
             'supports_defaults': False,
-            'supports_onbox_diff': True if self.supports_sessions else False,
+            'supports_onbox_diff': bool(self.supports_sessions),
             'supports_commit_comment': False,
             'supports_multiline_delimiter': False,
             'supports_diff_match': True,
             'supports_diff_ignore_lines': True,
-            'supports_generate_diff': False if self.supports_sessions else True,
-            'supports_replace': True if self.supports_sessions else False,
+            'supports_generate_diff': not bool(self.supports_sessions),
+            'supports_replace': bool(self.supports_sessions),
         }
 
     def get_capabilities(self):
