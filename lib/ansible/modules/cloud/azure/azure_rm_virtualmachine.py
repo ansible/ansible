@@ -74,6 +74,7 @@ options:
             - Please note that this operation is irreversible.
         default: true
         type: bool
+        version_added: "2.8"
     restarted:
         description:
             - Use with state 'present' to restart a running VM.

@@ -321,12 +321,12 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         image = result['properties']['storageProfile'].get('imageReference')
         if image is not None:
             if image.get('publisher', None) is not None:
-            new_result['image'] = {
-                'publisher': image['publisher'],
-                'sku': image['sku'],
-                'offer': image['offer'],
-                'version': image['version']
-            }
+                new_result['image'] = {
+                    'publisher': image['publisher'],
+                    'sku': image['sku'],
+                    'offer': image['offer'],
+                    'version': image['version']
+                }
             else:
                 new_result['image'] = {
                     'id': image.get('id', None)
