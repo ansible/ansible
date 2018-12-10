@@ -457,6 +457,45 @@ class AnsibleDockerClient(Client):
 
         return result
 
+    def get_network(self, name=None, id=None):
+        '''
+        Lookup a network and return the inspection results.
+        '''
+        if name is None and id is None:
+            return None
+
+        result = None
+
+        if id is None:
+            try:
+                for network in self.networks():
+                    self.log("testing network: %s" % (network['Name']))
+                    if name == network['Name']:
+                        result = network
+                        break
+                    if network['Id'].startswith(name):
+                        result = network
+                        break
+            except SSLError as exc:
+                self._handle_ssl_error(exc)
+            except Exception as exc:
+                self.fail("Error retrieving network list: %s" % exc)
+
+        if result is not None:
+            id = result['Id']
+
+        if id is not None:
+            try:
+                self.log("Inspecting network Id %s" % id)
+                result = self.inspect_network(id)
+                self.log("Completed network inspection")
+            except NotFound as exc:
+                return None
+            except Exception as exc:
+                self.fail("Error inspecting network: %s" % exc)
+
+        return result
+
     def find_image(self, name, tag):
         '''
         Lookup an image (by name and tag) and return the inspection results.
