@@ -12,9 +12,9 @@ def get_access_rule(module, connection):
 
     payload = {'name': name, 'layer': layer}
 
-    res = connection.send_request('/web_api/show-access-rule', payload)
+    code, response = connection.send_request('/web_api/show-access-rule', payload)
 
-    return res
+    return code, response
 
 def create_access_rule(module, connection):
     name = module.params['name']
@@ -31,9 +31,30 @@ def create_access_rule(module, connection):
                'destination': destination,
                'action': action}
 
-    res = connection.send_request('/web_api/add-access-rule', payload)
+    code, response = connection.send_request('/web_api/add-access-rule', payload)
 
-    return res
+    return code, response
+
+def update_access_rule(module, connection):
+    name = module.params['name']
+    layer = module.params['layer']
+    position = module.params['position']
+    source = module.params['source']
+    destination = module.params['destination']
+    action = module.params['action']
+    enabled = module.params['enabled']
+
+    payload = {'name': name,
+               'layer': layer,
+               'position': position,
+               'source': source,
+               'destination': destination,
+               'action': action,
+               'enabled': enabled}
+
+    code, response = connection.send_request('/web_api/set-access-rule', payload)
+
+    return code, response
 
 def delete_access_rule(module, connection):
     name = module.params['name']
@@ -43,7 +64,21 @@ def delete_access_rule(module, connection):
                'layer': layer,
               }
 
-    res = connection.send_request('/web_api/delete-access-rule', payload)
+    code, response = connection.send_request('/web_api/delete-access-rule', payload)
+
+    return code, response
+
+def needs_update(module, access_rule):
+    res = False
+
+    if module.params['source'] != access_rule['source'][0]['name']:
+        res = True
+    if module.params['destination'] != access_rule['destination'][0]['name']:
+        res = True
+    if module.params['action'] != access_rule['action']['name']:
+        res = True
+    if module.params['enabled'] != access_rule['enabled']:
+        res = True
 
     return res
 
@@ -55,6 +90,7 @@ def main():
         source=dict(type='str'),
         destination=dict(type='str'),
         action=dict(type='str'),
+        enabled=dict(type='bool', default=True),
         state=dict(type='str', default='present')
     )
 
@@ -65,23 +101,27 @@ def main():
 
     if module.params['state'] == 'present':
         if code == 200:
-            # Handle update
-            pass
+            if needs_update(module, response):
+                code, response = update_access_rule(module, connection)
+                publish(module, connection)
+                install_policy(module, connection)
+                result['changed'] = True
+                result['checkpoint_access_rules'] = response
+            else:
+                pass
         else:
-            response = create_access_rule(module, connection)
+            code, response = create_access_rule(module, connection)
             publish(module, connection)
             install_policy(module, connection)
             result['changed'] = True
             result['checkpoint_access_rules'] = response
-
     else:
         if code == 200:
             # Handle deletion
-            response = delete_access_rule(module, connection)
+            code, response = delete_access_rule(module, connection)
             publish(module, connection)
             install_policy(module, connection)
             result['changed'] = True
-            result['checkpoint_access_rules'] = response
             pass
         elif code == 404:
             pass
