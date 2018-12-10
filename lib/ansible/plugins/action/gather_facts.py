@@ -24,12 +24,11 @@ class ActionModule(ActionBase):
             mod_args = self._task.args.copy()
 
         if fact_module != 'setup':
-            mod_args.pop('gather_subset', None)
+            subset = mod_args.pop('gather_subset', None)
 
         return mod_args
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for package operations '''
 
         self._supports_check_mode = True
 
@@ -64,7 +63,7 @@ class ActionModule(ActionBase):
                     time.sleep(0.5)
 
             if skipped:
-                result['msg'] = "The following modules where skipped: %s\n" % (', '.join(skipped.keys()))
+                result['msg'] = "The following modules were skipped: %s\n" % (', '.join(skipped.keys()))
                 for skip in skipped:
                     result['msg'] += '  %s: %s\n' % (skip, skipped[skip])
                 if len(skipped) == len(modules):
