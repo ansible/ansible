@@ -4,7 +4,9 @@
 Ansible API Documentation
 *************************
 
-The Ansible API is under construction. These stub references will be documented in future.
+The Ansible API is under construction. These stub references will be documented in future.  For now, there is a legacy :ref:`documentation page <ansible.module_utils>` for the ``AnsibleModule``.
+
+
 
 .. contents::
    :local:
@@ -48,7 +50,8 @@ Deprecated in favor of ansibleModule._selinux_special_fs.
 Classes
 =======
 
-.. py:class:: ansible.module_utils.basic.AnsibleModule
+.. py:class:: ``ansible.module_utils.basic.AnsibleModule``
+   :noindex:
 
 The basic utilities for AnsibleModule.
 
