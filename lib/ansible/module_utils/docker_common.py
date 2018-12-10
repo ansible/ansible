@@ -422,7 +422,7 @@ class AnsibleDockerClient(Client):
 
     def _get_minimal_versions(self, option_minimal_versions, ignore_params=None):
         self.option_minimal_versions = dict()
-        for option, data in self.module.argument_spec.items():
+        for option in self.module.argument_spec:
             if ignore_params is not None:
                 if option in ignore_params:
                     continue

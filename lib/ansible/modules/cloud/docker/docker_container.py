@@ -2772,11 +2772,49 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
                     return True
             return False
-        if 'option_minimal_versions' in kwargs:
-            if 'ipvX_address_supported' in kwargs['option_minimal_versions']:
-                if 'detect_usage' not in kwargs['option_minimal_versions']['ipvX_address_supported']:
-                    kwargs['option_minimal_versions']['ipvX_address_supported']['detect_usage'] = detect_ipvX_address_usage
-        super(AnsibleDockerClientContainer, self).__init__(option_minimal_versions_ignore_params=self.__NON_CONTAINER_PROPERTY_OPTIONS, **kwargs)
+
+        option_minimal_versions = dict(
+            # internal options
+            log_config=dict(),
+            publish_all_ports=dict(),
+            ports=dict(),
+            volume_binds=dict(),
+            name=dict(),
+            # normal options
+            device_read_bps=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
+            device_read_iops=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
+            device_write_bps=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
+            device_write_iops=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
+            dns_opts=dict(docker_api_version='1.21', docker_py_version='1.10.0'),
+            ipc_mode=dict(docker_api_version='1.25'),
+            mac_address=dict(docker_api_version='1.25'),
+            oom_killer=dict(docker_py_version='2.0.0'),
+            oom_score_adj=dict(docker_api_version='1.22', docker_py_version='2.0.0'),
+            shm_size=dict(docker_api_version='1.22'),
+            stop_signal=dict(docker_api_version='1.21'),
+            tmpfs=dict(docker_api_version='1.22'),
+            volume_driver=dict(docker_api_version='1.21'),
+            memory_reservation=dict(docker_api_version='1.21'),
+            kernel_memory=dict(docker_api_version='1.21'),
+            auto_remove=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+            healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.24'),
+            init=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
+            runtime=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
+            sysctls=dict(docker_py_version='1.10.0', docker_api_version='1.24'),
+            userns_mode=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
+            uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
+            pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
+            # specials
+            ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
+                                        usage_msg='ipv4_address or ipv6_address in networks'),  # see above
+            stop_timeout=dict(),  # see _get_additional_minimal_versions()
+        )
+
+        super(AnsibleDockerClientContainer, self).__init__(
+            option_minimal_versions=option_minimal_versions,
+            option_minimal_versions_ignore_params=self.__NON_CONTAINER_PROPERTY_OPTIONS,
+            **kwargs
+        )
         self._get_additional_minimal_versions()
         self._parse_comparisons()
 
@@ -2897,47 +2935,11 @@ def main():
         ('state', 'present', ['image'])
     ]
 
-    option_minimal_versions = dict(
-        # internal options
-        log_config=dict(),
-        publish_all_ports=dict(),
-        ports=dict(),
-        volume_binds=dict(),
-        name=dict(),
-        device_read_bps=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
-        device_read_iops=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
-        device_write_bps=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
-        device_write_iops=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
-        dns_opts=dict(docker_api_version='1.21', docker_py_version='1.10.0'),
-        ipc_mode=dict(docker_api_version='1.25'),
-        mac_address=dict(docker_api_version='1.25'),
-        oom_killer=dict(docker_py_version='2.0.0'),
-        oom_score_adj=dict(docker_api_version='1.22', docker_py_version='2.0.0'),
-        shm_size=dict(docker_api_version='1.22'),
-        stop_signal=dict(docker_api_version='1.21'),
-        tmpfs=dict(docker_api_version='1.22'),
-        volume_driver=dict(docker_api_version='1.21'),
-        memory_reservation=dict(docker_api_version='1.21'),
-        kernel_memory=dict(docker_api_version='1.21'),
-        auto_remove=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
-        healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.24'),
-        init=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
-        runtime=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
-        sysctls=dict(docker_py_version='1.10.0', docker_api_version='1.24'),
-        userns_mode=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
-        uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
-        pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
-        # specials
-        ipvX_address_supported=dict(docker_py_version='1.9.0', usage_msg='ipv4_address or ipv6_address in networks'),  # detect_usage set above
-        stop_timeout=dict(),  # see above!
-    )
-
     client = AnsibleDockerClientContainer(
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True,
         min_docker_api_version='1.20',
-        option_minimal_versions=option_minimal_versions,
     )
 
     cm = ContainerManager(client)
