@@ -58,6 +58,7 @@ options:
       - Whether or not to alter existing targets in the group to match what is passed with the module
     required: false
     default: yes
+    type: bool
   name:
     description:
       - The name of the target group.

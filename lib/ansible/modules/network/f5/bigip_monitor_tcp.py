@@ -101,21 +101,23 @@ EXAMPLES = r'''
 - name: Create TCP Monitor
   bigip_monitor_tcp:
     state: present
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_tcp_monitor
     send: tcp string to send
     receive: tcp string to receive
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove TCP Monitor
   bigip_monitor_tcp:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_tcp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -621,7 +623,7 @@ class ArgumentSpec(object):
             send=dict(),
             receive=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),

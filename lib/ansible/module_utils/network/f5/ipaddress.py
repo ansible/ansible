@@ -94,12 +94,12 @@ def is_valid_ip_interface(address):
 
 
 def get_netmask(address):
-    addr = ip_network(address)
+    addr = ip_network(u'{0}'.format(address))
     netmask = addr.netmask.compressed
     return netmask
 
 
 def compress_address(address):
-    addr = ip_network(address)
+    addr = ip_network(u'{0}'.format(address))
     result = addr.compressed.split('/')[0]
     return result

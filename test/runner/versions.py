@@ -9,7 +9,7 @@ try:
 except ImportError:
     pip = None
 
-print('.'.join(u'%s' % i for i in sys.version_info))
+print(sys.version)
 
 if pip:
     print('pip %s from %s' % (pip.__version__, os.path.dirname(pip.__file__)))

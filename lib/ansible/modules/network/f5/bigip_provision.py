@@ -76,22 +76,22 @@ author:
 EXAMPLES = r'''
 - name: Provision PEM at "nominal" level
   bigip_provision:
-    server: lb.mydomain.com
     module: pem
     level: nominal
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: Provision a dedicated SWG. This will unprovision every other module
   bigip_provision:
-    server: lb.mydomain.com
     module: swg
-    password: secret
     level: dedicated
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 '''
 

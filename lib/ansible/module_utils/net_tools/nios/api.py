@@ -216,15 +216,6 @@ class WapiModule(WapiBase):
         # get object reference
         ib_obj_ref, update, new_name = self.get_object_ref(self.module, ib_obj_type, obj_filter, ib_spec)
 
-        if ib_obj_ref:
-            current_object = ib_obj_ref[0]
-            if 'extattrs' in current_object:
-                current_object['extattrs'] = flatten_extattrs(current_object['extattrs'])
-            ref = current_object.pop('_ref')
-        else:
-            current_object = obj_filter
-            ref = None
-
         proposed_object = {}
         for key, value in iteritems(ib_spec):
             if self.module.params[key] is not None:
@@ -232,6 +223,20 @@ class WapiModule(WapiBase):
                     proposed_object[key] = value['transform'](self.module)
                 else:
                     proposed_object[key] = self.module.params[key]
+
+        if ib_obj_ref:
+            if len(ib_obj_ref) > 1:
+                for each in ib_obj_ref:
+                    if each['ipv4addr'] == proposed_object['ipv4addr']:
+                        current_object = each
+            else:
+                current_object = ib_obj_ref[0]
+            if 'extattrs' in current_object:
+                current_object['extattrs'] = flatten_extattrs(current_object['extattrs'])
+            ref = current_object.pop('_ref')
+        else:
+            current_object = obj_filter
+            ref = None
 
         # checks if the name's field has been updated
         if update and new_name:
@@ -251,6 +256,11 @@ class WapiModule(WapiBase):
 
                 if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
                     proposed_object = self.on_update(proposed_object, ib_spec)
+                    res = self.update_object(ref, proposed_object)
+                if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD)):
+                    # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record
+                    proposed_object = self.on_update(proposed_object, ib_spec)
+                    del proposed_object['view']
                     res = self.update_object(ref, proposed_object)
                 elif 'network_view' in proposed_object:
                     proposed_object.pop('network_view')
@@ -339,6 +349,8 @@ class WapiModule(WapiBase):
             if old_name and new_name:
                 if (ib_obj_type == NIOS_HOST_RECORD):
                     test_obj_filter = dict([('name', old_name), ('view', obj_filter['view'])])
+                elif (ib_obj_type in (NIOS_AAAA_RECORD, NIOS_A_RECORD)):
+                    test_obj_filter = obj_filter
                 else:
                     test_obj_filter = dict([('name', old_name)])
                 # get the object reference
@@ -356,8 +368,9 @@ class WapiModule(WapiBase):
                     test_obj_filter = dict([('name', name)])
                 else:
                     test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
+            # check if test_obj_filter is empty copy passed obj_filter
             else:
-                test_obj_filter = dict([('name', name)])
+                test_obj_filter = obj_filter
             ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
         elif (ib_obj_type == NIOS_ZONE):
             # del key 'restart_if_needed' as nios_zone get_object fails with the key present

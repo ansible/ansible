@@ -609,10 +609,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     load_balancer_inbound_nat_pools = None
                     if self.load_balancer:
                         load_balancer = self.get_load_balancer(self.load_balancer)
-                        load_balancer_backend_address_pools = ([self.compute_models.SubResource(resource.id)
+                        load_balancer_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
                                                                 for resource in load_balancer.backend_address_pools]
                                                                if load_balancer.backend_address_pools else None)
-                        load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(resource.id)
+                        load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(id=resource.id)
                                                             for resource in load_balancer.inbound_nat_pools]
                                                            if load_balancer.inbound_nat_pools else None)
 
@@ -630,7 +630,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             self.security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
 
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
-                        self.location,
+                        location=self.location,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
@@ -696,7 +696,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                         for data_disk in self.data_disks:
                             data_disk_managed_disk = self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
-                                storage_account_type=data_disk['managed_disk_type']
+                                storage_account_type=data_disk.get('managed_disk_type', None)
                             )
 
                             data_disk['caching'] = data_disk.get(
@@ -705,10 +705,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             )
 
                             data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
-                                lun=data_disk['lun'],
-                                caching=data_disk['caching'],
+                                lun=data_disk.get('lun', None),
+                                caching=data_disk.get('caching', None),
                                 create_option=self.compute_models.DiskCreateOptionTypes.empty,
-                                disk_size_gb=data_disk['disk_size_gb'],
+                                disk_size_gb=data_disk.get('disk_size_gb', None),
                                 managed_disk=data_disk_managed_disk,
                             ))
 
@@ -725,18 +725,19 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
 
-                    data_disks = []
-                    for data_disk in self.data_disks:
-                        data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
-                            lun=data_disk['lun'],
-                            caching=data_disk['caching'],
-                            create_option=self.compute_models.DiskCreateOptionTypes.empty,
-                            disk_size_gb=data_disk['disk_size_gb'],
-                            managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
-                                storage_account_type=data_disk['managed_disk_type']
-                            ),
-                        ))
-                    vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
+                    if self.data_disks is not None:
+                        data_disks = []
+                        for data_disk in self.data_disks:
+                            data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
+                                lun=data_disk['lun'],
+                                caching=data_disk['caching'],
+                                create_option=self.compute_models.DiskCreateOptionTypes.empty,
+                                disk_size_gb=data_disk['disk_size_gb'],
+                                managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
+                                    storage_account_type=data_disk['managed_disk_type']
+                                ),
+                            ))
+                        vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
 
                     self.log("Update virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)

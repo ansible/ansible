@@ -156,69 +156,71 @@ author:
 EXAMPLES = r'''
 - name: Create pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     lb_method: least-connections-member
     slow_ramp_time: 120
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Modify load balancer method
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     lb_method: round-robin
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add pool member
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set a single monitor (with enforcement)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     monitor_type: single
     monitors:
       - http
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set a single monitor (without enforcement)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     monitors:
       - http
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set multiple monitors (all must succeed)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
@@ -226,13 +228,14 @@ EXAMPLES = r'''
     monitors:
       - http
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set multiple monitors (at least 1 must succeed)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
@@ -241,41 +244,48 @@ EXAMPLES = r'''
     monitors:
       - http
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove pool member from pool
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add metadata to pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
     metadata:
       ansible: 2.4
       updated_at: 2017-12-20T17:50:46Z
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -348,6 +358,7 @@ try:
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -358,6 +369,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -430,6 +442,12 @@ class Parameters(AnsibleF5Parameters):
 
 class ApiParameters(Parameters):
     @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
+    @property
     def quorum(self):
         if self._values['monitors'] is None:
             return None
@@ -479,6 +497,14 @@ class ApiParameters(Parameters):
 
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def monitors_list(self):
         if self._values['monitors'] is None:
@@ -615,6 +641,10 @@ class Difference(object):
             return None
         else:
             return want
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
     def _monitors_and_quorum(self):
         if self.want.monitor_type is None:
@@ -841,7 +871,6 @@ class ModuleManager(object):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()

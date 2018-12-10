@@ -379,7 +379,13 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
-        action_uri = data[key]["#ComputerSystem.Reset"]["target"]
+        power_state = data["PowerState"]
+        reset_action = data[key]["#ComputerSystem.Reset"]
+        action_uri = reset_action["target"]
+        allowable_vals = reset_action.get("ResetType@Redfish.AllowableValues", [])
+        restart_cmd = "GracefulRestart"
+        if "ForceRestart" in allowable_vals and "GracefulRestart" not in allowable_vals:
+            restart_cmd = "ForceRestart"
 
         # Define payload accordingly
         if command == "PowerOn":
@@ -390,6 +396,11 @@ class RedfishUtils(object):
             payload = {'ResetType': 'GracefulRestart'}
         elif command == "PowerGracefulShutdown":
             payload = {'ResetType': 'GracefulShutdown'}
+        elif command == "PowerReboot":
+            if power_state == "On":
+                payload = {'ResetType': restart_cmd}
+            else:
+                payload = {'ResetType': "On"}
         else:
             return {'ret': False, 'msg': 'Invalid Command'}
 
@@ -629,7 +640,7 @@ class RedfishUtils(object):
         response = self.post_request(self.root_uri + reset_bios_settings_uri, {}, HEADERS)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
 
     def set_one_time_boot_device(self, bootdevice):
         result = {}
@@ -664,7 +675,25 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def set_manager_attributes(self, attr):
-        attributes = "Attributes"
+        result = {}
+        # Here I'm making the assumption that the key 'Attributes' is part of the URI.
+        # It may not, but in the hardware I tested with, getting to the final URI where
+        # the Manager Attributes are, appear to be part of a specific OEM extension.
+        key = "Attributes"
+
+        # Search for key entry and extract URI from it
+        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        # Check if attribute exists
+        if attr['mgr_attr_name'] not in data[key]:
+            return {'ret': False, 'msg': "Manager attribute %s not found" % attr['mgr_attr_name']}
 
         # Example: manager_attr = {\"name\":\"value\"}
         # Check if value is a number. If so, convert to int.
@@ -673,11 +702,15 @@ class RedfishUtils(object):
         else:
             manager_attr = "{\"%s\": \"%s\"}" % (attr['mgr_attr_name'], attr['mgr_attr_value'])
 
+        # Find out if value is already set to what we want. If yes, return
+        if data[key][attr['mgr_attr_name']] == attr['mgr_attr_value']:
+            return {'ret': True, 'changed': False, 'msg': "Manager attribute already set"}
+
         payload = {"Attributes": json.loads(manager_attr)}
-        response = self.patch_request(self.root_uri + self.manager_uri + "/" + attributes, payload, HEADERS)
+        response = self.patch_request(self.root_uri + self.manager_uri + "/" + key, payload, HEADERS)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager attribute %s" % attr['mgr_attr_name']}
 
     def set_bios_attributes(self, attr):
         result = {}
@@ -719,42 +752,6 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
-
-    def create_bios_config_job(self):
-        result = {}
-        key = "Bios"
-        jobs = "Jobs"
-
-        # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-
-        if key not in data:
-            return {'ret': False, 'msg': "Key %s not found" % key}
-
-        bios_uri = data[key]["@odata.id"]
-
-        # Extract proper URI
-        response = self.get_request(self.root_uri + bios_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-        set_bios_attr_uri = data["@Redfish.Settings"]["SettingsObject"]["@odata.id"]
-
-        payload = {"TargetSettingsURI": set_bios_attr_uri}
-        response = self.post_request(self.root_uri + self.manager_uri + "/" + jobs, payload, HEADERS)
-        if response['ret'] is False:
-            return response
-
-        response_output = response['resp'].__dict__
-        job_id = response_output["headers"]["Location"]
-        job_id = re.search("JID_.+", job_id).group()
-        # Currently not passing job_id back to user but patch is coming
-        return {'ret': True, 'msg': "Config job %s created" % job_id}
 
     def get_fan_inventory(self):
         result = {}

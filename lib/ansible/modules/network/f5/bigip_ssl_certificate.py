@@ -69,30 +69,33 @@ EXAMPLES = r'''
 - name: Use a file lookup to import PEM Certificate
   bigip_ssl_certificate:
     name: certificate-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/cert.crt') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Use a file lookup to import CA certificate chain
   bigip_ssl_certificate:
     name: ca-chain-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/ca-chain.crt') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete Certificate
   bigip_ssl_certificate:
     name: certificate-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -564,6 +567,7 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
+
     client = F5RestClient(**module.params)
 
     try:

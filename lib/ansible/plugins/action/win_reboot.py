@@ -10,12 +10,9 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.reboot import ActionModule as RebootActionModule
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class TimedOutException(Exception):

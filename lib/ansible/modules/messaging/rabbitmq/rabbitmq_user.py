@@ -119,6 +119,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.collections import count
 
 
 class RabbitMqUser(object):
@@ -172,6 +173,7 @@ class RabbitMqUser(object):
         return False
 
     def _get_permissions(self):
+        """Get permissions of the user from RabbitMQ."""
         perms_out = [perm for perm in self._exec(['list_user_permissions', self.username], True) if perm.strip()]
 
         perms_list = list()
@@ -210,27 +212,28 @@ class RabbitMqUser(object):
         self._exec(['set_user_tags', self.username] + self.tags)
 
     def set_permissions(self):
-        for permission in self._permissions:
-            if permission not in self.permissions:
-                cmd = ['clear_permissions', '-p']
-                cmd.append(permission['vhost'])
-                cmd.append(self.username)
-                self._exec(cmd)
-        for permission in self.permissions:
-            if permission not in self._permissions:
-                cmd = ['set_permissions', '-p']
-                cmd.append(permission['vhost'])
-                cmd.append(self.username)
-                cmd.append(permission['configure_priv'])
-                cmd.append(permission['write_priv'])
-                cmd.append(permission['read_priv'])
-                self._exec(cmd)
+        permissions_to_clear = [permission for permission in self._permissions if permission not in self.permissions]
+        permissions_to_add = [permission for permission in self.permissions if permission not in self._permissions]
+        for permission in permissions_to_clear:
+            cmd = 'clear_permissions -p {vhost} {username}'.format(username=self.username,
+                                                                   vhost=permission['vhost'])
+            self._exec(cmd.split(' '))
+        for permission in permissions_to_add:
+            cmd = ('set_permissions -p {vhost} {username} {configure_priv} {write_priv} {read_priv}'
+                   .format(username=self.username, **permission))
+            self._exec(cmd.split(' '))
 
     def has_tags_modifications(self):
         return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
-        return sorted(self._permissions) != sorted(self.permissions)
+        def to_permission_tuple(vhost_permission_dict):
+            return vhost_permission_dict['vhost'], vhost_permission_dict
+
+        def permission_dict(vhost_permission_list):
+            return dict(map(to_permission_tuple, vhost_permission_list))
+
+        return permission_dict(self._permissions) != permission_dict(self.permissions)
 
 
 def main():
@@ -266,8 +269,12 @@ def main():
     node = module.params['node']
     update_password = module.params['update_password']
 
-    bulk_permissions = True
-    if not permissions:
+    if permissions:
+        vhosts = map(lambda permission: permission.get('vhost', '/'), permissions)
+        if any(map(lambda count: count > 1, count(vhosts).values())):
+            module.fail_json(msg="Error parsing permissions: You can't have two permission dicts for the same vhost")
+        bulk_permissions = True
+    else:
         perm = {
             'vhost': vhost,
             'configure_priv': configure_priv,
@@ -281,7 +288,6 @@ def main():
                                  node, bulk_permissions=bulk_permissions)
 
     result = dict(changed=False, user=username, state=state)
-
     if rabbitmq_user.get():
         if state == 'absent':
             rabbitmq_user.delete()

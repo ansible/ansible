@@ -32,18 +32,18 @@ DOCUMENTATION = '''
 ---
 module: gcp_dns_managed_zone_facts
 description:
-  - Gather facts for GCP ManagedZone
+- Gather facts for GCP ManagedZone
 short_description: Gather facts for GCP ManagedZone
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    dns_name:
-       description:
-           Restricts the list to return only zones with this domain name.
+  dns_name:
+    description:
+    - Restricts the list to return only zones with this domain name.
 extends_documentation_fragment: gcp
 '''
 
@@ -58,51 +58,51 @@ EXAMPLES = '''
 
 RETURN = '''
 items:
-    description: List of items
-    returned: always
-    type: complex
-    contains:
-        description:
-            description:
-                - A mutable string of at most 1024 characters associated with this resource for the
-                  user's convenience. Has no effect on the managed zone's function.
-            returned: success
-            type: str
-        dnsName:
-            description:
-                - The DNS name of this managed zone, for instance "example.com.".
-            returned: success
-            type: str
-        id:
-            description:
-                - Unique identifier for the resource; defined by the server.
-            returned: success
-            type: int
-        name:
-            description:
-                - User assigned name for this resource.
-                - Must be unique within the project.
-            returned: success
-            type: str
-        nameServers:
-            description:
-                - Delegate your managed_zone to these virtual name servers; defined by the server
-                  .
-            returned: success
-            type: list
-        nameServerSet:
-            description:
-                - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet is
-                  a set of DNS name servers that all host the same ManagedZones. Most users will leave
-                  this field unset.
-            returned: success
-            type: list
-        creationTime:
-            description:
-                - The time that this resource was created on the server.
-                - This is in RFC3339 text format.
-            returned: success
-            type: str
+  description: List of items
+  returned: always
+  type: complex
+  contains:
+    description:
+      description:
+      - A mutable string of at most 1024 characters associated with this resource
+        for the user's convenience. Has no effect on the managed zone's function.
+      returned: success
+      type: str
+    dnsName:
+      description:
+      - The DNS name of this managed zone, for instance "example.com.".
+      returned: success
+      type: str
+    id:
+      description:
+      - Unique identifier for the resource; defined by the server.
+      returned: success
+      type: int
+    name:
+      description:
+      - User assigned name for this resource.
+      - Must be unique within the project.
+      returned: success
+      type: str
+    nameServers:
+      description:
+      - Delegate your managed_zone to these virtual name servers; defined by the server
+        .
+      returned: success
+      type: list
+    nameServerSet:
+      description:
+      - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet
+        is a set of DNS name servers that all host the same ManagedZones. Most users
+        will leave this field unset.
+      returned: success
+      type: list
+    creationTime:
+      description:
+      - The time that this resource was created on the server.
+      - This is in RFC3339 text format.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -123,7 +123,7 @@ def main():
         )
     )
 
-    if 'scopes' not in module.params:
+    if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
 
     items = fetch_list(module, collection(module), module.params['dns_name'])

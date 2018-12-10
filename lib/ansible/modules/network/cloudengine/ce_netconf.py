@@ -28,7 +28,7 @@ short_description: Run an arbitrary netconf command on HUAWEI CloudEngine switch
 description:
     - Sends an arbitrary netconf command on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     rpc:
         description:

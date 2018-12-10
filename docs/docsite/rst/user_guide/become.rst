@@ -341,10 +341,6 @@ delegation or accessing forbidden system calls like the WUA API. You can use
 ``become`` with the same user as ``ansible_user`` to bypass these limitations
 and run commands that are not normally accessible in a WinRM session.
 
-.. note:: Prior to Ansible 2.4, become would only work when ``ansible_winrm_transport`` was
-    set to either ``basic`` or ``credssp``, but since Ansible 2.4 become now works on
-    all transport types.
-
 Administrative Rights
 ---------------------
 
@@ -353,21 +349,106 @@ the ``runas`` become method, Ansible will attempt to run the module with the
 full privileges that are available to the remote user. If it fails to elevate
 the user token, it will continue to use the limited token during execution.
 
-Before Ansible 2.5, a token was only able to be elevated when UAC was disabled
-or the remote user had the ``SeTcbPrivilege`` assigned. This restriction has
-been lifted in Ansible 2.5 and a user that is a member of the
-``BUILTIN\Administrators`` group should have an elevated token during the
-module execution.
+A user must have the ``SeDebugPrivilege`` to run a become process with elevated
+privileges. This privilege is assigned to Administrators by default. If the
+debug privilege is not available, the become process will run with a limited
+set of privileges and groups.
 
 To determine the type of token that Ansible was able to get, run the following
-task and check the output::
+task::
 
     - win_whoami:
       become: yes
 
-Under the ``GROUP INFORMATION`` section, the ``Mandatory Label`` entry
-determines whether the user has Administrative rights. Here are the labels that
-can be returned and what they mean:
+The output will look something similar to the below::
+
+    ok: [windows] => {
+        "account": {
+            "account_name": "vagrant-domain",
+            "domain_name": "DOMAIN",
+            "sid": "S-1-5-21-3088887838-4058132883-1884671576-1105",
+            "type": "User"
+        },
+        "authentication_package": "Kerberos",
+        "changed": false,
+        "dns_domain_name": "DOMAIN.LOCAL",
+        "groups": [
+            {
+                "account_name": "Administrators",
+                "attributes": [
+                    "Mandatory",
+                    "Enabled by default",
+                    "Enabled",
+                    "Owner"
+                ],
+                "domain_name": "BUILTIN",
+                "sid": "S-1-5-32-544",
+                "type": "Alias"
+            },
+            {
+                "account_name": "INTERACTIVE",
+                "attributes": [
+                    "Mandatory",
+                    "Enabled by default",
+                    "Enabled"
+                ],
+                "domain_name": "NT AUTHORITY",
+                "sid": "S-1-5-4",
+                "type": "WellKnownGroup"
+            },
+        ],
+        "impersonation_level": "SecurityAnonymous",
+        "label": {
+            "account_name": "High Mandatory Level",
+            "domain_name": "Mandatory Label",
+            "sid": "S-1-16-12288",
+            "type": "Label"
+        },
+        "login_domain": "DOMAIN",
+        "login_time": "2018-11-18T20:35:01.9696884+00:00",
+        "logon_id": 114196830,
+        "logon_server": "DC01",
+        "logon_type": "Interactive",
+        "privileges": {
+            "SeBackupPrivilege": "disabled",
+            "SeChangeNotifyPrivilege": "enabled-by-default",
+            "SeCreateGlobalPrivilege": "enabled-by-default",
+            "SeCreatePagefilePrivilege": "disabled",
+            "SeCreateSymbolicLinkPrivilege": "disabled",
+            "SeDebugPrivilege": "enabled",
+            "SeDelegateSessionUserImpersonatePrivilege": "disabled",
+            "SeImpersonatePrivilege": "enabled-by-default",
+            "SeIncreaseBasePriorityPrivilege": "disabled",
+            "SeIncreaseQuotaPrivilege": "disabled",
+            "SeIncreaseWorkingSetPrivilege": "disabled",
+            "SeLoadDriverPrivilege": "disabled",
+            "SeManageVolumePrivilege": "disabled",
+            "SeProfileSingleProcessPrivilege": "disabled",
+            "SeRemoteShutdownPrivilege": "disabled",
+            "SeRestorePrivilege": "disabled",
+            "SeSecurityPrivilege": "disabled",
+            "SeShutdownPrivilege": "disabled",
+            "SeSystemEnvironmentPrivilege": "disabled",
+            "SeSystemProfilePrivilege": "disabled",
+            "SeSystemtimePrivilege": "disabled",
+            "SeTakeOwnershipPrivilege": "disabled",
+            "SeTimeZonePrivilege": "disabled",
+            "SeUndockPrivilege": "disabled"
+        },
+        "rights": [
+            "SeNetworkLogonRight",
+            "SeBatchLogonRight",
+            "SeInteractiveLogonRight",
+            "SeRemoteInteractiveLogonRight"
+        ],
+        "token_type": "TokenPrimary",
+        "upn": "vagrant-domain@DOMAIN.LOCAL",
+        "user_flags": []
+    }
+
+Under the ``label`` key, the ``account_name`` entry determines whether the user
+has Administrative rights. Here are the labels that can be returned and what
+they represent:
 
 * ``Medium``: Ansible failed to get an elevated token and ran under a limited
   token. Only a subset of the privileges assigned to user are available during
@@ -380,9 +461,9 @@ can be returned and what they mean:
   level of privileges available.
 
 The output will also show the list of privileges that have been granted to the
-user. When ``State==Disabled``, the privileges have not been enabled but can be
-if required. In most scenarios these privileges are automatically enabled when
-required.
+user. When the privilege value is ``disabled``, the privilege is assigned to
+the logon token but has not been enabled. In most scenarios these privileges
+are automatically enabled when required.
 
 If running on a version of Ansible that is older than 2.5 or the normal
 ``runas`` escalation process fails, an elevated token can be retrieved by:

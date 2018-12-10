@@ -52,6 +52,9 @@ options:
     description:
       - Password of the user to login into OpenNebula RPC server. If not set
       - then the value of the C(ONE_PASSWORD) environment variable is used.
+      - if both I(api_username) or I(api_password) are not set, then it will try
+      - authenticate with ONE auth file. Default path is "~/.one/one_auth".
+      - Set environment variable C(ONE_AUTH) to override this path.
   template_name:
     description:
       - Name of VM template to use to create a new instace
@@ -1220,8 +1223,8 @@ def get_connection_info(module):
     if not password:
         password = os.environ.get('ONE_PASSWORD')
 
-    if not(url and username and password):
-        module.fail_json(msg="One or more connection parameters (api_url, api_username, api_password) were not specified")
+    if not url:
+        module.fail_json(msg="Opennebula API url (api_url) is not specified")
     from collections import namedtuple
 
     auth_params = namedtuple('auth', ('url', 'username', 'password'))
@@ -1309,7 +1312,10 @@ def main():
     count_labels = params.get('count_labels')
     disk_saveas = params.get('disk_saveas')
 
-    client = oca.Client(auth.username + ':' + auth.password, auth.url)
+    if not (auth.username and auth.password):
+        client = oca.Client(None, auth.url)
+    else:
+        client = oca.Client(auth.username + ':' + auth.password, auth.url)
 
     if attributes:
         attributes = dict((key.upper(), value) for key, value in attributes.items())

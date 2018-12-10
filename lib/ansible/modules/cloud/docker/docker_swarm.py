@@ -429,7 +429,7 @@ class SwarmManager(DockerBaseClass):
             self.client.leave_swarm(force=self.parameters.force)
         except APIError as exc:
             self.client.fail(msg="This node can not leave the Swarm Cluster: %s" % to_native(exc))
-        self.results['actions'].append("Node has leaved the swarm cluster")
+        self.results['actions'].append("Node has left the swarm cluster")
         self.results['changed'] = True
 
     def __get_node_info(self):

@@ -30,6 +30,11 @@ poll value is 10 seconds if you do not specify a value for `poll`::
    'async' keyword, the task runs synchronously, which is Ansible's
    default.
 
+.. note::
+  As of Ansible 2.3, async does not support check mode and will fail the
+  task when run in check mode. See :doc:`playbooks_checkmode` on how to
+  skip a task in check mode.
+
 Alternatively, if you do not need to wait on the task to complete, you may
 run the task asynchronously by specifying a poll value of 0::
 
@@ -127,4 +132,3 @@ of tasks running concurrently, you can do it this way::
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

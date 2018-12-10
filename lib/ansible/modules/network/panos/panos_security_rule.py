@@ -100,10 +100,12 @@ options:
     log_start:
         description:
             - Whether to log at session start.
+        type: bool
     log_end:
         description:
             - Whether to log at session end.
         default: true
+        type: bool
     action:
         description:
             - Action to apply once rules maches.

@@ -28,7 +28,7 @@ description:
     - This module offers the ability to set a configuration checkpoint
       file or rollback to a configuration checkpoint file on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     commit_id:
         description:

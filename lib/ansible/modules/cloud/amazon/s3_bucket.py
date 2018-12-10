@@ -51,6 +51,7 @@ options:
     description:
       - Enable API compatibility with Ceph. It takes into account the S3 API subset working
         with Ceph in order to provide the same module behaviour where possible.
+    type: bool
     version_added: "2.2"
   requester_pays:
     description:
@@ -119,7 +120,7 @@ import time
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import to_text
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import compare_policies, ec2_argument_spec, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, AWSRetry
 
@@ -446,10 +447,13 @@ def paginated_list(s3_client, **pagination_params):
 
 
 def paginated_versions_list(s3_client, **pagination_params):
-    pg = s3_client.get_paginator('list_object_versions')
-    for page in pg.paginate(**pagination_params):
-        # We have to merge the Versions and DeleteMarker lists here, as DeleteMarkers can still prevent a bucket deletion
-        yield [(data['Key'], data['VersionId']) for data in (page.get('Versions', []) + page.get('DeleteMarkers', []))]
+    try:
+        pg = s3_client.get_paginator('list_object_versions')
+        for page in pg.paginate(**pagination_params):
+            # We have to merge the Versions and DeleteMarker lists here, as DeleteMarkers can still prevent a bucket deletion
+            yield [(data['Key'], data['VersionId']) for data in (page.get('Versions', []) + page.get('DeleteMarkers', []))]
+    except is_boto3_error_code('NoSuchBucket'):
+        yield []
 
 
 def destroy_bucket(s3_client, module):

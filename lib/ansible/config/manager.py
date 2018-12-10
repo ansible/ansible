@@ -363,14 +363,8 @@ class ConfigManager(object):
         # Note: sources that are lists listed in low to high precedence (last one wins)
         value = None
         origin = None
-        defs = {}
-        if plugin_type is None:
-            defs = self._base_defs
-        elif plugin_name is None:
-            defs = self._plugins[plugin_type]
-        else:
-            defs = self._plugins[plugin_type][plugin_name]
 
+        defs = self.get_configuration_definitions(plugin_type, plugin_name)
         if config in defs:
 
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
@@ -436,7 +430,15 @@ class ConfigManager(object):
                             return value, origin
 
             # ensure correct type, can raise exceptoins on mismatched types
-            value = ensure_type(value, defs[config].get('type'), origin=origin)
+            try:
+                value = ensure_type(value, defs[config].get('type'), origin=origin)
+            except ValueError as e:
+                if origin.startswith('env:') and value == '':
+                    # this is empty env var for non string so we can set to default
+                    origin = 'default'
+                    value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
+                else:
+                    raise AnsibleOptionsError('Invalid type for configuration option %s: %s' % (to_native(config), to_native(e)))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':

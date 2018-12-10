@@ -98,9 +98,9 @@ options:
     description:
       - The system umask to apply before installing the pip package. This is
         useful, for example, when installing on systems that have a very
-        restrictive umask by default (e.g., 0077) and you want to pip install
+        restrictive umask by default (e.g., "0077") and you want to pip install
         packages which are to be used by all users. Note that this requires you
-        to specify desired umask mode in octal, with a leading 0 (e.g., 0077).
+        to specify desired umask mode as an octal string, (e.g., "0022").
     version_added: "2.1"
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
@@ -513,8 +513,8 @@ class Package:
             name_string = separator.join((name_string, version_string))
         try:
             self._requirement = Requirement.parse(name_string)
-            # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
-            if self._requirement.project_name == "distribute":
+            # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
+            if self._requirement.project_name == "distribute" and "setuptools" in name_string:
                 self.package_name = "setuptools"
                 self._requirement.project_name = "setuptools"
             else:

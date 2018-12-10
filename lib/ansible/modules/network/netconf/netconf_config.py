@@ -103,6 +103,7 @@ options:
         startup-config if changed and if :startup capability is supported by Netconf server.
     default: false
     version_added: "2.4"
+    type: bool
   backup:
     description:
       - This argument will cause the module to create a full backup of

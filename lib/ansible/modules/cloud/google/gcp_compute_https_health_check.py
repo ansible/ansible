@@ -32,76 +32,79 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_https_health_check
 description:
-    - An HttpsHealthCheck resource. This resource defines a template for how individual
-      VMs should be checked for health, via HTTPS.
+- An HttpsHealthCheck resource. This resource defines a template for how individual
+  VMs should be checked for health, via HTTPS.
 short_description: Creates a GCP HttpsHealthCheck
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    check_interval_sec:
-        description:
-            - How often (in seconds) to send a health check. The default value is 5 seconds.
-        required: false
+  state:
     description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
-        required: false
-    healthy_threshold:
-        description:
-            - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
-              The default value is 2.
-        required: false
-    host:
-        description:
-            - The value of the host header in the HTTPS health check request. If left empty (default
-              value), the public IP on behalf of which this health check is performed will be
-              used.
-        required: false
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    port:
-        description:
-            - The TCP port number for the HTTPS health check request.
-            - The default value is 80.
-        required: false
-    request_path:
-        description:
-            - The request path of the HTTPS health check request.
-            - The default value is /.
-        required: false
-    timeout_sec:
-        description:
-            - How long (in seconds) to wait before claiming failure.
-            - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
-              than checkIntervalSec.
-        required: false
-        aliases: [timeout_seconds]
-    unhealthy_threshold:
-        description:
-            - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
-              The default value is 2.
-        required: false
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  check_interval_sec:
+    description:
+    - How often (in seconds) to send a health check. The default value is 5 seconds.
+    required: false
+  description:
+    description:
+    - An optional description of this resource. Provide this property when you create
+      the resource.
+    required: false
+  healthy_threshold:
+    description:
+    - A so-far unhealthy instance will be marked healthy after this many consecutive
+      successes. The default value is 2.
+    required: false
+  host:
+    description:
+    - The value of the host header in the HTTPS health check request. If left empty
+      (default value), the public IP on behalf of which this health check is performed
+      will be used.
+    required: false
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  port:
+    description:
+    - The TCP port number for the HTTPS health check request.
+    - The default value is 80.
+    required: false
+  request_path:
+    description:
+    - The request path of the HTTPS health check request.
+    - The default value is /.
+    required: false
+  timeout_sec:
+    description:
+    - How long (in seconds) to wait before claiming failure.
+    - The default value is 5 seconds. It is invalid for timeoutSec to have greater
+      value than checkIntervalSec.
+    required: false
+    aliases:
+    - timeout_seconds
+  unhealthy_threshold:
+    description:
+    - A so-far healthy instance will be marked unhealthy after this many consecutive
+      failures. The default value is 2.
+    required: false
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/httpsHealthChecks)"
-    - "Adding Health Checks: U(https://cloud.google.com/compute/docs/load-balancing/health-checks#legacy_health_checks)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/httpsHealthChecks)'
+- 'Adding Health Checks: U(https://cloud.google.com/compute/docs/load-balancing/health-checks#legacy_health_checks)'
 '''
 
 EXAMPLES = '''
@@ -119,75 +122,75 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    checkIntervalSec:
-        description:
-            - How often (in seconds) to send a health check. The default value is 5 seconds.
-        returned: success
-        type: int
-    creationTimestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource.
-        returned: success
-        type: str
-    healthyThreshold:
-        description:
-            - A so-far unhealthy instance will be marked healthy after this many consecutive successes.
-              The default value is 2.
-        returned: success
-        type: int
-    host:
-        description:
-            - The value of the host header in the HTTPS health check request. If left empty (default
-              value), the public IP on behalf of which this health check is performed will be
-              used.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource. This identifier is defined by the server.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    port:
-        description:
-            - The TCP port number for the HTTPS health check request.
-            - The default value is 80.
-        returned: success
-        type: int
-    requestPath:
-        description:
-            - The request path of the HTTPS health check request.
-            - The default value is /.
-        returned: success
-        type: str
-    timeoutSec:
-        description:
-            - How long (in seconds) to wait before claiming failure.
-            - The default value is 5 seconds.  It is invalid for timeoutSec to have greater value
-              than checkIntervalSec.
-        returned: success
-        type: int
-    unhealthyThreshold:
-        description:
-            - A so-far healthy instance will be marked unhealthy after this many consecutive failures.
-              The default value is 2.
-        returned: success
-        type: int
+checkIntervalSec:
+  description:
+  - How often (in seconds) to send a health check. The default value is 5 seconds.
+  returned: success
+  type: int
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource. Provide this property when you create
+    the resource.
+  returned: success
+  type: str
+healthyThreshold:
+  description:
+  - A so-far unhealthy instance will be marked healthy after this many consecutive
+    successes. The default value is 2.
+  returned: success
+  type: int
+host:
+  description:
+  - The value of the host header in the HTTPS health check request. If left empty
+    (default value), the public IP on behalf of which this health check is performed
+    will be used.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource. This identifier is defined by the server.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+port:
+  description:
+  - The TCP port number for the HTTPS health check request.
+  - The default value is 80.
+  returned: success
+  type: int
+requestPath:
+  description:
+  - The request path of the HTTPS health check request.
+  - The default value is /.
+  returned: success
+  type: str
+timeoutSec:
+  description:
+  - How long (in seconds) to wait before claiming failure.
+  - The default value is 5 seconds. It is invalid for timeoutSec to have greater value
+    than checkIntervalSec.
+  returned: success
+  type: int
+unhealthyThreshold:
+  description:
+  - A so-far healthy instance will be marked unhealthy after this many consecutive
+    failures. The default value is 2.
+  returned: success
+  type: int
 '''
 
 ################################################################################
@@ -382,8 +385,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result

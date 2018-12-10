@@ -85,6 +85,7 @@ options:
       - Purge existing subnet on ELB that are not found in subnets
     default: 'no'
     version_added: "1.7"
+    type: bool
   scheme:
     description:
       - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'.

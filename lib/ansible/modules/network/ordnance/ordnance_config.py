@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: ordnance_config
 version_added: "2.3"
-author: "Alexander Turner (alex.turner@ordnance.io)"
+author: "Alexander Turner (@alexanderturner) <alex.turner@ordnance.io>"
 short_description: Manage Ordnance configuration sections
 description:
   - Ordnance router configurations use a simple block indent file syntax

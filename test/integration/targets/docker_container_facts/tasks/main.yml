@@ -8,7 +8,7 @@
     docker_container:
       name: "{{ cname }}"
       state: absent
-      stop_timeout: 1
+      force_kill: yes
 
   - name: Inspect a non-present container
     docker_container_facts:
@@ -19,7 +19,7 @@
       that:
       - "not result.exists"
       - "'docker_container' in result"
-      - "not result.docker_container"
+      - "result.docker_container is none"
 
   - name: Make sure container exists
     docker_container:
@@ -28,7 +28,7 @@
       command: '/bin/sh -c "sleep 10m"'
       state: started
       auto_remove: yes
-      stop_timeout: 1
+      force_kill: yes
 
   - name: Inspect a present container
     docker_container_facts:
@@ -49,7 +49,7 @@
     docker_container:
       name: "{{ cname }}"
       state: absent
-      stop_timeout: 1
+      force_kill: yes
 
   - assert:
       that:
@@ -58,5 +58,7 @@
       - "result.docker_container"
       - "result.docker_container == docker_inspect_result[0]"
 
-  # Skip for CentOS 6
-  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6
+  when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_container_facts tests!"
+  when: not(docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

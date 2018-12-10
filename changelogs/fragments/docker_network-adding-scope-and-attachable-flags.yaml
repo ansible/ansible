@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - "docker_network - ``scope`` is now used to set the ``Scope`` property of the docker network during creation."
+  - "docker_network - ``attachable`` is now used to set the ``Attachable`` property of the docker network during creation."

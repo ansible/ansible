@@ -78,3 +78,4 @@ The following is a list of ``module_utils`` files and a general description. The
 - utm_utils.py - Contains base class for creating new Sophos UTM Modules and helper functions for handling the rest interface of Sophos UTM
 - vca.py - Contains utilities for modules that work with VMware vCloud Air
 - vmware.py - Contains utilities for modules that work with VMware vSphere VMs
+- xenserver.py - Contains utilities for modules that work with XenServer.

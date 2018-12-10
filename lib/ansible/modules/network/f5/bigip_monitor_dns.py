@@ -223,10 +223,11 @@ EXAMPLES = r'''
     query_type: aaaa
     up_interval: 5
     adaptive: no
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -279,10 +280,10 @@ allowed_divergence_value:
   type: int
   sample: 25
 description:
-    description: The description of the monitor.
-    returned: changed
-    type: str
-    sample: Important Monitor
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important Monitor
 adaptive_limit:
   description: Absolute number of milliseconds that may not be exceeded by a monitor probe.
   returned: changed
@@ -960,7 +961,7 @@ class ArgumentSpec(object):
             receive=dict(),
             ip=dict(),
             description=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             manual_resume=dict(type='bool'),

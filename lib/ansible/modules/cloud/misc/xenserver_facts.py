@@ -21,7 +21,7 @@ description:
   - Reads data out of XenAPI, can be used instead of multiple xe commands.
 author:
     - Andy Hill (@andyhky)
-    - Tim Rupp
+    - Tim Rupp (@caphrim007)
     - Robin Lee (@cheese)
 options: {}
 '''

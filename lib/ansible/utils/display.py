@@ -36,7 +36,9 @@ from termios import TIOCGWINSZ
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
+from ansible.utils.singleton import Singleton
 
 
 try:
@@ -77,7 +79,7 @@ b_COW_PATHS = (
 )
 
 
-class Display:
+class Display(with_metaclass(Singleton, object)):
 
     def __init__(self, verbosity=0):
 
@@ -203,7 +205,7 @@ class Display:
             if host is None:
                 self.display(msg, color=C.COLOR_VERBOSE)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''

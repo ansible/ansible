@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_api_version
-author: Vilian Atmadzhov (vilian.atmadzhov@paddypowerbetfair.com)
+author: Vilian Atmadzhov (@grastogi23) <vilian.atmadzhov@paddypowerbetfair.com>
 
 short_description: Avi API Version Module
 description:

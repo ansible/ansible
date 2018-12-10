@@ -39,7 +39,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Obezimnaka Boms @ozboms"
+    - "Obezimnaka Boms (@ozboms)"
 
 '''
 

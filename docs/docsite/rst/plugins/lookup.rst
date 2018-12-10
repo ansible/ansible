@@ -1,9 +1,11 @@
-.. contents:: Topics
-
 .. _lookup_plugins:
 
 Lookup Plugins
---------------
+==============
+
+.. contents::
+   :local:
+   :depth: 2
 
 Lookup plugins allow Ansible to access data from outside sources.
 This can include reading the filesystem in addition to contacting external datastores and services.
@@ -26,16 +28,16 @@ Lookups are an Ansible-specific extension to the Jinja2 templating language.
 
 .. _enabling_lookup:
 
-Enabling Lookup Plugins
-+++++++++++++++++++++++
+Enabling lookup plugins
+-----------------------
 
 You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 
 .. _using_lookup:
 
-Using Lookup Plugins
-++++++++++++++++++++
+Using lookup plugins
+--------------------
 
 Lookup plugins can be used anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module.
 
@@ -45,7 +47,7 @@ Lookup plugins can be used anywhere you can use templating in Ansible: in a play
     file_contents: "{{lookup('file', 'path/to/file.txt')}}"
 
 Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup.
-This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :doc:`items <lookup/items>` lookup:
+This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup:
 
 .. code-block:: yaml
 
@@ -108,15 +110,15 @@ Fatal error (the default)::
 
 .. _query:
 
-query
-+++++
+Invoking lookup plugins with ``query``
+--------------------------------------
 
 .. versionadded:: 2.5
 
 In Ansible 2.5, a new jinja2 function called ``query`` was added for invoking lookup plugins. The difference between ``lookup`` and ``query`` is largely that ``query`` will always return a list.
 The default behavior of ``lookup`` is to return a string of comma separated values. ``lookup`` can be explicitly configured to return a list using ``wantlist=True``.
 
-This was done primarily to provide an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibiltiy with other uses of ``lookup``.
+This was done primarily to provide an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibility with other uses of ``lookup``.
 
 The following examples are equivalent::
 
@@ -133,8 +135,8 @@ Additionally, ``q`` was introduced as a shortform of ``query``::
 
 .. _lookup_plugins_list:
 
-Plugin List
-+++++++++++
+Plugin list
+-----------
 
 You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. Use ``ansible-doc -t lookup <plugin name>`` to see specific documents and examples.
 
@@ -148,9 +150,9 @@ You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. U
 
    :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
    :ref:`playbooks_filters`
        Jinja2 filter plugins

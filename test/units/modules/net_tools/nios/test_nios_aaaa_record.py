@@ -131,3 +131,29 @@ class TestNiosAAAARecordModule(TestNiosModule):
 
         self.assertTrue(res['changed'])
         wapi.delete_object.assert_called_once_with(ref)
+
+    def test_nios_aaaa_record_update_record_name(self):
+        self.module.params = {'provider': None, 'state': 'present', 'name': {'new_name': 'aaaa_new.ansible.com', 'old_name': 'aaaa.ansible.com'},
+                              'comment': 'comment', 'extattrs': None}
+
+        test_object = [
+            {
+                "comment": "test comment",
+                "_ref": "aaaarecord/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
+                "name": "aaaa_new.ansible.com",
+                "old_name": "aaaa.ansible.com",
+                "extattrs": {}
+            }
+        ]
+
+        test_spec = {
+            "name": {"ib_req": True},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.update_object.called_once_with(test_object)

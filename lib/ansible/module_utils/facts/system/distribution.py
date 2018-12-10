@@ -74,16 +74,15 @@ class DistributionFiles:
         {'path': '/etc/lsb-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
+        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
-        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
     )
 
     SEARCH_STRING = {
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT',
-        'ClearLinux': 'Clear Linux',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
@@ -379,6 +378,20 @@ class DistributionFiles:
 
         return True, coreos_facts
 
+    def parse_distribution_file_ClearLinux(self, name, data, path, collected_facts):
+        clear_facts = {}
+        if "clearlinux" not in name.lower():
+            return False, clear_facts
+
+        version = re.search('VERSION_ID=(.*)', data)
+        if version:
+            clear_facts['distribution_major_version'] = version.groups()[0]
+            clear_facts['distribution_version'] = version.groups()[0]
+        release = re.search('ID=(.*)', data)
+        if release:
+            clear_facts['distribution_release'] = release.groups()[0]
+        return True, clear_facts
+
 
 class Distribution(object):
     """
@@ -409,9 +422,9 @@ class Distribution(object):
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
+        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
-        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
     )
 
     SEARCH_STRING = {
@@ -490,8 +503,11 @@ class Distribution(object):
         rc, out, err = self.module.run_command("/usr/bin/oslevel")
         data = out.split('.')
         aix_facts['distribution_major_version'] = data[0]
-        aix_facts['distribution_version'] = data[0]
-        aix_facts['distribution_release'] = data[1]
+        if len(data) > 1:
+            aix_facts['distribution_version'] = '%s.%s' % (data[0], data[1])
+            aix_facts['distribution_release'] = data[1]
+        else:
+            aix_facts['distribution_version'] = data[0]
         return aix_facts
 
     def get_distribution_HPUX(self):

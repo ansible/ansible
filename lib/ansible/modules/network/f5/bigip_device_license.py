@@ -39,10 +39,13 @@ options:
       - When C(present), only guarantees that a license is there.
       - When C(latest), ensures that the license is always valid.
       - When C(absent), removes the license on the system.
+      - When C(revoked), removes the license on the system and revokes its future usage
+        on the F5 license servers.
     default: present
     choices:
       - absent
       - present
+      - revoked
   accept_eula:
     description:
       - Declares whether you accept the BIG-IP EULA or not. By default, this
@@ -385,6 +388,8 @@ class ModuleManager(object):
             changed = self.present()
         elif state == "absent":
             changed = self.absent()
+        elif state == "revoked":
+            changed = self.revoke()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -402,7 +407,7 @@ class ModuleManager(object):
             )
 
     def present(self):
-        if self.exists():
+        if self.exists() and not self.is_revoked():
             return False
         else:
             return self.create()
@@ -415,11 +420,67 @@ class ModuleManager(object):
             raise F5ModuleError("Failed to delete the resource.")
         return True
 
+    def revoke(self):
+        if self.is_revoked():
+            return False
+        else:
+            # When revoking a license, it should be acceptable to auto-accept the
+            # license since you accepted it the first time when you activated the
+            # license you are now revoking.
+            self.want.update({'accept_eula': True})
+
+            # Revoking seems to just be another way of saying "get me a new license".
+            # There appear to be revoke-specific wording in the license and I assume
+            # some special revoke-like signing is happening, but the process is essentially
+            # just another form of "create".
+            return self.create()
+
+    def revoke_from_device(self):
+        if self.module.check_mode:
+            return True
+
+        dossier = self.read_dossier_from_device()
+        if dossier:
+            self.want.update({'dossier': dossier})
+        else:
+            raise F5ModuleError("Dossier not generated.")
+
+        if self.is_revoked():
+            return False
+
+    def is_revoked(self):
+        command = '-c "egrep Revoked /config/bigip.license"'
+        params = dict(
+            command='run',
+            utilCmdArgs=command
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'commandResult' in response and 'Revoked' in response['commandResult']:
+            return True
+        return False
+
     def read_dossier_from_device(self):
         params = dict(
             command='run',
             utilCmdArgs='-b "{0}"'.format(self.want.license_key)
         )
+        if self.want.state == 'revoked':
+            params['utilCmdArgs'] = '-r ' + params['utilCmdArgs']
+
         uri = "https://{0}:{1}/mgmt/tm/util/get-dossier".format(
             self.client.provider['server'],
             self.client.provider['server_port']
@@ -436,7 +497,10 @@ class ModuleManager(object):
             else:
                 raise F5ModuleError(resp.content)
         try:
-            return response['commandResult']
+            if self.want.state == 'revoked':
+                return response['commandResult'][8:]
+            else:
+                return response['commandResult']
         except Exception:
             return None
 
@@ -455,13 +519,13 @@ class ModuleManager(object):
                     self.want.license_url,
                     data=self.want.license_envelope,
                 )
-            except Exception as ex:
+            except Exception:
                 continue
 
             try:
-                resp = LicenseXmlParser(content=resp._content)
+                resp = LicenseXmlParser(content=resp.content)
                 result = resp.json()
-            except F5ModuleError as ex:
+            except F5ModuleError:
                 # This error occurs when there is a problem with the license server and it
                 # starts returning invalid XML (like if they upgraded something and the server
                 # is redirecting improperly.
@@ -469,7 +533,7 @@ class ModuleManager(object):
                 # There's no way to recover from this error except by notifying F5 that there
                 # is an issue with the license server.
                 raise
-            except Exception as ex:
+            except Exception:
                 continue
 
             if result['state'] == 'EULA_REQUIRED':
@@ -554,7 +618,7 @@ class ModuleManager(object):
                     nops += 1
                 else:
                     nops = 0
-            except Exception as ex:
+            except Exception:
                 pass
             time.sleep(5)
 
@@ -583,7 +647,7 @@ class ModuleManager(object):
 
             if 'commandResult' in response:
                 return True
-        except Exception as ex:
+        except Exception:
             pass
         return False
 
@@ -790,7 +854,7 @@ class ArgumentSpec(object):
                 default='activate.f5.com'
             ),
             state=dict(
-                choices=['absent', 'present'],
+                choices=['absent', 'present', 'revoked'],
                 default='present'
             ),
             accept_eula=dict(

@@ -145,7 +145,7 @@ class Cli:
             except ConnectionError as exc:
                 self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
-            cfg = to_text(out, errors='surrogate_then_replace').strip()
+            cfg = to_text(out, errors='surrogate_then_replace').strip() + '\n'
             self._device_configs[cmd] = cfg
             return cfg
 
@@ -187,7 +187,7 @@ class Cli:
             message = getattr(e, 'err', e)
             err = to_text(message, errors='surrogate_then_replace')
             if opts.get('ignore_timeout') and code:
-                responses.append(code)
+                responses.append(err)
                 return responses
             elif code and 'no graceful-restart' in err:
                 if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:

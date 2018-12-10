@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: helm
 short_description: Manages Kubernetes packages with the Helm package manager
 version_added: "2.4"
-author: "Flavio Percoco (flaper87)"
+author: "Flavio Percoco (@flaper87)"
 description:
    - Install, upgrade, delete and list packages with the Helm package manager.
 requirements:

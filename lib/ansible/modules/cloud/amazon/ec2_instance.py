@@ -18,7 +18,7 @@ description:
     - Create and manage AWS EC2 instance
 version_added: "2.5"
 author:
-  - Ryan Scott Brown, @ryansb
+  - Ryan Scott Brown (@ryansb)
 requirements: [ "boto3", "botocore" ]
 options:
   instance_ids:
@@ -33,6 +33,7 @@ options:
     description:
       - Whether or not to wait for the desired state (use wait_timeout to customize this).
     default: true
+    type: bool
   wait_timeout:
     description:
       - How long to wait (in seconds) for the instance to finish booting/terminating.
@@ -69,6 +70,7 @@ options:
       - Delete any tags not specified in the task that are on the instance.
         This means you have to specify all the desired tags on each task affecting an instance.
     default: false
+    type: bool
   image:
     description:
       - An image to use for the instance. The ec2_ami_facts module may be used to retrieve images.
@@ -136,6 +138,7 @@ options:
     description:
       - Whether to enable termination protection.
         This module will not terminate an instance with termination protection active, it must be turned off first.
+    type: bool
   cpu_credit_specification:
     description:
       - For T2 series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
@@ -161,9 +164,11 @@ options:
   detailed_monitoring:
     description:
       - Whether to allow detailed cloudwatch metrics to be collected, enabling more detailed alerting.
+    type: bool
   ebs_optimized:
     description:
       - Whether instance is should use optimized EBS volumes, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html).
+    type: bool
   filters:
     description:
       - A dict of filters to apply when deciding whether existing instances match and should be altered. Each dict item
@@ -175,10 +180,14 @@ options:
     default: {"tag:Name": "<provided-Name-attribute>", "subnet-id": "<provided-or-default subnet>"}
   instance_role:
     description:
-    - The ARN or name of an EC2-enabled instance role to be used. If a name is not provided in arn format
-      then the ListInstanceProfiles permission must also be granted.
-      U(https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfiles.html) If no full ARN is provided,
-      the role with a matching name will be used from the active AWS account.
+      - The ARN or name of an EC2-enabled instance role to be used. If a name is not provided in arn format
+        then the ListInstanceProfiles permission must also be granted.
+        U(https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfiles.html) If no full ARN is provided,
+        the role with a matching name will be used from the active AWS account.
+  placement_group:
+    description:
+      - The placement group that needs to be assigned to the instance
+    version_added: 2.8
 
 extends_documentation_fragment:
     - aws
@@ -1111,6 +1120,8 @@ def build_top_level_options(params):
         spec['CreditSpecification'] = {'CpuCredits': params.get('cpu_credit_specification')}
     if params.get('tenancy') is not None:
         spec['Placement'] = {'Tenancy': params.get('tenancy')}
+    if params.get('placement_group'):
+        spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
         spec['EbsOptimized'] = params.get('ebs_optimized')
     elif (params.get('network') or {}).get('ebs_optimized') is not None:
@@ -1579,6 +1590,7 @@ def main():
             threads_per_core=dict(type='int', choices=[1, 2], required=True)
         )),
         tenancy=dict(type='str', choices=['dedicated', 'default']),
+        placement_group=dict(type='str'),
         instance_initiated_shutdown_behavior=dict(type='str', choices=['stop', 'terminate']),
         termination_protection=dict(type='bool'),
         detailed_monitoring=dict(type='bool'),

@@ -28,7 +28,7 @@ short_description: Manages outputting logs on HUAWEI CloudEngine switches.
 description:
     - This module offers the ability to be output to the log buffer, log file, console, terminal, or log host on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     info_center_enable:
         description:

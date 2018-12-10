@@ -655,7 +655,7 @@ test_no_log - Invoked with:
             }
             deprecations = @(
                 @{
-                    message = "Param 'removed1' is deprecated. See the module docs for more information"
+                    msg = "Param 'removed1' is deprecated. See the module docs for more information"
                     version = "2.1"
                 }
             )
@@ -710,7 +710,7 @@ test_no_log - Invoked with:
                 module_args = @{}
             }
             warnings = @("warning")
-            deprecations = @(@{message = "message"; version = "2.8"})
+            deprecations = @(@{msg = "message"; version = "2.8"})
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
@@ -1352,6 +1352,28 @@ test_no_log - Invoked with:
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "abc"}}
     }
 
+    "Check mode with suboption without supports_check_mode" = {
+        $spec = @{
+            options = @{
+                sub_options = @{
+                    # This tests the situation where a sub key doesn't set supports_check_mode, the logic in
+                    # Ansible.Basic automatically sets that to $false and we want it to ignore it for a nested check
+                    type = "dict"
+                    options = @{
+                        sub_option = @{ type = "str"; default = "value" }
+                    }
+                }
+            }
+            supports_check_mode = $true
+        }
+        $complex_args = @{
+            _ansible_check_mode = $true
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.CheckMode | Assert-Equals -Expected $true
+    }
+
     "Type conversion error" = {
         $spec = @{
             options = @{
@@ -1904,6 +1926,28 @@ test_no_log - Invoked with:
         $actual.Keys.Count | Assert-Equals -Expected 2
         $actual.changed | Assert-Equals -Expected $false
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $complex_args}
+    }
+
+    "PS Object in return result" = {
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
+
+        # JavaScriptSerializer struggles with PS Object like PSCustomObject due to circular references, this test makes
+        # sure we can handle these types of objects without bombing
+        $m.Result.output = [PSCustomObject]@{a = "a"; b = "b"}
+        $failed = $true
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $actual.Keys.Count | Assert-Equals -Expected 3
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = @{}}
+        $actual.output | Assert-DictionaryEquals -Expected @{a = "a"; b = "b"}
     }
 }
 

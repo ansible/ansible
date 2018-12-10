@@ -999,7 +999,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         parsed_availability_set = parse_resource_id(self.availability_set)
                         availability_set = self.get_availability_set(parsed_availability_set.get('resource_group', self.resource_group),
                                                                      parsed_availability_set.get('name'))
-                        availability_set_resource = self.compute_models.SubResource(availability_set.id)
+                        availability_set_resource = self.compute_models.SubResource(id=availability_set.id)
 
                     # Get defaults
                     if not self.network_interface_names:
@@ -1044,7 +1044,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                         promotion_code=self.plan.get('promotion_code'))
 
                     vm_resource = self.compute_models.VirtualMachine(
-                        self.location,
+                        location=self.location,
                         tags=self.tags,
                         os_profile=self.compute_models.OSProfile(
                             admin_username=self.admin_username,
@@ -1187,13 +1187,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     availability_set_resource = None
                     try:
-                        availability_set_resource = self.compute_models.SubResource(vm_dict['properties']['availabilitySet'].get('id'))
+                        availability_set_resource = self.compute_models.SubResource(id=vm_dict['properties']['availabilitySet'].get('id'))
                     except Exception:
                         # pass if the availability set is not set
                         pass
 
                     vm_resource = self.compute_models.VirtualMachine(
-                        vm_dict['location'],
+                        location=vm_dict['location'],
                         os_profile=self.compute_models.OSProfile(
                             admin_username=vm_dict['properties'].get('osProfile', {}).get('adminUsername'),
                             computer_name=vm_dict['properties'].get('osProfile', {}).get('computerName')
@@ -1431,10 +1431,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
             data_disks = vm.storage_profile.data_disks
             for data_disk in data_disks:
-                if(data_disk.vhd):
-                    vhd_uris.append(data_disk.vhd.uri)
-                elif(data_disk.managed_disk):
-                    managed_disk_ids.append(data_disk.managed_disk.id)
+                if data_disk is not None:
+                    if(data_disk.vhd):
+                        vhd_uris.append(data_disk.vhd.uri)
+                    elif(data_disk.managed_disk):
+                        managed_disk_ids.append(data_disk.managed_disk.id)
 
             # FUTURE enable diff mode, move these there...
             self.log("VHD URIs to delete: {0}".format(', '.join(vhd_uris)))

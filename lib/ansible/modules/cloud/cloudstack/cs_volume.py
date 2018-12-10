@@ -56,6 +56,7 @@ options:
       - Whether to display the volume to the end user or not.
       - Allowed to Root Admins only.
     default: true
+    type: bool
   domain:
     description:
       - Name of the domain the volume to be deployed in.
@@ -78,12 +79,14 @@ options:
   force:
     description:
       - Force removal of volume even it is attached to a VM.
-      - Considered on C(state=absnet) only.
+      - Considered on C(state=absent) only.
     default: false
+    type: bool
   shrink_ok:
     description:
       - Whether to allow to shrink the volume.
     default: false
+    type: bool
   vm:
     description:
       - Name of the virtual machine to attach the volume to.
@@ -100,6 +103,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+    type: bool
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).

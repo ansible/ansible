@@ -131,7 +131,7 @@ def main():
         msc.existing = msc.get_obj(path, id=label_id)
         existing_by_name = msc.get_obj(path, displayName=label)
         if existing_by_name and label_id != existing_by_name['id']:
-            msc.fail_json(msg="Provided label '{1}' with id '{2}' does not match existing id '{3}'.".format(label, label_id, existing_by_name['id']))
+            msc.fail_json(msg="Provided label '{0}' with id '{1}' does not match existing id '{2}'.".format(label, label_id, existing_by_name['id']))
 
     # If we found an existing object, continue with it
     if label_id:

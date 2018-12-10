@@ -601,10 +601,10 @@ In other cases there are technical issues, for example, for python wheels, our d
 How do I get the original ansible_host when I delegate a task?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overritten,
-but you can still access the orignal via ``hostvars``::
+As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overwritten,
+but you can still access the original via ``hostvars``::
 
-   oringal_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+   original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
 This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 

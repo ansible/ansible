@@ -160,7 +160,7 @@ def main():
         msc.existing = msc.get_obj(path, id=site_id)
         existing_by_name = msc.get_obj(path, name=site)
         if existing_by_name and site_id != existing_by_name['id']:
-            msc.fail_json(msg="Provided site '{1}' with id '{2}' does not match existing id '{3}'.".format(site, site_id, existing_by_name['id']))
+            msc.fail_json(msg="Provided site '{0}' with id '{1}' does not match existing id '{2}'.".format(site, site_id, existing_by_name['id']))
 
     # If we found an existing object, continue with it
     if site_id:

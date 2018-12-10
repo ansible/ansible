@@ -28,7 +28,7 @@ short_description: Manages MLAG configuration on HUAWEI CloudEngine switches.
 description:
     - Manages MLAG configuration on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     dfs_group_id:
         description:

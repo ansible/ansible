@@ -32,6 +32,7 @@ General guidelines & tips
 =========================
 
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
+* Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent Ansible from importing your module.
 * Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
@@ -56,10 +57,10 @@ Python tips
 * Include a ``main`` function that wraps the normal execution.
 * Call your ``main`` function from a conditional so you can import it into unit tests - for example:
 
-	.. code-block:: python
+.. code-block:: python
 
-	    if __name__ == '__main__':
-	        main()
+    if __name__ == '__main__':
+        main()
 
 .. _shared_code:
 
@@ -71,29 +72,31 @@ Importing and using shared code
 * Do NOT use wildcards (*) for importing other python modules; instead, list the function(s) you are importing (for example, ``from some.other_python_module.basic import otherFunction``).
 * Import custom packages in ``try``/``except``, capture any import errors, and handle them with ``fail_json()`` in ``main()``. For example:
 
-	.. code-block:: python
+.. code-block:: python
 
-	    import traceback
+    import traceback
 
-	    from ansible.basic import missing_required_lib
+    from ansible.basic import missing_required_lib
 
-	    LIB_IMP_ERR = None
-	    try:
-	        import foo
-	        HAS_LIB = True
-	    except:
-	        HAS_LIB = False
-	        LIB_IMP_ERR = traceback.format_exc()
+    LIB_IMP_ERR = None
+    try:
+        import foo
+        HAS_LIB = True
+    except:
+        HAS_LIB = False
+        LIB_IMP_ERR = traceback.format_exc()
 
-  Then in ``main()``, just after the argspec, do
 
-	.. code-block:: python
+Then in ``main()``, just after the argspec, do
 
-		if not HAS_LIB:
-		    module.fail_json(msg=missing_required_lib("foo"),
-		                     exception=LIB_IMP_ERR)
+.. code-block:: python
 
-  And document the dependency in the ``requirements`` section of your module's :ref:`documentation_block`.
+    if not HAS_LIB:
+        module.fail_json(msg=missing_required_lib("foo"),
+                         exception=LIB_IMP_ERR)
+
+
+And document the dependency in the ``requirements`` section of your module's :ref:`documentation_block`.
 
 .. _module_failures:
 

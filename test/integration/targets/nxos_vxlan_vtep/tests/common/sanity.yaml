@@ -27,6 +27,10 @@
 - set_fact: def_global_suppress_arp="false"
   when: platform is search('N9K') and (major_version is version('9.2', 'ge'))
 
+# This parameter requires a switch reload.
+# The line below can be commented out if needed to verify the functionality.
+- set_fact: global_suppress_arp="false"
+
 - block:
   - name: "Apply N7K specific setup config"
     include: targets/nxos_vxlan_vtep/tasks/platform/n7k/setup.yaml

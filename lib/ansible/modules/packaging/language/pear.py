@@ -24,7 +24,7 @@ description:
     - Manage PHP packages with the pear package manager.
 version_added: 2.0
 author:
-    - "'jonathan.lestrelin' <jonathan.lestrelin@gmail.com>"
+    - Jonathan Lestrelin (@jle64) <jonathan.lestrelin@gmail.com>
 options:
     name:
         description:

@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages netstream export on HUAWEI CloudEngine switches.
 description:
     - Configure NetStream flow statistics exporting and versions for exported packets on HUAWEI CloudEngine switches.
-author: Zhijin Zhou (@CloudEngine-Ansible)
+author: Zhijin Zhou (@QijunPan)
 notes:
 options:
     type:

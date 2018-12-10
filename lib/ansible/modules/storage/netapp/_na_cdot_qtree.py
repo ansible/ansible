@@ -20,7 +20,7 @@ short_description: Manage qtrees
 extends_documentation_fragment:
     - netapp.ontap
 version_added: '2.3'
-author: Sumit Kumar (sumit4@netapp.com)
+author: Sumit Kumar (@timuster) <sumit4@netapp.com>
 
 deprecated:
   removed_in: '2.11'

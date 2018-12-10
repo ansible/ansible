@@ -17,7 +17,7 @@ module: os_quota
 short_description: Manage OpenStack Quotas
 extends_documentation_fragment: openstack
 version_added: "2.3"
-author: "Michael Gale (gale.michael@gmail.com)"
+author: "Michael Gale (@mgale) <gale.michael@gmail.com>"
 description:
     - Manage OpenStack Quotas. Quotas can be created,
       updated or deleted using this module. A quota will be updated

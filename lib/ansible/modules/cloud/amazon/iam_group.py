@@ -48,14 +48,16 @@ options:
     choices: [ 'present', 'absent' ]
   purge_policy:
     description:
-      - Deatach policy which not included in managed_policy list
+      - Detach policy which not included in managed_policy list
     required: false
     default: false
+    type: bool
   purge_users:
     description:
-      - Deatach users which not included in users list
+      - Detach users which not included in users list
     required: false
     default: false
+    type: bool
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws

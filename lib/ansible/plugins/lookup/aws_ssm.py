@@ -103,12 +103,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 try:
     from botocore.exceptions import ClientError
@@ -116,6 +111,8 @@ try:
     import boto3
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
+
+display = Display()
 
 
 def _boto3_conn(region, credentials):

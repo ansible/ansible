@@ -1,0 +1,6 @@
+bugfixes:
+    - fix FactCache.update() to conform to the dict API.
+minor_changes:
+    - Moved the FactCache code from ansible.plugins.cache.FactCache to
+      ansible.vars.fact_cache.FactCache as it is not meant to be used to
+      implement cache plugins.

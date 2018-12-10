@@ -38,6 +38,7 @@ options:
         default: true
         description:
         - Should https certificates be validated?
+        type: bool
     ssid:
         description:
             - The ID of the storage array containing the AMG you wish to target

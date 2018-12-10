@@ -1,3 +1,5 @@
+.. _rebase_guide:
+
 ***********************
 Rebasing a pull request
 ***********************

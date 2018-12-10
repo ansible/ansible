@@ -89,7 +89,7 @@ author:
 EXAMPLES = r'''
 - name: Wait 300 seconds for all Oracle VirtualBox processes to stop. (VBoxHeadless, VirtualBox, VBoxSVC)
   win_wait_for_process:
-    process_name: 'v(irtual)?box(headless|svc)?'
+    process_name_pattern: 'v(irtual)?box(headless|svc)?'
     state: absent
     timeout: 500
 

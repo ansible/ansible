@@ -1,0 +1,2 @@
+bugfixes:
+- redis cache - Support version 3 of the redis python library (https://github.com/ansible/ansible/issues/49341)

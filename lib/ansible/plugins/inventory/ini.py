@@ -24,8 +24,7 @@ DOCUMENTATION = '''
         - Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
         - See the Examples for proper quoting to prevent changes to variable type.
     notes:
-        - Replaces the previously hardcoded INI inventory.
-        - Must be whitelisted in configuration to function.
+        - Whitelisted in configuration by default.
         - Consider switching to YAML format for inventory sources to avoid confusion on the actual type of a variable.
           The YAML inventory plugin processes variable values consistently and correctly.
 '''
@@ -314,6 +313,24 @@ class InventoryModule(BaseFileInventoryPlugin):
             variables[k] = self._parse_value(v)
 
         return hostnames, port, variables
+
+    def _expand_hostpattern(self, hostpattern):
+        '''
+        do some extra checks over normal processing
+        '''
+        # specification?
+
+        hostnames, port = super(InventoryModule, self)._expand_hostpattern(hostpattern)
+
+        if hostpattern.strip().endswith(':') and port is None:
+            raise AnsibleParserError("Invalid host pattern '%s' supplied, ending in ':' is not allowed, this character is reserved to provide a port." %
+                                     hostpattern)
+        for pattern in hostnames:
+            # some YAML parsing prevention checks
+            if pattern.strip() == '---':
+                raise AnsibleParserError("Invalid host pattern '%s' supplied, '---' is normally a sign this is a YAML file." % hostpattern)
+
+        return (hostnames, port)
 
     @staticmethod
     def _parse_value(v):

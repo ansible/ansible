@@ -19,19 +19,20 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from nose.plugins.skip import SkipTest
+import pytest
 
+pytestmark = []
 try:
     from ansible.modules.network.fortimanager import fmgr_provisioning
     from .fortimanager_module import TestFortimanagerModule
     from units.modules.utils import set_module_args
 except ImportError:
-    raise SkipTest("Could not load required modules for testing")
+    pytestmark.append(pytest.mark.skip("Could not load required modules for testing"))
 
 try:
     from pyFMG.fortimgr import FortiManager
 except ImportError:
-    raise SkipTest("FortiManager tests require pyFMG package")
+    pytestmark.append(pytest.mark.skip("FortiManager tests require pyFMG package"))
 
 
 class TestFmgrProvisioningModule(TestFortimanagerModule):

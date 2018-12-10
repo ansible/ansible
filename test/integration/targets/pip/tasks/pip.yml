@@ -499,3 +499,30 @@
   pip:
     name: "{{ pip_test_packages }}"
     state: absent
+
+# https://github.com/ansible/ansible/issues/47198
+# distribute is a legacy package that will fail on newer Python 3 versions
+- block:
+  - name: make sure the virtualenv does not exist
+    file:
+      state: absent
+      name: "{{ output_dir }}/pipenv"
+
+  - name: install distribute in the virtualenv
+    pip:
+      name: distribute
+      virtualenv: "{{ output_dir }}/pipenv"
+      state: present
+
+  - name: try to remove distribute
+    pip:
+      state: "absent"
+      name: "distribute"
+      virtualenv: "{{ output_dir }}/pipenv"
+    ignore_errors: yes
+    register: remove_distribute
+
+  - name: inspect the cmd
+    assert:
+      that: "'distribute' in remove_distribute.cmd"
+  when: ansible_python.version.major == 2

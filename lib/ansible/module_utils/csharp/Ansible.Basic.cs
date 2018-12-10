@@ -242,7 +242,7 @@ namespace Ansible.Basic
 
         public void Deprecate(string message, string version)
         {
-            deprecations.Add(new Dictionary<string, string>() { { "message", message }, { "version", version } });
+            deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
             LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
         }
 
@@ -338,14 +338,25 @@ namespace Ansible.Basic
 
         public static string ToJson(object obj)
         {
+            // Using PowerShell to serialize the JSON is preferable over the native .NET libraries as it handles
+            // PS Objects a lot better than the alternatives. In case we are debugging in Visual Studio we have a
+            // fallback to the other libraries as we won't be dealing with PowerShell objects there.
+            if (Runspace.DefaultRunspace != null)
+            {
+                PSObject rawOut = ScriptBlock.Create("ConvertTo-Json -InputObject $args[0] -Depth 99 -Compress").Invoke(obj)[0];
+                return rawOut.BaseObject as string;
+            }
+            else
+            {
 #if CORECLR
-            return JsonConvert.SerializeObject(obj);
+                return JsonConvert.SerializeObject(obj);
 #else
-            JavaScriptSerializer jss = new JavaScriptSerializer();
-            jss.MaxJsonLength = int.MaxValue;
-            jss.RecursionLimit = int.MaxValue;
-            return jss.Serialize(obj);
+                JavaScriptSerializer jss = new JavaScriptSerializer();
+                jss.MaxJsonLength = int.MaxValue;
+                jss.RecursionLimit = int.MaxValue;
+                return jss.Serialize(obj);
 #endif
+            }
         }
 
         public static IDictionary GetParams(string[] args)
@@ -700,7 +711,8 @@ namespace Ansible.Basic
             // initially parse the params and check for unsupported ones and set internal vars
             CheckUnsupportedArguments(param, legalInputs);
 
-            if (CheckMode && !(bool)spec["supports_check_mode"])
+            // Only run this check if we are at the root argument (optionsContext.Count == 0)
+            if (CheckMode && !(bool)spec["supports_check_mode"] && optionsContext.Count == 0)
             {
                 Result["skipped"] = true;
                 Result["msg"] = String.Format("remote module ({0}) does not support check mode", ModuleName);

@@ -33,6 +33,7 @@ options:
       - Force overwrite of already existing key pair if key has changed.
     required: false
     default: true
+    type: bool
     version_added: "2.3"
   state:
     description:
@@ -45,6 +46,7 @@ options:
       - Wait for the specified action to complete before returning. This option has no effect since version 2.5.
     required: false
     default: false
+    type: bool
     version_added: "1.6"
   wait_timeout:
     description:

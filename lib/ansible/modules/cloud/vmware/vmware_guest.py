@@ -202,6 +202,13 @@ options:
     - "vmware-tools needs to be installed on the given virtual machine in order to work with this parameter."
     default: 'no'
     type: bool
+  wait_for_customization:
+    description:
+    - Wait until vCenter detects all guest customizations as successfully completed.
+    - When enabled, the VM will automatically be powered on.
+    default: 'no'
+    type: bool
+    version_added: '2.8'
   state_change_timeout:
     description:
     - If the C(state) is set to C(shutdownguest), by default the module will return immediately after sending the shutdown signal.
@@ -336,6 +343,11 @@ options:
     - For example, when user has different datastore or datastore cluster for templates and virtual machines.
     - Please see example for more usage.
     version_added: '2.7'
+  convert:
+    description:
+    - Specify convert disk type while cloning template or virtual machine.
+    choices: [ thin, thick, eagerzeroedthick ]
+    version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -919,6 +931,14 @@ class PyVmomiHelper(PyVmomi):
                     num_cpus = int(self.params['hardware']['num_cpus'])
                 except ValueError as e:
                     self.module.fail_json(msg="hardware.num_cpus attribute should be an integer value.")
+                # check VM power state and cpu hot-add/hot-remove state before re-config VM
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    if not vm_obj.config.cpuHotRemoveEnabled and num_cpus < vm_obj.config.hardware.numCPU:
+                        self.module.fail_json(msg="Configured cpu number is less than the cpu number of the VM, "
+                                                  "cpuHotRemove is not enabled")
+                    if not vm_obj.config.cpuHotAddEnabled and num_cpus > vm_obj.config.hardware.numCPU:
+                        self.module.fail_json(msg="Configured cpu number is more than the cpu number of the VM, "
+                                                  "cpuHotAdd is not enabled")
 
                 if 'num_cpu_cores_per_socket' in self.params['hardware']:
                     try:
@@ -929,11 +949,9 @@ class PyVmomiHelper(PyVmomi):
                     if num_cpus % num_cpu_cores_per_socket != 0:
                         self.module.fail_json(msg="hardware.num_cpus attribute should be a multiple "
                                                   "of hardware.num_cpu_cores_per_socket")
-
                     self.configspec.numCoresPerSocket = num_cpu_cores_per_socket
                     if vm_obj is None or self.configspec.numCoresPerSocket != vm_obj.config.hardware.numCoresPerSocket:
                         self.change_detected = True
-
                 self.configspec.numCPUs = num_cpus
                 if vm_obj is None or self.configspec.numCPUs != vm_obj.config.hardware.numCPU:
                     self.change_detected = True
@@ -943,11 +961,19 @@ class PyVmomiHelper(PyVmomi):
 
             if 'memory_mb' in self.params['hardware']:
                 try:
-                    self.configspec.memoryMB = int(self.params['hardware']['memory_mb'])
+                    memory_mb = int(self.params['hardware']['memory_mb'])
                 except ValueError:
                     self.module.fail_json(msg="Failed to parse hardware.memory_mb value."
                                               " Please refer the documentation and provide"
                                               " correct value.")
+                # check VM power state and memory hotadd state before re-config VM
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    if vm_obj.config.memoryHotAddEnabled and memory_mb < vm_obj.config.hardware.memoryMB:
+                        self.module.fail_json(msg="Configured memory is less than memory size of the VM, "
+                                                  "operation is not supported")
+                    elif not vm_obj.config.memoryHotAddEnabled and memory_mb != vm_obj.config.hardware.memoryMB:
+                        self.module.fail_json(msg="memoryHotAdd is not enabled")
+                self.configspec.memoryMB = memory_mb
                 if vm_obj is None or self.configspec.memoryMB != vm_obj.config.hardware.memoryMB:
                     self.change_detected = True
             # memory_mb is mandatory for VM creation
@@ -955,16 +981,25 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
 
             if 'hotadd_memory' in self.params['hardware']:
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
+                        vm_obj.config.memoryHotAddEnabled != bool(self.params['hardware']['hotadd_memory']):
+                    self.module.fail_json(msg="Configure hotadd memory operation is not supported when VM is power on")
                 self.configspec.memoryHotAddEnabled = bool(self.params['hardware']['hotadd_memory'])
                 if vm_obj is None or self.configspec.memoryHotAddEnabled != vm_obj.config.memoryHotAddEnabled:
                     self.change_detected = True
 
             if 'hotadd_cpu' in self.params['hardware']:
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
+                        vm_obj.config.cpuHotAddEnabled != bool(self.params['hardware']['hotadd_cpu']):
+                    self.module.fail_json(msg="Configure hotadd cpu operation is not supported when VM is power on")
                 self.configspec.cpuHotAddEnabled = bool(self.params['hardware']['hotadd_cpu'])
                 if vm_obj is None or self.configspec.cpuHotAddEnabled != vm_obj.config.cpuHotAddEnabled:
                     self.change_detected = True
 
             if 'hotremove_cpu' in self.params['hardware']:
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
+                        vm_obj.config.cpuHotRemoveEnabled != bool(self.params['hardware']['hotremove_cpu']):
+                    self.module.fail_json(msg="Configure hotremove cpu operation is not supported when VM is power on")
                 self.configspec.cpuHotRemoveEnabled = bool(self.params['hardware']['hotremove_cpu'])
                 if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
                     self.change_detected = True
@@ -989,13 +1024,15 @@ class PyVmomiHelper(PyVmomi):
                     self.change_detected = True
 
             if 'boot_firmware' in self.params['hardware']:
+                # boot firmware re-config can cause boot issue
+                if vm_obj is not None:
+                    return
                 boot_firmware = self.params['hardware']['boot_firmware'].lower()
                 if boot_firmware not in ('bios', 'efi'):
                     self.module.fail_json(msg="hardware.boot_firmware value is invalid [%s]."
                                               " Need one of ['bios', 'efi']." % boot_firmware)
                 self.configspec.firmware = boot_firmware
-                if vm_obj is None or self.configspec.firmware != vm_obj.config.firmware:
-                    self.change_detected = True
+                self.change_detected = True
 
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
@@ -1286,9 +1323,9 @@ class PyVmomiHelper(PyVmomi):
                     pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
                 if (nic.device.backing and
-                   (not hasattr(nic.device.backing, 'port') or
-                    (nic.device.backing.port.portgroupKey != pg_obj.key or
-                     nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid))):
+                    (not hasattr(nic.device.backing, 'port') or
+                     (nic.device.backing.port.portgroupKey != pg_obj.key or
+                      nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid))):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
@@ -2055,6 +2092,22 @@ class PyVmomiHelper(PyVmomi):
                     relospec.host = self.select_host()
                 relospec.datastore = datastore
 
+                # Convert disk present in template if is set
+                if self.params['convert']:
+                    for device in vm_obj.config.hardware.device:
+                        if hasattr(device.backing, 'fileName'):
+                            disk_locator = vim.vm.RelocateSpec.DiskLocator()
+                            disk_locator.diskBackingInfo = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+                            if self.params['convert'] in ['thin']:
+                                disk_locator.diskBackingInfo.thinProvisioned = True
+                            if self.params['convert'] in ['eagerzeroedthick']:
+                                disk_locator.diskBackingInfo.eagerlyScrub = True
+                            if self.params['convert'] in ['thick']:
+                                disk_locator.diskBackingInfo.diskMode = "persistent"
+                            disk_locator.diskId = device.key
+                            disk_locator.datastore = datastore
+                            relospec.disk.append(disk_locator)
+
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
                 relospec.pool = resource_pool
@@ -2147,11 +2200,17 @@ class PyVmomiHelper(PyVmomi):
                 task = vm.ReconfigVM_Task(vm_custom_spec)
                 self.wait_for_task(task)
 
-            if self.params['wait_for_ip_address'] or self.params['state'] in ['poweredon', 'restarted']:
+            if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
 
                 if self.params['wait_for_ip_address']:
                     self.wait_for_vm_ip(vm)
+
+                if self.params['wait_for_customization']:
+                    is_customization_ok = self.wait_for_customization(vm)
+                    if not is_customization_ok:
+                        vm_facts = self.gather_facts(vm)
+                        return {'changed': self.change_detected, 'failed': True, 'instance': vm_facts}
 
             vm_facts = self.gather_facts(vm)
             return {'changed': self.change_detected, 'failed': False, 'instance': vm_facts}
@@ -2295,6 +2354,38 @@ class PyVmomiHelper(PyVmomi):
 
         return facts
 
+    def get_vm_events(self, eventTypeIdList):
+        newvm = self.get_vm()
+        byEntity = vim.event.EventFilterSpec.ByEntity(entity=newvm, recursion="self")
+        filterSpec = vim.event.EventFilterSpec(entity=byEntity, eventTypeId=eventTypeIdList)
+        eventManager = self.content.eventManager
+        return eventManager.QueryEvent(filterSpec)
+
+    def wait_for_customization(self, vm, poll=10000, sleep=10):
+        facts = {}
+        thispoll = 0
+        while thispoll <= poll:
+            eventStarted = self.get_vm_events(['CustomizationStartedEvent'])
+            if len(eventStarted):
+                thispoll = 0
+                while thispoll <= poll:
+                    eventsFinishedResult = self.get_vm_events(['CustomizationSucceeded', 'CustomizationFailed'])
+                    if len(eventsFinishedResult):
+                        if not isinstance(eventsFinishedResult[0], vim.event.CustomizationSucceeded):
+                            self.module.fail_json(msg='Customization failed with error {0}:\n{1}'.format(
+                                eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
+                            return False
+                        break
+                    else:
+                        time.sleep(sleep)
+                        thispoll += 1
+                return True
+            else:
+                time.sleep(sleep)
+                thispoll += 1
+        self.module.fail_json('waiting for customizations timed out.')
+        return False
+
 
 def main():
     argument_spec = vmware_argument_spec()
@@ -2325,8 +2416,10 @@ def main():
         resource_pool=dict(type='str'),
         customization=dict(type='dict', default={}, no_log=True),
         customization_spec=dict(type='str', default=None),
+        wait_for_customization=dict(type='bool', default=False),
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
+        convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
     )
 
     module = AnsibleModule(argument_spec=argument_spec,

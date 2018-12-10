@@ -23,13 +23,13 @@ try:
 except:
     HAS_BOTO3 = False
 
-from nose.plugins.skip import SkipTest
+import pytest
 
 from units.compat import unittest
 from ansible.module_utils.ec2 import AWSRetry
 
 if not HAS_BOTO3:
-    raise SkipTest("test_aws.py requires the python modules 'boto3' and 'botocore'")
+    pytestmark = pytest.mark.skip("test_aws.py requires the python modules 'boto3' and 'botocore'")
 
 
 class RetryTestCase(unittest.TestCase):
