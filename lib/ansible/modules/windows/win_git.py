@@ -65,7 +65,7 @@ options:
     description:
         - Create a shallow clone with a history truncated to the specified
           number or revisions. The minimum possible value is C(1), otherwise
-          ignored. Needs I(git>=1.9.1) to work correctly.  
+          ignored. Needs I(git>=2.19.0) to work correctly.  
   key_file:
         description:
             - Specify an optional private key file path, on the target host, to use for the checkout.  
@@ -79,17 +79,20 @@ notes:
 
 EXAMPLES = '''
 # Example git clone using https 
+name: git clone using https 
 win_git:
   repo: "https://github.com/githubtraining/hellogitworld"
   dest: "{{ ansible_env.TEMP }}\\hellogitworld"  
 
 # Example git clone using specific version
+name: git clone using specific version
 win_git:
   repo: 'https://foosball.example.org/path/to/repo.git'
   dest: "{{ ansible_env.TEMP }}\\hellogitworld"    
   version: release-0.22     
 
 # Example git clone using ssh. Also clean up existing directory
+name: git clone using ssh
 win_git:          
   repo: git@github.com:githubtraining/hellogitworld.git          
   dest: c:\windows\temp\hellogitworld_ssh     
@@ -97,6 +100,7 @@ win_git:
   key_file: 'c:\windows\temp\id_rsa'
 
 # Example git clone using git protocol. Update if the folder already cloned
+name: git clone using git protocol
 win_git:          
     repo: git://github.com/githubtraining/hellogitworld.git          
     dest: c:\windows\temp\hellogitworld_git
