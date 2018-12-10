@@ -1,0 +1,3 @@
+---
+bugfixes:
+- docker_swarm - Fix the minimum docker API version to be 1.25
