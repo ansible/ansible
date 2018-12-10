@@ -907,11 +907,19 @@ files:
 ###############################
 # plugins/filter
   $plugins/filter/:
+    support: community
+  $plugins/filter/__init__.py:
+    support: core
+  $plugins/filter/core.py:
+    support: core
+  $plugins/filter/mathstuff.py:
     support: core
   $plugins/filter/network.py:
     support: network
     maintainers: $team_networking
     labels: networking
+  $plugins/filter/urlsplit.py:
+    support: core
 ###############################
 # plugins/httpapi
   $plugins/httpapi:
@@ -1073,14 +1081,14 @@ files:
     keywords:
       - jinja
       - jinja2
-  lib/ansible/utils/module_docs_fragments/acme.py:
+  lib/ansible/utils/module_docs_fragments/:
     support: community
+  lib/ansible/utils/module_docs_fragments/acme.py:
     maintainers: resmo felixfontein
   lib/ansible/utils/module_docs_fragments/docker.py:
     support: community
     maintainers: $team_docker
   lib/ansible/utils/module_docs_fragments/xenserver.py:
-    support: community
     maintainers: bvitnik
   test/sanity/validate-modules:
     notified:
