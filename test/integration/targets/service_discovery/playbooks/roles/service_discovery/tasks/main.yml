@@ -22,16 +22,11 @@
         <<: *aws_connection_info
       register: setup_vpc
 
-      # I expect this entire test suite to fail because lack of service_disco_namespace
-      # But there could be one that just exists, so I'll check
-    - name: query hosted zones
-      route53_facts:
-        query: hosted_zone
-        <<: *aws_connection_info
-      register: existing_hosted_zones
-
-    - name: output zones so I can see if there are any usable
-      debug: var=existing_hosted_zones
+# There's currently no support for these tests.
+# If you want to run them, you'll need to create a service disovery namespace with something like
+#  aws --region us-east-1 servicediscovery create-private-dns-namespace --name testnamespace
+# then, set that namespace below to create registry
+# Alternatively, add the other PR's service_discovery_namespace module
 
 #   - name: create private service discovery namespace
 #     service_discovery_namespace:
@@ -46,6 +41,7 @@
 #     assert:
 #       that:
 #         - service_discovery_private_namespace.changed
+
 #   - name: create service discovery registry
 #     service_discovery_registry:
 #       name: "private-{{ namespace_name}}"
@@ -63,6 +59,56 @@
 #     assert:
 #       that:
 #         - service_discovery_registry.changed
+
+#   - name: create second service discovery registry
+#     service_discovery_registry:
+#       name: "private-{{ namespace_name}}-two"
+#       state: present
+#       dns_config:
+#         namespace_id: "{{ service_discovery_private_namespace.namespace.id }}"
+#         routing_policy: "WEIGHTED"
+#         dns_records:
+#           - type: "SRV"
+#             ttl: 60
+#       <<: *aws_connection_info
+#     register: service_discovery_registry_two
+
+#   - name: check that sd registry changed
+#     assert:
+#       that:
+#         - service_discovery_registry_two.changed
+
+#   - name: repeat create second service discovery registry
+#     service_discovery_registry:
+#       name: "private-{{ namespace_name}}-two"
+#       state: present
+#       dns_config:
+#         namespace_id: "{{ service_discovery_private_namespace.namespace.id }}"
+#         routing_policy: "WEIGHTED"
+#         dns_records:
+#           - type: "SRV"
+#             ttl: 60
+#       <<: *aws_connection_info
+#     register: service_discovery_registry_two
+
+#   - name: check that sd registry is not changed
+#     assert:
+#       that:
+#         - not service_discovery_registry_two.changed
+
+#   - name: delete second service discovery registry
+#     service_discovery_registry:
+#       name: "private-{{ namespace_name}}-two"
+#       state: absent
+#       dns_config:
+#         namespace_id: "{{ service_discovery_private_namespace.namespace.id }}"
+#         routing_policy: "WEIGHTED"
+#         dns_records:
+#           - type: "SRV"
+#             ttl: 60
+#       <<: *aws_connection_info
+#     register: service_discovery_registry_two
+# There should probably be something about verifying it was deleted, but I haven't written a query yet.
 
 
   always:
