@@ -72,7 +72,6 @@ options:
         description:
             - Use with state 'present' to generalize the machine. Set to true to generalize the machine.
             - Please note that this operation is irreversible.
-        default: true
         type: bool
         version_added: "2.8"
     restarted:
