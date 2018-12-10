@@ -149,10 +149,14 @@ class Svc(object):
             self.downed = os.path.lexists('%s/down' % self.svc_full)
             self.get_status()
         else:
+            if not os.path.isabs(self.src_full):
+                os.chdir(self.service_dir)
             self.downed = os.path.lexists('%s/down' % self.src_full)
             self.state = 'stopped'
 
     def enable(self):
+        if not os.path.isabs(self.src_full):
+            os.chdir(self.service_dir)
         if os.path.exists(self.src_full):
             try:
                 os.symlink(self.src_full, self.svc_full)
@@ -162,6 +166,8 @@ class Svc(object):
             self.module.fail_json(msg="Could not find source for service to enable (%s)." % self.src_full)
 
     def disable(self):
+        if not os.path.isabs(self.src_full):
+            os.chdir(self.service_dir)
         try:
             os.unlink(self.svc_full)
         except OSError as e:
