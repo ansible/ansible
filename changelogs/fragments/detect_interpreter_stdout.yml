@@ -1,0 +1,2 @@
+bugfixes:
+    - Also check stdout for interpreter errors for more intelligent messages to user
