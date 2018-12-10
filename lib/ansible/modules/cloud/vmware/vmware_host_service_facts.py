@@ -24,6 +24,7 @@ author:
 - Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
+- If source package name is not available then fact is populated as null.
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -75,7 +76,9 @@ host_service_facts:
                 "policy": "on",
                 "required": false,
                 "running": true,
-                "uninstallable": false
+                "uninstallable": false,
+                "source_package_name": "esx-base",
+                "source_package_desc": "This VIB contains all of the base functionality of vSphere ESXi."
             },
             {
                 "key": "TSM",
@@ -83,7 +86,9 @@ host_service_facts:
                 "policy": "off",
                 "required": false,
                 "running": false,
-                "uninstallable": false
+                "uninstallable": false,
+                "source_package_name": "esx-base",
+                "source_package_desc": "This VIB contains all of the base functionality of vSphere ESXi."
             },
         ]
     }
@@ -116,8 +121,8 @@ class VmwareServiceManager(PyVmomi):
                             uninstallable=service.uninstallable,
                             running=service.running,
                             policy=service.policy,
-                            source_package_name=service.sourcePackage.sourcePackageName if service.sourcePackage else 'NA',
-                            source_package_desc=service.sourcePackage.description if service.sourcePackage else 'NA',
+                            source_package_name=service.sourcePackage.sourcePackageName if service.sourcePackage else None,
+                            source_package_desc=service.sourcePackage.description if service.sourcePackage else None,
                         )
                     )
             hosts_facts[host.name] = host_service_facts
