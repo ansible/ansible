@@ -319,6 +319,16 @@ db_name:
     returned: when RDS instance exists
     type: string
     sample: "ASERTG"
+endpoint:
+    description: the endpoint uri of the database instance
+    returned: when RDS instance exists
+    type: string
+    sample: "my-ansible-database.asdfaosdgih.us-east-1.rds.amazonaws.com"
+port:
+    description: the listening port of the database instance
+    returned: when RDS instance exists
+    type: int
+    sample: 3306
 parameter_groups:
     description: the list of DB parameter groups applied to this RDS instance
     returned: when RDS instance exists and parameter groups are defined
