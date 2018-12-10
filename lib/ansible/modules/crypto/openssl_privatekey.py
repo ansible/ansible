@@ -23,7 +23,10 @@ version_added: "2.3"
 short_description: Generate OpenSSL private keys.
 description:
     - "This module allows one to (re)generate OpenSSL private keys. One can
-       generate either RSA or DSA private keys. Keys are generated in PEM format."
+       generate L(RSA,https://en.wikipedia.org/wiki/RSA_(cryptosystem)),
+       L(DSA,https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) or
+       L(ECC,https://en.wikipedia.org/wiki/Elliptic-curve_cryptography)
+       private keys. Keys are generated in PEM format."
     - "The module can use the cryptography Python library, or the pyOpenSSL Python
        library. By default, it tries to detect which one is available. This can be
        overridden with the I(select_crypto_backend) option."
@@ -616,7 +619,7 @@ def main():
         if not PYOPENSSL_FOUND:
             module.fail_json(msg='The Python pyOpenSSL library is required')
         private_key = PrivateKeyPyOpenSSL(module)
-    if backend == 'cryptography':
+    elif backend == 'cryptography':
         if not CRYPTOGRAPHY_FOUND:
             module.fail_json(msg='The Python cryptography library is required')
         private_key = PrivateKeyCryptography(module)
