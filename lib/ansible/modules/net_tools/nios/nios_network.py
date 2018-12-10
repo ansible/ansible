@@ -48,7 +48,10 @@ options:
     suboptions:
       name:
         description:
-          - The name of the DHCP option to configure
+          - The name of the DHCP option to configure. The standard options are
+            C(router), C(router-templates), C(domain-name-servers), C(domain-name),
+            C(broadcast-address), C(broadcast-address-offset), C(dhcp-lease-time),
+            and C(dhcp6.name-servers).
       num:
         description:
           - The number of the DHCP option to configure
