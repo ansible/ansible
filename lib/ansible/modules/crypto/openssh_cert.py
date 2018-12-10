@@ -44,88 +44,73 @@ options:
             - Should the certificate be regenerated even if it already exists and is valid.
     path:
         required: true
+        type: path
         description:
             - Path of the file containing the certificate.
     signing_key:
         required: true
+        type: path
         description:
             - The path to the private openssh key that is used for signing the public key in order to generate the certificate.
     public_key:
         required: true
+        type: path
         description:
             - The path to the public key that will be signed with the signing key in order to generate the certificate.
     valid_from:
         required: true
+        type: str
         description:
             - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
-               Time will always be interpreted as UTC. Valid formats are: [+-]timespec | YYYY:MM:DD | YYYY:MM:DD:HH:MM:SS | YYYY:MM:DD HH:MM:SS | always
-               where timespec can be an integer + [w | d | h | m | s] (e.g. +32w1d2h).
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY:MM:DD | YYYY:MM:DD:HH:MM:SS | YYYY:MM:DD HH:MM:SS | always)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
     valid_to:
         required: true
+        type: str
         description:
             - "The point in time the certificate is valid to. Time can be specified either as relative time or as absolute timestamp.
-               Time will always be interpreted as UTC. Valid formats are: [+-]timespec | YYYY:MM:DD | YYYY:MM:DD:HH:MM:SS | YYYY:MM:DD HH:MM:SS | forever
-               where timespec can be an integer + [w | d | h | m | s] (e.g. +32w1d2h).
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY:MM:DD | YYYY:MM:DD:HH:MM:SS | YYYY:MM:DD HH:MM:SS | forever)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
     valid_at:
         required: false
+        type: str
         description:
             - "Check if the certificate is valid at a certain point in time. If it is not the certificate will be regenerated.
-               Time will always be interpreted as UTC. Mainly to be used with relative timespec for valid_from and / or valid_to.
+               Time will always be interpreted as UTC. Mainly to be used with relative timespec for I(valid_from) and / or I(valid_to).
                Note that if using relative time this module is NOT idempotent."
     principals:
         required: false
+        type: list
         description:
             - "Certificates may be limited to be valid for a set of principal (user/host) names.
               By default, generated certificates are valid for all users or hosts."
     options:
         required: false
+        type: list
         description:
-            - "Specify a certificate options when signing a key. The option that are valid for user certificates are:
-
-             clear   Clear all enabled permissions.  This is useful for clearing the default set of permissions so permissions may be added individually.
-
-             force-command=command
-                     Forces the execution of command instead of any shell or command specified by the user when the certificate is used for authentication.
-
-             no-agent-forwarding
-                     Disable ssh-agent forwarding (permitted by default).
-
-             no-port-forwarding
-                     Disable port forwarding (permitted by default).
-
-             no-pty  Disable PTY allocation (permitted by default).
-
-             no-user-rc
-                     Disable execution of ~/.ssh/rc by sshd (permitted by default).
-
-             no-x11-forwarding
-                     Disable X11 forwarding (permitted by default).
-
-             permit-agent-forwarding
-                     Allows ssh-agent forwarding.
-
-             permit-port-forwarding
-                     Allows port forwarding.
-
-             permit-pty
-                     Allows PTY allocation.
-
-             permit-user-rc
-                     Allows execution of ~/.ssh/rc by sshd.
-
-             permit-x11-forwarding
-                     Allows X11 forwarding.
-
-             source-address=address_list
-                     Restrict the source addresses from which the certificate is considered valid.
-                     The address_list is a comma-separated list of one or more address/netmask pairs in CIDR format.
-
-             At present, no options are valid for host keys."
+            - "Specify certificate options when signing a key. The option that are valid for user certificates are:"
+            - "C(clear): Clear all enabled permissions.  This is useful for clearing the default set of permissions so permissions may be added individually."
+            - "C(force-command=command): Forces the execution of command instead of any shell or
+               command specified by the user when the certificate is used for authentication."
+            - "C(no-agent-forwarding): Disable ssh-agent forwarding (permitted by default)."
+            - "C(no-port-forwarding): Disable port forwarding (permitted by default)."
+            - "C(no-pty Disable): PTY allocation (permitted by default)."
+            - "C(no-user-rc): Disable execution of C(~/.ssh/rc) by sshd (permitted by default)."
+            - "C(no-x11-forwarding): Disable X11 forwarding (permitted by default)"
+            - "C(permit-agent-forwarding): Allows ssh-agent forwarding."
+            - "C(permit-port-forwarding): Allows port forwarding."
+            - "C(permit-pty): Allows PTY allocation."
+            - "C(permit-user-rc): Allows execution of C(~/.ssh/rc) by sshd."
+            - "C(permit-x11-forwarding): Allows X11 forwarding."
+            - "C(source-address=address_list): Restrict the source addresses from which the certificate is considered valid.
+               The C(address_list) is a comma-separated list of one or more address/netmask pairs in CIDR format."
+            - "At present, no options are valid for host keys."
 
     identifier:
         required: false
+        type: str
         description:
             - Specify the key identity when signing a public key. The identifier that is logged by the server when the certificate is used for authentication.
 
@@ -171,8 +156,20 @@ EXAMPLES = '''
     signing_key: /path/to/private_key
     public_key: /path/to/public_key.pub
     path: /path/to/certificate
-    valid_from: 2001:01:21
-    valid_to: 2019:01:21
+    valid_from: "2001:01:21"
+    valid_to: "2019:01:21"
+
+# Generate an OpenSSH user Certificate with clear and force-command option:
+- openssh_cert:
+    type: user
+    signing_key: /path/to/private_key
+    public_key: /path/to/public_key.pub
+    path: /path/to/certificate
+    valid_from: always
+    valid_to: forever
+    options:
+        - "clear"
+        - "force-command=/tmp/bla/foo"
 
 '''
 
@@ -188,7 +185,7 @@ filename:
     type: str
     sample: /tmp/certifivate-cert.pub
 info:
-    description: Information about the certificate. Output of "ssh-keygen -L -f".
+    description: Information about the certificate. Output of C(ssh-keygen -L -f).
     returned: change or success
     type: list
 
@@ -232,20 +229,24 @@ class Certificate(object):
         self.check_mode = module.check_mode
         self.cert_info = {}
 
-        if self.options and self.type == "host":
-            module.fail_json(msg="Options can only be used with user certificates.")
+        if self.state == 'present':
 
-        if self.valid_at:
-            self.valid_at = self.valid_at.lstrip()
+            if self.options and self.type == "host":
+                module.fail_json(msg="Options can only be used with user certificates.")
 
-        self.valid_from = self.valid_from.lstrip()
-        self.valid_to = self.valid_to.lstrip()
+            if self.valid_at:
+                self.valid_at = self.valid_at.lstrip()
+
+            self.valid_from = self.valid_from.lstrip()
+            self.valid_to = self.valid_to.lstrip()
+
+        self.ssh_keygen = module.get_bin_path('ssh-keygen', True)
 
     def generate(self, module):
 
-        if not self.isValid(module, perms_required=False) or self.force:
+        if not self.is_valid(module, perms_required=False) or self.force:
             args = [
-                module.get_bin_path('ssh-keygen', True),
+                self.ssh_keygen,
                 '-s', self.signing_key
             ]
 
@@ -254,7 +255,7 @@ class Certificate(object):
             if not (self.valid_from == "always" and self.valid_to == "forever"):
 
                 if not self.valid_from == "always":
-                    timeobj = self.convertToDatetime(module, self.valid_from)
+                    timeobj = self.convert_to_datetime(module, self.valid_from)
                     validity += (
                         str(timeobj.year).zfill(4) +
                         str(timeobj.month).zfill(2) +
@@ -272,7 +273,7 @@ class Certificate(object):
                     # on ssh-keygen versions that have the year 2038 bug this will cause the datetime to be 2038-01-19T04:14:07
                     timeobj = datetime(MAXYEAR, 12, 31)
                 else:
-                    timeobj = self.convertToDatetime(module, self.valid_to)
+                    timeobj = self.convert_to_datetime(module, self.valid_to)
 
                 validity += (
                     str(timeobj.year).zfill(4) +
@@ -297,7 +298,9 @@ class Certificate(object):
                 args.extend(['-n', ','.join(self.principals)])
 
             if self.options:
-                args.extend(['-O', self.options])
+                for option in self.options:
+                    args.extend(['-O'])
+                    args.extend([option])
 
             args.extend(['-P', ''])
 
@@ -308,7 +311,7 @@ class Certificate(object):
                 module.run_command(args, environ_update=dict(TZ="UTC"))
                 copy2(temp_directory + "/" + os.path.splitext(os.path.basename(self.public_key))[0] + "-cert.pub", self.path)
                 rmtree(temp_directory, ignore_errors=True)
-                proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-L', '-f', self.path])
+                proc = module.run_command([self.ssh_keygen, '-L', '-f', self.path])
                 self.cert_info = proc[1].split()
                 self.changed = True
             except Exception as e:
@@ -326,9 +329,9 @@ class Certificate(object):
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
-    def convertToDatetime(self, module, timestring):
+    def convert_to_datetime(self, module, timestring):
 
-        if self.isRelative(timestring):
+        if self.is_relative(timestring):
             dispatched_time = re.findall("^([+\\-])((\\d+)[w])?((\\d+)[d])?((\\d+)[h])?((\\d+)[m])?((\\d+)[s])?$", timestring, re.I)
             if not dispatched_time:
                 module.fail_json(msg="'%s' is not a valid time format." % timestring)
@@ -348,7 +351,36 @@ class Certificate(object):
                     minutes=int('0' + dispatched_time[8]),
                     seconds=int('0' + dispatched_time[10]))
         else:
-            formats = ["%Y:%m:%d", "%Y:%m:%d %H:%M:%S", "%Y:%m:%d:%H:%M:%S", "%Y-%m-%dT%H:%M:%S"]
+            formats = ["%Y:%m:%d",
+                       "%Y.%m.%d",
+                       "%Y/%m/%d",
+                       "%d.%m.%Y",
+                       "%d:%m:%Y",
+                       "%d/%m/%Y",
+                       "%d.%m.%Y %H.%M.%S",
+                       "%d:%m:%Y %H:%M:%S",
+                       "%d/%m/%Y %H/%M/%S",
+                       "%d.%m.%YT%H.%M.%S",
+                       "%d:%m:%YT%H:%M:%S",
+                       "%d/%m/%YT%H/%M/%S",
+                       "%d.%m.%Y-%H.%M.%S",
+                       "%d:%m:%Y-%H:%M:%S",
+                       "%d/%m/%Y-%H/%M/%S",
+                       "%d.%m.%Y:%H.%M.%S",
+                       "%d:%m:%Y:%H:%M:%S",
+                       "%d/%m/%Y:%H/%M/%S",
+                       "%d.%m.%Y/%H.%M.%S",
+                       "%d:%m:%Y/%H:%M:%S",
+                       "%d/%m/%Y/%H/%M/%S",
+                       "%Y:%m:%d %H:%M:%S",
+                       "%Y:%m:%d:%H:%M:%S",
+                       "%Y-%m-%dT%H:%M:%S",
+                       "%Y-%m-%d-%H-%M-%S",
+                       "%Y.%m.%d %H.%M.%S",
+                       "%Y.%m.%d.%H.%M.%S",
+                       "%Y/%m/%d %H/%M/%S",
+                       "%Y/%m/%d/%H/%M/%S",
+                       ]
             for fmt in formats:
                 try:
                     return datetime.strptime(timestring, fmt)
@@ -356,28 +388,39 @@ class Certificate(object):
                     pass
             module.fail_json(msg="'%s' is not a valid time format" % timestring)
 
-    def isRelative(self, timestr):
+    def is_relative(self, timestr):
         if timestr.startswith("+") or timestr.startswith("-"):
             return True
         return False
 
-    def isValid(self, module, perms_required=True):
+    def is_valid(self, module, perms_required=True):
 
         def _check_state():
             return os.path.exists(self.path)
 
         if _check_state():
-            proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-L', '-f', self.path], environ_update=dict(TZ="UTC"))
+            proc = module.run_command([self.ssh_keygen, '-L', '-f', self.path], environ_update=dict(TZ="UTC"), check_rc=False)
+            if proc[0] != 0:
+                return False
             self.cert_info = proc[1].split()
             principals = re.findall("(?<=Principals:)(.*)(?=Critical)", proc[1], re.S)[0].split()
             principals = list(map(str.strip, principals))
+            if principals == ["(none)"]:
+                principals = None
             cert_type = re.findall("( user | host )", proc[1])[0].strip()
             validity = re.findall("(from (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}) to (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}))", proc[1])
-            if validity:
-                cert_valid_from = self.convertToDatetime(module, validity[0][1])
-                cert_valid_to = self.convertToDatetime(module, validity[0][3])
+            if validity[0][1]:
+                cert_valid_from = self.convert_to_datetime(module, validity[0][1])
+                if (cert_valid_from - self.convert_to_datetime(module, "1970:01:01:01:01:01")).total_seconds() == 0.0:
+                    cert_valid_from = datetime(MINYEAR, 1, 1)
             else:
                 cert_valid_from = datetime(MINYEAR, 1, 1)
+
+            if validity[0][3]:
+                cert_valid_to = self.convert_to_datetime(module, validity[0][3])
+                if (cert_valid_to - self.convert_to_datetime(module, "2038:01:19:03:14:07")).total_seconds() == 0.0:
+                    cert_valid_to = datetime(MAXYEAR, 12, 31)
+            else:
                 cert_valid_to = datetime(MAXYEAR, 12, 31)
         else:
             return False
@@ -395,27 +438,27 @@ class Certificate(object):
         def _check_validity(module):
             if self.valid_from == "always":
                 earliest_time = datetime(MINYEAR, 1, 1)
-            elif self.isRelative(self.valid_from):
+            elif self.is_relative(self.valid_from):
                 earliest_time = None
             else:
-                earliest_time = self.convertToDatetime(module, self.valid_from)
+                earliest_time = self.convert_to_datetime(module, self.valid_from)
 
             if self.valid_to == "forever":
                 last_time = datetime(MAXYEAR, 12, 31)
-            elif self.isRelative(self.valid_to):
+            elif self.is_relative(self.valid_to):
                 last_time = None
             else:
-                last_time = self.convertToDatetime(module, self.valid_to)
+                last_time = self.convert_to_datetime(module, self.valid_to)
 
             if earliest_time:
-                if not (earliest_time - cert_valid_from).total_seconds == 0.0:
+                if not (earliest_time - cert_valid_from).total_seconds() == 0.0:
                     return False
             if last_time:
-                if not (last_time - cert_valid_to).total_seconds == 0.0:
+                if not (last_time - cert_valid_to).total_seconds() == 0.0:
                     return False
 
             if self.valid_at:
-                if cert_valid_from <= self.convertToDatetime(module, self.vaid_at) <= cert_valid_to:
+                if cert_valid_from <= self.convert_to_datetime(module, self.valid_at) <= cert_valid_to:
                     return True
 
             if earliest_time and last_time:
@@ -432,19 +475,19 @@ class Certificate(object):
 
         """Serialize the object into a dictionary."""
 
-        def filterKeywords(arr, keywords):
+        def filter_keywords(arr, keywords):
             concated = []
             string = ""
             for word in arr:
                 if word in keywords:
-                    concated.extend([string])
+                    concated.append(string)
                     string = ""
                 string += " " + word
-            concated.extend([string])
+            concated.append(string)
             return concated
 
-        def formatCertInfo():
-            return filterKeywords(self.cert_info, [
+        def format_cert_info():
+            return filter_keywords(self.cert_info, [
                 "Type:",
                 "Public",
                 "Signing",
@@ -455,12 +498,17 @@ class Certificate(object):
                 "Critical",
                 "Extensions:"])
 
-        result = {
-            'changed': self.changed,
-            'type': self.type,
-            'filename': self.path,
-            'info': formatCertInfo(),
-        }
+        if self.state == 'present':
+            result = {
+                'changed': self.changed,
+                'type': self.type,
+                'filename': self.path,
+                'info': format_cert_info(),
+            }
+        else:
+            result = {
+                'changed': self.changed,
+            }
 
         return result
 
@@ -484,31 +532,33 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             force=dict(default=False, type=bool),
-            type=dict(required=True, choices=['host', 'user'], type='str'),
-            signing_key=dict(required=True, type='path'),
-            public_key=dict(required=True, type='path'),
+            type=dict(choices=['host', 'user'], type='str'),
+            signing_key=dict(type='path'),
+            public_key=dict(type='path'),
             path=dict(required=True, type='path'),
             identifier=dict(type='str'),
-            valid_from=dict(required=True, type='str'),
-            valid_to=dict(required=True, type='str'),
+            valid_from=dict(type='str'),
+            valid_to=dict(type='str'),
             valid_at=dict(type='str'),
             principals=dict(type=list),
             options=dict(type=list),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
+        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])]
     )
 
     def isBaseDir(path):
-        base_dir = os.path.dirname(path)
+        base_dir = os.path.dirname(path) or '.'
         if not os.path.isdir(base_dir):
             module.fail_json(
                 name=base_dir,
                 msg='The directory %s does not exist or the file is not a directory' % base_dir
             )
+    if module.params['state'] == "present":
+        isBaseDir(module.params['signing_key'])
+        isBaseDir(module.params['public_key'])
 
-    isBaseDir(module.params['signing_key'])
-    isBaseDir(module.params['public_key'])
     isBaseDir(module.params['path'])
 
     certificate = Certificate(module)
@@ -516,14 +566,12 @@ def main():
     if certificate.state == 'present':
 
         if module.check_mode:
-            result = certificate.dump()
-            result['changed'] = module.params['force'] or not certificate.isValid(module)
-            module.exit_json(**result)
-
-        try:
-            certificate.generate(module)
-        except Exception as exc:
-            module.fail_json(msg=to_native(exc))
+            certificate.changed = module.params['force'] or not certificate.is_valid(module)
+        else:
+            try:
+                certificate.generate(module)
+            except Exception as exc:
+                module.fail_json(msg=to_native(exc))
 
     else:
 
@@ -531,16 +579,13 @@ def main():
             certificate.changed = os.path.exists(module.params['path'])
             if certificate.changed:
                 certificate.cert_info = {}
-            result = certificate.dump()
-            module.exit_json(**result)
-
-        try:
-            certificate.remove()
-        except Exception as exc:
-            module.fail_json(msg=to_native(exc))
+        else:
+            try:
+                certificate.remove()
+            except Exception as exc:
+                module.fail_json(msg=to_native(exc))
 
     result = certificate.dump()
-
     module.exit_json(**result)
 
 
