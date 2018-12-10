@@ -1,0 +1,4 @@
+---
+bugfixes:
+- docker_swarm - decreased minimal required API version from 1.35 to
+  1.25; some features require API version 1.30 though.
