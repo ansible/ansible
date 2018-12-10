@@ -101,6 +101,7 @@ DOCUMENTATION = """
               pywinrm.
         vars:
           - name: ansible_winrm_read_timeout
+        version_added: '2.8'
 """
 
 import base64
