@@ -51,6 +51,7 @@ options:
     disk_id:
         description:
             - "Disk id which you want to upload or download"
+            - "To get disk, you need to define disk_id or disk_name"
         version_added: "2.8"
     disk_name:
         description:
@@ -58,11 +59,11 @@ options:
         version_added: "2.8"
     download_image_path:
         description:
-            - "Path on a file system where disk should be downloaded."
+            - "Path on a file system where snapshot should be downloaded."
             - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
                or you must provide it in C(ca_file) parameter."
-            - "Note that the disk is not downloaded when the file already exists,
-               but you can forcibly download the disk when using C(force) I (true)."
+            - "Note that the snapshot is not downloaded when the file already exists,
+               but you can forcibly download the snapshot when using C(force) I (true)."
         version_added: "2.8"
     upload_image_path:
         description:
@@ -131,12 +132,13 @@ EXAMPLES = '''
     vm_name: myvm
     upload_image_path: /path/to/mydisk.qcow2
 
-# Download disk to local file system:
+# Download snapshot to local file system:
 # Since Ansible 2.8
 - ovirt_snapshot:
     snapshot_id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
     disk_name: DiskName
-    download_image_path: /home/user/mydisk.qcow2
+    vm_name: myvm
+    download_image_path: /home/user/mysnaphost.qcow2
 
 # Delete all snapshots older than 2 days
 - ovirt_snapshot:
@@ -172,7 +174,6 @@ except ImportError:
 
 
 import os
-import traceback
 import ssl
 import time
 
@@ -421,7 +422,7 @@ def get_snapshot_disk_id(module, snapshots_service):
     elif module.params.get('disk_name'):
         disk_id = get_id_by_name(snapshot_disks_service, module.params.get('disk_name'))
 
-    return snapshot_disks_service.disk_service(disk_id).get().id
+    return disk_id
 
 
 def remove_old_snapshosts(module, vm_service, snapshots_service):
@@ -484,11 +485,12 @@ def main():
     try:
         state = module.params['state']
         if state == 'present':
-            module.params['disk_id'] = get_snapshot_disk_id(module, snapshots_service)
-            if module.params['upload_image_path']:
-                ret['changed'] = upload_disk_image(connection, module)
-            if module.params['download_image_path']:
-                ret['changed'] = download_disk_image(connection, module)
+            if module.params.get('disk_id') or module.params.get('disk_name'):
+                module.params['disk_id'] = get_snapshot_disk_id(module, snapshots_service)
+                if module.params['upload_image_path']:
+                    ret['changed'] = upload_disk_image(connection, module)
+                if module.params['download_image_path']:
+                    ret['changed'] = download_disk_image(connection, module)
             if module.params.get('keep_days_old') is not None:
                 ret = remove_old_snapshosts(module, vm_service, snapshots_service)
             else:
