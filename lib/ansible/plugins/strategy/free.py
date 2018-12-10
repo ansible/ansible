@@ -80,7 +80,7 @@ class StrategyModule(StrategyBase):
         result = self._tqm.RUN_OK
 
         # start with all workers being counted as being free
-        workers_free = len(self._workers)
+        workers_free = len(self._tqm._process_manager._workers)
 
         work_to_do = True
         while work_to_do and not self._tqm._terminated:

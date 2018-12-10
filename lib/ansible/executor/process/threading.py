@@ -33,12 +33,11 @@ from ansible.executor.process.model import ProcessModelBase, ResultsSentinel, ke
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+
+display = Display()
+
 
 __all__ = ['ProcessModelThreading', ]
 
@@ -51,6 +50,7 @@ class ProcessModelThreading(ProcessModelBase):
         self._job_queue_lock = threading.Lock()
 
     def initialize_workers(self, num):
+        self._terminated = False
         self._cur_worker = 0
         self._workers = []
         for i in range(num):
@@ -62,25 +62,25 @@ class ProcessModelThreading(ProcessModelBase):
     def get_job(self):
         data = None
         try:
-            self._job_queue_lock.acquire()
-            data = self._job_queue.pop()
+            data = self._job_queue.popleft()
         except:
             pass
         finally:
-            self._job_queue_lock.release()
+            pass
         return data
 
-    def put_task(self, data):
+    def put_job(self, data):
         try:
-            self._job_queue_lock.acquire()
-            self._job_queue.appendleft(data)
+            host, task, dummy, dummy = data
+            self._job_queue.append(data)
+            self._tqm.send_callback('v2_runner_on_start', host, task)
         finally:
-            self._job_queue_lock.release()
+            pass
 
     def put_result(self, data):
         try:
             self._final_q_lock.acquire()
-            self._final_q.appendleft(data)
+            self._final_q.append(data)
         finally:
             self._final_q_lock.release()
 
@@ -116,12 +116,17 @@ def run_worker(pm, shared_loader_obj):
         display.debug("WORKER GOT A JOB")
         (host, task, play_context, task_vars) = job
 
+        # make a copy of the task here, because TaskExecutor will mutate
+        # it and we don't want every execution to be unique
+        c_task = task.copy(exclude_parent=True)
+        c_task._parent = task._parent
+
         try:
             # execute the task and build a TaskResult from the result
             display.debug("running TaskExecutor() for %s/%s" % (host, task))
             executor_result = TaskExecutor(
                 host,
-                task,
+                c_task,
                 task_vars,
                 play_context,
                 sys.stdin,
@@ -138,6 +143,7 @@ def run_worker(pm, shared_loader_obj):
                 host.name,
                 task._uuid,
                 executor_result,
+                task_fields=c_task.dump_attrs(),
             ))
             display.debug("done task result")
 
@@ -146,6 +152,7 @@ def run_worker(pm, shared_loader_obj):
                 host.name,
                 task._uuid,
                 dict(unreachable=True),
+                task_fields=c_task.dump_attrs(),
             ))
 
         except Exception as e:
@@ -155,6 +162,7 @@ def run_worker(pm, shared_loader_obj):
                         host.name,
                         task._uuid,
                         dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
+                        task_fields=c_task.dump_attrs(),
                     ))
                 except:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))

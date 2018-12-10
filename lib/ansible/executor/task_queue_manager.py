@@ -113,6 +113,7 @@ class TaskQueueManager:
         self._connection_lockfile = tempfile.TemporaryFile()
 
     def _initialize_processes(self, num):
+        self._terminated = False
         self._process_manager.initialize_workers(num)
 
     def load_callbacks(self):
@@ -240,14 +241,16 @@ class TaskQueueManager:
             self._start_at_done = True
 
         # and run the play using the strategy and cleanup on way out
-        play_return = strategy.run(iterator, play_context)
+        try:
+            play_return = strategy.run(iterator, play_context)
 
-        # now re-save the hosts that failed from the iterator to our internal list
-        for host_name in iterator.get_failed_hosts():
-            self._failed_hosts[host_name] = True
+            # now re-save the hosts that failed from the iterator to our internal list
+            for host_name in iterator.get_failed_hosts():
+                self._failed_hosts[host_name] = True
+        finally:
+            strategy.cleanup()
+            self._cleanup_processes()
 
-        strategy.cleanup()
-        self._cleanup_processes()
         return play_return
 
     def cleanup(self):

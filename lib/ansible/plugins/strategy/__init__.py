@@ -129,9 +129,9 @@ class StrategyBase:
         self._inventory = tqm.get_inventory()
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
-        self._step = getattr(tqm._options, 'step', False)
-        self._diff = getattr(tqm._options, 'diff', False)
-        self.flush_cache = getattr(tqm._options, 'flush_cache', False)
+        self._step = context.CLIARGS.get('step', False)
+        self._diff = context.CLIARGS.get('diff', False)
+        self.flush_cache = context.CLIARGS.get('flush_cache', False)
 
         # the task cache is a dictionary of tuples of (host.name, task._uuid)
         # used to find the original task object of in-flight tasks and to store
@@ -246,7 +246,7 @@ class StrategyBase:
             'play_context': play_context
         }
         # use the process manager to queue the task for its workers
-        self._tqm._process_manager.put_task(data=(host, task, play_context, task_vars))
+        self._tqm._process_manager.put_job([host, task, play_context, task_vars])
 
         self._pending_results += 1
 

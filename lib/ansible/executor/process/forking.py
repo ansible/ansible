@@ -46,13 +46,8 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
-__all__ = ['ProcessModelForking', 'WorkerProcess']
+display = Display()
 
 
 def results_thread_main(pm):
@@ -90,10 +85,11 @@ class ProcessModelForking(ProcessModelBase):
         self._results_thread.start()
 
     def initialize_workers(self, num):
+        self._terminated = False
         self._cur_worker = 0
         self._workers = [None for i in range(num)]
 
-    def put_task(self, data):
+    def put_job(self, data):
         try:
             (host, task, play_context, task_vars) = data
 
@@ -114,6 +110,7 @@ class ProcessModelForking(ProcessModelBase):
                     )
                     self._workers[self._cur_worker] = worker_prc
                     worker_prc.start()
+                    self._tqm.send_callback('v2_runner_on_start', host, task)
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
                 self._cur_worker += 1
@@ -137,8 +134,6 @@ class ProcessModelForking(ProcessModelBase):
         self._worker_results_q.put(self._sentinel)
         self._results_thread.join()
         self._worker_results_q.close()
-
-display = Display()
 
 
 class WorkerProcess(multiprocessing.Process):
