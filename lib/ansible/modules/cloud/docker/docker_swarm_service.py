@@ -273,7 +273,10 @@ options:
   user:
     required: false
     default: root
-    description: username or UID
+    description:
+    - username or UID.
+    - "If set to C(null) the image provided value (or the one already
+       set for the service) will be used"
 extends_documentation_fragment:
 - docker
 requirements:
@@ -718,7 +721,7 @@ class DockerService(DockerBaseClass):
             differences.append('update_order')
         if self.image != os.image.split('@')[0]:
             differences.append('image')
-        if self.user != os.user:
+        if self.user and self.user != os.user:
             differences.append('user')
         if self.dns != os.dns:
             differences.append('dns')
