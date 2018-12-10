@@ -201,11 +201,12 @@ def main():
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-        user = cloud.get_user(name)
-
         domain_id = None
         if domain:
             domain_id = _get_domain_id(cloud, domain)
+            user = cloud.get_user(name, domain_id=domain_id)
+        else:
+            user = cloud.get_user(name)
 
         if state == 'present':
             if update_password in ('always', 'on_create'):
@@ -271,7 +272,10 @@ def main():
             if user is None:
                 changed = False
             else:
-                cloud.delete_user(user['id'])
+                if domain:
+                    cloud.delete_user(user['id'], domain_id=domain_id)
+                else:
+                    cloud.delete_user(user['id'])
                 changed = True
             module.exit_json(changed=changed)
 
