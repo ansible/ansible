@@ -387,8 +387,11 @@ def main():
             except Exception as e:
                 module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
-    # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
-    aci.url = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
+    # Perform actual request using auth cookie (Same as aci.request(), but also supports XML)
+    if 'port' in aci.params and aci.params['port'] is not None:
+        aci.url = '%(protocol)s://%(host)s:%(port)s/' % aci.params + path.lstrip('/')
+    else:
+        aci.url = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
     if aci.params['method'] != 'get':
         path += '?rsp-subtree=modified'
         aci.url = update_qsl(aci.url, {'rsp-subtree': 'modified'})
