@@ -28,6 +28,12 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 
+# We want sphinx to document the ansible modules contained in this repository,
+# not those that may happen to be installed in the version
+# of Python used to run sphinx.  When sphinx loads in order to document,
+# the repository version needs to be the one that is loaded:
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..', 'lib')))
+
 VERSION = '2.7'
 AUTHOR = 'Ansible, Inc'
 
