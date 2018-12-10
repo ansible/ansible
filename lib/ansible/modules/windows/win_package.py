@@ -26,8 +26,8 @@ options:
     description:
     - Any arguments the installer needs to either install or uninstall the
       package.
-    - If the package is an MSI do not supply the C(/qn), C(/log) or
-      C(/norestart) arguments.
+    - If the package is an MSI do not supply the C(/qn) or C(/norestart) arguments.
+      C(/log) can be provided as an argument.
     - As of Ansible 2.5, this parameter can be a list of arguments and the
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
