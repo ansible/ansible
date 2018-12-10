@@ -1,3 +1,5 @@
+.. _styleguide_basic:
+
 Basic rules
 ===========
 .. contents::
