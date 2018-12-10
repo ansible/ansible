@@ -424,10 +424,7 @@ class DockerNetworkManager(object):
             self.results['diff'] = self.diff_result
 
     def get_existing_network(self):
-        try:
-            return self.client.inspect_network(self.parameters.network_name)
-        except NotFound:
-            return None
+        return self.client.get_network(name=self.parameters.network_name)
 
     def has_different_config(self, net):
         '''
@@ -552,7 +549,7 @@ class DockerNetworkManager(object):
             if not self.check_mode:
                 resp = self.client.create_network(self.parameters.network_name, **params)
 
-                self.existing_network = self.client.inspect_network(resp['Id'])
+                self.existing_network = self.client.get_network(id=resp['Id'])
             self.results['actions'].append("Created network %s with driver %s" % (self.parameters.network_name, self.parameters.driver))
             self.results['changed'] = True
 
@@ -590,7 +587,7 @@ class DockerNetworkManager(object):
                 self.disconnect_container(name)
 
     def disconnect_all_containers(self):
-        containers = self.client.inspect_network(self.parameters.network_name)['Containers']
+        containers = self.client.get_network(name=self.parameters.network_name)['Containers']
         if not containers:
             return
         for cont in containers.values():
