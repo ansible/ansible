@@ -273,11 +273,14 @@ def _ssh_retry(func):
             try:
                 try:
                     return_tuple = func(self, *args, **kwargs)
-                    display.vvv(return_tuple, host=self.host)
+                    if self._play_context.no_log:
+                        display.vvv('rc=%s, stdout & stderr censored due to no log' % return_tuple[0], host=self.host)
+                    else:
+                        display.vvv(return_tuple, host=self.host)
                     # 0 = success
                     # 1-254 = remote command return code
-                    # 255 = failure from the ssh command itself
-                except (AnsibleControlPersistBrokenPipeError) as e:
+                    # 255 could be a failure from the ssh command itself
+                except (AnsibleControlPersistBrokenPipeError):
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
                     cmd = args[0]
                     if self._play_context.password and isinstance(cmd, list):
@@ -290,7 +293,13 @@ def _ssh_retry(func):
                 if return_tuple[0] != 255:
                     break
                 else:
-                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s" % to_native(return_tuple[2]))
+                    msg = "Failed to connect to the host via ssh: "
+                    if self._play_context.no_log:
+                        msg += '<error censored due to no log>'
+                    else:
+                        msg += to_native(return_tuple[2])
+                    raise AnsibleConnectionFailure(msg)
+
             except (AnsibleConnectionFailure, Exception) as e:
                 if attempt == remaining_tries - 1:
                     raise

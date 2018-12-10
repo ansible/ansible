@@ -1,0 +1,2 @@
+bugfixes:
+    - now no log is being respected on retry and high verbosity.  CVE-2018-16876
