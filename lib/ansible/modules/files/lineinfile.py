@@ -247,8 +247,14 @@ def check_file_attrs(module, changed, message, diff):
 def present(module, dest, regexp, line, insertafter, insertbefore, create,
             backup, backrefs, firstmatch):
 
-    flock = FileLock()
+    diff = {'before': '',
+            'after': '',
+            'before_header': '{0} (content)'.format(dest),
+            'after_header': '{0} (content)'.format(dest)}
+
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
+    backupdest = ''
+    flock = FileLock()
 
     if not os.path.exists(b_dest):
         if not create:
@@ -258,32 +264,37 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             try:
                 os.makedirs(b_destpath)
             except Exception as e:
-                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
-
-    if module.check_mode:
-        _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
-                                  backup, backrefs, firstmatch)
+                module.fail_json(msg='Error creating {0} Error code: {1} Error description: {2}'.format(b_destpath, e[0], e[1]))
 
     with flock.lock_file(dest):
-        _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
-                                  backup, backrefs, firstmatch)
+        with open(b_dest, 'rb') as f:
+            b_lines = f.readlines()
 
+        msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
+                                                                   insertbefore, backrefs, firstmatch)
 
-def _present_data_manipulator(module, dest, regexp, line, insertafter, insertbefore,
-                              backup, backrefs, firstmatch):
+        if changed and not module.check_mode:
+            if backup and os.path.exists(b_dest):
+                backupdest = module.backup_local(dest)
+            write_changes(module, b_lines, dest)
 
-    diff = {'before': '',
-            'after': '',
-            'before_header': '%s (content)' % dest,
-            'after_header': '%s (content)' % dest}
-
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
-
-    with open(b_dest, 'rb') as f:
-        b_lines = f.readlines()
-
-    if module._diff:
         diff['before'] = to_native(b('').join(b_lines))
+        diff['after'] = to_native(b('').join(b_modified_lines))
+
+        if module.check_mode and not os.path.exists(b_dest):
+            return msg, changed, backupdest, diff
+
+        attr_diff = {}
+        msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+
+        attr_diff['before_header'] = '{0} (file attributes)'.format(dest)
+        attr_diff['after_header'] = '{0} (file attributes)'.format(dest)
+        difflist = [diff, attr_diff]
+
+        return msg, changed, backupdest, difflist
+
+
+def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, backrefs, firstmatch):
 
     if regexp is not None:
         bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
@@ -403,26 +414,7 @@ def _present_data_manipulator(module, dest, regexp, line, insertafter, insertbef
         msg = 'line added'
         changed = True
 
-    if module._diff:
-        diff['after'] = to_native(b('').join(b_lines))
-
-    backupdest = ""
-    if changed and not module.check_mode:
-        if backup and os.path.exists(b_dest):
-            backupdest = module.backup_local(dest)
-        write_changes(module, b_lines, dest)
-
-    if module.check_mode and not os.path.exists(b_dest):
-        module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
-
-    attr_diff = {}
-    msg, changed = check_file_attrs(module, changed, msg, attr_diff)
-
-    attr_diff['before_header'] = '%s (file attributes)' % dest
-    attr_diff['after_header'] = '%s (file attributes)' % dest
-
-    difflist = [diff, attr_diff]
-    module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=difflist)
+    return msg, changed, b_lines
 
 
 def absent(module, dest, regexp, line, backup):
@@ -549,8 +541,9 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        present(module, path, regexp, line,
-                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
+        msg, changed, backupdest, diff = present(module, path, regexp, line, ins_aft, ins_bef, create,
+                                                 backup, backrefs, firstmatch)
+        module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
     else:
         if regexp is None and line is None:
             module.fail_json(msg='one of line or regexp is required with state=absent')
