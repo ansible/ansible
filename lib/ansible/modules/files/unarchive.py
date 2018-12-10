@@ -264,11 +264,13 @@ class ZipArchive(object):
         else:
             try:
                 for member in archive.namelist():
+                    exclude_flag = False
                     if self.excludes:
                         for exclude in self.excludes:
-                            if not fnmatch.fnmatch(member, exclude):
-                                self._files_in_archive.append(to_native(member))
-                    else:
+                            if fnmatch.fnmatch(member, exclude):
+                                exclude_flag = True
+                                break
+                    if not exclude_flag:
                         self._files_in_archive.append(to_native(member))
             except:
                 archive.close()
@@ -664,11 +666,14 @@ class TgzArchive(object):
             if filename.startswith('/'):
                 filename = filename[1:]
 
+            exclude_flag = False
             if self.excludes:
                 for exclude in self.excludes:
-                    if not fnmatch.fnmatch(filename, exclude):
-                        self._files_in_archive.append(to_native(filename))
-            else:
+                    if fnmatch.fnmatch(filename, exclude):
+                        exclude_flag = True
+                        break
+
+            if not exclude_flag:
                 self._files_in_archive.append(to_native(filename))
 
         return self._files_in_archive
