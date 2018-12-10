@@ -672,6 +672,7 @@ import re
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.tools import parse_resource_id
+    from msrest.polling import LROPoller
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -1436,8 +1437,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.results['actions'].append("Generalize virtual machine {0}".format(self.name))
         self.log("Generalize virtual machine {0}".format(self.name))
         try:
-            poller = self.compute_client.virtual_machines.generalize(self.resource_group, self.name)
-            self.get_poller_result(poller)
+            response = self.compute_client.virtual_machines.generalize(self.resource_group, self.name)
+            if isinstance(response, LROPoller):
+                self.get_poller_result(response)
         except Exception as exc:
             self.fail("Error generalizing virtual machine {0} - {1}".format(self.name, str(exc)))
         return True
