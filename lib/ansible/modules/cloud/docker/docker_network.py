@@ -255,7 +255,7 @@ from ansible.module_utils.docker_common import (
     DockerBaseClass,
     docker_version,
     DifferenceTracker,
-    clean_booleans_for_docker_api,
+    clean_dict_booleans_for_docker_api,
 )
 
 try:
@@ -340,7 +340,7 @@ class DockerNetworkManager(object):
             self.parameters.ipam_config = [self.parameters.ipam_options]
 
         if self.parameters.driver_options:
-            self.parameters.driver_options = clean_booleans_for_docker_api(self.parameters.driver_options)
+            self.parameters.driver_options = clean_dict_booleans_for_docker_api(self.parameters.driver_options)
 
         state = self.parameters.state
         if state == 'present':
@@ -607,7 +607,7 @@ def main():
         min_docker_version='1.10.0',
         min_docker_api_version='1.22',
         # "The docker server >= 1.10.0"
-        option_minimal_versions=option_minimal_versions
+        option_minimal_versions=option_minimal_versions,
     )
 
     cm = DockerNetworkManager(client)

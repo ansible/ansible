@@ -176,7 +176,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils.docker_common import AnsibleDockerClient
 
 try:
-    from ansible.module_utils.docker_common import docker_version, clean_booleans_for_docker_api
+    from ansible.module_utils.docker_common import docker_version, clean_dict_booleans_for_docker_api
 except Exception as dummy:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -211,24 +211,24 @@ def main():
     result = dict()
 
     if client.module.params['containers']:
-        filters = clean_booleans_for_docker_api(client.module.params.get('containers_filters'))
+        filters = clean_dict_booleans_for_docker_api(client.module.params.get('containers_filters'))
         res = client.prune_containers(filters=filters)
         result['containers'] = res.get('ContainersDeleted') or []
         result['containers_space_reclaimed'] = res['SpaceReclaimed']
 
     if client.module.params['images']:
-        filters = clean_booleans_for_docker_api(client.module.params.get('images_filters'))
+        filters = clean_dict_booleans_for_docker_api(client.module.params.get('images_filters'))
         res = client.prune_images(filters=filters)
         result['images'] = res.get('ImagesDeleted') or []
         result['images_space_reclaimed'] = res['SpaceReclaimed']
 
     if client.module.params['networks']:
-        filters = clean_booleans_for_docker_api(client.module.params.get('networks_filters'))
+        filters = clean_dict_booleans_for_docker_api(client.module.params.get('networks_filters'))
         res = client.prune_networks(filters=filters)
         result['networks'] = res.get('NetworksDeleted') or []
 
     if client.module.params['volumes']:
-        filters = clean_booleans_for_docker_api(client.module.params.get('volumes_filters'))
+        filters = clean_dict_booleans_for_docker_api(client.module.params.get('volumes_filters'))
         res = client.prune_volumes(filters=filters)
         result['volumes'] = res.get('VolumesDeleted') or []
         result['volumes_space_reclaimed'] = res['SpaceReclaimed']

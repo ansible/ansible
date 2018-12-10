@@ -952,16 +952,6 @@ def split_colon_ipv6(input, module):
     return result
 
 
-def detect_ipvX_address_usage():
-    '''
-    Helper function to detect whether any specified network uses ipv4_address or ipv6_address
-    '''
-    for network in self.module.params.get("networks") or []:
-        if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
-            return True
-    return False
-
-
 class TaskParameters(DockerBaseClass):
     '''
     Access and parse module parameters
@@ -2774,6 +2764,18 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self.option_minimal_versions['stop_timeout']['supported'] = stop_timeout_supported
 
     def __init__(self, **kwargs):
+        def detect_ipvX_address_usage():
+            '''
+            Helper function to detect whether any specified network uses ipv4_address or ipv6_address
+            '''
+            for network in self.module.params.get("networks") or []:
+                if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
+                    return True
+            return False
+        if 'option_minimal_versions' in kwargs:
+            if 'ipvX_address_supported' in kwargs['option_minimal_versions']:
+                if 'detect_usage' not in kwargs['option_minimal_versions']['ipvX_address_supported']:
+                    kwargs['option_minimal_versions']['ipvX_address_supported']['detect_usage'] = detect_ipvX_address_usage
         super(AnsibleDockerClientContainer, self).__init__(option_minimal_versions_ignore_params=self.__NON_CONTAINER_PROPERTY_OPTIONS, **kwargs)
         self._get_additional_minimal_versions()
         self._parse_comparisons()
@@ -2926,8 +2928,7 @@ def main():
         uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
         pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
         # specials
-        ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
-                                    usage_msg='ipv4_address or ipv6_address in networks'),
+        ipvX_address_supported=dict(docker_py_version='1.9.0', usage_msg='ipv4_address or ipv6_address in networks'),  # detect_usage set above
         stop_timeout=dict(),  # see above!
     )
 

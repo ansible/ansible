@@ -799,7 +799,7 @@ class DifferenceTracker(object):
         return result
 
 
-def clean_booleans_for_docker_api(data):
+def clean_dict_booleans_for_docker_api(data):
     '''
     Go doesn't like Python booleans 'True' or 'False', while Ansible is just
     fine with them in YAML. As such, they need to be converted in cases where
