@@ -136,6 +136,9 @@ EXAMPLES = '''
     cond: id > 1
 '''
 
+RETURN = ''' # '''
+
+
 import traceback
 from hashlib import md5
 
