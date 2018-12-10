@@ -382,6 +382,21 @@
 - assert:
       that: not output.changed
 
+- name: Generalize VM
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name2 }}"
+      generalized: yes
+
+- name: Gather facts and check if machine is generalized
+  azure_rm_virtualmachine_facts:
+      resource_group: "{{ resource_group }}"
+      name: "{{ vm_name2 }}"
+  register: generalized_output
+
+- assert:
+      that: generalized_output.vms[0].power_state == 'generalized'
+
 - name: Delete dual NIC VM
   azure_rm_virtualmachine:
       resource_group: "{{ resource_group }}"
