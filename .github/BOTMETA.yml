@@ -1076,6 +1076,9 @@ files:
   lib/ansible/utils/module_docs_fragments/acme.py:
     support: community
     maintainers: resmo felixfontein
+  lib/ansible/utils/module_docs_fragments/docker.py:
+    support: community
+    maintainers: $team_docker
   lib/ansible/utils/module_docs_fragments/xenserver.py:
     support: community
     maintainers: bvitnik
@@ -1160,7 +1163,7 @@ macros:
   team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
-  team_docker: akshay196 danihodovic dariko felixfontein jwitko kassiansun tbouvet
+  team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet
   team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
