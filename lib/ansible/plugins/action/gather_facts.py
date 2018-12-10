@@ -24,7 +24,7 @@ class ActionModule(ActionBase):
             mod_args = self._task.args.copy()
 
         if fact_module != 'setup':
-            subset = mod_args.pop('gather_subset', None)
+            mod_args.pop('gather_subset', None)
 
         return mod_args
 
