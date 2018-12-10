@@ -21,8 +21,12 @@ We want the Ansible documentation to be:
 * easy to translate
 
 We want reading the docs to feel like having an experienced, friendly colleague
-explain how Ansible works. This cheat-sheet illustrates a few rules that
-help achieve the "Ansible tone":
+explain how Ansible works.
+
+Stylistic cheat-sheet
+---------------------
+
+This cheat-sheet illustrates a few rules that help achieve the "Ansible tone":
 
 +-------------------------------+------------------------------+----------------------------------------+
 | Rule                          | Good example                 | Bad example                            |
