@@ -300,8 +300,8 @@ if($gather_subset.Contains('memory')) {
         # Win32_PhysicalMemory is empty on some virtual platforms
         ansible_memtotal_mb = ([math]::ceiling($win32_cs.TotalPhysicalMemory / 1024 / 1024))
         ansible_memtotal = $win32_cs.TotalPhysicalMemory
-        ansible_swap_min = $win32_pf.InitialSize
-        ansible_swap_max = $win32_pf.MaximumSize
+        ansible_swap_min = $win32_pf.InitialSize * 1024 * 1024
+        ansible_swap_max = $win32_pf.MaximumSize * 1024 * 1024
     }
 }
 
