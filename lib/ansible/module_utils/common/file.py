@@ -63,12 +63,22 @@ _DEFAULT_PERM = 0o0666       # default file permission bits
 
 
 def is_executable(path):
-    '''is the given path executable?
+    # This function's signature needs to be repeated
+    # as the first line of its docstring.
+    # This method is reused by the basic module,
+    # the repetion helps the basic module's html documentation come out right.
+    # http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_docstring_signature
+    '''is_executable(path)
+
+    is the given path executable?
+
+    :arg path: The path of the file to check.
 
     Limitations:
+
     * Does not account for FSACLs.
     * Most times we really want to know "Can the current user execute this
-      file"  This function does not tell us that, only if an execute bit is set.
+      file".  This function does not tell us that, only if any execute bit is set.
     '''
     # These are all bitfields so first bitwise-or all the permissions we're
     # looking for, then bitwise-and with the file's mode to determine if any
