@@ -58,4 +58,4 @@
       force: yes
 
   # Requirements for docker_swarm
-  when: docker_py_version is version('2.6.0', '>=') and docker_api_version is version('1.35', '>=')
+  when: docker_py_version is version('2.6.0', '>=') and docker_api_version is version('1.25', '>=')
