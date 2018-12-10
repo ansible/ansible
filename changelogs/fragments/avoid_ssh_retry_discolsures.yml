@@ -1,0 +1,2 @@
+bugfixes:
+    - Respect no_log on retry and high verbosity (CVE-2018-16876)
