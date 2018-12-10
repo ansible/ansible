@@ -19,7 +19,7 @@
       that:
       - "not result.exists"
       - "'docker_container' in result"
-      - "not result.docker_container"
+      - "result.docker_container is none"
 
   - name: Make sure container exists
     docker_container:
