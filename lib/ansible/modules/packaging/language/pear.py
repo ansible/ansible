@@ -172,7 +172,7 @@ def install_packages(module, state, packages):
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
-            module.fail_json(msg="failed to install %s: %s" % (package, to_text(sdout + stderr)))
+            module.fail_json(msg="failed to install %s: %s" % (package, to_text(stdout + stderr)))
 
         install_c += 1
 
