@@ -305,6 +305,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             code = instance['statuses'][index]['code'].split('/')
             if code[0] == 'PowerState':
                 power_state = code[1]
+            elif code[0] == 'OSState' and code[1] == 'generalized':
+                power_state = 'generalized'
+                break
 
         new_result = {}
         new_result['power_state'] = power_state
