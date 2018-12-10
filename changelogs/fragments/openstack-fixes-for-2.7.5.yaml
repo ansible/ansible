@@ -1,0 +1,8 @@
+---
+bugfixes:
+  - openstack - fix parameter handling when cloud provided as dict
+    https://github.com/ansible/ansible/issues/42858
+  - os_user - Include domain parameter in user lookup
+    https://github.com/ansible/ansible/issues/42901
+  - os_user - Include domain parameter in user deletion
+    https://github.com/ansible/ansible/issues/42901
