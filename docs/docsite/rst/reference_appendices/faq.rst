@@ -168,9 +168,9 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
 
 .. code-block:: shell
 
-    $ virtualenv ansible
+    $ virtualenv -p python3 ansible
     $ source ./ansible/bin/activate
-    $ pip3 install ansible
+    $ pip install ansible
 
 If you need to use any libraries which are not available via pip (for instance, SELinux Python
 bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
