@@ -61,9 +61,8 @@ options:
     version_added: "2.0"
   method:
     description:
-      - The HTTP method of the request or response. It MUST be uppercase.
+      - The HTTP method of the request or response.
     type: str
-    choices: [ CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, REFRESH, TRACE ]
     default: GET
   return_content:
     description:
@@ -303,6 +302,7 @@ import cgi
 import datetime
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -516,7 +516,7 @@ def main():
         body=dict(type='raw'),
         body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw']),
         src=dict(type='path'),
-        method=dict(type='str', default='GET', choices=['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'REFRESH', 'TRACE']),
+        method=dict(type='str', default='GET'),
         return_content=dict(type='bool', default=False),
         follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
@@ -538,7 +538,7 @@ def main():
     url = module.params['url']
     body = module.params['body']
     body_format = module.params['body_format'].lower()
-    method = module.params['method']
+    method = module.params['method'].upper()
     dest = module.params['dest']
     return_content = module.params['return_content']
     creates = module.params['creates']
@@ -547,6 +547,9 @@ def main():
     socket_timeout = module.params['timeout']
 
     dict_headers = module.params['headers']
+
+    if not re.match('^[A-Z]+$', method):
+        module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
     if body_format == 'json':
         # Encode the body unless its a string, then assume it is pre-formatted JSON
