@@ -127,18 +127,18 @@ class DocCLI(CLI):
 
         # process all plugins of type
         if self.options.all_plugins:
-            self.args = self.get_all_plugins_of_type(plugin_type, loader)
+            self.args = self.get_all_plugins_of_type(plugin_type)
+            if self.options.module_path:
+                display.warning('Ignoring "--module-path/-M" option as "--all/-a" only displays builtins')
 
-        # dump plugin metadata as JSON
+        # dump plugin desc/metadata as JSON
         if self.options.json_dump:
             plugin_data = {}
-            for plugin_type in C.DOCUMENTABLE_PLUGINS:
-                plugin_data[plugin_type] = dict()
-                plugin_names = self.get_all_plugins_of_type(plugin_type)
-                for plugin_name in plugin_names:
-                    plugin_info = self.get_plugin_metadata(plugin_type, plugin_name)
-                    if plugin_info is not None:
-                        plugin_data[plugin_type][plugin_name] = plugin_info
+            plugin_names = self.get_all_plugins_of_type(plugin_type)
+            for plugin_name in plugin_names:
+                plugin_info = self.get_plugin_metadata(plugin_type, plugin_name)
+                if plugin_info is not None:
+                    plugin_data[plugin_name] = plugin_info
 
             self.pager(json.dumps(plugin_data, sort_keys=True, indent=4))
 
