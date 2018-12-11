@@ -350,10 +350,8 @@
     ssh_password_enabled: true
     admin_password: "Password1234!"
     image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
+      name: testimageb
+      resource_group: "{{ resource_group }}"
     upgrade_policy: Manual
     security_group:
       name: testNetworkSecurityGroup2
