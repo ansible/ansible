@@ -80,6 +80,7 @@ def test_fetch_url_params(open_url_mock, fake_ansible_module):
         'follow_redirects': 'all',
         'client_cert': 'client.pem',
         'client_key': 'client.key',
+        'tls_insecure': False,
     }
 
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')

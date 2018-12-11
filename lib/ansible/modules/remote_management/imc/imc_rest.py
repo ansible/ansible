@@ -72,6 +72,13 @@ options:
     - This should only set to C(no) used on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
+  tls_insecure:
+    description:
+    - Enable insecure TLS protocols.
+    - This may be required to support older devices.
+    type: bool
+    default: no
+    version_added: '2.8'
 notes:
 - The XML fragments don't need an authentication cookie, this is injected by the module automatically.
 - The Cisco IMC XML output is being translated to JSON using the Cobra convention.
@@ -301,10 +308,10 @@ def imc_response(module, rawoutput, rawinput=''):
     return result
 
 
-def logout(module, url, cookie, timeout):
+def logout(module, url, cookie, timeout, tls_insecure=False):
     ''' Perform a logout, if needed '''
     data = '<aaaLogout cookie="%s" inCookie="%s"/>' % (cookie, cookie)
-    resp, auth = fetch_url(module, url, data=data, method="POST", timeout=timeout)
+    resp, auth = fetch_url(module, url, data=data, method="POST", timeout=timeout, tls_insecure=tls_insecure)
 
 
 def merge(one, two):
@@ -333,6 +340,7 @@ def main():
             protocol=dict(type='str', default='https', choices=['http', 'https']),
             timeout=dict(type='int', default=60),
             validate_certs=dict(type='bool', default=True),
+            tls_insecure=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         mutually_exclusive=[['content', 'path']],
@@ -354,6 +362,8 @@ def main():
     protocol = module.params['protocol']
     timeout = module.params['timeout']
 
+    tls_insecure = module.params['tls_insecure']
+
     result = dict(
         failed=False,
         changed=False,
@@ -372,7 +382,7 @@ def main():
     # Perform login first
     url = '%s://%s/nuova' % (protocol, hostname)
     data = '<aaaLogin inName="%s" inPassword="%s"/>' % (username, password)
-    resp, auth = fetch_url(module, url, data=data, method='POST', timeout=timeout)
+    resp, auth = fetch_url(module, url, data=data, method='POST', timeout=timeout, tls_insecure=tls_insecure)
     if resp is None or auth['status'] != 200:
         result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
         module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % auth, **result)
@@ -385,7 +395,7 @@ def main():
         module.fail_json(msg='Could not find cookie in output', **result)
 
     # If we would not log out properly, we run out of sessions quickly
-    atexit.register(logout, module, url, cookie, timeout)
+    atexit.register(logout, module, url, cookie, timeout, tls_insecure)
 
     # Prepare request data
     if content:
@@ -406,7 +416,7 @@ def main():
         data = lxml.etree.tostring(xmldoc)
 
         # Perform actual request
-        resp, info = fetch_url(module, url, data=data, method='POST', timeout=timeout)
+        resp, info = fetch_url(module, url, data=data, method='POST', timeout=timeout, tls_insecure=tls_insecure)
         if resp is None or info['status'] != 200:
             result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
             module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % info, **result)
