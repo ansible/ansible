@@ -328,7 +328,7 @@ def gather_vm_facts(content, vm):
 
     cfm = content.customFieldsManager
     # Resolve custom values
-    for value_obj in vm.summary.customValue:
+    for value_obj in vm.config.extraConfig:
         kn = value_obj.key
         if cfm is not None and cfm.field:
             for f in cfm.field:
