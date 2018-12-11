@@ -70,6 +70,7 @@ EXAMPLES = """
   ios_logging:
     dest: host
     name: 172.16.0.1
+    source: Loopback0
     state: present
 
 - name: remove host logging configuration
@@ -147,6 +148,7 @@ def map_obj_to_commands(updates, module, os_version):
         facility = w['facility']
         level = w['level']
         state = w['state']
+        source = w['source']
         del w['state']
 
         if facility:
@@ -159,7 +161,6 @@ def map_obj_to_commands(updates, module, os_version):
                         commands.append('no logging {0}'.format(name))
                     else:
                         commands.append('no logging host {0}'.format(name))
-
                 elif dest in dest_group:
                     commands.append('no logging {0}'.format(dest))
 
@@ -168,6 +169,9 @@ def map_obj_to_commands(updates, module, os_version):
 
             if facility:
                 commands.append('no logging facility {0}'.format(facility))
+
+            if source:
+                commands.append('no logging source-interface {0}'.format(source))
 
         if state == 'present' and w not in have:
             if facility:
@@ -179,6 +183,9 @@ def map_obj_to_commands(updates, module, os_version):
 
                 if not present:
                     commands.append('logging facility {0}'.format(facility))
+
+            if source:
+                commands.append('logging source-interface {0}'.format(source))
 
             if dest == 'host':
                 if '12.' in os_version:
@@ -267,9 +274,18 @@ def parse_level(line, dest):
     return level
 
 
+def parse_source(line, dest):
+    if dest == 'source-interface':
+        match = re.search(r'(source-interface )(\S+)', line, re.M)
+        if match:
+            source = match.group(2)
+
+            return source
+
+
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
+    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility', 'source-interface')
 
     data = get_config(module, flags=['| include logging'])
 
@@ -284,6 +300,7 @@ def map_config_to_obj(module):
                     'name': parse_name(line, dest),
                     'size': parse_size(line, dest),
                     'facility': parse_facility(line, dest),
+                    'source': parse_source(line, dest),
                     'level': parse_level(line, dest)
                 })
             elif validate_ip_address(match.group(1)):
@@ -363,6 +380,7 @@ def map_params_to_obj(module, required_if=None):
                 'size': str(validate_size(module.params['size'], module)),
                 'facility': module.params['facility'],
                 'level': module.params['level'],
+                'source': module.params['source'],
                 'state': module.params['state']
             })
     return obj
@@ -375,6 +393,7 @@ def main():
         dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
         name=dict(type='str'),
         size=dict(type='int'),
+        source=dict(type='str'),
         facility=dict(type='str'),
         level=dict(type='str', default='debugging'),
         state=dict(default='present', choices=['present', 'absent']),
