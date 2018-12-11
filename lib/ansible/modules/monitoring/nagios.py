@@ -456,7 +456,7 @@ class Nagios(object):
         return dt_str
 
     def _fmt_ack_str(self, cmd, host, author=None,
-                    comment=None, svc=None, sticky=0, notify=1, persistent=0):
+                     comment=None, svc=None, sticky=0, notify=1, persistent=0):
         """
         Format an external-command acknowledge string.
 
