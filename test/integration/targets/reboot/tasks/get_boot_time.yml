@@ -1,0 +1,3 @@
+- name: Get current boot time
+  command: "{{ boot_time_command[ansible_facts['distribution'] | lower] | default('cat /proc/sys/kernel/random/boot_id') }}"
+  register: before_boot_time

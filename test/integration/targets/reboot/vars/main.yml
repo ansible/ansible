@@ -1,0 +1,9 @@
+boot_time_command:
+  freebsd: '/sbin/sysctl kern.boottime'
+  openbsd: '/sbin/sysctl kern.boottime'
+  macosx: 'who -b'
+  solaris: 'who -b'
+  sunos: 'who -b'
+
+timeout_value:
+  solaris: 120
