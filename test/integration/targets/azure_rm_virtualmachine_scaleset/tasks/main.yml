@@ -49,8 +49,8 @@
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: vmforimage
-    admin_username: "{{ admin_username }}"
-    admin_password: "{{ admin_password }}"
+    admin_username: testuser
+    admin_password: "Password1234!"
     vm_size: Standard_B1ms
     network_interfaces: vmforimagenic
     image:
