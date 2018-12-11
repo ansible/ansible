@@ -162,7 +162,7 @@ def main():
             universion=dict(type='int', required=False),
             verifycert=dict(type='bool', required=True),
             user=dict(type='str', required=True),
-            password=dict(type='str', required=True),
+            password=dict(type='str', required=True, no_log=True),
             array_id=dict(type='str', required=True),
             srp_id=dict(type='str', required=False),
             slo=dict(type='str', required=False),
@@ -193,18 +193,21 @@ def main():
     # Check if Storage Group already exists
 
     if module.params['sgname'] not in sglist:
-        dellemc.create_non_empty_storagegroup(srp_id='SRP_1',
-                                              sg_id=module.params['sgname'],
-                                              slo=module.params['slo'],
-                                              num_vols=module.params[
-                                                  'num_vols'],
-                                              vol_size=module.params[
-                                                  'vol_size'],
-                                              cap_unit=module.params[
-                                                  'cap_unit'],
-                                              workload=None
-                                              )
+        dellemc.create_storage_group(srp_id='SRP_1',
+                                     sg_id=module.params['sgname'],
+                                     slo=module.params['slo'],
+                                     num_vols=module.params[
+                                         'num_vols'],
+                                     vol_size=module.params[
+                                         'vol_size'],
+                                     cap_unit=module.params[
+                                         'cap_unit'],
+                                     workload=None,
+                                     vol_name=module.params[
+                                         'volumeIdentifier']
+                                     )
         changed = True
+
 
     else:
         module.fail_json(msg='Storage Group Already Exists')
