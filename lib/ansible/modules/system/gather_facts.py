@@ -24,12 +24,16 @@ description:
      - Ansible provides many I(facts) about the system, automatically.
 options:
     force_serialization:
-        description: A toggle that forces fact modules to be executed serialy.
+        description:
+            - A toggle that forces fact modules to be executed serialy and in order.
+              This can guarantee the merge order of module facts at the expense of performance.
         type: bool
         default: False
 notes:
     - This module is mostly a wrapper around other fact gathering modules.
     - Options passed to this module must be supported by all the underlying fact modules configured.
+    - Facts returned by each module will be merged, conflicts will favor 'last merged'.
+      Order is not guaranteed, when doing parallel gathering on multiple modules.
 author:
     - "Ansible Core Team"
 '''
