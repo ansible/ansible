@@ -251,7 +251,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             'after': '',
             'before_header': '{0} (content)'.format(dest),
             'after_header': '{0} (content)'.format(dest)}
-
+    attr_diff = {}
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     backupdest = ''
     flock = FileLock()
@@ -265,33 +265,47 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 os.makedirs(b_destpath)
             except Exception as e:
                 module.fail_json(msg='Error creating {0} Error code: {1} Error description: {2}'.format(b_destpath, e[0], e[1]))
+        # destination must exist to be able to lock it
+        if not module.check_mode:
+            open(b_dest, 'ab').close()
 
-    with flock.lock_file(dest):
-        with open(b_dest, 'rb') as f:
-            b_lines = f.readlines()
+    if module.check_mode:
+        if create:
+            b_lines = []
+        else:
+            with open(b_dest, 'rb') as f:
+                b_lines = f.readlines()
 
         msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
                                                                    insertbefore, backrefs, firstmatch)
-
-        if changed and not module.check_mode:
-            if backup and os.path.exists(b_dest):
-                backupdest = module.backup_local(dest)
-            write_changes(module, b_modified_lines, dest)
-
-        diff['before'] = to_native(b('').join(b_lines))
-        diff['after'] = to_native(b('').join(b_modified_lines))
-
-        if module.check_mode and not os.path.exists(b_dest):
+        if not os.path.exists(b_dest):
+            diff['before'] = to_native(b('').join(b_lines))
+            diff['after'] = to_native(b('').join(b_modified_lines))
             return msg, changed, backupdest, diff
 
-        attr_diff = {}
         msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+    else:
+        with flock.lock_file(dest):
+            with open(b_dest, 'rb') as f:
+                b_lines = f.readlines()
 
-        attr_diff['before_header'] = '{0} (file attributes)'.format(dest)
-        attr_diff['after_header'] = '{0} (file attributes)'.format(dest)
-        difflist = [diff, attr_diff]
+            msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
+                                                                       insertbefore, backrefs, firstmatch)
 
-        return msg, changed, backupdest, difflist
+            if changed:
+                if backup and os.path.exists(b_dest):
+                    backupdest = module.backup_local(dest)
+                write_changes(module, b_modified_lines, dest)
+
+            msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+
+    diff['before'] = to_native(b('').join(b_lines))
+    diff['after'] = to_native(b('').join(b_modified_lines))
+    attr_diff['before_header'] = '{0} (file attributes)'.format(dest)
+    attr_diff['after_header'] = '{0} (file attributes)'.format(dest)
+    difflist = [diff, attr_diff]
+
+    return msg, changed, backupdest, difflist
 
 
 def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, backrefs, firstmatch):
