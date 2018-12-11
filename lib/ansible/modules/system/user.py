@@ -379,7 +379,6 @@ import errno
 import grp
 import os
 import re
-import platform
 import pty
 import pwd
 import select
@@ -388,6 +387,7 @@ import socket
 import subprocess
 import time
 
+from ansible.module_utils import distro
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
 
@@ -569,7 +569,7 @@ class User(object):
             # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
             if os.path.exists('/etc/redhat-release'):
-                dist = platform.dist()
+                dist = distro.linux_distribution(full_distribution_name=False)
                 major_release = int(dist[1].split('.')[0])
                 if major_release <= 5:
                     cmd.append('-n')
@@ -578,7 +578,7 @@ class User(object):
             elif os.path.exists('/etc/SuSE-release'):
                 # -N did not exist in useradd before SLE 11 and did not
                 # automatically create a group
-                dist = platform.dist()
+                dist = distro.linux_distribution(full_distribution_name=False)
                 major_release = int(dist[1].split('.')[0])
                 if major_release >= 12:
                     cmd.append('-N')
