@@ -900,9 +900,9 @@ class TaskExecutor:
         final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
 
         option_vars = C.config.get_plugin_vars('connection', connection._load_name)
-        for plugin in connection._sub_plugins:
-            if plugin['type'] != 'external':
-                option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
+        plugin = connection._sub_plugin
+        if plugin['type'] != 'external':
+            option_vars.extend(C.config.get_plugin_vars(plugin['type'], plugin['name']))
 
         options = {}
         for k in option_vars:
