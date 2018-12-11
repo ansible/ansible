@@ -559,11 +559,11 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_dict['properties']['upgradePolicy']['mode'] = self.upgrade_policy
 
                 if image_reference and \
-                   image_reference != vmss_dict['properties']['virtualMachineProfile']['storageProfile']['imageReference']:
+                   image_reference.as_dict() != vmss_dict['properties']['virtualMachineProfile']['storageProfile']['imageReference']:
                     self.log('CHANGED: virtual machine scale set {0} - Image'.format(self.name))
                     differences.append('Image')
                     changed = True
-                    vmss_dict['properties']['virtualMachineProfile']['storageProfile']['imageReference'] = image_reference
+                    vmss_dict['properties']['virtualMachineProfile']['storageProfile']['imageReference'] = image_reference.as_dict()
 
                 update_tags, vmss_dict['tags'] = self.update_tags(vmss_dict.get('tags', dict()))
                 if update_tags:
