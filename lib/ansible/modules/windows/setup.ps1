@@ -442,33 +442,32 @@ if($gather_subset.Contains('winrm')) {
 if($gather_subset.Contains('virtual')) {
     $MachineInfo = Get-WmiObject -Class Win32_ComputerSystem
 
-        switch ($MachineInfo.Model) {
-        
-            "Virtual Machine" {
-                $MachineType="Hyper-V"
-                $MachineRole="guest"
-            }
-    
-            "VMware Virtual Platform" {
-                $MachineType="VMware"
-                $MachineRole="guest"
-            }
-    
-            "VirtualBox" { 
-                $MachineType="VirtualBox" 
-                $MachineRole="guest"
-            }
-    
-            "HVM domU" {
-                $MachineType="Xen"
-                $MachineRole="guest" 
-            }
- 
-            default {
-                $MachineType="NA"
-                $MachineRole="NA"
-            }
+    switch ($MachineInfo.Model) {
+        "Virtual Machine" {
+            $MachineType="Hyper-V"
+            $MachineRole="guest"
         }
+
+        "VMware Virtual Platform" {
+            $MachineType="VMware"
+            $MachineRole="guest"
+        }
+
+        "VirtualBox" { 
+            $MachineType="VirtualBox" 
+            $MachineRole="guest"
+        }
+
+        "HVM domU" {
+            $MachineType="Xen"
+            $MachineRole="guest" 
+        }
+
+        default {
+            $MachineType="NA"
+            $MachineRole="NA"
+        }
+    }
     
     $ansible_facts += @{
         ansible_virtualization_role = $MachineRole
