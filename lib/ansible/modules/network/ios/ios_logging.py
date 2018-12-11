@@ -55,6 +55,9 @@ options:
   level:
     description:
       - Set logging severity levels.
+  source:
+    description:
+      - Set logs source interface.
   aggregate:
     description: List of logging definitions.
   state:
