@@ -1,7 +1,17 @@
+# Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
+# Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import os
 import platform
 
+from ansible.module_utils import distro
 
+
+# Backwards compat.  New code should just use platform.system()
 def get_platform():
     '''
     :rtype: NativeString
@@ -16,39 +26,60 @@ def get_distribution():
     :returns: Name of the distribution the module is running on
     '''
     distribution = None
-    additional_linux = ('alpine', 'arch', 'devuan')
-    supported_dists = platform._supported_dists + additional_linux
 
     if platform.system() == 'Linux':
-        try:
-            distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
-            if not distribution and os.path.isfile('/etc/system-release'):
-                distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
-                if 'Amazon' in distribution:
-                    distribution = 'Amazon'
-                else:
-                    distribution = 'OtherLinux'
-        except Exception:
-            # FIXME: MethodMissing, I assume?
-            distribution = platform.dist()[0].capitalize()
+        distribution = distro.name().capitalize()
+
+        # FIXME: Would we need to normalize these if we used: id() instead of name()?
+        distribution_words = distribution.split()
+        if 'Amazon' in distribution_words:
+            distribution = 'Amazon'
+        elif not distribution:
+            distribution = 'OtherLinux'
+
     return distribution
 
 
 def get_distribution_version():
     '''
     :rtype: NativeString or None
-    :returns: A string representation of the version of the distribution
+    :returns: A string representation of the version of the distribution.  None if this is not run
+        on a Linux machine
     '''
-    distribution_version = None
+    version = None
     if platform.system() == 'Linux':
-        try:
-            distribution_version = platform.linux_distribution()[1]
-            if not distribution_version and os.path.isfile('/etc/system-release'):
-                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
-        except Exception:
-            # FIXME: MethodMissing, I assume?
-            distribution_version = platform.dist()[1]
-    return distribution_version
+        version = distro.version()
+    return version
+
+
+def get_distribution_codename():
+    '''
+    Return the code name for this Linux Distribution
+
+    :rtype: NativeString or None
+    :returns: A string representation of the distribution's codename or None if not a Linux distro
+    '''
+    codename = None
+    if platform.system() == 'Linux':
+        # Until this gets merged and we update our bundled copy of distro:
+        # https://github.com/nir0s/distro/pull/230
+        # Fixes Fedora 28+ not having a code name and Ubuntu Xenial Xerus needing to be "xenial"
+        os_release_info = distro.os_release_info()
+        codename = os_release_info.get('version_codename')
+
+        if codename is None:
+            codename = os_release_info.get('ubuntu_codename')
+
+        if codename is None and distro.id() == 'ubuntu':
+            lsb_release_info = distro.lsb_release_info()
+            codename = lsb_release_info.get('codename')
+
+        if codename is None:
+            codename = distro.codename()
+            if codename == u'':
+                codename = None
+
+    return codename
 
 
 def get_all_subclasses(cls):
