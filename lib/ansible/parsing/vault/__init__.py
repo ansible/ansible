@@ -1030,7 +1030,10 @@ class VaultEditor:
                 with open(filename, "rb") as fh:
                     data = fh.read()
         except Exception as e:
-            raise AnsibleError(to_native(e))
+            msg = to_native(e)
+            if not msg:
+                msg = repr(e)
+            raise AnsibleError('Unable to read source file (%s): %s' % (to_native(filename), msg))
 
         return data
 
