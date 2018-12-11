@@ -248,7 +248,7 @@ class Display(with_metaclass(Singleton, object)):
 
     def banner(self, msg, color=None, cows=True):
         '''
-        Prints a header-looking line with cowsay or stars wit hlength depending on terminal width (3 minimum)
+        Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
         '''
         if self.b_cowsay and cows:
             try:
