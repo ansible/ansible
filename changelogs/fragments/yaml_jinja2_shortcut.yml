@@ -1,0 +1,2 @@
+minor_changes:
+    - allow yamlism to indicate Jinja2 evaluation context
