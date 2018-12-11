@@ -237,7 +237,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 update_cache = True
 
         if not source_data:
-            b_pwfile = to_bytes(self.get_option('settings_password_file'), errors='surrogate_or_strict')
+            b_pwfile = to_bytes(self.get_option('settings_password_file'), errors='surrogate_or_strict', nonstring='passthru')
             running = self.get_option('running_only')
 
             # start getting data
