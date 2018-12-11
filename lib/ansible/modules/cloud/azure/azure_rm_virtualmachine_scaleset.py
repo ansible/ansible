@@ -446,7 +446,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        rr = { 'moo': 'xxx'}
         nsg = None
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
@@ -586,7 +585,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         self.results['changed'] = changed
         self.results['ansible_facts']['azure_vmss'] = results
-        self.results['rr'] = rr
 
         if self.check_mode:
             return self.results
