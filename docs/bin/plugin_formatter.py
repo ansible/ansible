@@ -185,7 +185,11 @@ def write_data(text, output_dir, outputname, module=None):
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
 
-        updated = update_file_if_different(fname, to_bytes(text))
+        try:
+            updated = update_file_if_different(fname, to_bytes(text))
+        except:
+            display.display("while rendering %s, an error occured:" % module)
+            raise
         if updated:
             display.display("rendering: %s" % module)
     else:
