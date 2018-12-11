@@ -165,6 +165,13 @@ options:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  tls_insecure:
+    description:
+      - Enable insecure TLS protocols.
+      - This should only be used with personally controlled devices (i.e. to support or upgrade older devices).
+    type: bool
+    default: no
+    version_added: '2.8'
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files

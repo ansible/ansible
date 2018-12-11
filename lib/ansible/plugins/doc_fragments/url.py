@@ -63,7 +63,8 @@ options:
   tls_insecure:
     description:
       - Enable insecure TLS protocols.
-      - This may be required to support older devices.
+      - This should only be used with personally controlled devices (i.e. to support or upgrade older devices).
     type: bool
     default: no
     version_added: '2.8'
+'''

@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2017, Dag Wieers <dag@wieers.com>
+
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -75,7 +75,7 @@ options:
   tls_insecure:
     description:
     - Enable insecure TLS protocols.
-    - This may be required to support older devices.
+    - This should only be used with personally controlled devices (i.e. to support or upgrade older devices).
     type: bool
     default: no
     version_added: '2.8'
@@ -311,7 +311,7 @@ def imc_response(module, rawoutput, rawinput=''):
 def logout(module, url, cookie, timeout, tls_insecure=False):
     ''' Perform a logout, if needed '''
     data = '<aaaLogout cookie="%s" inCookie="%s"/>' % (cookie, cookie)
-    resp, auth = fetch_url(module, url, data=data, method="POST", timeout=timeout, tls_insecure=tls_insecure)
+    resp, auth = fetch_url(module, url, data=data, method="POST", timeout=timeout)
 
 
 def merge(one, two):
@@ -382,7 +382,7 @@ def main():
     # Perform login first
     url = '%s://%s/nuova' % (protocol, hostname)
     data = '<aaaLogin inName="%s" inPassword="%s"/>' % (username, password)
-    resp, auth = fetch_url(module, url, data=data, method='POST', timeout=timeout, tls_insecure=tls_insecure)
+    resp, auth = fetch_url(module, url, data=data, method='POST', timeout=timeout)
     if resp is None or auth['status'] != 200:
         result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
         module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % auth, **result)
@@ -416,7 +416,7 @@ def main():
         data = lxml.etree.tostring(xmldoc)
 
         # Perform actual request
-        resp, info = fetch_url(module, url, data=data, method='POST', timeout=timeout, tls_insecure=tls_insecure)
+        resp, info = fetch_url(module, url, data=data, method='POST', timeout=timeout)
         if resp is None or info['status'] != 200:
             result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
             module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % info, **result)

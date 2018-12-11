@@ -318,7 +318,11 @@ HTTPSClientAuthHandler = None
 if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
+            self.tls_insecure = kwargs['tls_insecure']
+
+            del(kwargs['tls_insecure'])
             httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+
             self.context = None
             if HAS_SSLCONTEXT:
                 self.context = create_default_context()
@@ -326,8 +330,8 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 self.context = PyOpenSSLContext(PROTOCOL)
 
             # Support insecure TLS protocol options
-            # if self.context and self.tls_insecure:
-            #     tls_insecure_options(self.context)
+            if self.context and self.tls_insecure:
+                insecure_tls_options(self.context)
 
             if self.context and self.cert_file:
                 self.context.load_cert_chain(self.cert_file, self.key_file)
@@ -357,9 +361,16 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
     class CustomHTTPSHandler(urllib_request.HTTPSHandler):
+        def __init__(self, tls_insecure=False, **kwargs):
+            urllib_request.HTTPSHandler.__init__(self, **kwargs)
+            self.tls_insecure = tls_insecure
 
         def https_open(self, req):
-            return self.do_open(CustomHTTPSConnection, req)
+            return self.do_open(self._build_https_connection, req)
+
+        def _build_https_connection(self, host, **kwargs):
+            kwargs['tls_insecure'] = self.tls_insecure
+            return CustomHTTPSConnection(host, **kwargs)
 
         https_request = AbstractHTTPHandler.do_request_
 
@@ -380,10 +391,10 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
             return self.do_open(self._build_https_connection, req)
 
         def _build_https_connection(self, host, **kwargs):
-            kwargs.update({
-                'cert_file': self.client_cert,
-                'key_file': self.client_key,
-            })
+            kwargs.update(
+                cert_file=self.client_cert,
+                key_file=self.client_key,
+            )
             try:
                 kwargs['context'] = self._context
             except AttributeError:
@@ -474,7 +485,8 @@ def insecure_tls_options(context):
     '''
     # TODO: We may want to enable older ciphers here too ?
     # context.set_ciphers('HIGH:!aNULL:!eNULL')
-    context.options &= ~ssl.OP_NO_SSLv2
+    if ssl.OP_NO_SSLv2 is not None:
+        context.options &= ~ssl.OP_NO_SSLv2
     context.options &= ~ssl.OP_NO_SSLv3
     context.options &= ~ssl.OP_NO_TLSv1
     context.options &= ~ssl.OP_NO_TLSv1_1
@@ -1130,7 +1142,7 @@ class Request:
             if tls_insecure:
                 insecure_tls_options(context)
             else:
-                if ssl.OP_NO_SSLv2:
+                if ssl.OP_NO_SSLv2 is not None:
                     context.options |= ssl.OP_NO_SSLv2
 
                 context.options |= ssl.OP_NO_SSLv3
@@ -1150,7 +1162,7 @@ class Request:
         # handler, since the socket class is lacking create_connection.
         # Some python builds lack HTTPS support.
         if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
-            handlers.append(CustomHTTPSHandler)
+            handlers.append(CustomHTTPSHandler(tls_insecure=tls_insecure))
 
         handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, tls_insecure))
 
@@ -1417,7 +1429,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
         info['cookies'] = cookie_dict
         # finally update the result with a message about the fetch
-        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
+        info.update(msg='OK (%s bytes)' % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code)
     except NoSSLError as e:
         distribution = get_distribution()
         if distribution is not None and distribution.lower() == 'redhat':
@@ -1439,18 +1451,17 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         except Exception:
             pass
 
-        info.update({'msg': to_native(e), 'body': body, 'status': e.code})
+        info.update(msg=to_native(e), body=body, status=e.code)
 
     except urllib_error.URLError as e:
         code = int(getattr(e, 'code', -1))
-        info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
+        info.update(msg='Request failed: %s' % to_native(e), status=code)
     except socket.error as e:
-        info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+        info.update(msg='Connection failure: %s' % to_native(e), status=-1)
     except httplib.BadStatusLine as e:
-        info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
+        info.update(msg='Connection failure: connection was closed before a valid response was received: %s' % to_native(e.line), status=-1)
     except Exception as e:
-        info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
-                    exception=traceback.format_exc())
+        info.update(msg='An unknown error occurred: %s' % to_native(e), status=-1, exception=traceback.format_exc())
     finally:
         tempfile.tempdir = old_tempdir
 

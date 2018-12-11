@@ -100,6 +100,13 @@ options:
     default: 'yes'
     type: bool
     version_added: 2.7
+  tls_insecure:
+    description:
+      - Enable insecure TLS protocols.
+      - This should only be used with personally controlled devices (i.e. to support or upgrade older devices).
+    type: bool
+    default: no
+    version_added: '2.8'
 '''
 
 EXAMPLES = '''
