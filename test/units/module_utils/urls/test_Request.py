@@ -448,4 +448,4 @@ def test_open_url(urlopen_mock, install_opener_mock, mocker):
                                      url_username=None, url_password=None, http_agent=None,
                                      force_basic_auth=False, follow_redirects='urllib2',
                                      client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-                                     unix_socket=None)
+                                     unix_socket=None, tls_insecure=False)
