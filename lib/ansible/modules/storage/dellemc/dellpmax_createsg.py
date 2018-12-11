@@ -14,13 +14,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 --- 
-Contributors: 
-  - "Rob Mortell (@robmortell)"
 author: 
   - "Paul Martin (@rawstorage)"
 short_description: "Create storage group on Dell EMC PowerMax or VMAX All 
 Flash"
-version_added: "2.7"
+version_added: "2.8"
 description: 
   - "This module has been tested against UNI 9.0. Every effort has been made 
   to verify the scripts run with valid input. These modules are a tech preview"
@@ -65,7 +63,8 @@ options:
   srp_id: 
     description: 
       - "Storage Resource Pool Name, Default is set to SRP_1, if your system 
-      has mainframe or multiple pools you can set this to a different value to match your environment"
+      has mainframe or multiple pools you can set this to a different value to 
+      match your environment"
     required: false
   unispherehost: 
     description: 
@@ -103,42 +102,43 @@ requirements:
   - "VMAX All Flash, VMAX3, or PowerMax storage Array."
   - "PyU4V version 3.0.0.8 or higher using PIP python -m pip install PyU4V"
 '''
-
 EXAMPLES = '''
-- name: Create Storage Group
-  hosts: localhost
+--- 
+- 
   connection: local
-  no_log: True
-  vars:
-        unispherehost: '192.168.156.63'
-        universion: '90'
-        verifycert: False
-        user: 'smc'
-        password: 'smc'
-        array_id: '000197600123'
+  hosts: localhost
+  name: "Create Storage Group"
+  no_log: true
+  tasks: ~
+  vars: 
+    array_id: 000197600123
+    password: smc
+    unispherehost: "192.168.156.63"
+    universion: "90"
+    user: smc
+    verifycert: false
+- 
+  dellpmax_createsg: 
+    array_id: "{{array_id}}"
+    cap_unit: GB
+    num_vols: 1
+    password: "{{password}}"
+    sgname: "{{sgname}}"
+    slo: Diamond
+    srp_id: SRP_1
+    unispherehost: "{{unispherehost}}"
+    universion: "{{universion}}"
+    user: "{{user}}"
+    verifycert: "{{verifycert}}"
+    vol_size: 1
+    volumeIdentifier: Data
+    workload: None
+  name: "Create New Storage Group and add data volumes"
 
-  tasks:
-- name: Create New Storage Group and add data volumes
-    dellpmax_createsg:
-        unispherehost: '{{unispherehost}}'
-        universion: '{{universion}}'
-        verifycert: '{{verifycert}}'
-        user: '{{user}}'
-        password: '{{password}}'
-        sgname: '{{sgname}}'
-        array_id: '{{array_id}}'
-        srp_id: 'SRP_1'
-        slo: 'Diamond'
-        workload: None
-        num_vols: 1
-        vol_size:  1
-        cap_unit: 'GB'
-        volumeIdentifier: 'Data'
 '''
 RETURN = '''
 '''
 from ansible.module_utils.basic import AnsibleModule
-import PyU4V
 
 
 def main():
@@ -160,6 +160,13 @@ def main():
             volumeIdentifier=dict(type='str', required=False)
         )
     )
+    try:
+        import PyU4V
+    except:
+        module.fail_json(
+            msg='Requirements not met PyU4V is not installed, please install '
+                'via PIP')
+        module.exit_json(changed=changed)
 
     conn = PyU4V.U4VConn(server_ip=module.params['unispherehost'], port=8443,
                          array_id=module.params['array_id'],
@@ -167,38 +174,24 @@ def main():
                          username=module.params['user'],
                          password=module.params['password'],
                          u4v_version=module.params['universion'])
-
     dellemc = conn.provisioning
-
-    # Make REST call to Unisphere Server and execute create storage group
-
     changed = False
     # Compile a list of existing storage groups.
-
     sglist = dellemc.get_storage_group_list()
-
     # Check if Storage Group already exists
-
     if module.params['sgname'] not in sglist:
         dellemc.create_storage_group(srp_id='SRP_1',
                                      sg_id=module.params['sgname'],
                                      slo=module.params['slo'],
-                                     num_vols=module.params[
-                                         'num_vols'],
-                                     vol_size=module.params[
-                                         'vol_size'],
-                                     cap_unit=module.params[
-                                         'cap_unit'],
+                                     num_vols=module.params['num_vols'],
+                                     vol_size=module.params['vol_size'],
+                                     cap_unit=module.params['cap_unit'],
                                      workload=None,
-                                     vol_name=module.params[
-                                         'volumeIdentifier']
+                                     vol_name=module.params['volumeIdentifier']
                                      )
         changed = True
-
-
     else:
         module.fail_json(msg='Storage Group Already Exists')
-
     module.exit_json(changed=changed)
 
 
