@@ -151,6 +151,9 @@ class FileLock:
         b_lock_path = to_bytes(path, errors='surrogate_or_strict')
         l_wait = 0.1
         r_exception = IOError
+        if not os.path.exists(b_lock_path):
+            raise IOError('{0} does not exist'.format(path))
+
         if sys.version_info[0] == 3:
             r_exception = BlockingIOError
 
