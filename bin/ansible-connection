@@ -229,6 +229,12 @@ def main():
         play_context.deserialize(pc_data)
         display.verbosity = play_context.verbosity
 
+        if '/' in play_context.remote_addr:
+            raise Exception(
+                "Remote host %s is invalid because it contains a '/'. You probably wanted to set "
+                "ansible_host to an IP address instead of a CIDR block" % play_context.remote_addr
+            )
+
     except Exception as e:
         rc = 1
         result.update({
