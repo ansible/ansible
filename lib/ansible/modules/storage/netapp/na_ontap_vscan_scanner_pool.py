@@ -17,7 +17,7 @@ short_description: NetApp ONTAP Vscan Scanner Pools Configuration.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.8'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Configure a Vscan Scanner Pool
 options:
