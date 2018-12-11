@@ -27,7 +27,7 @@ description:
   - All actions require the I(host) parameter to be given explicitly. In playbooks you can use the C({{inventory_hostname}}) variable to refer
     to the host the playbook is currently running on.
   - You can specify multiple services at once by separating them with commas, .e.g., C(services=httpd,nfs,puppet).
-  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime for the I(host itself),
+  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime/acknowledge for the I(host itself),
     e.g., C(service=host). This keyword may not be given with other services at the same time.
     I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.) To schedule downtime for all
     services on particular host use keyword "all", e.g., C(service=all).
@@ -42,7 +42,7 @@ options:
     required: true
     choices: [ "downtime", "delete_downtime", "enable_alerts", "disable_alerts", "silence", "unsilence",
                "silence_nagios", "unsilence_nagios", "command", "servicegroup_service_downtime",
-               "servicegroup_host_downtime" ]
+               "servicegroup_host_downtime", "acknowledge" ]
   host:
     description:
       - Host to operate on in Nagios.
@@ -70,7 +70,7 @@ options:
     description:
       - What to manage downtime/alerts for. Separate multiple services with commas.
         C(service) is an alias for C(services).
-        B(Required) option when using the C(downtime), C(enable_alerts), and C(disable_alerts) actions.
+        B(Required) option when using the C(downtime), C(acknowledge), C(enable_alerts), and C(disable_alerts) actions.
     aliases: [ "service" ]
     required: true
   servicegroup:
@@ -251,6 +251,7 @@ def main():
         'command',
         'servicegroup_host_downtime',
         'servicegroup_service_downtime',
+        'acknowledge',
     ]
 
     module = AnsibleModule(
@@ -330,6 +331,11 @@ def main():
     if action in ['command']:
         if not command:
             module.fail_json(msg='no command passed for command action')
+    ######################################################################
+    if action == 'acknowledge':
+        # Make sure there's an actual service selected
+        if not services:
+            module.fail_json(msg='no service selected to acknowledge')
     ##################################################################
     if not cmdfile:
         module.fail_json(msg='unable to locate nagios.cfg')
@@ -449,6 +455,44 @@ class Nagios(object):
 
         return dt_str
 
+    def _fmt_ack_str(self, cmd, host, author=None,
+                    comment=None, svc=None, sticky=0, notify=1, persistent=0):
+        """
+        Format an external-command acknowledge string.
+
+        cmd - Nagios command ID
+        host - Host schedule downtime on
+        author - Name to file the downtime as
+        comment - Reason for running this command (upgrade, reboot, etc)
+        svc - Service to schedule downtime for, omit when for host downtime
+        sticky - the acknowledgement will remain until the host returns to an UP state if set to 1
+        notify -  a notification will be sent out to contacts
+        persistent - survive across restarts of the Nagios process
+
+        Syntax: [submitted] COMMAND;<host_name>;[<service_description>]
+        <sticky>;<notify>;<persistent>;<author>;<comment>
+        """
+
+        entry_time = self._now()
+        hdr = "[%s] %s;%s;" % (entry_time, cmd, host)
+
+        if not author:
+            author = self.author
+
+        if not comment:
+            comment = self.comment
+
+        if svc is not None:
+            ack_args = [svc, str(sticky), str(notify), str(persistent), author, comment]
+        else:
+            # Downtime for a host if no svc specified
+            ack_args = [str(sticky), str(notify), str(persistent), author, comment]
+
+        ack_arg_str = ";".join(ack_args)
+        ack_str = hdr + ack_arg_str + "\n"
+
+        return ack_str
+
     def _fmt_dt_del_str(self, cmd, host, svc=None, start=None, comment=None):
         """
         Format an external-command downtime deletion string.
@@ -552,6 +596,43 @@ class Nagios(object):
         cmd = "SCHEDULE_HOST_DOWNTIME"
         dt_cmd_str = self._fmt_dt_str(cmd, host, minutes)
         self._write_command(dt_cmd_str)
+
+    def acknowledge_svc_problem(self, host, services=None):
+        """
+        This command is used to acknowledge a particular
+        service problem.
+
+        By acknowledging the current problem, future notifications
+        for the same servicestate are disabled
+
+        Syntax: ACKNOWLEDGE_SVC_PROBLEM;<host_name>;<service_description>;
+        <sticky>;<notify>;<persistent>;<author>;<comment>
+        """
+
+        cmd = "ACKNOWLEDGE_SVC_PROBLEM"
+
+        if services is None:
+            services = []
+
+        for service in services:
+            ack_cmd_str = self._fmt_ack_str(cmd, host, svc=service)
+            self._write_command(ack_cmd_str)
+
+    def acknowledge_host_problem(self, host):
+        """
+        This command is used to acknowledge a particular
+        host problem.
+
+        By acknowledging the current problem, future notifications
+        for the same servicestate are disabled
+
+        Syntax: ACKNOWLEDGE_HOST_PROBLEM;<host_name>;<sticky>;<notify>;
+        <persistent>;<author>;<comment>
+        """
+
+        cmd = "ACKNOWLEDGE_HOST_PROBLEM"
+        ack_cmd_str = self._fmt_ack_str(cmd, host)
+        self._write_command(ack_cmd_str)
 
     def schedule_host_svc_downtime(self, host, minutes=30):
         """
@@ -1017,6 +1098,12 @@ class Nagios(object):
                 self.schedule_svc_downtime(self.host,
                                            services=self.services,
                                            minutes=self.minutes)
+
+        elif self.action == 'acknowledge':
+            if self.services == 'host':
+                self.acknowledge_host_problem(self.host)
+            else:
+                self.acknowledge_svc_problem(self.host, services=self.services)
 
         elif self.action == 'delete_downtime':
             if self.services == 'host':
