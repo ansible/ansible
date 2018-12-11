@@ -169,6 +169,7 @@ options:
         description:
             - I(True) if the disk should be activated.
         version_added: "2.8"
+        type: bool
 extends_documentation_fragment: ovirt
 '''
 
