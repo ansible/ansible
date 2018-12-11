@@ -1,20 +1,6 @@
 # test code for lookup plugins
-# (c) 2014, James Tanner <tanner.jc@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # FILE LOOKUP
 
@@ -286,6 +272,17 @@
 - assert:
     that:
       - "hello_world|trim == 'Hello world!'"
+
+
+- name: Test that we have a proper jinja search path in template lookup with different variable start and end string
+  vars:
+    my_var: world
+  set_fact:
+    hello_world_string: "{{ lookup('template', 'hello_string.txt', variable_start_string='[%', variable_end_string='%]') }}"
+
+- assert:
+    that:
+      - "hello_world_string|trim == 'Hello world!'"
 
 # Vars lookups
 
