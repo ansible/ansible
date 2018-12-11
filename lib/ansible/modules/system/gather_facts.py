@@ -25,7 +25,7 @@ description:
 options:
     parallel:
         description:
-            - A toggle that controls if the fact modules are executed in parallel or serialy and in order.
+            - A toggle that controls if the fact modules are executed in parallel or serially and in order.
               This can guarantee the merge order of module facts at the expense of performance.
         type: bool
         default: True
