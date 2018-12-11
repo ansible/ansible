@@ -53,6 +53,7 @@ options:
             - content_view
             - lifecycle_environment
             - activation_key
+            - product
 
         required: true
     action:
