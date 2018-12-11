@@ -701,15 +701,18 @@ def main():
 
     categories['all'] = {'_modules': plugin_info.keys()}
 
-    display.vvv(pp.pformat(categories))
-    display.vvvvv(pp.pformat(plugin_info))
+    if display.verbosity >= 3:
+        display.vvv(pp.pformat(categories))
+    if display.verbosity >= 5:
+        display.vvvvv(pp.pformat(plugin_info))
 
     # Transform the data
     if options.type == 'rst':
         display.v('Generating rst')
         for key, record in plugin_info.items():
             display.vv(key)
-            display.vvvvv(pp.pformat(('record', record)))
+            if display.verbosity >= 5:
+                display.vvvvv(pp.pformat(('record', record)))
             if record.get('doc', None):
                 short_desc = record['doc']['short_description'].rstrip('.')
                 if short_desc is None:
