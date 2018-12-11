@@ -143,11 +143,18 @@ class Group(object):
         return self.execute_command(cmd)
 
     def group_exists(self):
-        try:
-            if grp.getgrnam(self.name):
-                return True
-        except KeyError:
+        if self.local:
+            with open(GROUPFILE) as file:
+                for line in file:
+                    if line.split(':')[0] == self.name:
+                        return True
             return False
+        else:
+            try:
+                if grp.getgrnam(self.name):
+                    return True
+            except KeyError:
+                return False
 
     def group_info(self):
         if not self.group_exists():
