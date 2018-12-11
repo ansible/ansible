@@ -1,13 +1,11 @@
 #!/usr/bin/python
-from ansible.module_utils.six.moves.urllib.error import HTTPError
+# from ansible.module_utils.six.moves.urllib.error import HTTPError
 
 __metaclass__ = type
-import PyU4V
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.10',
                     'status': ['preview'],
-                    'supported_by': 'VMAX REST API Community '
-                                    'https://community.emc.com/docs/DOC-56447'
+                    'supported_by': 'community'
                     }
 DOCUMENTATION = r'''
 ---
@@ -17,8 +15,9 @@ Author: Paul Martin @rawstorage
 
 Contributors: Rob Mortell @robmortell
 
-software versions=ansible 2.6.2
-                  python version = 2.7.15rc1 (default, Apr 15 2018,
+software versions 
+                ansible 2.6.2
+                python version = 2.7.15rc1 (default, Apr 15 2018,
                   
 short_description: module to create storage group on Dell EMC PowerMax VMAX 
 All Flash or VMAX3 storage arrays.
@@ -154,11 +153,13 @@ EXAMPLES = r'''
 '''
 RETURN = r'''
 '''
+from ansible.module_utils.basic import AnsibleModule
+import PyU4V
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            sgname=dict(type='str',required=True),
+            sgname=dict(type='str', required=True),
             unispherehost=dict(required=True),
             universion=dict(type='int', required=False),
             verifycert=dict(type='bool', required=True),
@@ -216,11 +217,5 @@ def main():
     module.exit_json(changed=changed)
 
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-
 if __name__ == '__main__':
     main()
-
-
