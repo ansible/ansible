@@ -94,6 +94,20 @@ options:
     vars:
     - name: ansible_psrp_connection_timeout
     default: 30
+  reconnection_retries:
+    description:
+    - The number of retries on connection errors.
+    vars:
+    - name: ansible_psrp_reconnection_retries
+    default: 0
+  reconnection_backoff:
+    description:
+    - The backoff time to use in between reconnection attempts.
+      (First sleeps X, then sleeps 2*X, then sleeps 4*X, ...)
+    - This is measured in seconds.
+    vars:
+    - name: ansible_psrp_connection_backoff
+    default: 2
   message_encryption:
     description:
     - Controls the message encryption settings, this is different from TLS
@@ -504,6 +518,8 @@ if ($bytes_read -gt 0) {
         self._psrp_operation_timeout = int(self.get_option('operation_timeout'))
         self._psrp_max_envelope_size = int(self.get_option('max_envelope_size'))
         self._psrp_configuration_name = self.get_option('configuration_name')
+        self._psrp_reconnection_retries = int(self.get_option('reconnection_retries'))
+        self._psrp_reconnection_backoff = float(self.get_option('reconnection_backoff'))
 
         supported_args = []
         for auth_kwarg in AUTH_KWARGS.values():
@@ -526,6 +542,8 @@ if ($bytes_read -gt 0) {
             no_proxy=self._psrp_ignore_proxy,
             max_envelope_size=self._psrp_max_envelope_size,
             operation_timeout=self._psrp_operation_timeout,
+            reconnection_retries=self._psrp_reconnection_retries,
+            reconnection_backoff=self._psrp_reconnection_backoff,
         )
         # add in the extra args that were set
         for arg in extra_args.intersection(supported_args):
