@@ -10,113 +10,114 @@ ANSIBLE_METADATA = {'metadata_version': '1.10',
 DOCUMENTATION = r'''
 ---
 module: dellpmax_createsg
+version_added: '2.6'
+short_description: Create storage group on Dell EMC PowerMax or VMAX All Flash 
 
-Author: Paul Martin @rawstorage
+description:
 
-Contributors: Rob Mortell @robmortell
-
-software versions 
-                ansible 2.6.2
-                python version = 2.7.15rc1 (default, Apr 15 2018,
+- To modify an existing directory service configuration you must first delete
+  an exisitng configuration and then recreate with new settings.
+  
+author:
+- Paul Martin (@rawstorage)
+Contributors:
+- Rob Mortell (@robmortell)
                   
-short_description: module to create storage group on Dell EMC PowerMax VMAX 
-All Flash or VMAX3 storage arrays.
 
-
-notes:
-    - This module has been tested against UNI 9.0.    Every effort has been 
-    made to verify the scripts run with valid input.  These modules 
-    are a tech preview.  Additional error handling will be added at a later 
-    date, base functionality only right now.
+    description:
+    - This module has been tested against UNI 9.0. Every effort has been 
+    made to verify the scripts run with valid input. These modules are a 
+    tech preview. Additional error handling will be added at a later date, 
+    base functionality only right now.
 
 Requirements:
+    description:
     - Ansible, Python 2.7, Unisphere for PowerMax version 9.0 or higher. 
-    VMAX All Flash, VMAX3, or PowerMax storage Array
-    
-    Also requires PyU4V to be installed from PyPi using PIP
-    python -m pip install PyU4V recommend version 3.0.0.8 or higher
+    VMAX All Flash, VMAX3, or PowerMax storage Array. Also requires PyU4V to 
+    be installed from PyPi using PIP python -m pip install PyU4V recommend 
+    version 3.0.0.8 or higher.  
 
-playbook options:
-    Note:- Some Options are repeated across modules, we will look at 
-    reducing these in future work, however you can use variables in your 
-    playbook at the outset and reference in the task to reduce error, 
-    this also allows flexibility in versioning within a single playbook.   
+options:
+  unispherehost:
+    description:
+    - Fully Qualified Domain Name or IP address of Unisphere for PowerMax host.
     
-    unispherehost:
-        description:
-            - Full Qualified Domain Name or IP address of Unisphere for 
-            PowerMax host.
-        required:True
-
+    required: True
+    
     universion:
-        -description:
-            - Integer, version of unipshere software 
-            https://{HostName|IP}:8443/univmax/restapi/{version}/{resource}
-            90 is the release at time of writing module.
-        -required:True
+    description:
+    - Integer, version of unipshere software 
+      https://{HostName|IP}:8443/univmax/restapi/{version}/{resource}
+      90 is the release at time of writing module.
+    required: True
+    
     verifycert:
-        description: 
-            -Boolean, securitly check on ssl certificates
-        required:True             
-
-        required: True
+    description:
+    - Boolean, securitly check on ssl certificates
+    required: True             
+        
     sgname:
-        description:
-            - Storage Group name
-        required:True     
+    description:
+    - Storage Group name
+    required: True     
+    
     array_id:
-        description:
-            - Integer 12 Digit Serial Number of PowerMAX or VMAX array.
-        required:True
+    description:
+    - Integer 12 Digit Serial Number of PowerMAX or VMAX array.
+    required: True
+    
     srp_id:
-        description:
-            - Storage Resource Pool Name, Default is set to SRP_1, if your 
-            system has mainframe or multiple pools you can set this to a 
-            different value to match your environemtn
-        required:Optional
+    description:
+    - Storage Resource Pool Name, Default is set to SRP_1, if your system 
+    has mainframe or multiple pools you can set this to a different value to 
+    match your environment
+    required: Optional
+    
     slo:
-        description:
-            - Service Level for the storage group, Supported on VMAX3 and All 
-            Flash and PoweMAX NVMe Arrays running PowerMAX OS 5978 and 
-            above.  Default is set to Diamond, but user can override this.
-        required: Optional
+    description:
+    - Service Level for the storage group, Supported on VMAX3 and All Flash and
+     PoweMAX NVMe Arrays running PowerMAX OS 5978 and above.  Default is set to
+     Diamond, but user can override this by setting a different value.
+     required: Optional
+    
     workload:
-        description:
-            - Block workload type, optional and can only be set on VMAX3 
-            Hybrid Storage Arrays.  Default None.
-        required:Optional
+    description:
+    - Block workload type, optional and can only be set on VMAX3 Hybrid Storage
+    Arrays. Default None.
+    required: Optional
+    
     num_vols:
-        description:
-           - integer value for the number of volumes. Minimum is 1, module 
-           will fail if less than one volume is specified or value is 0.
-           
-        notes:
-            -if volumes are required of different sizes, addional tasks 
-            should be added to playbooks to use dellpmax_addvolume module
-           
-        required:True
+    description:
+    - integer value for the number of volumes. Minimum is 1, module will 
+    fail if less than one volume is specified or value is 0. If volumes are 
+    required of different sizes, addional tasks should be added to 
+    playbooks to use dellpmax_addvolume module
+    required: True
+    
     vol_size:
-        description:
-            - Integer value for the size of volumes.  All volumes will be 
-            created with same size.  Use dellpmax_addvol to add additional 
-            volumes if you require different sized volumes once storage 
-            group is created.
-        required:True
+    description:
+    - Integer value for the size of volumes.  All volumes will be created with 
+    same size.  Use dellpmax_addvol to add additional volumes if you require 
+    different sized volumes once storage group is created.
+    required: True
+    
     cap_unit: 
-        description:
-            - String value, Unit of capacity for GB,TB,MB or CYL
-        required:Optional default is set to GB
+    description:
+    - String value, Unit of capacity for GB,TB,MB or CYL default is set to GB
+    required: Optional 
+    
     async:
-        Optional Parameter to set REST call to run Asyncronously, job will 
-        be submitted to job queue and executed.  Task Id will be returned in 
-        JSON for lookup purposed to check job completion status. 
+    description:
+    - Optional Parameter to set REST call to run Asyncronously, job will be 
+    submitted to job queue and executed.  Task Id will be returned in JSON for
+    lookup purposed to check job completion status. 
+    
     volumeIdentifier:
-        description:
-        String up to 64 Characters no special character other than _ 
-        Provides an optional name or ID to make volumes easily identified on 
-        system hosts can run Dell EMC inq utility to identify volumes e.g.
-        inq -identify device_name 
-        required:Optional 
+    description:
+    -String up to 64 Characters no special character other than _ sets a label 
+    to make volumes easily identified on hosts can run Dell EMC inq utility 
+    command to see this label is  inq -identifier device_name
+    required: Optional 
 
 '''
 
@@ -127,22 +128,22 @@ EXAMPLES = r'''
   no_log: True
   vars:
         unispherehost: '192.168.156.63'
-        universion: "90"
+        universion: '90'
         verifycert: False
         user: 'smc'
         password: 'smc'
         array_id: '000197600123'
 
   tasks:
-   - name: Create New Storage Group and add data volumes
+- name: Create New Storage Group and add data volumes
     dellpmax_createsg:
-        unispherehost: "{{unispherehost}}"
-        universion: "{{universion}}"
-        verifycert: "{{verifycert}}"
-        user: "{{user}}"
-        password: "{{password}}"
-        sgname: "{{sgname}}"
-        array_id: "{{array_id}}"
+        unispherehost: '{{unispherehost}}'
+        universion: '{{universion}}'
+        verifycert: '{{verifycert}}'
+        user: '{{user}}'
+        password: '{{password}}'
+        sgname: '{{sgname}}'
+        array_id: '{{array_id}}'
         srp_id:	'SRP_1'
         slo: 'Diamond'
         workload: None
