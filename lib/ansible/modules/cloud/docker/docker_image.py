@@ -30,6 +30,12 @@ options:
       - Use with state C(present) to archive an image to a .tar file.
     required: false
     version_added: "2.1"
+  cache_from:
+    description:
+      - List of image names to consider as cache source.
+    required: false
+    type: list
+    version_added: "2.8"
   load_path:
     description:
       - Use with state C(present) to load an image from a .tar file.
@@ -238,6 +244,15 @@ EXAMPLES = '''
      buildargs:
        log_volume: /var/log/myapp
        listen_port: 8080
+
+- name: Build image using cache source
+  docker_image:
+    name: myimage:latest
+    path: /path/to/build/dir
+    # Use as cache source for building myimage
+    cache_from:
+      - nginx:latest
+      - alpine:3.8
 '''
 
 RETURN = '''
@@ -278,6 +293,7 @@ class ImageManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
 
         self.archive_path = parameters.get('archive_path')
+        self.cache_from = parameters.get('cache_from')
         self.container_limits = parameters.get('container_limits')
         self.dockerfile = parameters.get('dockerfile')
         self.force = parameters.get('force')
@@ -521,7 +537,8 @@ class ImageManager(DockerBaseClass):
             pull=self.pull,
             forcerm=self.rm,
             dockerfile=self.dockerfile,
-            decode=True
+            decode=True,
+            cache_from=self.cache_from
         )
         if not HAS_DOCKER_PY_3:
             params['stream'] = True
@@ -583,6 +600,7 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         archive_path=dict(type='path'),
+        cache_from=dict(type='list', elements='str'),
         container_limits=dict(type='dict', options=dict(
             memory=dict(type='int'),
             memswap=dict(type='int'),
