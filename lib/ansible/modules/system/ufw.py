@@ -52,7 +52,9 @@ options:
     choices: [ on, off, low, medium, high, full ]
   insert:
     description:
-      - Insert the corresponding rule as rule number NUM
+      - Insert the corresponding rule as rule number NUM.
+      - Note that ufw numbers rules starting with 1.
+    type: int
   rule:
     description:
       - Add firewall rule
@@ -247,7 +249,7 @@ def main():
             direction=dict(type='str', choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
             delete=dict(type='bool', default=False),
             route=dict(type='bool', default=False),
-            insert=dict(type='str'),
+            insert=dict(type='int'),
             rule=dict(type='str', choices=['allow', 'deny', 'limit', 'reject']),
             interface=dict(type='str', aliases=['if']),
             log=dict(type='bool', default=False),
