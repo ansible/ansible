@@ -66,6 +66,7 @@ EXAMPLES = '''
 
 import os
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -140,7 +141,7 @@ def remove_packages(module, packages):
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
-            module.fail_json(msg="failed to remove %s" % (package))
+            module.fail_json(msg="failed to remove %s: %s" % (package, to_text(stdout + stderr)))
 
         remove_c += 1
 
@@ -171,7 +172,7 @@ def install_packages(module, state, packages):
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
-            module.fail_json(msg="failed to install %s" % (package))
+            module.fail_json(msg="failed to install %s: %s" % (package, to_text(stdout + stderr)))
 
         install_c += 1
 
