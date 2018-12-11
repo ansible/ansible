@@ -38,6 +38,47 @@
     resource_group: "{{ resource_group_secondary }}"
     name: testNetworkSecurityGroup2
 
+- name: Create virtual network inteface cards for VM A and B
+  azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: vmforimagenic
+    virtual_network: testVnet
+    subnet: testSubnet
+
+- name: Create VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: vmforimage
+    admin_username: "{{ admin_username }}"
+    admin_password: "{{ admin_password }}"
+    vm_size: Standard_B1ms
+    network_interfaces: vmforimagenic
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+- name: Stop VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: vmforimage
+    started: no
+- name: Generalize VM
+  azure_rm_resource:
+    api_version: '2017-12-01'
+    method: POST
+    resource_group: "{{ resource_group }}"
+    provider: compute
+    resource_type: virtualmachines
+    resource_name: vmforimage
+    subresource:
+    - type: generalize
+- name: Create image
+  azure_rm_image:
+    resource_group: "{{ resource_group }}"
+    name: testimage
+    source: vmforimage
+
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
@@ -162,7 +203,7 @@
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
     image:
-      name: xxxxx
+      name: testimage
       resource_group: "{{ resource_group }}"
     data_disks:
       - lun: 0
