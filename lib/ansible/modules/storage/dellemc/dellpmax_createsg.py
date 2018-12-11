@@ -33,8 +33,9 @@ notes:
 Requirements:
     - Ansible, Python 2.7, Unisphere for PowerMax version 9.0 or higher. 
     VMAX All Flash, VMAX3, or PowerMax storage Array
+    
     Also requires PyU4V to be installed from PyPi using PIP
-    python -m pip install PyU4V
+    python -m pip install PyU4V recommend version 3.0.0.8 or higher
 
 playbook options:
     Note:- Some Options are repeated across modules, we will look at 
