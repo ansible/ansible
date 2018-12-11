@@ -16,6 +16,8 @@ import platform
 import pytest
 
 from ansible.module_utils import distro
+from ansible.module_utils.common.sys_info import (get_distribution, get_distribution_version,
+                                                  get_distribution_codename)
 
 
 # Generic test case with minimal assertions about specific returned values.
@@ -42,11 +44,12 @@ class TestDistroCompat():
     _platform_supported_dists = platform._supported_dists
 
     def test_linux_distribution(self):
+        distro_linux_dist = (get_distribution(), get_distribution_version(), get_distribution_codename())
+
         platform_linux_dist = platform.linux_distribution(supported_dists=self._platform_supported_dists)
-        distro_linux_dist = distro.linux_distribution()
 
         assert isinstance(distro_linux_dist, type(platform_linux_dist)), \
-            'linux_distrution() returned type (%s) which is different from platform.linux_distribution type (%s)' % \
+            'linux_distribution() returned type (%s) which is different from platform.linux_distribution type (%s)' % \
             (type(distro_linux_dist), type(platform_linux_dist))
 
         # TODO: add the cases where we expect them to differ
@@ -55,6 +58,9 @@ class TestDistroCompat():
         assert distro_linux_dist[0] == platform_linux_dist[0]
         assert distro_linux_dist[1] == platform_linux_dist[1]
 
-        # FIXME: This fails on at least Fedora
-        # platform returns the 'id', while distro returns the 'codename'
+        if platform_linux_dist[0] == 'Fedora' and 20 < int(platform_linux_dist[1]) < 28:
+            pytest.skip("Fedora versions between 20 and 28 return the variant instead of the code name making this test unreliable")
+            # Fedora considers the platform_linux behaviour to have been a bug as it's finding the
+            # variant, not the code name.  Fedora wants this to be the empty string.
+            platform_linux_dist = platform_linux_dist[:2] + ('',)
         assert distro_linux_dist[2] == platform_linux_dist[2]
