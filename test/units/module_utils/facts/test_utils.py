@@ -22,7 +22,7 @@ file_data = [
     ),
     (
         "/dev/null/no/content",
-        ['']
+        []
     ),
 ]
 
@@ -42,14 +42,16 @@ def test_oserror_on_statvfs(monkeypatch):
     assert isinstance(mount_info, dict)
 
 
-@pytest.mark.parametrize("file_name, file_content", file_data, ids=['hello_world_file', 'no_content_file'])
-def test_get_file_lines(monkeypatch, file_name, file_content):
+@pytest.mark.parametrize("file_name, expected_file_content", file_data, ids=['hello_world_file', 'no_content_file'])
+def test_get_file_lines(monkeypatch, file_name, expected_file_content):
     def _get_file_content(path, default=None, strip=True):
-        return file_content[0]
+        if expected_file_content:
+            return expected_file_content[0]
+        return []
 
     monkeypatch.setattr('ansible.module_utils.facts.utils.get_file_content', _get_file_content)
     file_content = utils.get_file_lines(file_name)
-    assert file_content == file_content
+    assert file_content == expected_file_content
 
 
 @pytest.mark.parametrize("strip", [True, False], ids=['With_default_strip_true', 'With_strip_false'])
