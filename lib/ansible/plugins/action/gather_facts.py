@@ -39,7 +39,7 @@ class ActionModule(ActionBase):
 
         force_serialization = task_vars.pop('ansible_facts_serialized', self._task.args.pop('force_serialization', None))
 
-        modules = task_vars.get('ansbile_facts_modules', {}).keys()
+        modules = task_vars.get('ansible_facts_modules', {}).keys()
         override_vars = {}
         if modules:
             override_vars['ansible_facts_modules'] = modules
