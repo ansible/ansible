@@ -196,6 +196,12 @@ def write_data(text, output_dir, outputname, module=None):
         print(text)
 
 
+def show_progress(progress):
+    '''Show a little process indicator.'''
+    sys.stdout.write('\r%s\r' % ("-/|\\"[progress % 4]))
+    sys.stdout.flush()
+
+
 def get_plugin_info(module_dir, limit_to=None, verbose=False):
     '''
     Returns information about plugins and the categories that they belong to
@@ -237,6 +243,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         glob.glob("%s/*/*/*/*.py" % module_dir)
     )
 
+    module_index = 0
     for module_path in files:
         # Do not list __init__.py files
         if module_path.endswith('__init__.py'):
@@ -271,6 +278,9 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         #
         # Regular module to process
         #
+
+        module_index += 1
+        show_progress(module_index)
 
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
@@ -405,7 +415,9 @@ def too_old(added):
 
 
 def process_plugins(module_map, templates, outputname, output_dir, ansible_version, plugin_type):
-    for module in module_map:
+    for module_index, module in enumerate(module_map):
+
+        show_progress(module_index)
 
         fname = module_map[module]['path']
         display.vvvvv(pp.pformat(('process_plugins info: ', module_map[module])))
