@@ -35,6 +35,8 @@ $appArguments = Get-AnsibleParam -obj $params -name "arguments" -aliases "app_pa
 $stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "path"
 $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "path"
 
+$executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -default "nssm.exe"
+
 # Deprecated options since 2.8. Remove in 2.12
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
 $dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "list"
@@ -52,14 +54,11 @@ function Invoke-NssmCommand {
         [string[]]$arguments
     )
 
-    $executable = "nssm"
-    $argument_string = Argv-ToString -arguments $arguments
-
-    $command = "$executable $argument_string"
+    $command = Argv-ToString -arguments (@($executable) + $arguments)
     $result = Run-Command -command $command
 
     #TODO Add this to CommandUtil.psm1 ?
-    $result.arguments = $argument_string
+    $result.arguments = $command
 
     return $result
 }

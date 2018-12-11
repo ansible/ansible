@@ -40,6 +40,12 @@ options:
       - The application binary to run as a service
       - Required when I(state) is C(present), C(started), C(stopped), or C(restarted).
     type: path
+  executable:
+    description:
+    - The location of the NSSM utility (in case it is not located in your PATH).
+    type: path
+    default: nssm.exe
+    version_added: "2.8.0"
   description:
     description:
       - The description to set for the service.
