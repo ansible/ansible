@@ -1,0 +1,4 @@
+bugfixes:
+  - reboot - search common paths for the shutdown command and use the full path to the binary rather than depending on the PATH of the remote system (https://github.com/ansible/ansible/issues/47131)
+  - reboot - gather distribution information in order to support Alpine and other distributions (https://github.com/ansible/ansible/issues/46723)
+  - reboot - use a common set of commands for older and newer Solaris and SunOS variants (https://github.com/ansible/ansible/pull/48986)
