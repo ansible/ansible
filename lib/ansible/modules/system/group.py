@@ -162,9 +162,10 @@ class Group(object):
 
     def group_exists(self):
         if self.local:
-            for line in get_file_content(self.GROUPFILE, '').splitlines():
-                if line.split(':')[0] == self.name:
-                    return True
+            with open(GROUPFILE) as file:
+                for line in file:
+                    if line.split(':')[0] == self.name:
+                        return True
             return False
         else:
             try:
