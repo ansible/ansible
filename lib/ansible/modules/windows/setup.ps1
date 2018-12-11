@@ -68,7 +68,7 @@ $result = @{
 $grouped_subsets = @{
     min=[System.Collections.Generic.List[string]]@('date_time','distribution','dns','env','local','platform','powershell_version','user')
     network=[System.Collections.Generic.List[string]]@('all_ipv4_addresses','all_ipv6_addresses','interfaces','windows_domain', 'winrm')
-    hardware=[System.Collections.Generic.List[string]]@('bios','memory','processor','uptime')
+    hardware=[System.Collections.Generic.List[string]]@('bios','memory','processor','uptime','virtual')
     external=[System.Collections.Generic.List[string]]@('facter')
 }
 
@@ -436,6 +436,43 @@ if($gather_subset.Contains('winrm')) {
     if ($winrm_cert_expirations) {
         # this fact was renamed from ansible_winrm_certificate_expires due to collision with ansible_winrm_X connection var pattern
         $ansible_facts.Add("ansible_win_rm_certificate_expires", $winrm_cert_expirations[0].NotAfter.ToString("yyyy-MM-dd HH:mm:ss"))
+    }
+}
+
+if($gather_subset.Contains('virtual')) {
+    $MachineInfo = Get-WmiObject -Class Win32_ComputerSystem
+
+        switch ($MachineInfo.Model) {
+        
+            "Virtual Machine" {
+                $MachineType="Hyper-V"
+                $MachineRole="guest"
+            }
+    
+            "VMware Virtual Platform" {
+                $MachineType="VMware"
+                $MachineRole="guest"
+            }
+    
+            "VirtualBox" { 
+                $MachineType="VirtualBox" 
+                $MachineRole="guest"
+            }
+    
+            "HVM domU" {
+                $MachineType="Xen"
+                $MachineRole="guest" 
+            }
+ 
+            default {
+                $MachineType="NA"
+                $MachineRole="NA"
+            }
+        }
+    
+    $ansible_facts += @{
+        ansible_virtualization_role = $MachineRole
+        ansible_virtualization_type = $MachineType
     }
 }
 
