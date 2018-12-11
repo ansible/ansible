@@ -55,6 +55,31 @@ options:
       - Insert the corresponding rule as rule number NUM.
       - Note that ufw numbers rules starting with 1.
     type: int
+  insert_relative_to:
+    description:
+      - Allows to interpret the index in I(insert) relative to a position.
+      - C(zero) interprets the rule number as an absolute index (i.e. 1 is
+        the first rule).
+      - C(first-ipv4) interprets the rule number relative to the index of the
+        first IPv4 rule, or relative to the position where the first IPv4 rule
+        would be if there is currently none.
+      - C(last-ipv4) interprets the rule number relative to the index of the
+        last IPv4 rule, or relative to the position where the last IPv4 rule
+        would be if there is currently none.
+      - C(first-ipv6) interprets the rule number relative to the index of the
+        first IPv6 rule, or relative to the position where the first IPv6 rule
+        would be if there is currently none.
+      - C(last-ipv6) interprets the rule number relative to the index of the
+        last IPv6 rule, or relative to the position where the last IPv6 rule
+        would be if there is currently none.
+    choices:
+      - zero
+      - first-ipv4
+      - last-ipv4
+      - first-ipv6
+      - last-ipv6
+    default: zero
+    version_added: "2.8"
   rule:
     description:
       - Add firewall rule
@@ -199,6 +224,26 @@ EXAMPLES = '''
     src: 2001:db8::/32
     port: 25
 
+- name: Deny all IPv6 traffic to tcp port 20 on this host
+  # this should be the first IPv6 rule
+  ufw:
+    rule: deny
+    proto: tcp
+    port: 20
+    to_ip: "::"
+    insert: 0
+    insert_relative_to: first-ipv6
+
+- name: Deny all IPv4 traffic to tcp port 20 on this host
+  # This should be the third to last IPv4 rule
+  ufw:
+    rule: deny
+    proto: tcp
+    port: 20
+    to_ip: "::"
+    insert: -1
+    insert_relative_to: last-ipv4
+
 # Can be used to further restrict a global FORWARD policy set to allow
 - name: Deny forwarded/routed traffic from subnet 1.2.3.0/24 to subnet 4.5.6.0/24
   ufw:
@@ -250,6 +295,7 @@ def main():
             delete=dict(type='bool', default=False),
             route=dict(type='bool', default=False),
             insert=dict(type='int'),
+            insert_relative_to=dict(choices=['zero', 'first-ipv4', 'last-ipv4', 'first-ipv6', 'last-ipv6'], default='zero'),
             rule=dict(type='str', choices=['allow', 'deny', 'limit', 'reject']),
             interface=dict(type='str', aliases=['if']),
             log=dict(type='bool', default=False),
@@ -425,7 +471,32 @@ def main():
             #     [proto protocol] [app application] [comment COMMENT]
             cmd.append([module.boolean(params['route']), 'route'])
             cmd.append([module.boolean(params['delete']), 'delete'])
-            cmd.append([params['insert'], "insert %s" % params['insert']])
+            if params['insert'] is not None:
+                relative_to_cmd = params['insert_relative_to']
+                if relative_to_cmd == 'zero':
+                    insert_to = params['insert']
+                else:
+                    (_, numbered_state, _) = module.run_command([ufw_bin, 'status', 'numbered'])
+                    numbered_line_re = re.compile(R'^\[ *([0-9]+)\] ')
+                    lines = [(numbered_line_re.match(line), '(v6)' in line) for line in numbered_state.splitlines()]
+                    lines = [(int(matcher.group(1)), ipv6) for (matcher, ipv6) in lines if matcher]
+                    last_number = max([no for (no, ipv6) in lines]) if lines else 0
+                    has_ipv4 = any([not ipv6 for (no, ipv6) in lines])
+                    has_ipv6 = any([ipv6 for (no, ipv6) in lines])
+                    if relative_to_cmd == 'first-ipv4':
+                        relative_to = 1
+                    elif relative_to_cmd == 'last-ipv4':
+                        relative_to = max([no for (no, ipv6) in lines if not ipv6]) if has_ipv4 else 1
+                    elif relative_to_cmd == 'first-ipv6':
+                        relative_to = max([no for (no, ipv6) in lines if not ipv6]) + 1 if has_ipv4 else 1
+                    elif relative_to_cmd == 'last-ipv6':
+                        relative_to = last_number if has_ipv6 else last_number + 1
+                    insert_to = params['insert'] + relative_to
+                    if insert_to > last_number:
+                        # ufw does not like it when the insert number is larger than the
+                        # maximal rule number for IPv4/IPv6.
+                        insert_to = None
+                cmd.append([insert_to is not None, "insert %s" % insert_to])
             cmd.append([value])
             cmd.append([params['direction'], "%s" % params['direction']])
             cmd.append([params['interface'], "on %s" % params['interface']])
