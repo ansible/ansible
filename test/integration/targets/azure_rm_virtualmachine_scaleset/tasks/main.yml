@@ -247,7 +247,65 @@
     data_disks: "{{ body.data_disks }}"
   register: results
 
-- name: Assert that VMSS was updated
+- name: Assert that nothing was changed
+  assert:
+    that: not results.changed
+
+- name: Create VMSS -- try to update image reference
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 2
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    upgrade_policy: Manual
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    image:
+      name: testimage
+      resource_group: "{{ resource_group }}"
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  register: results
+
+- name: Assert that VMSS was changed
+  assert:
+    that: results.changed
+
+- name: Create VMSS -- try to update image reference again
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS{{ rpfx }}
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 2
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    upgrade_policy: Manual
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    image:
+      name: testimage
+      resource_group: "{{ resource_group }}"
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+  register: results
+
+- name: Assert that VMSS was not changed
   assert:
     that: not results.changed
 
