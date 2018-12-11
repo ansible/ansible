@@ -284,8 +284,10 @@ def create(restbase, user, passwd, params):
     createfields = {
         'project': {'key': params['project']},
         'summary': params['summary'],
-        'description': params['description'],
         'issuetype': {'name': params['issuetype']}}
+
+    if params['description']:
+        createfields['description'] = params['description']
 
     # Merge in any additional or overridden fields
     if params['fields']:
@@ -370,7 +372,7 @@ def link(restbase, user, passwd, params):
 
 
 # Some parameters are required depending on the operation:
-OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
+OP_REQUIRED = dict(create=['project', 'issuetype', 'summary'],
                    comment=['issue', 'comment'],
                    edit=[],
                    fetch=['issue'],
