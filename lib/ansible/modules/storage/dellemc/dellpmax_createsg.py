@@ -28,11 +28,6 @@ options:
     description: 
       - "Integer 12 Digit Serial Number of PowerMAX or VMAX array."
     required: true
-  async: 
-    description: 
-      - "Optional Parameter to set REST call to run Asyncronously, job will be 
-      submitted to job queue and executed.  Task Id will be returned in JSON 
-      for lookup purposed to check job completion status."
   cap_unit: 
     choices: 
       - GB
@@ -91,6 +86,12 @@ options:
       label to make volumes easily identified on hosts can run Dell EMC inq 
       utility command to see this label is  inq -identifier device_name"
     required: false
+  user:
+    description:
+      - "Unisphere username"
+  password:
+    description:
+      - "password for Unisphere user"
   workload: 
     description: 
       - "Block workload type, optional and can only be set on VMAX3 Hybrid 
@@ -156,7 +157,9 @@ def main():
             workload=dict(type='str', required=False),
             num_vols=dict(type='int', required=True),
             vol_size=dict(type='int', required=True),
-            cap_unit=dict(type='str', required=True),
+            cap_unit=dict(type='str', required=True, choices=['GB',
+                                                              'TB',
+                                                              'MB','CYL']),
             volumeIdentifier=dict(type='str', required=False)
         )
     )
