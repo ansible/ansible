@@ -390,6 +390,9 @@ class DistributionFiles:
         release = re.search('ID=(.*)', data)
         if release:
             clear_facts['distribution_release'] = release.groups()[0]
+        pname = re.search('NAME="(.*)"', data)
+        if pname:
+            clear_facts['distribution'] = pname.groups()[0]
         return True, clear_facts
 
 
@@ -454,7 +457,8 @@ class Distribution(object):
                      'AIX': ['AIX'],
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
-                     'FreeBSD': ['FreeBSD', 'TrueOS']}
+                     'FreeBSD': ['FreeBSD', 'TrueOS'],
+                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
