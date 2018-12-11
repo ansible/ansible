@@ -23,12 +23,12 @@ description:
      - It can also be executed directly by C(/usr/bin/ansible) to check what variables are available to a host.
      - Ansible provides many I(facts) about the system, automatically.
 options:
-    force_serialization:
+    parallel:
         description:
-            - A toggle that forces fact modules to be executed serialy and in order.
+            - A toggle that controls if the fact modules are executed in parallel or serialy and in order.
               This can guarantee the merge order of module facts at the expense of performance.
         type: bool
-        default: False
+        default: True
 notes:
     - This module is mostly a wrapper around other fact gathering modules.
     - Options passed to this module must be supported by all the underlying fact modules configured.

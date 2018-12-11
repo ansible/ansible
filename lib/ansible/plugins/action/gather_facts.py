@@ -37,7 +37,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        force_serialization = task_vars.pop('ansible_facts_serialized', self._task.args.pop('force_serialization', None))
+        parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', True))
 
         modules = task_vars.get('ansible_facts_modules', {}).keys()
         override_vars = {}
@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
         modules = C.config.get_config_value('FACTS_MODULES', variables=override_vars)
 
         jobs = {}
-        if force_serialization or len(modules) == 1:
+        if not parallel or len(modules) == 1:
             # serially execute each module
             for fact_module in modules:
                 # just one module, no need for fancy async
