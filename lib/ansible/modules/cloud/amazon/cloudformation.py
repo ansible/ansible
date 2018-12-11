@@ -591,7 +591,7 @@ def main():
 
     # collect the parameters that are passed to boto3. Keeps us from having so many scalars floating around.
     stack_params = {
-        'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM', 'CAPABILITY_AUTO_EXPAND',],
+        'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM', 'CAPABILITY_AUTO_EXPAND', ],
         'ClientRequestToken': to_native(uuid.uuid4()),
     }
     state = module.params['state']
