@@ -1006,7 +1006,7 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
     "name": "ClearLinux 26580",
     "result": {
         "distribution_release": "clear-linux-os",
-        "distribution": "ClearLinux",
+        "distribution": "Clear Linux OS",
         "distribution_major_version": "26580",
         "os_family": "ClearLinux",
         "distribution_version": "26580"
