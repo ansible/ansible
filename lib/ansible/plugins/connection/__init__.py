@@ -297,7 +297,7 @@ class NetworkConnectionBase(ConnectionBase):
         self._local = connection_loader.get('local', play_context, '/dev/null')
         self._local.set_options()
 
-        self._sub_plugins = []
+        self._sub_plugin = {}
         self._cached_variables = (None, None, None)
 
         # reconstruct the socket_path and set instance values accordingly
@@ -309,8 +309,9 @@ class NetworkConnectionBase(ConnectionBase):
             return self.__dict__[name]
         except KeyError:
             if not name.startswith('_'):
-                for plugin in self._sub_plugins:
-                    method = getattr(plugin['obj'], name, None)
+                plugin = self._sub_plugin.get('obj')
+                if plugin:
+                    method = getattr(plugin, name, None)
                     if method is not None:
                         return method
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
@@ -342,12 +343,11 @@ class NetworkConnectionBase(ConnectionBase):
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
-        for plugin in self._sub_plugins:
-            if plugin['type'] != 'external':
-                try:
-                    plugin['obj'].set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-                except AttributeError:
-                    pass
+        if self._sub_plugin.get('obj') and self._sub_plugin.get('type') != 'external':
+            try:
+                self._sub_plugin['obj'].set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+            except AttributeError:
+                pass
 
     def _update_connection_state(self):
         '''
