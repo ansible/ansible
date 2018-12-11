@@ -1,0 +1,2 @@
+bugfixes:
+  - reboot - add appropriate commands to make the plugin work with VMware ESXi (https://github.com/ansible/ansible/issues/48425)

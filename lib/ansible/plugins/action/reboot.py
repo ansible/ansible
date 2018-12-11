@@ -45,10 +45,12 @@ class ActionModule(ActionBase):
         'macosx': 'who -b',
         'solaris': 'who -b',
         'sunos': 'who -b',
+        'vmkernel': 'grep booted /var/log/vmksummary.log | tail -n 1',
     }
 
     SHUTDOWN_COMMANDS = {
         'alpine': 'reboot',
+        'vmkernel': 'reboot',
     }
 
     SHUTDOWN_COMMAND_ARGS = {
@@ -59,10 +61,12 @@ class ActionModule(ActionBase):
         'openbsd': '-r +{delay_min} "{message}"',
         'solaris': '-y -g {delay_sec} -i 6 "{message}"',
         'sunos': '-y -g {delay_sec} -i 6 "{message}"',
+        'vmkernel': '-d {delay_sec}',
     }
 
     TEST_COMMANDS = {
-        'solaris': 'who'
+        'solaris': 'who',
+        'vmkernel': 'who',
     }
 
     def __init__(self, *args, **kwargs):
