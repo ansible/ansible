@@ -41,6 +41,23 @@ options:
         required: true
         description:
             - The endpoint to use ( for instance ovh-eu)
+    wait_completion:
+        required: false
+        default: true
+        type: bool
+        description:
+            - If true, the module will wait for the IP address to be moved.
+              If false, exit without waiting. The taskId will be returned
+              in module output
+    wait_task_completion:
+        required: false
+        default: 0
+        description:
+            - If not 0, the module will wait for this task id to be
+              completed. Use wait_task_completion if you want to wait for
+              completion of a previously executed task with
+              wait_completion=false. You can execute this module repeatedly on
+              a list of failover IPs using wait_completion=false (see examples)
     application_key:
         required: true
         description:
@@ -71,7 +88,23 @@ EXAMPLES = '''
     application_key: yourkey
     application_secret: yoursecret
     consumer_key: yourconsumerkey
-
+- ovh_ip_failover:
+    name: 1.1.1.1
+    service: ns666.ovh.net
+    endpoint: ovh-eu
+    wait_completion: false
+    application_key: yourkey
+    application_secret: yoursecret
+    consumer_key: yourconsumerkey
+  register: moved
+- ovh_ip_failover:
+    name: 1.1.1.1
+    service: ns666.ovh.net
+    endpoint: ovh-eu
+    wait_task_completion: "{{moved.taskId}}"
+    application_key: yourkey
+    application_secret: yoursecret
+    consumer_key: yourconsumerkey
 '''
 
 RETURN = '''
@@ -117,12 +150,27 @@ def waitForNoTask(client, name, timeout):
     return True
 
 
+def waitForTaskDone(client, name, taskId, timeout):
+    currentTimeout = timeout
+    while True:
+        task = client.get('/ip/{0}/task/{1}'.format(quote_plus(name), taskId))
+        if task['status'] == 'done':
+            return True
+        time.sleep(5)  # Delay for 5 sec because it's long to wait completion, do not harass the API
+        currentTimeout -= 5
+        if currentTimeout < 0:
+            return False
+    return True
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True),
             service=dict(required=True),
             endpoint=dict(required=True),
+            wait_completion=dict(default=True, type='bool'),
+            wait_task_completion=dict(default=0, type='int'),
             application_key=dict(required=True, no_log=True),
             application_secret=dict(required=True, no_log=True),
             consumer_key=dict(required=True, no_log=True),
@@ -142,6 +190,8 @@ def main():
     name = module.params.get('name')
     service = module.params.get('service')
     timeout = module.params.get('timeout')
+    wait_completion = module.params.get('wait_completion')
+    wait_task_completion = module.params.get('wait_task_completion')
 
     # Connect to OVH API
     client = getOvhClient(module)
@@ -182,11 +232,24 @@ def main():
 
     if ipproperties['routedTo']['serviceName'] != service:
         if not module.check_mode:
-            client.post('/ip/{0}/move'.format(quote_plus(name)), to=service)
-            if not waitForNoTask(client, name, timeout):
-                module.fail_json(
-                    msg='Timeout of {0} seconds while waiting for completion '
-                        'of move ip to service'.format(timeout))
+            if wait_task_completion == 0:
+                # Move the IP and get the created taskId
+                task = client.post('/ip/{0}/move'.format(quote_plus(name)), to=service)
+                taskId = task['taskId']
+                result['moved'] = True
+            else:
+                # Just wait for the given taskId to be completed
+                taskId = wait_task_completion
+                result['moved'] = False
+            result['taskId'] = taskId
+            if wait_completion or wait_task_completion != 0:
+                if not waitForTaskDone(client, name, taskId, timeout):
+                    module.fail_json(
+                        msg='Timeout of {0} seconds while waiting for completion '
+                            'of move ip to service'.format(timeout))
+                result['waited'] = True
+            else:
+                result['waited'] = False
         result['changed'] = True
 
     module.exit_json(**result)
