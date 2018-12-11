@@ -27,16 +27,8 @@ class JsonRpcServer(object):
             error = self.invalid_request()
             return json.dumps(error)
 
-        params = request.get('params')
+        args, kwargs = request.get('params')
         setattr(self, '_identifier', request.get('id'))
-
-        args = []
-        kwargs = {}
-
-        if all((params, isinstance(params, list))):
-            args = params
-        elif all((params, isinstance(params, dict))):
-            kwargs = params
 
         rpc_method = None
         for obj in self._objects:
