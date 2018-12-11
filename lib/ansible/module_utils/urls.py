@@ -4,8 +4,8 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
-# Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com>, 2015
+# Copyright: (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 #
@@ -68,6 +68,7 @@ except ImportError:
     import urllib2 as urllib_request
     from urllib2 import AbstractHTTPHandler
 
+# Add support for HTTP 308 Permanent Redirect (when missing)
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
 try:
@@ -323,6 +324,11 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 self.context = create_default_context()
             elif HAS_URLLIB3_PYOPENSSLCONTEXT:
                 self.context = PyOpenSSLContext(PROTOCOL)
+
+            # Support insecure TLS protocol options
+            # if self.context and self.tls_insecure:
+            #     tls_insecure_options(self.context)
+
             if self.context and self.cert_file:
                 self.context.load_cert_chain(self.cert_file, self.key_file)
 
@@ -460,6 +466,21 @@ class ParseResultDottedDict(dict):
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
 
 
+def insecure_tls_options(context):
+    '''
+    Add support for insecure TLS options when requested.
+    This is required when dealing with older devices,
+    or useful when needing to upgrade older devices.
+    '''
+    # TODO: We may want to enable older ciphers here too ?
+    # context.set_ciphers('HIGH:!aNULL:!eNULL')
+    context.options &= ~ssl.OP_NO_SSLv2
+    context.options &= ~ssl.OP_NO_SSLv3
+    context.options &= ~ssl.OP_NO_TLSv1
+    context.options &= ~ssl.OP_NO_TLSv1_1
+    context.options &= ~ssl.OP_NO_TLSv1_2
+
+
 def generic_urlparse(parts):
     '''
     Returns a dictionary of url parts as parsed by urlparse,
@@ -538,7 +559,7 @@ class RequestWithMethod(urllib_request.Request):
             return urllib_request.Request.get_method(self)
 
 
-def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
+def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, tls_insecure=False):
     """This is a class factory that closes over the value of
     ``follow_redirects`` so that the RedirectHandler class has access to
     that value without having to use globals, and potentially cause problems
@@ -553,7 +574,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
         """
 
         def redirect_request(self, req, fp, code, msg, hdrs, newurl):
-            handler = maybe_add_ssl_handler(newurl, validate_certs)
+            handler = maybe_add_ssl_handler(newurl, validate_certs, tls_insecure)
             if handler:
                 urllib_request._opener.add_handler(handler)
 
@@ -665,9 +686,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\n"
 
-    def __init__(self, hostname, port):
+    def __init__(self, hostname, port, tls_insecure=False):
         self.hostname = hostname
         self.port = port
+        self.tls_insecure = tls_insecure
 
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
@@ -775,6 +797,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         else:
             raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
 
+        # Support insecure TLS protocol options
+        if context and self.tls_insecure:
+            insecure_tls_options(context)
+
         if to_add_ca_cert_path:
             context.load_verify_locations(to_add_ca_cert_path)
         return context
@@ -875,7 +901,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     https_request = http_request
 
 
-def maybe_add_ssl_handler(url, validate_certs):
+def maybe_add_ssl_handler(url, validate_certs, tls_insecure=False):
     parsed = generic_urlparse(urlparse(url))
     if parsed.scheme == 'https' and validate_certs:
         if not HAS_SSL:
@@ -894,7 +920,7 @@ def maybe_add_ssl_handler(url, validate_certs):
             port = 443
         # create the SSL validation handler and
         # add it to the list of handlers
-        return SSLValidationHandler(hostname, port)
+        return SSLValidationHandler(hostname, port, tls_insecure)
 
 
 def rfc2822_date_string(timetuple, zone='-0000'):
@@ -917,7 +943,8 @@ def rfc2822_date_string(timetuple, zone='-0000'):
 class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
-                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None):
+                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None,
+                 unix_socket=None, tls_insecure=False):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -966,7 +993,7 @@ class Request:
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None):
+             unix_socket=None, tls_insecure=False):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1033,7 +1060,7 @@ class Request:
         if unix_socket:
             handlers.append(UnixHTTPHandler(unix_socket))
 
-        ssl_handler = maybe_add_ssl_handler(url, validate_certs)
+        ssl_handler = maybe_add_ssl_handler(url, validate_certs, tls_insecure)
         if ssl_handler:
             handlers.append(ssl_handler)
         if HAS_GSSAPI and use_gssapi:
@@ -1098,9 +1125,16 @@ class Request:
         if HAS_SSLCONTEXT and not validate_certs:
             # In 2.7.9, the default context validates certificates
             context = SSLContext(ssl.PROTOCOL_SSLv23)
-            if ssl.OP_NO_SSLv2:
-                context.options |= ssl.OP_NO_SSLv2
-            context.options |= ssl.OP_NO_SSLv3
+
+            # Support insecure TLS protocol options
+            if tls_insecure:
+                insecure_tls_options(context)
+            else:
+                if ssl.OP_NO_SSLv2:
+                    context.options |= ssl.OP_NO_SSLv2
+
+                context.options |= ssl.OP_NO_SSLv3
+
             context.verify_mode = ssl.CERT_NONE
             context.check_hostname = False
             handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
@@ -1118,7 +1152,7 @@ class Request:
         if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
             handlers.append(CustomHTTPSHandler)
 
-        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
+        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs, tls_insecure))
 
         # add some nicer cookie handling
         if cookies is not None:
@@ -1236,7 +1270,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
-             use_gssapi=False, unix_socket=None):
+             use_gssapi=False, unix_socket=None, tls_insecure=False):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1248,7 +1282,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
-                          use_gssapi=use_gssapi, unix_socket=unix_socket)
+                          use_gssapi=use_gssapi, unix_socket=unix_socket, tls_insecure=tls_insecure)
 
 
 #
@@ -1279,6 +1313,7 @@ def url_argument_spec():
         force_basic_auth=dict(type='bool', default=False),
         client_cert=dict(type='path'),
         client_key=dict(type='path'),
+        tls_insecure=dict(type='bool', default=False),
     )
 
 
@@ -1341,6 +1376,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     cookies = cookiejar.LWPCookieJar()
 
+    tls_insecure = module.params.get('tls_insecure', False)
+
     r = None
     info = dict(url=url)
     try:
@@ -1350,7 +1387,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-                     unix_socket=unix_socket)
+                     unix_socket=unix_socket, tls_insecure=tls_insecure)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 

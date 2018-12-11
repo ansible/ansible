@@ -60,4 +60,10 @@ options:
       - PEM formatted file that contains your private key to be used for SSL client authentication.
       - If C(client_cert) contains both the certificate and key, this option is not required.
     type: path
-'''
+  tls_insecure:
+    description:
+      - Enable insecure TLS protocols.
+      - This may be required to support older devices.
+    type: bool
+    default: no
+    version_added: '2.8'
