@@ -17,7 +17,7 @@ short_description: NetApp ONTAP Vscan on access policy configuration.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.8'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Configure on access policy for Vscan (virus scan)
 options:
