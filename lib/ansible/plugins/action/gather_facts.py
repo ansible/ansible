@@ -24,7 +24,9 @@ class ActionModule(ActionBase):
             mod_args = self._task.args.copy()
 
         if fact_module != 'setup':
-            mod_args.pop('gather_subset', None)
+            subset = mod_args.pop('gather_subset', None)
+            if subset not in ('all', ['all']):
+                self._display.warning('Ignoring subset(%s) for %s' % (subset, fact_module))
 
         return mod_args
 
@@ -35,10 +37,15 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        force_serialization = self._task.args.get('force_serialization', None)
+        force_serialization = self._task_vars.get('ansible_facts_serialized', self._task.args.pop('force_serialization', None))
+
+        modules = self._task_vars.get('ansbile_facts_modules', {}).keys()
+        override_vars = {}
+        if modules:
+            override_vars['ansible_facts_modules'] = modules
+        modules = C.config.get_config_value('FACTS_MODULES', variables=override_vars)
 
         jobs = {}
-        modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
         if force_serialization or len(modules) == 1:
             # serially execute each module
             for fact_module in modules:
