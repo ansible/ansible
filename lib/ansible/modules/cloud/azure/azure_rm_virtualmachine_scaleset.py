@@ -446,6 +446,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
+        rr = { 'moo': 'xxx'}
         nsg = None
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
@@ -558,6 +559,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     changed = True
                     vmss_dict['properties']['upgradePolicy']['mode'] = self.upgrade_policy
 
+                if image_reference and \
+                   image_reference != vmss_dict['properties']['virtualMachineProfile']['storageProfile']['imageReference']:
+                    self.log('CHANGED: virtual machine scale set {0} - Image'.format(self.name))
+                    differences.append('Image')
+                    changed = True
+                    vmss_dict['properties']['virtualMachineProfile']['storageProfile']['imageReference'] = image_reference
+
                 update_tags, vmss_dict['tags'] = self.update_tags(vmss_dict.get('tags', dict()))
                 if update_tags:
                     differences.append('Tags')
@@ -578,6 +586,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         self.results['changed'] = changed
         self.results['ansible_facts']['azure_vmss'] = results
+        self.results['rr'] = rr
 
         if self.check_mode:
             return self.results
@@ -739,6 +748,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             ))
                         vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
 
+                    if image_reference is not None:
+                        vmss_resource.virtual_machine_profile.storage_profile.image_reference = image_reference
                     self.log("Update virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
 
