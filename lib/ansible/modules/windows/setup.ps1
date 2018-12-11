@@ -440,7 +440,7 @@ if($gather_subset.Contains('winrm')) {
 }
 
 if($gather_subset.Contains('virtual')) {
-    $MachineInfo = Get-WmiObject -Class Win32_ComputerSystem
+    $MachineInfo = Get-CimInstance -Class Win32_ComputerSystem
 
     switch ($MachineInfo.Model) {
         "Virtual Machine" {
