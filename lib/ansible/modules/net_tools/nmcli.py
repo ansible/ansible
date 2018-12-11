@@ -314,15 +314,13 @@ EXAMPLES = '''
   tasks:
 
   - name: install needed network manager libs
-    yum:
-      name: '{{ item }}'
+    package:
+      name:
+        - NetworkManager-glib
+        - nm-connection-editor
+        - libsemanage-python
+        - policycoreutils-python
       state: installed
-    with_items:
-      - NetworkManager-glib
-      - libnm-qt-devel.x86_64
-      - nm-connection-editor.x86_64
-      - libsemanage-python
-      - policycoreutils-python
 
 ##### Working with all cloud nodes - Teaming
   - name: try nmcli add team - conn_name only & ip4 gw4
