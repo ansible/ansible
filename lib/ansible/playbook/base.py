@@ -350,6 +350,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         for (name, attribute) in iteritems(self._valid_attrs):
 
             if attribute.static:
+                value = getattr(self, name)
+                if templar.is_template(value):
+                    display.warning('"%s" is not templatable, but we found: %s, '
+                                    'it will not be templated and will be used "as is".' % (name, value))
                 continue
 
             if getattr(self, name) is None:
