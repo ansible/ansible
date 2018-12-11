@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ios_logging
-version_added: "2.4"
+version_added: "2.8"
 author: "Trishna Guha (@trishnaguha)"
 short_description: Manage logging on network devices
 description:
@@ -57,7 +57,7 @@ options:
       - Set logging severity levels.
   source:
     description:
-      - Set logs source interface.
+      - Set logging source interface.
   aggregate:
     description: List of logging definitions.
   state:
@@ -373,6 +373,7 @@ def map_params_to_obj(module, required_if=None):
                 'size': module.params['size'],
                 'facility': module.params['facility'],
                 'level': module.params['level'],
+                'source': module.params['source'],
                 'state': module.params['state']
             })
 
