@@ -411,6 +411,12 @@
     state: absent
     name: testPublicIP
 
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: vmforimage
+    state: absent
+
 - name: Delete virtual network
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
