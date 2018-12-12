@@ -43,7 +43,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def get_pid(name, module):
     command = module.get_bin_path('pgrep', True)
-    rc, processid, stderr = module.run_command([command,"-x", name])
+    rc, processid, stderr = module.run_command([command, "-x", name])
     return [int(pid) for pid in processid.split() if processid]
 
 
