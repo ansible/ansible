@@ -440,7 +440,7 @@ if($gather_subset.Contains('winrm')) {
 }
 
 if($gather_subset.Contains('virtual')) {
-    $machine_info = Get-LazyCimInstance -Class Win32_ComputerSystem
+    $machine_info = Get-LazyCimInstance Win32_ComputerSystem
 
     switch ($machine_info.model) {
         "Virtual Machine" {
