@@ -10,9 +10,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-      'metadata_version': '1.1',
-      'status': ['preview'],
-      'supported_by': 'community'
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
 }
 
 DOCUMENTATION = '''
@@ -86,6 +86,7 @@ from ansible.module_utils._text import to_native
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
+
 class NetAppOntapIpspace(object):
     '''Class with ipspace operations'''
 
@@ -93,8 +94,8 @@ class NetAppOntapIpspace(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(
-                        required=False, choices=['present', 'absent'],
-                        default='present'),
+                required=False, choices=['present', 'absent'],
+                default='present'),
             name=dict(required=True, type='str'),
             from_name=dict(required=False, type='str'),
         ))
@@ -108,7 +109,7 @@ class NetAppOntapIpspace(object):
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(
-                        msg="the python NetApp-Lib module is required")
+                msg="the python NetApp-Lib module is required")
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
         return
@@ -121,13 +122,13 @@ class NetAppOntapIpspace(object):
         """
         ipspace_get_iter = netapp_utils.zapi.NaElement('net-ipspaces-get-iter')
         query_details = netapp_utils.zapi.NaElement.create_node_with_children(
-                    'net-ipspaces-info', **{'ipspace': name})
+            'net-ipspaces-info', **{'ipspace': name})
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         ipspace_get_iter.add_child_elem(query)
         try:
             result = self.server.invoke_successfully(
-                        ipspace_get_iter, enable_tunneling=False)
+                ipspace_get_iter, enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
             # Error 14636 denotes an ipspace does not exist
             # Error 13073 denotes an ipspace not found
@@ -135,8 +136,8 @@ class NetAppOntapIpspace(object):
                 return None
             else:
                 self.module.self.fail_json(
-                            msg=to_native(error),
-                            exception=traceback.format_exc())
+                    msg=to_native(error),
+                    exception=traceback.format_exc())
         return result
 
     def get_ipspace(self, name=None):
@@ -151,9 +152,10 @@ class NetAppOntapIpspace(object):
             name = self.parameters['name']
         ipspace_get = self.ipspace_get_iter(name)
         if (ipspace_get and ipspace_get.get_child_by_name('num-records') and
-                        int(ipspace_get.get_child_content('num-records')) >= 1):
+                int(ipspace_get.get_child_content('num-records')) >= 1):
             current_ipspace = dict()
-            attr = ipspace_get.get_child_by_name('attributes-list').get_child_by_name('net-ipspaces-info')
+            attr_list = ipspace_get.get_child_by_name('attributes-list')
+            attr = attr_list.get_child_by_name('net-ipspaces-info')
             current_ipspace['name'] = attr.get_child_content('ipspace')
             return current_ipspace
         return None
@@ -164,16 +166,16 @@ class NetAppOntapIpspace(object):
         :return: None
         """
         ipspace_create = netapp_utils.zapi.NaElement.create_node_with_children(
-                'net-ipspaces-create', **{'ipspace': self.parameters['name']})
+            'net-ipspaces-create', **{'ipspace': self.parameters['name']})
         try:
             self.server.invoke_successfully(ipspace_create,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
             self.module.self.fail_json(
-                        msg="Error provisioning ipspace %s: %s" % (
-                            self.parameters['name'],
-                            to_native(error)),
-                        exception=traceback.format_exc())
+                msg="Error provisioning ipspace %s: %s" % (
+                    self.parameters['name'],
+                    to_native(error)),
+                exception=traceback.format_exc())
 
     def delete_ipspace(self):
         """
@@ -181,17 +183,17 @@ class NetAppOntapIpspace(object):
         :return: None
         """
         ipspace_destroy = netapp_utils.zapi.NaElement.create_node_with_children(
-                    'net-ipspaces-destroy',
-                    **{'ipspace': self.parameters['name']})
+            'net-ipspaces-destroy',
+            **{'ipspace': self.parameters['name']})
         try:
             self.server.invoke_successfully(
-                        ipspace_destroy, enable_tunneling=False)
+                ipspace_destroy, enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
             self.module.self.fail_json(
-                        msg="Error removing ipspace %s: %s" % (
-                                    self.parameters['name'],
-                                    to_native(error)),
-                        exception=traceback.format_exc())
+                msg="Error removing ipspace %s: %s" % (
+                    self.parameters['name'],
+                    to_native(error)),
+                exception=traceback.format_exc())
 
     def rename_ipspace(self):
         """
@@ -199,18 +201,18 @@ class NetAppOntapIpspace(object):
         :return: Nothing
         """
         ipspace_rename = netapp_utils.zapi.NaElement.create_node_with_children(
-                    'net-ipspaces-rename',
-                    **{'ipspace': self.parameters['from_name'],
-                    'new-name': self.parameters['name']})
+            'net-ipspaces-rename',
+            **{'ipspace': self.parameters['from_name'],
+               'new-name': self.parameters['name']})
         try:
             self.server.invoke_successfully(ipspace_rename,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(
-                        msg="Error renaming ipspace %s: %s" % (
-                                    self.parameters['from_name'],
-                                    to_native(error)),
-                        exception=traceback.format_exc())
+                msg="Error renaming ipspace %s: %s" % (
+                    self.parameters['from_name'],
+                    to_native(error)),
+                exception=traceback.format_exc())
 
     def apply(self):
         """
@@ -222,10 +224,12 @@ class NetAppOntapIpspace(object):
         rename, cd_action = None, None
         if self.parameters.get('from_name'):
             rename = self.na_helper.is_rename_action(
-                                self.get_ipspace(self.parameters['from_name']),
-                                current)
+                self.get_ipspace(self.parameters['from_name']),
+                current)
             if rename is None:
-                self.module.fail_json(msg="Error renaming: ipspace %s does not exist" % self.parameters['from_name'])
+                self.module.fail_json(
+                    msg="Error renaming: ipspace %s does not exist" %
+                    self.parameters['from_name'])
         else:
             cd_action = self.na_helper.get_cd_action(current, self.parameters)
         if self.na_helper.changed:
