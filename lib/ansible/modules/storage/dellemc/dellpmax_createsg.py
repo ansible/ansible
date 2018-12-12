@@ -16,11 +16,11 @@ DOCUMENTATION = '''
 ---
 author:
   - "Paul Martin (@rawstorage)"
-short_description: "Create storage group on Dell EMC PowerMax or VMAX All 
+short_description: "Create storage group on Dell EMC PowerMax or VMAX All
 Flash"
 version_added: "2.8"
 description:
-  - "This module has been tested against UNI 9.0. Every effort has been made 
+  - "This module has been tested against UNI 9.0. Every effort has been made
   to verify the scripts run with valid input. These modules are a tech preview"
 module: dellpmax_createsg
 options:
@@ -39,31 +39,31 @@ options:
     required: false
   num_vols:
     description:
-      - "integer value for the number of volumes. Minimum is 1, module will 
-      fail if less than one volume is specified or value is 0. If volumes are 
-      required of different sizes, addional tasks should be added to playbooks 
+      - "integer value for the number of volumes. Minimum is 1, module will
+      fail if less than one volume is specified or value is 0. If volumes are
+      required of different sizes, addional tasks should be added to playbooks
       to use dellpmax_addvolume module"
     required: true
   sgname:
     description:
-      - "Storage Group name 32 Characters no special characters other than 
+      - "Storage Group name 32 Characters no special characters other than
       underscore"
     required: true
   slo:
     description:
-      - "Service Level for the storage group, Supported on VMAX3 and All Flash 
-      and PowerMAX NVMe Arrays running PowerMAX OS 5978 and above.  Default is 
+      - "Service Level for the storage group, Supported on VMAX3 and All Flash
+      and PowerMAX NVMe Arrays running PowerMAX OS 5978 and above.  Default is
       set to Diamond, but user can override this by setting a different value."
     required: false
   srp_id:
     description:
-      - "Storage Resource Pool Name, Default is set to SRP_1, if your system 
-      has mainframe or multiple pools you can set this to a different value to 
+      - "Storage Resource Pool Name, Default is set to SRP_1, if your system
+      has mainframe or multiple pools you can set this to a different value to
       match your environment"
     required: false
   unispherehost:
     description:
-      - "Fully Qualified Domain Name or IP address of Unisphere for PowerMax 
+      - "Fully Qualified Domain Name or IP address of Unisphere for PowerMax
       host."
     required: true
   universion:
@@ -77,14 +77,14 @@ options:
     required: true
   vol_size:
     description:
-      - "Integer value for the size of volumes.  All volumes will be created 
-      with same size.  Use dellpmax_addvol to add additional volumes if you 
+      - "Integer value for the size of volumes.  All volumes will be created
+      with same size.  Use dellpmax_addvol to add additional volumes if you
       require different sized volumes once storage group is created."
     required: true
   volumeIdentifier:
     description:
-      - "String up to 64 Characters no special character other than _ sets a 
-      label to make volumes easily identified on hosts can run Dell EMC inq 
+      - "String up to 64 Characters no special character other than _ sets a
+      label to make volumes easily identified on hosts can run Dell EMC inq
       utility command to see this label is  inq -identifier device_name"
     required: false
   user:
@@ -95,7 +95,7 @@ options:
       - "password for Unisphere user"
   workload:
     description:
-      - "Block workload type, optional and can only be set on VMAX3 Hybrid 
+      - "Block workload type, optional and can only be set on VMAX3 Hybrid
       Storage Arrays. Default None."
     required: false
 requirements:
@@ -105,37 +105,35 @@ requirements:
   - "PyU4V version 3.0.0.8 or higher using PIP python -m pip install PyU4V"
 '''
 EXAMPLES = '''
----
+--- 
+- name: "Provision Storage For DB Cluster"
   connection: local
   hosts: localhost
-  name: "Create Storage Group"
-  no_log: true
-  tasks: ~
-  vars:
-    array_id: 000197600123
+  vars: 
+    array_id: 000197600156
     password: smc
-    unispherehost: "192.168.156.63"
+    sgname: Ansible_SG
+    unispherehost: "192.168.1.123"
     universion: "90"
     user: smc
     verifycert: false
-- 
-  dellpmax_createsg:
-    array_id: "{{array_id}}"
-    cap_unit: GB
-    num_vols: 1
-    password: "{{password}}"
-    sgname: "{{sgname}}"
-    slo: Diamond
-    srp_id: SRP_1
-    unispherehost: "{{unispherehost}}"
-    universion: "{{universion}}"
-    user: "{{user}}"
-    verifycert: "{{verifycert}}"
-    vol_size: 1
-    volumeIdentifier: Data
-    workload: None
-  name: "Create New Storage Group and add data volumes"
 
+  tasks: 
+    - name: "Create New Storage Group and add data volumes"
+      dellpmax_createsg: 
+        array_id: "{{array_id}}"
+        cap_unit: GB
+        num_vols: 1
+        password: "{{password}}"
+        sgname: "{{sgname}}"
+        slo: Diamond
+        srp_id: SRP_1
+        unispherehost: "{{unispherehost}}"
+        universion: "{{universion}}"
+        user: "{{user}}"
+        verifycert: "{{verifycert}}"
+        vol_size: 1
+        workload: None
 '''
 RETURN = '''
 '''
