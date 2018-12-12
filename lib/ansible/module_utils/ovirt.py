@@ -71,7 +71,21 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
         nested = False
 
         if isinstance(value, sdk.Struct):
-            return get_dict_of_struct(value)
+            if not fetch_nested or not value.href:
+                return get_dict_of_struct(value)
+
+            # Fetch nested values of struct:
+            try:
+                value = connection.follow_link(value)
+            except sdk.Error:
+                value = None
+            nested_obj = dict(
+                (attr, convert_value(getattr(value, attr)))
+                for attr in attributes if getattr(value, attr, None)
+            )
+            nested_obj['id'] = getattr(value, 'id', None)
+            nested_obj['href'] = getattr(value, 'href', None)
+            return nested_obj
         elif isinstance(value, Enum) or isinstance(value, datetime):
             return str(value)
         elif isinstance(value, list) or isinstance(value, sdk.List):
