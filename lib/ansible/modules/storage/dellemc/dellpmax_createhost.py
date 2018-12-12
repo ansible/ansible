@@ -16,38 +16,17 @@ DOCUMENTATION = '''
 ---
 author:
   - "Paul Martin (@rawstorage)"
-short_description: "Create storage group on Dell EMC PowerMax or VMAX All
+short_description: "Create a new Host on Dell EMC PowerMax or VMAX All
 Flash"
 version_added: "2.8"
 description:
   - "This module has been tested against UNI 9.0. Every effort has been made
   to verify the scripts run with valid input. These modules are a tech preview"
-module: dellpmax_addvolume
+module: dellpmax_createhost
 options:
   array_id:
     description:
       - "Integer 12 Digit Serial Number of PowerMAX or VMAX array."
-    required: true
-  cap_unit:
-    choices:
-      - GB
-      - TB
-      - MB
-      - CYL
-    description:
-      - "String value, default is set to GB"
-    required: false
-  num_vols:
-    description:
-      - "integer value for the number of volumes. Minimum is 1, module will
-      fail if less than one volume is specified or value is 0. If volumes are
-      required of different sizes, addional tasks should be added to playbooks
-      to use dellpmax_addvolume module"
-    required: true
-  sgname:
-    description:
-      - "Existing Storage Group name 32 Characters no special characters other
-      than underscore."
     required: true
   unispherehost:
     description:
@@ -82,6 +61,13 @@ options:
   password:
     description:
       - "password for Unisphere user"
+  host_id:
+    description:
+      - "32 Character string no special character permitted except for
+      underscore"
+  initiator_list:
+    description:
+      - "List of WWNs or iQN."
 requirements:
   - Ansible
   - "Unisphere for PowerMax version 9.0 or higher."
@@ -103,21 +89,21 @@ EXAMPLES = '''
     verifycert: false
 
   tasks:
-  - name: Add REDO Volumes to Storage Group
-    dellpmax_addvolume:
+  - name: Create Host2
+    dellpmax_createhost:
         unispherehost: "{{unispherehost}}"
         universion: "{{universion}}"
         verifycert: "{{verifycert}}"
         user: "{{user}}"
         password: "{{password}}"
-        sgname: "{{sgname}}"
         array_id: "{{array_id}}"
-        num_vols: 1
-        vol_size:  2
-        cap_unit: 'GB'
-        volumeIdentifier: 'REDO'
+        initiator_list:
+        - 10000000c98ffea2
+        - 10000000c98ffeb3
+        host_id: "AnsibleHost2"
+
 '''
-RETURN = '''
+RETURN = r'''
 '''
 from ansible.module_utils.basic import AnsibleModule
 
@@ -126,26 +112,21 @@ def main():
     changed = False
     module = AnsibleModule(
         argument_spec=dict(
-            sgname=dict(type='str', required=True),
             unispherehost=dict(required=True),
             universion=dict(type='int', required=False),
             verifycert=dict(type='bool', required=True),
             user=dict(type='str', required=True),
             password=dict(type='str', required=True, no_log=True),
             array_id=dict(type='str', required=True),
-            num_vols=dict(type='int', required=True),
-            vol_size=dict(type='int', required=True),
-            cap_unit=dict(type='str', required=True, choices=['GB',
-                                                              'TB',
-                                                              'MB', 'CYL']),
-            volumeIdentifier=dict(type='str', required=True)
+            host_id=dict(type='str', required=True),
+            initiator_list=dict(type='list', required=True)
         )
     )
     try:
         import PyU4V
     except:
         module.fail_json(
-            msg='Requirements not met PyU4V is not installed, please install '
+            msg='Requirements not met PyU4V is not installed, please install'
                 'via PIP')
         module.exit_json(changed=changed)
 
@@ -161,24 +142,20 @@ def main():
     # Setting connection shortcut to Provisioning modules to simplify code
 
     dellemc = conn.provisioning
-    changed = False
 
-    # Compile a list of existing storage groups.
+    # Compile a list of existing hosts.
 
-    sglist = dellemc.get_storage_group_list()
+    hostlist = dellemc.get_host_list()
 
-    # Check if Storage Group already exists
+    # Check if Host Name already exists
 
-    if module.params['sgname'] not in sglist:
-        module.fail_json(msg='Storage group does not Exist, Failing Task')
-    else:
-        dellemc.add_new_vol_to_storagegroup(sg_id=module.params['sgname'],
-                                            num_vols=module.params['num_vols'],
-                                            cap_unit=module.params['cap_unit'],
-                                            vol_size=module.params['vol_size'],
-                                            vol_name=module.params[
-                                                'volumeIdentifier'])
+    if module.params['host_id'] not in hostlist:
+        dellemc.create_host(host_name=module.params['host_id'],
+                            initiator_list=module.params['initiator_list'])
         changed = True
+
+    else:
+        module.fail_json(msg='Host Name already exists, Failing Task')
     module.exit_json(changed=changed)
 
 

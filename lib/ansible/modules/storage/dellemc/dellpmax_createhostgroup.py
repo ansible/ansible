@@ -16,38 +16,17 @@ DOCUMENTATION = '''
 ---
 author:
   - "Paul Martin (@rawstorage)"
-short_description: "Create storage group on Dell EMC PowerMax or VMAX All
-Flash"
+short_description: "Create Host Group group on Dell EMC PowerMax or VMAX All
+Flash a host group is equivalent of a cluster containing one or more hosts"
 version_added: "2.8"
 description:
   - "This module has been tested against UNI 9.0. Every effort has been made
   to verify the scripts run with valid input. These modules are a tech preview"
-module: dellpmax_addvolume
+module: dellpmax_createhostgroup
 options:
   array_id:
     description:
       - "Integer 12 Digit Serial Number of PowerMAX or VMAX array."
-    required: true
-  cap_unit:
-    choices:
-      - GB
-      - TB
-      - MB
-      - CYL
-    description:
-      - "String value, default is set to GB"
-    required: false
-  num_vols:
-    description:
-      - "integer value for the number of volumes. Minimum is 1, module will
-      fail if less than one volume is specified or value is 0. If volumes are
-      required of different sizes, addional tasks should be added to playbooks
-      to use dellpmax_addvolume module"
-    required: true
-  sgname:
-    description:
-      - "Existing Storage Group name 32 Characters no special characters other
-      than underscore."
     required: true
   unispherehost:
     description:
@@ -82,6 +61,14 @@ options:
   password:
     description:
       - "password for Unisphere user"
+  cluster_name:
+    description:
+      - "32 Character string no special character permitted except for
+      underscore"
+  host_list:
+    description:
+      - "List of Hosts to be added to the Cluster.  Hosts must already exist
+      for task to complete, will error out"
 requirements:
   - Ansible
   - "Unisphere for PowerMax version 9.0 or higher."
@@ -103,52 +90,56 @@ EXAMPLES = '''
     verifycert: false
 
   tasks:
-  - name: Add REDO Volumes to Storage Group
-    dellpmax_addvolume:
-        unispherehost: "{{unispherehost}}"
-        universion: "{{universion}}"
-        verifycert: "{{verifycert}}"
-        user: "{{user}}"
-        password: "{{password}}"
-        sgname: "{{sgname}}"
-        array_id: "{{array_id}}"
-        num_vols: 1
-        vol_size:  2
-        cap_unit: 'GB'
-        volumeIdentifier: 'REDO'
+    dellpmax_createhostgroup:
+             unispherehost: "{{unispherehost}}"
+             universion: "{{universion}}"
+             verifycert: "{{verifycert}}"
+             user: "{{user}}"
+             password: "{{password}}"
+             array_id: "{{array_id}}"
+             host_list:
+              - "AnsibleHost1"
+              - "AnsibleHost2"
+             cluster_name: "AnsibleCluster"
+
 '''
-RETURN = '''
+RETURN = r'''
 '''
 from ansible.module_utils.basic import AnsibleModule
 
-
 def main():
     changed = False
+    # print (changed)
     module = AnsibleModule(
         argument_spec=dict(
-            sgname=dict(type='str', required=True),
             unispherehost=dict(required=True),
             universion=dict(type='int', required=False),
             verifycert=dict(type='bool', required=True),
             user=dict(type='str', required=True),
             password=dict(type='str', required=True, no_log=True),
             array_id=dict(type='str', required=True),
-            num_vols=dict(type='int', required=True),
-            vol_size=dict(type='int', required=True),
-            cap_unit=dict(type='str', required=True, choices=['GB',
-                                                              'TB',
-                                                              'MB', 'CYL']),
-            volumeIdentifier=dict(type='str', required=True)
+            cluster_name=dict(type='str', required=True),
+            host_list=dict(type='list', required=True),
+
         )
     )
     try:
         import PyU4V
     except:
         module.fail_json(
-            msg='Requirements not met PyU4V is not installed, please install '
+            msg='Requirements not met PyU4V is not installed, please install'
                 'via PIP')
         module.exit_json(changed=changed)
 
+    # Make REST call to Unisphere Server and execute create Host Group
+
+    payload = (
+        {
+        "hostGroupId": module.params['cluster_name'],
+        "hostId":
+        module.params['host_list']
+        }
+    )
     # Crete Connection to Unisphere Server to Make REST calls
 
     conn = PyU4V.U4VConn(server_ip=module.params['unispherehost'], port=8443,
@@ -161,26 +152,33 @@ def main():
     # Setting connection shortcut to Provisioning modules to simplify code
 
     dellemc = conn.provisioning
-    changed = False
 
-    # Compile a list of existing storage groups.
 
-    sglist = dellemc.get_storage_group_list()
+    # Check for each host in the host list that it exists, otherwise fail
+    # module.
 
-    # Check if Storage Group already exists
+    configuredhostlist = dellemc.get_host_list()
+    hostgrouplist=dellemc.get_hostgroup_list()
 
-    if module.params['sgname'] not in sglist:
-        module.fail_json(msg='Storage group does not Exist, Failing Task')
-    else:
-        dellemc.add_new_vol_to_storagegroup(sg_id=module.params['sgname'],
-                                            num_vols=module.params['num_vols'],
-                                            cap_unit=module.params['cap_unit'],
-                                            vol_size=module.params['vol_size'],
-                                            vol_name=module.params[
-                                                'volumeIdentifier'])
+    host_exists = True
+
+    if module.params['cluster_name'] not in hostgrouplist:
+        for host in module.params["host_list"]:
+            if host not in configuredhostlist:
+                module.fail_json(msg='Host %s does not exist, failing task' % (
+                    host))
+                host_exists = False
+
+    if module.params['cluster_name'] not in hostgrouplist and host_exists:
+        dellemc.create_hostgroup(hostgroup_id=module.params['cluster_name']
+                             ,host_list=module.params['host_list'])
         changed = True
-    module.exit_json(changed=changed)
+        module.exit_json(changed=changed)
+    else:
+        module.fail_json(msg="Cluster Name Already Exists", changed=False)
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
