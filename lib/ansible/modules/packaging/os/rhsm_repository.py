@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: rhsm_repository
 short_description: Manage RHSM repositories using the subscription-manager command
 description:
-  - Manage(Enable/Disable) RHSM repositories to the Red Hat Subscription
+  - Manage (Enable/Disable) RHSM repositories to the Red Hat Subscription
     Management entitlement platform using the C(subscription-manager) command.
 version_added: '2.5'
 author: Giovanni Sciortino (@giovannisciortino)
@@ -74,7 +74,7 @@ RETURN = '''
 repositories:
   description:
     - The list of RHSM repositories with their states.
-    - When this module is used to change the repositories states, this list contains the updated states after the changes.
+    - When this module is used to change the repository states, this list contains the updated states after the changes.
   returned: success
   type: list
 '''
