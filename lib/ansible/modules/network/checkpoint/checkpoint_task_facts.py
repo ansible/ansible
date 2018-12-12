@@ -9,16 +9,19 @@ import json
 def get_task(module, connection):
     task_id = module.params['task_id']
 
-    payload = {'task-id': task_id}
+    if task_id:
+        payload = {'task-id': task_id}
 
-    code, response = connection.send_request('/web_api/show-task', payload)
+        code, response = connection.send_request('/web_api/show-task', payload)
+    else:
+        code, response = connection.send_request('/web_api/show-tasks', None)
 
     return code, response
 
 
 def main():
     argument_spec = dict(
-        task_id=dict(type='str', required=True),
+        task_id=dict(type='str'),
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
