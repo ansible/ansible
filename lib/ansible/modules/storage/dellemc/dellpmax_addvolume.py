@@ -22,7 +22,7 @@ version_added: "2.8"
 description:
   - "This module has been tested against UNI 9.0. Every effort has been made
   to verify the scripts run with valid input. These modules are a tech preview"
-module: dellpmax_createsg
+module: dellpmax_addvolume
 options:
   array_id:
     description:
@@ -184,10 +184,5 @@ def main():
         changed = True
     module.exit_json(changed=changed)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-
 if __name__ == '__main__':
     main()
-
-
