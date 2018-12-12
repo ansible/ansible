@@ -788,7 +788,7 @@ def main():
                 try:
                     set_users_groups(module, iam, name, '')
                     name, changed = delete_user(module, iam, name)
-                    module.exit_json(deleted_user=name, changed=changed)
+                    module.exit_json(deleted_user=name, user_name=name, changed=changed)
 
                 except Exception as ex:
                     module.fail_json(changed=changed, msg=str(ex))
