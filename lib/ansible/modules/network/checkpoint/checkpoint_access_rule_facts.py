@@ -16,9 +16,9 @@ def get_access_rule(module, connection):
     elif name:
         payload = {'name': name, 'layer': layer}
 
-    res = connection.send_request('/web_api/show-access-rule', payload)
+    code, response = connection.send_request('/web_api/show-access-rule', payload)
 
-    return res
+    return code, response
 
 
 def main():
