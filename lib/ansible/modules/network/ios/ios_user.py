@@ -482,7 +482,7 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
 
-    mutually_exclusive = [('name', 'aggregate')]
+    mutually_exclusive = [('name', 'aggregate'), ('nopassword', 'hashed_password', 'configured_password')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
