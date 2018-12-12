@@ -22,7 +22,7 @@ config file that ships with Ansible:
 .. code-block:: ini
 
    [inventory]
-   enable_plugins = host_list, script, auto, yaml, ini
+   enable_plugins = host_list, script, auto, yaml, ini, toml
 
 This list also establishes the order in which each plugin tries to parse an inventory source. Any plugins left out of the list will not be considered, so you can 'optimize' your inventory loading by minimizing it to what you actually use. For example:
 
