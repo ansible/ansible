@@ -29,8 +29,8 @@ description:
   - You can specify multiple services at once by separating them with commas, .e.g., C(services=httpd,nfs,puppet).
   - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime/acknowledge for the I(host itself),
     e.g., C(service=host). This keyword may not be given with other services at the same time.
-    I(Setting alerts/downtime/acknowledge for a host does not affect alerts/downtime/acknowledge for any of the services running on it.) To schedule downtime for all
-    services on particular host use keyword "all", e.g., C(service=all).
+    I(Setting alerts/downtime/acknowledge for a host does not affect alerts/downtime/acknowledge for any of the services running on it.)
+    To schedule downtime for all services on particular host use keyword "all", e.g., C(service=all).
   - When using the C(nagios) module you will need to specify your Nagios server using the C(delegate_to) parameter.
 version_added: "0.7"
 options:
@@ -153,25 +153,25 @@ EXAMPLES = '''
     comment: Planned maintenance
 
 # acknowledge an HOST with a particular comment
-    nagios:
-      action: acknowledge
-      service: host
-      host: '{{ inventory_hostname }}'
-      comment: 'power outage - see casenr 12345'
+- nagios:
+    action: acknowledge
+    service: host
+    host: '{{ inventory_hostname }}'
+    comment: 'power outage - see casenr 12345'
 
 # acknowledge an active service problem for the httpd service with a particular comment
-    nagios:
-      action: acknowledge
-      service: httpd
-      host: '{{ inventory_hostname }}'
-      comment: 'service crashed - see casenr 12345'
-      
+- nagios:
+    action: acknowledge
+    service: httpd
+    host: '{{ inventory_hostname }}'
+    comment: 'service crashed - see casenr 12345'
+
 # acknowledge an passive service problem for snmp trap with a particular comment
-    nagios:
-      action: service_check
-      service: snmp
-      host: '{{ inventory_hostname }}'
-      comment: 'switch problem - see casenr 12345'
+- nagios:
+    action: service_check
+    service: snmp
+    host: '{{ inventory_hostname }}'
+    comment: 'switch problem - see casenr 12345'
 
 # enable SMART disk alerts
 - nagios:
