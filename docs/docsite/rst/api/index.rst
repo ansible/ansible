@@ -4,9 +4,8 @@
 Ansible API Documentation
 *************************
 
-The Ansible API is under construction. These stub references will be documented in future.  For now, there is a legacy :ref:`documentation page <ansible.module_utils>` for the ``AnsibleModule``.
-
-
+The Ansible API is under construction. These stub references for attributes, classes, functions, methods, and modules will be documented in future.
+The :ref:`module utilities <ansible.module_utils>` included in ``ansible.module_utils.basic`` and ``AnsibleModule`` are documented under Reference & Appendices.
 
 .. contents::
    :local:
