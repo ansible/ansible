@@ -186,6 +186,8 @@ options:
   env:
     description:
       - Dictionary of key,value pairs.
+      - Values must be quoted in order to avoid YAML parsing losing data.
+    type: dict
   env_file:
     version_added: "2.2"
     description:
@@ -644,7 +646,7 @@ EXAMPLES = '''
      - "8080:9000"
      - "127.0.0.1:8081:9001/udp"
     env:
-        SECRET_KEY: ssssh
+        SECRET_KEY: "ssssh"
 
 - name: Container present
   docker_container:
@@ -762,8 +764,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: true
-      - arg2: whatever
+      - arg1: "true"
+      - arg2: "whatever"
     volumes:
       - /tmp:/tmp
     comparisons:
@@ -776,8 +778,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: true
-      - arg2: whatever
+      - arg1: "true"
+      - arg2: "whatever"
     comparisons:
       '*': ignore  # by default, ignore *all* options (including image)
       env: strict   # except for environment variables; there, we want to be strict
@@ -1605,6 +1607,9 @@ class TaskParameters(DockerBaseClass):
                 final_env[name] = str(value)
         if self.env:
             for name, value in self.env.items():
+                if not isinstance(value, string_types):
+                    self.fail("Non-string value found for env option. "
+                              "Env options must be wrapped in quotes to avoid YAML parsing. Key: %s Value: %s" % (name, str(value)))
                 final_env[name] = str(value)
         return final_env
 
