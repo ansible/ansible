@@ -1,7 +1,6 @@
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -29,7 +28,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         'doc': None,
         'plainexamples': None,
         'returndocs': None,
-        'metadata': None
+        'metadata': None,
+        'seealso': None,
     }
 
     string_to_vars = {
