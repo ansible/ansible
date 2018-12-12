@@ -41,48 +41,43 @@
 - name: Create virtual network inteface cards for VM A and B
   azure_rm_networkinterface:
     resource_group: "{{ resource_group }}"
-    name: vmforimagenic
+    name: "vmforimage{{ rpfx }}nic"
     virtual_network: testVnet
     subnet: testSubnet
 
 - name: Create VM
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
-    name: vmforimage
+    name: "vmforimage{{ rpfx }}"
     admin_username: testuser
     admin_password: "Password1234!"
     vm_size: Standard_B1ms
-    network_interfaces: vmforimagenic
+    network_interfaces: "vmforimage{{ rpfx }}nic"
     image:
       offer: UbuntuServer
       publisher: Canonical
       sku: 16.04-LTS
       version: latest
-- name: Stop VM
+- name: Generalize VM
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
-    name: vmforimage
-    started: no
-- name: Generalize VM
-  azure_rm_resource:
-    api_version: '2017-12-01'
-    method: POST
-    resource_group: "{{ resource_group }}"
-    provider: compute
-    resource_type: virtualmachines
-    resource_name: vmforimage
-    subresource:
-    - type: generalize
+    name: "vmforimage{{ rpfx }}"
+    generalized: yes
 - name: Create image A
   azure_rm_image:
     resource_group: "{{ resource_group }}"
     name: testimagea
-    source: vmforimage
+    source: "vmforimage{{ rpfx }}"
 - name: Create image B
   azure_rm_image:
     resource_group: "{{ resource_group }}"
     name: testimageb
-    source: vmforimage
+    source: "vmforimage{{ rpfx }}"
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "vmforimage{{ rpfx }}"
+    state: absent
 
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
@@ -229,7 +224,7 @@
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}1
+    name: testVMSS{{ rpfx }}
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
@@ -427,12 +422,6 @@
     resource_group: "{{ resource_group }}"
     state: absent
     name: testPublicIP
-
-- name: Delete VM
-  azure_rm_virtualmachine:
-    resource_group: "{{ resource_group }}"
-    name: vmforimage
-    state: absent
 
 #- name: Delete virtual network
 #  azure_rm_virtualnetwork:
