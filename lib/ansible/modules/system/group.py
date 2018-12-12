@@ -68,6 +68,8 @@ import grp
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 
+from ansible.module_utils.facts.utils import get_file_content
+
 
 class Group(object):
     """
@@ -144,10 +146,9 @@ class Group(object):
 
     def group_exists(self):
         if self.local:
-            with open(self.GROUPFILE) as file:
-                for line in file:
-                    if line.split(':')[0] == self.name:
-                        return True
+            for line in get_file_content(self.GROUPFILE, '').splitlines():
+                if line.split(':')[0] == self.name:
+                    return True
             return False
         else:
             try:
