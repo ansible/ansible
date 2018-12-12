@@ -319,7 +319,11 @@ if ($state -eq "absent") {
                 $cleanup_artifacts += $local_path
             } elseif ($program_metadata.location_type -eq [LocationType]::Empty -and $program_metadata.msi -ne $true) {
                 # TODO validate the uninstall_string to see if there are extra args in there
-                $local_path = $program_metadata.uninstall_string
+                if ((@($program_metadata.uninstall_string).Count -eq 1) -and ($program_metadata.uninstall_string.StartsWith("`""))) {
+                    $local_path = $program_metadata.uninstall_string.TrimStart("`"").TrimEnd("`"")
+                } else {
+                    $local_path = $program_metadata.uninstall_string
+                }
             } else {
                 $local_path = $path
             }
