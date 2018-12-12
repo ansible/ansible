@@ -99,12 +99,14 @@ options:
               (see U(https://docs.openstack.org/ironic/latest/install/advanced.html)
               for more information)
           default: ""
+          version_added: "2.8"
         root_device:
           description:
             - Root disk device hints for deployment.
               (see U(https://docs.openstack.org/ironic/latest/install/include/root-device-hints.html)
               for allowed hints)
           default: ""
+          version_added: "2.8"
     skip_update_of_driver_password:
       description:
         - Allows the code that would assert changes to nodes to skip the
