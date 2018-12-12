@@ -3,7 +3,6 @@ import pytest
 from units.compat.mock import patch
 from ansible.modules.notification import slack
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
-from ansible import module_utils
 
 
 class TestSlackModule(ModuleTestCase):
@@ -83,3 +82,39 @@ class TestSlackModule(ModuleTestCase):
             assert call_data['text'] == "test"
             assert call_data['thread_ts'] == 100.00
             assert fetch_url_mock.call_args[1]['url'] == "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ"
+
+    def test_message_with_invalid_color(self):
+        """tests sending invalid color value to module"""
+        set_module_args({
+            'token': 'XXXX/YYYY/ZZZZ',
+            'msg': 'test',
+            'color': 'aa',
+        })
+        with self.assertRaises(AnsibleFailJson) as exec_info:
+            self.module.main()
+
+        msg = "Color value specified should be either one of" \
+              " ['normal', 'good', 'warning', 'danger'] or any valid" \
+              " hex value with length 3 or 6."
+        assert exec_info.exception.args[0]['msg'] == msg
+
+
+color_test = [
+    ('#111111', True),
+    ('#00aabb', True),
+    ('#abc', True),
+    ('#gghhjj', False),
+    ('#ghj', False),
+    ('#a', False),
+    ('#aaaaaaaa', False),
+    ('', False),
+    ('aaaa', False),
+    ('$00aabb', False),
+    ('$00a', False),
+]
+
+
+@pytest.mark.parametrize("color_value, ret_status", color_test)
+def test_is_valid_hex_color(color_value, ret_status):
+    generated_value = slack.is_valid_hex_color(color_value)
+    assert generated_value == ret_status
