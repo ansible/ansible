@@ -196,10 +196,14 @@ def write_data(text, output_dir, outputname, module=None):
         print(text)
 
 
+IS_STDOUT_TTY = sys.stdout.isatty()
+
+
 def show_progress(progress):
     '''Show a little process indicator.'''
-    sys.stdout.write('\r%s\r' % ("-/|\\"[progress % 4]))
-    sys.stdout.flush()
+    if IS_STDOUT_TTY:
+        sys.stdout.write('\r%s\r' % ("-/|\\"[progress % 4]))
+        sys.stdout.flush()
 
 
 def get_plugin_info(module_dir, limit_to=None, verbose=False):
