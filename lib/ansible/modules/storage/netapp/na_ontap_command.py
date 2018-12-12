@@ -28,14 +28,14 @@ options:
 EXAMPLES = """
     - name: run ontap cli command
       na_ontap_command:
-        hostname: "{{ hostname }} "
+        hostname: "{{ hostname }}"
         username: "{{ admin username }}"
         password: "{{ admin password }}"
         command: ['version']
 
     - name: run ontap cli command
       na_ontap_command:
-        hostname: "{{ hostname }} "
+        hostname: "{{ hostname }}"
         username: "{{ admin username }}"
         password: "{{ admin password }}"
         command: ['network', 'interface', 'show']
