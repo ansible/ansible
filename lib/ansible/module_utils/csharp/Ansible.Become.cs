@@ -792,16 +792,15 @@ namespace Ansible.Become
                 throw new Win32Exception((int)NativeMethods.LsaNtStatusToWinError(res), "LsaEnumerateLogonSession() failed");
             using (sessionPtr)
             {
-                IntPtr currentSession = sessionPtr.DangerousGetHandle();
-                for (UInt32 i = 0; i < sessionCount; i++)
+                for (IntPtr p = sessionPtr.DangerousGetHandle();
+                    p != IntPtr.Add(sessionPtr.DangerousGetHandle(), (int)(IntPtr.Size * sessionCount));
+                    p = IntPtr.Add(p, Marshal.SizeOf(typeof(NativeHelpers.LUID))))
                 {
                     SafeLsaMemoryBuffer sessionDataPtr;
-                    res = NativeMethods.LsaGetLogonSessionData(currentSession, out sessionDataPtr);
+                    res = NativeMethods.LsaGetLogonSessionData(p, out sessionDataPtr);
                     if (res != 0)
-                    {
-                        currentSession = IntPtr.Add(currentSession, Marshal.SizeOf(typeof(NativeHelpers.LUID)));
                         continue;
-                    }
+
                     using (sessionDataPtr)
                     {
                         NativeHelpers.SECURITY_LOGON_SESSION_DATA sessionData = (NativeHelpers.SECURITY_LOGON_SESSION_DATA)Marshal.PtrToStructure(
@@ -813,8 +812,6 @@ namespace Ansible.Become
                             break;
                         }
                     }
-
-                    currentSession = IntPtr.Add(currentSession, Marshal.SizeOf(typeof(NativeHelpers.LUID)));
                 }
             }
 

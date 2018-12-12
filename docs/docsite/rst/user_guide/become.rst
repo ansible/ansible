@@ -552,12 +552,12 @@ able to access any network resources like a normal WinRM process.
 
 To make a distinction between using become with no password and becoming an
 account that has no password make sure to keep ``ansible_become_pass`` as
-undefined, set ``ansible_become_pass: ``, or set ``ansible_become_pass: null``.
+undefined or set ``ansible_become_pass: ``.
 
 .. Note:: Because there are no guarantees an existing token will exist for a
   user when Ansible runs, there's a high change the become process will only
   have access to local resources. Use become with a password if the task needs
-  to access network resources if this is needed.
+  to access network resources
 
 Accounts without a Password
 ---------------------------
