@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "group - Removing a group with 'local' only look local."
