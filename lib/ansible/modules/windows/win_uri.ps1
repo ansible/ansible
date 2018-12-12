@@ -179,7 +179,7 @@ if ($user -and $password) {
 }
 
 if ($null -ne $body) {
-    if ($body -is [Hashtable]) {
+    if ($body -is [System.Collections.IDictionary] -or $body -is [System.Collections.IList]) {
         $body_string = ConvertTo-Json -InputObject $body -Compress
     } elseif ($body -isnot [String]) {
         $body_string = $body.ToString()
