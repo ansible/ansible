@@ -1,0 +1,4 @@
+bugfixes:
+  - flatpak - Fixed issue where newer versions of flatpak failed on flatpak removal
+  - flatpak - Fixed Python 2/3 compatibility
+  - flatpak_remote - Fixed Python 2/3 compatibility
