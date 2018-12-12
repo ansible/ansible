@@ -39,7 +39,7 @@ options:
     default: filesystem
     description:
       - Whether the application should be deployed through the HTTP management API or filesystem
-    version_added: 2.6
+    version_added: 2.8
   state:
     required: false
     choices: [ deployed, undeployed, present, absent ]
@@ -51,30 +51,30 @@ options:
     default: admin
     description:
       - Username for JBoss management user
-    version_added: 2.6
+    version_added: 2.8
   url_password:
     required: false
     default: admin
     description:
       - Password for JBoss management user
-    version_added: 2.6
+    version_added: 2.8
   hostname:
     required: false
     default: localhost
     description:
       - Hostname of JBoss instance running HTTP management API
-    version_added: 2.6
+    version_added: 2.8
   port:
     required: false
     default: 9990
     description:
       - Port binding for HTTP management API
-    version_added: 2.6
+    version_added: 2.8
   cli_path:
     required: false
     description:
       - Path to jboss-cli.sh
-    version_added: 2.6
+    version_added: 2.8
 notes:
   - "The filesystem deployment strategy requires the deployment scanner to be enabled."
   - "The http deployment strategy requires the requests package to be installed on each host."
@@ -419,7 +419,7 @@ def main():
     state = module.params['state']
 
     if state == 'present' or state == 'absent':
-        module.deprecate('The "present" and "absent" values for the state key are deprecated in favor of "deployed" and "undeployed", respectively')
+        module.deprecate('The "present" and "absent" values for the state key are deprecated in favor of "deployed" and "undeployed", respectively', '2.9')
 
     if deployment_strategy == 'filesystem':
         module.warn('Filesystem deployments are not recommended for production use.')
