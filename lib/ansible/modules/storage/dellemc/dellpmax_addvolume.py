@@ -46,7 +46,7 @@ options:
     required: true
   sgname:
     description:
-      - "Existing Storage Group name 32 Characters no special characters other 
+      - "Existing Storage Group name 32 Characters no special characters other
       than underscore."
     required: true
   unispherehost:
@@ -159,10 +159,9 @@ def main():
                          password=module.params['password'],
                          u4v_version=module.params['universion'])
 
-    #Setting connection shortcut to Provisioning modules to simplify code
+    # Setting connection shortcut to Provisioning modules to simplify code
 
     dellemc = conn.provisioning
-
     changed = False
 
     # Compile a list of existing stroage groups.
@@ -179,10 +178,10 @@ def main():
                                             cap_unit=module.params['cap_unit'],
                                             vol_size=module.params['vol_size'],
                                             vol_name=module.params[
-                                                'volumeIdentifier'],
-                                            async=False)
+                                                'volumeIdentifier'])
         changed = True
     module.exit_json(changed=changed)
+
 
 if __name__ == '__main__':
     main()
