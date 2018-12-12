@@ -46,21 +46,9 @@ options:
     required: true
   sgname:
     description:
-      - "Storage Group name 32 Characters no special characters other than
-      underscore"
+      - "Existing Storage Group name 32 Characters no special characters other 
+      than underscore."
     required: true
-  slo:
-    description:
-      - "Service Level for the storage group, Supported on VMAX3 and All Flash
-      and PowerMAX NVMe Arrays running PowerMAX OS 5978 and above.  Default is
-      set to Diamond, but user can override this by setting a different value."
-    required: false
-  srp_id:
-    description:
-      - "Storage Resource Pool Name, Default is set to SRP_1, if your system
-      has mainframe or multiple pools you can set this to a different value to
-      match your environment"
-    required: false
   unispherehost:
     description:
       - "Fully Qualified Domain Name or IP address of Unisphere for PowerMax
@@ -94,11 +82,6 @@ options:
   password:
     description:
       - "password for Unisphere user"
-  workload:
-    description:
-      - "Block workload type, optional and can only be set on VMAX3 Hybrid
-      Storage Arrays. Default None."
-    required: false
 requirements:
   - Ansible
   - "Unisphere for PowerMax version 9.0 or higher."
@@ -107,7 +90,7 @@ requirements:
 '''
 EXAMPLES = '''
 ---
-- name: "Provision Storage For DB Cluster"
+- name: "Add volumes to existing storage group"
   connection: local
   hosts: localhost
   vars:
@@ -120,21 +103,18 @@ EXAMPLES = '''
     verifycert: false
 
   tasks:
-    - name: "Create New Storage Group and add data volumes"
-      dellpmax_createsg:
-        array_id: "{{array_id}}"
-        cap_unit: GB
-        num_vols: 1
-        password: "{{password}}"
-        sgname: "{{sgname}}"
-        slo: Diamond
-        srp_id: SRP_1
+  - name: Add REDO Volumes to Storage Group
+    dellpmax_addvolume:
         unispherehost: "{{unispherehost}}"
         universion: "{{universion}}"
-        user: "{{user}}"
         verifycert: "{{verifycert}}"
-        vol_size: 1
-        workload: None
+        user: "{{user}}"
+        password: "{{password}}"
+        sgname: "{{sgname}}"
+        array_id: "{{array_id}}"
+        num_vols: 1
+        vol_size:  2
+        cap_unit: 'GB'
         volumeIdentifier: 'REDO'
 '''
 RETURN = '''
@@ -144,6 +124,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     changed = False
+    # print (changed)
     module = AnsibleModule(
         argument_spec=dict(
             sgname=dict(type='str', required=True),
@@ -153,15 +134,14 @@ def main():
             user=dict(type='str', required=True),
             password=dict(type='str', required=True, no_log=True),
             array_id=dict(type='str', required=True),
-            srp_id=dict(type='str', required=False),
-            slo=dict(type='str', required=False),
-            workload=dict(type='str', required=False),
             num_vols=dict(type='int', required=True),
             vol_size=dict(type='int', required=True),
             cap_unit=dict(type='str', required=True, choices=['GB',
                                                               'TB',
                                                               'MB', 'CYL']),
-            volumeIdentifier=dict(type='str', required=False)))
+            volumeIdentifier=dict(type='str', required=True)
+        )
+    )
     try:
         import PyU4V
     except:
@@ -170,31 +150,44 @@ def main():
                 'via PIP')
         module.exit_json(changed=changed)
 
+    # Crete Connection to Unisphere Server to Make REST calls
+
     conn = PyU4V.U4VConn(server_ip=module.params['unispherehost'], port=8443,
                          array_id=module.params['array_id'],
                          verify=module.params['verifycert'],
                          username=module.params['user'],
                          password=module.params['password'],
                          u4v_version=module.params['universion'])
+
+    #Setting connection shortcut to Provisioning modules to simplify code
+
     dellemc = conn.provisioning
-    # Compile a list of existing storage groups.
+
+    changed = False
+
+    # Compile a list of existing stroage groups.
+
     sglist = dellemc.get_storage_group_list()
+
     # Check if Storage Group already exists
+
     if module.params['sgname'] not in sglist:
-        dellemc.create_storage_group(srp_id='SRP_1',
-                                     sg_id=module.params['sgname'],
-                                     slo=module.params['slo'],
-                                     num_vols=module.params['num_vols'],
-                                     vol_size=module.params['vol_size'],
-                                     cap_unit=module.params['cap_unit'],
-                                     workload=None,
-                                     vol_name=module.params['volumeIdentifier']
-                                     )
-        changed = True
+        module.fail_json(msg='Storage group does not Exist, Failing Task')
     else:
-        module.fail_json(msg='Storage Group Already Exists')
+        dellemc.add_new_vol_to_storagegroup(sg_id=module.params['sgname'],
+                                            num_vols=module.params['num_vols'],
+                                            cap_unit=module.params['cap_unit'],
+                                            vol_size=module.params['vol_size'],
+                                            vol_name=module.params[
+                                                'volumeIdentifier'],
+                                            async=False)
+        changed = True
     module.exit_json(changed=changed)
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
+
+
