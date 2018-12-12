@@ -73,7 +73,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         argument_spec['append_hash'] = dict(type='bool', default=False)
         return argument_spec
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, k8s_kind=None, *args, **kwargs):
         self.client = None
 
         mutually_exclusive = [
@@ -84,12 +84,13 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                                          mutually_exclusive=mutually_exclusive,
                                          supports_check_mode=True,
                                          **kwargs)
-        self.kind = self.params.get('kind')
+        self.kind = k8s_kind or self.params.get('kind')
         self.api_version = self.params.get('api_version')
         self.name = self.params.get('name')
         self.namespace = self.params.get('namespace')
         resource_definition = self.params.get('resource_definition')
-        if self.params['validate']:
+        validate = self.params.get('validate')
+        if validate:
             if LooseVersion(self.openshift_version) < LooseVersion("0.8.0"):
                 self.fail_json(msg="openshift >= 0.8.0 is required for validate")
         self.append_hash = self.params.get('append_hash')
@@ -182,8 +183,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         name = definition['metadata'].get('name')
         namespace = definition['metadata'].get('namespace')
         existing = None
-        wait = self.params['wait']
-        wait_timeout = self.params['wait_timeout']
+        wait = self.params.get('wait')
+        wait_timeout = self.params.get('wait_timeout')
 
         self.remove_aliases()
 
