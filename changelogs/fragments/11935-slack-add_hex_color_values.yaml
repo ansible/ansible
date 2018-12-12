@@ -1,0 +1,2 @@
+minor_changes:
+    - Add support for hex color values in Slack module.
