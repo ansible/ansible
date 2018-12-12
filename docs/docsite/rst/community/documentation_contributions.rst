@@ -175,7 +175,7 @@ When you submit a documentation pull request, automated tests are run. Those sam
   bin/ansible-test sanity --test rstcheck
 
 Unfortunately, leftover rST-files from previous document-generating can occasionally confuse these tests. It is therefore safest to run them on a clean copy of the repository, which is the purpose of ``make clean``. If you type these three lines one at a time and manually check the success of each, you do not need the ``&&``.
-                
+
 Joining the documentation working group
 =======================================
 
