@@ -1,3 +1,4 @@
+
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -43,14 +44,28 @@ class LsmodFactCollector(BaseFactCollector):
                 module_dict['dependencies'] = ""
             module_dict['state'] = data[4]
             loaded_kernel_modules.append(module_dict)
+
         return loaded_kernel_modules
+
+    def _list_builtins(self, kernel_string=''):
+        builtin_kernel_modules = []
+        modules_builtin = "/lib/modules/" + kernel_string + "/modules.builtin"
+        if os.path.exists(modules_builtin) and os.access(modules_builtin, os.R_OK):
+            builtins = get_file_lines(modules_builtin)
+            for builtin in builtins:
+                builtin_kernel_modules.append(os.path.splitext(os.path.basename(builtin))[0])
+
+        return builtin_kernel_modules
 
     def collect(self, module=None, collected_facts=None):
         lsmod_facts = {}
         modules = self._get_proc_modules()
+        kernel_string = collected_facts.get('ansible_kernel')
 
         if not modules:
             return lsmod_facts
 
         lsmod_facts['loaded_kernel_modules'] = self._parse_proc_modules(modules)
+        lsmod_facts['builtin_kernel_modules'] = self._list_builtins(kernel_string)
+
         return lsmod_facts
