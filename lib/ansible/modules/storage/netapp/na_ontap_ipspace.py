@@ -49,29 +49,29 @@ options:
 
 EXAMPLES = """
     - name: Create ipspace
-        na_ontap_ipspace:
-            state: present
-            name: ansibleIpspace
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
+      na_ontap_ipspace:
+        state: present
+        name: ansibleIpspace
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
 
     - name: Delete ipspace
-        na_ontap_ipspace:
-            state: absent
-            name: ansibleIpspace
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
+      na_ontap_ipspace:
+        state: absent
+        name: ansibleIpspace
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
 
     - name: Rename ipspace
-        na_ontap_ipspace:
-            state: present
-            name: ansibleIpspace_newname
-            from_name: ansibleIpspace
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
+      na_ontap_ipspace:
+        state: present
+        name: ansibleIpspace_newname
+        from_name: ansibleIpspace
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
 """
 
 RETURN = """
