@@ -92,13 +92,10 @@ options:
   color:
     version_added: "2.0"
     description:
-      - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
+      - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message.
+      - Allowed values for color can be one of 'normal', 'good', 'warning', 'danger', any valid 3 digit or 6 digit hex color value.
+      - Specifying value in hex is supported from version 2.8.
     default: 'normal'
-    choices:
-      - 'normal'
-      - 'good'
-      - 'warning'
-      - 'danger'
   attachments:
     description:
       - Define a list of attachments. This list mirrors the Slack JSON API.
@@ -132,6 +129,14 @@ EXAMPLES = """
     username: ''
     icon_url: ''
 
+- name: insert a color bar in front of the message with valid hex color value
+  slack:
+    token: thetoken/generatedby/slack
+    msg: 'This message uses color in hex value'
+    color: '#00aacc'
+    username: ''
+    icon_url: ''
+
 - name: Use the attachments API
   slack:
     token: thetoken/generatedby/slack
@@ -158,6 +163,7 @@ EXAMPLES = """
     msg: This message has &lt;brackets&gt; &amp; ampersands in plain text.
 """
 
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
@@ -171,6 +177,12 @@ escape_table = {
     '"': "\"",
     "'": "\'",
 }
+
+
+def is_valid_hex_color(color_choice):
+    if re.match(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', color_choice):
+        return True
+    return False
 
 
 def escape_quotes(text):
@@ -265,7 +277,7 @@ def main():
             link_names=dict(type='int', default=1, choices=[0, 1]),
             parse=dict(type='str', default=None, choices=['none', 'full']),
             validate_certs=dict(default='yes', type='bool'),
-            color=dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
+            color=dict(type='str', default='normal'),
             attachments=dict(type='list', required=False, default=None)
         )
     )
@@ -282,6 +294,11 @@ def main():
     parse = module.params['parse']
     color = module.params['color']
     attachments = module.params['attachments']
+
+    color_choices = ['normal', 'good', 'warning', 'danger']
+    if color not in color_choices and not is_valid_hex_color(color):
+        module.fail_json(msg="Color value specified should be either one of %r "
+                             "or any valid hex value with length 3 or 6." % color_choices)
 
     payload = build_payload_for_slack(module, text, channel, thread_id, username, icon_url, icon_emoji, link_names,
                                       parse, color, attachments)
