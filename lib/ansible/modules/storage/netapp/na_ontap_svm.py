@@ -17,14 +17,14 @@ DOCUMENTATION = '''
 
 module: na_ontap_svm
 
-short_description: Manage NetApp ONTAP svm
+short_description: NetApp ONTAP SVM
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
 author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
-- Create, modify or delete svm on NetApp ONTAP
+- Create, modify or delete SVM on NetApp ONTAP
 
 options:
 
@@ -96,7 +96,7 @@ options:
       that are assigned to the Vserver for volume operations.
     - When part of vserver-get-iter call,
       this will return the list of Vservers
-      which have any of the aggregates specified as part of the aggr-list.
+      which have any of the aggregates specified as part of the aggr list.
 
   ipspace:
     description:
@@ -188,6 +188,7 @@ import traceback
 import ansible.module_utils.netapp as netapp_utils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.netapp_module import NetAppModule
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -220,22 +221,8 @@ class NetAppOntapSVM(object):
             argument_spec=self.argument_spec,
             supports_check_mode=True
         )
-
-        p = self.module.params
-
-        # set up state variables
-        self.state = p['state']
-        self.name = p['name']
-        self.from_name = p['from_name']
-        self.root_volume = p['root_volume']
-        self.root_volume_aggregate = p['root_volume_aggregate']
-        self.root_volume_security_style = p['root_volume_security_style']
-        self.allowed_protocols = p['allowed_protocols']
-        self.aggr_list = p['aggr_list']
-        self.language = p['language']
-        self.ipspace = p['ipspace']
-        self.snapshot_policy = p['snapshot_policy']
-        self.subtype = p['subtype']
+        self.na_helper = NetAppModule()
+        self.parameters = self.na_helper.set_parameters(self.module.params)
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(
@@ -253,7 +240,7 @@ class NetAppOntapSVM(object):
         :rtype: object/None
         """
         if vserver_name is None:
-            vserver_name = self.name
+            vserver_name = self.parameters['name']
 
         vserver_info = netapp_utils.zapi.NaElement('vserver-get-iter')
         query_details = netapp_utils.zapi.NaElement.create_node_with_children(
@@ -279,11 +266,12 @@ class NetAppOntapSVM(object):
                     aggr_list.append(aggr.get_content())
 
             protocols = list()
-            '''allowed-protocols is not empty by default'''
-            get_protocols = vserver_info.get_child_by_name(
-                'allowed-protocols').get_children()
-            for protocol in get_protocols:
-                protocols.append(protocol.get_content())
+            '''allowed-protocols is not empty for data SVM, but is for node SVM'''
+            allowed_protocols = vserver_info.get_child_by_name('allowed-protocols')
+            if allowed_protocols is not None:
+                get_protocols = allowed_protocols.get_children()
+                for protocol in get_protocols:
+                    protocols.append(protocol.get_content())
             vserver_details = {'name': vserver_info.get_child_content('vserver-name'),
                                'root_volume': vserver_info.get_child_content('root-volume'),
                                'root_volume_aggregate': vserver_info.get_child_content('root-volume-aggregate'),
@@ -292,172 +280,145 @@ class NetAppOntapSVM(object):
                                'aggr_list': aggr_list,
                                'language': vserver_info.get_child_content('language'),
                                'snapshot_policy': vserver_info.get_child_content('snapshot-policy'),
-                               'allowed_protocols': protocols}
+                               'allowed_protocols': protocols,
+                               'ipspace': vserver_info.get_child_content('ipspace')}
         return vserver_details
 
     def create_vserver(self):
-        options = {'vserver-name': self.name, 'root-volume': self.root_volume}
-        if self.root_volume_aggregate is not None:
-            options['root-volume-aggregate'] = self.root_volume_aggregate
-        if self.root_volume_security_style is not None:
-            options['root-volume-security-style'] = self.root_volume_security_style
-        if self.language is not None:
-            options['language'] = self.language
-        if self.ipspace is not None:
-            options['ipspace'] = self.ipspace
-        if self.snapshot_policy is not None:
-            options['snapshot-policy'] = self.snapshot_policy
-        if self.subtype is not None:
-            options['vserver-subtype'] = self.subtype
-
-        vserver_create = netapp_utils.zapi.NaElement.create_node_with_children(
-            'vserver-create', **options)
+        options = {'vserver-name': self.parameters['name']}
+        self.add_parameter_to_dict(options, 'root_volume', 'root-volume')
+        self.add_parameter_to_dict(options, 'root_volume_aggregate', 'root-volume-aggregate')
+        self.add_parameter_to_dict(options, 'root_volume_security_style', 'root-volume-security-style')
+        self.add_parameter_to_dict(options, 'language', 'language')
+        self.add_parameter_to_dict(options, 'ipspace', 'ipspace')
+        self.add_parameter_to_dict(options, 'snapshot_policy', 'snapshot-policy')
+        self.add_parameter_to_dict(options, 'subtype', 'vserver-subtype')
+        vserver_create = netapp_utils.zapi.NaElement.create_node_with_children('vserver-create', **options)
         try:
             self.server.invoke_successfully(vserver_create,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg='Error provisioning SVM %s \
-                                  with root volume %s on aggregate %s: %s'
-                                  % (self.name, self.root_volume,
-                                     self.root_volume_aggregate, to_native(e)),
+            self.module.fail_json(msg='Error provisioning SVM %s: %s'
+                                      % (self.parameters['name'], to_native(e)),
                                   exception=traceback.format_exc())
 
     def delete_vserver(self):
         vserver_delete = netapp_utils.zapi.NaElement.create_node_with_children(
-            'vserver-destroy', **{'vserver-name': self.name})
+            'vserver-destroy', **{'vserver-name': self.parameters['name']})
 
         try:
             self.server.invoke_successfully(vserver_delete,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg='Error deleting SVM %s \
-                                  with root volume %s on aggregate %s: %s'
-                                  % (self.name, self.root_volume,
-                                     self.root_volume_aggregate, to_native(e)),
+            self.module.fail_json(msg='Error deleting SVM %s: %s'
+                                      % (self.parameters['name'], to_native(e)),
                                   exception=traceback.format_exc())
 
     def rename_vserver(self):
         vserver_rename = netapp_utils.zapi.NaElement.create_node_with_children(
-            'vserver-rename', **{'vserver-name': self.from_name,
-                                 'new-name': self.name})
+            'vserver-rename', **{'vserver-name': self.parameters['from_name'],
+                                 'new-name': self.parameters['name']})
 
         try:
             self.server.invoke_successfully(vserver_rename,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg='Error renaming SVM %s: %s'
-                                  % (self.name, to_native(e)),
+                                  % (self.parameters['from_name'], to_native(e)),
                                   exception=traceback.format_exc())
 
-    def modify_vserver(self, allowed_protocols, aggr_list, language, snapshot_policy):
-
-        options = {'vserver-name': self.name}
-        if language:
-            options['language'] = self.language
-        if snapshot_policy:
-            options['snapshot-policy'] = self.snapshot_policy
-
-        vserver_modify = netapp_utils.zapi.NaElement.create_node_with_children(
-            'vserver-modify', **options)
-
-        if allowed_protocols:
-            allowed_protocols = netapp_utils.zapi.NaElement(
-                'allowed-protocols')
-            for protocol in self.allowed_protocols:
-                allowed_protocols.add_new_child('protocol', protocol)
-            vserver_modify.add_child_elem(allowed_protocols)
-
-        if aggr_list:
-            aggregates = netapp_utils.zapi.NaElement('aggr-list')
-            for aggr in self.aggr_list:
-                aggregates.add_new_child('aggr-name', aggr)
-            vserver_modify.add_child_elem(aggregates)
-
+    def modify_vserver(self, modify):
+        '''
+        Modify vserver.
+        :param modify: list of modify attributes
+        '''
+        vserver_modify = netapp_utils.zapi.NaElement('vserver-modify')
+        vserver_modify.add_new_child('vserver-name', self.parameters['name'])
+        for attribute in modify:
+            if attribute == 'language':
+                vserver_modify.add_new_child('language', self.parameters['language'])
+            if attribute == 'snapshot_policy':
+                vserver_modify.add_new_child('snapshot_policy', self.parameters['snapshot_policy'])
+            if attribute == 'allowed_protocols':
+                allowed_protocols = netapp_utils.zapi.NaElement('allowed-protocols')
+                for protocol in self.parameters['allowed_protocols']:
+                    allowed_protocols.add_new_child('protocol', protocol)
+                vserver_modify.add_child_elem(allowed_protocols)
+            if attribute == 'aggr_list':
+                aggregates = netapp_utils.zapi.NaElement('aggr-list')
+                for aggr in self.parameters['aggr_list']:
+                    aggregates.add_new_child('aggr-name', aggr)
+                vserver_modify.add_child_elem(aggregates)
         try:
             self.server.invoke_successfully(vserver_modify,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg='Error modifying SVM %s: %s'
-                                  % (self.name, to_native(e)),
+                                  % (self.parameters['name'], to_native(e)),
                                   exception=traceback.format_exc())
 
+    def add_parameter_to_dict(self, adict, name, key=None, tostr=False):
+        '''
+        add defined parameter (not None) to adict using key.
+        :param adict: a dictionary.
+        :param name: name in self.parameters.
+        :param key:  key in adict.
+        :param tostr: boolean.
+        '''
+        if key is None:
+            key = name
+        if self.parameters.get(name) is not None:
+            if tostr:
+                adict[key] = str(self.parameters.get(name))
+            else:
+                adict[key] = self.parameters.get(name)
+
     def apply(self):
-        changed = False
-        vserver_details = self.get_vserver()
-# These are being commentted out as part of bugfix 595.
-
-#         if vserver_details is not None:
-#             results = netapp_utils.get_cserver(self.server)
-#             cserver = netapp_utils.setup_ontap_zapi(
-#                 module=self.module, vserver=results)
-#             netapp_utils.ems_log_event("na_ontap_svm", cserver)
-
-        rename_vserver = False
-        modify_protocols = False
-        modify_aggr_list = False
-        modify_snapshot_policy = False
-        modify_language = False
-
-        if vserver_details is not None:
-            if self.state == 'absent':
-                changed = True
-            elif self.state == 'present':
-                # SVM is present, is it a modify?
-                if self.allowed_protocols is not None:
-                    self.allowed_protocols.sort()
-                    vserver_details['allowed_protocols'].sort()
-                    if self.allowed_protocols != vserver_details['allowed_protocols']:
-                        modify_protocols = True
-                        changed = True
-                if self.aggr_list is not None:
-                    self.aggr_list.sort()
-                    vserver_details['aggr_list'].sort()
-                    if self.aggr_list != vserver_details['aggr_list']:
-                        modify_aggr_list = True
-                        changed = True
-                if self.snapshot_policy is not None:
-                    if self.snapshot_policy != vserver_details['snapshot_policy']:
-                        modify_snapshot_policy = True
-                        changed = True
-                if self.language is not None:
-                    if self.language != vserver_details['language']:
-                        modify_language = True
-                        changed = True
-                if self.root_volume is not None and self.root_volume != vserver_details['root_volume']:
-                    self.module.fail_json(msg='Error modifying SVM %s: %s' % (self.name, 'cannot change root volume'))
-                if self.root_volume_aggregate is not None and self.root_volume_aggregate != vserver_details['root_volume_aggregate']:
-                    self.module.fail_json(msg='Error modifying SVM %s: %s' % (self.name, 'cannot change root volume aggregate'))
-                if self.root_volume_security_style is not None and self.root_volume_security_style != vserver_details['root_volume_security_style']:
-                    self.module.fail_json(msg='Error modifying SVM %s: %s' % (self.name, 'cannot change root volume security style'))
-                if self.subtype is not None and self.subtype != vserver_details['subtype']:
-                    self.module.fail_json(msg='Error modifying SVM %s: %s' % (self.name, 'cannot change subtype'))
-                if self.ipspace is not None and self.ipspace != vserver_details['ipspace']:
-                    self.module.fail_json(msg='Error modifying SVM %s: %s' % (self.name, 'cannot change ipspace'))
+        '''Call create/modify/delete operations.'''
+        self.asup_log_for_cserver("na_ontap_svm")
+        current = self.get_vserver()
+        cd_action, rename = None, None
+        if self.parameters.get('from_name'):
+            rename = self.na_helper.is_rename_action(self.get_vserver(self.parameters['from_name']), current)
         else:
-            if self.state == 'present':
-                changed = True
-        if changed:
+            cd_action = self.na_helper.get_cd_action(current, self.parameters)
+        modify = self.na_helper.get_modified_attributes(current, self.parameters)
+        for attribute in modify:
+            if attribute in ['root_volume', 'root_volume_aggregate', 'root_volume_security_style', 'subtype', 'ipspace']:
+                self.module.fail_json(msg='Error modifying SVM %s: can not modify %s.' % (self.parameters['name'], attribute))
+            if attribute == 'language':
+                # Ontap documentation uses C.UTF-8, but actually stores as c.utf_8.
+                if self.parameters['language'].lower() == 'c.utf-8':
+                    self.parameters['language'] = 'c.utf_8'
+        if self.na_helper.changed:
             if self.module.check_mode:
                 pass
             else:
-                if self.state == 'present':
-                    if vserver_details is None:
-                        # create or rename
-                        if self.from_name is not None and self.get_vserver(self.from_name):
-                            self.rename_vserver()
-                        else:
-                            self.create_vserver()
-                    else:
-                        if modify_protocols or modify_aggr_list:
-                            self.modify_vserver(
-                                modify_protocols, modify_aggr_list, modify_language, modify_snapshot_policy)
-                elif self.state == 'absent':
+                if rename:
+                    self.rename_vserver()
+                # If rename is True, cd_action is None, but modify could be true or false.
+                if cd_action == 'create':
+                    self.create_vserver()
+                elif cd_action == 'delete':
                     self.delete_vserver()
+                elif modify:
+                    self.modify_vserver(modify)
+        self.module.exit_json(changed=self.na_helper.changed)
 
-        self.module.exit_json(changed=changed)
+    def asup_log_for_cserver(self, event_name):
+        """
+        Fetch admin vserver for the given cluster
+        Create and Autosupport log event with the given module name
+        :param event_name: Name of the event log
+        :return: None
+        """
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event(event_name, cserver)
 
 
 def main():
+    '''Apply vserver operations from playbook'''
     v = NetAppOntapSVM()
     v.apply()
 
