@@ -186,6 +186,10 @@ vms:
                 - Power state of the virtual machine.
             type: str
             sample: running
+        overprovision:
+            description:
+                - Specifies whether the Virtual Machine Scale Set should be overprovisioned.
+            type: bool
 '''
 
 try:
@@ -316,6 +320,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         new_result['name'] = vm.name
         new_result['state'] = 'present'
         new_result['location'] = vm.location
+        new_result['overprovision'] = result['properties']['overprovision']
         new_result['vm_size'] = result['properties']['hardwareProfile']['vmSize']
         new_result['admin_username'] = result['properties']['osProfile']['adminUsername']
         image = result['properties']['storageProfile'].get('imageReference')
