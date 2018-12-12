@@ -288,60 +288,6 @@ class TaskParameters(DockerBaseClass):
 
 class SwarmManager(DockerBaseClass):
 
-    def _get_minimal_versions(self):
-        # TODO: Move this and the same from docker_container.py to docker_common.py
-        self.option_minimal_versions = dict()
-        for option, data in self.client.module.argument_spec.items():
-            self.option_minimal_versions[option] = dict()
-        self.option_minimal_versions.update(dict(
-            signing_ca_cert=dict(docker_api_version='1.30'),
-            signing_ca_key=dict(docker_api_version='1.30'),
-            ca_force_rotate=dict(docker_api_version='1.30'),
-        ))
-
-        for option, data in self.option_minimal_versions.items():
-            # Test whether option is supported, and store result
-            support_docker_py = True
-            support_docker_api = True
-            if 'docker_py_version' in data:
-                support_docker_py = self.client.docker_py_version >= LooseVersion(data['docker_py_version'])
-            if 'docker_api_version' in data:
-                support_docker_api = self.client.docker_api_version >= LooseVersion(data['docker_api_version'])
-            data['supported'] = support_docker_py and support_docker_api
-            # Fail if option is not supported but used
-            if not data['supported']:
-                # Test whether option is specified
-                if 'detect_usage' in data:
-                    used = data['detect_usage']()
-                else:
-                    used = self.client.module.params.get(option) is not None
-                    if used and 'default' in self.client.module.argument_spec[option]:
-                        used = self.client.module.params[option] != self.client.module.argument_spec[option]['default']
-                if used:
-                    # If the option is used, compose error message.
-                    if 'usage_msg' in data:
-                        usg = data['usage_msg']
-                    else:
-                        usg = 'set %s option' % (option, )
-                    if not support_docker_api:
-                        msg = 'docker API version is %s. Minimum version required is %s to %s.'
-                        msg = msg % (self.client.docker_api_version_str, data['docker_api_version'], usg)
-                    elif not support_docker_py:
-                        if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "Consider switching to the 'docker' package if you do not require Python 2.6 support.")
-                        elif self.client.docker_py_version < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "You have to switch to the Python 'docker' package. First uninstall 'docker-py' before "
-                                   "installing 'docker' to avoid a broken installation.")
-                        else:
-                            msg = "docker version is %s. Minimum version required is %s to %s."
-                        msg = msg % (docker_version, data['docker_py_version'], usg)
-                    else:
-                        # should not happen
-                        msg = 'Cannot %s with your configuration.' % (usg, )
-                    self.client.fail(msg)
-
     def __init__(self, client, results):
 
         super(SwarmManager, self).__init__()
@@ -349,8 +295,6 @@ class SwarmManager(DockerBaseClass):
         self.client = client
         self.results = results
         self.check_mode = self.client.check_mode
-
-        self._get_minimal_versions()
 
         self.parameters = TaskParameters(client)
 
@@ -562,12 +506,19 @@ def main():
         ('state', 'remove', ['node_id'])
     ]
 
+    option_minimal_versions = dict(
+        signing_ca_cert=dict(docker_api_version='1.30'),
+        signing_ca_key=dict(docker_api_version='1.30'),
+        ca_force_rotate=dict(docker_api_version='1.30'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=required_if,
         min_docker_version='2.6.0',
         min_docker_api_version='1.25',
+        option_minimal_versions=option_minimal_versions,
     )
 
     results = dict(
