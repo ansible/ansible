@@ -255,6 +255,7 @@ from ansible.module_utils.docker_common import (
     DockerBaseClass,
     docker_version,
     DifferenceTracker,
+    clean_dict_booleans_for_docker_api,
 )
 
 try:
@@ -315,76 +316,7 @@ def get_ip_version(cidr):
     raise ValueError('"{0}" is not a valid CIDR'.format(cidr))
 
 
-def get_driver_options(driver_options):
-    # TODO: Move this and the same from docker_prune.py to docker_common.py
-    result = dict()
-    if driver_options is not None:
-        for k, v in driver_options.items():
-            # Go doesn't like 'True' or 'False'
-            if v is True:
-                v = 'true'
-            elif v is False:
-                v = 'false'
-            else:
-                v = str(v)
-            result[str(k)] = v
-    return result
-
-
 class DockerNetworkManager(object):
-
-    def _get_minimal_versions(self):
-        # TODO: Move this and the same from docker_container.py to docker_common.py
-        self.option_minimal_versions = dict()
-        for option, data in self.client.module.argument_spec.items():
-            self.option_minimal_versions[option] = dict()
-        self.option_minimal_versions.update(dict(
-            scope=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
-            attachable=dict(docker_py_version='2.0.0', docker_api_version='1.26'),
-        ))
-
-        for option, data in self.option_minimal_versions.items():
-            # Test whether option is supported, and store result
-            support_docker_py = True
-            support_docker_api = True
-            if 'docker_py_version' in data:
-                support_docker_py = self.client.docker_py_version >= LooseVersion(data['docker_py_version'])
-            if 'docker_api_version' in data:
-                support_docker_api = self.client.docker_api_version >= LooseVersion(data['docker_api_version'])
-            data['supported'] = support_docker_py and support_docker_api
-            # Fail if option is not supported but used
-            if not data['supported']:
-                # Test whether option is specified
-                if 'detect_usage' in data:
-                    used = data['detect_usage']()
-                else:
-                    used = self.client.module.params.get(option) is not None
-                    if used and 'default' in self.client.module.argument_spec[option]:
-                        used = self.client.module.params[option] != self.client.module.argument_spec[option]['default']
-                if used:
-                    # If the option is used, compose error message.
-                    if 'usage_msg' in data:
-                        usg = data['usage_msg']
-                    else:
-                        usg = 'set %s option' % (option, )
-                    if not support_docker_api:
-                        msg = 'docker API version is %s. Minimum version required is %s to %s.'
-                        msg = msg % (self.client.docker_api_version_str, data['docker_api_version'], usg)
-                    elif not support_docker_py:
-                        if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "Consider switching to the 'docker' package if you do not require Python 2.6 support.")
-                        elif self.client.docker_py_version < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "You have to switch to the Python 'docker' package. First uninstall 'docker-py' before "
-                                   "installing 'docker' to avoid a broken installation.")
-                        else:
-                            msg = "docker version is %s. Minimum version required is %s to %s."
-                        msg = msg % (docker_version, data['docker_py_version'], usg)
-                    else:
-                        # should not happen
-                        msg = 'Cannot %s with your configuration.' % (usg, )
-                    self.client.fail(msg)
 
     def __init__(self, client):
         self.client = client
@@ -398,8 +330,6 @@ class DockerNetworkManager(object):
         self.diff_tracker = DifferenceTracker()
         self.diff_result = dict()
 
-        self._get_minimal_versions()
-
         self.existing_network = self.get_existing_network()
 
         if not self.parameters.connected and self.existing_network:
@@ -410,7 +340,7 @@ class DockerNetworkManager(object):
             self.parameters.ipam_config = [self.parameters.ipam_options]
 
         if self.parameters.driver_options:
-            self.parameters.driver_options = get_driver_options(self.parameters.driver_options)
+            self.parameters.driver_options = clean_dict_booleans_for_docker_api(self.parameters.driver_options)
 
         state = self.parameters.state
         if state == 'present':
@@ -665,13 +595,19 @@ def main():
         ('ipam_config', 'ipam_options')
     ]
 
+    option_minimal_versions = dict(
+        scope=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
+        attachable=dict(docker_py_version='2.0.0', docker_api_version='1.26'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         mutually_exclusive=mutually_exclusive,
         supports_check_mode=True,
         min_docker_version='1.10.0',
-        min_docker_api_version='1.22'
+        min_docker_api_version='1.22',
         # "The docker server >= 1.10.0"
+        option_minimal_versions=option_minimal_versions,
     )
 
     cm = DockerNetworkManager(client)
