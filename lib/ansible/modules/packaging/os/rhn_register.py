@@ -295,11 +295,13 @@ class Rhn(redhat.RegistrationBase):
     def subscribe(self, channels):
         if not channels:
             return
+
         if self._is_hosted():
             current_channels = self.api('channel.software.listSystemChannels', self.systemid)
             new_channels = [item['channel_label'] for item in current_channels]
             new_channels.extend(channels)
             return self.api('channel.software.setSystemChannels', self.systemid, list(new_channels))
+
         else:
             current_channels = self.api('channel.software.listSystemChannels', self.systemid)
             current_channels = [item['label'] for item in current_channels]
@@ -315,10 +317,13 @@ class Rhn(redhat.RegistrationBase):
                         new_childs.append(ch)
             out_base = 0
             out_childs = 0
+
             if new_base:
                 out_base = self.api('system.setBaseChannel', self.systemid, new_base)
+
             if new_childs:
                 out_childs = self.api('system.setChildChannels', self.systemid, new_childs)
+
             return out_base and out_childs
 
     def _is_hosted(self):
@@ -344,7 +349,13 @@ def main():
             enable_eus=dict(default=False, type='bool'),
             nopackages=dict(default=False, type='bool'),
             channels=dict(default=[], type='list'),
-        )
+        ),
+        # username/password is required for state=absent, or if channels is not empty
+        # (basically anything that uses self.api requires username/password) but it doesnt
+        # look like we can express that with required_if/required_together/mutually_exclusive
+
+        # only username+password can be used for unregister
+        required_if=[['state', 'absent', ['username', 'password']]]
     )
 
     if not HAS_UP2DATE_CLIENT:
@@ -403,6 +414,9 @@ def main():
     if state == 'absent':
         if not rhn.is_registered:
             module.exit_json(changed=False, msg="System already unregistered.")
+
+        if not (rhn.username and rhn.password):
+            module.fail_json(msg="Missing arguments, the system is currently registered and unregistration requires a username and password")
 
         try:
             rhn.unregister()
