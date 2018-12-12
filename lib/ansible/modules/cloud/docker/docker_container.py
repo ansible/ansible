@@ -375,6 +375,83 @@ options:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
         - If not set, the value will be remain the same if container exists and will be inherited from the host machine if it is (re-)created.
     type: int
+  mounts:
+    version_added: "2.8"
+    type: list
+    description:
+      - 'Specification for mounts to be added to the container. More powerful alternative to C(volumes).'
+    suboptions:
+      target:
+        description:
+          - Container path.
+        type: str
+        required: true
+      source:
+        description:
+          - Mount source (e.g. a volume name or a host path).
+        type: str
+        required: true
+      type:
+        description:
+          - The mount type.
+        type: str
+        choices:
+          - 'bind'
+          - 'volume'
+          - 'tmpfs'
+          - 'npipe'
+        default: volume
+      read_only:
+        description:
+          - 'Whether the mount should be read-only.'
+        type: bool
+      consistency:
+        description:
+          - 'The consistency requirement for the mount.'
+        type: str
+        choices:
+          - 'default'
+          - 'consistent'
+          - 'cached'
+          - 'delegated'
+      propagation:
+        description:
+          - Propagation mode. Only valid for the C(bind) type.
+        type: str
+        choices:
+          - 'private'
+          - 'rprivate'
+          - 'shared'
+          - 'rshared'
+          - 'slave'
+          - 'rslave'
+      no_copy:
+        description:
+          - False if the volume should be populated with the data from the target. Only valid for the C(volume) type.
+        type: bool
+        default: false
+      labels:
+        description:
+          - User-defined name and labels for the volume. Only valid for the C(volume) type.
+        type: dict
+      volume_driver:
+        description:
+          - Specify the volume driver. Only valid for the C(volume) type.
+          - See L(here,https://docs.docker.com/storage/volumes/#use-a-volume-driver) for details.
+        type: str
+      volume_options:
+        description:
+          - Dictionary of options specific to the chosen volume_driver. See L(here,https://docs.docker.com/storage/volumes/#use-a-volume-driver)
+            for details.
+        type: dict
+      tmpfs_size:
+        description:
+          - The size for the tmpfs mount in bytes.
+        type: int
+      tmpfs_mode:
+        description:
+          - The permission mode for the tmpfs mount.
+        type: int
   name:
     description:
       - Assign a name to a new container or match an existing container.
@@ -1090,6 +1167,7 @@ class TaskParameters(DockerBaseClass):
         self.memory_reservation = None
         self.memory_swap = None
         self.memory_swappiness = None
+        self.mounts = None
         self.name = None
         self.network_mode = None
         self.userns_mode = None
@@ -1380,6 +1458,7 @@ class TaskParameters(DockerBaseClass):
             device_read_iops='device_read_iops',
             device_write_iops='device_write_iops',
             pids_limit='pids_limit',
+            mounts='mounts',
         )
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
@@ -2870,6 +2949,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             userns_mode=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
             pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
+            mounts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
                                         usage_msg='ipv4_address or ipv6_address in networks'),
@@ -2958,6 +3038,20 @@ def main():
         memory_reservation=dict(type='str'),
         memory_swap=dict(type='str'),
         memory_swappiness=dict(type='int'),
+        mounts=dict(type='list', elements='dict', options=dict(
+            target=dict(required=True, type='str'),
+            source=dict(required=True, type='str'),
+            type=dict(type='str', choices=['bind', 'volume', 'tmpfs', 'npipe'], default='volume'),
+            read_only=dict(type='bool'),
+            consistency=dict(type='str', choices=['default', 'consistent', 'cached', 'delegated']),
+            propagation=dict(type='str', choices=['private', 'rprivate', 'shared', 'rshared', 'slave', 'rslave']),
+            no_copy=dict(type='bool', default=False),
+            labels=dict(type='dict'),
+            volume_driver=dict(type='str'),
+            volume_options=dict(type='dict'),
+            tmpfs_size=dict(type='int'),
+            tmpfs_mode=dict(type='int'),
+        )),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
         networks=dict(type='list', elements='dict', options=dict(
