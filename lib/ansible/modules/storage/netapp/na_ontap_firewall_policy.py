@@ -35,7 +35,7 @@ options:
   service:
     description:
       - The service to apply the policy to
-    choices: ['http', 'https', 'ntp', 'rsh', 'snmp', 'ssh', 'telnet']
+    choices: ['dns', 'http', 'https', 'ndmp', 'ndmps', 'ntp', 'rsh', 'snmp', 'ssh', 'telnet']
     required: true
   vserver:
     description:
@@ -114,7 +114,7 @@ class NetAppONTAPFirewallPolicy(object):
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             allow_list=dict(required=False, type="list"),
             policy=dict(required=True, type='str'),
-            service=dict(required=True, type='str', choices=['http', 'https', 'ntp', 'rsh', 'snmp', 'ssh', 'telnet']),
+            service=dict(required=True, type='str', choices=['dns', 'http', 'https', 'ndmp', 'ndmps', 'ntp', 'rsh', 'snmp', 'ssh', 'telnet']),
             vserver=dict(required=True, type="str"),
             enable=dict(required=False, type="str", choices=['enable', 'disable'], default='enable'),
             logging=dict(required=False, type="str", choices=["enable", 'disable'], default='disable'),
@@ -279,6 +279,9 @@ class NetAppONTAPFirewallPolicy(object):
         return changed
 
     def apply(self):
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event("na_ontap_firewall_policy", cserver)
         changed = False
         if self.parameters['state'] == 'present':
             policy = self.get_firewall_policy()
