@@ -14,13 +14,12 @@ description: "Retrieves a list of process IDs (PIDs) of all processes of the giv
 short_description: "Retrieves process IDs list if the process is running otherwise return empty list"
 author:
   - Saranya Sridharan (@saranyasridharan)
-requirements:
-  - Needs 'pidof' to be installed in the system
 options:
   name:
     description: the name of the process you want to get PID for
     required: true
 '''
+
 EXAMPLES = '''
 # Pass the process name
 - name: Getting process IDs of the process
@@ -44,8 +43,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def get_pid(name, module):
-    command = module.get_bin_path('pidof', True)
-    rc, processid, stderr = module.run_command([command, name])
+    command = module.get_bin_path('pgrep', True)
+    rc, processid, stderr = module.run_command([command, "-x", name])
     return [int(pid) for pid in processid.split() if processid]
 
 
