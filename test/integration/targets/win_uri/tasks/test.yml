@@ -296,6 +296,29 @@
     - json_as_dict.json.json == json_as_dict_value
     - json_as_dict.status_code == 200
 
+- name: send JSON body with 1 item in list
+  win_uri:
+    url: https://{{httpbin_host}}/post
+    method: POST
+    body:
+      - foo: bar
+    headers:
+      'Content-Type': 'text/json'
+    return_content: yes
+  register: json_as_oneitemlist
+
+- name: set fact of expected json 1 item list
+  set_fact:
+    json_as_oneitemlist_value:
+      - foo: bar
+
+- name: assert send JSON body with 1 item in list
+  assert:
+    that:
+    - not json_as_oneitemlist.changed
+    - json_as_oneitemlist.json.json == json_as_oneitemlist_value
+    - json_as_oneitemlist.status_code == 200
+
 - name: get request with custom headers
   win_uri:
     url: https://{{httpbin_host}}/get
