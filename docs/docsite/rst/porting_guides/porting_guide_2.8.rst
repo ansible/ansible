@@ -139,6 +139,8 @@ Plugins
   has changed to ``%USERPROFILE%\.ansible_async``. To control this path now, either set the ``ansible_async_dir``
   variable or the ``async_dir`` value in the ``powershell`` section of the config ini.
 
+* Order of enabled inventory plugins (:ref:`INVENTORY_ENABLED`) has been updated, :ref:`auto <auto_inventory>` is now before :ref:`yaml <yaml_inventory>` and :ref:`ini <ini_inventory>`.
+
 Porting custom scripts
 ======================
 
