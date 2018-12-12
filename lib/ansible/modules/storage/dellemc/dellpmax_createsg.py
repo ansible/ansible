@@ -13,75 +13,76 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = '''
---- 
-author: 
+---
+author:
   - "Paul Martin (@rawstorage)"
 short_description: "Create storage group on Dell EMC PowerMax or VMAX All 
 Flash"
 version_added: "2.8"
-description: 
+description:
   - "This module has been tested against UNI 9.0. Every effort has been made 
   to verify the scripts run with valid input. These modules are a tech preview"
 module: dellpmax_createsg
-options: 
-  array_id: 
-    description: 
+options:
+  array_id:
+    description:
       - "Integer 12 Digit Serial Number of PowerMAX or VMAX array."
     required: true
-  cap_unit: 
-    choices: 
+  cap_unit:
+    choices:
       - GB
       - TB
       - MB
       - CYL
-    description: 
+    description:
       - "String value, default is set to GB"
     required: false
-  num_vols: 
-    description: 
+  num_vols:
+    description:
       - "integer value for the number of volumes. Minimum is 1, module will 
       fail if less than one volume is specified or value is 0. If volumes are 
       required of different sizes, addional tasks should be added to playbooks 
       to use dellpmax_addvolume module"
     required: true
-  sgname: 
-    description: 
+  sgname:
+    description:
       - "Storage Group name 32 Characters no special characters other than 
       underscore"
     required: true
-  slo: 
-    description: 
+  slo:
+    description:
       - "Service Level for the storage group, Supported on VMAX3 and All Flash 
       and PowerMAX NVMe Arrays running PowerMAX OS 5978 and above.  Default is 
       set to Diamond, but user can override this by setting a different value."
     required: false
-  srp_id: 
-    description: 
+  srp_id:
+    description:
       - "Storage Resource Pool Name, Default is set to SRP_1, if your system 
       has mainframe or multiple pools you can set this to a different value to 
       match your environment"
     required: false
-  unispherehost: 
-    description: 
+  unispherehost:
+    description:
       - "Fully Qualified Domain Name or IP address of Unisphere for PowerMax 
       host."
     required: true
-  universion: 
-    description: 
+  universion:
+    description:
       - "Integer, version of unipshere software  e.g. 90"
     required: true
-  verifycert: 
-    description: 
+  verifycert:
+    description:
       - "Boolean, securitly check on ssl certificates"
+    type: bool
     required: true
-  vol_size: 
-    description: 
+  vol_size:
+    description:
       - "Integer value for the size of volumes.  All volumes will be created 
       with same size.  Use dellpmax_addvol to add additional volumes if you 
       require different sized volumes once storage group is created."
     required: true
-  volumeIdentifier: 
-    description: 
+  volumeIdentifier:
+    description:
       - "String up to 64 Characters no special character other than _ sets a 
       label to make volumes easily identified on hosts can run Dell EMC inq 
       utility command to see this label is  inq -identifier device_name"
@@ -92,26 +93,25 @@ options:
   password:
     description:
       - "password for Unisphere user"
-  workload: 
-    description: 
+  workload:
+    description:
       - "Block workload type, optional and can only be set on VMAX3 Hybrid 
       Storage Arrays. Default None."
     required: false
-requirements: 
+requirements:
   - Ansible
   - "Unisphere for PowerMax version 9.0 or higher."
   - "VMAX All Flash, VMAX3, or PowerMax storage Array."
   - "PyU4V version 3.0.0.8 or higher using PIP python -m pip install PyU4V"
 '''
 EXAMPLES = '''
---- 
-- 
+---
   connection: local
   hosts: localhost
   name: "Create Storage Group"
   no_log: true
   tasks: ~
-  vars: 
+  vars:
     array_id: 000197600123
     password: smc
     unispherehost: "192.168.156.63"
@@ -119,7 +119,7 @@ EXAMPLES = '''
     user: smc
     verifycert: false
 - 
-  dellpmax_createsg: 
+  dellpmax_createsg:
     array_id: "{{array_id}}"
     cap_unit: GB
     num_vols: 1
@@ -159,10 +159,8 @@ def main():
             vol_size=dict(type='int', required=True),
             cap_unit=dict(type='str', required=True, choices=['GB',
                                                               'TB',
-                                                              'MB','CYL']),
-            volumeIdentifier=dict(type='str', required=False)
-        )
-    )
+                                                              'MB', 'CYL']),
+            volumeIdentifier=dict(type='str', required=False)))
     try:
         import PyU4V
     except:
