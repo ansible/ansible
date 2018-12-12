@@ -20,8 +20,13 @@ description:
 notes:
 - The C(tenant), C(ap), C(epg) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg) modules can be used for this.
-- More information about the internal APIC classes B(fv:RsPathAtt) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- module: aci_epg
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:RsPathAtt).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

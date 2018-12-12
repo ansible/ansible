@@ -18,10 +18,14 @@ short_description: Bind leaf selectors to switch policy leaf profiles (infra:Lea
 description:
 - Bind leaf selectors (with node block range and policy group) to switch policy leaf profiles on Cisco ACI fabrics.
 notes:
-- This module is to be used with M(aci_switch_policy_leaf_profile)
+- This module is to be used with M(aci_switch_policy_leaf_profile).
   One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
-- More information about the internal APIC classes B(infra:LeafS), B(infra:NodeBlk) and B(infra:RsAccNodePGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_switch_policy_leaf_profile
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:LeafS),
+               B(infra:NodeBlk) and B(infra:RsAccNodePGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
