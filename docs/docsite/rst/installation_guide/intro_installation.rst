@@ -275,6 +275,19 @@ Build and install packages from created queuefile (answer Q for question if sbop
 
     # sbopkg -k -i ansible
 
+.. _from swupd:
+
+Latest Release via swupd (Clear Linux)
++++++++++++++++++++++++++++++++++++++++
+
+Ansible and its dependencies are available as part of the sysadmin host management bundle::
+
+    $ sudo swupd bundle-add sysadmin-hostmgmt
+
+Update of the software will be managed by the swupd tool::
+
+   $ sudo swupd update
+
 .. _from_pip:
 
 Latest Releases via Pip
