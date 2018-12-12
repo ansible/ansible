@@ -157,7 +157,7 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2, HAS_DOCKER_PY_3
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, clean_dict_booleans_for_docker_api
 
 try:
     from docker import utils
@@ -192,21 +192,6 @@ def container_names_in_network(network):
     return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
 
-def get_driver_options(driver_options):
-    result = dict()
-    if driver_options is not None:
-        for k, v in driver_options.items():
-            # Go doesn't like 'True' or 'False'
-            if v is True:
-                v = 'true'
-            elif v is False:
-                v = 'false'
-            else:
-                v = str(v)
-            result[str(k)] = v
-    return result
-
-
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -225,7 +210,7 @@ class DockerNetworkManager(object):
             self.parameters.connected = container_names_in_network(self.existing_network)
 
         if self.parameters.driver_options:
-            self.parameters.driver_options = get_driver_options(self.parameters.driver_options)
+            self.parameters.driver_options = clean_dict_booleans_for_docker_api(self.parameters.driver_options)
 
         state = self.parameters.state
         if state == 'present':
