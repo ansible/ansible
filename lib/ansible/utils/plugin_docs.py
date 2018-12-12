@@ -69,6 +69,13 @@ def add_fragments(doc, filename, fragment_loader):
                     doc['notes'] = []
                 doc['notes'].extend(notes)
 
+        if 'seealso' in fragment:
+            seealso = fragment.pop('seealso')
+            if seealso:
+                if 'seealso' not in doc:
+                    doc['seealso'] = []
+                doc['seealso'].extend(seealso)
+
         if 'options' not in fragment:
             raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
