@@ -2440,11 +2440,42 @@
     force_kill: yes
   register: network_mode_3
 
+- name: network_mode (container mode setup)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname_h1 }}"
+    state: started
+
+- name: network_mode (container mode)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    network_mode: "container:{{ cname_h1 }}"
+    force_kill: yes
+  register: network_mode_4
+
+- name: network_mode (container mode idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    network_mode: "container:{{ cname_h1 }}"
+  register: network_mode_5
+
 - name: cleanup
   docker_container:
-    name: "{{ cname }}"
+    name: "{{ container_name }}"
     state: absent
     force_kill: yes
+  loop:
+  - "{{ cname }}"
+  - "{{ cname_h1 }}"
+  loop_control:
+    loop_var: container_name
   diff: no
 
 - assert:
@@ -2452,6 +2483,8 @@
     - network_mode_1 is changed
     - network_mode_2 is not changed
     - network_mode_3 is changed
+    - network_mode_4 is changed
+    - network_mode_5 is not changed
 
 ####################################################################
 ## networks, purge_networks ########################################

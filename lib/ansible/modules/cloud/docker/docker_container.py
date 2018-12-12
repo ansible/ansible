@@ -1090,6 +1090,7 @@ class TaskParameters(DockerBaseClass):
         self.volume_binds = self._get_volume_binds(self.volumes)
         self.pid_mode = self._replace_container_names(self.pid_mode)
         self.ipc_mode = self._replace_container_names(self.ipc_mode)
+        self.network_mode = self._replace_container_names(self.network_mode)
 
         self.log("volumes:")
         self.log(self.volumes, pretty_print=True)
