@@ -83,9 +83,10 @@ options:
     required: true
   volumeIdentifier:
     description:
-      - "String up to 64 Characters no special character other than _ sets a
-      label to make volumes easily identified on hosts can run Dell EMC inq
-      utility command to see this label is  inq -identifier device_name"
+      - "String up to 64 Characters no special character other than
+      underscore sets a label to make volumes easily identified on hosts can
+      run Dell EMC inq utility command to see this label is  inq -identifier
+      device_name"
     required: false
   user:
     description:
@@ -105,11 +106,11 @@ requirements:
   - "PyU4V version 3.0.0.8 or higher using PIP python -m pip install PyU4V"
 '''
 EXAMPLES = '''
---- 
+---
 - name: "Provision Storage For DB Cluster"
   connection: local
   hosts: localhost
-  vars: 
+  vars:
     array_id: 000197600156
     password: smc
     sgname: Ansible_SG
@@ -118,9 +119,9 @@ EXAMPLES = '''
     user: smc
     verifycert: false
 
-  tasks: 
+  tasks:
     - name: "Create New Storage Group and add data volumes"
-      dellpmax_createsg: 
+      dellpmax_createsg:
         array_id: "{{array_id}}"
         cap_unit: GB
         num_vols: 1
