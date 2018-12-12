@@ -1,0 +1,26 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_reboot sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- debug: msg="***WARNING*** Remove meta end_play to verify this module ***WARNING***"
+
+- meta: end_play
+
+- block:
+  - name: Reboot Switch
+    nxos_reboot:
+      confirm: True
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  always:
+  - name: Wait for device to come back up
+    wait_for:
+      port: 22
+      state: started
+      timeout: 600
+      delay: 60
+      host: "{{ inventory_hostname }}"
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_reboot sanity test"
