@@ -440,38 +440,38 @@ if($gather_subset.Contains('winrm')) {
 }
 
 if($gather_subset.Contains('virtual')) {
-    $MachineInfo = Get-CimInstance -Class Win32_ComputerSystem
+    $machine_info = Get-LazyCimInstance -Class Win32_ComputerSystem
 
-    switch ($MachineInfo.Model) {
+    switch ($machine_info.model) {
         "Virtual Machine" {
-            $MachineType="Hyper-V"
-            $MachineRole="guest"
+            $machine_type="Hyper-V"
+            $machine_role="guest"
         }
 
         "VMware Virtual Platform" {
-            $MachineType="VMware"
-            $MachineRole="guest"
+            $machine_type="VMware"
+            $machine_role="guest"
         }
 
         "VirtualBox" { 
-            $MachineType="VirtualBox" 
-            $MachineRole="guest"
+            $machine_type="VirtualBox" 
+            $machine_role="guest"
         }
 
         "HVM domU" {
-            $MachineType="Xen"
-            $MachineRole="guest" 
+            $machine_type="Xen"
+            $machine_role="guest" 
         }
 
         default {
-            $MachineType="NA"
-            $MachineRole="NA"
+            $machine_type="NA"
+            $machine_role="NA"
         }
     }
     
     $ansible_facts += @{
-        ansible_virtualization_role = $MachineRole
-        ansible_virtualization_type = $MachineType
+        ansible_virtualization_role = $machine_role
+        ansible_virtualization_type = $machine_type
     }
 }
 
