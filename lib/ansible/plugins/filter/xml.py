@@ -22,7 +22,7 @@ def xml_findall(data, expr):
     else:
         try:
             xml = etree.XML(data, parser=parser)
-            result = [etree.tostring(_xml) for _xml in xml.findall(expr)]
+            result = [etree.tostring(_xml, encoding="unicode") for _xml in xml.findall(expr)]
         except Exception as ex:
             raise AnsibleFilterError('xml error: ' + str(ex))
         return result
@@ -34,7 +34,7 @@ def xml_findtext(data, expr):
     else:
         try:
             xml = etree.XML(data, parser=parser)
-            result = xml.findtext(expr)
+            result = xml.findtext(expr, default="")
         except Exception as ex:
             raise AnsibleFilterError('xml error: ' + str(ex))
         return result
