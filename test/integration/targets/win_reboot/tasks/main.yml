@@ -31,9 +31,9 @@
 - name: reboot with test command that fails
   win_reboot:
     test_command: 'FAIL'
-    reboot_timeout: 120
+    reboot_timeout: 60
   register: reboot_fail_test
-  failed_when: "reboot_fail_test.msg != 'Timed out waiting for post-reboot test command (timeout=120)'"
+  failed_when: "reboot_fail_test.msg != 'Timed out waiting for post-reboot test command (timeout=60)'"
 
 # try and reboot the host with a non admin user, we expect an error here
 # this requires a bit of setup to create the user and allow it to connect
