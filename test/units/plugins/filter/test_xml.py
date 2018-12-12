@@ -33,11 +33,14 @@ with open(os.path.join(fixture_path, 'show_vlans_xml_output.txt')) as f:
 
 def test_xml_filter_find():
     expected = [
-        b'<vlan><name>test-1</name><vlan-id>100</vlan-id></vlan>',
-        b'<vlan><name>test-2</name></vlan>',
-        b'<vlan><name>test-3</name><vlan-id>300</vlan-id><description>test vlan-3</description><interface><name>em3.0</name></interface></vlan>',
-        b'<vlan inactive="inactive"><name>test-4</name><description>test vlan-4</description><vlan-id>400</vlan-id></vlan>',
-        b'<vlan inactive="inactive"><name>test-5</name><description>test vlan-5</description><vlan-id>500</vlan-id><interface><name>em5.0</name></interface></vlan>'
+        '<vlan><name>test-1</name><vlan-id>100</vlan-id></vlan>',
+        '<vlan><name>test-2</name></vlan>',
+        '<vlan><name>test-3</name><vlan-id>300</vlan-id><description>test vlan-3</description>'
+        '<interface><name>em3.0</name></interface></vlan>',
+        '<vlan inactive="inactive"><name>test-4</name><description>test vlan-4</description>'
+        '<vlan-id>400</vlan-id></vlan>',
+        '<vlan inactive="inactive"><name>test-5</name><description>test vlan-5</description>'
+        '<vlan-id>500</vlan-id><interface><name>em5.0</name></interface></vlan>'
     ]
     parsed = xml_findall(output_xml, ".//vlan")
     assert parsed == expected
@@ -60,7 +63,7 @@ def test_xml_filter_findtext():
 
 def test_xml_filter_findtext_not_found():
     parsed = xml_findtext(output_xml, ".//vlan[name='test-99']/vlan-id")
-    assert parsed is None
+    assert parsed == ""
 
 
 def test_xml_filter_findtext_invalid():

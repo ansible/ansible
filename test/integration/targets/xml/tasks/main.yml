@@ -67,3 +67,6 @@
   - include_tasks: test-get-element-content.yml
   - include_tasks: test-set-children-elements-unicode.yml
   - include_tasks: test-set-element-value-unicode.yml
+
+  # Filter tests
+  - include_tasks: test-xml-filter.yml
