@@ -1,17 +1,5 @@
-# (c) 2014, James Tanner <tanner.jc@gmail.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -573,7 +561,44 @@ class DocCLI(CLI):
             for note in doc['notes']:
                 text.append(textwrap.fill(CLI.tty_ify(note), limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
             text.append('')
+            text.append('')
             del doc['notes']
+
+        if 'seealso' in doc and doc['seealso']:
+            text.append("SEE ALSO:")
+            for item in doc['seealso']:
+                if 'module' in item and 'description' in item:
+                    text.append(textwrap.fill(CLI.tty_ify('Module %s' % item['module']),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(CLI.tty_ify(item['description']),
+                                limit - 6, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
+                elif 'module' in item:
+                    text.append(textwrap.fill(CLI.tty_ify('Module %s' % item['module']),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(CLI.tty_ify('The official documentation on the %s module.' % item['module']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
+                elif 'name' in item and 'link' in item and 'description' in item:
+                    text.append(textwrap.fill(CLI.tty_ify(item['name']),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(CLI.tty_ify(item['description']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    text.append(textwrap.fill(CLI.tty_ify(item['link']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                elif 'ref' in item and 'description' in item:
+                    text.append(textwrap.fill(CLI.tty_ify('Ansible documentation [%s]' % item['ref']),
+                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(CLI.tty_ify(item['description']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/#stq=%s&stp=1' % item['ref']),
+                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+
+            text.append('')
+            text.append('')
+            del doc['seealso']
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc.pop('requirements'))
@@ -594,14 +619,16 @@ class DocCLI(CLI):
 
         if 'plainexamples' in doc and doc['plainexamples'] is not None:
             text.append("EXAMPLES:")
+            text.append('')
             if isinstance(doc['plainexamples'], string_types):
                 text.append(doc.pop('plainexamples').strip())
             else:
                 text.append(yaml.dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
             text.append('')
+            text.append('')
 
         if 'returndocs' in doc and doc['returndocs'] is not None:
-            text.append("RETURN VALUES:\n")
+            text.append("RETURN VALUES:")
             if isinstance(doc['returndocs'], string_types):
                 text.append(doc.pop('returndocs'))
             else:

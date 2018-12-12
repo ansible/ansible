@@ -2,7 +2,6 @@
 
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # Copyright: (c) 2017, Swetha Chunduri (@schunduri)
-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
@@ -70,6 +69,9 @@ options:
     - This should only set to C(no) when used on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
-notes:
-- Please read the :ref:`aci_guide` for more detailed information on how to manage your ACI infrastructure using Ansible.
+seealso:
+- ref: aci_guide
+  description: Detailed information on how to manage your ACI infrastructure using Ansible.
+- ref: aci_dev_guide
+  description: Detailed guide on how to write your own Cisco ACI modules to contribute.
 '''
