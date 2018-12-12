@@ -29,7 +29,7 @@ description:
   - You can specify multiple services at once by separating them with commas, .e.g., C(services=httpd,nfs,puppet).
   - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime/acknowledge for the I(host itself),
     e.g., C(service=host). This keyword may not be given with other services at the same time.
-    I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.) To schedule downtime for all
+    I(Setting alerts/downtime/acknowledge for a host does not affect alerts/downtime/acknowledge for any of the services running on it.) To schedule downtime for all
     services on particular host use keyword "all", e.g., C(service=all).
   - When using the C(nagios) module you will need to specify your Nagios server using the C(delegate_to) parameter.
 version_added: "0.7"
@@ -39,10 +39,11 @@ options:
       - Action to take.
       - servicegroup options were added in 2.0.
       - delete_downtime options were added in 2.2.
+      - acknowledge and service_check options were added in 2.8.
     required: true
     choices: [ "downtime", "delete_downtime", "enable_alerts", "disable_alerts", "silence", "unsilence",
                "silence_nagios", "unsilence_nagios", "command", "servicegroup_service_downtime",
-               "servicegroup_host_downtime", "acknowledge" ]
+               "servicegroup_host_downtime", "acknowledge", "service_check" ]
   host:
     description:
       - Host to operate on in Nagios.
@@ -54,12 +55,12 @@ options:
   author:
     description:
      - Author to leave downtime comments as.
-       Only usable with the C(downtime) action.
+       Only usable with the C(downtime) and C(acknowledge) action.
     default: Ansible
   comment:
     version_added: "2.0"
     description:
-     - Comment for C(downtime) action.
+     - Comment for C(downtime) and C(acknowledge)action.
     default: Scheduling downtime
   minutes:
     description:
@@ -70,7 +71,7 @@ options:
     description:
       - What to manage downtime/alerts for. Separate multiple services with commas.
         C(service) is an alias for C(services).
-        B(Required) option when using the C(downtime), C(acknowledge), C(enable_alerts), and C(disable_alerts) actions.
+        B(Required) option when using the C(downtime), C(acknowledge), C(service_check), C(enable_alerts), and C(disable_alerts) actions.
     aliases: [ "service" ]
     required: true
   servicegroup:
@@ -150,6 +151,27 @@ EXAMPLES = '''
     host: '{{ inventory_hostname }}'
     service: host
     comment: Planned maintenance
+
+# acknowledge an HOST with a particular comment
+    nagios:
+      action: acknowledge
+      service: host
+      host: '{{ inventory_hostname }}'
+      comment: 'power outage - see casenr 12345'
+
+# acknowledge an active service problem for the httpd service with a particular comment
+    nagios:
+      action: acknowledge
+      service: httpd
+      host: '{{ inventory_hostname }}'
+      comment: 'service crashed - see casenr 12345'
+      
+# acknowledge an passive service problem for snmp trap with a particular comment
+    nagios:
+      action: service_check
+      service: snmp
+      host: '{{ inventory_hostname }}'
+      comment: 'switch problem - see casenr 12345'
 
 # enable SMART disk alerts
 - nagios:
@@ -252,6 +274,7 @@ def main():
         'servicegroup_host_downtime',
         'servicegroup_service_downtime',
         'acknowledge',
+        'service_check',
     ]
 
     module = AnsibleModule(
@@ -279,6 +302,7 @@ def main():
     ##################################################################
     # Required args per action:
     # downtime = (minutes, service, host)
+    # acknowledge = (service, host)
     # (un)silence = (host)
     # (enable/disable)_alerts = (service, host)
     # command = command
@@ -336,6 +360,11 @@ def main():
         # Make sure there's an actual service selected
         if not services:
             module.fail_json(msg='no service selected to acknowledge')
+    ##################################################################
+    if action == 'service_check':
+        # Make sure there's an actual service selected
+        if not services:
+            module.fail_json(msg='no service selected to check')
     ##################################################################
     if not cmdfile:
         module.fail_json(msg='unable to locate nagios.cfg')
@@ -534,6 +563,31 @@ class Nagios(object):
 
         return dt_del_str
 
+    def _fmt_chk_str(self, cmd, host, svc=None, start=None):
+        """
+        Format an external-command downtime deletion string.
+
+        cmd - Nagios command ID
+        host - Host to check service from
+        svc - Service to check
+        start - check time
+
+        Syntax: [submitted] COMMAND;<host_name>;[<service_description>];<check_time>
+        """
+
+        entry_time = self._now()
+        hdr = "[%s] %s;%s;" % (entry_time, cmd, host)
+
+        if start is None:
+            start = entry_time + 3
+
+        chk_args = [svc, str(start)]
+
+        chk_arg_str = ";".join(chk_args)
+        chk_str = hdr + chk_arg_str + "\n"
+
+        return chk_str
+
     def _fmt_notif_str(self, cmd, host=None, svc=None):
         """
         Format an external-command notification string.
@@ -633,6 +687,25 @@ class Nagios(object):
         cmd = "ACKNOWLEDGE_HOST_PROBLEM"
         ack_cmd_str = self._fmt_ack_str(cmd, host)
         self._write_command(ack_cmd_str)
+
+    def schedule_forced_svc_check(self, host, services=None):
+        """
+        This command is used to check a particular
+        service .
+
+        Schedules a forced active check of a particular service
+
+        Syntax: SCHEDULE_FORCED_SVC_CHECK;<host_name>;<service_description>;<check_time>
+        """
+
+        cmd = "SCHEDULE_FORCED_SVC_CHECK"
+
+        if services is None:
+            services = []
+
+        for service in services:
+            chk_cmd_str = self._fmt_chk_str(cmd, host, svc=service)
+            self._write_command(chk_cmd_str)
 
     def schedule_host_svc_downtime(self, host, minutes=30):
         """
@@ -1112,6 +1185,9 @@ class Nagios(object):
                 self.delete_host_downtime(self.host, comment='')
             else:
                 self.delete_host_downtime(self.host, services=self.services)
+
+        elif self.action == 'service_check':
+            self.schedule_forced_svc_check(self.host, services=self.services)
 
         elif self.action == "servicegroup_host_downtime":
             if self.servicegroup:
