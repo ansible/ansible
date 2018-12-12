@@ -19,7 +19,7 @@ __metaclass__ = type
 import re
 
 from ansible.module_utils._text import to_text
-
+from ansible.module_utils.basic import AnsibleRunCommandTimeout
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts import timeout
 
@@ -56,7 +56,7 @@ class OpenBSDHardware(Hardware):
         mount_facts = {}
         try:
             mount_facts = self.get_mount_facts()
-        except timeout.TimeoutError:
+        except AnsibleRunCommandTimeout:
             pass
 
         hardware_facts.update(cpu_facts)

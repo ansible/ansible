@@ -698,6 +698,10 @@ def missing_required_lib(library):
            "and install in the appropriate location." % (library, hostname, sys.executable)
 
 
+class AnsibleRunCommandTimeout(Exception):
+    pass
+
+
 class AnsibleFallbackNotFound(Exception):
     pass
 
@@ -2831,7 +2835,7 @@ class AnsibleModule(object):
             cmd.stderr.close()
 
             rc = cmd.returncode
-        except TimeoutError as e:
+        except AnsibleRunCommandTimeout as e:
             self.log("Timeout Executing CMD:%s Timeout :%s" % (self._clean_args(args), to_native(e)))
             if raise_timeouts:
                 raise e

@@ -20,8 +20,9 @@ import os
 import json
 import re
 
+from ansible.module_utils.basic import AnsibleRunCommandTimeout
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
-from ansible.module_utils.facts.timeout import TimeoutError, timeout
+from ansible.module_utils.facts.timeout import timeout
 
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
 
@@ -52,7 +53,7 @@ class FreeBSDHardware(Hardware):
         mount_facts = {}
         try:
             mount_facts = self.get_mount_facts()
-        except TimeoutError:
+        except AnsibleRunCommandTimeout:
             pass
 
         hardware_facts.update(cpu_facts)

@@ -24,8 +24,11 @@ import signal
 GATHER_TIMEOUT = None
 DEFAULT_GATHER_TIMEOUT = 10
 
+from ansible.module_utils.basic import AnsibleRunCommandTimeout
 
-class TimeoutError(Exception):
+
+class TimeoutError(AnsibleRunCommandTimeout):
+    # TODO: figure out how to issue deprecation warning here.
     pass
 
 
@@ -34,7 +37,7 @@ def timeout(seconds=None, error_message="Timer expired"):
     def decorator(func):
         def _handle_timeout(signum, frame):
             msg = 'Timer expired after %s seconds' % globals().get('GATHER_TIMEOUT')
-            raise TimeoutError(msg)
+            raise AnsibleRunCommandTimeout(msg)
 
         def wrapper(*args, **kwargs):
             local_seconds = seconds

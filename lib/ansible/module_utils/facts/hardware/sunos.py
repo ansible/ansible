@@ -18,14 +18,11 @@ __metaclass__ = type
 
 import re
 
-from ansible.module_utils.six.moves import reduce
-
-from ansible.module_utils.basic import bytes_to_human
-
+from ansible.module_utils.basic import bytes_to_human, AnsibleRunCommandTimeout
 from ansible.module_utils.facts.utils import get_file_content, get_mount_size
-
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts import timeout
+from ansible.module_utils.six.moves import reduce
 
 
 class SunOSHardware(Hardware):
@@ -52,7 +49,7 @@ class SunOSHardware(Hardware):
         mount_facts = {}
         try:
             mount_facts = self.get_mount_facts()
-        except timeout.TimeoutError:
+        except AnsibleRunCommandTimeout:
             pass
 
         hardware_facts.update(cpu_facts)
