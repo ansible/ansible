@@ -437,7 +437,7 @@ def absent(module, dest, regexp, line, backup):
             'after': '',
             'before_header': '{0} (content)'.format(dest),
             'after_header': '{0} (content)'.format(dest)}
-
+    attr_diff = {}
     flock = FileLock()
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     backupdest = ''
@@ -445,27 +445,33 @@ def absent(module, dest, regexp, line, backup):
     if not os.path.exists(b_dest):
         module.exit_json(changed=False, msg="file not present")
 
-    with flock.lock_file(dest):
+    if module.check_mode:
         with open(b_dest, 'rb') as f:
             b_lines = f.readlines()
 
         msg, changed, b_modified_lines = _absent_data_manipulator(b_lines, regexp, line)
-
         found = len(b_lines) - len(b_modified_lines)
         diff['before'] = to_native(b('').join(b_lines))
         diff['after'] = to_native(b('').join(b_modified_lines))
 
-        if module.check_mode:
-            return msg, changed, found, backupdest, diff
+        return msg, changed, found, backupdest, diff
 
-        if changed and not module.check_mode:
-            if backup:
-                backupdest = module.backup_local(dest)
-            write_changes(module, b_modified_lines, dest)
+    else:
+        with flock.lock_file(dest):
+            with open(b_dest, 'rb') as f:
+                b_lines = f.readlines()
 
-        attr_diff = {}
-        msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+            msg, changed, b_modified_lines = _absent_data_manipulator(b_lines, regexp, line)
+            if changed:
+                if backup:
+                    backupdest = module.backup_local(dest)
+                write_changes(module, b_modified_lines, dest)
 
+            msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+
+        found = len(b_lines) - len(b_modified_lines)
+        diff['before'] = to_native(b('').join(b_lines))
+        diff['after'] = to_native(b('').join(b_modified_lines))
         attr_diff['before_header'] = '{0} (file attributes)'.format(dest)
         attr_diff['after_header'] = '{0} (file attributes)'.format(dest)
         difflist = [diff, attr_diff]
@@ -483,11 +489,11 @@ def _absent_data_manipulator(b_lines, regexp, line):
         bre_c = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
 
     b_lines_new = [l for l in b_lines if _matcher(l, b_line, bre_c)]
-    if len(b_lines_new) > 0:
-        changed = True
+    lines_changed = len(b_lines) - len(b_lines_new)
 
-    if changed:
-        msg = "{0} line(s) removed".format(len(b_lines) - len(b_lines_new))
+    if lines_changed > 0:
+        changed = True
+        msg = "{0} line(s) removed".format(lines_changed)
 
     return msg, changed, b_lines_new
 
