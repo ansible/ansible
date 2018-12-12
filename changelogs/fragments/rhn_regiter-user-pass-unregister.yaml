@@ -1,0 +1,2 @@
+bugfixes:
+  - rhn_register - require username/password when unregistering and provide useful error message (https://github.com/ansible/ansible/issues/22300)
