@@ -2223,27 +2223,24 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         comparisons['expected_ports'] = dict(type='dict', comparison=comparisons['published_ports']['comparison'], name='expected_ports')
         self.comparisons = comparisons
 
-    def _get_minimal_versions(self):
-        # Helper function to detect whether any specified network uses ipv4_address or ipv6_address
+    def __init__(self, **kwargs):
         def detect_ipvX_address_usage():
+            '''
+            Helper function to detect whether any specified network uses ipv4_address or ipv6_address
+            '''
             for network in self.module.params.get("networks") or []:
                 if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
                     return True
             return False
 
-        self.option_minimal_versions = dict(
+        option_minimal_versions = dict(
             # internal options
             log_config=dict(),
             publish_all_ports=dict(),
             ports=dict(),
             volume_binds=dict(),
             name=dict(),
-        )
-        for option, data in self.module.argument_spec.items():
-            if option in self.__NON_CONTAINER_PROPERTY_OPTIONS:
-                continue
-            self.option_minimal_versions[option] = dict()
-        self.option_minimal_versions.update(dict(
+            # normal options
             dns_opts=dict(docker_api_version='1.21', docker_py_version='1.10.0'),
             ipc_mode=dict(docker_api_version='1.25'),
             mac_address=dict(docker_api_version='1.25'),
@@ -2262,55 +2259,14 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
-                                        usage_msg='ipv4_address or ipv6_address in networks'),
-        ))
+                                        usage_msg='ipv4_address or ipv6_address in networks'),  # see above
+        )
 
-        for option, data in self.option_minimal_versions.items():
-            # Test whether option is supported, and store result
-            support_docker_py = True
-            support_docker_api = True
-            if 'docker_py_version' in data:
-                support_docker_py = self.docker_py_version >= LooseVersion(data['docker_py_version'])
-            if 'docker_api_version' in data:
-                support_docker_api = self.docker_api_version >= LooseVersion(data['docker_api_version'])
-            data['supported'] = support_docker_py and support_docker_api
-            # Fail if option is not supported but used
-            if not data['supported']:
-                # Test whether option is specified
-                if 'detect_usage' in data:
-                    used = data['detect_usage']()
-                else:
-                    used = self.module.params.get(option) is not None
-                    if used and 'default' in self.module.argument_spec[option]:
-                        used = self.module.params[option] != self.module.argument_spec[option]['default']
-                if used:
-                    # If the option is used, compose error message.
-                    if 'usage_msg' in data:
-                        usg = data['usage_msg']
-                    else:
-                        usg = 'set %s option' % (option, )
-                    if not support_docker_api:
-                        msg = 'docker API version is %s. Minimum version required is %s to %s.'
-                        msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
-                    elif not support_docker_py:
-                        if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "Consider switching to the 'docker' package if you do not require Python 2.6 support.")
-                        elif self.docker_py_version < LooseVersion('2.0.0'):
-                            msg = ("docker-py version is %s. Minimum version required is %s to %s. "
-                                   "You have to switch to the Python 'docker' package. First uninstall 'docker-py' before "
-                                   "installing 'docker' to avoid a broken installation.")
-                        else:
-                            msg = "docker version is %s. Minimum version required is %s to %s."
-                        msg = msg % (docker_version, data['docker_py_version'], usg)
-                    else:
-                        # should not happen
-                        msg = 'Cannot %s with your configuration.' % (usg, )
-                    self.fail(msg)
-
-    def __init__(self, **kwargs):
-        super(AnsibleDockerClientContainer, self).__init__(**kwargs)
-        self._get_minimal_versions()
+        super(AnsibleDockerClientContainer, self).__init__(
+            option_minimal_versions=option_minimal_versions,
+            option_minimal_versions_ignore_params=self.__NON_CONTAINER_PROPERTY_OPTIONS,
+            **kwargs
+        )
         self._setup_comparisons()
 
 
