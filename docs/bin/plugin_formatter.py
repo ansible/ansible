@@ -207,6 +207,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
             :aliases: set of aliases to this module name
             :metadata: The modules metadata (as recorded in the module)
             :doc: The documentation structure for the module
+            :seealso: The list of dictionaries with references to related subjects
             :examples: The module's examples
             :returndocs: The module's returndocs
 
@@ -363,7 +364,7 @@ def jinja2_environment(template_dir, typ, plugin_type):
 
     templates = {}
     if typ == 'rst':
-        env.filters['convert_symbols_to_format'] = rst_ify
+        env.filters['rst_ify'] = rst_ify
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
