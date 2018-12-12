@@ -423,12 +423,12 @@
     state: absent
     name: testPublicIP
 
-#- name: Delete virtual network
-#  azure_rm_virtualnetwork:
-#    resource_group: "{{ resource_group }}"
-#    name: testVnet
-#    state: absent
-#    address_prefixes: "10.0.0.0/16"
+- name: Delete virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: testVnet
+    state: absent
+    address_prefixes: "10.0.0.0/16"
 
 # TODO: Until we have a module to create/delete images this is the best tests
 # I can do
