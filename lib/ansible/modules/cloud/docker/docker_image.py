@@ -624,10 +624,16 @@ def main():
         buildargs=dict(type='dict', default=None),
     )
 
+    option_minimal_versions = dict(
+        cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        min_docker_version='1.8.0',
         min_docker_api_version='1.20',
+        option_minimal_versions=option_minimal_versions,
     )
 
     results = dict(
