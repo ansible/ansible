@@ -38,6 +38,14 @@ options:
     description:
       - 'The interface you would like to add/remove to/from a zone in firewalld'
     version_added: "2.1"
+  icmp_block:
+    description:
+      - 'The icmp block you would like to add/remove to/from a zone in firewalld'
+    version_added: "2.8"
+  icmp_block_inversion:
+    description:
+      - 'Enable/Disable inversion of icmp blocks for a zone in firewalld'
+    version_added: "2.8"
   zone:
     description:
       - >
@@ -137,6 +145,18 @@ EXAMPLES = '''
     state: present
     permanent: yes
 
+- firewalld:
+    zone: drop
+    state: present
+    permanent: yes
+    icmp_block_inversion: yes
+
+- firewalld:
+    zone: drop
+    state: present
+    permanent: yes
+    icmp_block: echo-request
+
 - name: Redirect port 443 to 8443 with Rich Rule
   firewalld:
     rich_rule: rule family={{ item }} forward-port port=443 protocol=tcp to-port=8443
@@ -159,6 +179,80 @@ except ImportError:
     # The import errors are handled via FirewallTransaction, don't need to
     # duplicate that here
     pass
+
+
+class IcmpBlockTransaction(FirewallTransaction):
+    """
+    IcmpBlockTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(IcmpBlockTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+    def get_enabled_immediate(self, icmp_block, timeout):
+        return icmp_block in self.fw.getIcmpBlocks(self.zone)
+
+    def get_enabled_permanent(self, icmp_block, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        return icmp_block in fw_settings.getIcmpBlocks()
+
+    def set_enabled_immediate(self, icmp_block, timeout):
+        self.fw.addIcmpBlock(self.zone, icmp_block, timeout)
+
+    def set_enabled_permanent(self, icmp_block, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.addIcmpBlock(icmp_block)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self, icmp_block, timeout):
+        self.fw.removeIcmpBlock(self.zone, icmp_block)
+
+    def set_disabled_permanent(self, icmp_block, timeout):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.removeIcmpBlock(icmp_block)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+
+class IcmpBlockInversionTransaction(FirewallTransaction):
+    """
+    IcmpBlockInversionTransaction
+    """
+
+    def __init__(self, module, action_args=None, zone=None, desired_state=None, permanent=False, immediate=False):
+        super(IcmpBlockInversionTransaction, self).__init__(
+            module, action_args=action_args, desired_state=desired_state, zone=zone, permanent=permanent, immediate=immediate
+        )
+
+    def get_enabled_immediate(self):
+        if self.fw.queryIcmpBlockInversion(self.zone) is True:
+            return True
+        else:
+            return False
+
+    def get_enabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        if fw_settings.getIcmpBlockInversion() is True:
+            return True
+        else:
+            return False
+
+    def set_enabled_immediate(self):
+        self.fw.addIcmpBlockInversion(self.zone)
+
+    def set_enabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.setIcmpBlockInversion(True)
+        self.update_fw_settings(fw_zone, fw_settings)
+
+    def set_disabled_immediate(self):
+        self.fw.removeIcmpBlockInversion(self.zone)
+
+    def set_disabled_permanent(self):
+        fw_zone, fw_settings = self.get_fw_zone_settings()
+        fw_settings.setIcmpBlockInversion(False)
+        self.update_fw_settings(fw_zone, fw_settings)
 
 
 class ServiceTransaction(FirewallTransaction):
@@ -524,6 +618,8 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
+            icmp_block=dict(required=False, default=None),
+            icmp_block_inversion=dict(required=False, default=None),
             service=dict(required=False, default=None),
             port=dict(required=False, default=None),
             rich_rule=dict(required=False, default=None),
@@ -561,6 +657,8 @@ def main():
 
     changed = False
     msgs = []
+    icmp_block = module.params['icmp_block']
+    icmp_block_inversion = module.params['icmp_block_inversion']
     service = module.params['service']
     rich_rule = module.params['rich_rule']
     source = module.params['source']
@@ -574,6 +672,10 @@ def main():
         port = None
 
     modification_count = 0
+    if icmp_block is not None:
+        modification_count += 1
+    if icmp_block_inversion is not None:
+        modification_count += 1
     if service is not None:
         modification_count += 1
     if port is not None:
@@ -587,12 +689,44 @@ def main():
 
     if modification_count > 1:
         module.fail_json(
-            msg='can only operate on port, service, rich_rule, or interface at once'
+            msg='can only operate on port, service, rich_rule, masquerade, icmp_block, icmp_block_inversion, or interface at once'
         )
     elif modification_count > 0 and desired_state in ['absent', 'present']:
         module.fail_json(
             msg='absent and present state can only be used in zone level operations'
         )
+
+    if icmp_block is not None:
+
+        transaction = IcmpBlockTransaction(
+            module,
+            action_args=(icmp_block, timeout),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True:
+            msgs.append("Changed icmp-block %s to %s" % (icmp_block, desired_state))
+
+    if icmp_block_inversion is not None:
+
+        transaction = IcmpBlockInversionTransaction(
+            module,
+            action_args=(),
+            zone=zone,
+            desired_state=desired_state,
+            permanent=permanent,
+            immediate=immediate,
+        )
+
+        changed, transaction_msgs = transaction.run()
+        msgs = msgs + transaction_msgs
+        if changed is True:
+            msgs.append("Changed icmp-block-inversion %s to %s" % (icmp_block_inversion, desired_state))
 
     if service is not None:
 
