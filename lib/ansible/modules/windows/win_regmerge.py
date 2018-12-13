@@ -44,7 +44,7 @@ notes:
      differences on subsequent runs.
      To force registry change, use M(win_regedit) with state=absent before
      using M(win_regmerge).
-seeals:
+seealso:
 - module: win_reg_stat
 - module: win_regedit
 author:
