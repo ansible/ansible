@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: utm_proxy_profile_info
 
-author: 
+author:
     - Stephan Schwarz (@stearz)
 
 short_description: query info for reverse_proxy profile entry in Sophos UTM
@@ -26,7 +26,7 @@ description:
     - Gathers info for reverse_proxy profile entry in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -85,7 +85,7 @@ result:
         bad_clients:
             description: Block clients with bad reputation
             type: boolean
-        bad_clients_no_dnslookup: 
+        bad_clients_no_dnslookup:
             description: Skip remote lookups for clients with bad reputation
             type: boolean
         comment:
