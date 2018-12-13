@@ -143,57 +143,6 @@
     - '"LogonUser failed" not in become_invalid_pass.msg'
     - '"Win32ErrorCode 1326)" not in become_invalid_pass.msg'
 
-  - name: test become with SYSTEM account
-    win_whoami:
-    become: yes
-    become_method: runas
-    become_user: SYSTEM
-    register: whoami_out
-
-  - name: verify output
-    assert:
-      that:
-      - whoami_out.account.sid == "S-1-5-18"
-      - whoami_out.account.account_name == "SYSTEM"
-      - whoami_out.account.domain_name == "NT AUTHORITY"
-      - whoami_out.label.account_name == 'System Mandatory Level'
-      - whoami_out.label.sid == 'S-1-16-16384'
-      - whoami_out.logon_type == 'System'
-
-  - name: test become with NetworkService account
-    win_whoami:
-    become: yes
-    become_method: runas
-    become_user: NetworkService
-    register: whoami_out
-
-  - name: verify output
-    assert:
-      that:
-      - whoami_out.account.sid == "S-1-5-20"
-      - whoami_out.account.account_name == "NETWORK SERVICE"
-      - whoami_out.account.domain_name == "NT AUTHORITY"
-      - whoami_out.label.account_name == 'System Mandatory Level'
-      - whoami_out.label.sid == 'S-1-16-16384'
-      - whoami_out.logon_type == 'Service'
-
-  - name: test become with LocalService account
-    win_whoami:
-    become: yes
-    become_method: runas
-    become_user: LocalService
-    register: whoami_out
-
-  - name: verify output
-    assert:
-      that:
-      - whoami_out.account.sid == "S-1-5-19"
-      - whoami_out.account.account_name == "LOCAL SERVICE"
-      - whoami_out.account.domain_name == "NT AUTHORITY"
-      - whoami_out.label.account_name == 'System Mandatory Level'
-      - whoami_out.label.sid == 'S-1-16-16384'
-      - whoami_out.logon_type == 'Service'
-
   - name: test become + async
     vars: *become_vars
     win_command: whoami
@@ -227,82 +176,6 @@
     become_flags: logon_flags=with_profile,invalid
     register: failed_flags_invalid_flag
     failed_when: "failed_flags_invalid_flag.msg != \"internal error: failed to parse become_flags 'logon_flags=with_profile,invalid': become_flags logon_flags value 'invalid' is not valid, valid values are: with_profile, netcredentials_only\""
-
-  # Server 2008 doesn't work with network and network_cleartext, there isn't really a reason why you would want this anyway
-  - name: check if we are running on a dinosaur, neanderthal or an OS of the modern age
-    win_shell: |
-      $version = [System.Environment]::OSVersion.Version
-      if ($version -lt [Version]"6.1") {
-          "dinosaur"
-      } elseif ($version -lt [Version]"6.2") {
-          "neanderthal"
-      } else {
-          "False"
-      }
-    register: os_version
-
-  - name: become different types
-    vars: *become_vars
-    win_whoami:
-    become_flags: logon_type={{item.type}}
-    register: become_logon_type
-    when: not ((item.type == 'network' or item.type == 'network_cleartext') and os_version.stdout_lines[0] == "dinosaur")
-    failed_when: become_logon_type.logon_type != item.actual and become_logon_type.sid != user_limited_result.sid
-    with_items:
-    - type: interactive
-      actual: Interactive
-    - type: batch
-      actual: Batch
-    - type: network
-      actual: Network
-    - type: network_cleartext
-      actual: NetworkCleartext
-
-  - name: become netcredentials with network user
-    vars:
-      ansible_become_user: fakeuser
-      ansible_become_password: fakepassword
-      ansible_become_method: runas
-      ansible_become: True
-      ansible_become_flags: logon_type=new_credentials logon_flags=netcredentials_only
-    win_whoami:
-    register: become_netcredentials
-
-  - name: assert become netcredentials with network user
-    assert:
-      that:
-      # new_credentials still come up as the ansible_user so we can't test that
-      - become_netcredentials.label.account_name == 'High Mandatory Level'
-      - become_netcredentials.label.sid == 'S-1-16-12288'
-
-  - name: become logon_flags bitwise tests when loading the profile
-    # Error code of 2 means no file found == no profile loaded
-    win_shell: |
-      Add-Type -Name "Native" -Namespace "Ansible" -MemberDefinition '[DllImport("Userenv.dll", SetLastError=true)]public static extern bool GetProfileType(out UInt32 pdwFlags);'
-      $profile_type = $null
-      $res = [Ansible.Native]::GetProfileType([ref]$profile_type)
-      if (-not $res) {
-          $last_err = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
-          if ($last_err -eq 2) {
-              return $false
-          } else {
-              throw [System.ComponentModel.Win32Exception]$last_err
-          }
-      } else {
-          return $true
-      }
-    vars: *admin_become_vars
-    become_flags: logon_flags={{item.flags}}
-    register: become_logon_flags
-    failed_when: become_logon_flags.stdout_lines[0]|bool != item.actual
-    when: os_version.stdout_lines[0] not in ["dinosaur", "neanderthal"]  # usual suspect 2008 doesn't support the no profile flags
-    with_items:
-    - flags:
-      actual: False
-    - flags: netcredentials_only
-      actual: False
-    - flags: with_profile,netcredentials_only
-      actual: True
 
   - name: echo some non ascii characters
     win_command: cmd.exe /c echo über den Fußgängerübergang gehen
@@ -348,7 +221,7 @@
     win_user:
       name: "{{ become_test_username }}"
       state: absent
-  
+
   - name: ensure privileged test user is deleted
     win_user:
       name: "{{ become_test_admin_username }}"
@@ -360,7 +233,7 @@
     args:
       executable: cmd.exe
     when: become_test_username in profile_dir_out.stdout_lines[0]
-  
+
   - name: ensure privileged test user profile is deleted
     # NB: have to work around powershell limitation of long filenames until win_file fixes it
     win_shell: rmdir /S /Q {{ admin_profile_dir_out.stdout_lines[0] }}
