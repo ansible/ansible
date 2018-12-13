@@ -30,6 +30,18 @@ class Taggable:
     untagged = frozenset(['untagged'])
     _tags = FieldAttribute(isa='list', default=list, listof=(string_types, int), extend=True)
 
+    def _load_tags(self, attr, ds):
+        if isinstance(ds, list):
+            return ds
+        elif isinstance(ds, string_types):
+            value = ds.split(',')
+            if isinstance(value, list):
+                return [x.strip() for x in value]
+            else:
+                return [ds]
+        else:
+            raise AnsibleError('tags must be specified as a list', obj=ds)
+
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''
 
@@ -37,19 +49,13 @@ class Taggable:
             templar = Templar(loader=self._loader, variables=all_vars)
             tags = templar.template(self.tags)
 
-            if not isinstance(tags, list):
-                if tags.find(',') != -1:
-                    tags = set(tags.split(','))
+            _temp_tags = set()
+            for tag in tags:
+                if isinstance(tag, list):
+                    _temp_tags.update(tag)
                 else:
-                    tags = set([tags])
-            else:
-                _temp_tags = set()
-                for tag in tags:
-                    if isinstance(tag, list):
-                        _temp_tags.update(tag)
-                    else:
-                        _temp_tags.add(tag)
-                tags = _temp_tags
+                    _temp_tags.add(tag)
+            tags = _temp_tags
             self.tags = list(tags)
         else:
             # this makes isdisjoint work for untagged
