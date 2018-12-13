@@ -18,8 +18,6 @@ short_description: Set file/directory/registry permissions for a system user or 
 description:
 - Add or remove rights/permissions for a given user or group for the specified
   file, folder, registry key or AppPool identifies.
-- If adding ACL's for AppPool identities (available since 2.3), the Windows
-  Feature "Web-Scripting-Tools" must be enabled.
 options:
   path:
     description:
@@ -65,6 +63,11 @@ options:
       at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.propagationflags.aspx).
     choices: [ InheritOnly, None, NoPropagateInherit ]
     default: "None"
+notes:
+- If adding ACL's for AppPool identities (available since 2.3), the Windows
+  Feature "Web-Scripting-Tools" must be enabled.
+seealso:
+- module: win_acl_inheritance
 author:
 - Phil Schwartz (@schwartzmx)
 - Trond Hindenes (@trondhindenes)

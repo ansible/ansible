@@ -25,9 +25,9 @@ notes:
     - There are in fact two scheduled tasks for ngen but they have no triggers so aren't a problem.
     - There's no way to test if they've been completed.
     - The stdout is quite likely to be several megabytes.
+options: {}
 author:
 - Peter Mounce (@petemounce)
-options: {}
 '''
 
 EXAMPLES = r'''

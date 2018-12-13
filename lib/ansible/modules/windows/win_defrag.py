@@ -16,6 +16,8 @@ short_description: Consolidate fragmented files on local volumes
 description:
 - Locates and consolidates fragmented files on local volumes to improve system performance.
 - 'More information regarding C(win_defrag) is available from: U(https://technet.microsoft.com/en-us/library/cc731650(v=ws.11).aspx)'
+requirements:
+- defrag.exe
 options:
   include_volumes:
     description:
@@ -39,8 +41,6 @@ options:
     - Run the operation on each volume in parallel in the background.
     type: bool
     default: 'no'
-requirements:
-- defrag.exe
 author:
 - Dag Wieers (@dagwieers)
 '''

@@ -14,9 +14,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: service
-author:
-    - Ansible Core Team
-    - Michael DeHaan
 version_added: "0.1"
 short_description:  Manage services
 description:
@@ -72,6 +69,11 @@ options:
         version_added: 2.2
 notes:
     - For Windows targets, use the M(win_service) module instead.
+seealso:
+- module: win_service
+author:
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''
