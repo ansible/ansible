@@ -296,16 +296,13 @@ if ($gather_subset.Contains("local") -and $factpath -ne $null) {
 if($gather_subset.Contains('memory')) {
     $win32_cs = Get-LazyCimInstance Win32_ComputerSystem
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
-    $win32_pf = Get-LazyCimInstance Win32_PageFileSetting
     $ansible_facts += @{
         # Win32_PhysicalMemory is empty on some virtual platforms
-        ansible_memtotal_mb = ([math]::ceiling($win32_cs.TotalPhysicalMemory / 1024 / 1024))
-        ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024))
-        ansible_memtotal = $win32_cs.TotalPhysicalMemory
-        ansible_swap_min = $win32_pf.InitialSize * 1024 * 1024
-        ansible_swap_max = $win32_pf.MaximumSize * 1024 * 1024
+        ansible_memtotal_mb = ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
+        ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024 / 1024))
     }
 }
+
 
 if($gather_subset.Contains('platform')) {
     $win32_cs = Get-LazyCimInstance Win32_ComputerSystem
