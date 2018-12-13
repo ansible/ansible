@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: utm_ca_host_key_cert
 
-author: 
+author:
     - Stephan Schwarz (@stearz)
 
 short_description: create, update or destroy ca host_key_cert entry in Sophos UTM
@@ -26,7 +26,7 @@ description:
     - Create, update or destroy a ca host_key_cert entry in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -52,6 +52,7 @@ options:
         description:
           - Optionally enable encryption
         default: False
+        type: bool
     key:
         description:
           - Optional private key in PEM format
@@ -67,7 +68,7 @@ EXAMPLES = """
     utm_host: sophos.host.name
     utm_token: abcdefghijklmno1234
     name: TestHostKeyCertEntry
-    ca: REF_ca/signing_ca_OBJECT_STRING 
+    ca: REF_ca/signing_ca_OBJECT_STRING
     meta: REF_ca/meta_x509_OBJECT_STRING
     certificate: |
       --- BEGIN CERTIFICATE ---
@@ -107,7 +108,7 @@ result:
         _locked:
             description: Whether or not the object is currently locked
             type: boolean
-        _type: 
+        _type:
             description: The type of the object
             type: string
         name:
@@ -130,7 +131,7 @@ result:
             type: bool
         key:
             description: Private key in PEM format (may be empty string)
-            type: string            
+            type: string
 """
 
 from ansible.module_utils.utm_utils import UTM, UTMModule
