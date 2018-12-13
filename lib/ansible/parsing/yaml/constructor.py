@@ -123,7 +123,6 @@ class AnsibleConstructor(SafeConstructor):
     def construct_yaml_unsafe(self, node):
         return wrap_var(self.construct_yaml_str(node))
 
-
     def construct_jinja2_expression(self, node):
         value = self.construct_scalar(node)
         ret = AnsibleUnicode(u''.join([u'{{', to_text(value), u'}}']))
