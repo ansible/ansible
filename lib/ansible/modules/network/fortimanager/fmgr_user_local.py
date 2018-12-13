@@ -32,8 +32,8 @@ author:
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
 short_description: Create local users in FortiManager
-description: 
-  - Creating local FGT users via FortiManager Ansible modules 
+description:
+  - Creating local FGT users via FortiManager Ansible modules
 
 options:
   adom:
@@ -84,7 +84,7 @@ options:
   two_factor:
     description:
       - Enable/disable two-factor authentication.
-      - choice | disable | 
+      - choice | disable
       - choice | fortitoken | FortiToken
       - choice | email | Email authentication code.
       - choice | sms | SMS authentication code.
@@ -241,13 +241,10 @@ except ImportError:
 
 
 def fmgr_user_local_addsetdelete(fmg, paramgram):
-    """
-    fmgr_user_local -- Your Description here, bruh
-    """
 
     mode = paramgram["mode"]
     adom = paramgram["adom"]
-     # INIT A BASIC OBJECTS
+
     response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
     url = ""
     datagram = {}
