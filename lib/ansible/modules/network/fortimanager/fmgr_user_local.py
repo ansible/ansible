@@ -25,15 +25,15 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: fmgr_secprof_profile_group
+module: fmgr_user_local
 version_added: "2.8"
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
     - Jim Huber (@p4r4n0y1ng)
-short_description: Manage security profiles within FortiManager
-description:
-  - Manage security profile group which allows you to create a group of security profiles and apply that to a policy.
+short_description: Create local users in FortiManager
+description: 
+  - Creating local FGT users via FortiManager Ansible modules 
 
 options:
   adom:
@@ -44,7 +44,7 @@ options:
 
   host:
     description:
-      - The FortiManager's address.
+      - The FortiManager's Address.
     required: true
 
   username:
@@ -60,122 +60,162 @@ options:
   mode:
     description:
       - Sets one of three modes for managing the object.
-      - Allows use of soft-adds instead of overwriting existing values.
+      - Allows use of soft-adds instead of overwriting existing values
     choices: ['add', 'set', 'delete', 'update']
     required: false
     default: add
 
-  webfilter_profile:
-    type: str
+  workstation:
     description:
-      - Name of an existing Web filter profile.
+      - Name of the remote user workstation, if you want to limit the user to authenticate only from a particular work
+      - station.
     required: false
 
-  waf_profile:
-    type: str
+  type:
     description:
-      - Name of an existing Web application firewall profile.
+      - Authentication method.
+      - choice | password | Password authentication.
+      - choice | radius | RADIUS server authentication.
+      - choice | tacacs+ | TACACS+ server authentication.
+      - choice | ldap | LDAP server authentication.
+    required: false
+    choices: ["password", "radius", "tacacs+", "ldap"]
+
+  two_factor:
+    description:
+      - Enable/disable two-factor authentication.
+      - choice | disable | 
+      - choice | fortitoken | FortiToken
+      - choice | email | Email authentication code.
+      - choice | sms | SMS authentication code.
+    required: false
+    choices: ["disable", "fortitoken", "email", "sms"]
+
+  tacacs_server:
+    description:
+      - Name of TACACS+ server with which the user must authenticate.
     required: false
 
-  voip_profile:
-    type: str
+  status:
     description:
-      - Name of an existing VoIP profile.
+      - Enable/disable allowing the local user to authenticate with the FortiGate unit.
+      - choice | disable | Disable user.
+      - choice | enable | Enable user.
+    required: false
+    choices: ["disable", "enable"]
+
+  sms_server:
+    description:
+      - Send SMS through FortiGuard or other external server.
+      - choice | fortiguard | Send SMS by FortiGuard.
+      - choice | custom | Send SMS by custom server.
+    required: false
+    choices: ["fortiguard", "custom"]
+
+  sms_phone:
+    description:
+      - Two-factor recipient's mobile phone number.
     required: false
 
-  ssl_ssh_profile:
-    type: str
+  sms_custom_server:
     description:
-      - Name of an existing SSL SSH profile.
+      - Two-factor recipient's SMS server.
     required: false
 
-  ssh_filter_profile:
-    type: str
+  radius_server:
     description:
-      - Name of an existing SSH filter profile.
+      - Name of RADIUS server with which the user must authenticate.
     required: false
 
-  spamfilter_profile:
-    type: str
+  ppk_secret:
     description:
-      - Name of an existing Spam filter profile.
+      - IKEv2 Postquantum Preshared Key (ASCII string or hexadecimal encoded with a leading 0x).
     required: false
 
-  profile_protocol_options:
-    type: str
+  ppk_identity:
     description:
-      - Name of an existing Protocol options profile.
+      - IKEv2 Postquantum Preshared Key Identity.
+    required: false
+
+  passwd_policy:
+    description:
+      - Password policy to apply to this user, as defined in config user password-policy.
+    required: false
+
+  passwd:
+    description:
+      - User's password.
     required: false
 
   name:
-    type: str
     description:
-      - Profile group name.
+      - User name.
     required: false
 
-  mms_profile:
-    type: str
+  ldap_server:
     description:
-      - Name of an existing MMS profile.
+      - Name of LDAP server with which the user must authenticate.
     required: false
 
-  ips_sensor:
-    type: str
+  fortitoken:
     description:
-      - Name of an existing IPS sensor.
+      - Two-factor recipient's FortiToken serial number.
     required: false
 
-  icap_profile:
-    type: str
+  email_to:
     description:
-      - Name of an existing ICAP profile.
+      - Two-factor recipient's email address.
     required: false
 
-  dnsfilter_profile:
-    type: str
+  authtimeout:
     description:
-      - Name of an existing DNS filter profile.
+      - Time in minutes before the authentication timeout for a user is reached.
     required: false
 
-  dlp_sensor:
-    type: str
+  auth_concurrent_value:
     description:
-      - Name of an existing DLP sensor.
+      - Maximum number of concurrent logins permitted from the same user.
     required: false
 
-  av_profile:
-    type: str
+  auth_concurrent_override:
     description:
-      - Name of an existing Antivirus profile.
+      - Enable/disable overriding the policy-auth-concurrent under config system global.
+      - choice | disable | Disable auth-concurrent-override.
+      - choice | enable | Enable auth-concurrent-override.
     required: false
-
-  application_list:
-    type: str
-    description:
-      - Name of an existing Application list.
-    required: false
+    choices: ["disable", "enable"]
 
 
 '''
 
 EXAMPLES = '''
-  - name: DELETE Profile
-    fmgr_secprof_profile_group:
-      host: "{{inventory_hostname}}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      name: "Ansible_TEST_Profile_Group"
-      mode: "delete"
-
-  - name: CREATE Profile
-    fmgr_secprof_profile_group:
-      host: "{{inventory_hostname}}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      name: "Ansible_TEST_Profile_Group"
-      mode: "set"
-      av_profile: "Ansible_AV_Profile"
-      profile_protocol_options: "default"
+- name: EDIT FMGR_USER_LOCAL
+  fmgr_user_local:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    mode:
+    adom:
+    workstation:
+    type:
+    two_factor:
+    tacacs_server:
+    status:
+    sms_server:
+    sms_phone:
+    sms_custom_server:
+    radius_server:
+    ppk_secret:
+    ppk_identity:
+    passwd_policy:
+    passwd:
+    name:
+    ldap_server:
+    fortitoken:
+    email_to:
+    authtimeout:
+    auth_concurrent_value:
+    auth_concurrent_override:
 '''
 
 RETURN = """
@@ -200,27 +240,27 @@ except ImportError:
 ###############
 
 
-def fmgr_firewall_profile_group_addsetdelete(fmg, paramgram):
+def fmgr_user_local_addsetdelete(fmg, paramgram):
     """
-    fmgr_firewall_profile_group -- Your Description here, bruh
+    fmgr_user_local -- Your Description here, bruh
     """
 
     mode = paramgram["mode"]
     adom = paramgram["adom"]
+     # INIT A BASIC OBJECTS
+    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
     url = ""
     datagram = {}
 
-    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
-
     # EVAL THE MODE PARAMETER FOR SET OR ADD
     if mode in ['set', 'add', 'update']:
-        url = '/pm/config/adom/{adom}/obj/firewall/profile-group'.format(adom=adom)
+        url = '/pm/config/adom/{adom}/obj/user/local'.format(adom=adom)
         datagram = fmgr_del_none(fmgr_prepare_dict(paramgram))
 
     # EVAL THE MODE PARAMETER FOR DELETE
     elif mode == "delete":
         # SET THE CORRECT URL FOR DELETE
-        url = '/pm/config/adom/{adom}/obj/firewall/profile-group/{name}'.format(adom=adom, name=paramgram["name"])
+        url = '/pm/config/adom/{adom}/obj/user/local/{name}'.format(adom=adom, name=paramgram["name"])
         datagram = {}
 
     # IF MODE = SET -- USE THE 'SET' API CALL MODE
@@ -240,17 +280,15 @@ def fmgr_firewall_profile_group_addsetdelete(fmg, paramgram):
 
 
 # ADDITIONAL COMMON FUNCTIONS
-# FUNCTION/METHOD FOR LOGGING OUT AND ANALYZING ERROR CODES
 def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_fail=True, logout_on_success=False):
     """
     THIS METHOD CONTROLS THE LOGOUT AND ERROR REPORTING AFTER AN METHOD OR FUNCTION RUNS
     """
-
     # VALIDATION ERROR (NO RESULTS, JUST AN EXIT)
     if msg != "NULL" and len(results) == 0:
         try:
             fmg.logout()
-        except BaseException:
+        except:
             pass
         module.fail_json(msg=msg)
 
@@ -259,21 +297,19 @@ def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_
         if msg == "NULL":
             try:
                 msg = results[1]['status']['message']
-            except BaseException:
+            except:
                 msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
 
-            if results[0] not in good_codes:
-                if logout_on_fail:
-                    fmg.logout()
-                    module.fail_json(msg=msg, **results[1])
-                else:
-                    return msg
-            else:
-                if logout_on_success:
-                    fmg.logout()
-                    module.exit_json(msg=msg, **results[1])
-                else:
-                    return msg
+        if results[0] not in good_codes:
+            if logout_on_fail:
+                fmg.logout()
+                module.fail_json(msg=msg, **results[1])
+        else:
+            if logout_on_success:
+                fmg.logout()
+                module.exit_json(msg="API Called worked, but logout handler has been asked to logout on success",
+                                 **results[1])
+    return msg
 
 
 # FUNCTION/METHOD FOR CONVERTING CIDR TO A NETMASK
@@ -352,27 +388,32 @@ def fmgr_split_comma_strings_into_lists(obj):
 
 def main():
     argument_spec = dict(
-        adom=dict(type="str", default="root"),
+        adom=dict(required=False, type="str", default="root"),
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True, required=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True, required=True),
         mode=dict(choices=["add", "set", "delete", "update"], type="str", default="add"),
 
-        webfilter_profile=dict(required=False, type="str"),
-        waf_profile=dict(required=False, type="str"),
-        voip_profile=dict(required=False, type="str"),
-        ssl_ssh_profile=dict(required=False, type="str"),
-        ssh_filter_profile=dict(required=False, type="str"),
-        spamfilter_profile=dict(required=False, type="str"),
-        profile_protocol_options=dict(required=False, type="str"),
+        workstation=dict(required=False, type="str"),
+        type=dict(required=False, type="str", choices=["password", "radius", "tacacs+", "ldap"]),
+        two_factor=dict(required=False, type="str", choices=["disable", "fortitoken", "email", "sms"]),
+        tacacs_server=dict(required=False, type="str"),
+        status=dict(required=False, type="str", choices=["disable", "enable"]),
+        sms_server=dict(required=False, type="str", choices=["fortiguard", "custom"]),
+        sms_phone=dict(required=False, type="str"),
+        sms_custom_server=dict(required=False, type="str"),
+        radius_server=dict(required=False, type="str"),
+        ppk_secret=dict(required=False, type="str", no_log=True),
+        ppk_identity=dict(required=False, type="str"),
+        passwd_policy=dict(required=False, type="str"),
+        passwd=dict(required=False, type="str", no_log=True),
         name=dict(required=False, type="str"),
-        mms_profile=dict(required=False, type="str"),
-        ips_sensor=dict(required=False, type="str"),
-        icap_profile=dict(required=False, type="str"),
-        dnsfilter_profile=dict(required=False, type="str"),
-        dlp_sensor=dict(required=False, type="str"),
-        av_profile=dict(required=False, type="str"),
-        application_list=dict(required=False, type="str"),
+        ldap_server=dict(required=False, type="str"),
+        fortitoken=dict(required=False, type="str"),
+        email_to=dict(required=False, type="str"),
+        authtimeout=dict(required=False, type="int"),
+        auth_concurrent_value=dict(required=False, type="int"),
+        auth_concurrent_override=dict(required=False, type="str", choices=["disable", "enable"]),
 
     )
 
@@ -382,21 +423,26 @@ def main():
     paramgram = {
         "mode": module.params["mode"],
         "adom": module.params["adom"],
-        "webfilter-profile": module.params["webfilter_profile"],
-        "waf-profile": module.params["waf_profile"],
-        "voip-profile": module.params["voip_profile"],
-        "ssl-ssh-profile": module.params["ssl_ssh_profile"],
-        "ssh-filter-profile": module.params["ssh_filter_profile"],
-        "spamfilter-profile": module.params["spamfilter_profile"],
-        "profile-protocol-options": module.params["profile_protocol_options"],
+        "workstation": module.params["workstation"],
+        "type": module.params["type"],
+        "two-factor": module.params["two_factor"],
+        "tacacs+-server": module.params["tacacs_server"],
+        "status": module.params["status"],
+        "sms-server": module.params["sms_server"],
+        "sms-phone": module.params["sms_phone"],
+        "sms-custom-server": module.params["sms_custom_server"],
+        "radius-server": module.params["radius_server"],
+        "ppk-secret": module.params["ppk_secret"],
+        "ppk-identity": module.params["ppk_identity"],
+        "passwd-policy": module.params["passwd_policy"],
+        "passwd": module.params["passwd"],
         "name": module.params["name"],
-        "mms-profile": module.params["mms_profile"],
-        "ips-sensor": module.params["ips_sensor"],
-        "icap-profile": module.params["icap_profile"],
-        "dnsfilter-profile": module.params["dnsfilter_profile"],
-        "dlp-sensor": module.params["dlp_sensor"],
-        "av-profile": module.params["av_profile"],
-        "application-list": module.params["application_list"],
+        "ldap-server": module.params["ldap_server"],
+        "fortitoken": module.params["fortitoken"],
+        "email-to": module.params["email_to"],
+        "authtimeout": module.params["authtimeout"],
+        "auth-concurrent-value": module.params["auth_concurrent_value"],
+        "auth-concurrent-override": module.params["auth_concurrent_override"],
 
     }
 
@@ -414,7 +460,7 @@ def main():
     if response[1]['status']['code'] != 0:
         module.fail_json(msg="Connection to FortiManager Failed")
 
-    results = fmgr_firewall_profile_group_addsetdelete(fmg, paramgram)
+    results = fmgr_user_local_addsetdelete(fmg, paramgram)
     if results[0] != 0:
         fmgr_logout(fmg, module, results=results, good_codes=[0])
 

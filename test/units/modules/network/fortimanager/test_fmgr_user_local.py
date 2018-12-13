@@ -23,7 +23,7 @@ from pyFMG.fortimgr import FortiManager
 import pytest
 
 try:
-    from ansible.modules.network.fortimanager import fmgr_secprof_profile_group
+    from ansible.modules.network.fortimanager import fmgr_user_local
 except ImportError:
     pytest.skip("Could not load required modules for testing", allow_module_level=True)
 
@@ -31,8 +31,8 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(
-        filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') \
+                   + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -47,54 +47,62 @@ def fixture_data(request):
     return request.param.get(func_name, None)
 
 
-def test_fmgr_firewall_profile_group_addsetdelete(fixture_data, mocker):
+def test_fmgr_user_local_addsetdelete(fixture_data, mocker):
     mocker.patch("pyFMG.fortimgr.FortiManager._post_request", side_effect=fixture_data)
     #  Fixture sets used:###########################
 
     ##################################################
-    # ssl-ssh-profile: None
-    # waf-profile: None
+    # ppk-secret: None
+    # ppk-identity: None
+    # auth-concurrent-override: None
+    # email-to: None
+    # passwd-policy: None
+    # sms-custom-server: None
+    # two-factor: disable
+    # ldap-server: None
+    # radius-server: None
+    # tacacs+-server: None
+    # type: password
+    # sms-phone: None
+    # status: enable
+    # sms-server: None
     # adom: root
-    # webfilter-profile: None
-    # profile-protocol-options: None
-    # application-list: None
-    # icap-profile: None
-    # voip-profile: None
-    # ips-sensor: None
-    # dnsfilter-profile: None
-    # av-profile: None
-    # spamfilter-profile: None
-    # dlp-sensor: None
-    # mode: delete
-    # ssh-filter-profile: None
-    # mms-profile: None
-    # name: Ansible_TEST_Profile_Group
+    # passwd: test
+    # name: John Smith
+    # workstation: None
+    # fortitoken: None
+    # authtimeout: None
+    # mode: add
+    # auth-concurrent-value: None
     ##################################################
     ##################################################
-    # ssl-ssh-profile: None
-    # application-list: None
-    # waf-profile: None
+    # ppk-secret: None
+    # ppk-identity: None
+    # auth-concurrent-override: None
+    # email-to: None
+    # passwd-policy: None
+    # sms-custom-server: None
+    # two-factor: disable
+    # ldap-server: None
+    # radius-server: None
+    # tacacs+-server: None
+    # type: password
+    # sms-phone: None
+    # status: enable
+    # sms-server: None
     # adom: root
-    # webfilter-profile: None
-    # ips-sensor: None
-    # spamfilter-profile: None
-    # icap-profile: None
-    # dnsfilter-profile: None
-    # name: Ansible_TEST_Profile_Group
-    # voip-profile: None
-    # av-profile: Ansible_AV_Profile
+    # passwd: test
+    # name: Jane Doe
+    # workstation: None
+    # fortitoken: None
+    # authtimeout: None
     # mode: set
-    # dlp-sensor: None
-    # mms-profile: None
-    # ssh-filter-profile: None
-    # profile-protocol-options: default
+    # auth-concurrent-value: None
     ##################################################
 
     # Test using fixture 1 #
-    output = fmgr_secprof_profile_group.fmgr_firewall_profile_group_addsetdelete(fmg_instance,
-                                                                                 fixture_data[0]['paramgram_used'])
+    output = fmgr_user_local.fmgr_user_local_addsetdelete(fmg_instance, fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
     # Test using fixture 2 #
-    output = fmgr_secprof_profile_group.fmgr_firewall_profile_group_addsetdelete(fmg_instance,
-                                                                                 fixture_data[1]['paramgram_used'])
+    output = fmgr_user_local.fmgr_user_local_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
