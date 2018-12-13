@@ -40,12 +40,12 @@ class UTMUtilsTest(unittest.TestCase):
     def test_combine_headers_returns_only_default(self):
         default_headers = {"Accept": "application/json", "Content-type": "application/json"}
         module = FakeModule(params={'name': 'FakeName'})
-        result = UTM(module, None)._combine_headers()
+        result = UTM(module, "endpoint", None)._combine_headers()
         assert result.assertDictEqual(default_headers)
 
     def test_combine_headers_returns_combined(self):
         default_headers = {"Accept": "application/json", "Content-type": "application/json",
                            "extraHeader": "extraHeaderValue"}
         module = FakeModule(params={'name': 'FakeName', "headers": {"extraHeader": "extraHeaderValue"}})
-        result = UTM(module, None)._combine_headers()
+        result = UTM(module, "endpoint", None)._combine_headers()
         assert result.assertDictEqual(default_headers)
