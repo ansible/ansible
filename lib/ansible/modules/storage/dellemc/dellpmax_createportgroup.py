@@ -75,7 +75,6 @@ EXAMPLES = '''
     universion: "90"
     user: smc
     verifycert: false
-    
   tasks:
       dellpmax_createportgroup:
              unispherehost: "{{unispherehost}}"

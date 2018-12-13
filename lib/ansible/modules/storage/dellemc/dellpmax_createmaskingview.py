@@ -44,7 +44,7 @@ options:
     required: true
   compliancealerts:
     description:
-      - "Boolean, sets a flag to alert on storage group compliance with 
+      - "Boolean, sets a flag to alert on storage group compliance with
       service level"
     type: bool
     required: false
@@ -119,7 +119,7 @@ def main():
             host_or_cluster=dict(type='str', required=True),
             portgroup_id=dict(type='str', required=True),
             maskingview_name=dict(type='str', required=True),
-            compliancealterts=dict(type='bool',required=False)
+            compliancealterts=dict(type='bool', required=False)
 
         )
     )
@@ -146,7 +146,6 @@ def main():
     dellemc = conn.provisioning
 
     # Make REST call to Unisphere Server and execute create storage group
-
 
     # Compile a list of existing stroage groups.
 
