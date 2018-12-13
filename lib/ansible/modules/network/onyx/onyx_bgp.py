@@ -98,7 +98,7 @@ class OnyxBgpModule(BaseOnyxModule):
         r'^\s+router bgp\s+(\d+).*neighbor\s+(\S+)\s+remote\-as\s+(\S+).*')
     NETWORK_REGEX = re.compile(
         r'^\s+router bgp\s+(\d+).*network\s+(\S+)\s+(\S+).*')
-    __neighbors_purge = False
+    _neighbors_purge = False
 
     def init_module(self):
         """ initialize module
