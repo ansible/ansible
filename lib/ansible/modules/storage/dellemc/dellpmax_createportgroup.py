@@ -42,19 +42,6 @@ options:
       - "Boolean, security check on ssl certificates"
     type: bool
     required: true
-  vol_size:
-    description:
-      - "Integer value for the size of volumes.  All volumes will be created
-      with same size.  Use dellpmax_addvol to add additional volumes if you
-      require different sized volumes once storage group is created."
-    required: true
-  volumeIdentifier:
-    description:
-      - "String up to 64 Characters no special character other than
-      underscore sets a label to make volumes easily identified on hosts can
-      run Dell EMC inq utility command to see this label is  inq -identifier
-      device_name"
-    required: false
   user:
     description:
       - "Unisphere username"
@@ -128,19 +115,6 @@ def main():
         )
     )
     # Make REST call to Unisphere Server and execute create Host
-
-    payload = (
-        {
-            "portGroupId": module.params['portgroup_id'],
-            "symmetrixPortKey": module.params['port_list']
-        }
-    )
-
-    headers = ({
-
-        'Content-Type': 'application/json'
-
-    })
     try:
         import PyU4V
     except:
@@ -162,7 +136,6 @@ def main():
 
     changed = False
 
-
     pglist = dellemc.get_portgroup_list()
 
     if module.params['portgroup_id'] in pglist:
@@ -175,9 +148,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

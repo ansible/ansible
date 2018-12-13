@@ -42,18 +42,11 @@ options:
       - "Boolean, security check on ssl certificates"
     type: bool
     required: true
-  vol_size:
+  compliancealerts:
     description:
-      - "Integer value for the size of volumes.  All volumes will be created
-      with same size.  Use dellpmax_addvol to add additional volumes if you
-      require different sized volumes once storage group is created."
-    required: true
-  volumeIdentifier:
-    description:
-      - "String up to 64 Characters no special character other than
-      underscore sets a label to make volumes easily identified on hosts can
-      run Dell EMC inq utility command to see this label is  inq -identifier
-      device_name"
+      - "Boolean, sets a flag to alert on storage group compliance with 
+      service level"
+    type: bool
     required: false
   user:
     description:
@@ -72,6 +65,7 @@ options:
     description:
       - "32 Character string representing masking view name, name must not
       already be in use"
+
 requirements:
   - Ansible
   - "Unisphere for PowerMax version 9.0 or higher."
@@ -80,7 +74,7 @@ requirements:
 '''
 EXAMPLES = '''
 ---
-- name: "Add volumes to existing storage group"
+- name: "Create a Masking View from existing components"
   connection: local
   hosts: localhost
   vars:
@@ -91,19 +85,19 @@ EXAMPLES = '''
     universion: "90"
     user: smc
     verifycert: false
+
   tasks:
-    - name: Create Masking View for Host Access
-    dellpmax_createmaskingview:
-             unispherehost: "{{unispherehost}}"
-             universion: "{{universion}}"
-             verifycert: "{{verifycert}}"
-             user: "{{user}}"
-             password: "{{password}}"
-             array_id: "{{array_id}}"
-             host_or_cluster: "AnsibleCluster"
-             sgname: "{{sgname}}"
-             portgroup_id: "Ansible_PG"
-             maskingview_name: "MyMaskingView"
+    - name: "Create Masking View for Host Access to storage group volumes"
+      dellpmax_createsg:
+        array_id: "{{array_id}}"
+        password: "{{password}}"
+        unispherehost: "{{unispherehost}}"
+        universion: "{{universion}}"
+        user: "{{user}}"
+        verifycert: "{{verifycert}}"
+        sgname: "{{sgname}}"
+        portgroup_id: "Ansible_PG"
+        maskingview_name: "MyMaskingView"
 '''
 RETURN = r'''
 '''

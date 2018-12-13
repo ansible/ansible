@@ -107,6 +107,7 @@ RETURN = r'''
 '''
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
     changed = False
     # print (changed)
@@ -152,13 +153,11 @@ def main():
     # Setting connection shortcut to Provisioning modules to simplify code
 
     dellemc = conn.provisioning
-
-
     # Check for each host in the host list that it exists, otherwise fail
     # module.
 
     configuredhostlist = dellemc.get_host_list()
-    hostgrouplist=dellemc.get_hostgroup_list()
+    hostgrouplist = dellemc.get_hostgroup_list()
 
     host_exists = True
 
@@ -170,15 +169,13 @@ def main():
                 host_exists = False
 
     if module.params['cluster_name'] not in hostgrouplist and host_exists:
-        dellemc.create_hostgroup(hostgroup_id=module.params['cluster_name']
-                             ,host_list=module.params['host_list'])
+        dellemc.create_hostgroup(hostgroup_id=module.params['cluster_name'],
+                                 host_list=module.params['host_list'])
         changed = True
         module.exit_json(changed=changed)
     else:
         module.fail_json(msg="Cluster Name Already Exists", changed=False)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

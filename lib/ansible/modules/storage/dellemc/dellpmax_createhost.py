@@ -42,19 +42,6 @@ options:
       - "Boolean, security check on ssl certificates"
     type: bool
     required: true
-  vol_size:
-    description:
-      - "Integer value for the size of volumes.  All volumes will be created
-      with same size.  Use dellpmax_addvol to add additional volumes if you
-      require different sized volumes once storage group is created."
-    required: true
-  volumeIdentifier:
-    description:
-      - "String up to 64 Characters no special character other than
-      underscore sets a label to make volumes easily identified on hosts can
-      run Dell EMC inq utility command to see this label is  inq -identifier
-      device_name"
-    required: false
   user:
     description:
       - "Unisphere username"
