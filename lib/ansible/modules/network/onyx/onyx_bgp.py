@@ -49,6 +49,11 @@ options:
       - BGP state.
     default: present
     choices: ['present', 'absent']
+  purge_neighbors:
+    description:
+      - will Purge all neighbors when it is True.
+    type: bool
+    default: false
 """
 
 EXAMPLES = """
@@ -93,6 +98,7 @@ class OnyxBgpModule(BaseOnyxModule):
         r'^\s+router bgp\s+(\d+).*neighbor\s+(\S+)\s+remote\-as\s+(\S+).*')
     NETWORK_REGEX = re.compile(
         r'^\s+router bgp\s+(\d+).*network\s+(\S+)\s+(\S+).*')
+    __neighbors_purge = False
 
     def init_module(self):
         """ initialize module
@@ -108,6 +114,7 @@ class OnyxBgpModule(BaseOnyxModule):
                            options=neighbor_spec),
             networks=dict(type='list', elements='str'),
             state=dict(choices=['present', 'absent'], default='present'),
+            neighbors_purge=dict(default=False, type='bool'),
         )
         argument_spec = dict()
 
@@ -126,6 +133,7 @@ class OnyxBgpModule(BaseOnyxModule):
             neighbors=req_neighbors,
             networks=module_params['networks'])
         neighbors = module_params['neighbors'] or list()
+        self._neighbors_purge = module_params.get('neighbors_purge', False)
         for neighbor_data in neighbors:
             req_neighbors.append(
                 (neighbor_data['neighbor'], neighbor_data['remote_as']))
@@ -197,11 +205,10 @@ class OnyxBgpModule(BaseOnyxModule):
     def _generate_neighbors_cmds(self, as_number, bgp_removed):
         req_neighbors = self._required_config['neighbors']
         curr_neighbors = self._current_config.get('neighbors', [])
-        if not bgp_removed:
+        if self._neighbors_purge:
             for neighbor_data in curr_neighbors:
-                if neighbor_data not in req_neighbors:
-                    (neighbor, remote_as) = neighbor_data
-                    self._commands.append(
+                (neighbor, remote_as) = neighbor_data
+                self._commands.append(
                         'router bgp %s no neighbor %s remote-as %s' %
                         (as_number, neighbor, remote_as))
 
