@@ -17,9 +17,10 @@ module: aci_fabric_node
 short_description: Manage Fabric Node Members (fabric:NodeIdentP)
 description:
 - Manage Fabric Node Members on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(fabric:NodeIdentP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fabric:NodeIdentP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

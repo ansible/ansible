@@ -20,8 +20,10 @@ description:
 notes:
 - When using the module please select the appropriate link_aggregation_type (lag_type).
   C(link) for Port Channel(PC), C(node) for Virtual Port Channel(VPC) and C(leaf) for Leaf Access Port Policy Group.
-- More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
