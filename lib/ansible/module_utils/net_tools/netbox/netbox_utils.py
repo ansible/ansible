@@ -7,49 +7,49 @@ __metaclass__ = type
 
 API_APPS_ENDPOINTS = dict(
     circuits=[],
-    dcim=['device_roles', 'device_types', 'devices', 'interfaces', 'platforms', 'racks', 'sites'],
+    dcim=["device_roles", "device_types", "devices", "interfaces", "platforms", "racks", "sites"],
     extras=[],
-    ipam=['ip_addresses', 'prefixes', 'vrfs'],
+    ipam=["ip_addresses", "prefixes", "vrfs"],
     secrets=[],
-    tenancy=['tenants', 'tenant_groups'],
-    virtualization=['clusters']
+    tenancy=["tenants", "tenant_groups"],
+    virtualization=["clusters"]
 )
 
 QUERY_TYPES = dict(
-    cluster='name',
-    device_role='slug',
-    device_type='slug',
-    manufacturer='slug',
-    nat_inside='address',
-    nat_outside='address',
-    platform='slug',
-    primary_ip='address',
-    primary_ip4='address',
-    primary_ip6='address',
-    rack='slug',
-    region='slug',
-    site='slug',
-    tenant='slug',
-    tenant_group='slug',
-    vrf='name'
+    cluster="name",
+    device_role="slug",
+    device_type="slug",
+    manufacturer="slug",
+    nat_inside="address",
+    nat_outside="address",
+    platform="slug",
+    primary_ip="address",
+    primary_ip4="address",
+    primary_ip6="address",
+    rack="slug",
+    region="slug",
+    site="slug",
+    tenant="slug",
+    tenant_group="slug",
+    vrf="name"
 )
 
 CONVERT_TO_ID = dict(
-    cluster='clusters',
-    device_role='device_roles',
-    device_type='device_types',
-    interface='interfaces',
-    nat_inside='ip_addresses',
-    nat_outside='ip_addresses',
-    platform='platforms',
-    primary_ip='ip_addresses',
-    primary_ip4='ip_addresses',
-    primary_ip6='ip_addresses',
-    rack='racks',
-    site='sites',
-    tenant='tenants',
-    tenant_group='tenant_groups',
-    vrf='vrfs'
+    cluster="clusters",
+    device_role="device_roles",
+    device_type="device_types",
+    interface="interfaces",
+    nat_inside="ip_addresses",
+    nat_outside="ip_addresses",
+    platform="platforms",
+    primary_ip="ip_addresses",
+    primary_ip4="ip_addresses",
+    primary_ip6="ip_addresses",
+    rack="racks",
+    site="sites",
+    tenant="tenants",
+    tenant_group="tenant_groups",
+    vrf="vrfs"
 )
 
 FACE_ID = dict(
@@ -58,9 +58,12 @@ FACE_ID = dict(
 )
 
 NO_DEFAULT_ID = set([
-    'primary_ip',
-    'primary_ip4',
-    'primary_ip6'
+    "primary_ip",
+    "primary_ip4",
+    "primary_ip6",
+    "vrf",
+    "nat_inside",
+    "nat_outside"
 ])
 
 DEVICE_STATUS = dict(
@@ -120,14 +123,27 @@ def find_ids(nb, data):
             nb_app = getattr(nb, app)
             nb_endpoint = getattr(nb_app, endpoint)
 
-            query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
+            if k == "interface":
+                query_id = nb_endpoint.get(**{"name": v["name"], "device": v["device"]})
+            elif k == "nat_inside":
+                if v.get("vrf"):
+                    vrf_id = nb.ipam.vrfs.get(**{"name": v["vrf"]})
+                    query_id = nb_endpoint.get(**{"address": v["address"], "vrf_id": vrf_id.id})
+                else:
+                    try:
+                        query_id = nb_endpoint.get(**{"address": v["address"]})
+                    except ValueError:
+                        return {"failed": "Multiple results found while searching for %s: %s - Specify a VRF within %s" % (k, v["address"], k)}
+            else:
+                query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
 
-            if k in NO_DEFAULT_ID:
-                pass
-            elif query_id:
+            if query_id:
                 data[k] = query_id.id
+            elif k in NO_DEFAULT_ID:
+                pass
             else:
                 data[k] = 1
+
     return data
 
 
