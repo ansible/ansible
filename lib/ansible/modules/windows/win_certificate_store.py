@@ -119,7 +119,7 @@ notes:
   restrictions.
 - The certificates must be located on the Windows host to be set with I(path).
 - When importing a certificate for usage in IIS, it is generally required
-  to use the C(machine) key_storage option, as both C(default) and C(user) 
+  to use the C(machine) key_storage option, as both C(default) and C(user)
   will make the private key unreadable to IIS APPPOOL identities and prevent
   binding the certificate to the https endpoint.
 author:
@@ -181,10 +181,10 @@ EXAMPLES = r'''
   become: yes
   become_method: runas
   become_user: SYSTEM
-  
+
 - name: import certificate be used by IIS
   win_certificate_store:
-    path: C:\Temp\cert.pfx    
+    path: C:\Temp\cert.pfx
     file_type: pkcs12
     password: StrongPassword!
     key_exportable: yes
