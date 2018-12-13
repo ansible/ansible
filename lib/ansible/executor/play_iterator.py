@@ -190,7 +190,7 @@ class PlayIterator:
 
         self._host_states = {}
         start_at_matched = False
-        batch = inventory.get_hosts(self._play.hosts)
+        batch = inventory.get_hosts(self._play.hosts, order=self._play.order)
         self.batch_size = len(batch)
         for host in batch:
             self._host_states[host.name] = HostState(blocks=self._blocks)
