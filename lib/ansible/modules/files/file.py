@@ -173,8 +173,87 @@ EXAMPLES = '''
     modification_time: now
     access_time: now
 '''
-RETURN = '''
 
+RETURN = r'''
+changed:
+  description: Indicates if the task reported a change
+  returned:
+  type: boolean
+  sample: true
+dest: 
+  description: Path to the file being managed
+  returned:
+  type: string
+  sample: /tmp/passwd
+diff:
+  after:
+    path: 
+      description: Path to the file being managed
+      returned:
+      type: string
+      sample: /tmp/passwd
+    state:
+      description: State of dest after change
+      returned:
+      type: string
+      sample: link
+  before:
+    path: 
+      description: Path to the file being managed
+      returned:
+      type: string
+      sample: /tmp/passwd
+    state: 
+      description: State of dest before change
+      returned:
+      type: string
+      sample: absent
+failed: 
+  description: Indicates if the task failed
+  returned:
+  type: boolean
+  sample: false
+gid: 
+  description: Numeric gid
+  returned: 
+  type: integer
+  sample: 200
+group: 
+  description: Textual gid
+  returned:
+  type: string
+  sample: appusers
+mode: 
+  description: mode of dest
+  returned:
+  type: string
+  sample: '0777'
+owner: bcarroll
+secontext: 
+  description: 
+  returned:
+  type: string
+  sample: unconfined_u:object_r:user_tmp_t:s0
+size: 
+  description: Size of dest
+  returned:
+  type: integer
+  sample: 11
+src: 
+  description: Path to the source file
+  returned:
+  type: string
+  sample: /etc/passwd 
+state: 
+  description: State of dest after task runs (absent, directory, file, hard, link)
+  returned:
+  type: string
+  sample: link
+uid: 
+  description: Numeric uid
+  returned:
+  type: string
+  sample: 200
 '''
 
 import errno
