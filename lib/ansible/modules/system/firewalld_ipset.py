@@ -3,6 +3,10 @@
 # Copyright: (c) 2018, [rwaweber]
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -35,7 +39,18 @@ options:
         Typical usage with ips or mac addresses will use either a "hash:ip"
         or "hash:mac" option.
     required: True
-    choices: [ "hash:ip", "hash:ip,port", "hash:ip,port,ip", "hash:ip,port,net", "hash:ip,mark", "hash:net", "hash:net,net", "hash:net,port", "hash:net,port,net", "hash:net,iface", "hash:mac" ]
+    choices:
+      - "hash:ip"
+      - "hash:ip,port"
+      - "hash:ip,port,ip"
+      - "hash:ip,port,net"
+      - "hash:ip,mark"
+      - "hash:net"
+      - "hash:net,net"
+      - "hash:net,port"
+      - "hash:net,port,net"
+      - "hash:net,iface"
+      - "hash:mac"
   state:
     description: The desired state of the ipset
     required: True
@@ -154,6 +169,7 @@ firewalld_ipset_addresses:
   sample: [ "8.8.8.8", "1.1.1.1", "8.8.7.7" ]
 '''
 
+
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -164,11 +180,13 @@ except ImportError:
     # FirewallTransaction?
     pass
 
+
 def firewalld_state(client, indata):
     if indata['immediate']:
         client.reload()
     if indata['permanent']:
         client.runtimeToPermanent()
+
 
 def run():
     module_args = dict(
@@ -240,8 +258,10 @@ def run():
 
     module.exit_json(**result)
 
+
 def main():
     run()
+
 
 if __name__ == '__main__':
     main()
