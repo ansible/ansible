@@ -17,9 +17,10 @@ module: aci_access_port_block_to_access_port
 short_description: Manage port blocks of Fabric interface policy leaf profile interface selectors (infra:HPortS, infra:PortBlk)
 description:
 - Manage port blocks of Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC classes B(infra:HPortS) and B(infra:PortBlk) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/)
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:HPortS) and B(infra:PortBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Simon Metzger (@smnmtzgr)
 version_added: '2.8'

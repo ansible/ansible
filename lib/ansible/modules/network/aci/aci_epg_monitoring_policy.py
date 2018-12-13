@@ -19,8 +19,11 @@ description:
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(mon:EPGPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(mon:EPGPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'

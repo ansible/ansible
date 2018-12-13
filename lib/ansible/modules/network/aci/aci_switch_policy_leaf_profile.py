@@ -17,9 +17,11 @@ module: aci_switch_policy_leaf_profile
 short_description: Manage switch policy leaf profiles (infra:NodeP)
 description:
 - Manage switch policy leaf profiles on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(infra:NodeP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_switch_policy_leaf_profile
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:NodeP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
