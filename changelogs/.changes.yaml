@@ -656,3 +656,49 @@ releases:
     - powershell-bootstrap.yaml
     - v2.7.4_summary.yaml
     release_date: '2018-11-30'
+  2.7.5:
+    codename: In the Light
+    fragments:
+    - 33239-sensu-expire-cast-int.yaml
+    - 45122-fix-unarchive-excluded_files.yaml
+    - 45155-vmware-handle_exception.yaml
+    - 45155-vmware_host_service_facts-update_docs.yaml
+    - 46604-ontap-cifs-server-no-log-password.yaml
+    - 46740-gcp-utils-credentials-scoping.yaml
+    - 47019-mail-fix-py27-regression.yaml
+    - 47313-vmware-fix_module_error.yaml
+    - 48728-win_nssm-credential-quoting.yml
+    - 48730-zabbix_hostmacro-fixes.yml
+    - 48792-templar-fix-AttributeError.yml
+    - 48950-vault-encrypted-data-native-jinja.yaml
+    - 49096-ansible-galaxy-fix_info_typo.yaml
+    - 49113-iam-role-arn-parsing-updated.yml
+    - 49123-backport-devuan-support.yml
+    - 49212-require-git-ansible-galaxy.yaml
+    - 49235-docker_swarm_service-user-default.yaml
+    - 49266-acme-error-messages.yml
+    - 49299-openshift-inventory-plugin-empty-pods-and-serialization.yaml
+    - 49394_azure_image.yml
+    - 49407-acme-disabled-accounts.yml
+    - 49474-network_utils_dict_merge_fix.yaml
+    - 49553-aci_rest-fix-ignoring-custom-port.yaml
+    - avoid_ssh_retry_discolsures.yml
+    - azure_rm_subnet_route_table.yaml
+    - clear_system_variablse.yml
+    - detect_interpreter_stdout.yml
+    - dnf-fix-plugin-loading.yaml
+    - docker-swarm-min-ver.yaml
+    - iosxr_netconf_plugin_fix.yaml
+    - jinja2_native-fallback-warning.yaml
+    - nxos_facts_multiple_bugfixes.yaml
+    - nxos_install_os_nxapi_fix.yaml
+    - nxos_interface_linkagg_idempotence.yaml
+    - openstack-fixes-for-2.7.5.yaml
+    - ovirt_storage_connection_password-comparison.yaml
+    - parimko_ssh-log-message.yaml
+    - reboot-fix-exception-type.yaml
+    - redis-3-compat.yaml
+    - squash-deprecation-message.yml
+    - v2.7.5_summary.yaml
+    - vm_fix.yml
+    release_date: '2018-12-13'

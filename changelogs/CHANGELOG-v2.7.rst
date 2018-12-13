@@ -5,6 +5,73 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.5
+======
+
+Release Summary
+---------------
+
+| Release Date: 2018-12-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add warning about falling back to jinja2_native=false when Jinja2 version is lower than 2.10.
+- Change the position to search os-release since clearlinux new versions are providing /etc/os-release too
+- Fixed typo in ansible-galaxy info command.
+- Improve the deprecation message for squashing, to not give misleading advice
+- Update docs and return section of vmware_host_service_facts module.
+- ansible-galaxy: properly warn when git isn't found in an installed bin path instead of traceback
+- dnf module properly load and initialize dnf package manager plugins
+- docker_swarm_service: use docker defaults for the ``user`` parameter if it is set to ``null``
+
+Bugfixes
+--------
+
+- ACME modules: improve error messages in some cases (include error returned by server).
+- Added unit test for VMware module_utils.
+- Also check stdout for interpreter errors for more intelligent messages to user
+- Backported support for Devuan-based distribution
+- Convert hostvars data in OpenShift inventory plugin to be serializable by ansible-inventory
+- Fix AttributeError (Python 3 only) when an exception occurs while rendering a template
+- Fix N3K power supply facts (https://github.com/ansible/ansible/pull/49150).
+- Fix NameError nxos_facts (https://github.com/ansible/ansible/pull/48981).
+- Fix VMware module utils for self usage.
+- Fix error in OpenShift inventory plugin when a pod has errored and is empty
+- Fix if the route table changed to none (https://github.com/ansible/ansible/pull/49533)
+- Fix iosxr netconf plugin response namespace (https://github.com/ansible/ansible/pull/49300)
+- Fix issues with nxos_install_os module for nxapi (https://github.com/ansible/ansible/pull/48811).
+- Fix lldp and cdp neighbors information (https://github.com/ansible/ansible/pull/48318)(https://github.com/ansible/ansible/pull/48087)(https://github.com/ansible/ansible/pull/49024).
+- Fix nxos_interface and nxos_linkagg Idempotence issue (https://github.com/ansible/ansible/pull/46437).
+- Fix traceback when updating facts and the fact cache plugin was nonfunctional
+- Fix using vault encrypted data with jinja2_native (https://github.com/ansible/ansible/issues/48950)
+- Fixed: Make sure that the files excluded when extracting the archive are not checked. https://github.com/ansible/ansible/pull/45122
+- Fixes issue where a password parameter was not set to no_log
+- Respect no_log on retry and high verbosity (CVE-2018-16876)
+- aci_rest - Fix issue ignoring custom port
+- acme_account, acme_account_facts - in some cases, it could happen that the modules return information on disabled accounts accidentally returned by the ACME server.
+- docker_swarm - decreased minimal required API version from 1.35 to 1.25; some features require API version 1.30 though.
+- docker_swarm_service: fails because of default "user: root" (https://github.com/ansible/ansible/issues/49199)
+- ec2_metadata_facts - Parse IAM role name from the security credential field since the instance profile name is different
+- fix azure_rm_image module use positional parameter (https://github.com/ansible/ansible/pull/49394)
+- fixes an issue with dict_merge in network utils (https://github.com/ansible/ansible/pull/49474)
+- gcp_utils - fix google auth scoping issue with application default credentials or google cloud engine credentials. Only scope credentials that can be scoped.
+- mail - fix python 2.7 regression
+- openstack - fix parameter handling when cloud provided as dict https://github.com/ansible/ansible/issues/42858
+- os_user - Include domain parameter in user deletion https://github.com/ansible/ansible/issues/42901
+- os_user - Include domain parameter in user lookup https://github.com/ansible/ansible/issues/42901
+- ovirt_storage_connection - comparing passwords breaks idempotency in update_check (https://github.com/ansible/ansible/issues/48933)
+- paramiko_ssh - improve log message to state the connection type
+- reboot - use IndexError instead of TypeError in exception
+- redis cache - Support version 3 of the redis python library (https://github.com/ansible/ansible/issues/49341)
+- sensu_silence - Cast int for expire field to avoid call failure to sensu API.
+- vmware_host_service_facts - handle exception when service package does not have package name.
+- win_nssm - Switched to Argv-ToString for escaping NSSM credentials (https://github.com/ansible/ansible/issues/48728)
+- zabbix_hostmacro - Added missing validate_certs logic for running module against Zabbix servers with untrused SSL certificates (https://github.com/ansible/ansible/issues/47611)
+- zabbix_hostmacro - Fixed support for user macros with context (https://github.com/ansible/ansible/issues/46953)
+
 v2.7.4
 ======
 
