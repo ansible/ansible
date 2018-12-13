@@ -60,7 +60,7 @@ foreach ($raw_privilege in $raw_privilege_output) {
     $split = $raw_privilege.TrimEnd() -split " "
     $actual_privileges."$($split[0])" = ($split[-1] -eq "Enabled")
 }
-$process = [Ansible.Privilege.Utils]::GetCurrentProcess()
+$process = [Ansible.Privilege.PrivilegeUtil]::GetCurrentProcess()
 
 ### Test PS cmdlets ###
 # test ps Get-AnsiblePrivilege
@@ -74,7 +74,7 @@ foreach ($privilege in $total_privileges) {
 }
 
 # test c# GetAllPrivilegeInfo
-$actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+$actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
 Assert-Equals -actual $actual.GetType().Name -expected 'Dictionary`2'
 Assert-Equals -actual $actual.Count -expected $actual_privileges.Count
 foreach ($privilege in $total_privileges) {

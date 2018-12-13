@@ -145,75 +145,75 @@ Function Assert-DictionaryEquals {
     }
 }
 
-$process = [Ansible.Privilege.Utils]::GetCurrentProcess()
+$process = [Ansible.Privilege.PrivilegeUtil]::GetCurrentProcess()
 
 $tests = @{
     "Check valid privilege name" = {
-        $actual = [Ansible.Privilege.Utils]::CheckPrivilegeName("SeTcbPrivilege")
+        $actual = [Ansible.Privilege.PrivilegeUtil]::CheckPrivilegeName("SeTcbPrivilege")
         $actual | Assert-Equals -Expected $true
     }
 
     "Check invalid privilege name" = {
-        $actual = [Ansible.Privilege.Utils]::CheckPrivilegeName("SeFake")
+        $actual = [Ansible.Privilege.PrivilegeUtil]::CheckPrivilegeName("SeFake")
         $actual | Assert-Equals -Expected $false
     }
 
     "Disable a privilege" = {
         # Ensure the privilege is enabled at the start
-        [Ansible.Privilege.Utils]::EnablePrivilege($process, "SeTimeZonePrivilege") > $null
+        [Ansible.Privilege.PrivilegeUtil]::EnablePrivilege($process, "SeTimeZonePrivilege") > $null
 
-        $actual = [Ansible.Privilege.Utils]::DisablePrivilege($process, "SeTimeZonePrivilege")
+        $actual = [Ansible.Privilege.PrivilegeUtil]::DisablePrivilege($process, "SeTimeZonePrivilege")
         $actual.GetType().Name | Assert-Equals -Expected 'Dictionary`2'
         $actual.Count | Assert-Equals -Expected 1
         $actual.SeTimeZonePrivilege | Assert-Equals -Expected $true
 
         # Disable again
-        $actual = [Ansible.Privilege.Utils]::DisablePrivilege($process, "SeTimeZonePrivilege")
+        $actual = [Ansible.Privilege.PrivilegeUtil]::DisablePrivilege($process, "SeTimeZonePrivilege")
         $actual.GetType().Name | Assert-Equals -Expected 'Dictionary`2'
         $actual.Count | Assert-Equals -Expected 0
     }
 
     "Enable a privilege" = {
         # Ensure the privilege is disabled at the start
-        [Ansible.Privilege.Utils]::DisablePrivilege($process, "SeTimeZonePrivilege") > $null
+        [Ansible.Privilege.PrivilegeUtil]::DisablePrivilege($process, "SeTimeZonePrivilege") > $null
 
-        $actual = [Ansible.Privilege.Utils]::EnablePrivilege($process, "SeTimeZonePrivilege")
+        $actual = [Ansible.Privilege.PrivilegeUtil]::EnablePrivilege($process, "SeTimeZonePrivilege")
         $actual.GetType().Name | Assert-Equals -Expected 'Dictionary`2'
         $actual.Count | Assert-Equals -Expected 1
         $actual.SeTimeZonePrivilege | Assert-Equals -Expected $false
 
         # Disable again
-        $actual = [Ansible.Privilege.Utils]::EnablePrivilege($process, "SeTimeZonePrivilege")
+        $actual = [Ansible.Privilege.PrivilegeUtil]::EnablePrivilege($process, "SeTimeZonePrivilege")
         $actual.GetType().Name | Assert-Equals -Expected 'Dictionary`2'
         $actual.Count | Assert-Equals -Expected 0
     }
 
     "Disable and revert privileges" = {
-        $current_state = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        $current_state = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
 
-        $previous_state = [Ansible.Privilege.Utils]::DisableAllPrivileges($process)
+        $previous_state = [Ansible.Privilege.PrivilegeUtil]::DisableAllPrivileges($process)
         $previous_state.GetType().Name | Assert-Equals -Expected 'Dictionary`2'
         foreach ($previous_state_entry in $previous_state.GetEnumerator()) {
             $previous_state_entry.Value | Assert-Equals -Expected $true
         }
 
         # Disable again
-        $previous_state2 = [Ansible.Privilege.Utils]::DisableAllPrivileges($process)
+        $previous_state2 = [Ansible.Privilege.PrivilegeUtil]::DisableAllPrivileges($process)
         $previous_state2.Count | Assert-Equals -Expected 0
 
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         foreach ($actual_entry in $actual.GetEnumerator()) {
             $actual_entry.Value -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
         }
 
-        [Ansible.Privilege.Utils]::SetTokenPrivileges($process, $previous_state) > $null
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        [Ansible.Privilege.PrivilegeUtil]::SetTokenPrivileges($process, $previous_state) > $null
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $actual | Assert-DictionaryEquals -Expected $current_state
     }
 
     "Remove a privilege" = {
-        [Ansible.Privilege.Utils]::RemovePrivilege($process, "SeUndockPrivilege") > $null
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        [Ansible.Privilege.PrivilegeUtil]::RemovePrivilege($process, "SeUndockPrivilege") > $null
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $actual.ContainsKey("SeUndockPrivilege") | Assert-Equals -Expected $false
     }
 
@@ -224,15 +224,15 @@ $tests = @{
              SeShutdownPrivilege = $false
              SeIncreaseWorkingSetPrivilege = $false
         }
-        [Ansible.Privilege.Utils]::SetTokenPrivileges($process, $new_state) > $null
-        $check_state = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        [Ansible.Privilege.PrivilegeUtil]::SetTokenPrivileges($process, $new_state) > $null
+        $check_state = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $check_state.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
         $check_state.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
         $check_state.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
 
         # Check that strict = false won't validate privileges not held but activates the ones we want
         $enabler = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $false, "SeTimeZonePrivilege", "SeShutdownPrivilege", "SeTcbPrivilege"
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
@@ -241,13 +241,13 @@ $tests = @{
         # Now verify a no-op enabler will not rever back to disabled
         $enabler2 = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $false, "SeTimeZonePrivilege", "SeShutdownPrivilege", "SeTcbPrivilege"
         $enabler2.Dispose()
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
 
         # Verify that when disposing the object the privileges are reverted
         $enabler.Dispose()
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
         $actual.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
     }
@@ -259,15 +259,15 @@ $tests = @{
              SeShutdownPrivilege = $false
              SeIncreaseWorkingSetPrivilege = $false
         }
-        [Ansible.Privilege.Utils]::SetTokenPrivileges($process, $new_state) > $null
-        $check_state = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        [Ansible.Privilege.PrivilegeUtil]::SetTokenPrivileges($process, $new_state) > $null
+        $check_state = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $check_state.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
         $check_state.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
         $check_state.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
 
         # Check that strict = false won't validate privileges not held but activates the ones we want
         $enabler = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $true, "SeTimeZonePrivilege", "SeShutdownPrivilege"
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
@@ -275,13 +275,13 @@ $tests = @{
         # Now verify a no-op enabler will not rever back to disabled
         $enabler2 = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $true, "SeTimeZonePrivilege", "SeShutdownPrivilege"
         $enabler2.Dispose()
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
 
         # Verify that when disposing the object the privileges are reverted
         $enabler.Dispose()
-        $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        $actual = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
         $actual.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
     }
@@ -299,8 +299,8 @@ $tests = @{
 
     "Test Enabler strict failure" = {
         # Start disabled
-        [Ansible.Privilege.Utils]::DisablePrivilege($process, "SeTimeZonePrivilege") > $null
-        $check_state = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
+        [Ansible.Privilege.PrivilegeUtil]::DisablePrivilege($process, "SeTimeZonePrivilege") > $null
+        $check_state = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process)
         $check_state.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
 
         $failed = $false

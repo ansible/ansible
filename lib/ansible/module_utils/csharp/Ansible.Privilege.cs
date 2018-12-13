@@ -147,13 +147,13 @@ namespace Ansible.Privilege
         {
             if (privileges.Length > 0)
             {
-                process = Utils.GetCurrentProcess();
+                process = PrivilegeUtil.GetCurrentProcess();
                 Dictionary<string, bool?> newState = new Dictionary<string, bool?>();
                 for (int i = 0; i < privileges.Length; i++)
                     newState.Add(privileges[i], true);
                 try
                 {
-                    previousState = Utils.SetTokenPrivileges(process, newState, strict);
+                    previousState = PrivilegeUtil.SetTokenPrivileges(process, newState, strict);
                 }
                 catch (Win32Exception e)
                 {
@@ -166,13 +166,13 @@ namespace Ansible.Privilege
         {
             // disables any privileges that were enabled by this class
             if (previousState != null)
-                Utils.SetTokenPrivileges(process, previousState);
+                PrivilegeUtil.SetTokenPrivileges(process, previousState);
             GC.SuppressFinalize(this);
         }
         ~PrivilegeEnabler() { this.Dispose(); }
     }
 
-    public class Utils
+    public class PrivilegeUtil
     {
         private static readonly UInt32 TOKEN_PRIVILEGES = 3;
 
