@@ -1,0 +1,374 @@
+{
+   "fmgr_user_device_addsetdelete": [
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "user": "test user", 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "alias": "test_device", 
+            "mac": "adlks123123123lk2", 
+            "mode": "set", 
+            "type": "android-phone", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "avatar": null
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "The data is invalid for selected url", 
+               "code": -10
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "The data is invalid for selected url", 
+               "code": -10
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "mode": "set", 
+            "alias": "test_device", 
+            "mac": "adlks123123123lk2", 
+            "avatar": null, 
+            "type": "android-phone", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "user": null
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "avatar": null, 
+            "alias": "test_device", 
+            "mac": null, 
+            "user": null, 
+            "type": null, 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "mode": "set"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "user/device/test_device/ : user device \"test_device\" mac attribute cannot be empty.", 
+               "code": -9998
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "The data is invalid for selected url", 
+               "code": -10
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "user": null, 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "alias": "testdevice", 
+            "mac": "adlks123123123lk2", 
+            "mode": "set", 
+            "type": "android-phone", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "avatar": null
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "mode": "set", 
+            "alias": "testdevice", 
+            "mac": "00:0000 00 00.00", 
+            "avatar": null, 
+            "type": "android-phone", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "user": null
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "The data is invalid for selected url", 
+               "code": -10
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "avatar": null, 
+            "alias": "testdevice", 
+            "mac": "a0:c9:a0:a4:50:bc", 
+            "user": null, 
+            "type": "android-phone", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "mode": "set"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "user": "test user", 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "alias": "testdevice", 
+            "mac": "a0:c9:a0:a4:50:bc", 
+            "mode": "set", 
+            "type": "android-phone", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "avatar": null
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "mode": "set", 
+            "alias": "testdevice", 
+            "mac": "a0:c9:a0:a4:50:bc", 
+            "avatar": null, 
+            "type": "android-phone", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "user": "test user"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "category": "android-device", 
+            "adom": "root", 
+            "master-device": null, 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "tags": null, 
+               "master-device": null, 
+               "mac": null, 
+               "avatar": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "avatar": null, 
+            "alias": "testdevice", 
+            "mac": "a0:c9:a0:a4:50:bc", 
+            "user": "test user", 
+            "type": "android-phone", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "mode": "set"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/pm/config/adom/root/obj/user/device/testdevice"
+         }, 
+         "paramgram_used": {
+            "comment": "Created by Ansible", 
+            "adom": "root", 
+            "master-device": null, 
+            "dynamic_mapping": {
+               "category": null, 
+               "comment": null, 
+               "mac": null, 
+               "avatar": null, 
+               "tags": null, 
+               "master-device": null, 
+               "type": null, 
+               "user": null
+            }, 
+            "mac": "a0:c9:a0:a4:50:bc", 
+            "user": "test user", 
+            "tagging": {
+               "category": null, 
+               "name": null, 
+               "tags": null
+            }, 
+            "category": "android-device", 
+            "alias": "testdevice", 
+            "mode": "delete", 
+            "type": "android-phone", 
+            "avatar": null
+         }, 
+         "post_method": "delete"
+      }
+   ]
+}
