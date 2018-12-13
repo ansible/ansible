@@ -134,11 +134,7 @@ class UTM:
         adds or updates a host object on utm
         """
 
-        default_headers = {"Accept": "application/json", "Content-type": "application/json"}
-        if self.module.params['headers'] is not None:
-            combined_headers = default_headers.update(self.module.params['headers'])
-        else:
-            combined_headers = default_headers
+        combined_headers = self._combine_headers()
 
         is_changed = False
         info, result = self._lookup_entry(self.module, self.request_url)
@@ -164,6 +160,18 @@ class UTM:
                     is_changed = True
                     result = self._clean_result(json.loads(response.read()))
             self.module.exit_json(result=result, changed=is_changed)
+
+    def _combine_headers(self):
+        """
+        This will combine a header default with headers that come from the module declaration
+        :return: A combined headers dict
+        """
+        default_headers = {"Accept": "application/json", "Content-type": "application/json"}
+        if self.module.params['headers'] is not None:
+            combined_headers = default_headers.update(self.module.params['headers'])
+        else:
+            combined_headers = default_headers
+        return combined_headers
 
     def _remove(self):
         """
