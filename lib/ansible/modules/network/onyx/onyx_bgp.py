@@ -49,7 +49,7 @@ options:
       - BGP state.
     default: present
     choices: ['present', 'absent']
-  purge_neighbors:
+  neighbors_purge:
     description:
       - will Purge all neighbors when it is True.
     type: bool
@@ -64,6 +64,7 @@ EXAMPLES = """
     neighbors:
       - remote_as: 321
         neighbor: 10.3.3.4
+    neighbors_purge: True
     state: present
     networks:
       - 172.16.1.0/24
