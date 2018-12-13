@@ -1177,10 +1177,11 @@
     name: "{{ cname }}"
     state: started
     env:
-      TEST1: "val1"
-      TEST2: "val2"
+      TEST1: val1
+      TEST2: val2
       TEST3: "False"
       TEST4: "true"
+      TEST5: "yes"
   register: env_1
 
 - name: env (idempotency)
@@ -1190,8 +1191,9 @@
     name: "{{ cname }}"
     state: started
     env:
-      TEST2: "val2"
-      TEST1: "val1"
+      TEST2: val2
+      TEST1: val1
+      TEST5: "yes"
       TEST3: "False"
       TEST4: "true"
   register: env_2
@@ -1203,7 +1205,7 @@
     name: "{{ cname }}"
     state: started
     env:
-      TEST1: "val1"
+      TEST1: val1
   register: env_3
 
 - name: env (more environment variables)
@@ -1213,8 +1215,8 @@
     name: "{{ cname }}"
     state: started
     env:
-      TEST1: "val1"
-      TEST3: "val3"
+      TEST1: val1
+      TEST3: val3
     force_kill: yes
   register: env_4
 

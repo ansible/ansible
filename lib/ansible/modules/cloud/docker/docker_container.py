@@ -186,7 +186,7 @@ options:
   env:
     description:
       - Dictionary of key,value pairs.
-      - Values must be quoted in order to avoid YAML parsing losing data.
+      - Values which might be parsed as numbers, booleans or other types by the YAML parser must be quoted (e.g. C("true")) in order to avoid data loss.
     type: dict
   env_file:
     version_added: "2.2"
@@ -647,6 +647,8 @@ EXAMPLES = '''
      - "127.0.0.1:8081:9001/udp"
     env:
         SECRET_KEY: "ssssh"
+        # Values which might be parsed as numbers, booleans or other types by the YAML parser need to be quoted
+        BOOLEAN_KEY: "yes"
 
 - name: Container present
   docker_container:
