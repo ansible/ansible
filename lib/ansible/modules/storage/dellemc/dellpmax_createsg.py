@@ -41,9 +41,8 @@ options:
     description:
       - "integer value for the number of volumes. Minimum is 1, module will
       fail if less than one volume is specified or value is 0. If volumes are
-      required of different sizes, additional tasks should be added to 
-      playbooks
-      to use dellpmax_addvolume module"
+      required of different sizes, additional tasks should be added to
+      playbooks to use dellpmax_addvolume module"
     required: true
   sgname:
     description:

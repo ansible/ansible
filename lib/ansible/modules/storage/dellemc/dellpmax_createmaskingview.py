@@ -42,12 +42,6 @@ options:
       - "Boolean, security check on ssl certificates"
     type: bool
     required: true
-  compliancealerts:
-    description:
-      - "Boolean, sets a flag to alert on storage group compliance with
-      service level"
-    type: bool
-    required: false
   user:
     description:
       - "Unisphere username"
@@ -61,6 +55,10 @@ options:
   sgname:
     description:
       - "32 Character string representing storage group name"
+  host_or_cluster:
+    description:
+      - "Host or Cluster Name, Unique 32 Character string representing
+      masking"
   maskingview_name:
     description:
       - "32 Character string representing masking view name, name must not
@@ -106,7 +104,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 def main():
     changed = False
-    # print (changed)
     module = AnsibleModule(
         argument_spec=dict(
             unispherehost=dict(required=True),
@@ -118,9 +115,7 @@ def main():
             sgname=dict(type='str', required=True),
             host_or_cluster=dict(type='str', required=True),
             portgroup_id=dict(type='str', required=True),
-            maskingview_name=dict(type='str', required=True),
-            compliancealterts=dict(type='bool', required=False)
-
+            maskingview_name=dict(type='str', required=True)
         )
     )
     # Make REST call to Unisphere Server and execute create Host
