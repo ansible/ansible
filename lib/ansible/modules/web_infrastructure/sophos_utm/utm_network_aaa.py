@@ -18,16 +18,16 @@ DOCUMENTATION = """
 ---
 module: utm_network_aaa
 
-author: 
+author:
     - Stephan Schwarz (@stearz)
 
 short_description: create, update or destroy network aaa entry in Sophos UTM
 
 description:
-    - Create, update or destroy an network aaa entry in SOPHOS UTM.
+    - Create, update or destroy a network aaa entry in Sophos UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -42,19 +42,21 @@ options:
         description:
           - List of IPv6 addresses
         default: []
-    comment: 
+    comment:
         description:
           - Optional comment string
         default: ""
     resolved:
         description:
-          - Optional boolean  
+          - Optional boolean
         default: false
+        type: bool
     resolved6:
         description:
-          - Optional boolean  
+          - Optional boolean
         default: false
-        
+        type: bool
+
 extends_documentation_fragment:
     - utm
 """
@@ -73,14 +75,14 @@ EXAMPLES = """
     utm_token: abcdefghijklmno1234
     name: TestAAAGroupEntry
     state: absent
-    
+
 - name: Remove UTM network_aaa
   utm_network_aaa:
     utm_host: sophos.host.name
     utm_token: abcdefghijklmno1234
     name: TestAAAGroupEntry
     state: info
-    
+
 """
 
 RETURN = """
@@ -107,14 +109,14 @@ result:
         addresses6:
             description: List of IPv6 addresses
             type: list
-        comment: 
+        comment:
             description: Optional comment string
             type: string
         resolved:
-            description: Optional boolean  
+            description: Optional boolean
             type: boolean
         resolved6:
-            description: Optional boolean 
+            description: Optional boolean
             type: boolean
 """
 
