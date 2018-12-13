@@ -595,13 +595,6 @@ class DocCLI(CLI):
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
                     text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/#stq=%s&stp=1' % item['ref']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                elif 'doc' in item and 'description' in item:
-                    text.append(textwrap.fill(CLI.tty_ify('Ansible documentation [%s]' % item['doc']),
-                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(CLI.tty_ify(item['description']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/%s.html' % item['doc']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
 
             text.append('')
             text.append('')

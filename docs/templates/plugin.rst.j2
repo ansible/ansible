@@ -235,9 +235,6 @@ See Also
 {%   elif item.ref is defined and item.description is defined %}
    :ref:`@{ item.ref }@`
        @{ item.description | rst_ify }@
-{%   elif item.doc is defined and item.description is defined %}
-   :doc:`@{ item.doc }@`
-       @{ item.description | rst_ify }@
 {%   endif %}
 {% endfor %}
 

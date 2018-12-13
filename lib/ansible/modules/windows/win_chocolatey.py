@@ -215,7 +215,7 @@ notes:
   When using verbosity 5 (C(-vvvvv)) the C(stdout) output will include debug output.
 - Some packages, like hotfixes or updates need an interactive user logon in
   order to install. You can use C(become) to achieve this, see
-  :doc:`/user_guide/become`.
+  :ref:`become_windows`.
   Even if you are connecting as local Administrator, using C(become) to
   become Administrator will give you an interactive user logon, see examples
   below.
@@ -238,7 +238,7 @@ seealso:
 - name: Chocolatey packages
   description: An overview of the available Chocolatey packages.
   link: http://chocolatey.org/packages
-- doc: /user_guide/become
+- ref: become_windows
   description: Some packages, like hotfixes or updates need an interactive user logon
     in order to install. You can use C(become) to achieve this.
 author:
