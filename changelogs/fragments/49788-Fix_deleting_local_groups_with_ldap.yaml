@@ -1,3 +1,7 @@
+<<<<<<< Upstream, based on branch 'group_ldap_delete' of https://github.com/t794104/ansible.git
 d---
+=======
+---
+>>>>>>> f493d1a Revert "Wrong EOL"
 bugfixes:
 - "group - Removing a group with 'local' only look local."
