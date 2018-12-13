@@ -31,7 +31,8 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') \
+                   + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -55,7 +56,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: None
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -82,7 +84,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: None
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -109,7 +112,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: None
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -136,7 +140,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: None
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -163,7 +168,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: None
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -190,7 +196,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: None
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -217,7 +224,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: disable
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -244,7 +252,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: disable
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -271,7 +280,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: disable
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -298,7 +308,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: disable
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -325,7 +336,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: disable
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None, 'password': None, 'email': None, 'expiration': None}
+    # guest: {'comment': None, 'name': None, 'mobile-phone': None, 'company': None, 'sponsor': None, 'user-id': None,
+    # 'password': None, 'email': None, 'expiration': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -352,7 +364,8 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # auth-concurrent-override: disable
     # sponsor: None
     # multiple-guest-add: None
-    # guest: {'comment': None, 'sponsor': None, 'expiration': None, 'mobile-phone': None, 'company': None, 'password': None, 'user-id': None, 'email': None, 'name': None}
+    # guest: {'comment': None, 'sponsor': None, 'expiration': None, 'mobile-phone': None, 'company': None,
+    # 'password': None, 'user-id': None, 'email': None, 'name': None}
     # sms-custom-server: None
     # authtimeout: None
     # sso-attribute-value: None
@@ -411,4 +424,3 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # Test using fixture 12 #
     output = fmgr_user_group.fmgr_user_group_addsetdelete(fmg_instance, fixture_data[11]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
-
