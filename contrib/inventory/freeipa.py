@@ -19,6 +19,7 @@
 # - `ipauser`: an unprivileged user account for connecting to the API
 # - `ipapassword`: password for freeipauser
 # - `ipaversion`: specifies the FreeIPA API version, default is 2.228
+# - `ipahostgroup`: specfies the IPA hostgroup to use as the root hostgroup for the Ansible inventory, default is None which uses all hostgroups
 
 from argparse import ArgumentParser
 from distutils.version import LooseVersion
@@ -78,6 +79,12 @@ def parse_args():
         default=None,
         dest="ipaversion",
         help="version of FreeIPA server"
+    )
+    parser.add_argument(
+        '--hostgroup',
+        default=None,
+        dest="hostgroup",
+        help="hostgroup to use as the root of the Ansible inventory"
     )
     return parser.parse_args()
 
@@ -215,6 +222,7 @@ def get_host(
 
 def get_hostgroups(
     ipaconnection,
+    hostgroup=None,
     use_kerberos=False
 ):
     '''
@@ -226,13 +234,22 @@ def get_hostgroups(
     result = {}
 
     if use_kerberos:
-        result = ipaconnection.Command.hostgroup_find(all=True)['result']
+        if hostgroup:
+            result = ipaconnection.Command.hostgroup_find(
+                str(hostgroup).decode('utf-8'),
+                all=True
+            )['result']
+        else:
+            result = ipaconnection.Command.hostgroup_find(
+                all=True
+            )['result']
+
     else:
         # We don't need warnings
         urllib3.disable_warnings()
         result = ipaconnection._request(
             'hostgroup_find',
-            '',
+            hostgroup,
             {'all': True, 'raw': False}
         )['result']
 
@@ -285,9 +302,26 @@ if __name__ == '__main__':
 
     ipaconnection = initialize(use_kerberos)
 
+    # Need to grab this from the env if run from Ansible
+    hostgroup = None
+    if args.hostgroup:
+        hostgroup = args.hostgroup
+    elif 'ipahostgroup' in env:
+        hostgroup = env['ipahostgroup']
+
     if args.host:
         hostvars = get_host(ipaconnection, args.host, use_kerberos)
         print(json.dumps(hostvars, indent=1, sort_keys=True))
     elif args.list:
-        inventory = get_hostgroups(ipaconnection, use_kerberos)
+        if hostgroup:
+            inventory = get_hostgroups(
+                ipaconnection,
+                hostgroup=hostgroup,
+                use_kerberos=use_kerberos
+            )
+        else:
+            inventory = get_hostgroups(
+                ipaconnection,
+                use_kerberos=use_kerberos
+            )
         print(json.dumps(inventory, indent=1, sort_keys=True))
