@@ -231,7 +231,7 @@ $tests = @{
         $check_state.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
 
         # Check that strict = false won't validate privileges not held but activates the ones we want
-        $enabler = New-Object -TypeName Ansible.Privilege.Enabler -ArgumentList $false, "SeTimeZonePrivilege", "SeShutdownPrivilege", "SeTcbPrivilege"
+        $enabler = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $false, "SeTimeZonePrivilege", "SeShutdownPrivilege", "SeTcbPrivilege"
         $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
@@ -239,7 +239,7 @@ $tests = @{
         $actual.ContainsKey("SeTcbPrivilege") | Assert-Equals -Expected $false
 
         # Now verify a no-op enabler will not rever back to disabled
-        $enabler2 = New-Object -TypeName Ansible.Privilege.Enabler -ArgumentList $false, "SeTimeZonePrivilege", "SeShutdownPrivilege", "SeTcbPrivilege"
+        $enabler2 = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $false, "SeTimeZonePrivilege", "SeShutdownPrivilege", "SeTcbPrivilege"
         $enabler2.Dispose()
         $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
@@ -266,14 +266,14 @@ $tests = @{
         $check_state.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
 
         # Check that strict = false won't validate privileges not held but activates the ones we want
-        $enabler = New-Object -TypeName Ansible.Privilege.Enabler -ArgumentList $true, "SeTimeZonePrivilege", "SeShutdownPrivilege"
+        $enabler = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $true, "SeTimeZonePrivilege", "SeShutdownPrivilege"
         $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeShutdownPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
         $actual.SeIncreaseWorkingSetPrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected 0
 
         # Now verify a no-op enabler will not rever back to disabled
-        $enabler2 = New-Object -TypeName Ansible.Privilege.Enabler -ArgumentList $true, "SeTimeZonePrivilege", "SeShutdownPrivilege"
+        $enabler2 = New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $true, "SeTimeZonePrivilege", "SeShutdownPrivilege"
         $enabler2.Dispose()
         $actual = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process)
         $actual.SeTimeZonePrivilege -band [Ansible.Privilege.PrivilegeAttributes]::Enabled | Assert-Equals -Expected ([Ansible.Privilege.PrivilegeAttributes]::Enabled)
@@ -289,7 +289,7 @@ $tests = @{
     "Test Enabler invalid privilege" = {
         $failed = $false
         try {
-            New-Object -TypeName Ansible.Privilege.Enabler -ArgumentList $false, "SeTimeZonePrivilege", "SeFake"
+            New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $false, "SeTimeZonePrivilege", "SeFake"
         } catch {
             $failed = $true
             $_.Exception.InnerException.Message | Assert-Equals -Expected "Failed to enable privilege(s) SeTimeZonePrivilege, SeFake (A specified privilege does not exist, Win32ErrorCode 1313)"
@@ -305,7 +305,7 @@ $tests = @{
 
         $failed = $false
         try {
-            New-Object -TypeName Ansible.Privilege.Enabler -ArgumentList $true, "SeTimeZonePrivilege", "SeTcbPrivilege"
+            New-Object -TypeName Ansible.Privilege.PrivilegeEnabler -ArgumentList $true, "SeTimeZonePrivilege", "SeTcbPrivilege"
         } catch {
             $failed = $true
             $_.Exception.InnerException.Message | Assert-Equals -Expected "Failed to enable privilege(s) SeTimeZonePrivilege, SeTcbPrivilege (Not all privileges or groups referenced are assigned to the caller, Win32ErrorCode 1300)"

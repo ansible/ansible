@@ -133,7 +133,7 @@ namespace Ansible.Privilege
         UsedForAccess = 0x80000000,
     }
 
-    public class Enabler : IDisposable
+    public class PrivilegeEnabler : IDisposable
     {
         private SafeHandle process;
         private Dictionary<string, bool?> previousState;
@@ -143,7 +143,7 @@ namespace Ansible.Privilege
         /// </summary>
         /// <param name="strict">Whether to fail if any privilege failed to be enabled, if false then this will continue silently</param>
         /// <param name="privileges">A list of privileges to enable</param>
-        public Enabler(bool strict, params string[] privileges)
+        public PrivilegeEnabler(bool strict, params string[] privileges)
         {
             if (privileges.Length > 0)
             {
@@ -169,7 +169,7 @@ namespace Ansible.Privilege
                 Utils.SetTokenPrivileges(process, previousState);
             GC.SuppressFinalize(this);
         }
-        ~Enabler() { this.Dispose(); }
+        ~PrivilegeEnabler() { this.Dispose(); }
     }
 
     public class Utils
