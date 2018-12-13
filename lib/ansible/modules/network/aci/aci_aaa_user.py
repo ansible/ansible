@@ -22,13 +22,16 @@ notes:
   (even if that password was already set identically). This
   appears to be an inconsistency wrt. the idempotent nature
   of the APIC REST API. The vendor has been informed.
-- More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- More information about the internal APIC class B(aaa:User) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+seealso:
+- module: aci_aaa_user_certificate
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(aaa:User).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 requirements:
-  - python-dateutil
+- python-dateutil
 version_added: '2.5'
 options:
   aaa_password:

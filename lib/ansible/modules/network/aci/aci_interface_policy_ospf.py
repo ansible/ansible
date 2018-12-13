@@ -17,9 +17,10 @@ module: aci_interface_policy_ospf
 short_description: Manage OSPF interface policies (ospf:IfPol)
 description:
 - Manage OSPF interface policies on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(ospf:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(ospf:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.7'

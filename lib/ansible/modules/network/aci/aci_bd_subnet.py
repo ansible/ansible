@@ -24,6 +24,9 @@ notes:
 seealso:
 - module: aci_bd
 - module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Subnet).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'

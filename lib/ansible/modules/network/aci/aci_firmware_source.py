@@ -20,9 +20,10 @@ description:
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
-notes:
-- More information about the internal APIC class B(firmware:OSource) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(firmware:OSource).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 options:
   source:
     description:
