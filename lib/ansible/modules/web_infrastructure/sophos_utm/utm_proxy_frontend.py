@@ -17,16 +17,16 @@ DOCUMENTATION = """
 ---
 module: utm_proxy_frontend
 
-author: 
+author:
     - Johannes Brunswicker (@MatrixCrawler)
 
 short_description: create, update or destroy reverse_proxy frontend entry in Sophos UTM
 
 description:
-    - Create, update or destroy a reverse_proxy frontend entry in SOPHOS UTM.
+    - Create, update or destroy a reverse_proxy frontend entry in Sophos UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -35,7 +35,8 @@ options:
         required: true
     add_content_type_header :
         description:
-          - whether to add he content type header or not 
+          - Whether to add the content type header or not
+        type: bool
         default: False
     address:
         description:
@@ -56,6 +57,7 @@ options:
     disable_compression:
         description:
           - Whether to enable the compression
+        type: bool
         default: False
     domain:
         description:
@@ -66,19 +68,22 @@ options:
         default: []
     htmlrewrite:
         description:
-          - whether to enable html rewrite or not
+          - Whether to enable html rewrite or not
+        type: bool
         default: False
     htmlrewrite_cookies:
         description:
-          - whether to enable html rewrite cookie or not
+          - Whether to enable html rewrite cookie or not
+        type: bool
         default: False
     implicitredirect:
         description:
-          - whether to enable implicit redirection or not
+          - Whether to enable implicit redirection or not
+        type: bool
         default: False
     lbmethod:
         description:
-          - which loadbalancer method should be used
+          - Which loadbalancer method should be used
         choices:
           - ""
           - bybusyness
@@ -89,32 +94,35 @@ options:
         description:
           - A list of location ref names (reverse_proxy/location)
         default: []
-    port: 
+    port:
         description:
           - The frontend http port
         default: 80
     preservehost:
         description:
-          - whether to preserve host header
+          - Whether to preserve host header
+        type: bool
         default: False
     profile:
         description:
-          - the reference string of the reverse_proxy/profile
+          - The reference string of the reverse_proxy/profile
         default: ""
     status:
         description:
-          - whether to activate the frontend entry or not
+          - Whether to activate the frontend entry or not
+        type: bool
         default: True
     type:
         description:
-          - which protocol should be used
+          - Which protocol should be used
         choices:
           - http
           - https
         default: http
     xheaders:
         description:
-          - whether to pass the host header or not
+          - Whether to pass the host header or not
+        type: bool
         default: False
 
 extends_documentation_fragment:
@@ -123,18 +131,18 @@ extends_documentation_fragment:
 
 EXAMPLES = """
 - name: Create utm proxy_frontend
-  utm_proxy_backend:
+  utm_proxy_frontend:
     utm_host: sophos.host.name
     utm_token: abcdefghijklmno1234
-    name: TestBackendEntry
+    name: TestFrontendEntry
     host: REF_OBJECT_STRING
     state: present
 
-- name: Remove utm proxy_backend
-  utm_proxy_backend:
+- name: Remove utm proxy_frontend
+  utm_proxy_frontend:
     utm_host: sophos.host.name
     utm_token: abcdefghijklmno1234
-    name: TestBackendEntry
+    name: TestFrontendEntry
     state: absent
 """
 
@@ -184,10 +192,10 @@ result:
             description: State of html rewrite
             type: bool
         htmlrewrite_cookies:
-            description: whether the html rewrite cookie will be set
+            description: Whether the html rewrite cookie will be set
             type: bool
         implicitredirect:
-            description: whether to use implicit redirection
+            description: Whether to use implicit redirection
             type: bool
         lbmethod:
             description: The method of loadbalancer to use
