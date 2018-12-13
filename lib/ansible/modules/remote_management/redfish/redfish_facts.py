@@ -127,7 +127,7 @@ CATEGORY_COMMANDS_ALL = {
     "Chassis": ["GetFanInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
-    "Manager": ["GetManagerAttributes", "GetLogs"],
+    "Manager": ["GetManagerAttributes", "GetManagerNicInventory", "GetLogs"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -257,6 +257,8 @@ def main():
             for command in command_list:
                 if command == "GetManagerAttributes":
                     result["manager_attributes"] = rf_utils.get_manager_attributes()
+                elif command == "GetManagerNicInventory":
+                    result["manager_nics"] = rf_utils.get_nic_inventory(get_manager=True)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 
