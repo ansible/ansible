@@ -1087,10 +1087,10 @@ class DnfModule(YumDnf):
                 self.module.exit_json(**response)
             else:
                 response['changed'] = True
+                if failure_response['failures']:
+                    failure_response['msg'] = 'Failed to install some of the specified packages',
+                    self.module.fail_json(**failure_response)
                 if self.module.check_mode:
-                    if failure_response['failures']:
-                        failure_response['msg'] = 'Failed to install some of the specified packages',
-                        self.module.fail_json(**failure_response)
                     response['msg'] = "Check mode: No changes made, but would have if not in check mode"
                     self.module.exit_json(**response)
 
