@@ -247,6 +247,10 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
         - ref: aci_guide
           description: Detailed information on how to manage your ACI infrastructure using Ansible.
 
+        # Reference by rST document name
+        - doc: /user_guide/become
+          description: Detailed information on how to use C(become) (e.g. on Windows).
+
         # Reference by Internet resource
         - name: APIC Management Information Model reference
           description: Complete reference of the APIC object model.

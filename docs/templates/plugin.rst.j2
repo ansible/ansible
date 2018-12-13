@@ -224,7 +224,7 @@ See Also
 
 {% for item in seealso %}
 {%   if item.module is defined and item.description is defined %}
-   :ref:`Module @{ item.module }@ <@{ item.module }@_module>`
+   :ref:`@{ item.module }@_module`
        @{ item.description | rst_ify }@
 {%   elif item.module is defined %}
    :ref:`@{ item.module }@_module`
@@ -234,6 +234,9 @@ See Also
        @{ item.description | rst_ify }@
 {%   elif item.ref is defined and item.description is defined %}
    :ref:`@{ item.ref }@`
+       @{ item.description | rst_ify }@
+{%   elif item.doc is defined and item.description is defined %}
+   :doc:`@{ item.doc }@`
        @{ item.description | rst_ify }@
 {%   endif %}
 {% endfor %}

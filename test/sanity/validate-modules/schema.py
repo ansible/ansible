@@ -47,6 +47,10 @@ seealso_schema = Schema(
                 Required('description'): Any(*string_types),
             },
             {
+                Required('doc'): Any(*string_types),
+                Required('description'): Any(*string_types),
+            },
+            {
                 Required('name'): Any(*string_types),
                 Required('link'): Any(*string_types),
                 Required('description'): Any(*string_types),
