@@ -357,9 +357,6 @@ except ImportError:
 
 
 def fmgr_user_group_addsetdelete(fmg, paramgram):
-    """
-    fmgr_user_group -- Your Description here, bruh
-    """
 
     mode = paramgram["mode"]
     adom = paramgram["adom"]
