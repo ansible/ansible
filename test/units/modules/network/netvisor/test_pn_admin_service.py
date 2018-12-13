@@ -43,14 +43,14 @@ class TestAdminServiceModule(TestNvosModule):
 
     def test_admin_service_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn__if': 'mgmt',
-                         'pn_snmp': 'True', 'pn_net_api': 'True','pn_ssh': 'True', 'state': 'update'})
+                         'pn_snmp': 'True', 'pn_net_api': 'True', 'pn_ssh': 'True', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
         expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-service-modify  if mgmt snmp  ssh  net-api '
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_admin_service_modify_t3(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn__if': 'data',
-                         'pn_web_port': '8080', 'pn_net_api': 'True','pn_web_log': 'True', 'state': 'update'})
+                         'pn_web_port': '8080', 'pn_net_api': 'True', 'pn_web_log': 'True', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
         expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 admin-service-modify  if data web-port 8080 net-api  web-log '
         self.assertEqual(result['cli_cmd'], expected_cmd)
