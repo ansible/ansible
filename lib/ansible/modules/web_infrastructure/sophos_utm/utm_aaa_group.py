@@ -2,9 +2,7 @@
 
 # Copyright: (c) 2018, Johannes Brunswicker <johannes.brunswicker@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import absolute_import, division, print_function
-
 
 __metaclass__ = type
 
@@ -18,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: utm_aaa_group
 
-author: 
+author:
     - Johannes Brunswicker (@MatrixCrawler)
 
 short_description: create, update or destroy reverse_proxy frontend entry in Sophos UTM
@@ -27,7 +25,7 @@ description:
     - Create, update or destroy a reverse_proxy frontend entry in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -36,11 +34,11 @@ options:
         required: true
     adirectory_groups :
         description:
-          - list of adirectory group strings 
+          - list of adirectory group strings
         type: list
-    adirectory_groups_ids :
+    adirectory_groups_sids :
         description:
-          - dictionary of group ids 
+          - dictionary of group sids
         type: list
     backend_match:
         description:
@@ -53,17 +51,23 @@ options:
           - radius
           - tacacs
           - ldap
+    comment:
+        description:
+            - Comment that describes the AAA group
+        default: ''
+        type: str
+        required: false
     dynamic:
         description:
-          - 
+          - Group type. Is static if none is selected
         default: none
         choices:
           - none
           - ipsec_dn
           - directory_groups
-    edirectory_groups :
+    edirectory_groups:
         description:
-          - list of edirectory group strings 
+          - list of edirectory group strings
         type: list
     ipsec_dn:
         description:
