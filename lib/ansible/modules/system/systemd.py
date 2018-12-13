@@ -44,7 +44,7 @@ options:
         type: bool
     daemon_reload:
         description:
-            - run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+            - run daemon-reload before doing any other operations, to make sure systemd has read any changes. Reloading will also occur if the module does not start or stop anything.
         type: bool
         default: 'no'
         aliases: [ daemon-reload ]
