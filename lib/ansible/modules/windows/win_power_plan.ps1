@@ -55,6 +55,27 @@ If (! ($all_available_plans.ContainsKey($name)) )
 #If false, means plan is not active and we move down to enable
 #Since the results here are the same whether check mode or not, no specific handling is required
 #for check mode.
+
+If ([System.Environment]::OSVersion.Version -ge '10.0.17134')
+{
+    $plan = Get-WmiObject -Class win32_powerplan -Namespace root\cimv2\power -Filter "ElementName='$name'"
+    $regex = [regex]"{(.*?)}$"
+    $planGuid = $regex.Match($plan.instanceID.Tostring()).groups[1].value
+
+    If ( $all_available_plans.item($name) )
+    {
+        Exit-Json $result
+    }
+
+    Else
+    {
+        $result.changed = $true
+        powercfg /S $planGuid
+        $result.all_available_plans = Get-PowerPlans
+        Exit-Json $result
+    }
+}
+
 If ( $all_available_plans.item($name) )
 {
     Exit-Json $result
@@ -76,4 +97,3 @@ Else
     $result.all_available_plans = Get-PowerPlans
     Exit-Json $result
 }
-
