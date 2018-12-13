@@ -53,7 +53,7 @@ options:
         description:
             - This is the type of device or network connection that you wish to create or modify.
             - "type C(generic) is added in version 2.5."
-        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, vxlan, ipip, generic ]
+        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, vxlan, ipip, sit, generic ]
     mode:
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
@@ -188,15 +188,15 @@ options:
        version_added: "2.8"
     ip_tunnel_dev:
         description:
-            - This is only used with IPIP - parent device this IPIP tunnel, can use ifname.
+            - This is used with IPIP/SIT - parent device this IPIP/SIT tunnel, can use ifname.
         version_added: "2.8"
     ip_tunnel_remote:
        description:
-            - This is only used with IPIP - IPIP destination IP address.
+            - This is used with IPIP/SIT - IPIP/SIT destination IP address.
        version_added: "2.8"
     ip_tunnel_local:
        description:
-            - This is only used with IPIP - IPIP local IP address.
+            - This is used with IPIP/SIT - IPIP/SIT local IP address.
        version_added: "2.8"
 '''
 
@@ -471,6 +471,14 @@ EXAMPLES = '''
       ip_tunnel_local: 192.168.1.2
       ip_tunnel_remote: 192.168.1.5
 
+# To add sit, issue a command as follows:
+  - nmcli:
+      type: sit
+      conn_name: sit_test1
+      ip_tunnel_dev: eth0
+      ip_tunnel_local: 192.168.1.2
+      ip_tunnel_remote: 192.168.1.5
+
 # nmcli exits with status 0 if it succeeds and exits with a status greater
 # than zero when there is a failure. The following list of status codes may be
 # returned:
@@ -545,6 +553,7 @@ class Nmcli(object):
         15: "Team",
         16: "VxLan",
         17: "ipip",
+        18: "sit",
     }
     STATES = {
         0: "Unknown",
@@ -1213,6 +1222,55 @@ class Nmcli(object):
             cmd.extend([k, v])
         return cmd
 
+    def create_connection_sit(self):
+        cmd = [self.nmcli_bin, 'con', 'add', 'type', 'ip-tunnel', 'mode', 'sit', 'con-name']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.ip_tunnel_dev is not None:
+            cmd.append('sit%s' % self.ip_tunnel_dev)
+
+        cmd.append('ifname')
+        if self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
+        else:
+            cmd.append('sit%s' % self.ipip_dev)
+
+        if self.ip_tunnel_dev is not None:
+            cmd.append('dev')
+            cmd.append(self.ip_tunnel_dev)
+
+        params = {'ip-tunnel.local': self.ip_tunnel_local,
+                  'ip-tunnel.remote': self.ip_tunnel_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+
+        return cmd
+
+    def modify_connection_sit(self):
+        cmd = [self.nmcli_bin, 'con', 'mod']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.ip_tunnel_dev is not None:
+            cmd.append('sit%s' % self.ip_tunnel_dev)
+
+        params = {'ip-tunnel.local': self.ip_tunnel_local,
+                  'ip-tunnel.remote': self.ip_tunnel_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+        return cmd
+
     def create_connection(self):
         cmd = []
         if self.type == 'team':
@@ -1262,6 +1320,8 @@ class Nmcli(object):
             cmd = self.create_connection_vxlan()
         elif self.type == 'ipip':
             cmd = self.create_connection_ipip()
+        elif self.type == 'sit':
+            cmd = self.create_connection_sit()
         elif self.type == 'generic':
             cmd = self.create_connection_ethernet(conn_type='generic')
 
@@ -1298,6 +1358,8 @@ class Nmcli(object):
             cmd = self.modify_connection_vxlan()
         elif self.type == 'ipip':
             cmd = self.modify_connection_ipip()
+        elif self.type == 'sit':
+            cmd = self.modify_connection_sit()
         elif self.type == 'generic':
             cmd = self.modify_connection_ethernet(conn_type='generic')
         if cmd:
@@ -1319,7 +1381,7 @@ def main():
             type=dict(required=False, default=None,
                       choices=['ethernet', 'team', 'team-slave', 'bond',
                                'bond-slave', 'bridge', 'bridge-slave',
-                               'vlan', 'vxlan', 'ipip', 'generic'],
+                               'vlan', 'vxlan', 'ipip', 'sit', 'generic'],
                       type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
