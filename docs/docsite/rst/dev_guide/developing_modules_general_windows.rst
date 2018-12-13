@@ -168,6 +168,7 @@ When creating a new module there are a few things to keep in mind:
 - Module code is in Powershell (.ps1) files while the documentation is contained in Python (.py) files of the same name
 - Avoid using ``Write-Host/Debug/Verbose/Error`` in the module and add what needs to be returned to the ``$module.Result`` variable
 - To fail a module, call ``$module.FailJson("failure message here")``, an Exception or ErrorRecord can be set to the second argument for a more descriptive error message
+- You can pass in the exception or ErrorRecord as a second argument to ``FailJson("failure", $_)`` to get a more detailed output
 - Most new modules require check mode and integration tests before they are merged into the main Ansible codebase
 - Avoid using try/catch statements over a large code block, rather use them for individual calls so the error message can be more descriptive
 - Try and catch specific exceptions when using try/catch statements
@@ -197,7 +198,6 @@ spec. The following options can be set at the root level of the argument spec:
 - ``mutually_exclusive``: A list of lists, where the inner list contains module options that cannot be set together
 - ``no_log``: Stops the module from emitting any logs to the Windows Event log
 - ``options``: A dictionary where the key is the module option and the value is the spec for that option
-- ``required``: Will fail when the module option is not set
 - ``required_if``: A list of lists where the inner list contains 3 or 4 elements;
     * The first element is the module option to check the value against
     * The second element is the value of the option specified by the first element, if matched then the required if check is run
@@ -217,6 +217,7 @@ options set:
 - ``elements``: When ``type=list``, this sets the type of each list value, the values are the same as ``type``
 - ``no_log``: Will sanitise the input value before being returned in the ``module_invocation`` return value
 - ``removed_in_version``: States when a deprecated module option is to be removed, a warning is displayed to the end user if set
+- ``required``: Will fail when the module option is not set
 - ``type``: The type of the module option, if not set then it defaults to ``str``. The valid types are;
     * ``bool``: A boolean value
     * ``dict``: A dictionary value, if the input is a JSON or key=value string then it is converted to dictionary
@@ -235,6 +236,7 @@ When ``type=dict``, or ``type=list`` and ``elements=dict``, the following keys c
 - ``mutually_exclusive``: Same as the root level ``mutually_exclusive`` but validated against the values in the sub dict
 - ``options``: Same as the root level ``options`` but contains the valid options for the sub option
 - ``required_if``: Same as the root level ``required_if`` but validated against the values in the sub dict
+- ``required_together``: Same as the root level ``required_together`` but validated against the values in the sub dict
 - ``required_one_of``: Same as the root level ``required_one_of`` but validated against the values in the sub dict
 
 A module type can also be a delegate function that converts the value to whatever is required by the module option. For
@@ -423,7 +425,7 @@ are some steps that need to be followed to set this up:
 
 - Copy the module script to the Windows server
 - Copy the folders ``./lib/ansible/module_utils/powershell`` and ``./lib/ansible/module_utils/csharp`` to the same directory as the script above
-- Add an extra ``#`` to the start of any ``#Requires -Module`` lines in the module code
+- Add an extra ``#`` to the start of any ``#Requires -Module`` lines in the module code, this is only required for any lines starting with ``#Requires -Module``
 - Add the following to the start of the module script that was copied to the server:
 
 .. code-block:: powershell
@@ -431,7 +433,7 @@ are some steps that need to be followed to set this up:
     # Set $ErrorActionPreference to what's set during Ansible execution
     $ErrorActionPreference = "Stop"
 
-    # Set the first argument file to a JSON that contains the module args
+    # Set the first argument as the path to a JSON file that contains the module args
     $args = @("$($pwd.Path)\args.json")
 
     # Or instead of an args file, set $complex_args to the pre-processed module args
@@ -443,9 +445,10 @@ are some steps that need to be followed to set this up:
     }
 
     # Import any C# utils referenced with '#AnsibleRequires -CSharpUtil' or 'using Ansible.;
+    # The $_csharp_utils entries should be the context of the C# util files and not the path
     Import-Module -Name "$($pwd.Path)\powershell\Ansible.ModuleUtils.AddType.psm1"
     $_csharp_utils = @(
-        "$($pwd.Path)\csharp\Ansible.Basic.cs"
+        [System.IO.File]::ReadAllText("$($pwd.Path)\csharp\Ansible.Basic.cs")
     )
     Add-CSharpType -References $_csharp_utils -IncludeDebugInfo
 
