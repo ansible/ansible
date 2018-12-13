@@ -10,7 +10,8 @@ def get_task(module, connection):
     task_id = module.params['task_id']
 
     if task_id:
-        payload = {'task-id': task_id}
+        payload = {'task-id': task_id,
+                   'details-level': 'full'}
 
         code, response = connection.send_request('/web_api/show-task', payload)
     else:
