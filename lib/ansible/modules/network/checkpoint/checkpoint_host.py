@@ -51,6 +51,8 @@ def delete_host(module, connection):
 def needs_update(module, host):
     res = False
 
+    if  module.params['ip_address'] != host['ipv4-address']:
+        res = True
     return res
 
 def main():
