@@ -41,8 +41,8 @@ options:
           If you are using keystone version 2, then this value is required.
    domain:
      description:
-        - ID of the domain to scope the role association to. Valid only with
-          keystone version 3, and required if I(project) is not specified.
+	- Name or ID of the domain to scope the role association to. Valid only
+	  with keystone version 3, and required if I(project) is not specified.
    state:
      description:
        - Should the roles be present or absent on the user.
@@ -137,7 +137,7 @@ def main():
         filters['role'] = r['id']
 
         if domain:
-            d = cloud.get_domain(domain)
+            d = cloud.get_domain(name_or_id=domain)
             if d is None:
                 module.fail_json(msg="Domain %s is not valid" % domain)
             filters['domain'] = d['id']
