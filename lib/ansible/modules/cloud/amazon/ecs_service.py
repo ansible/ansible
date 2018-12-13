@@ -421,7 +421,6 @@ class EcsServiceManager:
             serviceName=service_name,
             taskDefinition=task_definition,
             loadBalancers=load_balancers,
-            desiredCount=desired_count,
             clientToken=client_token,
             role=role,
             deploymentConfiguration=deployment_configuration,
@@ -436,6 +435,9 @@ class EcsServiceManager:
             params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         if service_registries:
             params['serviceRegistries'] = service_registries
+        # desired count is not required if scheduling strategy is daemon
+        if desired_count is not None:
+            params['desiredCount']=desired_count
 
         if scheduling_strategy:
             params['schedulingStrategy'] = scheduling_strategy
@@ -449,7 +451,6 @@ class EcsServiceManager:
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
-            desiredCount=desired_count,
             deploymentConfiguration=deployment_configuration)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
@@ -459,6 +460,9 @@ class EcsServiceManager:
             params['forceNewDeployment'] = force_new_deployment
         if healthcheck_grace_period:
             params['healthCheckGracePeriodSeconds'] = healthcheck_grace_period
+        # desired count is not required if scheduling strategy is daemon
+        if desired_count is not None:
+            params['desiredCount']=desired_count
 
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
