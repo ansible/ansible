@@ -99,10 +99,13 @@ notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
 - By default C(win_updates) does not manage reboots, but will signal when a
-  reboot is required with the I(reboot_required) return value, as of Ansible 2.5
+  reboot is required with the I(reboot_required) return value, as of Ansible v2.5
   C(reboot) can be used to reboot the host if required in the one task.
 - C(win_updates) can take a significant amount of time to complete (hours, in some cases).
   Performance depends on many factors, including OS version, number of updates, system load, and update server load.
+- Beware that just after C(win_updates) reboots the system, the Windows system may not have settled yet
+  and some base services could be in limbo. This can result in unexpected behavior.
+  Check the examples for ways to mitigate this.
 - More information about PowerShell and how it handles RegEx strings can be
   found at U(https://technet.microsoft.com/en-us/library/2007.11.powershell.aspx).
 '''
@@ -148,6 +151,18 @@ EXAMPLES = r'''
     blacklist:
     - Windows Malicious Software Removal Tool for Windows
     - \d{4}-\d{2} Cumulative Update for Windows Server 2016
+
+# One way to ensure the system is reliable just after a reboot, is to set WinRM to a delayed startup
+- name: Ensure WinRM starts when the system has settled and is ready to work reliably
+  win_service:
+    name: WinRM
+    start_mode: delayed
+
+# Optionally, you can increase the reboot_timeout to survive long updates during reboot
+- name: Ensure we wait long enough for the updates to be applied during reboot
+  win_updates:
+    reboot: yes
+    reboot_timeout: 3600
 '''
 
 RETURN = r'''
