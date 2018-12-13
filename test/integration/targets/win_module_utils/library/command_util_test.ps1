@@ -34,7 +34,7 @@ try {
     $actual = Run-Command -command "C:\fakepath\$exe_filename arg1"
     Fail-Json -obj $result -message "Test $test_name failed`nCommand should have thrown an exception"
 } catch {
-    Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"SearchPath`" with `"1`" argument(s): `"Could not locate the following executable C:\fakepath\$exe_filename`""
+    Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"SearchPath`" with `"1`" argument(s): `"Could not find file 'C:\fakepath\$exe_filename'.`""
 }
 
 $test_name = "exe in current folder"
