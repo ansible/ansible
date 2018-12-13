@@ -40,12 +40,12 @@ Function Get-AnsiblePrivilege {
         [Parameter(Mandatory=$true)][String]$Name
     )
 
-    if (-not [Ansible.Privilege.Utils]::CheckPrivilegeName($Name)) {
+    if (-not [Ansible.Privilege.PrivilegeUtil]::CheckPrivilegeName($Name)) {
         throw [System.ArgumentException] "Invalid privilege name '$Name'"
     }
 
-    $process_token = [Ansible.Privilege.Utils]::GetCurrentProcess()
-    $privilege_info = [Ansible.Privilege.Utils]::GetAllPrivilegeInfo($process_token)
+    $process_token = [Ansible.Privilege.PrivilegeUtil]::GetCurrentProcess()
+    $privilege_info = [Ansible.Privilege.PrivilegeUtil]::GetAllPrivilegeInfo($process_token)
     if ($privilege_info.ContainsKey($Name)) {
         $status = $privilege_info.$Name
         return $status.HasFlag([Ansible.Privilege.PrivilegeAttributes]::Enabled)
@@ -87,11 +87,11 @@ Function Set-AnsiblePrivilege {
         throw [System.InvalidOperationException] "Cannot $($action.ToLower()) the privilege '$Name' as it has been removed from the token"
     }
 
-    $process_token = [Ansible.Privilege.Utils]::GetCurrentProcess()
+    $process_token = [Ansible.Privilege.PrivilegeUtil]::GetCurrentProcess()
     if ($PSCmdlet.ShouldProcess($Name, "$action the privilege $Name")) {
         $new_state = New-Object -TypeName 'System.Collections.Generic.Dictionary`2[[System.String], [System.Nullable`1[System.Boolean]]]'
         $new_state.Add($Name, $Value)
-        [Ansible.Privilege.Utils]::SetTokenPrivileges($process_token, $new_state) > $null
+        [Ansible.Privilege.PrivilegeUtil]::SetTokenPrivileges($process_token, $new_state) > $null
     }
 }
 
