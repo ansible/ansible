@@ -87,16 +87,17 @@ EXAMPLES = r'''
   win_reboot:
   when: iis_install.reboot_required
 
-# One way to ensure the system is reliable, is to add a delay before running the next task
-- name: Reboot a machine that takes time to settle after being booted
-  win_reboot:
-    post_reboot_delay: 120
-
-# Alternatively, you can set WinRM to a delayed startup
+# One way to ensure the system is reliable, is to set WinRM to a delayed startup
 - name: Ensure WinRM starts when the system has settled and is ready to work reliably
   win_service:
     name: WinRM
     start_mode: delayed
+
+
+# Additionally, you can add a delay before running the next task
+- name: Reboot a machine that takes time to settle after being booted
+  win_reboot:
+    post_reboot_delay: 120
 
 # Or you can make win_reboot validate exactly what you need to work before running the next task
 - name: Validate that the netlogon service has started, before running the next task
