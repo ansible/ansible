@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: onyx_bgp
-version_added: "2.5"
+version_added: "2.8"
 author: "Samer Deeb (@samerd)"
 short_description: Configures BGP on Mellanox ONYX network devices
 description:
