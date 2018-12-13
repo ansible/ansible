@@ -59,12 +59,13 @@ class UTMModule(AnsibleModule):
                  mutually_exclusive=None, required_together=None, required_one_of=None, add_file_common_args=False,
                  supports_check_mode=False, required_if=None):
         default_specs = dict(
+            headers=dict(type='dict', required=False),
             utm_host=dict(type='str', required=True),
             utm_port=dict(type='int', default=4444),
             utm_token=dict(type='str', required=True, no_log=True),
             utm_protocol=dict(type='str', required=False, default="https", choices=["https", "http"]),
             validate_certs=dict(type='bool', required=False, default=True),
-            state=dict(default='present', choices=['present', 'absent', 'info'])
+            state=dict(default='present', choices=['present', 'absent'])
         )
         super(UTMModule, self).__init__(self._merge_specs(default_specs, argument_spec), bypass_checks, no_log,
                                         check_invalid_arguments, mutually_exclusive, required_together, required_one_of,
