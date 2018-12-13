@@ -55,7 +55,7 @@ options:
   level:
     description:
       - Set logging severity levels.
-  source:
+  interface:
     description:
       - Set logging source interface.
     version_added: "2.8"
@@ -74,7 +74,7 @@ EXAMPLES = """
   ios_logging:
     dest: host
     name: 172.16.0.1
-    source: Loopback0
+    interface: Loopback0
     state: present
 
 - name: remove host logging configuration
@@ -152,7 +152,7 @@ def map_obj_to_commands(updates, module, os_version):
         facility = w['facility']
         level = w['level']
         state = w['state']
-        source = w['source']
+        interface = w['interface']
         del w['state']
 
         if facility:
@@ -174,8 +174,8 @@ def map_obj_to_commands(updates, module, os_version):
             if facility:
                 commands.append('no logging facility {0}'.format(facility))
 
-            if source:
-                commands.append('no logging source-interface {0}'.format(source))
+            if interface:
+                commands.append('no logging source-interface {0}'.format(interface))
 
         if state == 'present' and w not in have:
             if facility:
@@ -188,8 +188,8 @@ def map_obj_to_commands(updates, module, os_version):
                 if not present:
                     commands.append('logging facility {0}'.format(facility))
 
-            if source:
-                commands.append('logging source-interface {0}'.format(source))
+            if interface:
+                commands.append('logging source-interface {0}'.format(interface))
 
             if dest == 'host':
                 if '12.' in os_version:
@@ -278,13 +278,13 @@ def parse_level(line, dest):
     return level
 
 
-def parse_source(line, dest):
+def parse_interface(line, dest):
     if dest == 'source-interface':
-        match = re.search(r'(source-interface )(\S+)', line, re.M)
+        match = re.search(r'(logging source-interface )(\S+)', line, re.M)
         if match:
-            source = match.group(2)
+            interface = match.group(2)
 
-            return source
+            return interface
 
 
 def map_config_to_obj(module):
@@ -304,7 +304,7 @@ def map_config_to_obj(module):
                     'name': parse_name(line, dest),
                     'size': parse_size(line, dest),
                     'facility': parse_facility(line, dest),
-                    'source': parse_source(line, dest),
+                    'interface': parse_interface(line, dest),
                     'level': parse_level(line, dest)
                 })
             elif validate_ip_address(match.group(1)):
@@ -313,6 +313,7 @@ def map_config_to_obj(module):
                     'dest': dest,
                     'name': match.group(1),
                     'facility': parse_facility(line, dest),
+                    'interface': parse_interface(line, dest),
                     'level': parse_level(line, dest)
                 })
             else:
@@ -323,6 +324,7 @@ def map_config_to_obj(module):
                         'dest': dest,
                         'name': match.group(1),
                         'facility': parse_facility(line, dest),
+                        'interface': parse_interface(line, dest),
                         'level': parse_level(line, dest)
                     })
     return obj
@@ -374,7 +376,7 @@ def map_params_to_obj(module, required_if=None):
                 'size': module.params['size'],
                 'facility': module.params['facility'],
                 'level': module.params['level'],
-                'source': module.params['source'],
+                'interface': module.params['interface'],
                 'state': module.params['state']
             })
 
@@ -385,7 +387,7 @@ def map_params_to_obj(module, required_if=None):
                 'size': str(validate_size(module.params['size'], module)),
                 'facility': module.params['facility'],
                 'level': module.params['level'],
-                'source': module.params['source'],
+                'interface': module.params['interface'],
                 'state': module.params['state']
             })
     return obj
@@ -398,7 +400,7 @@ def main():
         dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
         name=dict(type='str'),
         size=dict(type='int'),
-        source=dict(type='str'),
+        interface=dict(type='str'),
         facility=dict(type='str'),
         level=dict(type='str', default='debugging'),
         state=dict(default='present', choices=['present', 'absent']),
