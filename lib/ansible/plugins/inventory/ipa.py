@@ -85,7 +85,7 @@ ipaversion: 2.228
 '''
 
 # Imports for Ansible AWX
-from collections import MutableMapping
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.errors import AnsibleParserError, AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
