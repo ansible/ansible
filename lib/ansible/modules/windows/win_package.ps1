@@ -4,9 +4,27 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
-#Requires -Module Ansible.ModuleUtils.CommandUtil
-#Requires -Module Ansible.ModuleUtils.ArgvParser
+#R equires -Module Ansible.ModuleUtils.Legacy
+#R equires -Module Ansible.ModuleUtils.CommandUtil
+#R equires -Module Ansible.ModuleUtils.ArgvParser
+
+### start setup code
+$complex_args = @{
+    "_ansible_check_mode" = $false
+    "_ansible_diff" = $false
+
+
+    "_ansible_version" = "2.7.0"
+"product_id" = "{9C8905FB-DE22-4AF4-9B13-A6BA36A73D59}_is1"
+
+"state" = "absent"
+
+}
+
+Import-Module -Name .\Ansible.ModuleUtils.Legacy.psm1
+Import-Module -Name .\Ansible.ModuleUtils.CommandUtil.psm1
+Import-Module -Name .\Ansible.ModuleUtils.ArgvParser.psm1
+### end setup code
 
 $ErrorActionPreference = 'Stop'
 
@@ -319,8 +337,9 @@ if ($state -eq "absent") {
                 $cleanup_artifacts += $local_path
             } elseif ($program_metadata.location_type -eq [LocationType]::Empty -and $program_metadata.msi -ne $true) {
                 # TODO validate the uninstall_string to see if there are extra args in there
-                if ((@($program_metadata.uninstall_string).Count -eq 1) -and ($program_metadata.uninstall_string.StartsWith("`""))) {
-                    $local_path = $program_metadata.uninstall_string.TrimStart("`"").TrimEnd("`"")
+                $parsed_uninstall_string = ParseCommandLine $program_metadata.uninstall_string
+                if (($parsed_uninstall_string.Length -eq 1) -and ($parsed_uninstall_string.StartsWith('"'))) {
+                    $local_path = $parsed_uninstall_string[0].TrimStart('"').TrimEnd('"')
                 } else {
                     $local_path = $program_metadata.uninstall_string
                 }
@@ -484,5 +503,7 @@ if ($state -eq "absent") {
         $result.changed = $true
     }
 }
+
+
 
 Exit-Json -obj $result
