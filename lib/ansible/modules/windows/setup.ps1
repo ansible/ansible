@@ -66,7 +66,7 @@ $result = @{
 }
 
 $grouped_subsets = @{
-    min=[System.Collections.Generic.List[string]]@('date_time','distribution','dns','env','local','platform','powershell_version','user')
+    min=[System.Collections.Generic.List[string]]@('date_time','distribution','dns','env','local','platform','powershell_version','user','license')
     network=[System.Collections.Generic.List[string]]@('all_ipv4_addresses','all_ipv6_addresses','interfaces','windows_domain', 'winrm')
     hardware=[System.Collections.Generic.List[string]]@('bios','memory','processor','uptime','virtual')
     external=[System.Collections.Generic.List[string]]@('facter')
@@ -477,6 +477,54 @@ if($gather_subset.Contains('virtual')) {
         ansible_virtualization_type = $machine_type
     }
 }
+
+
+if($gather_subset.Contains('license')) {
+    $license_info = Get-LazyCimInstance SoftwareLicensingProduct | Where-Object PartialProductKey
+
+    switch ($license_info.LicenseStatus){
+        0 {
+            $winlicense_status="Unlicensed"
+        }
+
+        1 {
+            $winlicense_status="Licensed"
+        }
+
+        2 {
+            $winlicense_status="OOBGrace"
+        }
+
+        3 {
+            $winlicense_status="OOTGrace"
+        }
+
+        4 {
+            $winlicense_status="NonGenuineGrace"
+        }
+
+        5 {
+            $winlicense_status="Notification"
+        }
+
+        6 {
+            $winlicense_status="ExtendedGrace"
+        }
+
+        default {
+            $winlicense_status="NA"
+        }
+    }
+
+
+    $ansible_facts += @{
+        ansible_winlicense_edition = $license_info.Name
+        ansible_winlicense_channel = $license_info.ProductKeyChannel
+        ansible_winlicense_partprodkey = $license_info.PartialProductKey
+        ansible_winlicense_status = $winlicense_status
+    }
+}
+
 
 $result.ansible_facts += $ansible_facts
 
