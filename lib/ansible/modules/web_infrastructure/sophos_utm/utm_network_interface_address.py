@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# Copyright: (c) 2018, Juergen Wiebe <wiebe@e-spirit.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
@@ -14,8 +16,8 @@ DOCUMENTATION = """
 ---
 module: utm_network_interface_address
 
-author: 
-    - Juergen Wiebe (wiebe@e-spirit.com)
+author:
+    - Juergen Wiebe (@example)
 
 short_description: create, update or destroy network/interface_address object
 
@@ -23,7 +25,7 @@ description:
     - Create, update or destroy a network/interface_address object in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -34,6 +36,10 @@ options:
         description:
           - The ip4 address of the network/interface_address object.
         required: true
+    address6:
+        description:
+          - The ip6 address of the network/interface_address object.
+        required: false
     comment:
         description:
           - An optional comment to add to the object
@@ -41,10 +47,10 @@ options:
         description:
           - The ip6 address of the network/interface_address object.
     resolved:
-         description:
+        description:
           - Whether or not the object is resolved
     resolved6:
-         description:
+        description:
           - Whether or not the object is resolved
 
 extends_documentation_fragment:
@@ -83,7 +89,7 @@ result:
         _locked:
             description: Whether or not the object is currently locked
             type: boolean
-        _type: 
+        _type:
             description: The type of the object
             type: string
         name:
@@ -100,10 +106,10 @@ result:
             type: string
         resolved:
              description: Whether or not the object is resolved
-              type: boolean
+             type: boolean
         resolved6:
              description: Whether or not the object is resolved
-              type: boolean
+             type: boolean
 """
 
 from ansible.module_utils.utm_utils import UTM, UTMModule
