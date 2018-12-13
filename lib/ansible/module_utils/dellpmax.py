@@ -30,4 +30,3 @@
 
 VERSION = 1.1
 USER_AGENT_BASE = 'Ansible'
-
