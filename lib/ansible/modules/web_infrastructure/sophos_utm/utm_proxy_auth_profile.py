@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: utm_proxy_auth_profile
 
-author: 
+author:
     - Stephan Schwarz (@stearz)
 
 short_description: create, update or destroy reverse_proxy auth_profile entry in Sophos UTM
@@ -26,7 +26,7 @@ description:
     - Create, update or destroy a reverse_proxy auth_profile entry in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -51,6 +51,7 @@ options:
     backend_strip_basic_auth:
         description:
           - Should the login data be stripped when proxying the request to the backend host
+        type: bool
         default: True
         choices:
           - True
@@ -99,6 +100,7 @@ options:
     frontend_session_allow_persistency:
         description:
           - Allow session persistency
+        type: bool
         default: False
         choices:
           - True
@@ -109,7 +111,8 @@ options:
         required: true
     frontend_session_lifetime_limited:
         description:
-          - Specifies if limitation of session lifetime is active 
+          - Specifies if limitation of session lifetime is active
+        type: bool
         default: True
         choices:
           - True
@@ -129,6 +132,7 @@ options:
     frontend_session_timeout_enabled:
         description:
           - Specifies if session timeout is active
+        type: bool
         default: True
         choices:
           - True
@@ -155,6 +159,7 @@ options:
     redirect_to_requested_url:
         description:
           - Should a redirect to the requested URL be made
+        type: bool
         default: False
         choices:
           - True
@@ -262,7 +267,7 @@ result:
             description: session lifetime
             type: integer
         frontend_session_lifetime_limited:
-            description: Specifies if limitation of session lifetime is active 
+            description: Specifies if limitation of session lifetime is active
             type: boolean
         frontend_session_lifetime_scope:
             description: scope for frontend_session_lifetime (days|hours|minutes)
@@ -285,7 +290,6 @@ result:
         redirect_to_requested_url:
             description: Should a redirect to the requested URL be made
             type: boolean
-              
 """
 
 from ansible.module_utils.utm_utils import UTM, UTMModule
@@ -310,7 +314,7 @@ def main():
             aaa=dict(type='list', elements='str', required=True),
             basic_prompt=dict(type='str', required=True),
             backend_mode=dict(type='str', required=False, default="None", choices=['Basic', 'None']),
-            backend_strip_basic_auth=dict(type='bool', required=False, default=True),
+            backend_strip_basic_auth=dict(type='bool', required=False, default=True, choices=[True, False]),
             backend_user_prefix=dict(type='str', required=False, default=""),
             backend_user_suffix=dict(type='str', required=False, default=""),
             comment=dict(type='str', required=False, default=""),
@@ -322,22 +326,23 @@ def main():
             frontend_logout=dict(type='str', required=False),
             frontend_mode=dict(type='str', required=False, default="Basic", choices=['Basic', 'Form']),
             frontend_realm=dict(type='str', required=False),
-            frontend_session_allow_persistency=dict(type='bool', required=False, default=False),
+            frontend_session_allow_persistency=dict(type='bool', required=False, default=False, choices=[True, False]),
             frontend_session_lifetime=dict(type='int', required=True),
-            frontend_session_lifetime_limited=dict(type='bool', required=False, default=True),
+            frontend_session_lifetime_limited=dict(type='bool', required=False, default=True, choices=[True, False]),
             frontend_session_lifetime_scope=dict(type='str', required=False, default="hours", choices=['days', 'hours', 'minutes']),
             frontend_session_timeout=dict(type='int', required=True),
-            frontend_session_timeout_enabled=dict(type='bool', required=False, default=True),
+            frontend_session_timeout_enabled=dict(type='bool', required=False, default=True, choices=[True, False]),
             frontend_session_timeout_scope=dict(type='str', required=False, default="minutes", choices=['days', 'hours', 'minutes']),
             logout_delegation_urls=dict(type='list', elements='str', required=False, default=[]),
             logout_mode=dict(type='str', required=False, default="None", choices=['None', 'Delegation']),
-            redirect_to_requested_url=dict(type='bool', required=False, default=False)
+            redirect_to_requested_url=dict(type='bool', required=False, default=False, choices=[True, False])
         )
     )
     try:
         UTM(module, endpoint, key_to_check_for_changes).execute()
     except Exception as e:
         module.fail_json(msg=to_native(e))
+
 
 if __name__ == '__main__':
     main()
