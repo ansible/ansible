@@ -25,8 +25,6 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import unittest
-
 from ansible.module_utils.utm_utils import UTM
 
 
@@ -35,17 +33,20 @@ class FakeModule:
         pass
 
 
-class UTMUtilsTest(unittest.TestCase):
-    def test_combine_headers_returns_only_default(self):
-        default_headers = {"Accept": "application/json", "Content-type": "application/json"}
-        module = FakeModule(params={'utm_host': 'utm_host', 'utm_token': 'utm_token', 'name': 'FakeName'})
-        result = UTM(module, "endpoint", None)._combine_headers()
-        assert result.assertDictEqual(default_headers)
+def test_combine_headers_returns_only_default():
+    default_headers = {"Accept": "application/json", "Content-type": "application/json"}
+    module = FakeModule(
+        params={'utm_protocol': 'utm_protocol', 'utm_host': 'utm_host', 'utm_port': 1234, 'utm_token': 'utm_token',
+                'name': 'FakeName'})
+    result = UTM(module, "endpoint", None)._combine_headers()
+    assert result.assertDictEqual(default_headers)
 
-    def test_combine_headers_returns_combined(self):
-        default_headers = {"Accept": "application/json", "Content-type": "application/json",
-                           "extraHeader": "extraHeaderValue"}
-        module = FakeModule(params={'utm_host': 'utm_host', 'utm_token': 'utm_token', 'name': 'FakeName',
-                                    "headers": {"extraHeader": "extraHeaderValue"}})
-        result = UTM(module, "endpoint", None)._combine_headers()
-        assert result.assertDictEqual(default_headers)
+
+def test_combine_headers_returns_combined():
+    default_headers = {"Accept": "application/json", "Content-type": "application/json",
+                       "extraHeader": "extraHeaderValue"}
+    module = FakeModule(params={'utm_protocol': 'utm_protocol', 'utm_host': 'utm_host', 'utm_port': 1234,
+                                'utm_token': 'utm_token', 'name': 'FakeName',
+                                "headers": {"extraHeader": "extraHeaderValue"}})
+    result = UTM(module, "endpoint", None)._combine_headers()
+    assert result.assertDictEqual(default_headers)
