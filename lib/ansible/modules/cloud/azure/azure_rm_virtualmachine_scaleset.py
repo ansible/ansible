@@ -201,6 +201,7 @@ options:
         description:
             - Specifies whether the Virtual Machine Scale Set should be overprovisioned.
         type: bool
+        default: True
         version_added: "2.8"
 
 extends_documentation_fragment:
@@ -409,7 +410,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             remove_on_absent=dict(type='list', default=['all']),
             enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name']),
-            overprovision=dict(type='bool')
+            overprovision=dict(type='bool', default=True)
         )
 
         self.resource_group = None
