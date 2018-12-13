@@ -5,6 +5,7 @@ param(
     [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
 )
 
+#Requires -Module Ansible.ModuleUtils.AddType
 #AnsibleRequires -CSharpUtil Ansible.Become
 
 $ErrorActionPreference = "Stop"
@@ -74,18 +75,24 @@ Function Get-BecomeFlags($flags) {
 }
 
 Write-AnsibleLog "INFO - loading C# become code" "become_wrapper"
-$become_def = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.csharp_utils["Ansible.Become"]))
+$add_type_b64 = $Payload.powershell_modules["Ansible.ModuleUtils.AddType"]
+$add_type = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($add_type_b64))
+New-Module -Name Ansible.ModuleUtils.AddType -ScriptBlock ([ScriptBlock]::Create($add_type)) | Import-Module > $null
 
-# set the TMP env var to _ansible_remote_tmp to ensure the tmp binaries are
-# compiled to that location
 $new_tmp = [System.Environment]::ExpandEnvironmentVariables($Payload.module_args["_ansible_remote_tmp"])
-$old_tmp = $env:TMP
-$env:TMP = $new_tmp
-Add-Type -TypeDefinition $become_def -Debug:$false
-$env:TMP = $old_tmp
+$become_def = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.csharp_utils["Ansible.Become"]))
+$process_def = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.csharp_utils["Ansible.Process"]))
+Add-CSharpType -References $become_def, $process_def -TempPath $new_tmp -IncludeDebugInfo
 
 $username = $Payload.become_user
 $password = $Payload.become_password
+# We need to set password to the value of NullString so a null password is preserved when crossing the .NET
+# boundary. If we pass $null it will automatically be converted to "" and we need to keep the distinction for
+# accounts that don't have a password and when someone wants to become without knowing the password.
+if ($null -eq $password) {
+    $password = [NullString]::Value
+}
+
 try {
     $logon_type, $logon_flags = Get-BecomeFlags -flags $Payload.become_flags
 } catch {
@@ -109,7 +116,7 @@ $bootstrap_wrapper = {
     &$exec_wrapper
 }
 $exec_command = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($bootstrap_wrapper.ToString()))
-$lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $exec_command")
+$lp_command_line = "powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $exec_command"
 $lp_current_directory = $env:SystemRoot  # TODO: should this be set to the become user's profile dir?
 
 # pop the become_wrapper action so we don't get stuck in a loop
@@ -124,8 +131,8 @@ $exec_wrapper += "`0`0`0`0" + $payload_json
 
 try {
     Write-AnsibleLog "INFO - starting become process '$lp_command_line'" "become_wrapper"
-    $result = [Ansible.Become.BecomeUtil]::RunAsUser($username, $password, $lp_command_line,
-        $lp_current_directory, $exec_wrapper, $logon_flags, $logon_type)
+    $result = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($username, $password, $logon_flags, $logon_type,
+        $null, $lp_command_line,  $lp_current_directory, $null, $exec_wrapper)
     Write-AnsibleLog "INFO - become process complete with rc: $($result.ExitCode)" "become_wrapper"
     $stdout = $result.StandardOut
     try {

@@ -523,6 +523,42 @@ Because local service accounts do not have passwords, the
 ``ansible_become_password`` parameter is not required and is ignored if
 specified.
 
+Become without setting a Password
+---------------------------------
+
+As of Ansible 2.8, ``become`` can be used to become a local or domain account
+without requiring a password for that account. For this method to work, the
+following requirements must be met:
+
+* The connection user has the ``SeDebugPrivilege`` privilege assigned
+* The connection user is part of the ``BUILTIN\Administrators`` group
+* The ``become_user`` has either the ``SeBatchLogonRight`` or ``SeNetworkLogonRight`` user right
+
+Using become without a password is achieved in one of two different methods:
+
+* Duplicating an existing logon session's token if the account is already logged on
+* Using S4U to generate a logon token that is valid on the remote host only
+
+In the first scenario, the become process is spawned from another logon of that
+user account. This could be an existing RDP logon, console logon, but this is
+not guaranteed to occur all the time. This is similar to the
+``Run only when user is logged on`` option for a Scheduled Task.
+
+In the case where another logon of the become account does not exist, S4U is
+used to create a new logon and run the module through that. This is similar to
+the ``Run whether user is logged on or not`` with the ``Do not store password``
+option for a Scheduled Task. In this scenario, the become process will not be
+able to access any network resources like a normal WinRM process.
+
+To make a distinction between using become with no password and becoming an
+account that has no password make sure to keep ``ansible_become_pass`` as
+undefined or set ``ansible_become_pass:``.
+
+.. Note:: Because there are no guarantees an existing token will exist for a
+  user when Ansible runs, there's a high change the become process will only
+  have access to local resources. Use become with a password if the task needs
+  to access network resources
+
 Accounts without a Password
 ---------------------------
 
@@ -530,8 +566,7 @@ Accounts without a Password
 
 Ansible can be used to become an account that does not have a password (like the
 ``Guest`` account). To become an account without a password, set up the
-variables like normal but either do not define ``ansible_become_pass`` or set
-``ansible_become_pass: ''``.
+variables like normal but set ``ansible_become_pass: ''``.
 
 Before become can work on an account like this, the local policy
 `Accounts: Limit local account use of blank passwords to console logon only <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/jj852174(v=ws.11)>`_
