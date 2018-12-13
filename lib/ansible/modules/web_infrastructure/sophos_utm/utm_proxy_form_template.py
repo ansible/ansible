@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: utm_proxy_form_template
 
-author: 
+author:
     - Johannes Brunswicker (@MatrixCrawler)
 
 short_description: create, update or destroy reverse_proxy form_template entry in Sophos UTM
@@ -26,7 +26,7 @@ description:
     - Create, update or destroy a reverse_proxy location entry in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -35,7 +35,7 @@ options:
         required: true
     assets:
         description:
-          - A list of hashes of assets. In the form "filename":"fileContentAsBase64" 
+          - A list of hashes of assets. In the form "filename":"fileContentAsBase64"
         default: []
         type: list
     comment:
@@ -44,11 +44,11 @@ options:
     filename:
         description:
           - A name for the file
-        type: string
-    template: 
+        type: str
+    template:
         description:
           - The html template as base64 string that will be the content of C(filename)
-        type: string
+        type: str
 
 extends_documentation_fragment:
     - utm
@@ -61,8 +61,10 @@ EXAMPLES = """
     utm_token: abcdefghijklmno1234
     name: TestFormTemplateEntry
     assets:
-      - "style.css":"abcdef12345691=="
-      - "logo.png":"1234567890abcdef=="
+      "style.css":
+        "abcdef12345691=="
+      "logo.png":
+        "1234567890abcdef=="
     filename: "login.html"
     template: "123456790=="
     state: present

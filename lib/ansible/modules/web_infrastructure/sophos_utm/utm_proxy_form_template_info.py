@@ -15,24 +15,40 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: utm_proxy_form_template
+module: utm_proxy_form_template_info
 
-author: 
+author:
     - Johannes Brunswicker (@MatrixCrawler)
 
 short_description: query info for reverse_proxy form_template entry in Sophos UTM
 
 description:
-    - Gathers info for reverse_proxy form_template entry in SOPHOS UTM.
+    - Gathers info for reverse_proxy form_template entry in Sophos UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
         description:
           - The name of the object. Will be used to identify the entry
         required: true
+    assets:
+        description:
+          - A list of hashes of assets. In the form "filename":"fileContentAsBase64"
+        default: []
+        type: list
+    comment:
+        description:
+          - The optional comment string
+    filename:
+        description:
+          - A name for the file
+        type: str
+    template:
+        description:
+          - The html template as base64 string that will be the content of C(filename)
+        type: str
 
 extends_documentation_fragment:
     - utm
