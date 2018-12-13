@@ -32,7 +32,6 @@ from ansible.module_utils.utm_utils import UTM
 
 class FakeModule:
     def __init__(self, params):
-        params = params
         pass
 
 
