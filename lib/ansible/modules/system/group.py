@@ -162,16 +162,9 @@ class Group(object):
 
     def group_exists(self):
         if self.local:
-<<<<<<< Upstream, based on branch 'devel' of https://github.com/ansible/ansible.git
             for line in get_file_content(self.GROUPFILE, '').splitlines():
                 if line.split(':')[0] == self.name:
                     return True
-=======
-            with open(GROUPFILE) as file:
-                for line in file:
-                    if line.split(':')[0] == self.name:
-                        return True
->>>>>>> d373471 Fix deleting local groups with ldap
             return False
         else:
             try:
