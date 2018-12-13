@@ -94,8 +94,10 @@ EXAMPLES = r'''
   args:
     creates: /path/to/database
 
-- name: Change the working directory to somedir/ and run command if /path/to/database does not exist.
+- name: Change the working directory to somedir/ and run command as db_owner if /path/to/database does not exist.
   command: /usr/bin/make_database.sh arg1 arg2
+  become: yes
+  become_user: db_owner
   args:
     chdir: somedir/
     creates: /path/to/database
