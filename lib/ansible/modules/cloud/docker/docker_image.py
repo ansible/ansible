@@ -538,7 +538,6 @@ class ImageManager(DockerBaseClass):
             forcerm=self.rm,
             dockerfile=self.dockerfile,
             decode=True,
-            cache_from=self.cache_from
         )
         if not HAS_DOCKER_PY_3:
             params['stream'] = True
@@ -551,6 +550,8 @@ class ImageManager(DockerBaseClass):
             for key, value in self.buildargs.items():
                 self.buildargs[key] = to_native(value)
             params['buildargs'] = self.buildargs
+        if self.cache_from:
+            params['cache_from'] = self.cache_from
 
         for line in self.client.build(**params):
             # line = json.loads(line)
