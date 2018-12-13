@@ -1,0 +1,4 @@
+bugfixes:
+  - setup - fix the rounding of the ansible_memtotal_mb value on VMWare vm's (https://github.com/ansible/ansible/issues/49608)
+minor_changes:
+  - setup - add new facts to display the initial and maximum pagefile size
