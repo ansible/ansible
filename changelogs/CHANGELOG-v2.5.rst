@@ -2,6 +2,28 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.14:
+
+v2.5.14
+=======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.14_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2018-12-13
+| Security release for CVE-2018-16876 (https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2018-16876)
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.14_Bugfixes:
+
+Bugfixes
+--------
+
+- now no log is being respected on retry and high verbosity. CVE-2018-16876
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.13:
 
 v2.5.13
