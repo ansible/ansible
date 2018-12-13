@@ -491,6 +491,11 @@ files:
       - windows
   $module_utils/docker_common.py:
     maintainers: $team_docker
+  $module_utils/ec2.py:
+    support: core
+    labels:
+      - aws
+      - cloud
   $module_utils/facts:
     support: core
   $module_utils/ipa.py:
