@@ -132,6 +132,13 @@ class UTM:
         """
         adds or updates a host object on utm
         """
+
+        default_headers = {"Accept": "application/json", "Content-type": "application/json"}
+        if self.module.params['headers'] is not None:
+            combined_headers = default_headers.update(self.module.params['headers'])
+        else:
+            combined_headers = default_headers
+
         is_changed = False
         info, result = self._lookup_entry(self.module, self.request_url)
         if info["status"] >= 400:
@@ -140,7 +147,7 @@ class UTM:
             data_as_json_string = self.module.jsonify(self.module.params)
             if result is None:
                 response, info = fetch_url(self.module, self.request_url, method="POST",
-                                           headers={"Accept": "application/json", "Content-type": "application/json"},
+                                           headers=combined_headers,
                                            data=data_as_json_string)
                 if info["status"] >= 400:
                     self.module.fail_json(msg=json.loads(info["body"]))
@@ -149,8 +156,7 @@ class UTM:
             else:
                 if self._is_object_changed(self.change_relevant_keys, self.module, result):
                     response, info = fetch_url(self.module, self.request_url + result['_ref'], method="PUT",
-                                               headers={"Accept": "application/json",
-                                                        "Content-type": "application/json"},
+                                               headers=combined_headers,
                                                data=data_as_json_string)
                     if info['status'] >= 400:
                         self.module.fail_json(msg=json.loads(info["body"]))

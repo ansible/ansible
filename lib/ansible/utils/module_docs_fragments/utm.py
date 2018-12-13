@@ -5,6 +5,11 @@
 class ModuleDocFragment(object):
     DOCUMENTATION = """
 options:
+    headers:
+        description:
+          - A dictionary of additional headers to be sent to POST and PUT requests.
+          - Is needed for some modules
+        required: false
     utm_host:
         description:
           - The REST Endpoint of the Sophos UTM.
