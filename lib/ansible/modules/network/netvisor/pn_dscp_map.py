@@ -30,6 +30,7 @@ options:
       - State the action to perform. Use 'present' to create dscp-map and
         'absent' to delete.
     required: True
+    choices: ["present", "absent"]
   pn_name:
     description:
       - Name for the DSCP map.
