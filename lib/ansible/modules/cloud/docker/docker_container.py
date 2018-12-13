@@ -1609,7 +1609,7 @@ class TaskParameters(DockerBaseClass):
             for name, value in self.env.items():
                 if not isinstance(value, string_types):
                     self.fail("Non-string value found for env option. "
-                              "Env options must be wrapped in quotes to avoid YAML parsing. Key: %s Value: %s" % (name, str(value)))
+                              "Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s" % (name, ))
                 final_env[name] = str(value)
         return final_env
 
