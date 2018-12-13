@@ -20,10 +20,12 @@ short_description: Execute commands on targets
 version_added: historical
 description:
      - The C(command) module takes the command name followed by a list of space-delimited arguments.
-     - The given command will be executed on all selected nodes. It will not be
+     - The given command will be executed on all selected nodes.
+     - The command(s) will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
        module if you need these features).
+     - To create C(command) tasks that are easier to read, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task).
      - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
@@ -84,19 +86,21 @@ EXAMPLES = r'''
   command: cat /etc/motd
   register: mymotd
 
-- name: Run the command if the specified file does not exist.
+- name: Run command if /path/to/database does not exist (without 'args').
+  command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+
+- name: Run command if /path/to/database does not exist (with 'args').
   command: /usr/bin/make_database.sh arg1 arg2
   args:
     creates: /path/to/database
 
-# You can also use the 'args' form to provide the options.
-- name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
+- name: Change the working directory to somedir/ and run command if /path/to/database does not exist.
   command: /usr/bin/make_database.sh arg1 arg2
   args:
     chdir: somedir/
     creates: /path/to/database
 
-- name: use argv to send the command as a list.  Be sure to leave command empty
+- name: Use 'argv' with 'args' to send a command as a list - be sure to leave 'command' empty
   command:
   args:
     argv:
