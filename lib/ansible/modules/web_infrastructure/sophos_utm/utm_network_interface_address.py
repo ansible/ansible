@@ -43,9 +43,6 @@ options:
     comment:
         description:
           - An optional comment to add to the object
-    address:
-        description:
-          - The ip6 address of the network/interface_address object.
     resolved:
         description:
           - Whether or not the object is resolved
