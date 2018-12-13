@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: utm_proxy_location
 
-author: 
+author:
     - Johannes Brunswicker (@MatrixCrawler)
 
 short_description: create, update or destroy reverse_proxy location entry in Sophos UTM
@@ -26,7 +26,7 @@ description:
     - Create, update or destroy a reverse_proxy location entry in SOPHOS UTM.
     - This module needs to have the REST Ability of the UTM to be activated.
 
-version_added: "2.7" 
+version_added: "2.8"
 
 options:
     name:
@@ -36,11 +36,11 @@ options:
     access_control:
         description:
           - whether to activate the access control for the location
-        default: 0
+        type: str
+        default: '0'
         choices:
-          - 0 
-          - 1
-        type: string
+          - '0'
+          - '1'
     allowed_networks:
         description:
           - A list of allowed networks
@@ -63,29 +63,33 @@ options:
         description:
           - A list of denied network references
         default: []
-    hot_standby: 
+    hot_standby:
         description:
           - Activate hot standby mode
+        type: bool
         default: False
-    path: 
+    path:
         description:
           - The path of the location
         default: "/"
-    status: 
+    status:
         description:
           - Whether the location is active or not
+        type: bool
         default: True
-    stickysession_id: 
+    stickysession_id:
         description:
-          - The sticksession id
+          - The stickysession id
         default: ROUTEID
-    stickysession_status: 
+    stickysession_status:
         description:
           - Enable the stickysession
+        type: bool
         default: False
-    websocket_passthrough: 
+    websocket_passthrough:
         description:
           - Enable the websocket passthrough
+        type: bool
         default: False
 
 extends_documentation_fragment:
