@@ -351,6 +351,20 @@ releases:
     - powershell-bootstrap.yaml
     - v2.6.10_summary.yaml
     release_date: '2018-11-30'
+  2.6.11:
+    codename: Heartbreaker
+    fragments:
+    - 45155-vmware-handle_exception.yaml
+    - 45155-vmware_host_service_facts-update_docs.yaml
+    - 47313-vmware-fix_module_error.yaml
+    - 49096-ansible-galaxy-fix_info_typo.yaml
+    - 49113-iam-role-arn-parsing-updated.yml
+    - avoid_ssh_retry_discolsures.yml
+    - nxos_facts_multiple_bugfixes.yaml
+    - nxos_install_os_nxapi_fix.yaml
+    - nxos_interface_linkagg_idempotence.yaml
+    - v2.6.11_summary.yaml
+    release_date: '2018-12-13'
   2.6.2:
     codename: Heartbreaker
     fragments:

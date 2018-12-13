@@ -2,6 +2,36 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.11
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2018-12-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Fixed typo in ansible-galaxy info command.
+- Update docs and return section of vmware_host_service_facts module.
+
+Bugfixes
+--------
+
+- Added unit test for VMware module_utils.
+- Fix N3K power supply facts (https://github.com/ansible/ansible/pull/49150).
+- Fix NameError nxos_facts (https://github.com/ansible/ansible/pull/48981).
+- Fix VMware module utils for self usage.
+- Fix issues with nxos_install_os module for nxapi (https://github.com/ansible/ansible/pull/48811).
+- Fix lldp and cdp neighbors information (https://github.com/ansible/ansible/pull/48318)(https://github.com/ansible/ansible/pull/48087)(https://github.com/ansible/ansible/pull/49024).
+- Fix nxos_interface and nxos_linkagg Idempotence issue (https://github.com/ansible/ansible/pull/46437).
+- ec2_metadata_facts - Parse IAM role name from the security credential field since the instance profile name is different
+- now no log is being respected on retry and high verbosity.  CVE-2018-16876
+- vmware_host_service_facts - handle exception when service package does not have package name.
+
 v2.6.10
 =======
 
