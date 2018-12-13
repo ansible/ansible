@@ -216,7 +216,7 @@ notes:
 - Some packages, like hotfixes or updates need an interactive user logon in
   order to install. You can use C(become) to achieve this, see
   :doc:`/user_guide/become`.
-- Even if you are connecting as local Administrator, using C(become) to
+  Even if you are connecting as local Administrator, using C(become) to
   become Administrator will give you an interactive user logon, see examples
   below.
 - If C(become) is unavailable, use M(win_hotfix) to install hotfixes instead
@@ -240,7 +240,7 @@ seealso:
   link: http://chocolatey.org/packages
 - doc: /user_guide/become
   description: Some packages, like hotfixes or updates need an interactive user logon
-    in order to install. You can use (C(become)) to achieve this.
+    in order to install. You can use C(become) to achieve this.
 author:
 - Trond Hindenes (@trondhindenes)
 - Peter Mounce (@petemounce)
