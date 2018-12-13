@@ -87,15 +87,15 @@ EXAMPLES = r'''
   register: mymotd
 
 - name: Run command if /path/to/database does not exist (without 'args').
-  command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+  command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
 - name: Run command if /path/to/database does not exist (with 'args').
-  command: /usr/bin/make_database.sh arg1 arg2
+  command: /usr/bin/make_database.sh db_user db_name
   args:
     creates: /path/to/database
 
 - name: Change the working directory to somedir/ and run command as db_owner if /path/to/database does not exist.
-  command: /usr/bin/make_database.sh arg1 arg2
+  command: /usr/bin/make_database.sh db_user db_name
   become: yes
   become_user: db_owner
   args:
