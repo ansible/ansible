@@ -18,10 +18,13 @@ description:
 - Manage top level Application Profile (AP) objects on Cisco ACI fabrics
 notes:
 - This module does not manage EPGs, see M(aci_epg) to do this.
-- The C(tenant) used must exist before using this module in your playbook.
+- The used C(tenant) must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(fv:Ap) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Ap).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'

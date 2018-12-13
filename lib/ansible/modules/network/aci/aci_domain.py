@@ -16,10 +16,11 @@ module: aci_domain
 short_description: Manage physical, virtual, bridged, routed or FC domain profiles (phys:DomP, vmm:DomP, l2ext:DomP, l3ext:DomP, fc:DomP)
 description:
 - Manage physical, virtual, bridged, routed or FC domain profiles on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC classes B(phys:DomP),
-  B(vmm:DomP), B(l2ext:DomP), B(l3ext:DomP) and B(fc:DomP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(phys:DomP),
+               B(vmm:DomP), B(l2ext:DomP), B(l3ext:DomP) and B(fc:DomP)
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
