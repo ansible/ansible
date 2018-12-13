@@ -18,9 +18,13 @@ description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
 notes:
 - The C(tenant) and C(contract) used must exist before using this module in your playbook.
-- The M(aci_tenant) and M(aci_contract) modules can be used for this.
-- More information about the internal APIC class B(vz:Subj) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+  The M(aci_tenant) and M(aci_contract) modules can be used for this.
+seealso:
+- module: aci_contract
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:Subj).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'

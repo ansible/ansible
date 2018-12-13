@@ -20,8 +20,11 @@ description:
 - Manage VLAN encap blocks that are assigned to VLAN pools on Cisco ACI fabrics.
 notes:
 - The C(pool) must exist in order to add or delete a encap block.
-- More information about the internal APIC class B(fvns:EncapBlk) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_vlan_pool
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fvns:EncapBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 - Dag Wieers (@dagwieers)
