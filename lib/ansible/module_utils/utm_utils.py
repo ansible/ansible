@@ -59,7 +59,7 @@ class UTMModule(AnsibleModule):
                  mutually_exclusive=None, required_together=None, required_one_of=None, add_file_common_args=False,
                  supports_check_mode=False, required_if=None):
         default_specs = dict(
-            headers=dict(type='dict', required=False),
+            headers=dict(type='dict', required=False, default={}),
             utm_host=dict(type='str', required=True),
             utm_port=dict(type='int', default=4444),
             utm_token=dict(type='str', required=True, no_log=True),
@@ -167,11 +167,12 @@ class UTM:
         :return: A combined headers dict
         """
         default_headers = {"Accept": "application/json", "Content-type": "application/json"}
-        if self.module.params['headers'] is not None:
-            combined_headers = default_headers.update(self.module.params['headers'])
+        if self.module.params.get('headers') is not None:
+            result = default_headers.copy()
+            result.update(self.module.params.get('headers'))
         else:
-            combined_headers = default_headers
-        return combined_headers
+            result = default_headers
+        return result
 
     def _remove(self):
         """

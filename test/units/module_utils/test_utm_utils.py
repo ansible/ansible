@@ -30,23 +30,32 @@ from ansible.module_utils.utm_utils import UTM
 
 class FakeModule:
     def __init__(self, params):
-        pass
+        self.params = params
 
 
 def test_combine_headers_returns_only_default():
-    default_headers = {"Accept": "application/json", "Content-type": "application/json"}
+    expected = {"Accept": "application/json", "Content-type": "application/json"}
+    module = FakeModule(
+        params={'utm_protocol': 'utm_protocol', 'utm_host': 'utm_host', 'utm_port': 1234, 'utm_token': 'utm_token',
+                'name': 'FakeName', 'headers': {}})
+    result = UTM(module, "endpoint", [])._combine_headers()
+    assert result == expected
+
+
+def test_combine_headers_returns_only_default2():
+    expected = {"Accept": "application/json", "Content-type": "application/json"}
     module = FakeModule(
         params={'utm_protocol': 'utm_protocol', 'utm_host': 'utm_host', 'utm_port': 1234, 'utm_token': 'utm_token',
                 'name': 'FakeName'})
-    result = UTM(module, "endpoint", None)._combine_headers()
-    assert result.assertDictEqual(default_headers)
+    result = UTM(module, "endpoint", [])._combine_headers()
+    assert result == expected
 
 
 def test_combine_headers_returns_combined():
-    default_headers = {"Accept": "application/json", "Content-type": "application/json",
-                       "extraHeader": "extraHeaderValue"}
+    expected = {"Accept": "application/json", "Content-type": "application/json",
+                "extraHeader": "extraHeaderValue"}
     module = FakeModule(params={'utm_protocol': 'utm_protocol', 'utm_host': 'utm_host', 'utm_port': 1234,
                                 'utm_token': 'utm_token', 'name': 'FakeName',
                                 "headers": {"extraHeader": "extraHeaderValue"}})
-    result = UTM(module, "endpoint", None)._combine_headers()
-    assert result.assertDictEqual(default_headers)
+    result = UTM(module, "endpoint", [])._combine_headers()
+    assert result == expected
