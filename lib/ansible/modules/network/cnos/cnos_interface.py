@@ -508,7 +508,7 @@ def main():
         description=dict(),
         speed=dict(),
         mtu=dict(),
-        duplex=dict(default='auto',choices=['full', 'half', 'auto']),
+        duplex=dict(default='auto', choices=['full', 'half', 'auto']),
         enabled=dict(default=True, type='bool'),
         tx_rate=dict(),
         rx_rate=dict(),
