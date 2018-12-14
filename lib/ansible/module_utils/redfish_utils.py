@@ -886,7 +886,6 @@ class RedfishUtils(object):
         result["entries"] = nic_results
         return result
 
-
     def get_psu_inventory(self):
         result = {}
         psu_list = []
