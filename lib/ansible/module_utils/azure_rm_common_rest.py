@@ -32,7 +32,6 @@ class GenericRestClientConfiguration(AzureConfiguration):
         self.add_user_agent('genericrestclient/1.0')
         self.add_user_agent('Azure-SDK-For-Python')
 
-
         self.credentials = credentials
         self.subscription_id = subscription_id
 
