@@ -170,7 +170,7 @@ instances:
             type: string
             sample: "2099-12-31T15:59Z"
         gpu:
-            description: The attribution of instane GPU.
+            description: The attribution of instance GPU.
             returned: always
             type: complex
             contains:
