@@ -67,6 +67,9 @@ class AnsibleError(Exception):
                 self.message = '%s\n\n%s' % (to_native(message), to_native(extended_error))
             else:
                 self.message = '%s' % to_native(message)
+        elif isinstance(message, Exception):
+            # Some exceptions (like KeyError) give unhelpful information from __str__
+            self.message = '%s' % to_native(message.__repr__())
         else:
             self.message = '%s' % to_native(message)
         if orig_exc:
