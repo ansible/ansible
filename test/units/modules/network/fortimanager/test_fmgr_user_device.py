@@ -31,8 +31,11 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') \
-                   + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(
+        os.path.dirname(__file__),
+        'fixtures') + "/{filename}.json".format(
+        filename=os.path.splitext(
+            os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -62,7 +65,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # alias: test_device
     # mac: adlks123123123lk2
     # mode: set
-    # type: android-phone
+    # type: androidphone
     # tagging: {'category': None, 'name': None, 'tags': None}
     # avatar: None
     ##################################################
@@ -77,7 +80,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # alias: test_device
     # mac: adlks123123123lk2
     # avatar: None
-    # type: android-phone
+    # type: androidphone
     # tagging: {'category': None, 'name': None, 'tags': None}
     # user: None
     ##################################################
@@ -107,7 +110,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # alias: testdevice
     # mac: adlks123123123lk2
     # mode: set
-    # type: android-phone
+    # type: androidphone
     # tagging: {'category': None, 'name': None, 'tags': None}
     # avatar: None
     ##################################################
@@ -122,7 +125,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # alias: testdevice
     # mac: 00:0000 00 00.00
     # avatar: None
-    # type: android-phone
+    # type: androidphone
     # tagging: {'category': None, 'name': None, 'tags': None}
     # user: None
     ##################################################
@@ -137,7 +140,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # alias: testdevice
     # mac: a0:c9:a0:a4:50:bc
     # user: None
-    # type: android-phone
+    # type: androidphone
     # tagging: {'category': None, 'name': None, 'tags': None}
     # mode: set
     ##################################################
@@ -152,7 +155,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # alias: testdevice
     # mac: a0:c9:a0:a4:50:bc
     # mode: set
-    # type: android-phone
+    # type: androidphone
     # tagging: {'category': None, 'name': None, 'tags': None}
     # avatar: None
     ##################################################
@@ -167,7 +170,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # alias: testdevice
     # mac: a0:c9:a0:a4:50:bc
     # avatar: None
-    # type: android-phone
+    # type: androidphone
     # tagging: {'category': None, 'name': None, 'tags': None}
     # user: test user
     ##################################################
@@ -182,7 +185,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # alias: testdevice
     # mac: a0:c9:a0:a4:50:bc
     # user: test user
-    # type: android-phone
+    # type: androidphone
     # tagging: {'category': None, 'name': None, 'tags': None}
     # mode: set
     ##################################################
@@ -198,7 +201,7 @@ def test_fmgr_user_device_addsetdelete(fixture_data, mocker):
     # category: android-device
     # alias: testdevice
     # mode: delete
-    # type: android-phone
+    # type: androidphone
     # avatar: None
     ##################################################
 
