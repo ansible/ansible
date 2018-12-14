@@ -651,7 +651,7 @@ custom_error_responses:
       type: complex
       contains:
         error_caching_min_ttl:
-          description: Mininum time to cache this error response
+          description: Minimum time to cache this error response
           returned: always
           type: int
           sample: 300
