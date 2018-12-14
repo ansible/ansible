@@ -5,7 +5,7 @@
 DOCUMENTATION = '''
 ---
 module: ios_ntp
-extends_documentation_fragment: nxos
+extends_documentation_fragment: ios
 version_added: "2.8"
 short_description: Manages core NTP configuration.
 description:
@@ -21,8 +21,11 @@ options:
             - Network address of NTP peer.
     source_int:
         description:
-            - Source interface for NTP requests.  
-     state:
+            - Interface for sourcing NTP packets.
+    acl:
+        description:
+            - ACL for peer/server access restricition.
+    state:
         description:
             - Manage the state of the resource.
         default: present
@@ -35,7 +38,7 @@ EXAMPLES = '''
     server: 8.8.8.8
     source_int: Loopback0
     acl: NTP_ACL
-    state: present
+    state: absent
     provider: "{{ staging }}"
 '''
 
@@ -52,6 +55,7 @@ changed:
     type: boolean
     sample: true
 '''
+
 import re
 
 from ansible.module_utils.basic import AnsibleModule
@@ -61,9 +65,9 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 def parse_server(line, dest):
     if dest == 'server':
-        match = re.search(r'(ntp server )(ip )?(\d+\.\d+\.\d+\.\d+)', line, re.M)
+        match = re.search(r'(ntp server \d+\.\d+\.\d+\.\d+)', line, re.M)
         if match:
-            server = match.group(3)
+            server = match.group(1)
             return server
 
 
@@ -115,7 +119,7 @@ def map_config_to_obj(module):
 
     return obj
 
-def map_params_to_obj(module, required_if=None):
+def map_params_to_obj(module):
     obj = []
 
     obj.append({
