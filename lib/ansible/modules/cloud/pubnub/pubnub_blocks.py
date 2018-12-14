@@ -124,6 +124,7 @@ options:
       - If check should be ignored C(False) should be passed to this parameter.
     required: false
     default: true
+    type: bool
 '''
 
 EXAMPLES = '''

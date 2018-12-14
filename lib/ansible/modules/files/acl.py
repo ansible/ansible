@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -10,87 +11,83 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: acl
-version_added: "1.4"
-short_description: Sets and retrieves file ACL information.
+version_added: '1.4'
+short_description: Set and retrieve file ACL information.
 description:
-    - Sets and retrieves file ACL information.
+- Set and retrieve file ACL information.
 options:
   path:
     description:
-      - The full path of the file or object.
+    - The full path of the file or object.
     aliases: [ name ]
-    required: true
-
+    required: yes
   state:
     description:
-      - defines whether the ACL should be present or not.  The C(query) state gets the current acl without changing it, for use in 'register' operations.
+    - Define whether the ACL should be present or not.
+    - The C(query) state gets the current ACL without changing it, for use in C(register) operations.
     choices: [ absent, present, query ]
     default: query
-
   follow:
     description:
-      - whether to follow symlinks on the path if a symlink is encountered.
+    - Whether to follow symlinks on the path if a symlink is encountered.
     type: bool
-    default: 'yes'
-
+    default: yes
   default:
     description:
-      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if
-        path is a file.
+    - If the target is a directory, setting this to C(yes) will make it the default ACL for entities created inside the directory.
+    - Setting C(default) to C(yes) causes an error if the path is a file.
     type: bool
-    default: 'no'
-    version_added: "1.5"
-
+    default: no
+    version_added: '1.5'
   entity:
     description:
-      - actual user or group that the ACL applies to when matching entity types user or group are selected.
-    version_added: "1.5"
-
+    - The actual user or group that the ACL applies to when matching entity types user or group are selected.
+    version_added: '1.5'
   etype:
     description:
-      - the entity type of the ACL to apply, see setfacl documentation for more info.
+    - The entity type of the ACL to apply, see C(setfacl) documentation for more info.
     choices: [ group, mask, other, user ]
-    version_added: "1.5"
-
+    version_added: '1.5'
   permissions:
     description:
-      - Permissions to apply/remove can be any combination of r, w and  x (read, write and execute respectively)
-    version_added: "1.5"
-
+    - The permissions to apply/remove can be any combination of C(r), C(w) and C(x) (read, write and execute respectively)
+    version_added: '1.5'
   entry:
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for
-        some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now
-        superseded by entity, type and permissions fields.
-
+    - DEPRECATED.
+    - The ACL to set or remove.
+    - This must always be quoted in the form of C(<etype>:<qualifier>:<perms>).
+    - The qualifier may be empty for some types, but the type and perms are always required.
+    - C(-) can be used as placeholder when you do not care about permissions.
+    - This is now superseded by entity, type and permissions fields.
   recursive:
     description:
-      - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
+    - Recursively sets the specified ACL.
+    - Incompatible with C(state=query).
     type: bool
-    default: 'no'
-    version_added: "2.0"
-
+    default: no
+    version_added: '2.0'
   recalculate_mask:
     description:
-      - Select if and when to recalculate the effective right masks of the files, see setfacl documentation for more info. Incompatible with C(state=query).
+    - Select if and when to recalculate the effective right masks of the files.
+    - See C(setfacl) documentation for more info.
+    - Incompatible with C(state=query).
     choices: [ default, mask, no_mask ]
-    default: 'default'
-    version_added: "2.7"
-
+    default: default
+    version_added: '2.7'
 author:
-    - Brian Coca (@bcoca)
-    - Jérémie Astori (@astorije)
+- Brian Coca (@bcoca)
+- Jérémie Astori (@astorije)
 notes:
-    - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
-    - As of Ansible 2.0, this module only supports Linux distributions.
-    - As of Ansible 2.3, the I(name) option has been changed to I(path) as default, but I(name) still works as well.
+- The C(acl) module requires that ACLs are enabled on the target filesystem and that the C(setfacl) and C(getfacl) binaries are installed.
+- As of Ansible 2.0, this module only supports Linux distributions.
+- As of Ansible 2.3, the I(name) option has been changed to I(path) as default, but I(name) still works as well.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Grant user Joe read access to a file
   acl:
     path: /etc/foo.conf
@@ -99,16 +96,16 @@ EXAMPLES = '''
     permissions: r
     state: present
 
-- name: Removes the acl for Joe on a specific file
+- name: Removes the ACL for Joe on a specific file
   acl:
     path: /etc/foo.conf
     entity: joe
     etype: user
     state: absent
 
-- name: Sets default acl for joe on foo.d
+- name: Sets default ACL for joe on /etc/foo.d/
   acl:
-    path: /etc/foo.d
+    path: /etc/foo.d/
     entity: joe
     etype: user
     permissions: rw
@@ -117,19 +114,19 @@ EXAMPLES = '''
 
 - name: Same as previous but using entry shorthand
   acl:
-    path: /etc/foo.d
-    entry: "default:user:joe:rw-"
+    path: /etc/foo.d/
+    entry: default:user:joe:rw-
     state: present
 
-- name: Obtain the acl for a specific file
+- name: Obtain the ACL for a specific file
   acl:
     path: /etc/foo.conf
   register: acl_info
 '''
 
-RETURN = '''
+RETURN = r'''
 acl:
-    description: Current acl on provided path (after changes, if any)
+    description: Current ACL on provided path (after changes, if any)
     returned: success
     type: list
     sample: [ "user::rwx", "group::rwx", "other::rwx" ]

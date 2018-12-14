@@ -32,71 +32,78 @@ DOCUMENTATION = '''
 ---
 module: gcp_storage_bucket_access_control
 description:
-    - The BucketAccessControls resource represents the Access Control Lists (ACLs) for
-      buckets within Google Cloud Storage. ACLs let you specify who has access to your
-      data and to what extent.
-    - 'There are three roles that can be assigned to an entity:  READERs can get the bucket,
-      though no acl property will be returned, and list the bucket''s objects.  WRITERs
-      are READERs, and they can insert objects into the bucket and delete the bucket''s
-      objects.  OWNERs are WRITERs, and they can get the acl property of a bucket, update
-      a bucket, and call all BucketAccessControls methods on the bucket.  For more information,
-      see Access Control, with the caveat that this API uses READER, WRITER, and OWNER
-      instead of READ, WRITE, and FULL_CONTROL.'
+- The BucketAccessControls resource represents the Access Control Lists (ACLs) for
+  buckets within Google Cloud Storage. ACLs let you specify who has access to your
+  data and to what extent.
+- 'There are three roles that can be assigned to an entity: READERs can get the bucket,
+  though no acl property will be returned, and list the bucket''s objects. WRITERs
+  are READERs, and they can insert objects into the bucket and delete the bucket''s
+  objects. OWNERs are WRITERs, and they can get the acl property of a bucket, update
+  a bucket, and call all BucketAccessControls methods on the bucket. For more information,
+  see Access Control, with the caveat that this API uses READER, WRITER, and OWNER
+  instead of READ, WRITE, and FULL_CONTROL.'
 short_description: Creates a GCP BucketAccessControl
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  bucket:
+    description:
+    - The name of the bucket.
+    - 'This field represents a link to a Bucket resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
+      task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
+      you can set this bucket to a dictionary with the name key where the value is
+      the name of your Bucket'
+    required: true
+  entity:
+    description:
+    - 'The entity holding the permission, in one of the following forms: user-userId
+      user-email group-groupId group-email domain-domain project-team-projectId allUsers
+      allAuthenticatedUsers Examples: The user liz@example.com would be user-liz@example.com.'
+    - The group example@googlegroups.com would be group-example@googlegroups.com.
+    - To refer to all members of the Google Apps for Business domain example.com,
+      the entity would be domain-example.com.
+    required: true
+  entity_id:
+    description:
+    - The ID for the entity.
+    required: false
+  project_team:
+    description:
+    - The project team associated with the entity.
+    required: false
+    suboptions:
+      project_number:
         description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    bucket:
-        description:
-            - The name of the bucket.
-            - 'This field represents a link to a Bucket resource in GCP. It can be specified in
-              two ways. You can add `register: name-of-resource` to a gcp_storage_bucket task
-              and then set this bucket field to "{{ name-of-resource }}" Alternatively, you can
-              set this bucket to a dictionary with the name key where the value is the name of
-              your Bucket.'
-        required: true
-    entity:
-        description:
-            - 'The entity holding the permission, in one of the following forms: user-userId
-              user-email group-groupId group-email domain-domain project-team-projectId allUsers
-              allAuthenticatedUsers Examples: The user liz@example.com would be
-              user-liz@example.com.'
-            - The group example@googlegroups.com would be   group-example@googlegroups.com.
-            - To refer to all members of the Google Apps for Business domain   example.com, the
-              entity would be domain-example.com.
-        required: true
-    entity_id:
-        description:
-            - The ID for the entity.
+        - The project team associated with the entity.
         required: false
-    project_team:
+      team:
         description:
-            - The project team associated with the entity.
+        - The team.
         required: false
-        suboptions:
-            project_number:
-                description:
-                    - The project team associated with the entity.
-                required: false
-            team:
-                description:
-                    - The team.
-                required: false
-                choices: ['editors', 'owners', 'viewers']
-    role:
-        description:
-            - The access permission for the entity.
-        required: false
-        choices: ['OWNER', 'READER', 'WRITER']
+        choices:
+        - editors
+        - owners
+        - viewers
+  role:
+    description:
+    - The access permission for the entity.
+    required: false
+    choices:
+    - OWNER
+    - READER
+    - WRITER
 extends_documentation_fragment: gcp
 '''
 
@@ -122,63 +129,62 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    bucket:
-        description:
-            - The name of the bucket.
-        returned: success
-        type: dict
-    domain:
-        description:
-            - The domain associated with the entity.
-        returned: success
-        type: str
-    email:
-        description:
-            - The email address associated with the entity.
-        returned: success
-        type: str
-    entity:
-        description:
-            - 'The entity holding the permission, in one of the following forms: user-userId
-              user-email group-groupId group-email domain-domain project-team-projectId allUsers
-              allAuthenticatedUsers Examples: The user liz@example.com would be
-              user-liz@example.com.'
-            - The group example@googlegroups.com would be   group-example@googlegroups.com.
-            - To refer to all members of the Google Apps for Business domain   example.com, the
-              entity would be domain-example.com.
-        returned: success
-        type: str
-    entityId:
-        description:
-            - The ID for the entity.
-        returned: success
-        type: str
-    id:
-        description:
-            - The ID of the access-control entry.
-        returned: success
-        type: str
-    projectTeam:
-        description:
-            - The project team associated with the entity.
-        returned: success
-        type: complex
-        contains:
-            projectNumber:
-                description:
-                    - The project team associated with the entity.
-                returned: success
-                type: str
-            team:
-                description:
-                    - The team.
-                returned: success
-                type: str
-    role:
-        description:
-            - The access permission for the entity.
-        returned: success
-        type: str
+bucket:
+  description:
+  - The name of the bucket.
+  returned: success
+  type: dict
+domain:
+  description:
+  - The domain associated with the entity.
+  returned: success
+  type: str
+email:
+  description:
+  - The email address associated with the entity.
+  returned: success
+  type: str
+entity:
+  description:
+  - 'The entity holding the permission, in one of the following forms: user-userId
+    user-email group-groupId group-email domain-domain project-team-projectId allUsers
+    allAuthenticatedUsers Examples: The user liz@example.com would be user-liz@example.com.'
+  - The group example@googlegroups.com would be group-example@googlegroups.com.
+  - To refer to all members of the Google Apps for Business domain example.com, the
+    entity would be domain-example.com.
+  returned: success
+  type: str
+entityId:
+  description:
+  - The ID for the entity.
+  returned: success
+  type: str
+id:
+  description:
+  - The ID of the access-control entry.
+  returned: success
+  type: str
+projectTeam:
+  description:
+  - The project team associated with the entity.
+  returned: success
+  type: complex
+  contains:
+    projectNumber:
+      description:
+      - The project team associated with the entity.
+      returned: success
+      type: str
+    team:
+      description:
+      - The team.
+      returned: success
+      type: str
+role:
+  description:
+  - The access permission for the entity.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -262,7 +268,7 @@ def resource_to_request(module):
         u'bucket': replace_resource_dict(module.params.get(u'bucket', {}), 'name'),
         u'entity': module.params.get('entity'),
         u'entityId': module.params.get('entity_id'),
-        u'projectTeam': BucketAccessControlProjectTeam(module.params.get('project_team', {}), module).to_request(),
+        u'projectTeam': BucketAccessControlProjectteam(module.params.get('project_team', {}), module).to_request(),
         u'role': module.params.get('role')
     }
     return_vals = {}
@@ -335,12 +341,12 @@ def response_to_hash(module, response):
         u'entity': response.get(u'entity'),
         u'entityId': response.get(u'entityId'),
         u'id': response.get(u'id'),
-        u'projectTeam': BucketAccessControlProjectTeam(response.get(u'projectTeam', {}), module).from_response(),
+        u'projectTeam': BucketAccessControlProjectteam(response.get(u'projectTeam', {}), module).from_response(),
         u'role': response.get(u'role')
     }
 
 
-class BucketAccessControlProjectTeam(object):
+class BucketAccessControlProjectteam(object):
     def __init__(self, request, module):
         self.module = module
         if request:

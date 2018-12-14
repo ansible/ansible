@@ -60,7 +60,7 @@ options:
       the Unix command C(ln -s SRC DEST) treats relative paths.
   recurse:
     description:
-    - Recursively set the specified file attributes.
+    - Recursively set the specified file attributes on directory contents.
     - This applies only to C(state=directory).
     type: bool
     default: no

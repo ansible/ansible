@@ -968,8 +968,9 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

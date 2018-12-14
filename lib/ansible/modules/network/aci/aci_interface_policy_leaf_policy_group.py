@@ -20,8 +20,10 @@ description:
 notes:
 - When using the module please select the appropriate link_aggregation_type (lag_type).
   C(link) for Port Channel(PC), C(node) for Virtual Port Channel(VPC) and C(leaf) for Leaf Access Port Policy Group.
-- More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -370,6 +372,124 @@ def main():
             lagT=lag_type,
         )
 
+    child_configs = [
+        dict(
+            infraRsCdpIfPol=dict(
+                attributes=dict(
+                    tnCdpIfPolName=cdp_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsFcIfPol=dict(
+                attributes=dict(
+                    tnFcIfPolName=fibre_channel_interface_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsHIfPol=dict(
+                attributes=dict(
+                    tnFabricHIfPolName=link_level_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsL2IfPol=dict(
+                attributes=dict(
+                    tnL2IfPolName=l2_interface_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsL2PortSecurityPol=dict(
+                attributes=dict(
+                    tnL2PortSecurityPolName=port_security_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsLacpPol=dict(
+                attributes=dict(
+                    tnLacpLagPolName=port_channel_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsLldpIfPol=dict(
+                attributes=dict(
+                    tnLldpIfPolName=lldp_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsMcpIfPol=dict(
+                attributes=dict(
+                    tnMcpIfPolName=mcp_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsMonIfInfraPol=dict(
+                attributes=dict(
+                    tnMonInfraPolName=monitoring_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsQosEgressDppIfPol=dict(
+                attributes=dict(
+                    tnQosDppPolName=egress_data_plane_policing_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsQosIngressDppIfPol=dict(
+                attributes=dict(
+                    tnQosDppPolName=ingress_data_plane_policing_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsQosPfcIfPol=dict(
+                attributes=dict(
+                    tnQosPfcIfPolName=priority_flow_control_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsQosSdIfPol=dict(
+                attributes=dict(
+                    tnQosSdIfPolName=slow_drain_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsStormctrlIfPol=dict(
+                attributes=dict(
+                    tnStormctrlIfPolName=storm_control_interface_policy,
+                ),
+            ),
+        ),
+        dict(
+            infraRsStpIfPol=dict(
+                attributes=dict(
+                    tnStpIfPolName=stp_interface_policy,
+                ),
+            ),
+        ),
+    ]
+
+    # Add infraRsattEntP binding only when aep was defined
+    if aep is not None:
+        child_configs.append(dict(
+            infraRsAttEntP=dict(
+                attributes=dict(
+                    tDn='uni/infra/attentp-{0}'.format(aep),
+                ),
+            ),
+        ))
+
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
@@ -404,120 +524,7 @@ def main():
         aci.payload(
             aci_class=aci_class_name,
             class_config=class_config_dict,
-            child_configs=[
-                dict(
-                    infraRsAttEntP=dict(
-                        attributes=dict(
-                            tDn='uni/infra/attentp-{0}'.format(aep),
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsCdpIfPol=dict(
-                        attributes=dict(
-                            tnCdpIfPolName=cdp_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsFcIfPol=dict(
-                        attributes=dict(
-                            tnFcIfPolName=fibre_channel_interface_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsHIfPol=dict(
-                        attributes=dict(
-                            tnFabricHIfPolName=link_level_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsL2IfPol=dict(
-                        attributes=dict(
-                            tnL2IfPolName=l2_interface_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsL2PortSecurityPol=dict(
-                        attributes=dict(
-                            tnL2PortSecurityPolName=port_security_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsLacpPol=dict(
-                        attributes=dict(
-                            tnLacpLagPolName=port_channel_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsLldpIfPol=dict(
-                        attributes=dict(
-                            tnLldpIfPolName=lldp_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsMcpIfPol=dict(
-                        attributes=dict(
-                            tnMcpIfPolName=mcp_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsMonIfInfraPol=dict(
-                        attributes=dict(
-                            tnMonInfraPolName=monitoring_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsQosEgressDppIfPol=dict(
-                        attributes=dict(
-                            tnQosDppPolName=egress_data_plane_policing_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsQosIngressDppIfPol=dict(
-                        attributes=dict(
-                            tnQosDppPolName=ingress_data_plane_policing_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsQosPfcIfPol=dict(
-                        attributes=dict(
-                            tnQosPfcIfPolName=priority_flow_control_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsQosSdIfPol=dict(
-                        attributes=dict(
-                            tnQosSdIfPolName=slow_drain_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsStormctrlIfPol=dict(
-                        attributes=dict(
-                            tnStormctrlIfPolName=storm_control_interface_policy,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsStpIfPol=dict(
-                        attributes=dict(
-                            tnStpIfPolName=stp_interface_policy,
-                        ),
-                    ),
-                ),
-            ],
+            child_configs=child_configs,
         )
 
         aci.get_diff(aci_class=aci_class_name)

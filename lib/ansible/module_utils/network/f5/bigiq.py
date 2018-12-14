@@ -8,14 +8,7 @@ __metaclass__ = type
 
 
 import os
-import time
 
-try:
-    from f5.bigiq import ManagementRoot
-    from icontrol.exceptions import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
 
 try:
     from library.module_utils.network.f5.common import F5BaseClient
@@ -29,87 +22,56 @@ except ImportError:
     from ansible.module_utils.network.f5.icontrol import iControlRestSession
 
 
-class F5Client(F5BaseClient):
-    def __init__(self, *args, **kwargs):
-        super(F5Client, self).__init__(*args, **kwargs)
-        self.provider = self.merge_provider_params()
-
-    @property
-    def api(self):
-        exc = None
-        if self._client:
-            return self._client
-        for x in range(0, 10):
-            try:
-                result = ManagementRoot(
-                    self.provider['server'],
-                    self.provider['user'],
-                    self.provider['password'],
-                    port=self.provider['server_port'],
-                    verify=self.provider['validate_certs']
-                )
-                self._client = result
-                return self._client
-            except Exception as ex:
-                exc = ex
-                time.sleep(1)
-        error = 'Unable to connect to {0} on port {1}.'.format(
-            self.provider['server'], self.provider['server_port']
-        )
-
-        if exc is not None:
-            error += ' The reported error was "{0}".'.format(str(exc))
-        raise F5ModuleError(error)
-
-
 class F5RestClient(F5BaseClient):
     def __init__(self, *args, **kwargs):
         super(F5RestClient, self).__init__(*args, **kwargs)
         self.provider = self.merge_provider_params()
+        self.headers = {
+            'Content-Type': 'application/json'
+        }
 
     @property
     def api(self):
-        exc = None
         if self._client:
             return self._client
-        for x in range(0, 10):
-            try:
-                provider = self.provider['auth_provider'] or 'local'
-                url = "https://{0}:{1}/mgmt/shared/authn/login".format(
-                    self.provider['server'], self.provider['server_port']
-                )
-                payload = {
-                    'username': self.provider['user'],
-                    'password': self.provider['password'],
-                }
+        session, err = self.connect_via_token_auth()
+        if err:
+            raise F5ModuleError(err)
+        self._client = session
+        return session
 
-                # - local is a special provider that is baked into the system and
-                #   has no loginReference
-                if provider != 'local':
-                    login_ref = self.get_login_ref(provider)
-                    payload.update(login_ref)
+    def connect_via_token_auth(self):
+        provider = self.provider['auth_provider'] or 'local'
 
-                session = iControlRestSession()
-                session.verify = self.provider['validate_certs']
-                response = session.post(url, json=payload)
-
-                if response.status not in [200]:
-                    raise F5ModuleError('Status code: {0}. Unexpected Error: {1} for uri: {2}\nText: {3}'.format(
-                        response.status, response.reason, response.url, response.content
-                    ))
-
-                session.headers['X-F5-Auth-Token'] = response.json()['token']['token']
-                self._client = session
-                return self._client
-            except Exception as ex:
-                exc = ex
-                time.sleep(1)
-        error = 'Unable to connect to {0} on port {1}.'.format(
+        url = "https://{0}:{1}/mgmt/shared/authn/login".format(
             self.provider['server'], self.provider['server_port']
         )
-        if exc is not None:
-            error += ' The reported error was "{0}".'.format(str(exc))
-        raise F5ModuleError(error)
+        payload = {
+            'username': self.provider['user'],
+            'password': self.provider['password'],
+        }
+
+        # - local is a special provider that is baked into the system and
+        #   has no loginReference
+        if provider != 'local':
+            login_ref = self.get_login_ref(provider)
+            payload.update(login_ref)
+
+        session = iControlRestSession(
+            validate_certs=self.provider['validate_certs']
+        )
+
+        response = session.post(
+            url,
+            json=payload,
+            headers=self.headers
+        )
+
+        if response.status not in [200]:
+            return None, response.content
+
+        session.request.headers['X-F5-Auth-Token'] = response.json()['token']['token']
+        return session, None
 
     def get_login_ref(self, provider):
         info = self.read_provider_info_from_device()

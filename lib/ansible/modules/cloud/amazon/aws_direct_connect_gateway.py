@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: aws_direct_connect_gateway
-author: Gobin Sougrakpam (gobins@github)
+author: Gobin Sougrakpam (@gobins)
 version_added: "2.5"
 short_description: Manage AWS Direct Connect Gateway.
 description:

@@ -60,6 +60,12 @@ EXAMPLES = '''
 - ec2_instance_facts:
     filters:
       "tag:Name": Example
+
+# Gather facts about any instance in states "shutting-down", "stopping", "stopped"
+- ec2_instance_facts:
+    filters:
+      instance-state-name: [ "shutting-down", "stopping", "stopped" ]
+
 '''
 
 RETURN = '''

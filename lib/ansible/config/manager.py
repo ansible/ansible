@@ -38,6 +38,17 @@ Setting = namedtuple('Setting', 'name value origin type')
 INTERNAL_DEFS = {'lookup': ('_terms',)}
 
 
+def _get_entry(plugin_type, plugin_name, config):
+    ''' construct entry for requested config '''
+    entry = ''
+    if plugin_type:
+        entry += 'plugin_type: %s ' % plugin_type
+        if plugin_name:
+            entry += 'plugin: %s ' % plugin_name
+    entry += 'setting: %s ' % config
+    return entry
+
+
 # FIXME: see if we can unify in module_utils with similar function used by argspec
 def ensure_type(value, value_type, origin=None):
     ''' return a configuration variable with casting
@@ -351,7 +362,7 @@ class ConfigManager(object):
         except AnsibleError:
             raise
         except Exception as e:
-            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, traceback.format_exc()))
+            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config), orig_exc=e)
         return value
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
@@ -363,14 +374,8 @@ class ConfigManager(object):
         # Note: sources that are lists listed in low to high precedence (last one wins)
         value = None
         origin = None
-        defs = {}
-        if plugin_type is None:
-            defs = self._base_defs
-        elif plugin_name is None:
-            defs = self._plugins[plugin_type]
-        else:
-            defs = self._plugins[plugin_type][plugin_name]
 
+        defs = self.get_configuration_definitions(plugin_type, plugin_name)
         if config in defs:
 
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
@@ -420,14 +425,9 @@ class ConfigManager(object):
                 # set default if we got here w/o a value
                 if value is None:
                     if defs[config].get('required', False):
-                        entry = ''
-                        if plugin_type:
-                            entry += 'plugin_type: %s ' % plugin_type
-                            if plugin_name:
-                                entry += 'plugin: %s ' % plugin_name
-                        entry += 'setting: %s ' % config
                         if not plugin_type or config not in INTERNAL_DEFS.get(plugin_type, {}):
-                            raise AnsibleError("No setting was provided for required configuration %s" % (entry))
+                            raise AnsibleError("No setting was provided for required configuration %s" %
+                                               to_native(_get_entry(plugin_type, plugin_name, config)))
                     else:
                         value = defs[config].get('default')
                         origin = 'default'
@@ -436,13 +436,22 @@ class ConfigManager(object):
                             return value, origin
 
             # ensure correct type, can raise exceptoins on mismatched types
-            value = ensure_type(value, defs[config].get('type'), origin=origin)
+            try:
+                value = ensure_type(value, defs[config].get('type'), origin=origin)
+            except ValueError as e:
+                if origin.startswith('env:') and value == '':
+                    # this is empty env var for non string so we can set to default
+                    origin = 'default'
+                    value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
+                else:
+                    raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
+                                              (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
                 self.DEPRECATED.append((config, defs[config].get('deprecated')))
         else:
-            raise AnsibleError('Requested option %s was not defined in configuration' % to_native(config))
+            raise AnsibleError('Requested entry (%s) was not defined in configuration.' % to_native(_get_entry(plugin_type, plugin_name, config)))
 
         return value, origin
 
@@ -496,7 +505,7 @@ class ConfigManager(object):
                 # above problem #1 has been fixed.  Revamp this to be more like the try: except
                 # in get_config_value() at that time.
                 sys.stderr.write("Unhandled error:\n %s\n\n" % traceback.format_exc())
-                raise AnsibleError("Invalid settings supplied for %s: %s\n%s" % (config, to_native(e), traceback.format_exc()))
+                raise AnsibleError("Invalid settings supplied for %s: %s\n" % (config, to_native(e)), orig_exc=e)
 
             # set the constant
             self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))

@@ -32,7 +32,6 @@ notes:
 
 
 author:
-  - Matthew Jones
   - Adam Miller (@maxamillion)
 '''
 
@@ -47,22 +46,30 @@ EXAMPLES = '''
 
 RETURN = '''
 ansible_facts:
-  description: facts to add to ansible_facts about the services on the system
+  description: Facts to add to ansible_facts about the services on the system
   returned: always
   type: complex
   contains:
-    "services": {
-      "network": {
-        "source": "sysv",
-        "state": "running",
-        "name": "network"
-      },
-      arp-ethers.service: {
-        "source": "systemd",
-        "state": "stopped",
-        "name": "arp-ethers.service"
-      }
-    }
+    services:
+      description: States of the services with service name as key.
+      returned: always
+      type: complex
+      contains:
+        source:
+          description: Init system of the service. One of C(systemd), C(sysv), C(upstart).
+          returned: always
+          type: string
+          sample: sysv
+        state:
+          description: State of the service. Either C(running) or C(stopped).
+          returned: always
+          type: string
+          sample: running
+        name:
+          description: Name of the service.
+          returned: always
+          type: string
+          sample: arp-ethers.service
 '''
 
 

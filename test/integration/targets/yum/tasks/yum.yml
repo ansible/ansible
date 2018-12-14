@@ -120,14 +120,29 @@
     that:
         - "yum_result is successful"
 
-- name: install sos with state latest in check mode with config file param
-  yum: name=sos state=latest conf_file=/etc/yum.conf
-  check_mode: true
-  register: yum_result
-- name: verify install sos with state latest in check mode with config file param
-  assert:
-    that:
+- name: copy yum.conf file in case it is missing
+  copy:
+    src: yum.conf
+    dest: /etc/yum.conf
+    force: False
+  register: yum_conf_copy
+
+- block:
+  - name: install sos with state latest in check mode with config file param
+    yum: name=sos state=latest conf_file=/etc/yum.conf
+    check_mode: true
+    register: yum_result
+  - name: verify install sos with state latest in check mode with config file param
+    assert:
+      that:
         - "yum_result is changed"
+
+  always:
+  - name: remove tmp yum.conf file if we created it
+    file:
+      path: /etc/yum.conf
+      state: absent
+    when: yum_conf_copy is changed
 
 - name: install sos with state latest in check mode
   yum: name=sos state=latest

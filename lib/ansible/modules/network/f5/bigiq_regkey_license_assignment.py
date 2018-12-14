@@ -83,10 +83,11 @@ EXAMPLES = r'''
     managed: no
     device_username: admin
     device_password: secret
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Register a managed device, by name
@@ -95,10 +96,11 @@ EXAMPLES = r'''
     key: XXXX-XXXX-XXXX-XXXX-XXXX
     device: bigi1.foo.com
     managed: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Register a managed device, by UUID
@@ -107,10 +109,11 @@ EXAMPLES = r'''
     key: XXXX-XXXX-XXXX-XXXX-XXXX
     device: 7141a063-7cf8-423f-9829-9d40599fa3e0
     managed: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -617,8 +620,9 @@ def main():
         required_if=spec.required_if
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

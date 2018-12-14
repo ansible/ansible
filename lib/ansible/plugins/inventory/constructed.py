@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     description:
         - Uses a YAML configuration file with a valid YAML or C(.config) extension to define var expressions and group conditionals
         - The Jinja2 conditionals that qualify a host for membership.
-        - The JInja2 exprpessions are calculated and assigned to the variables
+        - The Jinja2 expressions are calculated and assigned to the variables
         - Only variables already available from previous inventories or the fact cache can be used for templating.
         - When I(strict) is False, failed expressions will be ignored (assumes vars were missing).
     options:
@@ -63,10 +63,10 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.inventory.helpers import get_group_vars
-from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
 from ansible.utils.vars import combine_vars
+from ansible.vars.fact_cache import FactCache
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):

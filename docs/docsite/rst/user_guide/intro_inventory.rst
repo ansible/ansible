@@ -1,11 +1,12 @@
 .. _intro_inventory:
 .. _inventory:
 
-
+**********************
 Working with Inventory
-======================
+**********************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Ansible works against multiple systems in your infrastructure at the same time.
 It does this by selecting portions of systems listed in Ansible's inventory,
@@ -18,8 +19,8 @@ Introduced in version 2.4, Ansible has inventory plugins to make this flexible a
 
 .. _inventoryformat:
 
-Hosts and Groups
-++++++++++++++++
+Inventory basics: hosts and groups
+==================================
 
 The inventory file can be in one of many formats, depending on the inventory plugins you have.
 For this example, the format for ``/etc/ansible/hosts`` is an INI-like (one of Ansible's defaults) and looks like this:
@@ -94,16 +95,30 @@ In the above example, trying to ansible against the host alias "jumper" (which m
 Note that this is using a feature of the inventory file to define some special variables.
 Generally speaking, this is not the best way to define variables that describe your system policy, but we'll share suggestions on doing this later.
 
-.. note:: Values passed in the INI format using the ``key=value`` syntax are not interpreted as Python literal structure
-          (strings, numbers, tuples, lists, dicts, booleans, None), but as a string. For example ``var=FALSE`` would create a string equal to 'FALSE'.
-          Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+.. note:: Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared.
+          * When declared inline with the host, INI values are interpreted as Python literal structures
+          (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple ``key=value`` parameters per line. Therefore they need a way to indicate that a space is part of a value rather than a separator.
+          * When declared in a ``:vars`` section, INI values are interpreted as strings. For example ``var=FALSE`` would create a string equal to 'FALSE'. Unlike host lines, ``:vars`` sections accept only a single entry per line, so everything after the ``=`` must be the value for the entry.
+          * Do not rely on types set during definition, always make sure you specify type with a filter when needed when consuming the variable.
+          * Consider using YAML format for inventory sources to avoid confusion on the actual type of a variable. The YAML inventory plugin processes variable values consistently and correctly.
 
 If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
+
+In INI:
 
 .. code-block:: guess
 
     [webservers]
     www[01:50].example.com
+    
+In YAML:
+
+.. code-block:: yaml
+
+    ...
+      webservers:
+        hosts:
+          www[01:50].example.com:
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.  You can also define alphabetic ranges:
 
@@ -126,8 +141,8 @@ As mentioned above, setting these in the inventory file is only a shorthand, and
 
 .. _host_variables:
 
-Host Variables
-++++++++++++++
+Assigning a variable to one machine: host variables
+===================================================
 
 As described above, it is easy to assign variables to hosts that will be used later in playbooks:
 
@@ -137,10 +152,22 @@ As described above, it is easy to assign variables to hosts that will be used la
    host1 http_port=80 maxRequestsPerChild=808
    host2 http_port=303 maxRequestsPerChild=909
 
+The YAML version:
+
+.. code-block:: yaml
+
+    atlanta:
+      host1:
+        http_port: 80
+        maxRequestsPerChild: 808
+      host2:
+        http_port: 303
+        maxRequestsPerChild: 909
+
 .. _group_variables:
 
-Group Variables
-+++++++++++++++
+Assigning a variable to many machines: group variables
+======================================================
 
 Variables can also be applied to an entire group at once:
 
@@ -172,11 +199,11 @@ Be aware that this is only a convenient way to apply variables to multiple hosts
 
 .. _subgroups:
 
-Groups of Groups, and Group Variables
-+++++++++++++++++++++++++++++++++++++
+Inheriting variable values: group variables for groups of groups
+----------------------------------------------------------------
 
-It is also possible to make groups of groups using the ``:children`` suffix in INI or the ``children:`` entry in YAML.
-You can apply variables using ``:vars`` or ``vars:``:
+You can make groups of groups using the ``:children`` suffix in INI or the ``children:`` entry in YAML.
+You can apply variables to these groups of groups using ``:vars`` or ``vars:``:
 
 
 .. code-block:: guess
@@ -241,7 +268,7 @@ Child groups have a couple of properties to note:
 .. _default_groups:
 
 Default groups
-++++++++++++++
+==============
 
 There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every host.
 ``ungrouped`` contains all hosts that don't have another group aside from ``all``.
@@ -250,22 +277,18 @@ Though ``all`` and ``ungrouped`` are always present, they can be implicit and no
 
 .. _splitting_out_vars:
 
-Splitting Out Host and Group Specific Data
-++++++++++++++++++++++++++++++++++++++++++
+Organizing host and group variables
+===================================
 
-The preferred practice in Ansible is to not store variables in the main inventory file.
+Although you can store variables in the main inventory file, storing separate host and group variables files may help you track your variable values more easily.
 
-In addition to storing variables directly in the inventory file, host and group variables can be stored in individual files relative to the inventory file (not directory, it is always the file).
+Host and group variables can be stored in individual files relative to the inventory file (not directory, it is always the file).
 
 These variable files are in YAML format. Valid file extensions include '.yml', '.yaml', '.json', or no file extension.
 See :ref:`yaml_syntax` if you are new to YAML.
 
-Assuming the inventory file path is::
-
-    /etc/ansible/hosts
-
-If the host is named 'foosball', and in groups 'raleigh' and 'webservers', variables
-in YAML files at the following locations will be made available to the host::
+Let's say, for example, that you keep your inventory file at ``/etc/ansible/hosts``. You have a host named 'foosball' that's a member of two groups: 'raleigh' and 'webservers'. That host will use variables
+in YAML files at the following locations::
 
     /etc/ansible/group_vars/raleigh # can optionally end in '.yml', '.yaml', or '.json'
     /etc/ansible/group_vars/webservers
@@ -289,20 +312,24 @@ Ansible will read all the files in these directories in lexicographical order. A
 
 All hosts that are in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
-file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
+file starts to be too big, or when you want to use :ref:`Ansible Vault<playbooks_vault>` on a part of a group's
 variables.
 
 Tip: The ``group_vars/`` and ``host_vars/`` directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
+Tip: The ``ansible-playbook`` command looks for playbooks in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, etc.) will only look for ``group_vars/`` and ``host_vars/`` in the
+inventory directory unless you provide the ``--playbook-dir`` option
+on the command line.
+
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
 
 .. _how_we_merge:
 
-How Variables Are Merged
-++++++++++++++++++++++++
+How variables are merged
+========================
 
 By default variables are merged/flattened to the specific host before a play is run. This keeps Ansible focused on the Host and Task, so groups don't really survive outside of inventory and host matching. By default, Ansible overwrites variables including the ones defined for a group and/or host (see :ref:`DEFAULT_HASH_BEHAVIOUR<DEFAULT_HASH_BEHAVIOUR>`). The order/precedence is (from lowest to highest):
 
@@ -329,8 +356,8 @@ In this example, if both groups have the same priority, the result would normall
 
 .. _behavioral_parameters:
 
-List of Behavioral Inventory Parameters
-+++++++++++++++++++++++++++++++++++++++
+Connecting to hosts: behavioral inventory parameters
+====================================================
 
 As described above, setting the following variables control how Ansible interacts with remote hosts.
 
@@ -373,7 +400,7 @@ ansible_ssh_executable (added in version 2.2)
     This setting overrides the default behavior to use the system :command:`ssh`. This can override the ``ssh_executable`` setting in :file:`ansible.cfg`.
 
 
-Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details):
+Privilege escalation (see :ref:`Ansible Privilege Escalation<become>` for further details):
 
 ansible_become
     Equivalent to ``ansible_sudo`` or ``ansible_su``, allows to force privilege escalation
@@ -430,7 +457,7 @@ Examples from an Ansible-INI host file::
   ruby_module_host  ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
 
 Non-SSH connection types
-++++++++++++++++++++++++
+------------------------
 
 As stated in the previous section, Ansible executes playbooks over SSH but it is not limited to this connection type.
 With the host specific parameter ``ansible_connection=<connector>``, the connection type can be changed.
@@ -490,4 +517,3 @@ Here is an example of how to instantly deploy to created containers::
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

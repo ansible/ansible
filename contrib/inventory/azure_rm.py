@@ -20,6 +20,12 @@
 #
 
 '''
+Important note (2018/10)
+========================
+This inventory script is in maintenance mode: only critical bug fixes but no new features.
+There's new Azure external inventory script at https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/inventory/azure_rm.py,
+with better performance and latest new features. Please go to the link to get latest Azure inventory.
+
 Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource

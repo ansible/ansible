@@ -82,3 +82,11 @@ test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
 
 ansible-playbook public_exposure/playbook.yml -i ../../inventory "$@"
 ansible-playbook public_exposure/no_bleeding.yml -i ../../inventory "$@"
+ansible-playbook public_exposure/no_overwrite_roles.yml -i ../../inventory "$@"
+
+# https://github.com/ansible/ansible/pull/48068
+ansible-playbook run_once/playbook.yml "$@"
+
+# https://github.com/ansible/ansible/issues/48936
+ansible-playbook -v handler_addressing/playbook.yml 2>&1 | tee test_handler_addressing.out
+test "$(egrep -c 'include handler task|ERROR! The requested handler '"'"'do_import'"'"' was not found' test_handler_addressing.out)" = 2

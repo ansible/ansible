@@ -145,7 +145,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
-def _can_update(subnet, module, cloud):
+def _can_update(subnet, module, cloud, filters=None):
     """Check for differences in non-updatable values"""
     network_name = module.params['network_name']
     ip_version = int(module.params['ip_version'])
@@ -153,7 +153,7 @@ def _can_update(subnet, module, cloud):
     ipv6_a_mode = module.params['ipv6_address_mode']
 
     if network_name:
-        network = cloud.get_network(network_name)
+        network = cloud.get_network(network_name, filters)
         if network:
             netid = network['id']
         else:
@@ -170,11 +170,11 @@ def _can_update(subnet, module, cloud):
                               subnet')
 
 
-def _needs_update(subnet, module, cloud):
+def _needs_update(subnet, module, cloud, filters=None):
     """Check for differences in the updatable values."""
 
     # First check if we are trying to update something we're not allowed to
-    _can_update(subnet, module, cloud)
+    _can_update(subnet, module, cloud, filters)
 
     # now check for the things we are allowed to update
     enable_dhcp = module.params['enable_dhcp']
@@ -209,12 +209,12 @@ def _needs_update(subnet, module, cloud):
     return False
 
 
-def _system_state_change(module, subnet, cloud):
+def _system_state_change(module, subnet, cloud, filters=None):
     state = module.params['state']
     if state == 'present':
         if not subnet:
             return True
-        return _needs_update(subnet, module, cloud)
+        return _needs_update(subnet, module, cloud, filters)
     if state == 'absent' and subnet:
         return True
     return False
@@ -299,7 +299,7 @@ def main():
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, subnet,
-                                                          cloud))
+                                                          cloud, filters))
 
         if state == 'present':
             if not subnet:
@@ -326,7 +326,7 @@ def main():
                 subnet = cloud.create_subnet(network_name, **kwargs)
                 changed = True
             else:
-                if _needs_update(subnet, module, cloud):
+                if _needs_update(subnet, module, cloud, filters):
                     cloud.update_subnet(subnet['id'],
                                         subnet_name=subnet_name,
                                         enable_dhcp=enable_dhcp,

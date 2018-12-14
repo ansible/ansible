@@ -11,13 +11,13 @@ When you execute a playbook, you can filter tasks based on tags in two ways:
 - In Ansible configuration settings, with the ``TAGS_RUN`` and ``TAGS_SKIP`` options
 
 Tags can be applied to *many* structures in Ansible (see "tag inheritance",
-below), but its simplest use is with indivdual tasks. Here is an example
+below), but its simplest use is with individual tasks. Here is an example
 that tags two tasks with different tags::
 
     tasks:
         - yum:
             name: "{{ item }}"
-            state: installed
+            state: present
           loop:
              - httpd
              - memcached
@@ -55,7 +55,7 @@ This example tags several tasks with one tag, "ntp"::
     - name: be sure ntp is installed
       yum:
         name: ntp
-        state: installed
+        state: present
       tags: ntp
 
     - name: be sure ntp is configured
@@ -86,7 +86,7 @@ such as ``include_role`` and ``include_tasks``.
 When you apply ``tags:`` attributes to structures other than tasks,
 Ansible processes the tag attribute to apply ONLY to the tasks they contain.
 Applying tags anywhere other than tasks is just a convenience so you don't
-have to tag tasks indivdually.
+have to tag tasks individually.
 
 This example tags all tasks in the two plays. The first play has all its tasks
 tagged with 'bar', and the second has all its tasks tagged with 'foo'::
@@ -133,7 +133,7 @@ There is no way to 'import only these tags'; you probably want to split into sma
 The above information does not apply to `include_tasks` or other dynamic includes,
 as the attributes applied to an include, only affect the include itself.
 
-You can see which tags are applied to tasks, roles, and static imports 
+You can see which tags are applied to tasks, roles, and static imports
 by running ``ansible-playbook`` with the ``--list-tasks`` option. You can
 display all tags applied to the tasks with the ``--list-tags`` option.
 
@@ -156,7 +156,7 @@ Playbook file::
       tasks:
       - include_role:
           name: myrole
-        tags: mytag  
+        tags: mytag
 
 Role tasks file::
 

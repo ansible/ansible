@@ -22,13 +22,11 @@ __metaclass__ = type
 import time
 from datetime import datetime, timedelta
 
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class TimedOutException(Exception):
@@ -112,7 +110,7 @@ class ActionModule(ActionBase):
 
         except TimedOutException as e:
             result['failed'] = True
-            result['msg'] = str(e)
+            result['msg'] = to_text(e)
 
         elapsed = datetime.now() - start
         result['elapsed'] = elapsed.seconds

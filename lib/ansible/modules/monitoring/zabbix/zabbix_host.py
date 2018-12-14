@@ -21,8 +21,8 @@ description:
    - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
 version_added: "2.0"
 author:
-    - "(@cove)"
-    - Tony Minfei Ding
+    - "Cove (@cove)"
+    - Tony Minfei Ding (!UNKNOWN)
     - Harrison Gu (@harrisongu)
     - Werner Dijkerman (@dj-wasabi)
     - Eike Frost (@eikef)

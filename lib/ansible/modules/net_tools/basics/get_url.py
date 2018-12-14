@@ -492,7 +492,7 @@ def main():
                     checksum = None
 
                 if checksum is None:
-                    module.fail_json("Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
+                    module.fail_json(msg="Unable to find a checksum for file '%s' in '%s'" % (filename, checksum_url))
             # Remove any non-alphanumeric characters, including the infamous
             # Unicode zero-width space
             checksum = re.sub(r'\W+', '', checksum).lower()

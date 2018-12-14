@@ -17,7 +17,7 @@ short_description: get facts about log_group in CloudWatchLogs
 description: Lists the specified log groups. You can list all your log groups or filter the results by prefix.
 version_added: "2.5"
 author:
-    - Willian Ricardo(@willricardo) <willricardo@gmail.com>
+    - Willian Ricardo (@willricardo) <willricardo@gmail.com>
 requirements: [ botocore, boto3 ]
 options:
     log_group_name:

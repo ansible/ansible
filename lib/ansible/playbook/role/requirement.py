@@ -31,10 +31,9 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
-
+from ansible.utils.display import Display
 
 __all__ = ['RoleRequirement']
-
 
 VALID_SPEC_KEYS = [
     'name',
@@ -44,11 +43,7 @@ VALID_SPEC_KEYS = [
     'version',
 ]
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class RoleRequirement(RoleDefinition):
@@ -159,7 +154,7 @@ class RoleRequirement(RoleDefinition):
             raise AnsibleError("- scm %s is not currently supported" % scm)
 
         try:
-            scm_path = get_bin_path(scm)
+            scm_path = get_bin_path(scm, required=True)
         except (ValueError, OSError, IOError):
             raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
 

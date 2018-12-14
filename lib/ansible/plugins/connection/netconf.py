@@ -181,6 +181,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import NetworkConnectionBase
+from ansible.utils.display import Display
 
 try:
     from ncclient import manager
@@ -190,11 +191,7 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
@@ -220,11 +217,11 @@ class Connection(NetworkConnectionBase):
 
         netconf = netconf_loader.get(self._network_os, self)
         if netconf:
-            self._sub_plugins.append({'type': 'netconf', 'name': self._network_os, 'obj': netconf})
+            self._sub_plugin = {'type': 'netconf', 'name': self._network_os, 'obj': netconf}
             display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
         else:
             netconf = netconf_loader.get("default", self)
-            self._sub_plugins.append({'type': 'netconf', 'name': 'default', 'obj': netconf})
+            self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': netconf}
             display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
         display.display('network_os is set to %s' % self._network_os, log_only=True)
 
@@ -296,7 +293,7 @@ class Connection(NetworkConnectionBase):
                 ssh_config=ssh_config
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
         except ImportError as exc:
             raise AnsibleError("connection=netconf is not supported on {0}".format(self._network_os))
 

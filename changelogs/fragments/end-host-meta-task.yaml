@@ -1,0 +1,2 @@
+minor_changes:
+    - Add new meta task end_host - https://github.com/ansible/ansible/issues/40904

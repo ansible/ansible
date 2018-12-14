@@ -1,0 +1,2 @@
+minor_changes:
+  - k8s - add validate parameter to k8s module to allow resources to be validated against their specification

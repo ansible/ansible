@@ -1,0 +1,90 @@
+- name: Bucket Creation
+  s3_bucket:
+    name: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+
+    requester_pays:
+  register: bucket_creation_task
+
+- name: Show bucket_creation_task
+  debug:
+    var: bucket_creation_task
+
+- name: bucket_creation_task is success
+  assert:
+    that:
+      - bucket_creation_task is success
+
+- name: bucket_creation_task is changed
+  assert:
+    that:
+      - bucket_creation_task is changed
+
+- name: Bucket Creation (Confirmation)
+  s3_bucket:
+    name: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    requester_pays: null
+  register: bucket_creation_confirmation_task
+
+- name: Show bucket_creation_confirmation_task
+  debug:
+    var: bucket_creation_confirmation_task
+
+- name: bucket_creation_confirmation_task is success
+  assert:
+    that:
+      - bucket_creation_confirmation_task is success
+
+- name: bucket_creation_confirmation_task is not changed
+  assert:
+    that:
+      - bucket_creation_confirmation_task is not changed
+
+- name: Bucket Deletion
+  s3_bucket:
+    name: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    requester_pays: null
+    state: absent
+  register: bucket_deletion_task
+
+- name: Show bucket_deletion_task
+  debug:
+    var: bucket_deletion_task
+
+- name: bucket_deletion_task is success
+  assert:
+    that:
+      - bucket_deletion_task is success
+
+- name: bucket_deletion_task is changed
+  assert:
+    that:
+      - bucket_deletion_task is changed
+
+- name: Bucket Deletion (Confirmation)
+  s3_bucket:
+    name: '{{ bucket_name }}'
+    s3_url: '{{ s3_url }}'
+    region: '{{ scaleway_region }}'
+    requester_pays: null
+    state: absent
+  register: bucket_deletion_confirmation_task
+
+- name: Show bucket_deletion_confirmation_task
+  debug:
+    var: bucket_deletion_confirmation_task
+
+- name: bucket_deletion_confirmation_task is success
+  assert:
+    that:
+      - bucket_deletion_confirmation_task is success
+
+- name: bucket_deletion_confirmation_task is not changed
+  assert:
+    that:
+      - bucket_deletion_confirmation_task is not changed

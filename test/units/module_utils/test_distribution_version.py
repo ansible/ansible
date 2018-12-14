@@ -351,7 +351,64 @@ CPE_NAME="cpe:/o:suse:sles:12:sp1"
             "distribution_version": "12.1",
         }
     },
-
+    {
+        "name": "SLES4SAP 12 SP2",
+        "input": {
+            "/etc/SuSE-release": """
+SUSE Linux Enterprise Server 12 (x86_64)
+VERSION = 12
+PATCHLEVEL = 2
+# This file is deprecated and will be removed in a future service pack or release.
+# Please check /etc/os-release for details about this release.
+""",
+            "/etc/os-release": """
+NAME="SLES_SAP"
+VERSION="12-SP2"
+VERSION_ID="12.2"
+PRETTY_NAME="SUSE Linux Enterprise Server for SAP Applications 12 SP2"
+ID="sles_sap"
+ANSI_COLOR="0;32"
+CPE_NAME="cpe:/o:suse:sles_sap:12:sp2"
+            """,
+        },
+        "platform.dist": ['SuSE', '12', 'x86_64'],
+        "result":{
+            "distribution": "SLES_SAP",
+            "distribution_major_version": "12",
+            "distribution_release": "2",
+            "os_family": "Suse",
+            "distribution_version": "12.2",
+        }
+    },
+    {
+        "name": "SLES4SAP 12 SP3",
+        "input": {
+            "/etc/SuSE-release": """
+SUSE Linux Enterprise Server 12 (x86_64)
+VERSION = 12
+PATCHLEVEL = 3
+# This file is deprecated and will be removed in a future service pack or release.
+# Please check /etc/os-release for details about this release.
+""",
+            "/etc/os-release": """
+NAME="SLES"
+VERSION="12-SP3"
+VERSION_ID="12.3"
+PRETTY_NAME="SUSE Linux Enterprise Server 12 SP3"
+ID="sles"
+ANSI_COLOR="0;32"
+CPE_NAME="cpe:/o:suse:sles_sap:12:sp3"
+            """,
+        },
+        "platform.dist": ['SuSE', '12', 'x86_64'],
+        "result":{
+            "distribution": "SLES_SAP",
+            "distribution_major_version": "12",
+            "distribution_release": "3",
+            "os_family": "Suse",
+            "distribution_version": "12.3",
+        }
+    },
     {
         "name": "Debian stretch/sid",
         "input": {
@@ -912,36 +969,49 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
 
     # ClearLinux https://github.com/ansible/ansible/issues/31501#issuecomment-340861535
-    {
-        "platform.dist": [
-            "Clear Linux OS for Intel Architecture",
-            "18450",
-            "clear-linux-os"
-        ],
-        "input": {
-            "/usr/lib/os-release": '''
-NAME="Clear Linux OS for Intel Architecture"
+{
+    "platform.dist": [
+        "Clear Linux OS",
+        "26580",
+        "clear-linux-os"
+    ],
+    "input": {
+        "/etc/os-release": '''
+NAME="Clear Linux OS"
 VERSION=1
 ID=clear-linux-os
-VERSION_ID=18450
-PRETTY_NAME="Clear Linux OS for Intel Architecture"
+ID_LIKE=clear-linux-os
+VERSION_ID=26580
+PRETTY_NAME="Clear Linux OS"
+ANSI_COLOR="1;35"
+HOME_URL="https://clearlinux.org"
+SUPPORT_URL="https://clearlinux.org"
+BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
+PRIVACY_POLICY_URL="http://www.intel.com/privacy"
+''',
+        "/usr/lib/os-release": '''
+NAME="Clear Linux OS"
+VERSION=1
+ID=clear-linux-os
+ID_LIKE=clear-linux-os
+VERSION_ID=26580
+PRETTY_NAME="Clear Linux OS"
 ANSI_COLOR="1;35"
 HOME_URL="https://clearlinux.org"
 SUPPORT_URL="https://clearlinux.org"
 BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
 PRIVACY_POLICY_URL="http://www.intel.com/privacy"
 '''
-        },
-        "name": "Clear Linux OS for Intel Architecture 1",
-        "result": {
-            "distribution_release": "clear-linux-os",
-            "distribution": "ClearLinux",
-            "distribution_major_version": "18450",
-            "os_family": "ClearLinux",
-            "distribution_version": "18450"
-        }
     },
-
+    "name": "ClearLinux 26580",
+    "result": {
+        "distribution_release": "clear-linux-os",
+        "distribution": "Clear Linux OS",
+        "distribution_major_version": "26580",
+        "os_family": "ClearLinux",
+        "distribution_version": "26580"
+    }
+},
     # ArchLinux with no /etc/arch-release but with a /etc/os-release with NAME=Arch Linux
     # The fact needs to map 'Arch Linux' to 'Archlinux' for compat with 2.3 and earlier facts
     {

@@ -130,9 +130,9 @@ def options_argspec_list():
 
 
 @pytest.fixture
-def options_argspec_dict():
+def options_argspec_dict(options_argspec_list):
     # should test ok, for options in dict format.
-    kwargs = options_argspec_list()
+    kwargs = options_argspec_list
     kwargs['argument_spec']['foobar']['type'] = 'dict'
 
     return kwargs

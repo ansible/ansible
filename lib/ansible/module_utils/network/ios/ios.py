@@ -168,6 +168,10 @@ def normalize_interface(name):
         if_type = 'port-channel'
     elif name.lower().startswith('nv'):
         if_type = 'nve'
+    elif name.lower().startswith('twe'):
+        if_type = 'TwentyFiveGigE'
+    elif name.lower().startswith('hu'):
+        if_type = 'HundredGigE'
     else:
         if_type = None
 

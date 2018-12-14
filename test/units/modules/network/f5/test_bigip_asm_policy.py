@@ -11,38 +11,44 @@ import json
 import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from units.compat import unittest
-from units.compat.mock import Mock
-from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_asm_policy import V1Parameters
-    from library.modules.bigip_asm_policy import V2Parameters
-    from library.modules.bigip_asm_policy import ModuleManager
-    from library.modules.bigip_asm_policy import V1Manager
-    from library.modules.bigip_asm_policy import V2Manager
-    from library.modules.bigip_asm_policy import ArgumentSpec
+    from library.modules._bigip_asm_policy import V1Parameters
+    from library.modules._bigip_asm_policy import V2Parameters
+    from library.modules._bigip_asm_policy import ModuleManager
+    from library.modules._bigip_asm_policy import V1Manager
+    from library.modules._bigip_asm_policy import V2Manager
+    from library.modules._bigip_asm_policy import ArgumentSpec
+
     from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_asm_policy import V1Parameters
-        from ansible.modules.network.f5.bigip_asm_policy import V2Parameters
-        from ansible.modules.network.f5.bigip_asm_policy import ModuleManager
-        from ansible.modules.network.f5.bigip_asm_policy import V1Manager
-        from ansible.modules.network.f5.bigip_asm_policy import V2Manager
-        from ansible.modules.network.f5.bigip_asm_policy import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5._bigip_asm_policy import V1Parameters
+    from ansible.modules.network.f5._bigip_asm_policy import V2Parameters
+    from ansible.modules.network.f5._bigip_asm_policy import ModuleManager
+    from ansible.modules.network.f5._bigip_asm_policy import V1Manager
+    from ansible.modules.network.f5._bigip_asm_policy import V2Manager
+    from ansible.modules.network.f5._bigip_asm_policy import ArgumentSpec
+
+    from ansible.module_utils.network.f5.common import F5ModuleError
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -92,8 +98,18 @@ class TestManager(unittest.TestCase):
         self.patcher1 = patch('time.sleep')
         self.patcher1.start()
 
+        try:
+            self.p1 = patch('library.modules._bigip_asm_policy.module_provisioned')
+            self.m1 = self.p1.start()
+            self.m1.return_value = True
+        except Exception:
+            self.p1 = patch('ansible.modules.network.f5._bigip_asm_policy.module_provisioned')
+            self.m1 = self.p1.start()
+            self.m1.return_value = True
+
     def tearDown(self):
         self.patcher1.stop()
+        self.p1.stop()
 
     def test_activate_import_from_file(self, *args):
         set_module_args(dict(
@@ -467,37 +483,6 @@ class TestManager(unittest.TestCase):
         results = mm.exec_module()
 
         assert results['changed'] is True
-
-    def test_policy_import_raises(self, *args):
-        set_module_args(dict(
-            name='fake_policy',
-            file=self.policy,
-            state='present',
-            server='localhost',
-            password='password',
-            user='admin',
-        ))
-
-        module = AnsibleModule(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
-        )
-
-        msg = 'Import policy task failed.'
-        # Override methods to force specific logic in the module to happen
-        v2 = V2Manager(module=module)
-        v2.exists = Mock(return_value=False)
-        v2.import_to_device = Mock(return_value=True)
-        v2.wait_for_task = Mock(return_value=False)
-
-        # Override methods to force specific logic in the module to happen
-        mm = ModuleManager(module=module)
-        mm.version_is_less_than_13 = Mock(return_value=False)
-        mm.get_manager = Mock(return_value=v2)
-
-        with pytest.raises(F5ModuleError) as err:
-            mm.exec_module()
-        assert str(err.value) == msg
 
     def test_activate_policy_raises(self, *args):
         set_module_args(dict(

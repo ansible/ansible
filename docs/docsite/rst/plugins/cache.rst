@@ -1,13 +1,16 @@
-.. contents:: Topics
-
+.. _cache_plugins:
 
 Cache Plugins
 =============
 
+.. contents::
+   :local:
+   :depth: 2
+
 Cache plugin implement a backend caching mechanism that allows Ansible to store gathered facts or inventory source data
 without the performance hit of retrieving them from source.
 
-The default cache plugin is the :doc:`memory <cache/memory>` plugin, which only caches the data for the current execution of Ansible. Other plugins with persistent storage are available to allow caching the data across runs.
+The default cache plugin is the :ref:`memory <memory_cache>` plugin, which only caches the data for the current execution of Ansible. Other plugins with persistent storage are available to allow caching the data across runs.
 
 You can use a separate cache plugin for inventory and facts. If an inventory-specific cache plugin is not provided and inventory caching is enabled, the fact cache plugin is used for inventory.
 
@@ -110,19 +113,19 @@ Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and exa
 
 .. seealso::
 
-   :doc:`action`
+   :ref:`action_plugins`
        Ansible Action plugins
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`connection`
+   :ref:`connection_plugins`
        Ansible connection plugins
-   :doc:`inventory`
+   :ref:`inventory_plugins`
        Ansible inventory plugins
-   :doc:`shell`
+   :ref:`shell_plugins`
        Ansible Shell plugins
-   :doc:`strategy`
+   :ref:`strategy_plugins`
        Ansible Strategy plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible Vars plugins
    `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!

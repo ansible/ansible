@@ -92,7 +92,8 @@ options:
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
     description:
-      - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate.
+      - Indicates that minor version upgrades should be applied automatically.
+      - Used only when command=create or command=modify or command=restore or command=replicate.
     type: bool
     default: 'no'
   option_group:
@@ -318,6 +319,16 @@ db_name:
     returned: when RDS instance exists
     type: string
     sample: "ASERTG"
+endpoint:
+    description: the endpoint uri of the database instance
+    returned: when RDS instance exists
+    type: string
+    sample: "my-ansible-database.asdfaosdgih.us-east-1.rds.amazonaws.com"
+port:
+    description: the listening port of the database instance
+    returned: when RDS instance exists
+    type: int
+    sample: 3306
 parameter_groups:
     description: the list of DB parameter groups applied to this RDS instance
     returned: when RDS instance exists and parameter groups are defined

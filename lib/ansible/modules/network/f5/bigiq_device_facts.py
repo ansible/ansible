@@ -29,11 +29,17 @@ options:
     required: True
     choices:
       - all
+      - applications
       - managed-devices
+      - purchased-pool-licenses
+      - regkey-pools
       - system-info
       - vlans
       - "!all"
+      - "!applications"
       - "!managed-devices"
+      - "!purchased-pool-licenses"
+      - "!regkey-pools"
       - "!system-info"
       - "!vlans"
 extends_documentation_fragment: f5
@@ -76,6 +82,91 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+applications:
+  description: Application related facts
+  returned: When C(managed-devices) is specified in C(gather_subset).
+  type: complex
+  contains:
+    protection_mode:
+      description:
+        - The type of F5 Web Application Security Service protection on the application.
+      returned: changed
+      type: string
+      sample: Not Protected
+    id:
+      description:
+        - ID of the application as known to the BIG-IQ.
+      returned: changed
+      type: string
+      sample: 996baae8-5d1d-3662-8a2d-3612fa2aceae
+    name:
+      description:
+        - Name of the application.
+      returned: changed
+      type: string
+      sample: site12http.example.com
+    status:
+      description:
+        - Current state of the application.
+      returned: changed
+      type: string
+      sample: DEPLOYED
+    transactions_per_second:
+      description:
+        - Current measurement of Transactions Per second being handled by the application.
+      returned: changed
+      type: float
+      sample: 0.87
+    connections:
+      description:
+        - Current number of connections established to the application.
+      returned: changed
+      type: float
+      sample: 3.06
+    new_connections:
+      description:
+        - Number of new connections being established per second.
+      returned: changed
+      type: float
+      sample: 0.35
+    response_time:
+      description:
+        - Measured response time of the application in milliseconds.
+      returned: changed
+      type: float
+      sample: 0.02
+    health:
+      description:
+        - Health of the application.
+      returned: changed
+      type: string
+      sample: Good
+    active_alerts:
+      description:
+        - Number of alerts active on the application.
+      returned: changed
+      type: int
+      sample: 0
+    bad_traffic:
+      description:
+        - Percent of traffic to application that is determined to be 'bad'.
+        - This value is dependent on C(protection_mode) being enabled.
+      returned: changed
+      type: float
+      sample: 1.7498
+    enhanced_analytics:
+      description:
+        - Whether enhanced analytics is enabled for the application or not.
+      returned: changed
+      type: bool
+      sample: yes
+    bad_traffic_growth:
+      description:
+        - Whether or not Bad Traffic Growth alerts are configured to be triggered or not.
+      returned: changed
+      type: bool
+      sample: no
+  sample: hash/dictionary of values
 managed_devices:
   description: Managed device related facts.
   returned: When C(managed-devices) is specified in C(gather_subset).
@@ -83,136 +174,321 @@ managed_devices:
   contains:
     address:
       description:
-        - TODO("Write description")
+        - Address where the device was discovered.
       returned: changed
       type: string
       sample: 10.10.10.10
     build:
       description:
-        - TODO("Write description")
+        - Build of the version.
       returned: changed
       type: string
       sample: 0.0.4
     device_uri:
       description:
-        - TODO("Write description")
+        - URI to reach the management interface of the device.
       returned: changed
       type: string
       sample: "https://10.10.10.10:443"
     edition:
       description:
-        - TODO("Write description")
+        - Edition string of the product version.
       returned: changed
       type: string
       sample: Final
     group_name:
       description:
-        - TODO("Write description")
+        - BIG-IQ group that the device is a member of.
       returned: changed
       type: string
       sample: cm-bigip-allBigIpDevices
     hostname:
       description:
-        - TODO("Write description")
+        - Discovered hostname of the device.
       returned: changed
       type: string
       sample: tier2labB1.lab.fp.foo.com
     https_port:
       description:
-        - TODO("Write description")
+        - HTTPS port available on the management interface of the device.
       returned: changed
       type: int
       sample: 443
     is_clustered:
       description:
-        - TODO("Write description")
+        - Whether the device is clustered or not.
       returned: changed
       type: bool
       sample: no
     is_license_expired:
       description:
-        - TODO("Write description")
+        - Whether the license on the device is expired or not.
       returned: changed
       type: bool
       sample: yes
     is_virtual:
       description:
-        - TODO("Write description")
+        - Whether the device is a virtual edition or not.
       returned: changed
       type: bool
       sample: yes
     machine_id:
       description:
-        - TODO("Write description")
+        - Machine specific ID assigned to this device by BIG-IQ.
       returned: changed
       type: string
       sample: c141bc88-f734-4434-be64-a3e9ea98356e
     management_address:
       description:
-        - TODO("Write description")
+        - IP address of the management interface on the device.
       returned: changed
       type: string
       sample: 10.10.10.10
     mcp_device_name:
       description:
-        - TODO("Write description")
+        - Device name as known by MCPD on the BIG-IP.
       returned: changed
       type: string
       sample: /Common/tier2labB1.lab.fp.foo.com
     product:
       description:
-        - TODO("Write description")
+        - Product that the managed device is identified as.
       returned: changed
       type: string
       sample: BIG-IP
     rest_framework_version:
       description:
-        - TODO("Write description")
+        - REST framework version running on the device
       returned: changed
       type: string
       sample: 13.1.1-0.0.4
     self_link:
       description:
-        - TODO("Write description")
+        - Internal reference to the managed device in BIG-IQ.
       returned: changed
       type: string
       sample: "https://localhost/mgmt/shared/resolver/device-groups/cm-bigip-allBigIpDevices/devices/c141bc88-f734-4434-be64-a3e9ea98356e"
     slots:
       description:
-        - TODO("Write description")
+        - Volumes on the device and versions of software installed in those volumes.
       returned: changed
       type: complex
       sample: {"volume": "HD1.1", "product": "BIG-IP", "version": "13.1.1", "build": "0.0.4", "isActive": "yes"}
     state:
       description:
-        - TODO("Write description")
+        - State of the device.
       returned: changed
       type: string
       sample: ACTIVE
     tags:
       description:
-        - TODO("Write description")
+        - Misc tags that are assigned to the device.
       returned: changed
       type: complex
       sample: {'BIGIQ_tier_2_device': '2018-08-22T13:30:47.693-07:00', 'BIGIQ_SSG_name': 'tim-ssg'}
     trust_domain_guid:
       description:
-        - TODO("Write description")
+        - GUID of the trust domain the device is part of.
       returned: changed
       type: string
       sample: 40ddf541-e604-4905-bde3005056813e36
     uuid:
       description:
-        - TODO("Write description")
+        - UUID of the device in BIG-IQ.
       returned: changed
       type: string
       sample: c141bc88-f734-4434-be64-a3e9ea98356e
     version:
       description:
-        - Version of TMOS installed on the device
+        - Version of TMOS installed on the device.
       returned: changed
       type: string
       sample: 13.1.1
+  sample: hash/dictionary of values
+purchased_pool_licenses:
+  description: Purchased Pool License related facts.
+  returned: When C(purchased-pool-licenses) is specified in C(gather_subset).
+  type: complex
+  contains:
+    base_reg_key:
+      description:
+        - Base registration key of the purchased pool
+      returned: changed
+      type: string
+      sample: XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
+    dossier:
+      description:
+        - Dossier of the purchased pool license
+      returned: changed
+      type: string
+      sample: d6bd4b8ba5...e9a1a1199b73af9932948a
+    free_device_licenses:
+      description:
+        - Number of free licenses remaining.
+      returned: changed
+      type: int
+      sample: 34
+    name:
+      description:
+        - Name of the purchased pool
+      returned: changed
+      type: string
+      sample: my-pool1
+    state:
+      description:
+        - State of the purchased pool license
+      returned: changed
+      type: string
+      sample: LICENSED
+    total_device_licenses:
+      description:
+        - Total number of licenses in the pool.
+      returned: changed
+      type: int
+      sample: 40
+    uuid:
+      description:
+        - UUID of the purchased pool license
+      returned: changed
+      type: string
+      sample: b2112329-cba7-4f1f-9a26-fab9be416d60
+    vendor:
+      description:
+        - Vendor who provided the license
+      returned: changed
+      type: string
+      sample: F5 Networks, Inc
+    licensed_date_time:
+      description:
+        - Timestamp that the pool was licensed.
+      returned: changed
+      type: string
+      sample: "2018-09-10T00:00:00-07:00"
+    licensed_version:
+      description:
+        - Version of BIG-IQ that is licensed.
+      returned: changed
+      type: string
+      sample: 6.0.1
+    evaluation_start_date_time:
+      description:
+        - Date that evaluation license starts.
+      returned: changed
+      type: string
+      sample: "2018-09-09T00:00:00-07:00"
+    evaluation_end_date_time:
+      description:
+        - Date that evaluation license ends.
+      returned: changed
+      type: string
+      sample: "2018-10-11T00:00:00-07:00"
+    license_end_date_time:
+      description:
+        - Date that the license expires.
+      returned: changed
+      type: string
+      sample: "2018-10-11T00:00:00-07:00"
+    license_start_date_time:
+      description:
+        - Date that the license starts.
+      returned: changed
+      type: string
+      sample: "2018-09-09T00:00:00-07:00"
+    registration_key:
+      description:
+        - Purchased pool license key.
+      returned: changed
+      type: string
+      sample: XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
+  sample: hash/dictionary of values
+regkey_pools:
+  description: Regkey Pool related facts.
+  returned: When C(regkey-pools) is specified in C(gather_subset).
+  type: complex
+  contains:
+    name:
+      description:
+        - Name of the regkey pool.
+      returned: changed
+      type: string
+      sample: pool1
+    id:
+      description:
+        - ID of the regkey pool.
+      returned: changed
+      type: string
+      sample: 4f9b565c-0831-4657-b6c2-6dde6182a502
+    total_offerings:
+      description:
+        - Total number of offerings in the pool
+      returned: changed
+      type: int
+      sample: 10
+    offerings:
+      description: List of the offerings in the pool.
+      type: complex
+      contains:
+        dossier:
+          description:
+            - Dossier of the license.
+          returned: changed
+          type: string
+          sample: d6bd4b8ba5...e9a1a1199b73af9932948a
+        name:
+          description:
+            - Name of the regkey.
+          returned: changed
+          type: string
+          sample: regkey1
+        state:
+          description:
+            - State of the regkey license
+          returned: changed
+          type: string
+          sample: LICENSED
+        licensed_date_time:
+          description:
+            - Timestamp that the regkey was licensed.
+          returned: changed
+          type: string
+          sample: "2018-09-10T00:00:00-07:00"
+        licensed_version:
+          description:
+            - Version of BIG-IQ that is licensed.
+          returned: changed
+          type: string
+          sample: 6.0.1
+        evaluation_start_date_time:
+          description:
+            - Date that evaluation license starts.
+          returned: changed
+          type: string
+          sample: "2018-09-09T00:00:00-07:00"
+        evaluation_end_date_time:
+          description:
+            - Date that evaluation license ends.
+          returned: changed
+          type: string
+          sample: "2018-10-11T00:00:00-07:00"
+        license_end_date_time:
+          description:
+            - Date that the license expires.
+          returned: changed
+          type: string
+          sample: "2018-10-11T00:00:00-07:00"
+        license_start_date_time:
+          description:
+            - Date that the license starts.
+          returned: changed
+          type: string
+          sample: "2018-09-09T00:00:00-07:00"
+        registration_key:
+          description:
+            - Registration license key.
+          returned: changed
+          type: string
+          sample: XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
+      sample: hash/dictionary of values
   sample: hash/dictionary of values
 system_info:
   description: System info related facts.
@@ -677,6 +953,94 @@ class BaseParameters(Parameters):
         return result
 
 
+class ApplicationsParameters(BaseParameters):
+    api_map = {
+        'protectionMode': 'protection_mode',
+        'transactionsPerSecond': 'transactions_per_second',
+        'newConnections': 'new_connections',
+        'responseTime': 'response_time',
+        'activeAlerts': 'active_alerts',
+        'badTraffic': 'bad_traffic',
+        'enhancedAnalytics': 'enhanced_analytics',
+        'badTrafficGrowth': 'bad_traffic_growth'
+    }
+
+    returnables = [
+        'protection_mode',
+        'id',
+        'name',
+        'status',
+        'transactions_per_second',
+        'connections',
+        'new_connections',
+        'response_time',
+        'health',
+        'active_alerts',
+        'bad_traffic',
+        'enhanced_analytics',
+        'bad_traffic_growth',
+    ]
+
+    @property
+    def enhanced_analytics(self):
+        return flatten_boolean(self._values['enhanced_analytics'])
+
+    @property
+    def bad_traffic_growth(self):
+        return flatten_boolean(self._values['bad_traffic_growth'])
+
+
+class ApplicationsFactManager(BaseManager):
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(ApplicationsFactManager, self).__init__(**kwargs)
+        self.want = ApplicationsParameters(params=self.module.params)
+
+    def exec_module(self):
+        facts = self._exec_module()
+        result = dict(applications=facts)
+        return result
+
+    def _exec_module(self):
+        results = []
+        facts = self.read_facts()
+        for item in facts:
+            attrs = item.to_return()
+            results.append(attrs)
+        results = sorted(results, key=lambda k: k['name'])
+        return results
+
+    def read_facts(self):
+        results = []
+        collection = self.read_collection_from_device()
+        for resource in collection:
+            params = ApplicationsParameters(params=resource)
+            results.append(params)
+        return results
+
+    def read_collection_from_device(self):
+        uri = "https://{0}:{1}/mgmt/ap/query/v1/tenants/default/reports/AllApplicationsList".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        try:
+            return response['result']['items']
+        except KeyError:
+            return []
+
+
 class ManagedDevicesParameters(BaseParameters):
     api_map = {
         'deviceUri': 'device_uri',
@@ -801,6 +1165,312 @@ class ManagedDevicesFactManager(BaseManager):
             return []
         result = response['items']
         return result
+
+
+class PurchasedPoolLicensesParameters(BaseParameters):
+    api_map = {
+        'baseRegKey': 'base_reg_key',
+        'freeDeviceLicenses': 'free_device_licenses',
+        'licenseState': 'license_state',
+        'totalDeviceLicenses': 'total_device_licenses',
+    }
+
+    returnables = [
+        'base_reg_key',
+        'dossier',
+        'free_device_licenses',
+        'name',
+        'state',
+        'total_device_licenses',
+        'uuid',
+
+        # license_state facts
+        'vendor',
+        'licensed_date_time',
+        'licensed_version',
+        'evaluation_start_date_time',
+        'evaluation_end_date_time',
+        'license_end_date_time',
+        'license_start_date_time',
+        'registration_key',
+    ]
+
+    @property
+    def registration_key(self):
+        try:
+            return self._values['license_state']['registrationKey']
+        except KeyError:
+            return None
+
+    @property
+    def license_start_date_time(self):
+        try:
+            return self._values['license_state']['licenseStartDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def license_end_date_time(self):
+        try:
+            return self._values['license_state']['licenseEndDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def evaluation_end_date_time(self):
+        try:
+            return self._values['license_state']['evaluationEndDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def evaluation_start_date_time(self):
+        try:
+            return self._values['license_state']['evaluationStartDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def licensed_version(self):
+        try:
+            return self._values['license_state']['licensedVersion']
+        except KeyError:
+            return None
+
+    @property
+    def licensed_date_time(self):
+        try:
+            return self._values['license_state']['licensedDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def vendor(self):
+        try:
+            return self._values['license_state']['vendor']
+        except KeyError:
+            return None
+
+
+class PurchasedPoolLicensesFactManager(BaseManager):
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(PurchasedPoolLicensesFactManager, self).__init__(**kwargs)
+        self.want = PurchasedPoolLicensesParameters(params=self.module.params)
+
+    def exec_module(self):
+        facts = self._exec_module()
+        result = dict(purchased_pool_licenses=facts)
+        return result
+
+    def _exec_module(self):
+        results = []
+        facts = self.read_facts()
+        for item in facts:
+            attrs = item.to_return()
+            results.append(attrs)
+        results = sorted(results, key=lambda k: k['name'])
+        return results
+
+    def read_facts(self):
+        results = []
+        collection = self.read_collection_from_device()
+        for resource in collection:
+            params = PurchasedPoolLicensesParameters(params=resource)
+            results.append(params)
+        return results
+
+    def read_collection_from_device(self):
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/purchased-pool/licenses".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        try:
+            return response['items']
+        except KeyError:
+            return []
+
+
+class RegkeyPoolsParameters(BaseParameters):
+    api_map = {
+
+    }
+
+    returnables = [
+        'name',
+        'id',
+        'offerings',
+        'total_offerings',
+    ]
+
+
+class RegkeyPoolsOfferingParameters(BaseParameters):
+    api_map = {
+        'regKey': 'registration_key',
+        'licenseState': 'license_state',
+        'status': 'state',
+    }
+
+    returnables = [
+        'name',
+        'dossier',
+        'state',
+
+        # license_state facts
+        'licensed_date_time',
+        'licensed_version',
+        'evaluation_start_date_time',
+        'evaluation_end_date_time',
+        'license_end_date_time',
+        'license_start_date_time',
+        'registration_key',
+    ]
+
+    @property
+    def registration_key(self):
+        try:
+            return self._values['license_state']['registrationKey']
+        except KeyError:
+            return None
+
+    @property
+    def license_start_date_time(self):
+        try:
+            return self._values['license_state']['licenseStartDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def license_end_date_time(self):
+        try:
+            return self._values['license_state']['licenseEndDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def evaluation_end_date_time(self):
+        try:
+            return self._values['license_state']['evaluationEndDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def evaluation_start_date_time(self):
+        try:
+            return self._values['license_state']['evaluationStartDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def licensed_version(self):
+        try:
+            return self._values['license_state']['licensedVersion']
+        except KeyError:
+            return None
+
+    @property
+    def licensed_date_time(self):
+        try:
+            return self._values['license_state']['licensedDateTime']
+        except KeyError:
+            return None
+
+    @property
+    def vendor(self):
+        try:
+            return self._values['license_state']['vendor']
+        except KeyError:
+            return None
+
+
+class RegkeyPoolsFactManager(BaseManager):
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.get('client', None)
+        self.module = kwargs.get('module', None)
+        super(RegkeyPoolsFactManager, self).__init__(**kwargs)
+        self.want = RegkeyPoolsParameters(params=self.module.params)
+
+    def exec_module(self):
+        facts = self._exec_module()
+        result = dict(regkey_pools=facts)
+        return result
+
+    def _exec_module(self):
+        results = []
+        facts = self.read_facts()
+        for item in facts:
+            attrs = item.to_return()
+            results.append(attrs)
+        results = sorted(results, key=lambda k: k['name'])
+        return results
+
+    def read_facts(self):
+        results = []
+        collection = self.read_collection_from_device()
+        for resource in collection:
+            params = RegkeyPoolsParameters(params=resource)
+            offerings = self.read_offerings_from_device(resource['id'])
+            params.update({'total_offerings': len(offerings)})
+            for offering in offerings:
+                params2 = RegkeyPoolsOfferingParameters(params=offering)
+                params.update({'offerings': params2.to_return()})
+            results.append(params)
+        return results
+
+    def read_collection_from_device(self):
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        try:
+            return response['items']
+        except KeyError:
+            return []
+
+    def read_offerings_from_device(self, license):
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses/{2}/offerings".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            license,
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        try:
+            return response['items']
+        except KeyError:
+            return []
 
 
 class SystemInfoParameters(BaseParameters):
@@ -1473,8 +2143,20 @@ class ModuleManager(object):
         self.kwargs = kwargs
         self.want = Parameters(params=self.module.params)
         self.managers = {
+            'applications': dict(
+                manager=ApplicationsFactManager,
+                client=F5RestClient,
+            ),
             'managed-devices': dict(
                 manager=ManagedDevicesFactManager,
+                client=F5RestClient,
+            ),
+            'purchased-pool-licenses': dict(
+                manager=PurchasedPoolLicensesFactManager,
+                client=F5RestClient,
+            ),
+            'regkey-pools': dict(
+                manager=RegkeyPoolsFactManager,
                 client=F5RestClient,
             ),
             'system-info': dict(
@@ -1584,7 +2266,10 @@ class ArgumentSpec(object):
                     'all',
 
                     # Non-meta choices
+                    'applications',
                     'managed-devices',
+                    'purchased-pool-licenses',
+                    'regkey-pools',
                     'system-info',
                     'vlans',
 
@@ -1592,7 +2277,10 @@ class ArgumentSpec(object):
                     '!all',
 
                     # Negations of non-meta-choices
+                    '!applications',
                     '!managed-devices',
+                    '!purchased-pool-licenses',
+                    '!regkey-pools',
                     '!system-info',
                     '!vlans',
                 ]
@@ -1611,8 +2299,9 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

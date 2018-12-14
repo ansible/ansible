@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -48,25 +49,28 @@ author:
 EXAMPLES = r'''
 - name: Wait for BIG-IP to be ready to take configuration
   bigip_wait:
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Wait a maximum of 300 seconds for BIG-IP to be ready to take configuration
   bigip_wait:
     timeout: 300
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Wait for BIG-IP to be ready, don't start checking for 10 seconds
   bigip_wait:
     delay: 10
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -202,6 +206,9 @@ class ModuleManager(object):
                     self._wait_for_module_provisioning()
                 break
             except Exception as ex:
+                if 'Failed to validate the SSL' in str(ex):
+                    raise F5ModuleError(str(ex))
+
                 # The types of exception's we're handling here are "REST API is not
                 # ready" exceptions.
                 #
@@ -327,8 +334,9 @@ def main():
         supports_check_mode=spec.supports_check_mode
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

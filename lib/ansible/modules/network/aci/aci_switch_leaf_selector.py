@@ -18,10 +18,14 @@ short_description: Bind leaf selectors to switch policy leaf profiles (infra:Lea
 description:
 - Bind leaf selectors (with node block range and policy group) to switch policy leaf profiles on Cisco ACI fabrics.
 notes:
-- This module is to be used with M(aci_switch_policy_leaf_profile)
+- This module is to be used with M(aci_switch_policy_leaf_profile).
   One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
-- More information about the internal APIC classes B(infra:LeafS), B(infra:NodeBlk) and B(infra:RsAccNodePGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_switch_policy_leaf_profile
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:LeafS),
+               B(infra:NodeBlk) and B(infra:RsAccNodePGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -260,6 +264,30 @@ def main():
     policy_group = module.params['policy_group']
     state = module.params['state']
 
+    # Build child_configs dynamically
+    child_configs = [
+        dict(
+            infraNodeBlk=dict(
+                attributes=dict(
+                    descr=leaf_node_blk_description,
+                    name=leaf_node_blk,
+                    from_=from_,
+                    to_=to_,
+                ),
+            ),
+        ),
+    ]
+
+    # Add infraRsAccNodePGrp only when policy_group was defined
+    if policy_group is not None:
+        child_configs.append(dict(
+            infraRsAccNodePGrp=dict(
+                attributes=dict(
+                    tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group),
+                ),
+            ),
+        ))
+
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
@@ -289,25 +317,7 @@ def main():
                 descr=description,
                 name=leaf,
             ),
-            child_configs=[
-                dict(
-                    infraNodeBlk=dict(
-                        attributes=dict(
-                            descr=leaf_node_blk_description,
-                            name=leaf_node_blk,
-                            from_=from_,
-                            to_=to_,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsAccNodePGrp=dict(
-                        attributes=dict(
-                            tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group),
-                        ),
-                    ),
-                ),
-            ],
+            child_configs=child_configs,
         )
 
         aci.get_diff(aci_class='infraLeafS')

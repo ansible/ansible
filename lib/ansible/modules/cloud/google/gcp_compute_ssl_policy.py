@@ -32,58 +32,68 @@ DOCUMENTATION = '''
 ---
 module: gcp_compute_ssl_policy
 description:
-    - Represents a SSL policy. SSL policies give you the ability to control the features
-      of SSL that your SSL proxy or HTTPS load balancer negotiates.
+- Represents a SSL policy. SSL policies give you the ability to control the features
+  of SSL that your SSL proxy or HTTPS load balancer negotiates.
 short_description: Creates a GCP SslPolicy
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
-        description:
-            - An optional description of this resource.
-        required: false
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    profile:
-        description:
-            - Profile specifies the set of SSL features that can be used by the load balancer
-              when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`, `RESTRICTED`,
-              or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable must be specified
-              in the `customFeatures` field.
-        required: false
-        choices: ['COMPATIBLE', 'MODERN', 'RESTRICTED', 'CUSTOM']
-    min_tls_version:
-        description:
-            - The minimum version of SSL protocol that can be used by the clients to establish
-              a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`, `TLS_1_2`.
-        required: false
-        choices: ['TLS_1_0', 'TLS_1_1', 'TLS_1_2']
-    custom_features:
-        description:
-            - A list of features enabled when the selected profile is CUSTOM. The method returns
-              the set of features that can be specified in this list. This field must be empty
-              if the profile is not CUSTOM.
-        required: false
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  description:
+    description:
+    - An optional description of this resource.
+    required: false
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  profile:
+    description:
+    - Profile specifies the set of SSL features that can be used by the load balancer
+      when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`,
+      `RESTRICTED`, or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable
+      must be specified in the `customFeatures` field.
+    required: false
+    choices:
+    - COMPATIBLE
+    - MODERN
+    - RESTRICTED
+    - CUSTOM
+  min_tls_version:
+    description:
+    - The minimum version of SSL protocol that can be used by the clients to establish
+      a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`,
+      `TLS_1_2`.
+    required: false
+    choices:
+    - TLS_1_0
+    - TLS_1_1
+    - TLS_1_2
+  custom_features:
+    description:
+    - A list of features enabled when the selected profile is CUSTOM. The method returns
+      the set of features that can be specified in this list. This field must be empty
+      if the profile is not CUSTOM.
+    required: false
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslPolicies)"
-    - "Using SSL Policies: U(https://cloud.google.com/compute/docs/load-balancing/ssl-policies)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/sslPolicies)'
+- 'Using SSL Policies: U(https://cloud.google.com/compute/docs/load-balancing/ssl-policies)'
 '''
 
 EXAMPLES = '''
@@ -102,80 +112,81 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    creationTimestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    profile:
-        description:
-            - Profile specifies the set of SSL features that can be used by the load balancer
-              when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`, `RESTRICTED`,
-              or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable must be specified
-              in the `customFeatures` field.
-        returned: success
-        type: str
-    minTlsVersion:
-        description:
-            - The minimum version of SSL protocol that can be used by the clients to establish
-              a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`, `TLS_1_2`.
-        returned: success
-        type: str
-    enabledFeatures:
-        description:
-            - The list of features enabled in the SSL policy.
-        returned: success
-        type: list
-    customFeatures:
-        description:
-            - A list of features enabled when the selected profile is CUSTOM. The method returns
-              the set of features that can be specified in this list. This field must be empty
-              if the profile is not CUSTOM.
-        returned: success
-        type: list
-    fingerprint:
-        description:
-            - Fingerprint of this resource. A hash of the contents stored in this object. This
-              field is used in optimistic locking.
-        returned: success
-        type: str
-    warnings:
-        description:
-            - If potential misconfigurations are detected for this SSL policy, this field will
-              be populated with warning messages.
-        returned: success
-        type: complex
-        contains:
-            code:
-                description:
-                    - A warning code, if applicable.
-                returned: success
-                type: str
-            message:
-                description:
-                    - A human-readable description of the warning code.
-                returned: success
-                type: str
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+profile:
+  description:
+  - Profile specifies the set of SSL features that can be used by the load balancer
+    when negotiating SSL with clients. This can be one of `COMPATIBLE`, `MODERN`,
+    `RESTRICTED`, or `CUSTOM`. If using `CUSTOM`, the set of SSL features to enable
+    must be specified in the `customFeatures` field.
+  returned: success
+  type: str
+minTlsVersion:
+  description:
+  - The minimum version of SSL protocol that can be used by the clients to establish
+    a connection with the load balancer. This can be one of `TLS_1_0`, `TLS_1_1`,
+    `TLS_1_2`.
+  returned: success
+  type: str
+enabledFeatures:
+  description:
+  - The list of features enabled in the SSL policy.
+  returned: success
+  type: list
+customFeatures:
+  description:
+  - A list of features enabled when the selected profile is CUSTOM. The method returns
+    the set of features that can be specified in this list. This field must be empty
+    if the profile is not CUSTOM.
+  returned: success
+  type: list
+fingerprint:
+  description:
+  - Fingerprint of this resource. A hash of the contents stored in this object. This
+    field is used in optimistic locking.
+  returned: success
+  type: str
+warnings:
+  description:
+  - If potential misconfigurations are detected for this SSL policy, this field will
+    be populated with warning messages.
+  returned: success
+  type: complex
+  contains:
+    code:
+      description:
+      - A warning code, if applicable.
+      returned: success
+      type: str
+    message:
+      description:
+      - A human-readable description of the warning code.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -361,8 +372,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result

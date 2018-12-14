@@ -207,6 +207,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
             :aliases: set of aliases to this module name
             :metadata: The modules metadata (as recorded in the module)
             :doc: The documentation structure for the module
+            :seealso: The list of dictionaries with references to related subjects
             :examples: The module's examples
             :returndocs: The module's returndocs
 
@@ -334,7 +335,7 @@ def generate_parser():
     p.add_option("-A", "--ansible-version", action="store", dest="ansible_version", default="unknown", help="Ansible version number")
     p.add_option("-M", "--module-dir", action="store", dest="module_dir", default=MODULEDIR, help="Ansible library path")
     p.add_option("-P", "--plugin-type", action="store", dest="plugin_type", default='module', help="The type of plugin (module, lookup, etc)")
-    p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="hacking/templates", help="directory containing Jinja2 templates")
+    p.add_option("-T", "--template-dir", action="append", dest="template_dir", help="directory containing Jinja2 templates")
     p.add_option("-t", "--type", action='store', dest='type', choices=['rst'], default='rst', help="Document type")
     p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
     p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
@@ -363,7 +364,7 @@ def jinja2_environment(template_dir, typ, plugin_type):
 
     templates = {}
     if typ == 'rst':
-        env.filters['convert_symbols_to_format'] = rst_ify
+        env.filters['rst_ify'] = rst_ify
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
@@ -651,6 +652,8 @@ def main():
     # INIT
     p = generate_parser()
     (options, args) = p.parse_args()
+    if not options.template_dir:
+        options.template_dir = ["hacking/templates"]
     validate_options(options)
     display.verbosity = options.verbosity
     plugin_type = options.plugin_type

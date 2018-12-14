@@ -182,7 +182,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - "Yunge Zhu (@yungezz)"
 
 '''
 
@@ -353,6 +353,38 @@ def get_sku_name(tier):
         return 'PREMIUMV2'
     else:
         return None
+
+
+def appserviceplan_to_dict(plan):
+    return dict(
+        id=plan.id,
+        name=plan.name,
+        kind=plan.kind,
+        location=plan.location,
+        reserved=plan.reserved,
+        is_linux=plan.reserved,
+        provisioning_state=plan.provisioning_state,
+        tags=plan.tags if plan.tags else None
+    )
+
+
+def webapp_to_dict(webapp):
+    return dict(
+        id=webapp.id,
+        name=webapp.name,
+        location=webapp.location,
+        client_cert_enabled=webapp.client_cert_enabled,
+        enabled=webapp.enabled,
+        reserved=webapp.reserved,
+        client_affinity_enabled=webapp.client_affinity_enabled,
+        server_farm_id=webapp.server_farm_id,
+        host_names_disabled=webapp.host_names_disabled,
+        https_only=webapp.https_only if hasattr(webapp, 'https_only') else None,
+        skip_custom_domain_verification=webapp.skip_custom_domain_verification if hasattr(webapp, 'skip_custom_domain_verification') else None,
+        ttl_in_seconds=webapp.ttl_in_seconds if hasattr(webapp, 'ttl_in_seconds') else None,
+        state=webapp.state,
+        tags=webapp.tags if webapp.tags else None
+    )
 
 
 class Actions:
@@ -631,8 +663,8 @@ class AzureRMWebApps(AzureRMModuleBase):
                 self.site.server_farm_id = old_plan['id']
 
                 # if linux, setup startup_file
-                if old_plan.get('is_linux'):
-                    if self.startup_file:
+                if old_plan['is_linux']:
+                    if hasattr(self, 'startup_file'):
                         self.site_config['app_command_line'] = self.startup_file
 
                 # set app setting
@@ -803,7 +835,7 @@ class AzureRMWebApps(AzureRMModuleBase):
             self.log('Error attempting to create the Web App instance.')
             self.fail(
                 "Error creating the Web App instance: {0}".format(str(exc)))
-        return response.as_dict()
+        return webapp_to_dict(response)
 
     def delete_webapp(self):
         '''
@@ -839,7 +871,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             self.log("Response : {0}".format(response))
             self.log("Web App instance : {0} found".format(response.name))
-            return response.as_dict()
+            return webapp_to_dict(response)
 
         except CloudError as ex:
             self.log("Didn't find web app {0} in resource group {1}".format(
@@ -860,7 +892,7 @@ class AzureRMWebApps(AzureRMModuleBase):
             self.log("Response : {0}".format(response))
             self.log("App Service Plan : {0} found".format(response.name))
 
-            return response.as_dict()
+            return appserviceplan_to_dict(response)
         except CloudError as ex:
             self.log("Didn't find app service plan {0} in resource group {1}".format(
                 self.plan['name'], self.plan['resource_group']))
@@ -891,7 +923,7 @@ class AzureRMWebApps(AzureRMModuleBase):
 
             self.log("Response : {0}".format(response))
 
-            return response.as_dict()
+            return appserviceplan_to_dict(response)
         except CloudError as ex:
             self.fail("Failed to create app service plan {0} in resource group {1}: {2}".format(
                 self.plan['name'], self.plan['resource_group'], str(ex)))

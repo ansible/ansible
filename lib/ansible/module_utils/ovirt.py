@@ -26,6 +26,7 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from distutils.version import LooseVersion
 
+from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.common._collections_compat import Mapping
 
 try:
@@ -70,7 +71,21 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
         nested = False
 
         if isinstance(value, sdk.Struct):
-            return get_dict_of_struct(value)
+            if not fetch_nested or not value.href:
+                return get_dict_of_struct(value)
+
+            # Fetch nested values of struct:
+            try:
+                value = connection.follow_link(value)
+            except sdk.Error:
+                value = None
+            nested_obj = dict(
+                (attr, convert_value(getattr(value, attr)))
+                for attr in attributes if getattr(value, attr, None)
+            )
+            nested_obj['id'] = getattr(value, 'id', None)
+            nested_obj['href'] = getattr(value, 'href', None)
+            return nested_obj
         elif isinstance(value, Enum) or isinstance(value, datetime):
             return str(value)
         elif isinstance(value, list) or isinstance(value, sdk.List):
@@ -802,3 +817,32 @@ class BaseModule(object):
         if isinstance(full_version, otypes.Version):
             return int(full_version.minor)
         return int(full_version.split('.')[1])
+
+
+def _sdk4_error_maybe():
+    """
+    Allow for ovirtsdk4 not being installed.
+    """
+    if HAS_SDK:
+        return sdk.Error
+    return type(None)
+
+
+class OvirtRetry(CloudRetry):
+    base_class = _sdk4_error_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.code
+
+    @staticmethod
+    def found(response_code, catch_extra_error_codes=None):
+        # This is a list of error codes to retry.
+        retry_on = [
+            # HTTP status: Conflict
+            409,
+        ]
+        if catch_extra_error_codes:
+            retry_on.extend(catch_extra_error_codes)
+
+        return response_code in retry_on

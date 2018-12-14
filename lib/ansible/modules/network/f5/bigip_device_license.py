@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 F5 Networks Inc.
+# Copyright: (c) 2016, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -39,10 +39,13 @@ options:
       - When C(present), only guarantees that a license is there.
       - When C(latest), ensures that the license is always valid.
       - When C(absent), removes the license on the system.
+      - When C(revoked), removes the license on the system and revokes its future usage
+        on the F5 license servers.
     default: present
     choices:
       - absent
       - present
+      - revoked
   accept_eula:
     description:
       - Declares whether you accept the BIG-IP EULA or not. By default, this
@@ -90,31 +93,25 @@ import time
 import xml.etree.ElementTree
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import iControlRestSession
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.sdk_exception import UtilError
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import iControlRestSession
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.sdk_exception import UtilError
-    except ImportError:
-        HAS_F5SDK = False
 
 
 class LicenseXmlParser(object):
@@ -176,10 +173,17 @@ class LicenseXmlParser(object):
     def get_fault(self):
         result = dict()
 
+        self.set_result_for_license_fault(result)
+        self.set_result_for_general_fault(result)
+
+        if 'faultNumber' not in result:
+            result['faultNumber'] = None
+        return result
+
+    def set_result_for_license_fault(self, result):
         root = self.find_element('LicensingFault')
         if root is None:
             return result
-
         for elem in root:
             if elem.tag == 'faultNumber':
                 result['faultNumber'] = int(elem.text)
@@ -189,9 +193,17 @@ class LicenseXmlParser(object):
                     result['faultText'] = None
                 else:
                     result['faultText'] = elem.text
-        if 'faultNumber' not in result:
-            result['faultNumber'] = None
-        return result
+
+    def set_result_for_general_fault(self, result):
+        namespaces = {
+            'ns2': 'http://schemas.xmlsoap.org/soap/envelope/'
+        }
+        root = self.content.findall('.//ns2:Fault', namespaces)
+        if len(root) == 0:
+            return None
+        for elem in root[0]:
+            if elem.tag == 'faultstring':
+                result['faultText'] = elem.text
 
     def json(self):
         result = dict(
@@ -206,7 +218,7 @@ class LicenseXmlParser(object):
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'licenseEndDateTime': 'license_end_date_time'
+        'licenseEndDateTime': 'license_end_date_time',
     }
 
     api_attributes = [
@@ -372,13 +384,12 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
+        elif state == "revoked":
+            changed = self.revoke()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -396,7 +407,7 @@ class ModuleManager(object):
             )
 
     def present(self):
-        if self.exists():
+        if self.exists() and not self.is_revoked():
             return False
         else:
             return self.create()
@@ -409,33 +420,112 @@ class ModuleManager(object):
             raise F5ModuleError("Failed to delete the resource.")
         return True
 
-    def read_dossier_from_device(self):
-        result = self.client.api.tm.util.get_dossier.exec_cmd(
-            'run', utilCmdArgs='-b {0}'.format(self.want.license_key)
+    def revoke(self):
+        if self.is_revoked():
+            return False
+        else:
+            # When revoking a license, it should be acceptable to auto-accept the
+            # license since you accepted it the first time when you activated the
+            # license you are now revoking.
+            self.want.update({'accept_eula': True})
+
+            # Revoking seems to just be another way of saying "get me a new license".
+            # There appear to be revoke-specific wording in the license and I assume
+            # some special revoke-like signing is happening, but the process is essentially
+            # just another form of "create".
+            return self.create()
+
+    def revoke_from_device(self):
+        if self.module.check_mode:
+            return True
+
+        dossier = self.read_dossier_from_device()
+        if dossier:
+            self.want.update({'dossier': dossier})
+        else:
+            raise F5ModuleError("Dossier not generated.")
+
+        if self.is_revoked():
+            return False
+
+    def is_revoked(self):
+        command = '-c "egrep Revoked /config/bigip.license"'
+        params = dict(
+            command='run',
+            utilCmdArgs=command
         )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
         try:
-            return result.commandResult
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'commandResult' in response and 'Revoked' in response['commandResult']:
+            return True
+        return False
+
+    def read_dossier_from_device(self):
+        params = dict(
+            command='run',
+            utilCmdArgs='-b "{0}"'.format(self.want.license_key)
+        )
+        if self.want.state == 'revoked':
+            params['utilCmdArgs'] = '-r ' + params['utilCmdArgs']
+
+        uri = "https://{0}:{1}/mgmt/tm/util/get-dossier".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        try:
+            if self.want.state == 'revoked':
+                return response['commandResult'][8:]
+            else:
+                return response['commandResult']
         except Exception:
             return None
 
     def generate_license_from_remote(self):
-        mgmt = iControlRestSession()
-        mgmt.verify = False
-        mgmt.headers = {
-            'SOAPAction': '""',
-            'Content-Type': 'text/xml; charset=utf-8',
-        }
+        mgmt = iControlRestSession(
+            validate_certs=False,
+            headers={
+                'SOAPAction': '""',
+                'Content-Type': 'text/xml; charset=utf-8',
+            }
+        )
 
         for x in range(0, 10):
             try:
-                resp = mgmt.post(self.want.license_url, data=self.want.license_envelope)
-            except Exception as ex:
+                resp = mgmt.post(
+                    self.want.license_url,
+                    data=self.want.license_envelope,
+                )
+            except Exception:
                 continue
 
             try:
-                resp = LicenseXmlParser(content=resp._content)
+                resp = LicenseXmlParser(content=resp.content)
                 result = resp.json()
-            except F5ModuleError as ex:
+            except F5ModuleError:
                 # This error occurs when there is a problem with the license server and it
                 # starts returning invalid XML (like if they upgraded something and the server
                 # is redirecting improperly.
@@ -443,7 +533,7 @@ class ModuleManager(object):
                 # There's no way to recover from this error except by notifying F5 that there
                 # is an issue with the license server.
                 raise
-            except Exception as ex:
+            except Exception:
                 continue
 
             if result['state'] == 'EULA_REQUIRED':
@@ -493,9 +583,24 @@ class ModuleManager(object):
         return False
 
     def exists(self):
-        resource = self.client.api.tm.shared.licensing.registration.load()
+        uri = "https://{0}:{1}/mgmt/tm/shared/licensing/registration".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
         try:
-            if resource.registrationKey == self.want.license_key:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        try:
+            if response['registrationKey'] == self.want.license_key:
                 return True
         except Exception:
             pass
@@ -513,26 +618,57 @@ class ModuleManager(object):
                     nops += 1
                 else:
                     nops = 0
-            except Exception as ex:
+            except Exception:
                 pass
             time.sleep(5)
 
     def _is_mcpd_ready_on_device(self):
         try:
-            output = self.client.api.tm.util.bash.exec_cmd(
-                'run',
-                utilCmdArgs='-c "tmsh show sys mcp-state | grep running"'
+            command = "tmsh show sys mcp-state | grep running"
+            params = dict(
+                command='run',
+                utilCmdArgs='-c "{0}"'.format(command)
             )
-            if hasattr(output, 'commandResult'):
+            uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+                self.client.provider['server'],
+                self.client.provider['server_port']
+            )
+            resp = self.client.api.post(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] in [400, 403]:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+            if 'commandResult' in response:
                 return True
-        except Exception as ex:
+        except Exception:
             pass
         return False
 
     def any_license_exists(self):
-        resource = self.client.api.tm.shared.licensing.registration.load()
+        uri = "https://{0}:{1}/mgmt/tm/shared/licensing/registration".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
         try:
-            if resource.registrationKey is not None:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        try:
+            if response['registrationKey'] is not None:
                 return True
         except Exception:
             pass
@@ -562,21 +698,75 @@ class ModuleManager(object):
 
     def upload_license_to_device(self, license):
         license_payload = re.sub(self.escape_patterns, r'\\\1', license['license'])
-        command = """cat > /config/bigip.license <<EOF\n{0}\nEOF""".format(license_payload)
-        command = '-c "{0}"'.format(command)
-        self.client.api.tm.util.bash.exec_cmd('run', utilCmdArgs=command)
+        command_arg = """cat > /config/bigip.license <<EOF\n{0}\nEOF""".format(license_payload)
+        command = '-c "{0}"'.format(command_arg)
+        params = dict(
+            command='run',
+            utilCmdArgs=command
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
         return True
 
     def upload_eula_to_device(self, license):
         eula_payload = re.sub(self.escape_patterns, r'\\\1', license['eula'])
-        command = """cat > /LICENSE.F5 <<EOF\n{0}\nEOF""".format(eula_payload)
-        command = '-c "{0}"'.format(command)
-        self.client.api.tm.util.bash.exec_cmd('run', utilCmdArgs=command)
+        command_arg = """cat > /LICENSE.F5 <<EOF\n{0}\nEOF""".format(eula_payload)
+        command = '-c "{0}"'.format(command_arg)
+        params = dict(
+            command='run',
+            utilCmdArgs=command
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
         return True
 
     def reload_license(self):
         command = '-c "{0}"'.format("/usr/bin/reloadlic")
-        self.client.api.tm.util.bash.exec_cmd('run', utilCmdArgs=command)
+        params = dict(
+            command='run',
+            utilCmdArgs=command
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
         return True
 
     def remove_from_device(self):
@@ -597,27 +787,61 @@ class ModuleManager(object):
             )
 
     def remove_license_from_device(self):
-        # UtilError should be raised when non-existent file is mentioned
+        params = dict(
+            command='run',
+            utilCmdArgs='/config/bigip.license'
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+
         try:
-            self.client.api.tm.util.unix_rm.exec_cmd(
-                'run', utilCmdArgs='/config/bigip.license'
-            )
-        except UtilError as ex:
-            if 'No such file or directory' in str(ex):
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
+            if 'No such file or directory' in response['commandResult']:
                 return True
             else:
-                raise F5ModuleError(str(ex))
+                raise F5ModuleError(response['commandResult'])
         return True
 
     def remove_eula_from_device(self):
-        # UtilError should be raised when non-existent file is mentioned
+        params = dict(
+            command='run',
+            utilCmdArgs='/LICENSE.F5'
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+
         try:
-            self.client.api.tm.util.unix_rm.exec_cmd('run', utilCmdArgs='/LICENSE.F5')
-        except UtilError as ex:
-            if 'No such file or directory' in str(ex):
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
+            if 'No such file or directory' in response['commandResult']:
                 return True
             else:
-                raise F5ModuleError(str(ex))
+                raise F5ModuleError(response['commandResult'])
         return True
 
 
@@ -630,7 +854,7 @@ class ArgumentSpec(object):
                 default='activate.f5.com'
             ),
             state=dict(
-                choices=['absent', 'present'],
+                choices=['absent', 'present', 'revoked'],
                 default='present'
             ),
             accept_eula=dict(
@@ -653,18 +877,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

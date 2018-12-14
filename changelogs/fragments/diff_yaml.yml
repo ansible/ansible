@@ -1,0 +1,2 @@
+minor_changes:
+  - diff mode outputs in YAML form when used with yaml callback plugin

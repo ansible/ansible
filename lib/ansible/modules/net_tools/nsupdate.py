@@ -76,7 +76,12 @@ options:
     value:
         description:
             - Sets the record value.
-
+    protocol:
+        description:
+            - Sets the transport protocol (TCP or UDP). TCP is the recommended and a more robust option.
+        default: 'tcp'
+        choices: ['tcp', 'udp']
+        version_added: 2.8
 '''
 
 EXAMPLES = '''
@@ -227,7 +232,10 @@ class RecordManager(object):
     def __do_update(self, update):
         response = None
         try:
-            response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            if self.module.params['protocol'] == 'tcp':
+                response = dns.query.tcp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            else:
+                response = dns.query.udp(update, self.module.params['server'], timeout=10, port=self.module.params['port'])
         except (dns.tsig.PeerBadKey, dns.tsig.PeerBadSignature) as e:
             self.module.fail_json(msg='TSIG update error (%s): %s' % (e.__class__.__name__, to_native(e)))
         except (socket_error, dns.exception.Timeout) as e:
@@ -354,7 +362,10 @@ class RecordManager(object):
         query = dns.message.make_query(self.fqdn, self.module.params['type'])
 
         try:
-            lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            if self.module.params['protocol'] == 'tcp':
+                lookup = dns.query.tcp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
+            else:
+                lookup = dns.query.udp(query, self.module.params['server'], timeout=10, port=self.module.params['port'])
         except (socket_error, dns.exception.Timeout) as e:
             self.module.fail_json(msg='DNS server error: (%s): %s' % (e.__class__.__name__, to_native(e)))
 
@@ -378,7 +389,8 @@ def main():
             record=dict(required=True, type='str'),
             type=dict(required=False, default='A', type='str'),
             ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False, default=None, type='list')
+            value=dict(required=False, default=None, type='list'),
+            protocol=dict(required=False, default='tcp', choices=['tcp', 'udp'], type='str')
         ),
         supports_check_mode=True
     )

@@ -105,6 +105,7 @@ options:
   termination_protection:
     description:
     - enable or disable termination protection on the stack. Only works with botocore >= 1.7.18.
+    type: bool
     version_added: "2.5"
   template_body:
     description:

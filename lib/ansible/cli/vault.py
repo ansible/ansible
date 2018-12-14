@@ -28,12 +28,9 @@ from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class VaultCLI(CLI):
@@ -432,7 +429,7 @@ class VaultCLI(CLI):
             display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
-        ''' create and open a file in an editor that will be encryped with the provided vault secret when closed'''
+        ''' create and open a file in an editor that will be encrypted with the provided vault secret when closed'''
 
         if len(self.args) > 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
@@ -441,7 +438,7 @@ class VaultCLI(CLI):
                                 vault_id=self.encrypt_vault_id)
 
     def execute_edit(self):
-        ''' open and decrypt an existing vaulted file in an editor, that will be encryped again when closed'''
+        ''' open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed'''
         for f in self.args:
             self.editor.edit_file(f)
 

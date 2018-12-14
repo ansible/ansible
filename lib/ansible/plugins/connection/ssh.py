@@ -288,13 +288,10 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
@@ -335,11 +332,14 @@ def _ssh_retry(func):
             try:
                 try:
                     return_tuple = func(self, *args, **kwargs)
-                    display.vvv(return_tuple, host=self.host)
+                    if self._play_context.no_log:
+                        display.vvv('rc=%s, stdout & stderr censored due to no log' % return_tuple[0], host=self.host)
+                    else:
+                        display.vvv(return_tuple, host=self.host)
                     # 0 = success
                     # 1-254 = remote command return code
                     # 255 could be a failure from the ssh command itself
-                except (AnsibleControlPersistBrokenPipeError) as e:
+                except (AnsibleControlPersistBrokenPipeError):
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
                     cmd = args[0]
                     if self._play_context.password and isinstance(cmd, list):
@@ -357,8 +357,12 @@ def _ssh_retry(func):
                             break
 
                     if SSH_ERROR:
-                        raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s"
-                                                       % to_native(return_tuple[2]))
+                        msg = "Failed to connect to the host via ssh: "
+                        if self._play_context.no_log:
+                            msg += '<error censored due to no log>'
+                        else:
+                            msg += to_native(return_tuple[2])
+                        raise AnsibleConnectionFailure(msg)
 
                 break
 

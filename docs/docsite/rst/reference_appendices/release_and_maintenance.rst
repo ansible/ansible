@@ -3,7 +3,7 @@
 Release and maintenance
 =======================
 
-.. contents:: Topics
+.. contents::
    :local:
 
 .. _release_cycle:
@@ -96,54 +96,16 @@ releases of Ansible, there can sometimes be exceptions for critical issues.
 
 .. _GitHub: https://github.com/ansible/ansible
 
-.. _changelogs_how_to:
+.. _release_changelogs:
 
 Changelogs
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
 
 Older versions logged changes in ``stable-<version>`` branches at ``stable-<version>/CHANGELOG.md``. For example, here is the changelog for 2.4_ on GitHub.
 
 We now generate changelogs based on fragments. Here is the generated changelog for 2.6_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
-Creating New Fragments
-----------------------
-
-Create a new file with a unique and descriptive name in ``changelogs/fragments/`` that ends in ``.yaml`` such as ``user-40696-backup-shadow-file.yaml``
-
-A single changelog fragment may contain multiple sections but most will only contain one section. Here are the valid sections and a description of each:
-
-**major_changes**
-    Major changes to Ansible itself. Generally does not include module or plugin changes.
-
-**minor_changes**
-  Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
-
-**deprecated_features**
-  Features that have been deprecated and are scheduled for removal in a future release.
-
-**removed_features**
-  Features that were previously deprecated and are now removed.
-
-**bugfixes**
-  Fixes that resolve issues. If there is a specific issue related to this bugfix, add a link in the changelog entry.
-
-**known_issues**
-  Known issues that are currently not fixed or will not be fixed.
-
-Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and include a link to the related issue if one exists. Here are some examples:
-
-.. code-block:: yaml
-
-  bugfixes:
-    - win_updates - fixed issue where running win_updates on async fails without any error
-
-.. code-block:: yaml
-
-  minor_changes:
-    - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
-
-Commit the changelog fragment and include it with the pull request.
-
+We've got :ref:`examples and instructions on creating changelog fragments <changelogs_how_to>` in the Community Guide.
 
 
 Release candidates

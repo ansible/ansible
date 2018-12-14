@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: find
-author: Brian Coca (based on Ruggero Marchei's Tidy)
+author: Brian Coca (@bcoca)
 version_added: "2.0"
 short_description: Return a list of files based on specific criteria
 description:

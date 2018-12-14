@@ -75,6 +75,7 @@ options:
     description:
       - Persistence.
     required: true
+    type: bool
   persistence_time:
     description:
       - Persistence time in seconds. Required if persistence is enabled. minimum=30, maximum=1200, multipleOf=1

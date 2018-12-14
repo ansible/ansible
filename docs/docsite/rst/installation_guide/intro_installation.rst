@@ -119,7 +119,7 @@ To enable the Ansible Engine repository, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.6-rpms
+    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.7-rpms
 
 RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
@@ -145,12 +145,12 @@ To configure the PPA on your machine and install ansible run these commands:
 
 .. code-block:: bash
 
-    $ sudo apt-get update
-    $ sudo apt-get install software-properties-common
+    $ sudo apt update
+    $ sudo apt install software-properties-common
     $ sudo apt-add-repository --yes --update ppa:ansible/ansible
-    $ sudo apt-get install ansible
+    $ sudo apt install ansible
 
-.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
+.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions.
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
 
@@ -176,10 +176,10 @@ Then run these commands:
 .. code-block:: bash
 
     $ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
-    $ sudo apt-get update
-    $ sudo apt-get install ansible
+    $ sudo apt update
+    $ sudo apt install ansible
 
-.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions.
+.. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions. You may want to use ``apt-get`` instead of ``apt`` in older versions.
 
 Latest Releases via Portage (Gentoo)
 ++++++++++++++++++++++++++++++++++++
@@ -259,6 +259,35 @@ The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <htt
 
 Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
 
+.. _from_sbopkg:
+
+Latest Releases via sbopkg (Slackware Linux)
+++++++++++++++++++++++++++++++++++++++++++++
+
+Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ repository.
+Can be built and installed using `sbopkg <https://sbopkg.org/>`_.
+
+Create queue with Ansible and all dependencies::
+
+    # sqg -p ansible
+
+Build and install packages from created queuefile (answer Q for question if sbopkg should use queue or package)::
+
+    # sbopkg -k -i ansible
+
+.. _from swupd:
+
+Latest Release via swupd (Clear Linux)
++++++++++++++++++++++++++++++++++++++++
+
+Ansible and its dependencies are available as part of the sysadmin host management bundle::
+
+    $ sudo swupd bundle-add sysadmin-hostmgmt
+
+Update of the software will be managed by the swupd tool::
+
+   $ sudo swupd update
+
 .. _from_pip:
 
 Latest Releases via Pip
@@ -323,7 +352,7 @@ To install from source, clone the Ansible git repository:
 
 .. code-block:: bash
 
-    $ git clone https://github.com/ansible/ansible.git --recursive
+    $ git clone https://github.com/ansible/ansible.git
     $ cd ./ansible
 
 Once git has cloned the Ansible repository, setup the Ansible environment:
@@ -375,10 +404,6 @@ other than /etc/ansible/hosts:
 
     $ echo "127.0.0.1" > ~/ansible_hosts
     $ export ANSIBLE_INVENTORY=~/ansible_hosts
-
-.. note::
-
-    ANSIBLE_INVENTORY is available starting at 1.9 and substitutes the deprecated ANSIBLE_HOSTS
 
 You can read more about the inventory file in later parts of the manual.
 

@@ -183,6 +183,8 @@ class K8sAnsibleMixin(object):
 
     def kubernetes_facts(self, kind, api_version, name=None, namespace=None, label_selectors=None, field_selectors=None):
         resource = self.find_resource(kind, api_version)
+        if not resource:
+            return dict(resources=[])
         try:
             result = resource.get(name=name,
                                   namespace=namespace,

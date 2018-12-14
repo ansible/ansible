@@ -70,6 +70,7 @@ try:
 except ImportError:
     HAS_REQUESTS = False
 
+from ansible.module_utils._text import to_text
 from ansible.plugins.callback import CallbackBase
 
 
@@ -152,7 +153,7 @@ class CallbackModule(CallbackBase):
                               verify=self.ssl_verify)
             r.raise_for_status()
         except requests.exceptions.RequestException as err:
-            print(str(err))
+            print(to_text(err))
 
     def _build_log(self, data):
         logs = []
@@ -214,7 +215,7 @@ class CallbackModule(CallbackBase):
                                   verify=self.ssl_verify)
                 r.raise_for_status()
             except requests.exceptions.RequestException as err:
-                print(str(err))
+                print(to_text(err))
             self.items[host] = []
 
     def append_result(self, result):

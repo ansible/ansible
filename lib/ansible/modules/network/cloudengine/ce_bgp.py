@@ -28,7 +28,7 @@ short_description: Manages BGP configuration on HUAWEI CloudEngine switches.
 description:
     - Manages BGP configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:

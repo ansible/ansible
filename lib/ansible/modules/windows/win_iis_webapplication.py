@@ -37,7 +37,7 @@ options:
     description:
     - The application pool in which the new site executes.
 author:
-- Henrik Wallström
+- Henrik Wallström (@henrikwallstrom)
 '''
 
 EXAMPLES = r'''

@@ -252,7 +252,8 @@ def tags_changed(nacl_id, client, module):
     tags = dict()
     if module.params.get('tags'):
         tags = module.params.get('tags')
-    tags['Name'] = module.params.get('name')
+    if module.params.get('name') and not tags.get('Name'):
+        tags['Name'] = module.params['name']
     nacl = find_acl_by_id(nacl_id, client, module)
     if nacl['NetworkAcls']:
         nacl_values = [t.values() for t in nacl['NetworkAcls'][0]['Tags']]

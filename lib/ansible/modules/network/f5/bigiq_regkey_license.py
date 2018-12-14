@@ -63,20 +63,21 @@ EXAMPLES = r'''
     regkey_pool: foo-pool
     license_key: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
     accept_eula: yes
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove a registration key license from a pool
   bigiq_regkey_license:
     regkey_pool: foo-pool
     license_key: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX
-    password: secret
-    server: lb.mydomain.com
     state: absent
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -93,25 +94,21 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.module_utils.network.f5.bigiq import HAS_F5SDK
-    from library.module_utils.network.f5.bigiq import F5Client
+    from library.module_utils.network.f5.bigiq import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    from ansible.module_utils.network.f5.bigiq import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigiq import F5Client
+    from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -151,12 +148,33 @@ class ModuleParameters(Parameters):
     def regkey_pool_uuid(self):
         if self._values['regkey_pool_uuid']:
             return self._values['regkey_pool_uuid']
-        collection = self.client.api.cm.device.licensing.pool.regkey.licenses_s.get_collection()
+        collection = self.read_current_from_device()
         resource = next((x for x in collection if x.name == self.regkey_pool), None)
         if resource is None:
             raise F5ModuleError("Could not find the specified regkey pool.")
         self._values['regkey_pool_uuid'] = resource.id
         return resource.id
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'items' not in response:
+            return []
+        result = [ApiParameters(params=r) for r in response['items']]
+        return result
 
 
 class Changes(Parameters):
@@ -246,13 +264,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -276,11 +291,18 @@ class ModuleManager(object):
             return self.create()
 
     def exists(self):
-        collection = self.client.api.cm.device.licensing.pool.regkey.licenses_s
-        pool = collection.licenses.load(id=self.want.regkey_pool_uuid)
-        collection = pool.offerings_s.get_collection()
-        resource = next((x for x in collection if x.regKey == self.want.license_key), None)
-        if resource is None:
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses/{2}/offerings/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.regkey_pool_uuid,
+            self.want.license_key
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
             return False
         return True
 
@@ -314,41 +336,74 @@ class ModuleManager(object):
 
     def create_on_device(self):
         params = self.want.api_params()
-        collection = self.client.api.cm.device.licensing.pool.regkey.licenses_s
-        pool = collection.licenses.load(id=self.want.regkey_pool_uuid)
-        resource = pool.offerings_s.offerings.create(
-            status='ACTIVATING_AUTOMATIC',
-            **params
+        params['name'] = self.want.name
+        params['status'] = 'ACTIVATING_AUTOMATIC'
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses/{2}/offerings".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.regkey_pool_uuid,
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
         for x in range(60):
-            resource.refresh()
+            resource = self.read_current_from_device()
             if resource.status == 'READY':
                 break
             elif resource.status == 'ACTIVATING_AUTOMATIC_NEED_EULA_ACCEPT':
-                resource.modify(
+                params = dict(
                     status='ACTIVATING_AUTOMATIC_EULA_ACCEPTED',
                     eulaText=resource.eulaText
                 )
+                uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses/{2}/offerings/{3}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    self.want.regkey_pool_uuid,
+                    self.want.license_key
+                )
+                resp = self.client.api.patch(uri, json=params)
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
             elif resource.status == 'ACTIVATION_FAILED':
                 raise F5ModuleError(str(resource.message))
             time.sleep(1)
 
-    def wait_for_status(self, resource, status):
-        for x in range(60):
-            resource.refresh()
-            if resource.status == status:
-                return
-            time.sleep(1)
-
     def update_on_device(self):
         params = self.changes.api_params()
-        collection = self.client.api.cm.device.licensing.pool.regkey.licenses_s
-        pool = collection.licenses.load(id=self.want.regkey_pool_uuid)
-        collection = pool.offerings_s.get_collection()
-        resource = next((x for x in collection if x.regKey == self.want.license_key), None)
-        if resource is None:
-            return False
-        resource.modify(**params)
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses/{2}/offerings/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.regkey_pool_uuid,
+            self.want.license_key
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def absent(self):
         if self.exists():
@@ -356,24 +411,35 @@ class ModuleManager(object):
         return False
 
     def remove_from_device(self):
-        collection = self.client.api.cm.device.licensing.pool.regkey.licenses_s
-        pool = collection.licenses.load(id=self.want.regkey_pool_uuid)
-        collection = pool.offerings_s.get_collection()
-        resource = next((x for x in collection if x.regKey == self.want.license_key), None)
-        if resource is None:
-            return False
-        if resource:
-            resource.delete()
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses/{2}/offerings/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.regkey_pool_uuid,
+            self.want.license_key
+        )
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
 
     def read_current_from_device(self):
-        collection = self.client.api.cm.device.licensing.pool.regkey.licenses_s
-        pool = collection.licenses.load(id=self.want.regkey_pool_uuid)
-        collection = pool.offerings_s.get_collection()
-        resource = next((x for x in collection if x.regKey == self.want.license_key), None)
-        if resource is None:
-            return False
-        result = resource.attrs
-        return ApiParameters(params=result)
+        uri = "https://{0}:{1}/mgmt/cm/device/licensing/pool/regkey/licenses/{2}/offerings/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.regkey_pool_uuid,
+            self.want.license_key
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -403,18 +469,19 @@ def main():
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
-        required_if=spec.required_if
+        required_if=spec.required_if,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        module.exit_json(**results)
-    except F5ModuleError as e:
-        module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

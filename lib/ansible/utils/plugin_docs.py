@@ -10,12 +10,9 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSet, MutableSequence
 from ansible.parsing.plugin_docs import read_docstring, read_docstub
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 # modules that are ok that they do not have documentation strings
@@ -71,6 +68,13 @@ def add_fragments(doc, filename, fragment_loader):
                 if 'notes' not in doc:
                     doc['notes'] = []
                 doc['notes'].extend(notes)
+
+        if 'seealso' in fragment:
+            seealso = fragment.pop('seealso')
+            if seealso:
+                if 'seealso' not in doc:
+                    doc['seealso'] = []
+                doc['seealso'].extend(seealso)
 
         if 'options' not in fragment:
             raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))

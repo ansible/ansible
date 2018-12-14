@@ -35,8 +35,7 @@ DOCUMENTATION = '''
           C(--host) will only be used if no C(_meta) key is present.
           This is a performance optimization as the script would be called per host otherwise.
     notes:
-        - It takes the place of the previously hardcoded script inventory.
-        - In order to function, it requires being whitelisted in configuration, which is true by default.
+        - Whitelisted in configuration by default.
 '''
 
 import os

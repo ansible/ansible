@@ -43,7 +43,6 @@ options:
             family:
                 description:
                     - SKU family name
-                required: True
             name:
                 description:
                     - SKU name to specify whether the key vault is a standard vault or a premium vault.

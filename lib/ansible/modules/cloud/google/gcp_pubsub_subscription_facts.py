@@ -32,14 +32,15 @@ DOCUMENTATION = '''
 ---
 module: gcp_pubsub_subscription_facts
 description:
-  - Gather facts for GCP Subscription
+- Gather facts for GCP Subscription
 short_description: Gather facts for GCP Subscription
 version_added: 2.8
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
+options: {}
 extends_documentation_fragment: gcp
 '''
 
@@ -53,52 +54,53 @@ EXAMPLES = '''
 
 RETURN = '''
 items:
-    description: List of items
-    returned: always
-    type: complex
-    contains:
-        name:
-            description:
-                - Name of the subscription.
-            returned: success
-            type: str
-        topic:
-            description:
-                - A reference to a Topic resource.
-            returned: success
-            type: dict
-        pushConfig:
-            description:
-                - If push delivery is used with this subscription, this field is used to configure
-                  it. An empty pushConfig signifies that the subscriber will pull and ack messages
-                  using API methods.
-            returned: success
-            type: complex
-            contains:
-                pushEndpoint:
-                    description:
-                        - A URL locating the endpoint to which messages should be pushed.
-                        - For example, a Webhook endpoint might use "U(https://example.com/push".)
-                    returned: success
-                    type: str
-        ackDeadlineSeconds:
-            description:
-                - This value is the maximum time after a subscriber receives a message before the
-                  subscriber should acknowledge the message. After message delivery but before the
-                  ack deadline expires and before the message is acknowledged, it is an outstanding
-                  message and will not be delivered again during that time (on a best-effort basis).
-                - For pull subscriptions, this value is used as the initial value for the ack deadline.
-                  To override this value for a given message, call subscriptions.modifyAckDeadline
-                  with the corresponding ackId if using pull. The minimum custom deadline you can
-                  specify is 10 seconds. The maximum custom deadline you can specify is 600 seconds
-                  (10 minutes).
-                - If this parameter is 0, a default value of 10 seconds is used.
-                - For push delivery, this value is also used to set the request timeout for the call
-                  to the push endpoint.
-                - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
-                  redeliver the message.
-            returned: success
-            type: int
+  description: List of items
+  returned: always
+  type: complex
+  contains:
+    name:
+      description:
+      - Name of the subscription.
+      returned: success
+      type: str
+    topic:
+      description:
+      - A reference to a Topic resource.
+      returned: success
+      type: dict
+    pushConfig:
+      description:
+      - If push delivery is used with this subscription, this field is used to configure
+        it. An empty pushConfig signifies that the subscriber will pull and ack messages
+        using API methods.
+      returned: success
+      type: complex
+      contains:
+        pushEndpoint:
+          description:
+          - A URL locating the endpoint to which messages should be pushed.
+          - For example, a Webhook endpoint might use "U(https://example.com/push".)
+          returned: success
+          type: str
+    ackDeadlineSeconds:
+      description:
+      - This value is the maximum time after a subscriber receives a message before
+        the subscriber should acknowledge the message. After message delivery but
+        before the ack deadline expires and before the message is acknowledged, it
+        is an outstanding message and will not be delivered again during that time
+        (on a best-effort basis).
+      - For pull subscriptions, this value is used as the initial value for the ack
+        deadline. To override this value for a given message, call subscriptions.modifyAckDeadline
+        with the corresponding ackId if using pull. The minimum custom deadline you
+        can specify is 10 seconds. The maximum custom deadline you can specify is
+        600 seconds (10 minutes).
+      - If this parameter is 0, a default value of 10 seconds is used.
+      - For push delivery, this value is also used to set the request timeout for
+        the call to the push endpoint.
+      - If the subscriber never acknowledges the message, the Pub/Sub system will
+        eventually redeliver the message.
+      returned: success
+      type: int
 '''
 
 ################################################################################
@@ -118,7 +120,7 @@ def main():
         )
     )
 
-    if 'scopes' not in module.params:
+    if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
 
     items = fetch_list(module, collection(module))

@@ -63,7 +63,7 @@ DOCUMENTATION = '''
                 environment variable.
           key_file:
               description:
-              - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_HOST
+              - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE
                 environment variable.
           ssl_ca_cert:
               description:
@@ -235,6 +235,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
                 pod_labels = dict(pod.metadata.labels)
             else:
                 pod_labels = {}
+
+            if not pod.status.containerStatuses:
+                continue
 
             for container in pod.status.containerStatuses:
                 # add each pod_container to the namespace group, and to each label_value group

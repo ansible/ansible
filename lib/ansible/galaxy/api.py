@@ -32,12 +32,9 @@ from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def g_connect(method):
@@ -238,7 +235,7 @@ class GalaxyAPI(object):
                 done = (data.get('next_link', None) is None)
             return results
         except Exception as error:
-            raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
+            raise AnsibleError("Failed to download the %s list: %s" % (what, to_native(error)))
 
     @g_connect
     def search_roles(self, search, **kwargs):

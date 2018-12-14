@@ -87,7 +87,7 @@ Function Get-ChocolateyPackages {
 
     param($choco_app)
 
-    $command = Argv-ToString -arguments $choco_app.Path, "list", "--local-only", "-r"
+    $command = Argv-ToString -arguments $choco_app.Path, "list", "--local-only", "--limit-output", "--all-versions"
     $res = Run-Command -command $command
     if ($res.rc -ne 0) {
         $result.stdout = $res.stdout
@@ -97,7 +97,7 @@ Function Get-ChocolateyPackages {
     }
 
     $packages_info = [System.Collections.ArrayList]@()
-    $res.stdout -split "`r`n" | Where-Object { $_ -ne "" } | ForEach-Object {
+    $res.stdout.Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object {
         $packages_split = $_ -split "\|"
         $package_info = @{
             package = $packages_split[0]

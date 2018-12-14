@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 short_description: NetApp ONTAP Modify SVM Options
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - Modify ONTAP SVM Options
   - Only Options that appear on "vserver options show" can be set
@@ -63,7 +63,7 @@ class NetAppONTAPSvnOptions(object):
     def __init__(self):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
-            name=dict(requried=False, type="str", default=None),
+            name=dict(required=False, type="str", default=None),
             value=dict(required=False, type='str', default=None),
             vserver=dict(required=True, type='str')
 

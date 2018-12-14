@@ -37,7 +37,9 @@ options:
   datacenter_name:
     description:
     - Name of the datacenter to add the datastore.
-    required: true
+    - The datacenter isn't used by the API to create a datastore.
+    - Will be removed in 2.11.
+    required: false
   datastore_name:
     description:
     - Name of the datastore to add/remove.
@@ -89,7 +91,6 @@ EXAMPLES = r'''
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
-      datacenter_name: '{{ datacenter }}'
       datastore_name: '{{ item.name }}'
       datastore_type: '{{ item.type }}'
       vmfs_device_name: 'naa.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
@@ -103,7 +104,6 @@ EXAMPLES = r'''
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
-      datacenter_name: '{{ datacenter }}'
       datastore_name: '{{ item.name }}'
       datastore_type: '{{ item.type }}'
       nfs_server: '{{ item.server }}'
@@ -121,7 +121,6 @@ EXAMPLES = r'''
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
-      datacenter_name: '{{ datacenter }}'
       datastore_name: '{{ item.name }}'
       datastore_type: '{{ item.type }}'
       nfs_server: '{{ item.server }}'
@@ -139,7 +138,6 @@ EXAMPLES = r'''
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
       password: '{{ vcenter_password }}'
-      datacenter_name: '{{ datacenter }}'
       datastore_name: NasDS_vol01
       esxi_hostname: '{{ inventory_hostname }}'
       state: absent
@@ -163,6 +161,7 @@ class VMwareHostDatastore(PyVmomi):
     def __init__(self, module):
         super(VMwareHostDatastore, self).__init__(module)
 
+        # NOTE: The below parameter is deprecated starting from Ansible v2.11
         self.datacenter_name = module.params['datacenter_name']
         self.datastore_name = module.params['datastore_name']
         self.datastore_type = module.params['datastore_type']
@@ -284,7 +283,7 @@ class VMwareHostDatastore(PyVmomi):
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        datacenter_name=dict(type='str', required=True),
+        datacenter_name=dict(type='str', required=False, removed_in_version=2.11),
         datastore_name=dict(type='str', required=True),
         datastore_type=dict(type='str', choices=['nfs', 'nfs41', 'vmfs']),
         nfs_server=dict(type='str'),

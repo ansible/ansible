@@ -25,12 +25,9 @@ from abc import ABCMeta
 
 from ansible import constants as C
 from ansible.module_utils.six import with_metaclass, string_types
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 # Global so that all instances of a PluginLoader will share the caches
 MODULE_CACHE = {}

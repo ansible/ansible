@@ -114,6 +114,10 @@ class CallbackModule(Default):
         if 'stdout' in abridged_result and 'stdout_lines' in abridged_result:
             abridged_result['stdout_lines'] = '<omitted>'
 
+        # if we already have stderr, we don't need stderr_lines
+        if 'stderr' in abridged_result and 'stderr_lines' in abridged_result:
+            abridged_result['stderr_lines'] = '<omitted>'
+
         if abridged_result:
             dumped += '\n'
             dumped += to_text(yaml.dump(abridged_result, allow_unicode=True, width=1000, Dumper=AnsibleDumper, default_flow_style=False))
@@ -121,3 +125,6 @@ class CallbackModule(Default):
         # indent by a couple of spaces
         dumped = '\n  '.join(dumped.split('\n')).rstrip()
         return dumped
+
+    def _serialize_diff(self, diff):
+        return to_text(yaml.dump(diff, allow_unicode=True, width=1000, Dumper=AnsibleDumper, default_flow_style=False))
