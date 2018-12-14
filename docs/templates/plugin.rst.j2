@@ -67,7 +67,7 @@ Aliases: @{ ','.join(aliases) }@
 {% if requirements -%}
 
 Requirements
-~~~~~~~~~~~~
+------------
 {%   if plugin_type == 'module' %}
 The below requirements are needed on the host that executes this @{ plugin_type }@.
 {%   else %}
@@ -116,11 +116,13 @@ Parameters
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
                 {# parameter name with required and/or introduced label #}
-                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
-                    <b>@{ key }@</b>
-                    {% if value.get('type', None) %}<br/><div style="font-size: small; color: red">@{ value.type }@</div>{% endif %}
-                    {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
-                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" style="position: relative">
+                    <b>@{ key }@</b><br/>
+                    <div style="font-size: small">
+                        <div style="color: purple; display: inline">@{ value.type | documented_type }@</div>
+                        {% if value.get('required', False) %} / <div style="color: red; display: inline">required</div>{% endif %}
+                    </div>
+                    {% if value.version_added %}<div style="align: right; font-style: italic; font-size: small; color: darkgreen">added in v@{value.version_added}@</div>{% endif %}
                 </td>
                 {# default / choices #}
                 <td>
@@ -135,7 +137,7 @@ Parameters
                     {% endif %}
                     {# Show possible choices and highlight details #}
                     {% if value.choices %}
-                        <ul><b>Choices:</b>
+                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
                             {% for choice in value.choices %}
                                 {# Turn boolean values in 'yes' and 'no' values #}
                                 {% if choice is sameas true %}
@@ -292,8 +294,8 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
-                    <b>@{ key }@</b>
-                    <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                    <b>@{ key }@</b><br/>
+                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
                     {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
@@ -364,8 +366,8 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                     <td class="elbow-placeholder">&nbsp;</td>
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
-                    <b>@{ key }@</b>
-                    <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                    <b>@{ key }@</b><br/>
+                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
                     {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
@@ -432,7 +434,7 @@ For a list of other modules that are also maintained by @{ supported_by }@, see 
 {%       if metadata.supported_by in ('core', 'network') %}
 
 Support
-~~~~~~~
+-------
 
 For more information about Red Hat's support of this @{ plugin_type }@,
 please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
@@ -451,7 +453,7 @@ This @{ plugin_type }@ is flagged as **deprecated** and will be removed in versi
 {% if author is defined -%}
 
 Author
-~~~~~~
+------
 
 {%   for author_name in author %}
 - @{ author_name }@
