@@ -70,7 +70,8 @@ class TestCnosInterfaceModule(TestCnosModule):
             {
                 'commands': [
                     'interface Ethernet1/2',
-                    'description show version'
+                    'description show version',
+                    'duplex auto'
                 ],
                 'changed': True
             }
@@ -87,7 +88,8 @@ class TestCnosInterfaceModule(TestCnosModule):
             {
                 'commands': [
                     'interface Ethernet1/2',
-                    'speed 1000'
+                    'speed 1000',
+                    'duplex auto'
                 ],
                 'changed': True
             }
@@ -104,6 +106,7 @@ class TestCnosInterfaceModule(TestCnosModule):
             {
                 'commands': [
                     'interface Ethernet1/2',
+                    'duplex auto',
                     'mtu 1548'
                 ],
                 'changed': True
@@ -135,6 +138,7 @@ class TestCnosInterfaceModule(TestCnosModule):
             {
                 'commands': [
                     'interface Ethernet1/44',
+                    'duplex auto',
                     'no shutdown'
                 ],
                 'changed': True
