@@ -32,7 +32,7 @@ try:
         pass
 except NameError:
     # On Python 2, there unfortunately isn't a better base class to inherit from
-    class TimeoutError(Exception):
+    class TimeoutError(OSError):
         pass
 
 
