@@ -120,7 +120,7 @@ EXAMPLES = r'''
 # Deploys a new VM named 'NewVM' in specific datacenter/cluster, with network mapping taken from variable and using ova template from an absolute path
 - vmware_deploy_ovf:
     hostname: '{{ vcenter_hostname }}'
-    username: vCenteruser
+    username: '{{ vcenter_username }}'
     password: vCenterpassword
     datacenter: Datacenter1
     cluster: Cluster1
