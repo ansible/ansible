@@ -19,6 +19,7 @@ except ImportError:
 
 ANSIBLE_USER_AGENT = 'Ansible/{0}'.format(ANSIBLE_VERSION)
 
+
 class GenericRestClientConfiguration(AzureConfiguration):
 
     def __init__(self, credentials, subscription_id, base_url=None):
