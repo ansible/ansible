@@ -19,6 +19,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+import ast
 import os
 
 
@@ -60,8 +61,15 @@ def replace_resource_dict(item, value):
     else:
         if not item:
             return item
-        return item.get(value)
+        if isinstance(item, dict):
+            return item.get(value)
 
+        # Item could be a string or a string representing a dictionary.
+        try:
+            new_item = ast.literal_eval(item)
+            return replace_resource_dict(new_item, value)
+        except ValueError:
+            return new_item
 
 # Handles all authentation and HTTP sessions for GCP API calls.
 class GcpSession(object):

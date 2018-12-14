@@ -87,10 +87,9 @@ options:
       resource. If not set, the TargetHttpsProxy resource will not have any SSL policy
       configured.
     - 'This field represents a link to a SslPolicy resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_ssl_policy
-      task and then set this ssl_policy field to "{{ name-of-resource }}" Alternatively,
-      you can set this ssl_policy to a dictionary with the selfLink key where the
-      value is the selfLink of your SslPolicy'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_ssl_policy
+      task and then set this ssl_policy field to "{{ name-of-resource }}"'
     required: false
     version_added: 2.8
   url_map:
@@ -98,10 +97,9 @@ options:
     - A reference to the UrlMap resource that defines the mapping from URL to the
       BackendService.
     - 'This field represents a link to a UrlMap resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_url_map
-      task and then set this url_map field to "{{ name-of-resource }}" Alternatively,
-      you can set this url_map to a dictionary with the selfLink key where the value
-      is the selfLink of your UrlMap'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_url_map
+      task and then set this url_map field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 notes:
@@ -250,12 +248,12 @@ sslPolicy:
     resource. If not set, the TargetHttpsProxy resource will not have any SSL policy
     configured.
   returned: success
-  type: dict
+  type: str
 urlMap:
   description:
   - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
   returned: success
-  type: dict
+  type: str
 '''
 
 ################################################################################
@@ -280,9 +278,9 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             quic_override=dict(type='str', choices=['NONE', 'ENABLE', 'DISABLE']),
-            ssl_certificates=dict(required=True, type='list', elements='dict'),
-            ssl_policy=dict(type='dict'),
-            url_map=dict(required=True, type='dict')
+            ssl_certificates=dict(required=True, type='list'),
+            ssl_policy=dict(),
+            url_map=dict(required=True)
         )
     )
 

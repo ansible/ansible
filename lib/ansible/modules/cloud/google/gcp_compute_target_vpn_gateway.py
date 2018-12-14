@@ -66,10 +66,9 @@ options:
     description:
     - The network this VPN gateway is accepting traffic for.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
     required: true
   region:
     description:
@@ -141,7 +140,7 @@ network:
   description:
   - The network this VPN gateway is accepting traffic for.
   returned: success
-  type: dict
+  type: str
 tunnels:
   description:
   - A list of references to VpnTunnel resources associated to this VPN gateway.
@@ -180,7 +179,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True, type='dict'),
+            network=dict(required=True),
             region=dict(required=True, type='str')
         )
     )

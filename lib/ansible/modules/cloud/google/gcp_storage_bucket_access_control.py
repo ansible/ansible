@@ -61,10 +61,9 @@ options:
     description:
     - The name of the bucket.
     - 'This field represents a link to a Bucket resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
-      task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
-      you can set this bucket to a dictionary with the name key where the value is
-      the name of your Bucket'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
+      task and then set this bucket field to "{{ name-of-resource }}"'
     required: true
   entity:
     description:
@@ -133,7 +132,7 @@ bucket:
   description:
   - The name of the bucket.
   returned: success
-  type: dict
+  type: str
 domain:
   description:
   - The domain associated with the entity.
@@ -205,7 +204,7 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            bucket=dict(required=True, type='dict'),
+            bucket=dict(required=True),
             entity=dict(required=True, type='str'),
             entity_id=dict(type='str'),
             project_team=dict(type='dict', options=dict(

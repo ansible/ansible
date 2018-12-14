@@ -65,10 +65,9 @@ options:
       will automatically connect the Interconnect to the network & region within which
       the Cloud Router is configured.
     - 'This field represents a link to a Router resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_router
-      task and then set this router field to "{{ name-of-resource }}" Alternatively,
-      you can set this router to a dictionary with the selfLink key where the value
-      is the selfLink of your Router'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_router
+      task and then set this router field to "{{ name-of-resource }}"'
     required: true
   name:
     description:
@@ -150,7 +149,7 @@ router:
     automatically connect the Interconnect to the network & region within which the
     Cloud Router is configured.
   returned: success
-  type: dict
+  type: str
 creationTimestamp:
   description:
   - Creation timestamp in RFC3339 text format.
@@ -200,7 +199,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             interconnect=dict(required=True, type='str'),
             description=dict(type='str'),
-            router=dict(required=True, type='dict'),
+            router=dict(required=True),
             name=dict(required=True, type='str'),
             region=dict(required=True, type='str')
         )
