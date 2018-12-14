@@ -82,7 +82,7 @@ class GenericRestClient(object):
             exp.request_id = response.headers.get('x-ms-request-id')
             raise exp
 
-        return response.text
+        return { 'status_code': response.status_code, 'text': response.text }
 
     def get_poller_result(self, poller, wait=5):
         '''

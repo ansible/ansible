@@ -251,12 +251,12 @@ class AzureRMResource(AzureRMModuleBase):
         if self.idempotency:
             original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [200, 404])
 
-            if original.status_code == 404:
+            if original['status_code'] == 404:
                 if self.state == 'absent':
                     needs_update = False
             else:
                 try:
-                    response = json.loads(original.text)
+                    response = json.loads(original['text'])
                     needs_update = (dict_merge(response, self.body) != response)
                 except:
                     pass
@@ -265,9 +265,9 @@ class AzureRMResource(AzureRMModuleBase):
             response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
             if self.state == 'present':
                 try:
-                    response = json.loads(response)
+                    response = json.loads(response['text'])
                 except:
-                    response = str(response)
+                    response = response['text']
             else:
                 response = None
 
