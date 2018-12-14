@@ -26,14 +26,8 @@ GATHER_TIMEOUT = None
 DEFAULT_GATHER_TIMEOUT = 10
 
 
-try:
-    # On Python 3, reuse the TimeoutError
-    class TimeoutError(TimeoutError):
-        pass
-except NameError:
-    # On Python 2, there unfortunately isn't a better base class to inherit from
-    class TimeoutError(OSError):
-        pass
+class TimeoutError(Exception):
+    pass
 
 
 def timeout(seconds=None, error_message="Timer expired"):
