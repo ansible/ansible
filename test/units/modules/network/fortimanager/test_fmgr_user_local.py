@@ -65,7 +65,6 @@ def test_fmgr_user_local_addsetdelete(fixture_data, mocker):
     # ldap-server: None
     # radius-server: None
     # tacacs-server: None
-    # type: password
     # sms-phone: None
     # status: enable
     # sms-server: None
@@ -89,7 +88,6 @@ def test_fmgr_user_local_addsetdelete(fixture_data, mocker):
     # ldap-server: None
     # radius-server: None
     # tacacs-server: None
-    # type: password
     # sms-phone: None
     # status: enable
     # sms-server: None
