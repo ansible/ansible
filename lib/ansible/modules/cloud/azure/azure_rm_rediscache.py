@@ -112,7 +112,7 @@ options:
             - Dict of tenant settings.
     state:
       description:
-        - Assert the state of the redis cahce.
+        - Assert the state of the redis cache.
         - Use 'present' to create or update a redis cache and 'absent' to delete it.
       default: present
       choices:

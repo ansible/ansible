@@ -74,7 +74,7 @@ options:
         type: str
     origin_path:
         description:
-            - A directory path on the origin that CDN can use to retreive content from.
+            - A directory path on the origin that CDN can use to retrieve content from.
         type: str
     content_types_to_compress:
         description:

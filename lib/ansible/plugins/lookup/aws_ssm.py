@@ -33,7 +33,7 @@ description:
   - If the lookup fails due to lack of permissions or due to an AWS client error then the aws_ssm
     will generate an error, normally crashing the current ansible task.  This is normally the right
     thing since ignoring a value that IAM isn't giving access to could cause bigger problems and
-    wrong behavour or loss of data.  If you want to continue in this case then you will have to set
+    wrong behaviour or loss of data.  If you want to continue in this case then you will have to set
     up two ansible tasks, one which sets a variable and ignores failures one which uses the value
     of that variable with a default.  See the examples below.
 
@@ -144,7 +144,7 @@ class LookupModule(LookupBase):
                 e.g. ['parameter_name', 'parameter_name_too' ]
             :kwarg variables: ansible variables active at the time of the lookup
             :kwarg aws_secret_key: identity of the AWS key to use
-            :kwarg aws_access_key: AWS seret key (matching identity)
+            :kwarg aws_access_key: AWS secret key (matching identity)
             :kwarg aws_security_token: AWS session key if using STS
             :kwarg decrypt: Set to True to get decrypted parameters
             :kwarg region: AWS region in which to do the lookup

@@ -202,7 +202,7 @@ class VariableManager:
                 basedirs = [task.get_search_path()[0]]
             elif C.PLAYBOOK_VARS_ROOT != 'top':
                 # preserves default basedirs, only option pre 2.3
-                raise AnsibleError('Unkown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
+                raise AnsibleError('Unknown playbook vars logic: %s' % C.PLAYBOOK_VARS_ROOT)
 
             # if we have a task in this context, and that task has a role, make
             # sure it sees its defaults above any other roles, as we previously
