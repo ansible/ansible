@@ -41,7 +41,7 @@ EXAMPLES = '''
 - debug: var=resp_out
 - set_fact:
     size_slug: "{{ item.slug }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?vcpus==`1`]"
 - debug: var=size_slug

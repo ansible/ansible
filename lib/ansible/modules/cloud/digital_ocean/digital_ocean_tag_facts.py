@@ -49,7 +49,7 @@ EXAMPLES = '''
   register: resp_out
 - set_fact:
     resources: "{{ item.resources }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?name=='extra_awesome_tag']"
 - debug: var=resources
