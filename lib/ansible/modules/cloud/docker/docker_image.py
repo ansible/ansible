@@ -30,6 +30,12 @@ options:
       - Use with state C(present) to archive an image to a .tar file.
     required: false
     version_added: "2.1"
+  cache_from:
+    description:
+      - List of image names to consider as cache source.
+    required: false
+    type: list
+    version_added: "2.8"
   load_path:
     description:
       - Use with state C(present) to load an image from a .tar file.
@@ -238,6 +244,15 @@ EXAMPLES = '''
      buildargs:
        log_volume: /var/log/myapp
        listen_port: 8080
+
+- name: Build image using cache source
+  docker_image:
+    name: myimage:latest
+    path: /path/to/build/dir
+    # Use as cache source for building myimage
+    cache_from:
+      - nginx:latest
+      - alpine:3.8
 '''
 
 RETURN = '''
@@ -278,6 +293,7 @@ class ImageManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
 
         self.archive_path = parameters.get('archive_path')
+        self.cache_from = parameters.get('cache_from')
         self.container_limits = parameters.get('container_limits')
         self.dockerfile = parameters.get('dockerfile')
         self.force = parameters.get('force')
@@ -521,7 +537,7 @@ class ImageManager(DockerBaseClass):
             pull=self.pull,
             forcerm=self.rm,
             dockerfile=self.dockerfile,
-            decode=True
+            decode=True,
         )
         if not HAS_DOCKER_PY_3:
             params['stream'] = True
@@ -534,6 +550,8 @@ class ImageManager(DockerBaseClass):
             for key, value in self.buildargs.items():
                 self.buildargs[key] = to_native(value)
             params['buildargs'] = self.buildargs
+        if self.cache_from:
+            params['cache_from'] = self.cache_from
 
         for line in self.client.build(**params):
             # line = json.loads(line)
@@ -583,6 +601,7 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         archive_path=dict(type='path'),
+        cache_from=dict(type='list', elements='str'),
         container_limits=dict(type='dict', options=dict(
             memory=dict(type='int'),
             memswap=dict(type='int'),
@@ -606,10 +625,16 @@ def main():
         buildargs=dict(type='dict', default=None),
     )
 
+    option_minimal_versions = dict(
+        cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        min_docker_version='1.8.0',
         min_docker_api_version='1.20',
+        option_minimal_versions=option_minimal_versions,
     )
 
     results = dict(
