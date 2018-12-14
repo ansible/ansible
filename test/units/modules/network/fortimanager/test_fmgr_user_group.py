@@ -106,7 +106,7 @@ def test_fmgr_user_group_addsetdelete(fixture_data, mocker):
     # password: None
     # user-name: None
     # group-type: None
-    # name: AnsibleUserGroup
+    # name: Ansible_UserGroup
     # mode: add
     # auth-concurrent-value: None
     ##################################################
