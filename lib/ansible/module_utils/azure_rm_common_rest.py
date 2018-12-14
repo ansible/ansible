@@ -81,11 +81,9 @@ class GenericRestClient(object):
             def get_long_running_output(response):
                 return response
             poller = LROPoller(self._client, ClientRawResponse(None, response), get_long_running_output, ARMPolling(30, **operation_config))
-            response_text = self.get_poller_result(poller)
-        else:
-            response_text = response.text
+            response = self.get_poller_result(poller)
 
-        return {'status_code': response.status_code, 'text': response_text}
+        return response
 
     def get_poller_result(self, poller, wait=5):
         '''
