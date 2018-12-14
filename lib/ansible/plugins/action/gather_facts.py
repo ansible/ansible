@@ -45,23 +45,29 @@ class ActionModule(ActionBase):
             override_vars['ansible_facts_modules'] = modules
         modules = C.config.get_config_value('FACTS_MODULES', variables=override_vars)
 
-        jobs = {}
+        failed = {}
+        skipped = {}
         if not parallel or len(modules) == 1:
             # serially execute each module
             for fact_module in modules:
                 # just one module, no need for fancy async
                 mod_args = self._get_module_args(fact_module, task_vars)
-                result.update(self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False))
+                res = self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=False)
+                if res.get('failed', False):
+                    failed[fact_module] = res.get('msg')
+                elif res.get('skipped', False):
+                    skipped[fact_module] = res.get('msg')
+                else:
+                    result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
         else:
             # do it async
+            jobs = {}
             for fact_module in modules:
 
                 mod_args = self._get_module_args(fact_module, task_vars)
                 self._display.vvvv("Running %s" % fact_module)
                 jobs[fact_module] = (self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=True))
 
-            failed = {}
-            skipped = {}
             while jobs:
                 for module in jobs:
                     poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(jobs[module]['results_file'])}
@@ -78,18 +84,18 @@ class ActionModule(ActionBase):
                 else:
                     time.sleep(0.5)
 
-            if skipped:
-                result['msg'] = "The following modules were skipped: %s\n" % (', '.join(skipped.keys()))
-                for skip in skipped:
-                    result['msg'] += '  %s: %s\n' % (skip, skipped[skip])
-                if len(skipped) == len(modules):
-                    result['skipped'] = True
+        if skipped:
+            result['msg'] = "The following modules were skipped: %s\n" % (', '.join(skipped.keys()))
+            for skip in skipped:
+                result['msg'] += '  %s: %s\n' % (skip, skipped[skip])
+            if len(skipped) == len(modules):
+                result['skipped'] = True
 
-            if failed:
-                result['failed'] = True
-                result['msg'] += "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
-                for fail in failed:
-                    result['msg'] += '  %s: %s\n' % (fail, failed[fail])
+        if failed:
+            result['failed'] = True
+            result['msg'] += "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
+            for fail in failed:
+                result['msg'] += '  %s: %s\n' % (fail, failed[fail])
 
         # tell executor facts were gathered
         result['ansible_facts']['_ansible_facts_gathered'] = True
