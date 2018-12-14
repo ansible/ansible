@@ -1028,7 +1028,8 @@ class MASResourceConfig(object):
                 severity=result.get('nitro_severity'),
             )
 
-    def exists(self, get_id_attributes, success_codes=[None, 0], use_filter=True):
+    def exists(self, get_id_attributes, success_codes=None, use_filter=True):
+        success_codes = [None, 0] if success_codes is None else success_codes
         self.get_actual_instance(get_id_attributes, success_codes, use_filter)
         return self.actual_dict != {}
 
