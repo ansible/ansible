@@ -7,13 +7,15 @@ __metaclass__ = type
 DOCUMENTATION = """
     lookup: cloudformation_parse
     author: Steven Miller (@sjmiller609)
-    version_added: "2.6"
-    short_description: Parse cloudformation files
+    version_added: "2.8"
+    short_description: Parse CloudFormation files
     description:
-        - Allows users to parse json or yaml cloudformation files into a list of json objects
+        - Allows users to parse json or yaml CloudFormation files into a list of json objects
+    requirements:
+        - 'cfn-flip python library U(https://github.com/awslabs/aws-cfn-template-flip)'
     options:
       _terms:
-        description: File name or list of filenames for the cloudformation template(s) to load
+        description: File name or list of filenames for the CloudFormation template(s) to load
         required: True
 """
 
@@ -24,7 +26,7 @@ EXAMPLES = """
 RETURN = """
   _list:
     description:
-      - The parsed cloudformation file(s)
+      - The parsed CloudFormation file(s)
     type: list
 """
 
@@ -32,7 +34,11 @@ RETURN = """
 # The module is supported by awslabs
 # see 'load' function here
 # https://github.com/awslabs/aws-cfn-template-flip/blob/master/cfn_flip/__init__.py
-from cfn_flip import load as cfn_load
+try:
+    from cfn_flip import load as cfn_load
+    HAS_CFN_FLIP = True
+except ImportError:
+    HAS_CFN_FLIP = False
 
 from ansible.plugins.lookup import LookupBase
 
@@ -40,6 +46,10 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
+
+        if not HAS_CFN_FLIP:
+            raise AnsibleError(
+                'cfn-flip is required for cloudformation_parse lookup. see https://github.com/awslabs/aws-cfn-template-flip')
 
         ret = []
         for term in terms:
