@@ -168,6 +168,7 @@ from ansible.module_utils.ec2 import (
     camel_dict_to_snake_dict,
     ansible_dict_to_boto3_filter_list
 )
+from ansible.module_utils._text import to_native
 
 try:
     import botocore
@@ -209,7 +210,7 @@ def describe_subnets(connection, module):
     try:
         response = describe_subnets_with_backoff(connection, subnet_ids, filters)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     for subnet in response['Subnets']:
         # for backwards compatibility
@@ -240,7 +241,7 @@ def main():
         try:
             connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
         except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
         module.fail_json(msg="Region must be specified")
 
