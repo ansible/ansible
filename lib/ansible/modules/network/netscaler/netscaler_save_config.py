@@ -31,23 +31,32 @@ options:
         description:
             - The ip address of the netscaler appliance where the nitro API calls will be made.
             - "The port can be specified with the colon (:). E.g. C(192.168.1.1:555)."
+        aliases: [ 'mas_ip' ]
         required: True
 
     nitro_user:
         description:
             - The username with which to authenticate to the netscaler node.
         required: True
+        aliases: [ 'mas_user' ]
 
     nitro_pass:
         description:
             - The password with which to authenticate to the netscaler node.
         required: True
+        aliases: [ 'mas_pass' ]
 
     nitro_protocol:
         choices: [ 'http', 'https' ]
         default: http
         description:
             - Which protocol to use when accessing the nitro API objects.
+
+    nitro_auth_token:
+        description:
+            - The authentication token provided by a login operation.
+        aliases: [ 'mas_auth_token' ]
+        version_added: "2.8.0"
 
     validate_certs:
         description:
@@ -60,6 +69,20 @@ options:
         description:
             - Time in seconds until a timeout error is thrown when establishing a new session with Netscaler.
         default: 310
+
+    mas_proxy_call:
+        description:
+            - If true the underlying NITRO API calls made by the module will be proxied through a MAS node to the target Netscaler instance.
+            - "When (mas_proxy_call=true) you must also define the following options: I(nitro_auth_token), I(instance_ip)."
+        type: bool
+        default: false
+        version_added: "2.8.0"
+
+    instance_ip:
+        description:
+            - The target Netscaler instance ip address to which all underlying NITRO API calls will be proxied to.
+            - It is meaningful only when having set C(mas_proxy_call) to C(true)
+        version_added: "2.8.0"
 
 requirements:
     - nitro python sdk
