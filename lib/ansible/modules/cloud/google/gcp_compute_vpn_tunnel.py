@@ -162,8 +162,8 @@ EXAMPLES = '''
       state: present
   register: gateway
 
-- name: create a vpn-tunnel
-  gcp_compute_vpn-tunnel:
+- name: create a vpn tunnel
+  gcp_compute_vpn_tunnel:
       name: "test_object"
       region: us-west1
       target_vpn_gateway: "{{ gateway }}"

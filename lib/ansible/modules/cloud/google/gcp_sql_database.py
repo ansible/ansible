@@ -76,7 +76,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a instance
   gcp_sql_instance:
-      name: "{{ resource_name }}"
+      name: "{{resource_name}}-3"
       settings:
         ip_configuration:
           authorized_networks:

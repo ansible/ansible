@@ -15,7 +15,7 @@
 # Pre-test setup
 - name: create a instance
   gcp_sql_instance:
-      name: "{{ resource_name }}"
+      name: "{{resource_name}}-3"
       settings:
         ip_configuration:
           authorized_networks:
@@ -132,7 +132,7 @@
 # If errors happen, don't crash the playbook!
 - name: delete a instance
   gcp_sql_instance:
-      name: "{{ resource_name }}"
+      name: "{{resource_name}}-3"
       settings:
         ip_configuration:
           authorized_networks:

@@ -15,7 +15,9 @@
 # Pre-test setup
 - name: delete a service account
   gcp_iam_service_account:
-      name: test-ansible@graphite-playground.google.com.iam.gserviceaccount.com
+      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
+
+      '
       display_name: My Ansible test key
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -24,7 +26,9 @@
 #----------------------------------------------------------
 - name: create a service account
   gcp_iam_service_account:
-      name: test-ansible@graphite-playground.google.com.iam.gserviceaccount.com
+      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
+
+      '
       display_name: My Ansible test key
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -50,7 +54,9 @@
 # ----------------------------------------------------------------------------
 - name: create a service account that already exists
   gcp_iam_service_account:
-      name: test-ansible@graphite-playground.google.com.iam.gserviceaccount.com
+      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
+
+      '
       display_name: My Ansible test key
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -64,7 +70,9 @@
 #----------------------------------------------------------
 - name: delete a service account
   gcp_iam_service_account:
-      name: test-ansible@graphite-playground.google.com.iam.gserviceaccount.com
+      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
+
+      '
       display_name: My Ansible test key
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -90,7 +98,9 @@
 # ----------------------------------------------------------------------------
 - name: delete a service account that does not exist
   gcp_iam_service_account:
-      name: test-ansible@graphite-playground.google.com.iam.gserviceaccount.com
+      name: '"{{resource_name}}@{{gcp_project}}.google.com.iam.gserviceaccount.com"
+
+      '
       display_name: My Ansible test key
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
