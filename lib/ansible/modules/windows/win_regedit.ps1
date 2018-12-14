@@ -295,7 +295,6 @@ if ($hive) {
     Add-Type -TypeDefinition $registry_util
     $env:TMP = $original_tmp
 
-    Import-PrivilegeUtil
     try {
         Set-AnsiblePrivilege -Name SeBackupPrivilege -Value $true
         Set-AnsiblePrivilege -Name SeRestorePrivilege -Value $true
