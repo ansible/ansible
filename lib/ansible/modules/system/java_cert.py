@@ -58,6 +58,11 @@ options:
     description:
       - Create keystore if it doesn't exist
     type: bool
+  keystore_type:
+    description:
+      - Keystore type (JCEKS, JKS).
+    default: None
+    version_added: "2.8"
   executable:
     description:
       - Path to keytool binary if not used we search in PATH for it.
