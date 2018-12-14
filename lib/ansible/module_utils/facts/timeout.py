@@ -16,8 +16,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import signal
-from functools import partial
+import multiprocessing
+import multiprocessing.pool as mp
 
 # timeout function to make sure some fact gathering
 # steps do not exceed a time limit
@@ -36,16 +36,6 @@ except NameError:
         pass
 
 
-class _InternalTimeoutSignal(BaseException):
-    """This is only used by the timeout decorator itself.  Do not use this elsewhere"""
-    pass
-
-
-def _handle_timeout(timeout_value, signum, frame):
-    msg = 'Timer expired after %s seconds' % timeout_value
-    raise _InternalTimeoutSignal(msg)
-
-
 def timeout(seconds=None, error_message="Timer expired"):
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -53,18 +43,13 @@ def timeout(seconds=None, error_message="Timer expired"):
             if timeout_value is None:
                 timeout_value = globals().get('GATHER_TIMEOUT') or DEFAULT_GATHER_TIMEOUT
 
-            old_handler = signal.signal(signal.SIGALRM, partial(_handle_timeout, timeout_value))
-            signal.alarm(timeout_value)
-
+            pool = mp.ThreadPool(processes=1)
+            res = pool.apply_async(func, args, kwargs)
+            pool.close()
             try:
-                result = func(*args, **kwargs)
-            except _InternalTimeoutSignal as e:
-                raise TimeoutError(e.args[0])
-            finally:
-                signal.signal(signal.SIGALRM, old_handler)
-                signal.alarm(0)
-
-            return result
+                return res.get(timeout_value)
+            except multiprocessing.TimeoutError:
+                raise TimeoutError('Timer expired after %s seconds' % timeout_value)
 
         return wrapper
 

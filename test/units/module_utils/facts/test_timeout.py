@@ -137,7 +137,7 @@ def function_raises():
 def function_catches_all_exceptions():
     try:
         time.sleep(10)
-    except Exception:
+    except BaseException:
         raise RuntimeError('We should not have gotten here')
 
 
