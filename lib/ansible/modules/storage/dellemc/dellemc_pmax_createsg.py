@@ -22,7 +22,7 @@ version_added: "2.8"
 description:
   - "This module has been tested against UNI 9.0. Every effort has been made
   to verify the scripts run with valid input. These modules are a tech preview"
-module: dellpmax_createsg
+module: dellemc_pmax_createsg
 options:
   array_id:
     description:
@@ -42,7 +42,7 @@ options:
       - "integer value for the number of volumes. Minimum is 1, module will
       fail if less than one volume is specified or value is 0. If volumes are
       required of different sizes, additional tasks should be added to
-      playbooks to use dellpmax_addvolume module"
+      playbooks to use dellemc_pmax_addvolume module"
     required: true
   sgname:
     description:
@@ -78,7 +78,7 @@ options:
   vol_size:
     description:
       - "Integer value for the size of volumes.  All volumes will be created
-      with same size.  Use dellpmax_addvol to add additional volumes if you
+      with same size.  Use dellemc_pmax_addvol to add additional volumes if you
       require different sized volumes once storage group is created."
     required: true
   volumeIdentifier:
@@ -121,7 +121,7 @@ EXAMPLES = '''
 
   tasks:
     - name: "Create New Storage Group and add data volumes"
-      dellpmax_createsg:
+      dellemc_pmax_createsg:
         array_id: "{{array_id}}"
         cap_unit: GB
         num_vols: 1
