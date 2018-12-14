@@ -17,6 +17,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import signal
+from functools import partial
 
 # timeout function to make sure some fact gathering
 # steps do not exceed a time limit
@@ -25,28 +26,44 @@ GATHER_TIMEOUT = None
 DEFAULT_GATHER_TIMEOUT = 10
 
 
-class TimeoutError(Exception):
+try:
+    # On Python 3, reuse the TimeoutError
+    class TimeoutError(TimeoutError):
+        pass
+except NameError:
+    # On Python 2, there unfortunately isn't a better base class to inherit from
+    class TimeoutError(Exception):
+        pass
+
+
+class _InternalTimeoutSignal(BaseException):
+    """This is only used by the timeout decorator itself.  Do not use this elsewhere"""
     pass
 
 
+def _handle_timeout(timeout_value, signum, frame):
+    msg = 'Timer expired after %s seconds' % timeout_value
+    raise _InternalTimeoutSignal(msg)
+
+
 def timeout(seconds=None, error_message="Timer expired"):
-
     def decorator(func):
-        def _handle_timeout(signum, frame):
-            msg = 'Timer expired after %s seconds' % globals().get('GATHER_TIMEOUT')
-            raise TimeoutError(msg)
-
         def wrapper(*args, **kwargs):
-            local_seconds = seconds
-            if local_seconds is None:
-                local_seconds = globals().get('GATHER_TIMEOUT') or DEFAULT_GATHER_TIMEOUT
-            signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.alarm(local_seconds)
+            timeout_value = seconds
+            if timeout_value is None:
+                timeout_value = globals().get('GATHER_TIMEOUT') or DEFAULT_GATHER_TIMEOUT
+
+            old_handler = signal.signal(signal.SIGALRM, partial(_handle_timeout, timeout_value))
+            signal.alarm(timeout_value)
 
             try:
                 result = func(*args, **kwargs)
+            except _InternalTimeoutSignal as e:
+                raise TimeoutError(e.args[0])
             finally:
+                signal.signal(signal.SIGALRM, old_handler)
                 signal.alarm(0)
+
             return result
 
         return wrapper

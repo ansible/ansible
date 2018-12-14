@@ -20,12 +20,10 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
+import sys
 import time
 
 import pytest
-
-from units.compat import unittest
-from units.compat.mock import patch, MagicMock
 
 from ansible.module_utils.facts import timeout
 
@@ -66,6 +64,10 @@ def sleep_amount_explicit_lower(amount):
     time.sleep(amount)
     return 'Succeeded after {0} sec'.format(amount)
 
+
+#
+# Tests for how the timeout decorator is specified
+#
 
 def test_defaults_still_within_bounds():
     # If the default changes outside of these bounds, some of the tests will
@@ -110,3 +112,84 @@ def test_explicit_timeout():
     sleep_time = 3
     with pytest.raises(timeout.TimeoutError):
         assert sleep_amount_explicit_lower(sleep_time) == '(Not expected to succeed)'
+
+
+#
+# Test that exception handling works
+#
+
+@timeout.timeout(1)
+def function_times_out():
+    time.sleep(2)
+
+
+@timeout.timeout(1)
+def function_other_timeout():
+    raise TimeoutError('Vanilla Timeout')
+
+
+@timeout.timeout(1)
+def function_raises():
+    1/0
+
+
+@timeout.timeout(1)
+def function_catches_all_exceptions():
+    try:
+        time.sleep(10)
+    except Exception:
+        raise RuntimeError('We should not have gotten here')
+
+
+def test_timeout_raises_timeout():
+    with pytest.raises(timeout.TimeoutError):
+        assert function_times_out() == '(Not expected to succeed)'
+
+
+def test_timeout_raises_other_exception():
+    with pytest.raises(ZeroDivisionError):
+        assert function_raises() == '(Not expected to succeed)'
+
+
+def test_exception_not_caught_by_called_code():
+    with pytest.raises(timeout.TimeoutError):
+        assert function_catches_all_exceptions() =='(Not expected to succeed)'
+
+
+def test_timeout_can_catch_our_timeout_only():
+    passed = False
+    try:
+        function_times_out()
+    except timeout.TimeoutError:
+        passed = True
+    assert passed
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="TimeoutError first appeared in Python3")
+def test_timeout_can_catch_other_timeout():
+    passed = False
+    try:
+        function_other_timeout()
+    except timeout.TimeoutError:
+        passed = False
+    except TimeoutError:
+        passed = True
+
+    assert passed
+
+
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="TimeoutError first appeared in Python3")
+def test_timeout_can_catch_all_timeouts():
+    passed = False
+    try:
+        function_times_out()
+    except TimeoutError:
+        passed = True
+    assert passed
+
+    passed = False
+    try:
+        function_times_out()
+    except TimeoutError:
+        passed = True
+    assert passed
