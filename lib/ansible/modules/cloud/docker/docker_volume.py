@@ -216,10 +216,15 @@ class DockerVolumeManager(object):
         if not self.existing_volume:
             if not self.check_mode:
                 try:
-                    resp = self.client.create_volume(self.parameters.volume_name,
-                                                     driver=self.parameters.driver,
-                                                     driver_opts=self.parameters.driver_options,
-                                                     labels=self.parameters.labels)
+                    params = dict(
+                        driver=self.parameters.driver,
+                        driver_opts=self.parameters.driver_options,
+                    )
+
+                    if self.parameters.labels is not None:
+                        params['labels'] = self.parameters.labels
+
+                    resp = self.client.create_volume(self.parameters.volume_name, **params)
                     self.existing_volume = self.client.inspect_volume(resp['Name'])
                 except APIError as e:
                     self.client.fail(text_type(e))
@@ -275,11 +280,17 @@ def main():
         debug=dict(type='bool', default=False)
     )
 
+    option_minimal_versions = dict(
+        labels=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
         min_docker_version='1.10.0',
+        min_docker_api_version='1.21',
         # "The docker server >= 1.9.0"
+        option_minimal_versions=option_minimal_versions,
     )
 
     cm = DockerVolumeManager(client)
