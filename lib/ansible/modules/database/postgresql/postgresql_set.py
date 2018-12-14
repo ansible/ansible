@@ -22,6 +22,8 @@ description:
    - Allows to change PostgreSQL (9.4+) server configuration parameters
      using ALTER SYSTEM command and apply them by reload server configuration.
    - Changed parameter values are stored in PGDATA/postgresql.auto.conf.
+   - Allows to reset parameter to boot_val (cluster initial value) or remove parameter
+     string from postgresql.auto.conf and reload.
    - After change you can see in ansible output the previous and
      the new parameter value, and other information by using returned values.
 version_added: "2.8"
@@ -32,7 +34,7 @@ options:
     required: true
   value:
     description:
-      - Parameter value to set.
+      - Parameter value to set (may be 'default' to remove parameter string from postgresql.auto.conf).
   show:
     description:
       - Show parameter value.
@@ -40,7 +42,7 @@ options:
     type: bool
   reset:
     description:
-      - Restoring whatever setting was effective in postgresql.conf / postgresql.auto.conf
+      - Restore parameter to initial state (boot_val).
     default: false
     type: bool
   db:
@@ -105,7 +107,7 @@ EXAMPLES = '''
 - debug:
     msg: "{{ show_value.info }}"
 
-# Restore wal_keep_segments parameter was effective in postgresql.conf
+# Restore wal_keep_segments parameter to initial state
 - postgresql_set:
     name: wal_keep_segments
     reset: yes
@@ -118,7 +120,7 @@ EXAMPLES = '''
     register: set_value
 
 - debug:
-    msg: "{{ inventory_hostname }} {{ set_value.name }} {{ set_value.result }}, restart_required: {{ set_value.required_restart }}"
+    msg: "{{ inventory_hostname }} {{ set_value.name }} {{ set_value.result }}, restart_required: {{ set_value.restart_required }}"
   when: set_value.changed
 
 # Set log_min_duration_statement parameter to 1 second
@@ -126,7 +128,7 @@ EXAMPLES = '''
     name: log_min_duration_statement
     value: 1s
 
-# Set wal_log_hints parameter to default value
+# Set wal_log_hints parameter to default value (remove parameter from postgresql.auto.conf)
 - postgresql_set:
     name: wal_log_hints
     value: default
@@ -184,7 +186,7 @@ POSSIBLE_SIZE_UNITS = ("mb", "gb", "tb")
 
 
 def param_get(cursor, module, name):
-    query = "SELECT name, setting, unit, context, boot_val, reset_val "\
+    query = "SELECT name, setting, unit, context, boot_val "\
             "FROM pg_settings WHERE name = '%s'" % name
     try:
         cursor.execute(query)
@@ -214,21 +216,6 @@ def param_set(cursor, module, name, value):
         module.fail_json(msg="Unable to get %s value due to : %s" % (name, to_native(e)),
                          exception=traceback.format_exc())
     return True
-
-
-def param_reset(cursor, module, name):
-    try:
-        query = "ALTER SYSTEM RESET %s" % name
-        cursor.execute(query)
-        cursor.execute("SELECT pg_reload_conf()")
-
-    except SQLParseError as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
-    except psycopg2.ProgrammingError as e:
-        module.fail_json(msg="Unable to get %s value due to : %s" % (name, to_native(e)),
-                         exception=traceback.format_exc())
-    return True
-
 
 # ===========================================
 # Module execution.
@@ -334,14 +321,12 @@ def main():
     unit = res[1][0][2]
     if unit is None:
         unit = ''
-    default_val = res[1][0][4]
-    reset_val = res[1][0][5]
+    boot_val = res[1][0][4]
     context = res[1][0][3]
 
     kw['info'] = "name: %s, setting: %s, context: %s, "\
-                 "default_val: %s, reset_val: %s, "\
-                 "unit: %s" % (name, current_value, context,
-                               default_val, reset_val, unit)
+                 "boot_val: %s, unit: %s" % (name, current_value, context,
+                                             boot_val, unit)
     # Do job
     # Show param:
     if show:
@@ -356,41 +341,27 @@ def main():
 
     # Set param:
     if value is not None and value != current_value:
-        if value in ('DEFAULT', 'default'):
-            if raw_val == default_val:
-                # value: 'default' and
-                # current value equals default, nothing to change, exit:
-                module.exit_json(**kw)
-
         changed = param_set(cursor, module, name, value)
-        if changed:
-            if context == 'postmaster' and value not in ('DEFAULT', 'default'):
-                kw['result'] = '%s => %s' % (current_value, value)
-            elif context == 'postmaster' and value in ('DEFAULT', 'default'):
-                kw['result'] = '%s => %s%s' % (current_value, default_val, unit)
-            else:
-                kw['result'] = '%s => %s' % (current_value,
-                                             param_get(cursor, module, name)[0][0])
+        kw['result'] = '%s => %s' % (current_value, value)
     # Reset param:
     elif reset:
-        if raw_val == reset_val:
+        if raw_val == boot_val:
             # nothing to change, exit:
             module.exit_json(**kw)
+        changed = param_set(cursor, module, name, boot_val)
 
-        changed = param_reset(cursor, module, name)
-        if changed:
-            if not restart_required:
-                kw['result'] = '%s => %s' % (current_value,
-                                             param_get(cursor, module, name)[0][0])
-            else:
-                kw['result'] = '%s => %s' % (current_value, reset_val)
+        if unit:
+            kw['result'] = '%s => %s (unit: %s)' % (current_value, boot_val, unit)
+        else:
+            kw['result'] = '%s => %s' % (current_value, boot_val)
 
-    if changed and not restart_required:
-        new_value = param_get(cursor, module, name)[0][0]
-        kw['info'] = "name: %s, setting: %s, context: %s, "\
-                     "default_val: %s, reset_val: %s, "\
-                     "unit: %s" % (name, new_value, context,
-                                   default_val, reset_val, unit)
+    if changed:
+        if not restart_required:
+            new_value = param_get(cursor, module, name)[0][0]
+            kw['result'] = '%s => %s' % (current_value, new_value)
+            kw['info'] = "name: %s, setting: %s, context: %s, "\
+                         "boot_val: %s, unit: %s" % (name, new_value, context,
+                                                     boot_val, unit)
 
     kw['changed'] = changed
     kw['restart_required'] = restart_required
