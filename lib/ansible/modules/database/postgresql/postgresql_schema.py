@@ -54,6 +54,12 @@ options:
       - The schema state.
     default: present
     choices: [ "present", "absent" ]
+  cascade_drop:
+    description:
+      - Drop schema with CASCADE to remove child objects
+    type: bool
+    default: false
+    version_added: '2.8'
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection
@@ -91,6 +97,11 @@ EXAMPLES = '''
     name: acme
     owner: bob
 
+# Drop schema "acme" with cascade
+- postgresql_schema:
+    name: acme
+    ensure: absent
+    cascade_drop: yes
 '''
 
 RETURN = '''
@@ -149,9 +160,11 @@ def schema_exists(cursor, schema):
     return cursor.rowcount == 1
 
 
-def schema_delete(cursor, schema):
+def schema_delete(cursor, schema, cascade):
     if schema_exists(cursor, schema):
         query = "DROP SCHEMA %s" % pg_quote_identifier(schema, 'schema')
+        if cascade:
+            query += " CASCADE"
         cursor.execute(query)
         return True
     else:
@@ -200,6 +213,7 @@ def main():
             schema=dict(required=True, aliases=['name']),
             owner=dict(default=""),
             database=dict(default="postgres"),
+            cascade_drop=dict(type="bool", default=False),
             state=dict(default="present", choices=["absent", "present"]),
             ssl_mode=dict(default='prefer', choices=[
                           'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
@@ -215,6 +229,7 @@ def main():
     owner = module.params["owner"]
     state = module.params["state"]
     sslrootcert = module.params["ssl_rootcert"]
+    cascade_drop = module.params["cascade_drop"]
     changed = False
 
     # To use defaults values, keyword arguments must be absent, so
@@ -272,7 +287,7 @@ def main():
 
         if state == "absent":
             try:
-                changed = schema_delete(cursor, schema)
+                changed = schema_delete(cursor, schema, cascade_drop)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
