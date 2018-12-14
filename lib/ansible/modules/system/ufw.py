@@ -245,10 +245,11 @@ def main():
         cmd = ' '.join(map(itemgetter(-1), filter(itemgetter(0), cmd)))
 
         cmds.append(cmd)
-        (rc, out, err) = module.run_command(cmd)
+        (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "en_EN"})
 
         if rc != 0:
             module.fail_json(msg=err or out)
+        return (rc, out, err)
 
     def ufw_version():
         """
@@ -296,6 +297,7 @@ def main():
     (_, pre_state, _) = module.run_command(ufw_bin + ' status verbose')
     (_, pre_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
 
+    changed = False
     # Execute commands
     for (command, value) in commands.items():
         cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
@@ -303,13 +305,28 @@ def main():
         if command == 'state':
             states = {'enabled': 'enable', 'disabled': 'disable',
                       'reloaded': 'reload', 'reset': 'reset'}
-            execute(cmd + [['-f'], [states[value]]])
+            if module.check_mode:
+                if value in ['reloaded', 'reset']:
+                    changed = True
+                else:
+                    (_, ufw_state, _) = execute([[ufw_bin], ["status"]])
+                    ufw_enabled = ufw_state.find("active") != -1
+                    if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and ufw_enabled):
+                        changed = True
+            else:
+                execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
-            execute(cmd + [[command], [value]])
+            if module.check_mode:
+                changed = True
+            else:
+                execute(cmd + [[command], [value]])
 
         elif command == 'default':
-            execute(cmd + [[command], [value], [params['direction']]])
+            if module.check_mode:
+                changed = True
+            else:
+                execute(cmd + [[command], [value], [params['direction']]])
 
         elif command == 'rule':
             # Rules are constructed according to the long format
@@ -336,14 +353,19 @@ def main():
             if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
                 cmd.append([params['comment'], "comment '%s'" % params['comment']])
 
-            execute(cmd)
+            (_, rules_dry, _) = execute(cmd)
+            if module.check_mode:
+                if rules_dry.find("Rules updated") != -1:
+                    changed = True
 
     # Get the new state
-    (_, post_state, _) = module.run_command(ufw_bin + ' status verbose')
-    (_, post_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
-    changed = (pre_state != post_state) or (pre_rules != post_rules)
-
-    return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
+    if module.check_mode:
+        return module.exit_json(changed=changed, commands=cmds)
+    else:
+        (_, post_state, _) = module.run_command(ufw_bin + ' status verbose')
+        (_, post_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
+        changed = (pre_state != post_state) or (pre_rules != post_rules)
+        return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
 
 
 if __name__ == '__main__':
