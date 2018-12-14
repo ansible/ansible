@@ -208,7 +208,7 @@ def main():
                 elif command == "GetCpuInventory":
                     result["cpu"] = rf_utils.get_cpu_inventory()
                 elif command == "GetNicInventory":
-                    result["nic"] = rf_utils.get_nic_inventory()
+                    result["nic"] = rf_utils.get_nic_inventory(category)
                 elif command == "GetStorageControllerInventory":
                     result["storage_controller"] = rf_utils.get_storage_controller_inventory()
                 elif command == "GetDiskInventory":
@@ -258,7 +258,7 @@ def main():
                 if command == "GetManagerAttributes":
                     result["manager_attributes"] = rf_utils.get_manager_attributes()
                 elif command == "GetManagerNicInventory":
-                    result["manager_nics"] = rf_utils.get_nic_inventory(get_manager=True)
+                    result["manager_nics"] = rf_utils.get_nic_inventory(resource_type=category)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 
