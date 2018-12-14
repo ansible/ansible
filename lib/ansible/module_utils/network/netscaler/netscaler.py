@@ -450,9 +450,13 @@ class NitroAPIFetcher(object):
             result['nitro_message'] = data.get('message')
             result['nitro_severity'] = data.get('severity')
 
-    def _construct_query_string(self, args={}, attrs=[], filter={}, action=None, count=False):
+    def _construct_query_string(self, args=None, attrs=None, filter=None, action=None, count=False):
 
         query_dict = {}
+
+        args = {} if args is None else args
+        attrs = [] if attrs is None else attrs
+        filter = {} if filter is None else filter
 
         # Construct args
         args_val = ','.join(['%s:%s' % (k, quote(args[k], safe='')) for k in args])
@@ -515,7 +519,11 @@ class NitroAPIFetcher(object):
 
         return result
 
-    def get(self, resource, id=None, args={}, attrs=[], filter={}):
+    def get(self, resource, id=None, args=None, attrs=None, filter=None):
+
+        args = {} if args is None else args
+        attrs = [] if attrs is None else attrs
+        filter = {} if filter is None else filter
 
         # Construct basic get url
         url = '%s://%s/%s/%s' % (
@@ -546,7 +554,9 @@ class NitroAPIFetcher(object):
 
         return result
 
-    def delete(self, resource, id=None, args={}):
+    def delete(self, resource, id=None, args=None):
+
+        args = {} if args is None else args
 
         # Deletion by name takes precedence over deletion by attributes
 
@@ -610,17 +620,19 @@ class NitroAPIFetcher(object):
 
 class NitroResourceConfig(object):
 
-    def __init__(self, module, resource, attributes_list, attribute_values_dict={}, transforms={}, actual_dict={}):
+    def __init__(self, module, resource, attributes_list, attribute_values_dict=None, transforms=None, actual_dict=None):
         self.resource = resource
         self.module = module
         self.fetcher = NitroAPIFetcher(module)
         self.attributes_list = attributes_list
-        self.attribute_values_dict = attribute_values_dict
-        self.transforms = transforms
+
+        self.attribute_values_dict = {} if attribute_values_dict is None else attribute_values_dict
+        self.transforms = {} if transforms is None else transforms
+
         log('transforms %s' % transforms)
         log('attribute_values_dict %s' % attribute_values_dict)
 
-        self.actual_dict = actual_dict
+        self.actual_dict = {} if actual_dict is None else actual_dict
 
         self.values_dict = {}
 
@@ -646,24 +658,8 @@ class NitroResourceConfig(object):
         # Populate the id values dictionary
         self.id_values_dict = {}
 
-    def __eq__(self, other):
-        raise NotImplementedError
-        log('Running eq')
-        if not isinstance(other, NitroResourceConfig):
-            return False
-
-        return self.values_dict == other.values_dict
-
-    def __ne__(self, other):
-        raise NotImplementedError
-        log('Running ne')
-        return not self.__eq__(other)
-
-    def __contains__(self, item):
-        raise NotImplementedError
-        log('Running contains')
-
-    def _get_actual_instance(self, get_id_attributes=[]):
+    def _get_actual_instance(self, get_id_attributes=None):
+        get_id_attributes = [] if get_id_attributes is None else get_id_attributes
         # Try to get the item using the get_id_attributes
         if get_id_attributes == []:
             raise Exception('Cannot get NITRO object without get_id_attributes')
@@ -951,17 +947,17 @@ class NitroResourceConfig(object):
 
 class MASResourceConfig(object):
 
-    def __init__(self, module, resource, attributes_list, attribute_values_dict={}, transforms={}, actual_dict={}, api_path='nitro/v1/config'):
+    def __init__(self, module, resource, attributes_list, attribute_values_dict=None, transforms=None, actual_dict=None, api_path='nitro/v1/config'):
         self.resource = resource
         self.module = module
         self.fetcher = NitroAPIFetcher(module, api_path=api_path)
         self.attributes_list = attributes_list
-        self.attribute_values_dict = attribute_values_dict
-        self.transforms = transforms
+        self.attribute_values_dict = {} if attribute_values_dict is None else attribute_values_dict
+        self.transforms = {} if transforms is None else transforms
         log('transforms %s' % transforms)
         log('attribute_values_dict %s' % attribute_values_dict)
 
-        self.actual_dict = actual_dict
+        self.actual_dict = {} if actual_dict is None else actual_dict
 
         self.values_dict = {}
 
@@ -1039,16 +1035,19 @@ class MASResourceConfig(object):
         self.get_actual_instance(get_id_attributes, success_codes, use_filter)
         return self.actual_dict != {}
 
-    def values_subset_of_actual(self, skip_attributes=[]):
+    def values_subset_of_actual(self, skip_attributes=None):
+        skip_attributes = [] if skip_attributes is None else skip_attributes
         log('values_subset_of_actual')
         return self.values_subset_of(self.actual_dict, skip_attributes)
 
-    def values_subset_of(self, other, skip_attributes=[]):
+    def values_subset_of(self, other, skip_attributes=None):
+        skip_attributes = [] if skip_attributes is None else skip_attributes
         log('values_subset_of')
         diff_list = self.diff_list(other, skip_attributes)
         return diff_list == []
 
-    def diff_list(self, other, skip_attributes=[]):
+    def diff_list(self, other, skip_attributes=None):
+        skip_attributes = [] if skip_attributes is None else skip_attributes
         log('diff_list start')
         diff_list = []
         # We compare only the attributes defined in the values_dict
