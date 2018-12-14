@@ -52,7 +52,7 @@ EXAMPLES = '''
   register: resp_out
 - set_fact:
     volume_id: "{{ item.id }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?name=='nyc3-test-volume']"
 - debug: var=volume_id
