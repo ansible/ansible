@@ -12,6 +12,7 @@ import pytest
 
 from ansible.config.manager import ConfigManager, Setting, ensure_type, resolve_path, get_config_type
 from ansible.errors import AnsibleOptionsError, AnsibleError
+from ansible.module_utils.six import integer_types, string_types
 
 curdir = os.path.dirname(__file__)
 cfg_file = os.path.join(curdir, 'test.cfg')
@@ -48,14 +49,16 @@ ensure_test_data = [
     (0, 'bool', bool),
     (0.0, 'bool', bool),
     (False, 'bool', bool),
-    ('10', 'int', int),
-    (20, 'int', int),
+    ('10', 'int', integer_types),
+    (20, 'int', integer_types),
     ('0.10', 'float', float),
     (0.2, 'float', float),
     ('/tmp/test.yml', 'pathspec', list),
     ('/tmp/test.yml,/home/test2.yml', 'pathlist', list),
-    ('a', 'str', str),
-    ('a', 'string', str),
+    ('a', 'str', string_types),
+    ('a', 'string', string_types),
+    ('Café', 'string', string_types),
+    ('', 'string', string_types),
     ('None', 'none', type(None))
 ]
 
