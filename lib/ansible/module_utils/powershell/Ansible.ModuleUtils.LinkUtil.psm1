@@ -1,5 +1,5 @@
- # Copyright (c) 2017 Ansible Project
- # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+# Copyright (c) 2017 Ansible Project
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 #Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 
@@ -408,7 +408,6 @@ namespace Ansible
     Add-Type -TypeDefinition $link_util
     $env:TMP = $original_tmp
 
-    Import-PrivilegeUtil
     # enable the SeBackupPrivilege if it is disabled
     $state = Get-AnsiblePrivilege -Name SeBackupPrivilege
     if ($state -eq $false) {
