@@ -15,6 +15,7 @@ except ImportError:
     # This is handled in azure_rm_common
     AzureConfiguration = object
 
+ANSIBLE_USER_AGENT = 'Ansible/{0}'.format(ANSIBLE_VERSION)
 
 class GenericRestClientConfiguration(AzureConfiguration):
 
@@ -29,8 +30,7 @@ class GenericRestClientConfiguration(AzureConfiguration):
 
         super(GenericRestClientConfiguration, self).__init__(base_url)
 
-        self.add_user_agent('genericrestclient/1.0')
-        self.add_user_agent('Azure-SDK-For-Python')
+        self.add_user_agent(ANSIBLE_USER_AGENT)
 
         self.credentials = credentials
         self.subscription_id = subscription_id
