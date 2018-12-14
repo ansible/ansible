@@ -36,10 +36,11 @@ class Cliconf(CliconfBase):
         reply = self.get(b'show version | json-print')
         data = json.loads(reply)
         device_info['network_os'] = data['Product name']
-        device_info['network_os_version'] = data['Version summary']
+        device_info['network_os_version'] = data['Product release']
+        device_info['network_os_version_summary'] = data['Version summary']
         device_info['network_os_model'] = data['Product model']
 
-        reply = self.get(b'show version | include Hostname')
+        reply = self.get(b'show hosts | include Hostname')
         data = to_text(reply, errors='surrogate_or_strict').strip()
         hostname = data.split(':')[1]
         hostname = hostname.strip()
