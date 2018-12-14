@@ -459,6 +459,7 @@ def get_configured_service_members(client, module):
         # Make a copy to update
         config = copy.deepcopy(config)
         config['servicegroupname'] = module.params['servicegroupname']
+        config['state'] = config['state'].upper()
         member_proxy = ConfigProxy(
             actual=servicegroup_servicegroupmember_binding(),
             client=client,
