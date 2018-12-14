@@ -735,9 +735,6 @@ class NitroResourceConfig(object):
         self.get_actual(get_id_attributes)
         return self.actual_dict != {}
 
-    def binding_exists():
-        pass
-
     def diff_list(self):
         log('diff_list')
         diff_list = []
@@ -823,7 +820,7 @@ class NitroResourceConfig(object):
             self.resource: self.values_dict
         }
 
-        import_object_resource = "{}{}".format(self.resource, "?action=Import")
+        import_object_resource = "{0}{1}".format(self.resource, "?action=Import")
         result = self.fetcher.post(post_data=post_data, resource=import_object_resource)
         log('result of post: %s' % result)
         if result['http_response_data']['status'] == 200:
@@ -852,7 +849,7 @@ class NitroResourceConfig(object):
             self.resource: update_object_resource_dict
         }
 
-        update_object_resource = "{}{}".format(self.resource, "?action=update")
+        update_object_resource = "{0}{1}".format(self.resource, "?action=update")
         result = self.fetcher.post(post_data=post_data, resource=update_object_resource)
         log('result of post: %s' % result)
         if result['http_response_data']['status'] == 200:
@@ -1075,7 +1072,8 @@ class MASResourceConfig(object):
         log('diff_list %s' % diff_list)
         return diff_list
 
-    def create(self, success_codes=[None, 0]):
+    def create(self, success_codes=None):
+        success_codes = [None, 0] if success_codes is None else success_codes
         if self.values_dict == {}:
             raise Exception('Cannot create NITRO object without any attribute values')
 
@@ -1091,7 +1089,8 @@ class MASResourceConfig(object):
                 severity=result.get('nitro_severity'),
             )
 
-    def update(self, success_codes=[None, 0], id_attribute=None):
+    def update(self, success_codes=None, id_attribute=None):
+        success_codes = [None, 0] if success_codes is None else success_codes
         if self.values_dict == {}:
             raise Exception('Cannot update NITRO object without any attribute values')
 
@@ -1120,7 +1119,8 @@ class MASResourceConfig(object):
                 severity=result.get('nitro_severity'),
             )
 
-    def delete(self, delete_id_attributes, success_codes=[None, 0]):
+    def delete(self, delete_id_attributes, success_codes=None):
+        success_codes = [None, 0] if success_codes is None else success_codes
         id_values_dict = {}
         for id in delete_id_attributes:
             if id in self.actual_dict:
