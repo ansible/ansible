@@ -31,8 +31,11 @@ fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
-    fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures') \
-                   + "/{filename}.json".format(filename=os.path.splitext(os.path.basename(__file__))[0])
+    fixture_path = os.path.join(
+        os.path.dirname(__file__),
+        'fixtures') + "/{filename}.json".format(
+        filename=os.path.splitext(
+            os.path.basename(__file__))[0])
     try:
         with open(fixture_path, "r") as fixture_file:
             fixture_data = json.load(fixture_file)
@@ -61,7 +64,7 @@ def test_fmgr_user_local_addsetdelete(fixture_data, mocker):
     # two-factor: disable
     # ldap-server: None
     # radius-server: None
-    # tacacs+-server: None
+    # tacacs-server: None
     # type: password
     # sms-phone: None
     # status: enable
@@ -85,7 +88,7 @@ def test_fmgr_user_local_addsetdelete(fixture_data, mocker):
     # two-factor: disable
     # ldap-server: None
     # radius-server: None
-    # tacacs+-server: None
+    # tacacs-server: None
     # type: password
     # sms-phone: None
     # status: enable
