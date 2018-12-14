@@ -829,7 +829,8 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
         self.device_helper = PyVmomiDeviceHelper(self.module)
         self.configspec = None
-        self.change_detected = False
+        self.change_detected = False  # a change was detected and needs to be applied through reconfiguration
+        self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.customspec = None
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
 
@@ -844,11 +845,10 @@ class PyVmomiHelper(PyVmomi):
                                       "and try removing VM again." % vm.name)
         task = vm.Destroy()
         self.wait_for_task(task)
-
         if task.info.state == 'error':
-            return {'changed': False, 'failed': True, 'msg': task.info.error.msg}
+            return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'destroy'}
         else:
-            return {'changed': True, 'failed': False}
+            return {'changed': self.change_applied, 'failed': False}
 
     def configure_guestid(self, vm_obj, vm_creation=False):
         # guest_id is not required when using templates
@@ -879,7 +879,7 @@ class PyVmomiHelper(PyVmomi):
                 mem_limit = None
                 try:
                     mem_limit = int(self.params['hardware'].get('mem_limit'))
-                except ValueError as e:
+                except ValueError:
                     self.module.fail_json(msg="hardware.mem_limit attribute should be an integer value.")
                 memory_allocation.limit = mem_limit
                 if vm_obj is None or memory_allocation.limit != vm_obj.config.memoryAllocation.limit:
@@ -889,7 +889,7 @@ class PyVmomiHelper(PyVmomi):
                 mem_reservation = None
                 try:
                     mem_reservation = int(self.params['hardware'].get('mem_reservation'))
-                except ValueError as e:
+                except ValueError:
                     self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
 
                 memory_allocation.reservation = mem_reservation
@@ -901,7 +901,7 @@ class PyVmomiHelper(PyVmomi):
                 cpu_limit = None
                 try:
                     cpu_limit = int(self.params['hardware'].get('cpu_limit'))
-                except ValueError as e:
+                except ValueError:
                     self.module.fail_json(msg="hardware.cpu_limit attribute should be an integer value.")
                 cpu_allocation.limit = cpu_limit
                 if vm_obj is None or cpu_allocation.limit != vm_obj.config.cpuAllocation.limit:
@@ -911,7 +911,7 @@ class PyVmomiHelper(PyVmomi):
                 cpu_reservation = None
                 try:
                     cpu_reservation = int(self.params['hardware'].get('cpu_reservation'))
-                except ValueError as e:
+                except ValueError:
                     self.module.fail_json(msg="hardware.cpu_reservation should be an integer value.")
                 cpu_allocation.reservation = cpu_reservation
                 if vm_obj is None or \
@@ -929,7 +929,7 @@ class PyVmomiHelper(PyVmomi):
             if 'num_cpus' in self.params['hardware']:
                 try:
                     num_cpus = int(self.params['hardware']['num_cpus'])
-                except ValueError as e:
+                except ValueError:
                     self.module.fail_json(msg="hardware.num_cpus attribute should be an integer value.")
                 # check VM power state and cpu hot-add/hot-remove state before re-config VM
                 if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
@@ -943,7 +943,7 @@ class PyVmomiHelper(PyVmomi):
                 if 'num_cpu_cores_per_socket' in self.params['hardware']:
                     try:
                         num_cpu_cores_per_socket = int(self.params['hardware']['num_cpu_cores_per_socket'])
-                    except ValueError as e:
+                    except ValueError:
                         self.module.fail_json(msg="hardware.num_cpu_cores_per_socket attribute "
                                                   "should be an integer value.")
                     if num_cpus % num_cpu_cores_per_socket != 0:
@@ -1136,8 +1136,8 @@ class PyVmomiHelper(PyVmomi):
                     try:
                         task = vm_obj.UpgradeVM_Task(new_version)
                         self.wait_for_task(task)
-                        if task.info.state != 'error':
-                            self.change_detected = True
+                        if task.info.state == 'error':
+                            return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'upgrade'}
                     except vim.fault.AlreadyUpgraded:
                         # Don't fail if VM is already upgraded.
                         pass
@@ -1807,7 +1807,7 @@ class PyVmomiHelper(PyVmomi):
                 rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
                 rec_action = rec.recommendations[0].action[0]
                 return rec_action.destination.name
-            except Exception as e:
+            except Exception:
                 # There is some error so we fall back to general workflow
                 pass
         datastore = None
@@ -2176,7 +2176,7 @@ class PyVmomiHelper(PyVmomi):
             clonespec_json = serialize_spec(clonespec)
             configspec_json = serialize_spec(self.configspec)
             kwargs = {
-                'changed': self.change_detected,
+                'changed': self.change_applied,
                 'failed': True,
                 'msg': task.info.error.msg,
                 'clonespec': clonespec_json,
@@ -2193,12 +2193,16 @@ class PyVmomiHelper(PyVmomi):
                 annotation_spec.annotation = str(self.params['annotation'])
                 task = vm.ReconfigVM_Task(annotation_spec)
                 self.wait_for_task(task)
+                if task.info.state == 'error':
+                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'annotation'}
 
             if self.params['customvalues']:
                 vm_custom_spec = vim.vm.ConfigSpec()
                 self.customize_customvalues(vm_obj=vm, config_spec=vm_custom_spec)
                 task = vm.ReconfigVM_Task(vm_custom_spec)
                 self.wait_for_task(task)
+                if task.info.state == 'error':
+                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customvalues'}
 
             if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
@@ -2210,10 +2214,10 @@ class PyVmomiHelper(PyVmomi):
                     is_customization_ok = self.wait_for_customization(vm)
                     if not is_customization_ok:
                         vm_facts = self.gather_facts(vm)
-                        return {'changed': self.change_detected, 'failed': True, 'instance': vm_facts}
+                        return {'changed': self.change_applied, 'failed': True, 'instance': vm_facts, 'op': 'customization'}
 
             vm_facts = self.gather_facts(vm)
-            return {'changed': self.change_detected, 'failed': False, 'instance': vm_facts}
+            return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
 
     def get_snapshots_by_name_recursively(self, snapshots, snapname):
         snap_obj = []
@@ -2242,8 +2246,6 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.annotation = str(self.params['annotation'])
             self.change_detected = True
 
-        change_applied = False
-
         relospec = vim.vm.RelocateSpec()
         if self.params['resource_pool']:
             relospec.pool = self.get_resource_pool()
@@ -2251,7 +2253,8 @@ class PyVmomiHelper(PyVmomi):
             if relospec.pool != self.current_vm_obj.resourcePool:
                 task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
                 self.wait_for_task(task)
-                change_applied = True
+                if task.info.state == 'error':
+                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'relocate'}
 
         # Only send VMWare task if we see a modification
         if self.change_detected:
@@ -2262,30 +2265,24 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Failed to reconfigure virtual machine due to"
                                           " product versioning restrictions: %s" % to_native(e.msg))
             self.wait_for_task(task)
-            change_applied = True
-
             if task.info.state == 'error':
-                # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2021361
-                # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2173
-                return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
+                return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'reconfig'}
 
         # Rename VM
         if self.params['uuid'] and self.params['name'] and self.params['name'] != self.current_vm_obj.config.name:
             task = self.current_vm_obj.Rename_Task(self.params['name'])
             self.wait_for_task(task)
-            change_applied = True
-
             if task.info.state == 'error':
-                return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
+                return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'rename'}
 
         # Mark VM as Template
         if self.params['is_template'] and not self.current_vm_obj.config.template:
             try:
                 self.current_vm_obj.MarkAsTemplate()
+                self.change_applied = True
             except vmodl.fault.NotSupported as e:
                 self.module.fail_json(msg="Failed to mark virtual machine [%s] "
                                           "as template: %s" % (self.params['name'], e.msg))
-            change_applied = True
 
         # Mark Template as VM
         elif not self.params['is_template'] and self.current_vm_obj.config.template:
@@ -2298,6 +2295,7 @@ class PyVmomiHelper(PyVmomi):
 
             try:
                 self.current_vm_obj.MarkAsVirtualMachine(**kwargs)
+                self.change_applied = True
             except vim.fault.InvalidState as invalid_state:
                 self.module.fail_json(msg="Virtual machine is not marked"
                                           " as template : %s" % to_native(invalid_state.msg))
@@ -2324,20 +2322,29 @@ class PyVmomiHelper(PyVmomi):
                 uuid_action_opt.key = "uuid.action"
                 uuid_action_opt.value = "create"
                 self.configspec.extraConfig.append(uuid_action_opt)
-                self.change_detected = True
 
-            change_applied = True
+            self.change_detected = True
 
         vm_facts = self.gather_facts(self.current_vm_obj)
-        return {'changed': change_applied, 'failed': False, 'instance': vm_facts}
+        return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
 
-    @staticmethod
-    def wait_for_task(task):
+    def wait_for_task(self, task, poll_interval=1):
+        """
+        Wait for a VMware task to complete.  Terminal states are 'error' and 'success'.
+
+        Inputs:
+          - task: the task to wait for
+          - poll_interval: polling interval to check the task, in seconds
+
+        Modifies:
+          - self.change_applied
+        """
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.Task.html
         # https://www.vmware.com/support/developer/vc-sdk/visdk25pubs/ReferenceGuide/vim.TaskInfo.html
         # https://github.com/virtdevninja/pyvmomi-community-samples/blob/master/samples/tools/tasks.py
         while task.info.state not in ['error', 'success']:
-            time.sleep(1)
+            time.sleep(poll_interval)
+        self.change_applied = self.change_applied or task.info.state == 'success'
 
     def wait_for_vm_ip(self, vm, poll=100, sleep=5):
         ips = None
@@ -2362,7 +2369,6 @@ class PyVmomiHelper(PyVmomi):
         return eventManager.QueryEvent(filterSpec)
 
     def wait_for_customization(self, vm, poll=10000, sleep=10):
-        facts = {}
         thispoll = 0
         while thispoll <= poll:
             eventStarted = self.get_vm_events(['CustomizationStartedEvent'])
