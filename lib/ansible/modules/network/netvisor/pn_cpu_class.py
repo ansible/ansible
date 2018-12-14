@@ -27,9 +27,10 @@ options:
     type: str
   state:
     description:
-      - State the action to perform. Use 'present' to create cpu-class and
-        'absent' to delete cpu-class 'update' to modify the cpu-class.
+      - State the action to perform. Use C(present) to create cpu-class and
+        C(absent) to delete cpu-class C(update) to modify the cpu-class.
     required: True
+    type: str
     choices: ['present', 'absent', 'update']
   pn_scope:
     description:
@@ -40,6 +41,7 @@ options:
     description:
       - enable host-based hog protection.
     required: False
+    type: str
     choices: ['disable', 'enable', 'enable-and-drop']
   pn_rate_limit:
     description:
