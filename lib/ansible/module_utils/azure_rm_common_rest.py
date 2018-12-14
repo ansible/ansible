@@ -49,6 +49,9 @@ class GenericRestClient(object):
 
         request = None
 
+        if header_parameters is None:
+            header_parameters = {}
+
         header_parameters['x-ms-client-request-id'] = str(uuid.uuid1())
 
         if method == 'GET':
