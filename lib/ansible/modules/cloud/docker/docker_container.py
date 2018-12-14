@@ -186,6 +186,8 @@ options:
   env:
     description:
       - Dictionary of key,value pairs.
+      - Values which might be parsed as numbers, booleans or other types by the YAML parser must be quoted (e.g. C("true")) in order to avoid data loss.
+    type: dict
   env_file:
     version_added: "2.2"
     description:
@@ -644,7 +646,9 @@ EXAMPLES = '''
      - "8080:9000"
      - "127.0.0.1:8081:9001/udp"
     env:
-        SECRET_KEY: ssssh
+        SECRET_KEY: "ssssh"
+        # Values which might be parsed as numbers, booleans or other types by the YAML parser need to be quoted
+        BOOLEAN_KEY: "yes"
 
 - name: Container present
   docker_container:
@@ -762,8 +766,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: true
-      - arg2: whatever
+      - arg1: "true"
+      - arg2: "whatever"
     volumes:
       - /tmp:/tmp
     comparisons:
@@ -776,8 +780,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: true
-      - arg2: whatever
+      - arg1: "true"
+      - arg2: "whatever"
     comparisons:
       '*': ignore  # by default, ignore *all* options (including image)
       env: strict   # except for environment variables; there, we want to be strict
@@ -1605,6 +1609,9 @@ class TaskParameters(DockerBaseClass):
                 final_env[name] = str(value)
         if self.env:
             for name, value in self.env.items():
+                if not isinstance(value, string_types):
+                    self.fail("Non-string value found for env option. "
+                              "Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s" % (name, ))
                 final_env[name] = str(value)
         return final_env
 
