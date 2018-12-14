@@ -26,8 +26,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+
 def publish(module, connection):
     connection.send_request('/web_api/publish', None)
+
 
 def install_policy(module, connection):
     payload = {'policy-package': 'standard'}
