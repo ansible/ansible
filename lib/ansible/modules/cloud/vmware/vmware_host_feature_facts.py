@@ -58,7 +58,7 @@ EXAMPLES = r'''
   register: features_set
 - set_fact:
     ssbd : "{{ item.value }}"
-  with_items: "{{ features_set.host_feature_facts[esxi_hostname] |json_query(name) }}"
+  loop: "{{ features_set.host_feature_facts[esxi_hostname] |json_query(name) }}"
   vars:
     name: "[?key=='cpuid.SSBD']"
 - assert:
