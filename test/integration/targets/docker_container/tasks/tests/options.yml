@@ -1179,6 +1179,9 @@
     env:
       TEST1: val1
       TEST2: val2
+      TEST3: "False"
+      TEST4: "true"
+      TEST5: "yes"
   register: env_1
 
 - name: env (idempotency)
@@ -1190,6 +1193,9 @@
     env:
       TEST2: val2
       TEST1: val1
+      TEST5: "yes"
+      TEST3: "False"
+      TEST4: "true"
   register: env_2
 
 - name: env (less environment variables)
@@ -1214,6 +1220,18 @@
     force_kill: yes
   register: env_4
 
+- name: env (fail unwrapped values)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    env:
+      TEST1: true
+    force_kill: yes
+  register: env_5
+  ignore_errors: yes
+
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
@@ -1227,6 +1245,8 @@
     - env_2 is not changed
     - env_3 is not changed
     - env_4 is changed
+    - env_5 is failed
+    - "('Non-string value found for env option.') in env_5.msg"
 
 ####################################################################
 ## env_file #########################################################
