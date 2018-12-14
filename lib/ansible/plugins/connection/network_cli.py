@@ -453,7 +453,7 @@ class Connection(NetworkConnectionBase):
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
             raise AnsibleConnectionFailure("timeout: value is %s seconds trying to send command: %s"
-                                           % (self._ssh_shell.gettimeout(), command.strip())
+                                           % (self._ssh_shell.gettimeout(), command.strip()))
 
     def _handle_buffer_read_timeout(self, signum, frame):
         display.vvvv("Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds"
