@@ -28,6 +28,7 @@ from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
 from ansible.module_utils.facts import timeout
+from ansible.module_utils.basic import AnsibleRunCommandTimeout
 
 
 @pytest.fixture
@@ -82,7 +83,7 @@ def test_implicit_file_default_succeeds():
 def test_implicit_file_default_timesout():
     # sleep_time is greater than the default
     sleep_time = timeout.DEFAULT_GATHER_TIMEOUT + 1
-    with pytest.raises(timeout.TimeoutError):
+    with pytest.raises(AnsibleRunCommandTimeout):
         assert sleep_amount_implicit(sleep_time) == '(Not expected to succeed)'
 
 
@@ -95,7 +96,7 @@ def test_implicit_file_overridden_succeeds(set_gather_timeout_higher):
 def test_implicit_file_overridden_timesout(set_gather_timeout_lower):
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
-    with pytest.raises(timeout.TimeoutError):
+    with pytest.raises(AnsibleRunCommandTimeout):
         assert sleep_amount_implicit(sleep_time) == '(Not expected to Succeed)'
 
 
@@ -108,5 +109,5 @@ def test_explicit_succeeds():
 def test_explicit_timeout():
     # Set sleep_time greater than our new timeout but less than the default
     sleep_time = 3
-    with pytest.raises(timeout.TimeoutError):
+    with pytest.raises(AnsibleRunCommandTimeout):
         assert sleep_amount_explicit_lower(sleep_time) == '(Not expected to succeed)'
