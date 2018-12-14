@@ -71,18 +71,19 @@ class GenericRestClient(object):
 
         response = self._client.send(request, header_parameters, body, **operation_config)
 
-        if response.status_code == 202:
-            def get_long_running_output(response):
-                return response
-            poller = LROPoller(self._client, ClientRawResponse(None, response), get_long_running_output, ARMPolling(30, **operation_config))
-            response = self.get_poller_result(poller)
-
         if response.status_code not in expected_status_codes:
             exp = CloudError(response)
             exp.request_id = response.headers.get('x-ms-request-id')
             raise exp
+        elif response.status_code == 202:
+            def get_long_running_output(response):
+                return response
+            poller = LROPoller(self._client, ClientRawResponse(None, response), get_long_running_output, ARMPolling(30, **operation_config))
+            response_text = self.get_poller_result(poller)
+        else:
+            response_text = response.text
 
-        return { 'status_code': response.status_code, 'text': response.text }
+        return {'status_code': response.status_code, 'text': response_text}
 
     def get_poller_result(self, poller, wait=5):
         '''
