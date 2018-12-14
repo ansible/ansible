@@ -123,6 +123,13 @@ def function_times_out():
     time.sleep(2)
 
 
+# This is just about the same test as function_times_out but uses a separate process which is where
+# we normally have our timeouts.  It's more of an integration test than a unit test.
+@timeout.timeout(1)
+def function_times_out_in_run_command(am):
+    am.run_command([sys.executable, '-c', 'import time ; time.sleep(2)'])
+
+
 @timeout.timeout(1)
 def function_other_timeout():
     raise TimeoutError('Vanilla Timeout')
@@ -130,7 +137,7 @@ def function_other_timeout():
 
 @timeout.timeout(1)
 def function_raises():
-    1/0
+    1 / 0
 
 
 @timeout.timeout(1)
@@ -146,6 +153,12 @@ def test_timeout_raises_timeout():
         assert function_times_out() == '(Not expected to succeed)'
 
 
+@pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
+def test_timeout_raises_timeout_integration_test(am):
+    with pytest.raises(timeout.TimeoutError):
+        assert function_times_out_in_run_command(am) == '(Not expected to succeed)'
+
+
 def test_timeout_raises_other_exception():
     with pytest.raises(ZeroDivisionError):
         assert function_raises() == '(Not expected to succeed)'
@@ -153,7 +166,7 @@ def test_timeout_raises_other_exception():
 
 def test_exception_not_caught_by_called_code():
     with pytest.raises(timeout.TimeoutError):
-        assert function_catches_all_exceptions() =='(Not expected to succeed)'
+        assert function_catches_all_exceptions() == '(Not expected to succeed)'
 
 
 def test_timeout_can_catch_our_timeout_only():
