@@ -363,7 +363,7 @@ def main():
 
     target_state = module.params['state']
     server = AnsibleCloudscaleServer(module)
-    # The server could be in a changeing or error state.
+    # The server could be in a changing or error state.
     # Wait for one of the allowed states before doing anything.
     # If an allowed state can't be reached, this module fails.
     if server.info['state'] not in ALLOWED_STATES:

@@ -57,7 +57,7 @@ EXAMPLES = '''
         resource_group: TestRG
         profile_name: Testing
 
-    - name: Get specific endpoint of a Traffic Manager profie
+    - name: Get specific endpoint of a Traffic Manager profile
       azure_rm_trafficmanager_facts:
         resource_group: TestRG
         profile_name: Testing

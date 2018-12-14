@@ -162,7 +162,7 @@ def get_global_forwarding_rule(client, name, project_id=None):
     """
     Get a Global Forwarding Rule from GCP.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param name: Name of the Global Forwarding Rule.
@@ -186,7 +186,7 @@ def create_global_forwarding_rule(client, params, project_id):
     """
     Create a new Global Forwarding Rule.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param params: Dictionary of arguments from AnsibleModule.
@@ -239,7 +239,7 @@ def update_global_forwarding_rule(client, forwarding_rule, params, name, project
 
     If the forwarding_rule has not changed, the update will not occur.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param forwarding_rule: Name of the Target Proxy.

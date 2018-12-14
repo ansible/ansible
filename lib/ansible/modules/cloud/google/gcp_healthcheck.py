@@ -244,7 +244,7 @@ def get_healthcheck(client, name, project_id=None, resource_type='HTTP'):
     """
     Get a Healthcheck from GCP.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param name: Name of the Url Map.
@@ -269,7 +269,7 @@ def create_healthcheck(client, params, project_id, resource_type='HTTP'):
     """
     Create a new Healthcheck.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param params: Dictionary of arguments from AnsibleModule.
@@ -297,7 +297,7 @@ def delete_healthcheck(client, name, project_id, resource_type='HTTP'):
     """
     Delete a Healthcheck.
 
-    :param client: An initialized GCE Compute Disover resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param name: Name of the Url Map.
@@ -326,7 +326,7 @@ def update_healthcheck(client, healthcheck, params, name, project_id,
 
     If the healthcheck has not changed, the update will not occur.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param healthcheck: Name of the Url Map.

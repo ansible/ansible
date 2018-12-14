@@ -408,7 +408,7 @@ def nic_to_dict(nic):
             internal_fqdn=nic.dns_settings.internal_fqdn
         ),
         ip_configurations=ip_configurations,
-        ip_configuration=ip_configurations[0] if len(ip_configurations) == 1 else None,  # for compatiable issue, keep this field
+        ip_configuration=ip_configurations[0] if len(ip_configurations) == 1 else None,  # for compatible issue, keep this field
         mac_address=nic.mac_address,
         enable_ip_forwarding=nic.enable_ip_forwarding,
         provisioning_state=nic.provisioning_state,
@@ -512,7 +512,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.security_group = self.parse_resource_to_dict(self.security_group or self.name)
 
         if self.state == 'present' and not self.ip_configurations:
-            # construct the ip_configurations array for compatiable
+            # construct the ip_configurations array for compatible
             self.deprecate('Setting ip_configuration flatten is deprecated and will be removed.'
                            ' Using ip_configurations list to define the ip configuration', version='2.9')
             self.ip_configurations = [
