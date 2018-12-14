@@ -97,7 +97,7 @@ class ConfigCLI(CLI):
 
         # pylint: disable=unreachable
         if self.options.setting is None:
-            raise AnsibleOptionsError("update option requries a setting to update")
+            raise AnsibleOptionsError("update option requires a setting to update")
 
         (entry, value) = self.options.setting.split('=')
         if '.' in entry:

@@ -431,11 +431,11 @@ class ConfigManager(object):
                     else:
                         value = defs[config].get('default')
                         origin = 'default'
-                        # skip typing as this is a temlated default that will be resolved later in constants, which has needed vars
+                        # skip typing as this is a templated default that will be resolved later in constants, which has needed vars
                         if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
                             return value, origin
 
-            # ensure correct type, can raise exceptoins on mismatched types
+            # ensure correct type, can raise exceptions on mismatched types
             try:
                 value = ensure_type(value, defs[config].get('type'), origin=origin)
             except ValueError as e:

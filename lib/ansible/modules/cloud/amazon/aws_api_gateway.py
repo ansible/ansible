@@ -270,7 +270,7 @@ def configure_api(client, api_data=None, api_id=None, mode="overwrite"):
 
 @AWSRetry.backoff(**retry_params)
 def create_deployment(client, api_id=None, stage=None, description=None):
-    # we can also get None as an argument so we don't do this as a defult
+    # we can also get None as an argument so we don't do this as a default
     return client.create_deployment(restApiId=api_id, stageName=stage, description=description)
 
 

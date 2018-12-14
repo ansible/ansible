@@ -199,7 +199,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         for password_file in vault_password_files:
             id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, password_file)
 
-            # note this makes --vault-id higher precendence than --vault-password-file
+            # note this makes --vault-id higher precedence than --vault-password-file
             # if we want to intertwingle them in order probably need a cli callback to populate vault_ids
             # used by --vault-id and --vault-password-file
             vault_ids.append(id_slug)
@@ -267,7 +267,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                                                           vault_id=built_vault_id)
 
                 # a empty or invalid password from the prompt will warn and continue to the next
-                # without erroring globablly
+                # without erroring globally
                 try:
                     prompted_vault_secret.load()
                 except AnsibleError as exc:
