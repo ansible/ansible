@@ -39,7 +39,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"% ?This command is not authorized"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
-        re.compile(br"connection timed out", re.I),
+        re.compile(br"(?<!\()connection timed out(?!\))", re.I),
         re.compile(br"[^\r\n]+ not found", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"Failed to commit", re.I)
