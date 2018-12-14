@@ -2,15 +2,14 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from msrest.pipeline import ClientRawResponse
-from msrest.polling import LROPoller
-from msrestazure.polling.arm_polling import ARMPolling
-import uuid
-
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_configuration import AzureConfiguration
     from msrest.service_client import ServiceClient
+    from msrest.pipeline import ClientRawResponse
+    from msrest.polling import LROPoller
+    from msrestazure.polling.arm_polling import ARMPolling
+    import uuid
     import json
 except ImportError:
     # This is handled in azure_rm_common
