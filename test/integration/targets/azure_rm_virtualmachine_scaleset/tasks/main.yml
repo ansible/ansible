@@ -215,6 +215,7 @@
     os_disk_caching: "{{ body.os_disk_caching }}"
     image: "{{ body.image }}"
     data_disks: "{{ body.data_disks }}"
+    overprovision: "{{ body.overprovision }}"
   register: results
 
 - name: Assert that nothing was changed
