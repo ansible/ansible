@@ -121,7 +121,7 @@ EXAMPLES = r'''
 - vmware_deploy_ovf:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
-    password: vCenterpassword
+    password: '{{ vcenter_password }}'
     datacenter: Datacenter1
     cluster: Cluster1
     datastore: vsandatastore
