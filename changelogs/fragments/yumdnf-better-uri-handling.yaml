@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - "yum and dnf can now handle installing packages from URIs that are proxy redirects and don't end in the .rpm file extension"
