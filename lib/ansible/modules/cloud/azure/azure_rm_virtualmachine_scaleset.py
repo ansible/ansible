@@ -197,6 +197,12 @@ options:
         version_added: "2.7"
         aliases:
             - security_group_name
+    overprovision:
+        description:
+            - Specifies whether the Virtual Machine Scale Set should be overprovisioned.
+        type: bool
+        default: True
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -403,7 +409,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
             enable_accelerated_networking=dict(type='bool'),
-            security_group=dict(type='raw', aliases=['security_group_name'])
+            security_group=dict(type='raw', aliases=['security_group_name']),
+            overprovision=dict(type='bool', default=True)
         )
 
         self.resource_group = None
@@ -432,6 +439,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.load_balancer = None
         self.enable_accelerated_networking = None
         self.security_group = None
+        self.overprovision = None
 
         self.results = dict(
             changed=False,
@@ -570,6 +578,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     differences.append('Tags')
                     changed = True
 
+                if bool(self.overprovision) != bool(vmss_dict['properties']['overprovision']):
+                    differences.append('overprovision')
+                    changed = True
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -638,6 +650,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         location=self.location,
+                        overprovision=self.overprovision,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
@@ -731,6 +744,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource = self.get_vmss()
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
+                    vmss_resource.overprovision = self.overprovision
 
                     if self.data_disks is not None:
                         data_disks = []

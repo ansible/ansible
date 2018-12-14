@@ -182,6 +182,11 @@ vmss:
             type: str
             returned: always
             sample: Linux
+        overprovision:
+            description:
+                - Specifies whether the Virtual Machine Scale Set should be overprovisioned.
+            type: bool
+            sample: true
         resource_group:
             description:
                 - Resource group.
@@ -348,6 +353,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     'image': vmss['properties']['virtualMachineProfile']['storageProfile']['imageReference'],
                     'os_disk_caching': vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching'],
                     'os_type': 'Linux' if (vmss['properties']['virtualMachineProfile']['osProfile'].get('linuxConfiguration') is not None) else 'Windows',
+                    'overprovision': vmss['properties']['overprovision'],
                     'managed_disk_type': vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['managedDisk']['storageAccountType'],
                     'data_disks': data_disks,
                     'virtual_network_name': virtual_network_name,
