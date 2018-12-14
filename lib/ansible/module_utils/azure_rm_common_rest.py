@@ -46,7 +46,7 @@ class GenericRestClient(object):
         self._client = ServiceClient(self.config.credentials, self.config)
         self.models = None
 
-    def query(self, url, method, query_parameters, header_parameters, body, expected_status_codes):
+    def query(self, url, method, query_parameters, header_parameters, body, expected_status_codes, polling_timeout, polling_interval):
         # Construct and send request
         operation_config = {}
 
@@ -78,25 +78,20 @@ class GenericRestClient(object):
             exp = CloudError(response)
             exp.request_id = response.headers.get('x-ms-request-id')
             raise exp
-        elif response.status_code == 202:
+        elif response.status_code == 202 and polling_timeout > 0:
             def get_long_running_output(response):
                 return response
-            poller = LROPoller(self._client, ClientRawResponse(None, response), get_long_running_output, ARMPolling(30, **operation_config))
-            response = self.get_poller_result(poller)
+            poller = LROPoller(self._client,
+                               ClientRawResponse(None, response),
+                               get_long_running_output,
+                               ARMPolling(polling_interval, **operation_config))
+            response = self.get_poller_result(poller, polling_timeout)
 
         return response
 
-    def get_poller_result(self, poller, wait=5):
-        '''
-        Consistent method of waiting on and retrieving results from Azure's long poller
-
-        :param poller Azure poller object
-        :return object resulting from the original request
-        '''
+    def get_poller_result(self, poller, timeout):
         try:
-            delay = wait
-            while not poller.done():
-                poller.wait(timeout=delay)
+            poller.wait(timeout=timeout)
             return poller.result()
         except Exception as exc:
             raise
