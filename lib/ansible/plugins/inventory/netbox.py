@@ -262,7 +262,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_config_context(self, host):
         try:
             if self.config_context:
-                url = urljoin(self.api_endpoint, "/api/dcim/devices/" + str(host["id"]))
+                url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
                 device_lookup = self._fetch_information(url)
                 return [device_lookup["config_context"]]
         except Exception:
@@ -299,42 +299,42 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         return host["tags"]
 
     def refresh_platforms_lookup(self):
-        url = urljoin(self.api_endpoint, "/api/dcim/platforms/?limit=0")
+        url = self.api_endpoint + "/api/dcim/platforms/?limit=0"
         platforms = self.get_resource_list(api_url=url)
         self.platforms_lookup = dict((platform["id"], platform["name"]) for platform in platforms)
 
     def refresh_sites_lookup(self):
-        url = urljoin(self.api_endpoint, "/api/dcim/sites/?limit=0")
+        url = self.api_endpoint + "/api/dcim/sites/?limit=0"
         sites = self.get_resource_list(api_url=url)
         self.sites_lookup = dict((site["id"], site["name"]) for site in sites)
 
     def refresh_regions_lookup(self):
-        url = urljoin(self.api_endpoint, "/api/dcim/regions/?limit=0")
+        url = self.api_endpoint + "/api/dcim/regions/?limit=0"
         regions = self.get_resource_list(api_url=url)
         self.regions_lookup = dict((region["id"], region["name"]) for region in regions)
 
     def refresh_tenants_lookup(self):
-        url = urljoin(self.api_endpoint, "/api/tenancy/tenants/?limit=0")
+        url = self.api_endpoint + "/api/tenancy/tenants/?limit=0"
         tenants = self.get_resource_list(api_url=url)
         self.tenants_lookup = dict((tenant["id"], tenant["name"]) for tenant in tenants)
 
     def refresh_racks_lookup(self):
-        url = urljoin(self.api_endpoint, "/api/dcim/racks/?limit=0")
+        url = self.api_endpoint + "/api/dcim/racks/?limit=0"
         racks = self.get_resource_list(api_url=url)
         self.racks_lookup = dict((rack["id"], rack["name"]) for rack in racks)
 
     def refresh_device_roles_lookup(self):
-        url = urljoin(self.api_endpoint, "/api/dcim/device-roles/?limit=0")
+        url = self.api_endpoint + "/api/dcim/device-roles/?limit=0"
         device_roles = self.get_resource_list(api_url=url)
         self.device_roles_lookup = dict((device_role["id"], device_role["name"]) for device_role in device_roles)
 
     def refresh_device_types_lookup(self):
-        url = urljoin(self.api_endpoint, "/api/dcim/device-types/?limit=0")
+        url = self.api_endpoint + "/api/dcim/device-types/?limit=0"
         device_types = self.get_resource_list(api_url=url)
         self.device_types_lookup = dict((device_type["id"], device_type["model"]) for device_type in device_types)
 
     def refresh_manufacturers_lookup(self):
-        url = urljoin(self.api_endpoint, "/api/dcim/manufacturers/?limit=0")
+        url = self.api_endpoint + "/api/dcim/manufacturers/?limit=0"
         manufacturers = self.get_resource_list(api_url=url)
         self.manufacturers_lookup = dict((manufacturer["id"], manufacturer["name"]) for manufacturer in manufacturers)
 
@@ -377,10 +377,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if self.query_filters:
             query_parameters.extend(filter(lambda x: x,
                                            map(self.validate_query_parameters, self.query_filters)))
-        self.device_url = urljoin(self.api_endpoint,
-                                  "/api/dcim/devices/?" + urlencode(query_parameters))
-        self.virtual_machines_url = urljoin(self.api_endpoint,
-                                            "/api/virtualization/virtual-machines/?" + urlencode(query_parameters))
+        self.device_url = self.api_endpoint + "/api/dcim/devices/?" + urlencode(query_parameters)
+        self.virtual_machines_url = self.api_endpoint + "/api/virtualization/virtual-machines/?" + urlencode(query_parameters)
 
     def fetch_hosts(self):
         return chain(
