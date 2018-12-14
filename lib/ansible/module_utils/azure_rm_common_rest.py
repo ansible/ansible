@@ -2,6 +2,11 @@
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from msrest.pipeline import ClientRawResponse
+from msrest.polling import LROPoller
+from msrestazure.polling.arm_polling import ARMPolling
+import uuid
+
 try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_configuration import AzureConfiguration
@@ -28,6 +33,7 @@ class GenericRestClientConfiguration(AzureConfiguration):
         self.add_user_agent('genericrestclient/1.0')
         self.add_user_agent('Azure-SDK-For-Python')
 
+
         self.credentials = credentials
         self.subscription_id = subscription_id
 
@@ -44,6 +50,8 @@ class GenericRestClient(object):
         operation_config = {}
 
         request = None
+
+        header_parameters['x-ms-client-request-id'] = str(uuid.uuid1())
 
         if method == 'GET':
             request = self._client.get(url, query_parameters)
@@ -62,9 +70,30 @@ class GenericRestClient(object):
 
         response = self._client.send(request, header_parameters, body, **operation_config)
 
+        if response.status_code == 202:
+            def get_long_running_output(response):
+                return response
+            poller = LROPoller(self._client, ClientRawResponse(None, response), get_long_running_output, ARMPolling(30, **operation_config))
+            response = self.get_poller_result(poller)
+
         if response.status_code not in expected_status_codes:
             exp = CloudError(response)
             exp.request_id = response.headers.get('x-ms-request-id')
             raise exp
 
-        return response
+        return response.text
+
+    def get_poller_result(self, poller, wait=5):
+        '''
+        Consistent method of waiting on and retrieving results from Azure's long poller
+
+        :param poller Azure poller object
+        :return object resulting from the original request
+        '''
+        try:
+            delay = wait
+            while not poller.done():
+                poller.wait(timeout=delay)
+            return poller.result()
+        except Exception as exc:
+            raise

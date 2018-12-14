@@ -193,7 +193,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
         response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404])
 
         try:
-            response = json.loads(response.text)
+            response = json.loads(response)
             if response is list:
                 self.results['response'] = response
             else:

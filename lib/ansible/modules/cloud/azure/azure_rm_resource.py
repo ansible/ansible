@@ -265,9 +265,9 @@ class AzureRMResource(AzureRMModuleBase):
             response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
             if self.state == 'present':
                 try:
-                    response = json.loads(response.text)
+                    response = json.loads(response)
                 except:
-                    response = response.text
+                    response = str(response)
             else:
                 response = None
 
