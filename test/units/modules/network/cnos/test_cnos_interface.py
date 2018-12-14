@@ -130,9 +130,6 @@ class TestCnosInterfaceModule(TestCnosModule):
             enabled=True
         ))
         result = self.execute_module(changed=True)
-        #f = open("myfile.txt", "w")
-        #f.write(str(result))
-        #f.close()
         self.assertEqual(
             result,
             {
@@ -143,4 +140,3 @@ class TestCnosInterfaceModule(TestCnosModule):
                 'changed': True
             }
         )
-
