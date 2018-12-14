@@ -36,7 +36,7 @@ EXAMPLES = '''
 
 - set_fact:
     pubkey: "{{ item.public_key }}"
-  with_items: "{{ ssh_keys|json_query(ssh_pubkey) }}"
+  loop: "{{ ssh_keys|json_query(ssh_pubkey) }}"
   vars:
     ssh_pubkey: "[?name=='ansible_ctrl']"
 

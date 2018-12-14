@@ -49,7 +49,7 @@ EXAMPLES = '''
   register: resp_out
 - set_fact:
     domain_ttl: "{{ item.ttl }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?name=='example.com']"
 - debug: var=domain_ttl

@@ -65,7 +65,7 @@ EXAMPLES = '''
     name: "{{ item }}"
     resource_id: "73333005"
     state: present
-  with_items:
+  loop:
     - staging
     - dbserver
 
