@@ -743,9 +743,10 @@ class DnfModule(YumDnf):
         already_loaded_comps = False  # Only load this if necessary, it's slow
 
         for name in self.names:
-            if name.endswith(".rpm"):
-                if '://' in name:
-                    name = self.fetch_rpm_from_url(name)
+            if '://' in name:
+                name = self.fetch_rpm_from_url(name)
+                filenames.append(name)
+            elif name.endswith(".rpm"):
                 filenames.append(name)
             elif name.startswith("@") or ('/' in name):
                 if not already_loaded_comps:
