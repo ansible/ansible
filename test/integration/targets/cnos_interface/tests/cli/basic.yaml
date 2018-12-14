@@ -226,4 +226,3 @@
       - 'result.changed == false'
 
 - debug: msg="END cnos_interface cli/basic.yaml on connection={{ ansible_connection }}"
-
