@@ -68,11 +68,13 @@ options:
     type: bool
     default: no
     version_added: '2.8'
-author:
-- Dag Wieers (@dagwieers)
 notes:
 - 'The following options can include Windows environment variables: C(dest), C(args), C(description), C(dest), C(directory), C(icon) C(src)'
 - 'Windows has two types of shortcuts: Application and URL shortcuts. URL shortcuts only consists of C(dest) and C(src)'
+seealso:
+- module: win_file
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''

@@ -222,6 +222,14 @@ notes:
 - If (C(become)) is unavailable, use (M(win_hotfix) to install hotfixes instead
   of (M(win_chocolatey)) as (M(win_hotfix)) avoids using wusa.exe which cannot
   be run without (C(become)).
+seealso:
+- module: win_chocolatey_config
+- module: win_chocolatey_facts
+- module: win_chocolatey_feature
+- module: win_chocolatey_source
+- module: win_feature
+- module: win_package
+- module: win_updates
 author:
 - Trond Hindenes (@trondhindenes)
 - Peter Mounce (@petemounce)

@@ -139,6 +139,10 @@ notes:
   and the file is not an MSI.
 - All the installation checks under C(product_id) and C(creates_*) add
   together, if one fails then the program is considered to be absent.
+seealso:
+- module: win_chocolatey
+- module: win_hotfix
+- module: win_updates
 author:
 - Trond Hindenes (@trondhindenes)
 - Jordan Borean (@jborean93)

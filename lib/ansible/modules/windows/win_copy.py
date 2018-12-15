@@ -90,6 +90,11 @@ notes:
 - Because win_copy runs over WinRM, it is not a very efficient transfer
   mechanism. If sending large files consider hosting them on a web service and
   using M(win_get_url) instead.
+seealso:
+- module: assemble
+- module: copy
+- module: win_get_url
+- module: win_robocopy
 author:
 - Jon Hawkesworth (@jhawkesworth)
 - Jordan Borean (@jborean93)

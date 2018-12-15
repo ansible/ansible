@@ -169,6 +169,13 @@ notes:
   - Note that some individuals have confirmed successful operation on Windows
     2008R2 servers with AD and AD Web Services enabled, but this has not
     received the same degree of testing as Windows 2012R2.
+seealso:
+- module: win_domain
+- module: win_domain_controller
+- module: win_domain_computer
+- module: win_domain_group
+- module: win_domain_membership
+- module: win_user
 author:
     - Nick Chandler (@nwchandler)
 '''

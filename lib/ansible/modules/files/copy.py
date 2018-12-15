@@ -104,13 +104,18 @@ extends_documentation_fragment:
     - files
     - validate
     - decrypt
-author:
-    - Ansible Core Team
-    - Michael DeHaan
 notes:
    - The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
      For alternative, see M(synchronize) module, which is a wrapper around C(rsync).
    - For Windows targets, use the M(win_copy) module instead.
+seealso:
+- module: assemble
+- module: file
+- module: template
+- module: win_copy
+author:
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = r'''

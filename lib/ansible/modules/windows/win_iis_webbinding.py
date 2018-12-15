@@ -57,6 +57,11 @@ options:
       - Set to c(0) to disable SNI.
       - Set to c(1) to enable SNI.
     version_added: "2.5"
+seealso:
+- module: win_iis_virtualdirectory
+- module: win_iis_webapplication
+- module: win_iis_webapppool
+- module: win_iis_website
 author:
   - Noah Sparks (@nwsparks)
   - Henrik Wallström (@henrikwallstrom)

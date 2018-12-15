@@ -42,7 +42,9 @@ options:
 notes:
   - The PowerShellGet module (version 1.6.0 or newer) and the NuGet package provider (version 2.8.5.201 or newer) are required.
   - See the examples on how to update the NuGet package provider.
-  - You can't use M(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
+  - You can't use C(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
+seealso:
+- module: win_psmodule
 author:
 - Wojciech Sciesinski (@it-praktyk)
 '''

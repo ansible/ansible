@@ -10,8 +10,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_lineinfile
-author:
-- Brian Lloyd (@brianlloyd)
 short_description: Ensure a particular line is in a file, or replace an existing line using a back-referenced regular expression
 description:
   - This module will search a file for a line, and ensure that it is present or absent.
@@ -94,6 +92,11 @@ options:
     default: windows
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+seealso:
+- module: assemble
+- module: lineinfile
+author:
+- Brian Lloyd (@brianlloyd)
 '''
 
 EXAMPLES = r'''
