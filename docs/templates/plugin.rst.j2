@@ -117,12 +117,12 @@ Parameters
                 {% endfor %}
                 {# parameter name with required and/or introduced label #}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" style="position: relative">
-                    <b>@{ key }@</b><br/>
+                    <b>@{ key }@</b>
                     <div style="font-size: small">
-                        <div style="color: purple; display: inline">@{ value.type | documented_type }@</div>
-                        {% if value.get('required', False) %} / <div style="color: red; display: inline">required</div>{% endif %}
+                        <span style="color: purple">@{ value.type | documented_type }@</span>
+                        {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
                     </div>
-                    {% if value.version_added %}<div style="align: right; font-style: italic; font-size: small; color: darkgreen">added in v@{value.version_added}@</div>{% endif %}
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in v@{value.version_added}@</div>{% endif %}
                 </td>
                 {# default / choices #}
                 <td>
@@ -294,9 +294,9 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
-                    <b>@{ key }@</b><br/>
+                    <b>@{ key }@</b>
                     <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
-                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
@@ -366,9 +366,9 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                     <td class="elbow-placeholder">&nbsp;</td>
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
-                    <b>@{ key }@</b><br/>
+                    <b>@{ key }@</b>
                     <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
-                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
