@@ -130,6 +130,7 @@ options:
         description:
             - This only affects C(state=absent), it forces removal of the user and associated directories on supported platforms.
               The behavior is the same as C(userdel --force), check the man page for C(userdel) on your system for details and support.
+            - When used with C(generate_ssh_key=yes) this forces an existing key to be overwritten.
         type: bool
         default: "no"
     remove:
@@ -144,7 +145,7 @@ options:
     generate_ssh_key:
         description:
             - Whether to generate a SSH key for the user in question.
-              This will B(not) overwrite an existing SSH key.
+              This will not overwrite an existing SSH key unless used with C(force=yes).
         type: bool
         default: "no"
         version_added: "0.9"
@@ -872,6 +873,7 @@ class User(object):
 
     def ssh_key_gen(self):
         info = self.user_info()
+        overwrite = None
         try:
             ssh_key_file = self.get_ssh_key_path()
         except Exception as e:
@@ -886,7 +888,11 @@ class User(object):
             except OSError as e:
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, to_native(e)))
         if os.path.exists(ssh_key_file):
-            return (None, 'Key already exists', '')
+            if self.force:
+                # ssh-keygen doesn't support overwriting the key interactively, so send 'y' to confirm
+                overwrite = 'y'
+            else:
+                return (None, 'Key already exists, use force=yes to overwrite', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)
@@ -947,7 +953,7 @@ class User(object):
             cmd.append('-N')
             cmd.append('')
 
-            (rc, out, err) = self.execute_command(cmd)
+            (rc, out, err) = self.execute_command(cmd, data=overwrite)
 
         if rc == 0 and not self.module.check_mode:
             # If the keys were successfully created, we should be able
