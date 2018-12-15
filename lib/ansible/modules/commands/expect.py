@@ -69,6 +69,9 @@ notes:
   - The M(expect) module is designed for simple scenarios. For more complex
     needs, consider the use of expect code with the M(shell) or M(script)
     modules. (An example is part of the M(shell) module documentation)
+seealso:
+- module: script
+- module: shell
 author: "Matt Martz (@sivel)"
 '''
 

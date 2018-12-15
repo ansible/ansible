@@ -18,16 +18,6 @@ short_description: Change local security policy settings
 description:
 - Allows you to set the local security policies that are configured by
   SecEdit.exe.
-notes:
-- This module uses the SecEdit.exe tool to configure the values, more details
-  of the areas and keys that can be configured can be found here
-  U(https://msdn.microsoft.com/en-us/library/bb742512.aspx).
-- If you are in a domain environment these policies may be set by a GPO policy,
-  this module can temporarily change these values but the GPO will override
-  it if the value differs.
-- You can also run C(SecEdit.exe /export /cfg C:\temp\output.ini) to view the
-  current policies set on your system.
-- When assigning user rights, use the M(win_user_right) module instead.
 options:
   section:
     description:
@@ -49,6 +39,18 @@ options:
     - The value for the ini key or policy name.
     - If the key takes in a boolean value then 0 = False and 1 = True.
     required: yes
+notes:
+- This module uses the SecEdit.exe tool to configure the values, more details
+  of the areas and keys that can be configured can be found here
+  U(https://msdn.microsoft.com/en-us/library/bb742512.aspx).
+- If you are in a domain environment these policies may be set by a GPO policy,
+  this module can temporarily change these values but the GPO will override
+  it if the value differs.
+- You can also run C(SecEdit.exe /export /cfg C:\temp\output.ini) to view the
+  current policies set on your system.
+- When assigning user rights, use the M(win_user_right) module instead.
+seealso:
+- module: win_user_right
 author:
 - Jordan Borean (@jborean93)
 '''

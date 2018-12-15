@@ -40,14 +40,17 @@ options:
       - The text of the message to be displayed.
       - The message must be less than 256 characters.
     default: Hello world!
-author:
-- Jon Hawkesworth (@jhawkesworth)
 notes:
    - This module must run on a windows host, so ensure your play targets windows
      hosts, or delegates to a windows host.
    - Messages are only sent to the local host where the module is run.
    - The module does not support sending to users listed in a file.
    - Setting wait to C(yes) can result in long run times on systems with many logged in users.
+seealso:
+- module: win_say
+- module: win_toast
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''

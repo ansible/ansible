@@ -90,6 +90,9 @@ notes:
     which changes the variable interpolation markers to  [% var %] instead of  {{ var }}.
     This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
     raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
+seealso:
+- module: template
+- module: win_copy
 author:
 - Jon Hawkesworth (@jhawkesworth)
 '''

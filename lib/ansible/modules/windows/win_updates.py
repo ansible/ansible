@@ -93,8 +93,6 @@ options:
         type: bool
         default: 'no'
         version_added: '2.6'
-author:
-- Matt Davis (@nitzmahone)
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
@@ -108,6 +106,13 @@ notes:
   Check the examples for ways to mitigate this.
 - More information about PowerShell and how it handles RegEx strings can be
   found at U(https://technet.microsoft.com/en-us/library/2007.11.powershell.aspx).
+seealso:
+- module: win_chocolatey
+- module: win_feature
+- module: win_hotfix
+- module: win_package
+author:
+- Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = r'''

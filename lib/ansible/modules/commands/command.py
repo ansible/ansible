@@ -74,6 +74,11 @@ notes:
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
     -  For Windows targets, use the M(win_command) module instead.
+seealso:
+- module: raw
+- module: script
+- module: shell
+- module: win_command
 author:
     - Ansible Core Team
     - Michael DeHaan

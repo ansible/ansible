@@ -18,6 +18,7 @@ description:
   - Create, read, update and delete computers in Active Directory using a
     windows bridge computer to launch New-ADComputer, Get-ADComputer,
     Set-ADComputer, Remove-ADComputer and Move-ADObject powershell commands.
+version_added: '2.6'
 options:
   name:
     description:
@@ -65,8 +66,12 @@ options:
       - present
       - absent
     default: present
-notes:
-version_added: 2.6
+seealso:
+- module: win_domain
+- module: win_domain_controller
+- module: win_domain_group
+- module: win_domain_membership
+- module: win_domain_user
 author: Daniel Sánchez Fábregas (@Daniel-Sanchez-Fabregas)
 '''
 

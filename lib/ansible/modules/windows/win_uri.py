@@ -142,6 +142,9 @@ options:
     version_added: '2.5'
 notes:
 - For non-Windows targets, use the M(uri) module instead.
+seealso:
+- module: uri
+- module: win_get_url
 author:
 - Corwin Brown (@blakfeld)
 - Dag Wieers (@dagwieers)

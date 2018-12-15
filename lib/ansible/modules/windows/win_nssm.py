@@ -73,6 +73,8 @@ options:
       - C(disabled) means that the service will stay off, regardless if it is needed or not.
     choices: [ auto, delayed, disabled, manual ]
     default: auto
+seealso:
+- module: win_service
 author:
   - Adam Keech (@smadam813)
   - George Frank (@georgefrank)

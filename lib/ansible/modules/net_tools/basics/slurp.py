@@ -31,7 +31,8 @@ notes:
    - This module returns an 'in memory' base64 encoded version of the file, take into account that this will require at least twice the RAM as the
      original file size.
    - This module is also supported for Windows targets.
-   - "See also: M(fetch)"
+seealso:
+- module: fetch
 author:
     - Ansible Core Team
     - Michael DeHaan (@mpdehaan)

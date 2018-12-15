@@ -56,6 +56,9 @@ notes:
   U(https://developer.microsoft.com/en-us/windows/hardware/windows-assessment-deployment-kit),
   see examples to see how to do it with chocolatey.
 - You can download hotfixes from U(https://www.catalog.update.microsoft.com/Home.aspx).
+seealso:
+- module: win_package
+- module: win_updates
 author:
 - Jordan Borean (@jborean93)
 '''

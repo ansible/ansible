@@ -15,9 +15,9 @@ short_description: Provides Windows product information (product id, product key
 description:
 - Provides Windows product information.
 version_added: '2.5'
+options: {}
 author:
 - Dag Wieers (@dagwieers)
-options: {}
 '''
 
 EXAMPLES = r'''

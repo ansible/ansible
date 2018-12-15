@@ -39,6 +39,11 @@ options:
       setting.
     - Cannot be null or an empty string, use C(state=absent) to unset a config
       value instead.
+seealso:
+- module: win_chocolatey
+- module: win_chocolatey_facts
+- module: win_chocolatey_feature
+- module: win_chocolatey_source
 author:
 - Jordan Borean (@jborean93)
 '''

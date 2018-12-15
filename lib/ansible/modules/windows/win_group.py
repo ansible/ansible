@@ -34,6 +34,10 @@ options:
     default: present
 notes:
     - For non-Windows targets, please use the M(group) module instead.
+seealso:
+- module: group
+- module: win_domain_group
+- module: win_group_membership
 author:
 - Chris Hoffman (@chrishoffman)
 '''

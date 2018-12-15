@@ -18,11 +18,6 @@ description:
        and can create or remove directories.
      - Unlike M(file), does not modify ownership, permissions or manipulate links.
      - For non-Windows targets, use the M(file) module instead.
-notes:
-    - For non-Windows targets, use the M(file) module instead.
-    - See also M(win_copy), M(win_template), M(copy), M(template), M(assemble)
-author:
-- Jon Hawkesworth (@jhawkesworth)
 options:
   path:
     description:
@@ -41,6 +36,18 @@ options:
         exist, while an existing file or directory will receive updated file access and
         modification times (similar to the way C(touch) works from the command line).
     choices: [ absent, directory, file, touch ]
+notes:
+    - For non-Windows targets, use the M(file) module instead.
+seealso:
+- module: assemble
+- module: copy
+- module: file
+- module: template
+- module: win_copy
+- module: win_stat
+- module: win_template
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''

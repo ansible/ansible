@@ -19,17 +19,6 @@ version_added: '2.4'
 short_description: Map network drives for users
 description:
 - Allows you to modify mapped network drives for individual users.
-notes:
-- You cannot use this module to access a mapped drive in another Ansible task,
-  drives mapped with this module are only accessible when logging in
-  interactively with the user through the console or RDP.
-- It is recommend to run this module with become or CredSSP when the remote
-  path requires authentication.
-- When using become or CredSSP, the task will have access to any local
-  credentials stored in the user's vault.
-- If become or CredSSP is not available, the I(username) and I(password)
-  options can be used for the initial authentication but these are not
-  persisted.
 options:
   letter:
     description:
@@ -66,6 +55,19 @@ options:
       custom credentials and become, or CredSSP cannot be used.
     - If become or CredSSP is used, any credentials saved with
       M(win_credential) will automatically be used instead.
+notes:
+- You cannot use this module to access a mapped drive in another Ansible task,
+  drives mapped with this module are only accessible when logging in
+  interactively with the user through the console or RDP.
+- It is recommend to run this module with become or CredSSP when the remote
+  path requires authentication.
+- When using become or CredSSP, the task will have access to any local
+  credentials stored in the user's vault.
+- If become or CredSSP is not available, the I(username) and I(password)
+  options can be used for the initial authentication but these are not
+  persisted.
+seealso:
+- module: win_credential
 author:
 - Jordan Borean (@jborean93)
 '''

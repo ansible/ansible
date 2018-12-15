@@ -28,6 +28,8 @@ options:
     description:
       - Name of the package to be installed.
     required: yes
+seealso:
+- module: win_package
 author:
 - Peter Mounce (@petemounce)
 '''

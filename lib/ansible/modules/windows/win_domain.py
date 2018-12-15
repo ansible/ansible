@@ -71,6 +71,12 @@ options:
     type: str
     choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
+seealso:
+- module: win_domain_controller
+- module: win_domain_computer
+- module: win_domain_group
+- module: win_domain_membership
+- module: win_domain_user
 author:
 - Matt Davis (@nitzmahone)
 '''

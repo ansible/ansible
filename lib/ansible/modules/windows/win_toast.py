@@ -47,13 +47,16 @@ options:
     description:
       - The notification title, which appears in the pop up..
     default: Notification HH:mm
-author:
-- Jon Hawkesworth (@jhawkesworth)
 notes:
    - This module must run on a windows 10 or Server 2016 host, so ensure your play targets windows hosts, or delegates to a windows host.
    - The module does not fail if there are no logged in users to notify.
    - Messages are only sent to the local host where the module is run.
    - You must run this module with async, otherwise it will hang until the expire period has passed.
+seealso:
+- module: win_msg
+- module: win_say
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''

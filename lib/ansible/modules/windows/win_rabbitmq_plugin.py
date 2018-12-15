@@ -15,8 +15,6 @@ short_description: Manage RabbitMQ plugins
 description:
   - Manage RabbitMQ plugins.
 version_added: "2.4"
-author:
-  - Artem Zinenko (@ar7z1)
 options:
   names:
     description:
@@ -37,6 +35,8 @@ options:
   prefix:
     description:
       - Specify a custom install prefix to a Rabbit.
+author:
+  - Artem Zinenko (@ar7z1)
 '''
 
 EXAMPLES = r'''
