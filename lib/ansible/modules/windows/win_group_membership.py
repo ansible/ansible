@@ -36,6 +36,10 @@ options:
       - Desired state of the members in the group.
     choices: [ absent, present ]
     default: present
+seealso:
+- module: win_domain_group
+- module: win_domain_membership
+- module: win_group
 author:
     - Andrew Saraceni (@andrewsaraceni)
 '''

@@ -81,6 +81,11 @@ notes:
   - An alternative to using inline shell scripts with this module is to use
     the M(script) module possibly together with the M(template) module.
   - For Windows targets, use the M(win_shell) module instead.
+seealso:
+- module: command
+- module: raw
+- module: script
+- module: win_shell
 author:
     - Ansible Core Team
     - Michael DeHaan

@@ -24,6 +24,8 @@ options:
       - Always provide absolute path.
     required: yes
     type: path
+seealso:
+- module: win_file
 author:
 - Sam Liu (@SamLiu79)
 '''

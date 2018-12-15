@@ -76,6 +76,9 @@ options:
     - The path to the file to validate is passed in via '%s' which must be present as in the sshd example below.
     - The command is passed securely so shell features like expansion and pipes won't work.
     version_added: '2.0'
+seealso:
+- module: copy
+- module: win_copy
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
