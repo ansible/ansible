@@ -17,7 +17,7 @@ module: lightsail_lb
 short_description: Creates or deletes load balancer and attaches running instances to the created load balancer in AWS Lightsail.
 description:
      - Create or delete a load balancer in AWS Lightsail.
-version_added: "2.4"
+version_added: "2.8"
 author: "Gencebay Demir (@gencebay)"
 options:
   state:
@@ -171,7 +171,6 @@ def create_load_balancer(module, client, name):
             module.fail_json(msg='Unable to create the load balancer {0}, error: {1}'.format(loadBalancerName, e))
         changed = True
 
-
         if attachInstances is not None:
             try:
                 for instanceName in attachInstances:
@@ -185,10 +184,8 @@ def create_load_balancer(module, client, name):
             except botocore.exceptions.ClientError as e:
                 module.fail_json(msg='Unable to attach {0}, error: {1}'.format(loadBalancerName, e))
 
-
     loadbalancer = get_load_balancer_info(client, loadBalancerName)
     return (changed, loadbalancer)
-
 
 def delete_load_balancer(module, client, lb_name):
     """
@@ -200,7 +197,6 @@ def delete_load_balancer(module, client, lb_name):
     
     Returns a dictionary of the load balancer information
     """
-
     changed = False
 
     loadbalancer = None
@@ -218,7 +214,6 @@ def delete_load_balancer(module, client, lb_name):
             module.fail_json(msg='Error deleting load balancer {0}, error: {1}'.format(lb_name, e))
 
     return (changed, loadbalancer)
-
 
 def core(module):
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -246,7 +241,6 @@ def core(module):
 
     module.exit_json(changed=changed, loadbalancer=camel_dict_to_snake_dict(lb_dict))
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -269,7 +263,6 @@ def main():
         core(module)
     except (botocore.exceptions.ClientError, Exception) as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
-
 
 if __name__ == '__main__':
     main()
