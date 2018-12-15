@@ -330,9 +330,9 @@ class SysctlModule(object):
         checked = []
         self.fixed_lines = []
         if self.args['space_wrap_assignment_operator']:
-            key_value_separator = "="
-        else:
             key_value_separator = " = "
+        else:
+            key_value_separator = "="
 
         for line in self.file_lines:
             if not line.strip() or line.strip().startswith(("#", ";")) or "=" not in line:
