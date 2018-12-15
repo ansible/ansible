@@ -29,6 +29,9 @@ options:
     description:
     - The registry property name to get information for, the return json will not include the sub_keys and properties entries for the I(key) specified.
     aliases: [ entry, value, property ]
+seealso:
+- module: win_regedit
+- module: win_regmerge
 author:
 - Jordan Borean (@jborean93)
 '''

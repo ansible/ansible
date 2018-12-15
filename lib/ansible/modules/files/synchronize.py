@@ -185,7 +185,9 @@ notes:
      encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
    - link_destination is subject to the same limitations as the underlaying rsync daemon. Hard links are only preserved if the relative subtrees
      of the source and destination are the same. Attempts to hardlink into a directory that is a subdirectory of the source will be prevented.
-
+seealso:
+- module: copy
+- module: win_robocopy
 author:
 - Timothy Appnel (@tima)
 '''

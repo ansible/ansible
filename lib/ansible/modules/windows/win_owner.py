@@ -30,6 +30,8 @@ options:
       - Indicates if the owner should be changed recursively
     type: bool
     default: 'no'
+seealso:
+- module: win_file
 author:
 - Hans-Joachim Kliemeck (@h0nIg)
 '''

@@ -20,9 +20,6 @@ description:
 - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
   server I(must) have direct access to the remote resource.
 - For non-Windows targets, use the M(get_url) module instead.
-author:
-- Paul Durivage (@angstwad)
-- Takeshi Kuramochi (@tksarah)
 options:
   url:
     description:
@@ -108,6 +105,13 @@ notes:
 - If your URL includes an escaped slash character (%2F) this module will convert it to a real slash.
   This is a result of the behaviour of the System.Uri class as described in
   L(the documentation,https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/schemesettings-element-uri-settings#remarks).
+seealso:
+- module: get_url
+- module: uri
+- module: win_uri
+author:
+- Paul Durivage (@angstwad)
+- Takeshi Kuramochi (@tksarah)
 '''
 
 EXAMPLES = r'''

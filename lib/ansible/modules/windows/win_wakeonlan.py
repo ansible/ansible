@@ -29,14 +29,16 @@ options:
     - UDP port to use for magic Wake-on-LAN packet.
     type: int
     default: 7
-author:
-- Dag Wieers (@dagwieers)
 todo:
 - Does not have SecureOn password support
 notes:
 - This module sends a magic packet, without knowing whether it worked. It always report a change.
 - Only works if the target system was properly configured for Wake-on-LAN (in the BIOS and/or the OS).
 - Some BIOSes have a different (configurable) Wake-on-LAN boot order (i.e. PXE first).
+seealso:
+- module: wakeonlan
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''

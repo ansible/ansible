@@ -20,7 +20,6 @@ DOCUMENTATION = r'''
 module: unarchive
 version_added: '1.4'
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
-extends_documentation_fragment: [ decrypt, files ]
 description:
      - The C(unarchive) module unpacks an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
@@ -86,7 +85,9 @@ options:
     type: 'bool'
     default: 'yes'
     version_added: "2.2"
-author: Michael DeHaan
+extends_documentation_fragment:
+- decrypt
+- files
 todo:
     - Re-implement tar support using native tarfile module.
     - Re-implement zip support using native zipfile module.
@@ -100,6 +101,9 @@ notes:
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
     - For Windows targets, use the M(win_unzip) module instead.
+seealso:
+- module: win_unzip
+author: Michael DeHaan
 '''
 
 EXAMPLES = r'''

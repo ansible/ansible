@@ -13,9 +13,6 @@ DOCUMENTATION = r'''
 ---
 module: win_firewall_rule
 version_added: "2.0"
-author:
-  - Artem Zinenko (@ar7z1)
-  - Timothy Vandenbrande (@TimothyVandenbrande)
 short_description: Windows firewall automation
 description:
   - Allows you to create/remove/update firewall rules.
@@ -85,6 +82,11 @@ options:
     - DEPRECATED in 2.4 and will be removed in 2.9.
     type: bool
     default: 'no'
+seealso:
+- module: win_firewall
+author:
+  - Artem Zinenko (@ar7z1)
+  - Timothy Vandenbrande (@TimothyVandenbrande)
 '''
 
 EXAMPLES = r'''

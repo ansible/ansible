@@ -15,12 +15,6 @@ version_added: "2.0"
 short_description: Manage scheduled tasks
 description:
 - Creates/modified or removes Windows scheduled tasks.
-notes:
-- In Ansible 2.4 and earlier, this could only be run on Server 2012/Windows 8
-  or newer. Since 2.5 this restriction has been lifted.
-- The option names and structure for actions and triggers of a service follow
-  the C(RegisteredTask) naming standard and requirements, it would be useful to
-  read up on this guide if coming across any issues U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa382542.aspx).
 options:
   # module definition options
   name:
@@ -397,6 +391,14 @@ options:
     - Whether the task will wake the computer when it is time to run the task.
     type: bool
     version_added: '2.5'
+notes:
+- In Ansible 2.4 and earlier, this could only be run on Server 2012/Windows 8
+  or newer. Since 2.5 this restriction has been lifted.
+- The option names and structure for actions and triggers of a service follow
+  the C(RegisteredTask) naming standard and requirements, it would be useful to
+  read up on this guide if coming across any issues U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa382542.aspx).
+seealso:
+- module: win_scheduled_task_stat
 author:
 - Peter Mounce (@petemounce)
 - Jordan Borean (@jborean93)

@@ -18,11 +18,11 @@ description:
      its volumes and partitions if existent.
 requirements:
     - Windows 8.1 / Windows 2012 (NT 6.2)
-author:
-    - Marc Tschapek (@marqelme)
 notes:
   - In order to understand all the returned properties and values please visit the following site and open the respective MSFT class
     U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830612.aspx)
+author:
+    - Marc Tschapek (@marqelme)
 '''
 
 EXAMPLES = r'''

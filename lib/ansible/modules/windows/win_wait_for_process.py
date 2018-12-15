@@ -82,6 +82,9 @@ options:
       before erroring out.
     type: int
     default: 300
+seealso:
+- module: wait_for
+- module: win_wait_for
 author:
 - Charles Crossan (@crossan007)
 '''

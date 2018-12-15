@@ -73,6 +73,9 @@ options:
     aliases: [ attr, attributes ]
 notes:
      - For Windows targets, use the M(win_stat) module instead.
+seealso:
+- module: file
+- module: win_stat
 author: Bruce Pennypacker (@bpennypacker)
 '''
 

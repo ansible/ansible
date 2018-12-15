@@ -23,12 +23,6 @@ description:
 - Alternatively, remove files, symlinks or directories.
 - Many other modules support the same options as the C(file) module - including M(copy), M(template), and M(assemble).
 - For Windows targets, use the M(win_file) module instead.
-notes:
-- For Windows targets, use the M(win_file) module instead.
-- See also M(copy), M(template) and M(assemble).
-author:
-- Ansible Core Team
-- Michael DeHaan
 options:
   path:
     description:
@@ -104,6 +98,17 @@ options:
     - Based on default Python format (see time.strftime doc).
     default: "%Y%m%d%H%M.%S"
     version_added: '2.7'
+notes:
+- For Windows targets, use the M(win_file) module instead.
+seealso:
+- module: assemble
+- module: copy
+- module: stat
+- module: template
+- module: win_file
+author:
+- Ansible Core Team
+- Michael DeHaan
 '''
 
 EXAMPLES = '''

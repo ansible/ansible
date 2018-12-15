@@ -17,12 +17,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: lineinfile
-author:
-    - Daniel Hokka Zakrissoni (@dhozac)
-    - Ahti Kitsik (@ahtik)
-extends_documentation_fragment:
-    - files
-    - validate
 short_description: Manage lines in text files
 description:
   - This module ensures a particular line is in a file, or replace an
@@ -122,8 +116,18 @@ options:
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
+extends_documentation_fragment:
+    - files
+    - validate
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+seealso:
+- module: blockinfile
+- module: file
+- module: win_lineinfile
+author:
+    - Daniel Hokka Zakrissoni (@dhozac)
+    - Ahti Kitsik (@ahtik)
 """
 
 EXAMPLES = r"""

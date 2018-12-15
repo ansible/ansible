@@ -156,6 +156,9 @@ notes:
 - There can only be one credential per host and type. if a second credential is
   defined that uses the same host and type, then the original credential is
   overwritten.
+seealso:
+- module: win_user_right
+- module: win_whoami
 author:
 - Jordan Borean (@jborean93)
 '''

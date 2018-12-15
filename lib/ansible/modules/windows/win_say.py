@@ -54,8 +54,6 @@ options:
       - Full path to a C(.wav) file containing a sound to play after the text has been spoken.
       - Useful on conference calls to alert other speakers that ansible has finished speaking.
     type: path
-author:
-- Jon Hawkesworth (@jhawkesworth)
 notes:
    - Needs speakers or headphones to do anything useful.
    - |
@@ -67,6 +65,11 @@ notes:
                  $speech.Dispose()
 
    - Speech can be surprisingly slow, so it's best to keep message text short.
+seealso:
+- module: win_msg
+- module: win_toast
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''

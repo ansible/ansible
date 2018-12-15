@@ -51,6 +51,11 @@ options:
   parameters:
     description:
       - Custom site Parameters from string where properties are separated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
+seealso:
+- module: win_iis_virtualdirectory
+- module: win_iis_webapplication
+- module: win_iis_webapppool
+- module: win_iis_webbinding
 author:
 - Henrik Wallström (@henrikwallstrom)
 '''

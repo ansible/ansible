@@ -43,8 +43,6 @@ options:
       - The level at which the environment variable specified by C(name) should be managed (either for the current user or global machine scope).
     choices: [ machine, user ]
     default: machine
-author:
-- Matt Davis (@nitzmahone)
 notes:
    - This module is for modifying indidvidual elements of path-like
      environment variables. For general-purpose management of other
@@ -55,6 +53,10 @@ notes:
      therefore will need restarting to pick up new environment settings.
      User level environment variables will require an interactive user to
      log out and in again before they become available.
+seealso:
+- module: win_environment
+author:
+- Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = r'''

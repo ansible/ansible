@@ -18,6 +18,8 @@ version_added: '2.4'
 short_description: Enable or disable the Windows Firewall
 description:
 - Enable or Disable Windows Firewall profiles.
+requirements:
+  - This module requires Windows Management Framework 5 or later.
 options:
   profiles:
     description:
@@ -34,8 +36,8 @@ options:
     choices:
     - enabled
     - disabled
-requirements:
-  - This module requires Windows Management Framework 5 or later.
+seealso:
+- module: win_firewall_rule
 author:
 - Michael Eaton (@if-meaton)
 '''

@@ -50,6 +50,12 @@ notes:
     - C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not
       exist, use this.
     - For non-Windows targets, use the M(command) module instead.
+seealso:
+- module: command
+- module: psexec
+- module: raw
+- module: win_psexec
+- module: win_shell
 author:
     - Matt Davis (@nitzmahone)
 '''

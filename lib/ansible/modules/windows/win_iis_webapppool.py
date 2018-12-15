@@ -51,6 +51,11 @@ options:
         is never idempotent.
       - If C(started) will ensure the app pool exists and is started.
       - If C(stopped) will ensure the app pool exists and is stopped.
+seealso:
+- module: win_iis_virtualdirectory
+- module: win_iis_webapplication
+- module: win_iis_webbinding
+- module: win_iis_website
 author:
 - Henrik Wallström (@henrikwallstrom)
 - Jordan Borean (@jborean93)

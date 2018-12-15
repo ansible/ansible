@@ -65,6 +65,8 @@ notes:
 - Beware that when C(win_reboot) returns, the Windows system may not have settled yet and some base services could be in limbo.
   This can result in unexpected behavior. Check the examples for ways to mitigate this.
 - For non-Windows targets, use the M(reboot) module instead.
+seealso:
+- module: reboot
 author:
 - Matt Davis (@nitzmahone)
 '''

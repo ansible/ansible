@@ -43,7 +43,12 @@ options:
     default: 600
 notes:
 - This module is also supported for Windows targets.
-author: "Dag Wieers (@dagwieers)"
+seealso:
+- module: wait_for
+- module: win_wait_for
+- module: win_wait_for_process
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''

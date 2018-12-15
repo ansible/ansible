@@ -19,9 +19,6 @@ short_description: Manage Windows User Rights
 description:
 - Add, remove or set User Rights for a group or users or groups.
 - You can set user rights for both local and domain accounts.
-notes:
-- If the server is domain joined this module can change a right but if a GPO
-  governs this right then the changes won't last.
 options:
   name:
     description:
@@ -46,6 +43,13 @@ options:
     - C(set) will replace the users/groups of the existing right.
     default: set
     choices: [ add, remove, set ]
+notes:
+- If the server is domain joined this module can change a right but if a GPO
+  governs this right then the changes won't last.
+seealso:
+- module: win_group
+- module: win_group_membership
+- module: win_user
 author:
 - Jordan Borean (@jborean93)
 '''

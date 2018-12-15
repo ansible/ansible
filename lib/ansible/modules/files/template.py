@@ -124,6 +124,10 @@ notes:
 - You can use the M(copy) module with the C(content:) option if you prefer the template inline,
   as part of the playbook.
 - For Windows you can use M(win_template) which uses '\\r\\n' as C(newline_sequence) by default.
+seealso:
+- module: copy
+- module: win_copy
+- module: win_template
 author:
 - Ansible Core Team
 - Michael DeHaan

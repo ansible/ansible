@@ -95,8 +95,10 @@ notes:
     can't be modified or created by the remote user either.
   - When waiting for a path, symbolic links will be followed.  Many other modules that manipulate files do not follow symbolic links,
     so operations on the path using other modules may not work exactly as expected.
-  - This module is also supported for Windows targets.
-  - See also M(wait_for_connection)
+seealso:
+- module: wait_for_connection
+- module: win_wait_for
+- module: win_wait_for_process
 author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)

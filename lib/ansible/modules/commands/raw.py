@@ -53,6 +53,11 @@ notes:
       which means it only works if C(executable) is set or using the module
       with privilege escalation (C(become)).
     - This module is also supported for Windows targets.
+seealso:
+- module: command
+- module: shell
+- module: win_command
+- module: win_shell
 author:
     - Ansible Core Team
     - Michael DeHaan

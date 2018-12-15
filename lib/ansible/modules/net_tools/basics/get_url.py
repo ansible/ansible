@@ -159,6 +159,9 @@ extends_documentation_fragment:
     - files
 notes:
      - For Windows targets, use the M(win_get_url) module instead.
+seealso:
+- module: uri
+- module: win_get_url
 author:
 - Jan-Piet Mens (@jpmens)
 '''
