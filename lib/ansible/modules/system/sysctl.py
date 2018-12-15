@@ -38,7 +38,7 @@ options:
         default: present
     space_wrap_assignment_operator:
         description:
-           - Whether the '=' symbol should be wrapped in spaces or not. 
+           - Whether the '=' symbol should be wrapped in spaces or not.
         type: bool
         default: 'yes'
         version_added: 2.8
