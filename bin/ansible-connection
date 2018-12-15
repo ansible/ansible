@@ -291,7 +291,7 @@ def main():
                 conn.set_options(var_options=variables)
                 pc_data = to_text(init_data)
                 try:
-                    messages.extend([('vvvv', msg) for msg in conn.update_play_context(pc_data)])
+                    conn.update_play_context(pc_data)
                 except Exception as exc:
                     # Only network_cli has update_play context, so missing this is
                     # not fatal e.g. netconf
@@ -303,6 +303,7 @@ def main():
                             'exception': traceback.format_exc()
                         })
 
+    messages.extend(Connection(socket_path).push_messages())
     messages.append(('vvvv', sys.stdout.getvalue()))
     result.update({
         'messages': messages,

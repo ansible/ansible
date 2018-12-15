@@ -291,6 +291,7 @@ class NetworkConnectionBase(ConnectionBase):
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
+        self.messages = []
 
         self._network_os = self._play_context.network_os
 
@@ -319,6 +320,10 @@ class NetworkConnectionBase(ConnectionBase):
     def exec_command(self, cmd, in_data=None, sudoable=True):
         return self._local.exec_command(cmd, in_data, sudoable)
 
+    def push_messages(self):
+        messages, self.messages = self.messages, []
+        return messages
+
     def put_file(self, in_path, out_path):
         """Transfer a file from local to remote"""
         return self._local.put_file(in_path, out_path)
@@ -332,9 +337,9 @@ class NetworkConnectionBase(ConnectionBase):
         Reset the connection
         '''
         if self._socket_path:
-            display.vvvv('resetting persistent connection for socket_path %s' % self._socket_path, host=self._play_context.remote_addr)
+            self.messages.append(('vvvv', 'resetting persistent connection for socket_path %s' % self._socket_path))
             self.close()
-        display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
+        self.messages.append(('vvvv', 'reset call on connection instance'))
 
     def close(self):
         if self._connected:

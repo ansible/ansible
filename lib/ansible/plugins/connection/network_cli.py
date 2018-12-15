@@ -282,15 +282,15 @@ class Connection(NetworkConnectionBase):
         play_context = PlayContext()
         play_context.deserialize(pc_data)
 
-        messages = ['updating play_context for connection']
+        self.messages.append(('vvvv', 'updating play_context for connection'))
         if self._play_context.become ^ play_context.become:
             if play_context.become is True:
                 auth_pass = play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)
-                messages.append('authorizing connection')
+                self.messages.append(('vvvv', 'authorizing connection'))
             else:
                 self._terminal.on_unbecome()
-                messages.append('deauthorizing connection')
+                self.messages.append(('vvvv', 'deauthorizing connection'))
 
         self._play_context = play_context
 
@@ -298,8 +298,6 @@ class Connection(NetworkConnectionBase):
             self.reset_history()
         if hasattr(self, 'disable_response_logging'):
             self.disable_response_logging()
-
-        return messages
 
     def _connect(self):
         '''

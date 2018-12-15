@@ -199,16 +199,15 @@ class Connection(NetworkConnectionBase):
         play_context = PlayContext()
         play_context.deserialize(pc_data)
 
-        messages = ['updating play_context for connection']
+        self.messages.append(('vvvv', 'updating play_context for connection'))
         if self._play_context.become ^ play_context.become:
             self.set_become(play_context)
             if play_context.become is True:
-                messages.append('authorizing connection')
+                self.messages.append(('vvvv', 'authorizing connection'))
             else:
-                messages.append('deauthorizing connection')
+                self.messages.append(('vvvv', 'deauthorizing connection'))
 
         self._play_context = play_context
-        return messages
 
     def _connect(self):
         if not self.connected:
