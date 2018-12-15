@@ -256,7 +256,7 @@ def main():
 
         with file_lock(lock_path):
             if not os.path.exists(socket_path):
-                messages.append('local domain socket does not exist, starting it')
+                messages.append(('vvvv', 'local domain socket does not exist, starting it'))
                 original_path = os.getcwd()
                 r, w = os.pipe()
                 pid = fork_process()
@@ -268,7 +268,7 @@ def main():
                         process = ConnectionProcess(wfd, play_context, socket_path, original_path, ansible_playbook_pid)
                         process.start(variables)
                     except Exception:
-                        messages.append(traceback.format_exc())
+                        messages.append(('error', traceback.format_exc()))
                         rc = 1
 
                     if rc == 0:
@@ -282,16 +282,16 @@ def main():
                     os.close(w)
                     rfd = os.fdopen(r, 'r')
                     data = json.loads(rfd.read(), cls=AnsibleJSONDecoder)
-                    messages.extend(data.pop('messages'))
+                    messages.extend([('vvvv', msg) for msg in data.pop('messages')])
                     result.update(data)
 
             else:
-                messages.append('found existing local domain socket, using it!')
+                messages.append(('vvvv', 'found existing local domain socket, using it!'))
                 conn = Connection(socket_path)
                 conn.set_options(var_options=variables)
                 pc_data = to_text(init_data)
                 try:
-                    messages.extend(conn.update_play_context(pc_data))
+                    messages.extend([('vvvv', msg) for msg in conn.update_play_context(pc_data)])
                 except Exception as exc:
                     # Only network_cli has update_play context, so missing this is
                     # not fatal e.g. netconf
@@ -303,7 +303,7 @@ def main():
                             'exception': traceback.format_exc()
                         })
 
-    messages.append(sys.stdout.getvalue())
+    messages.append(('vvvv', sys.stdout.getvalue()))
     result.update({
         'messages': messages,
         'socket_path': socket_path
