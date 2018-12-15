@@ -36,11 +36,11 @@ options:
             - Whether the entry should be present or absent in the sysctl file.
         choices: [ "present", "absent" ]
         default: present
-    no_extra_spaces:
+    space_wrap_assignment_operator:
         description:
-           - Do not insert spaces before and after '=' symbol
+           - Whether the '=' symbol should be wrapped in spaces or not. 
         type: bool
-        default: 'no'
+        default: 'yes'
         version_added: 2.8
     ignoreerrors:
         description:
@@ -105,7 +105,7 @@ EXAMPLES = '''
 - sysctl:
     name: vm.overcommit_memory
     value: 1
-    no_extra_spaces: yes
+    space_wrap_assignment_operator: no
     sysctl_file: /etc/sysctl.conf
 '''
 
@@ -329,7 +329,7 @@ class SysctlModule(object):
     def fix_lines(self):
         checked = []
         self.fixed_lines = []
-        if self.args['no_extra_spaces']:
+        if self.args['space_wrap_assignment_operator']:
             key_value_separator = "="
         else:
             key_value_separator = " = "
@@ -384,7 +384,7 @@ def main():
             name=dict(aliases=['key'], required=True),
             value=dict(aliases=['val'], required=False, type='str'),
             state=dict(default='present', choices=['present', 'absent']),
-            no_extra_spaces=dict(default=False, type='bool'),
+            space_wrap_assignment_operator=dict(default=True, type='bool'),
             reload=dict(default=True, type='bool'),
             sysctl_set=dict(default=False, type='bool'),
             ignoreerrors=dict(default=False, type='bool'),

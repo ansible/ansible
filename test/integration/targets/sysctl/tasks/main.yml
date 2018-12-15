@@ -75,17 +75,17 @@
       - sysctl_test1 is not changed
       - 'sysctl_content0.stdout_lines[sysctl_content0.stdout_lines.index("vm.swappiness = 5")] == "vm.swappiness = 5"'
 
-- name: set vm.swappiness to 10 (without extra spaces) 
+- name: set vm.swappiness to 10 (without space wrapped '=' symbol) 
   sysctl:
     name: vm.swappiness
     value: 10
     state: present
-    no_extra_spaces: true 
+    space_wrap_assignment_operator: no
     reload: no
     sysctl_file: "{{ output_dir_test }}/sysctl.conf"
   register: sysctl_test2
 
-- name: get file content (without extra spaces)
+- name: get file content (without space wrapped '=' symbol)
   shell: "cat {{ output_dir_test }}/sysctl.conf | egrep -v ^\\#"
   register: sysctl_content2
 
@@ -93,7 +93,7 @@
     var: sysctl_content2
     verbosity: 1
 
-- name: validate result without extra spaces 
+- name: validate result without space wrapped '=' symbol
   assert: 
     that: 
       - sysctl_test2 is changed 
