@@ -23,6 +23,8 @@ options:
     description:
     - The hostname to set for the computer.
     required: true
+seealso:
+- module: win_dns_client
 author:
 - Ripon Banik (@riponbanik)
 '''

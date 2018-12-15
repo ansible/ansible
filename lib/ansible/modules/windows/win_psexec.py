@@ -16,6 +16,8 @@ short_description: Runs commands (remotely) as another (privileged) user
 description:
 - Run commands (remotely) through the PsExec service
 - Run commands as another (domain) user (with elevated privileges)
+requirements:
+- Microsoft PsExec
 options:
   command:
     description:
@@ -105,8 +107,11 @@ options:
 notes:
 - More information related to Microsoft PsExec is available from
   U(https://technet.microsoft.com/en-us/sysinternals/bb897553.aspx)
-requirements:
-- Microsoft PsExec
+seealso:
+- module: psexec
+- module: raw
+- module: win_command
+- module: win_shell
 author:
 - Dag Wieers (@dagwieers)
 '''

@@ -15,8 +15,6 @@ DOCUMENTATION = '''
 module: win_snmp
 version_added: '2.8'
 short_description: Configures the Windows SNMP service
-author:
-    - Michael Cassaniti (@mcassaniti)
 description:
     - This module configures the Windows SNMP service.
 options:
@@ -37,6 +35,8 @@ options:
         - C(remove) will remove SNMP community strings and/or SNMP managers
         default: set
         choices: [ add, set, remove ]
+author:
+    - Michael Cassaniti (@mcassaniti)
 '''
 
 EXAMPLES = '''

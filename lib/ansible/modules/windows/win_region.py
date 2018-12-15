@@ -47,6 +47,8 @@ options:
               change.
         type: bool
         default: 'no'
+seealso:
+- module: win_timezone
 author:
 - Jordan Borean (@jborean93)
 '''

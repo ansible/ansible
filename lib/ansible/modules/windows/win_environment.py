@@ -40,8 +40,6 @@ options:
     - Use C(process) to set for the current process.  Probably not that useful.
     choices: [ machine, user, process ]
     required: yes
-author:
-- Jon Hawkesworth (@jhawkesworth)
 notes:
 - This module is best-suited for setting the entire value of an
   environment variable. For safe element-based management of
@@ -52,6 +50,10 @@ notes:
   therefore will need restarting to pick up new environment settings.
   User level environment variables will require the user to log out
   and in again before they become available.
+seealso:
+- module: win_path
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''

@@ -54,7 +54,13 @@ notes:
       Thus, it is not possible to use C(win_shell) to spawn long-running child or background processes.
       Consider creating a Windows service for managing background processes.
    - For non-Windows targets, use the M(shell) module instead.
-   - See also M(win_command), M(raw)
+seealso:
+- module: psexec
+- module: raw
+- module: script
+- module: shell
+- module: win_command
+- module: win_psexec
 author:
     - Matt Davis (@nitzmahone)
 '''

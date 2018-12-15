@@ -55,6 +55,8 @@ options:
     type: str
 notes:
     - For Windows targets, use the M(win_reboot) module instead.
+seealso:
+- module: win_reboot
 author:
     - Matt Davis (@nitzmahone)
     - Sam Doran (@samdoran)

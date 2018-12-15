@@ -42,7 +42,8 @@ options:
     default: present
 notes:
    -  Powershell 5.0 or higher is needed.
-
+seealso:
+- module: win_psrepository
 author:
 - Daniele Lazzari (@dlazz)
 '''

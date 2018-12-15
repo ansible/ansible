@@ -98,6 +98,12 @@ options:
     default: present
 notes:
      - For non-Windows targets, use the M(user) module instead.
+seealso:
+- module: user
+- module: win_domain_membership
+- module: win_domain_user
+- module: win_group
+- module: win_group_membership
 author:
     - Paul Durivage (@angstwad)
     - Chris Church (@cchurch)

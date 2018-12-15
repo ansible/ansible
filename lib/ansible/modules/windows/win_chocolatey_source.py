@@ -87,6 +87,11 @@ options:
     - always
     - on_create
     default: always
+seealso:
+- module: win_chocolatey
+- module: win_chocolatey_config
+- module: win_chocolatey_facts
+- module: win_chocolatey_feature
 author:
 - Jordan Borean (@jborean93)
 '''

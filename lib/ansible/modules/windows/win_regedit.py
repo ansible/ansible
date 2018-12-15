@@ -87,6 +87,9 @@ notes:
   applying changes.
 - Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths in the root folder.
 - Since ansible 2.4, when checking if a string registry value has changed, a case-sensitive test is used. Previously the test was case-insensitive.
+seealso:
+- module: win_reg_stat
+- module: win_regmerge
 author:
 - Adam Keech (@smadam813)
 - Josh Ludwig (@joshludwig)

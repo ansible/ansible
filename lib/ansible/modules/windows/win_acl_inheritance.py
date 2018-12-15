@@ -37,6 +37,8 @@ options:
         of the ACL structure.
     type: bool
     default: 'no'
+seealso:
+- module: win_acl
 author:
 - Hans-Joachim Kliemeck (@h0nIg)
 '''

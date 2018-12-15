@@ -46,12 +46,15 @@ options:
   flags:
     description:
       - Directly supply Robocopy flags. If set, C(purge) and C(recurse) will be ignored.
-author:
-- Corwin Brown (@blakfeld)
 notes:
 - This is not a complete port of the M(synchronize) module. Unlike the M(synchronize) module this only performs the sync/copy on the remote machine,
   not from the master to the remote machine.
 - This module does not currently support all Robocopy flags.
+seealso:
+- module: synchronize
+- module: win_copy
+author:
+- Corwin Brown (@blakfeld)
 '''
 
 EXAMPLES = r'''

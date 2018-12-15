@@ -36,6 +36,11 @@ options:
     description:
       - The physical path to the folder in which the new virtual directory is created.
       - The specified folder must already exist.
+seealso:
+- module: win_iis_webapplication
+- module: win_iis_webapppool
+- module: win_iis_webbinding
+- module: win_iis_website
 author:
 - Henrik Wallström (@henrikwallstrom)
 '''

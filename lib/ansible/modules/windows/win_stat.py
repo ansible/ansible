@@ -53,6 +53,9 @@ options:
         version_added: "2.3"
 notes:
      - For non-Windows targets, use the M(stat) module instead.
+seealso:
+- module: stat
+- module: win_file
 author:
 - Chris Church (@cchurch)
 '''

@@ -19,8 +19,6 @@ description:
   - The behavior is designed to ignore inherited rules since those cannot be adjusted without first disabling
     the inheritance behavior. It will still print inherited rules in the output though for debugging purposes.
 version_added: "2.5"
-author:
-  - Noah Sparks (@nwsparks)
 options:
   path:
     description:
@@ -74,6 +72,10 @@ options:
       - Specifying C(absent) will remove all rules matching the defined I(user).
     choices: [ absent, present ]
     default: present
+seealso:
+- module: win_audit_policy_system
+author:
+  - Noah Sparks (@nwsparks)
 '''
 
 EXAMPLES = r'''
