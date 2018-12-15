@@ -187,6 +187,7 @@ def create_load_balancer(module, client, name):
     loadbalancer = get_load_balancer_info(client, loadBalancerName)
     return (changed, loadbalancer)
 
+
 def delete_load_balancer(module, client, lb_name):
     """
     Terminates the load balancer
@@ -194,7 +195,7 @@ def delete_load_balancer(module, client, lb_name):
     module: Ansible module object
     client: authenticated lightsail connection object
     lb_name: name of load balancer to delete
-    
+
     Returns a dictionary of the load balancer information
     """
     changed = False
@@ -214,6 +215,7 @@ def delete_load_balancer(module, client, lb_name):
             module.fail_json(msg='Error deleting load balancer {0}, error: {1}'.format(lb_name, e))
 
     return (changed, loadbalancer)
+
 
 def core(module):
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -241,6 +243,7 @@ def core(module):
 
     module.exit_json(changed=changed, loadbalancer=camel_dict_to_snake_dict(lb_dict))
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -263,6 +266,7 @@ def main():
         core(module)
     except (botocore.exceptions.ClientError, Exception) as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()
