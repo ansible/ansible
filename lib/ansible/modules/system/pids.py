@@ -46,8 +46,8 @@ import psutil
 
 def get_pid(name, module):
     return [int(p.info['pid']) for p in psutil.process_iter(attrs=['pid', 'name']) if name in p.info['name']]
-    
-	
+
+
 def main():
     module = AnsibleModule(
         argument_spec={
