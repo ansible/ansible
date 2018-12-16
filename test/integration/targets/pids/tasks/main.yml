@@ -1,6 +1,10 @@
 # Test code for the pid module
 # Copyright 2018, Saranya sridharan
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- pip:
+    name: psutil
+    
 - name: "Checking the empty result" 
   pids: 
     name: "blahblah"
