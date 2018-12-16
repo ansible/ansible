@@ -41,12 +41,14 @@ pids:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
+import sys
+import psutil
 
 def get_pid(name, module):
-    command = module.get_bin_path('pgrep', True)
-    rc, processid, stderr = module.run_command([command, "-x", name])
-    return [int(pid) for pid in processid.split() if processid]
+    
+
+    return [int(p.info['pid']) for p in psutil.process_iter(attrs=['pid', 'name']) if name in p.info['name']]
+    
 
 
 def main():
