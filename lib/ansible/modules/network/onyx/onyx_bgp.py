@@ -49,6 +49,12 @@ options:
       - BGP state.
     default: present
     choices: ['present', 'absent']
+  purge:
+    description:
+      - will remove all neighbors when it is True.
+    type: bool
+    default: false
+    version_added: 2.8
 """
 
 EXAMPLES = """
@@ -59,6 +65,7 @@ EXAMPLES = """
     neighbors:
       - remote_as: 321
         neighbor: 10.3.3.4
+    purge: True
     state: present
     networks:
       - 172.16.1.0/24
@@ -93,6 +100,7 @@ class OnyxBgpModule(BaseOnyxModule):
         r'^\s+router bgp\s+(\d+).*neighbor\s+(\S+)\s+remote\-as\s+(\S+).*')
     NETWORK_REGEX = re.compile(
         r'^\s+router bgp\s+(\d+).*network\s+(\S+)\s+(\S+).*')
+    _purge = False
 
     def init_module(self):
         """ initialize module
@@ -108,6 +116,7 @@ class OnyxBgpModule(BaseOnyxModule):
                            options=neighbor_spec),
             networks=dict(type='list', elements='str'),
             state=dict(choices=['present', 'absent'], default='present'),
+            purge=dict(default=False, type='bool'),
         )
         argument_spec = dict()
 
@@ -126,6 +135,7 @@ class OnyxBgpModule(BaseOnyxModule):
             neighbors=req_neighbors,
             networks=module_params['networks'])
         neighbors = module_params['neighbors'] or list()
+        self._purge = module_params.get('purge', False)
         for neighbor_data in neighbors:
             req_neighbors.append(
                 (neighbor_data['neighbor'], neighbor_data['remote_as']))
@@ -197,13 +207,10 @@ class OnyxBgpModule(BaseOnyxModule):
     def _generate_neighbors_cmds(self, as_number, bgp_removed):
         req_neighbors = self._required_config['neighbors']
         curr_neighbors = self._current_config.get('neighbors', [])
-        if not bgp_removed:
+        if self._purge:
             for neighbor_data in curr_neighbors:
-                if neighbor_data not in req_neighbors:
-                    (neighbor, remote_as) = neighbor_data
-                    self._commands.append(
-                        'router bgp %s no neighbor %s remote-as %s' %
-                        (as_number, neighbor, remote_as))
+                (neighbor, remote_as) = neighbor_data
+                self._commands.append('router bgp %s no neighbor %s remote-as %s' % (as_number, neighbor, remote_as))
 
         for neighbor_data in req_neighbors:
             if bgp_removed or neighbor_data not in curr_neighbors:
