@@ -169,8 +169,8 @@ DEFAULT_RULE_FIELDS_IPV6 = {
     'Protocol': '-1'
 }
 
-DEFAULT_INGRESS = [ dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', False)]), dict(list(DEFAULT_RULE_FIELDS_IPV6.items()) + [('Egress', False)]) ]
-DEFAULT_EGRESS = [ dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)]), dict(list(DEFAULT_RULE_FIELDS_IPV6.items()) + [('Egress', True)]) ]
+DEFAULT_INGRESS = [dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', False)]), dict(list(DEFAULT_RULE_FIELDS_IPV6.items()) + [('Egress', False)])]
+DEFAULT_EGRESS = [dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)]), dict(list(DEFAULT_RULE_FIELDS_IPV6.items()) + [('Egress', True)])]
 
 def match_default_rules(rule, egress):
     default_rules = DEFAULT_EGRESS if egress else DEFAULT_INGRESS
