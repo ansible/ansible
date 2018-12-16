@@ -420,8 +420,8 @@ You can also use customization for `retries`, `delay` and `max_delay` parameters
 `AWSRetry.jittered_backoff` API using module params. You can take a look into
 [cloudformation](/lib/ansible/modules/cloud/amazon/cloudformation.py) module for example.
 
-To make all Amazon modules uniform, please use module param as `backoff_retries` for `retries`,
-`backoff_delay` of `delay` and `backoff_max_delay` for `max_delay`.
+To make all Amazon modules uniform, prefix the module param with `backoff_`, so `retries` becomes `backoff_retries`
+ and likewise with `backoff_delay` and `backoff_max_delay`.
 
 ### Returning Values
 

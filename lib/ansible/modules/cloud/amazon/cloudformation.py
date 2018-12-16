@@ -126,18 +126,18 @@ options:
     version_added: "2.8"
     type: int
     required: False
+  backoff_max_delay:
+    description:
+    - Maximum amount of time to wait between retries.
+    default: 30
+    version_added: "2.8"
+    type: int
+    required: False
   backoff_retries:
     description:
     - Number of times to retry operation.
     - AWS API throttling mechanism fails Cloudformation module so we have to retry a couple of times.
     default: 10
-    version_added: "2.8"
-    type: int
-    required: False
-  backoff_max_delay:
-    description:
-    - Maximum amount of time to wait between retries.
-    default: 30
     version_added: "2.8"
     type: int
     required: False
