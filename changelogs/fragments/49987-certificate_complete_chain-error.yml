@@ -1,0 +1,2 @@
+bugfixes:
+- "certificate_complete_chain - fix behavior when invalid file is parsed while reading intermediate or root certificates."
