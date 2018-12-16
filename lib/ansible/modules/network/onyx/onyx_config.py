@@ -179,6 +179,7 @@ def run(module, result):
 
     if module.params['save']:
         if not module.check_mode:
+            # switch must be in config mode in order to run configuration write commands
             run_commands(module, 'configure terminal')
             run_commands(module, 'configuration write')
         result['changed'] = True
