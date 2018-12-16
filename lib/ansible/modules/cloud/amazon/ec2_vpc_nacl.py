@@ -2,6 +2,7 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+import socket
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -45,7 +46,7 @@ options:
     description:
       - A list of rules for outgoing traffic. Each rule must be specified as a list.
         Each rule may contain the rule number (integer 1-32766), protocol (one of ['tcp', 'udp', 'icmp', '-1', 'all']),
-        the rule action ('allow' or 'deny') the CIDR of the IPv4 network range to allow or deny,
+        the rule action ('allow' or 'deny'), the CIDR of the IPv4 or IPv6 network range to allow or deny,
         the ICMP type (-1 means all types), the ICMP code (-1 means all codes), the last port in the range for
         TCP or UDP protocols, and the first port in the range for TCP or UDP protocols.
         See examples.
@@ -55,7 +56,7 @@ options:
     description:
       - List of rules for incoming traffic. Each rule must be specified as a list.
         Each rule may contain the rule number (integer 1-32766), protocol (one of ['tcp', 'udp', 'icmp', '-1', 'all']),
-        the rule action ('allow' or 'deny') the CIDR of the IPv4 network range to allow or deny,
+        the rule action ('allow' or 'deny'), the CIDR of the IPv4 or IPv6 network range to allow or deny,
         the ICMP type (-1 means all types), the ICMP code (-1 means all codes), the last port in the range for
         TCP or UDP protocols, and the first port in the range for TCP or UDP protocols.
         See examples.
@@ -98,9 +99,11 @@ EXAMPLES = '''
         #                                             port from, port to
         - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
         - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+        - [205, 'tcp', 'allow', '::/0', null, null, 80, 80]
         - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
     egress:
         - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+        - [105, 'all', 'allow', '::/0', null, null, null, null]
     state: 'present'
 
 - name: "Remove the ingress and egress rules - defaults to deny all"
@@ -153,6 +156,9 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
+
+# CIDR regex
+CIDR_REGEX = re.compile(r'(\w+)/\d+')
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
@@ -290,7 +296,14 @@ def process_rule_entry(entry, Egress):
     params['Protocol'] = str(PROTOCOL_NUMBERS[entry[1]])
     params['RuleAction'] = entry[2]
     params['Egress'] = Egress
-    params['CidrBlock'] = entry[3]
+    match = CIDR_REGEX.match(entry[3])
+    if not match:
+        module.fail_json(msg="Invalid CIDR value: %s" % entry[3])
+    try:
+        socket.inet_pton(socket.AF_INET6, match.group(1))
+        params['Ipv6CidrBlock'] = entry[3]
+    except socket.error:
+        params['CidrBlock'] = entry[3]
     if icmp_present(entry):
         params['IcmpTypeCode'] = {"Type": int(entry[4]), "Code": int(entry[5])}
     else:
