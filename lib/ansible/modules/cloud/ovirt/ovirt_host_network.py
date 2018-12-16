@@ -74,7 +74,7 @@ options:
         type: bool
     save:
         description:
-            - "If I(false) network configuration will be temporary, by default they are persistent."
+            - "If I(false) network configuration will be temporary until next boot, by default they are persistent."
         type: bool
     sync_networks:
         description:
@@ -462,7 +462,6 @@ def main():
                         ],
                     ) for network in networks
                 ] if networks else None,
-                save=module.params['save'],
             )
         elif state == 'absent' and nic:
             attachments = []
@@ -503,7 +502,6 @@ def main():
                         otypes.NetworkLabel(id=str(name)) for name in labels
                     ] if labels else None,
                     removed_network_attachments=attachments if attachments else None,
-                    save=module.params['save'],
                 )
 
         nic = search_by_name(nics_service, nic_name)
