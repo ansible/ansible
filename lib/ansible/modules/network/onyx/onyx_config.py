@@ -179,6 +179,7 @@ def run(module, result):
 
     if module.params['save']:
         if not module.check_mode:
+            run_commands(module, 'configure terminal')
             run_commands(module, 'configuration write')
         result['changed'] = True
 
