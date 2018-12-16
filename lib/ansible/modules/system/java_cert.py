@@ -150,9 +150,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def get_keystore_type(keystore_type):
-  if not keystore_type:
-    return (" -storetype '%s'") % (keystore_type)
-  return ''
+    ''' Check that custom keystore is presented in parameters '''
+    if not keystore_type:
+        return (" -storetype '%s'") % (keystore_type)
+    return ''
 
 
 def check_cert_present(module, executable, keystore_path, keystore_pass, alias, keystore_type):
@@ -160,7 +161,6 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias, 
         located at keystore_path '''
     test_cmd = ("%s -noprompt -list -keystore '%s' -storepass '%s' "
                 "-alias '%s' %s") % (executable, keystore_path, keystore_pass, alias, get_keystore_type(keystore_type))
-                
 
     (check_rc, _, _) = module.run_command(test_cmd)
     if check_rc == 0:
@@ -193,7 +193,8 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     fetch_cmd = ("%s -printcert -rfc -sslserver %s %s:%d") % (executable, proxy_opts, url, port)
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -alias '%s' %s") % (executable, keystore_path,
-                                                    keystore_pass, alias, get_keystore_type(keystore_type))
+                                                       keystore_pass, alias,
+                                                       get_keystore_type(keystore_type))
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -219,10 +220,9 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
     ''' Import certificate from path into keystore located on
         keystore_path as alias '''
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
-                  "-storepass '%s' -file '%s' -alias '%s' %s") % (executable,
-                                                               keystore_path,
-                                                               keystore_pass,
-                                                               path, alias, get_keystore_type(keystore_type))
+                  "-storepass '%s' -file '%s' -alias '%s' %s") % (executable, keystore_path,
+                                                                  keystore_pass, path, alias,
+                                                                  get_keystore_type(keystore_type))
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -246,7 +246,8 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
     import_cmd = ("%s -importkeystore -noprompt -destkeystore '%s' -srcstoretype PKCS12 "
                   "-deststorepass '%s' -destkeypass '%s' -srckeystore '%s' -srcstorepass '%s' "
                   "-srcalias '%s' -destalias '%s' %s") % (executable, keystore_path, keystore_pass,
-                                                       keystore_pass, path, pkcs12_pass, pkcs12_alias, alias, get_keystore_type(keystore_type))
+                                                          keystore_pass, path, pkcs12_pass, pkcs12_alias,
+                                                          alias, get_keystore_type(keystore_type))
 
     if module.check_mode:
         module.exit_json(changed=True)
