@@ -216,6 +216,7 @@ import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.parsing.duration import duration
 from ansible.module_utils._text import to_native
 
 
@@ -465,16 +466,16 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             host=dict(type='str', default='127.0.0.1'),
-            timeout=dict(type='int', default=300),
-            connect_timeout=dict(type='int', default=5),
-            delay=dict(type='int', default=0),
+            timeout=dict(type=duration, default=300),
+            connect_timeout=dict(type=duration, default=5),
+            delay=dict(type=duration, default=0),
             port=dict(type='int'),
             active_connection_states=dict(type='list', default=['ESTABLISHED', 'FIN_WAIT1', 'FIN_WAIT2', 'SYN_RECV', 'SYN_SENT', 'TIME_WAIT']),
             path=dict(type='path'),
             search_regex=dict(type='str'),
             state=dict(type='str', default='started', choices=['absent', 'drained', 'present', 'started', 'stopped']),
             exclude_hosts=dict(type='list'),
-            sleep=dict(type='int', default=1),
+            sleep=dict(type=duration, default=1),
             msg=dict(type='str'),
         ),
     )
@@ -514,13 +515,13 @@ def main():
     start = datetime.datetime.utcnow()
 
     if delay:
-        time.sleep(delay)
+        time.sleep(delay.total_seconds())
 
     if not port and not path and state != 'drained':
-        time.sleep(timeout)
+        time.sleep(timeout.total_seconds())
     elif state in ['absent', 'stopped']:
         # first wait for the stop condition
-        end = start + datetime.timedelta(seconds=timeout)
+        end = start + timeout
 
         while datetime.datetime.utcnow() < end:
             if path:
@@ -531,13 +532,13 @@ def main():
                     break
             elif port:
                 try:
-                    s = _create_connection(host, port, connect_timeout)
+                    s = _create_connection(host, port, connect_timeout.total_seconds())
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                 except:
                     break
             # Conditions not yet met, wait and try again
-            time.sleep(module.params['sleep'])
+            time.sleep(module.params['sleep'].total_seconds())
         else:
             elapsed = datetime.datetime.utcnow() - start
             if port:
@@ -547,7 +548,7 @@ def main():
 
     elif state in ['started', 'present']:
         # wait for start condition
-        end = start + datetime.timedelta(seconds=timeout)
+        end = start + timeout
         while datetime.datetime.utcnow() < end:
             if path:
                 try:
@@ -581,7 +582,7 @@ def main():
             elif port:
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
-                    s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
+                    s = _create_connection(host, port, min(connect_timeout.total_seconds(), alt_connect_timeout))
                 except:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
@@ -631,7 +632,7 @@ def main():
                         break
 
             # Conditions not yet met, wait and try again
-            time.sleep(module.params['sleep'])
+            time.sleep(module.params['sleep'].total_seconds())
 
         else:   # while-else
             # Timeout expired
@@ -649,7 +650,7 @@ def main():
 
     elif state == 'drained':
         # wait until all active connections are gone
-        end = start + datetime.timedelta(seconds=timeout)
+        end = start + timeout
         tcpconns = TCPConnectionInfo(module)
         while datetime.datetime.utcnow() < end:
             try:
@@ -658,7 +659,7 @@ def main():
             except IOError:
                 pass
             # Conditions not yet met, wait and try again
-            time.sleep(module.params['sleep'])
+            time.sleep(module.params['sleep'].total_seconds())
         else:
             elapsed = datetime.datetime.utcnow() - start
             module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
