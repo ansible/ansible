@@ -171,6 +171,7 @@ firewalld_ipset_addresses:
 
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.firewalld import FirewallTransaction
 
 try:
     from firewall.client import FirewallClient
@@ -188,7 +189,7 @@ def firewalld_state(client, indata):
         client.runtimeToPermanent()
 
 
-def run():
+def main():
     module_args = dict(
         name=dict(type='str', required=True),
         state=dict(choices=['present', 'absent'], required=True),
@@ -208,6 +209,7 @@ def run():
         argument_spec=module_args,
         supports_check_mode=True
     )
+    FirewallTransaction.sanity_check(module)
 
     # setup the FirewallDClient
     client = FirewallClient()
@@ -218,49 +220,52 @@ def run():
 
     # construct return data
     result = {
-        "changed": False,
-        "firewalld_ipset_name": module.params['name'],
-        "firewalld_ipset_addresses": module.params['addresses']
+        'firewalld_ipset_name': module.params['name']
     }
-
-    if module.check_mode:
-        return result
-
     # Modifying a preexisting ipset
     if module.params['name'] in sets and module.params['state'] == 'present':
         client_ipset_config = config.getIPSetByName(module.params['name'])
         original_entries = client_ipset_config.getEntries()
-        client_ipset_config.setEntries(module.params['addresses'])
-        firewalld_state(client, module.params)
-        new_entries = client_ipset_config.getEntries()
+
+        # when we're in check mode we shouldn't commit anything to the
+        # state of the target. Just output what would happen.
+        if module.check_mode:
+            new_entries = module.params['addresses']
+        else:
+            client_ipset_config.setEntries(module.params['addresses'])
+            firewalld_state(client, module.params)
+            new_entries = client_ipset_config.getEntries()
+
         result['changed'] = (new_entries != original_entries)
         result['firewalld_ipset_addresses'] = new_entries
 
     # Creating a new ipset because the one proposed in the module declaration
     # does not exist already.
     elif module.params['name'] not in sets and module.params['state'] == 'present':
-        client_ipset_config = config.addIPSet(module.params['name'], settings)
-        original_entries = client_ipset_config.getEntries()
-        client_ipset_config.setEntries(module.params['addresses'])
-        firewalld_state(client, module.params)
-        new_entries = client_ipset_config.getEntries()
-        result['changed'] = (new_entries != original_entries)
-        result['firewalld_ipset_addresses'] = new_entries
+        if module.check_mode:
+            result['firewalld_ipset_addresses'] = module.params['addresses']
+        else:
+            client_ipset_config = config.addIPSet(module.params['name'], settings)
+            client_ipset_config.setEntries(module.params['addresses'])
+            firewalld_state(client, module.params)
+            new_entries = client_ipset_config.getEntries()
+
+            result['firewalld_ipset_addresses'] = new_entries
+        result['changed'] = True
 
     # Removing an ipset that exists right now. If an ipset is asked to be
     # removed when it doesn't exist, we should just return an "unchanged"
     # state.
     elif module.params['name'] in sets and module.params['state'] == 'absent':
         client_ipset_config = config.getIPSetByName(module.params['name'])
-        original_entries = client_ipset_config.remove()
-        firewalld_state(client, module.params)
+        # avoid stateful actions in check mode
+        if not module.check_mode:
+            original_entries = client_ipset_config.remove()
+            firewalld_state(client, module.params)
         result['changed'] = True
+        result['firewalld_ipset_addresses'] = []
 
     module.exit_json(**result)
-
-
-def main():
-    run()
 
 
 if __name__ == '__main__':
