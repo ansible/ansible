@@ -32,7 +32,7 @@
   poll: 0
 
 - name: "Finding the process ID(PIDs)"
-  command: pgrep -x "{{ random_name.stdout }}"
+  command: ./obtainpid.py "{{ random_name.stdout }}"
   register: find_process
 
 - name: "Checking the process IDs (PIDs) of sleep binary" 
