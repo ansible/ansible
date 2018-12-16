@@ -348,7 +348,7 @@ def main():
         networks=dict(default=None, type='list'),
         labels=dict(default=None, type='list'),
         check=dict(default=None, type='bool'),
-        save=dict(default=None, type='bool'),
+        save=dict(default=True, type='bool'),
         sync_networks=dict(default=False, type='bool'),
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -462,6 +462,7 @@ def main():
                         ],
                     ) for network in networks
                 ] if networks else None,
+                save=module.params['save'],
             )
         elif state == 'absent' and nic:
             attachments = []
@@ -502,6 +503,7 @@ def main():
                         otypes.NetworkLabel(id=str(name)) for name in labels
                     ] if labels else None,
                     removed_network_attachments=attachments if attachments else None,
+                    save=module.params['save'],
                 )
 
         nic = search_by_name(nics_service, nic_name)
