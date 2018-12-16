@@ -172,12 +172,6 @@ DEFAULT_RULE_FIELDS_IPV6 = {
 DEFAULT_INGRESS = [dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', False)]), dict(list(DEFAULT_RULE_FIELDS_IPV6.items()) + [('Egress', False)])]
 DEFAULT_EGRESS = [dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)]), dict(list(DEFAULT_RULE_FIELDS_IPV6.items()) + [('Egress', True)])]
 
-def match_default_rules(rule, egress):
-    default_rules = DEFAULT_EGRESS if egress else DEFAULT_INGRESS
-    for r in default_rules:
-        if r['RuleNumber'] == rule['RuleNumber']:
-            return True
-
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
 PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
@@ -187,6 +181,13 @@ PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
 def icmp_present(entry):
     if len(entry) == 6 and entry[1] == 'icmp' or entry[1] == 1:
         return True
+
+
+def match_default_rules(rule, egress):
+    default_rules = DEFAULT_EGRESS if egress else DEFAULT_INGRESS
+    for r in default_rules:
+        if r['RuleNumber'] == rule['RuleNumber']:
+            return True
 
 
 def load_tags(module):
