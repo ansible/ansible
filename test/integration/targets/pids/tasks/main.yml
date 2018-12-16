@@ -36,7 +36,7 @@
   poll: 0
 
 - name: "Finding the process ID(PIDs)"
-  command: python {{ playbook_dir }}/obtainpid.py "{{ random_name.stdout }}"
+  command: python {{ playbook_dir }}/targets/pids/tasks/obtainpid.py "{{ random_name.stdout }}"
   register: find_process
 
 - name: "Checking the process IDs (PIDs) of sleep binary" 
