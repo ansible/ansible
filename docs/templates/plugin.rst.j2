@@ -20,7 +20,7 @@
 @{ '+' * title|length }@
 
 {% if version_added is defined and version_added != '' -%}
-.. versionadded:: @{ version_added | default('') }@
+.. versionadded:: v@{ version_added | default('') }@
 {% endif %}
 
 .. contents::
@@ -116,7 +116,7 @@ Parameters
                     <td class="elbow-placeholder"></td>
                 {% endfor %}
                 {# parameter name with required and/or introduced label #}
-                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" style="position: relative">
+                <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     <div style="font-size: small">
                         <span style="color: purple">@{ value.type | documented_type }@</span>
