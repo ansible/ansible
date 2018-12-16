@@ -74,7 +74,7 @@ options:
         type: bool
     save:
         description:
-            - "If I(true) network configuration will be persistent, by default they are temporarily."
+            - "If I(false) network configuration will be temporary, by default they are persistent."
         type: bool
     sync_networks:
         description:
