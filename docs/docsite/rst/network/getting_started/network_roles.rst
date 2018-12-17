@@ -287,6 +287,16 @@ The Ansible Galaxy role version has two components:
 * Major release number - (for example, 2.6) which shows the Ansible engine version this role supports.
 * Minor release number (for example .1) which denotes the role release cycle and does not reflect the Ansible engine minor release version.
 
+Update an installed role
+------------------------
+
+The Ansible Galaxy page for a role lists all available versions. To update a locally installed role to a new or different version, use the ``ansible-galaxy install`` command with the version and ``--force`` option. You will also need to manually update any dependent roles to match this version:
+
+.. code-block:: bash
+
+  [user@ansible]$ ansible-galaxy install ansible-network.network_engine,v2.7.0 --force
+  [user@ansible]$ ansible-galaxy install ansible-network.cisco_ios,v2.7.0 --force
+
 .. seealso::
 
        `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_
