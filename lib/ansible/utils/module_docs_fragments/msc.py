@@ -11,20 +11,24 @@ options:
   host:
     description:
     - IP Address or hostname of ACI Multi-Site host.
+    type: str
     required: yes
     aliases: [ hostname ]
   port:
     description:
     - Port number to be used for REST connection.
     - The default value depends on parameter `use_ssl`.
+    type: int
   username:
     description:
     - The username to use for authentication.
+    type: str
     default: admin
   password:
     description:
     - The password to use for authentication.
     - This option is mutual exclusive with C(private_key). If C(private_key) is provided too, it will be used instead.
+    type: str
     required: yes
   output_level:
     description:
@@ -32,6 +36,7 @@ options:
     - C(normal) means the standard output, incl. C(current) dict
     - C(info) adds informational output, incl. C(previous), C(proposed) and C(sent) dicts
     - C(debug) adds debugging output, incl. C(filter_string), C(method), C(response), C(status) and C(url) information
+    type: str
     choices: [ debug, info, normal ]
     default: normal
   timeout:
