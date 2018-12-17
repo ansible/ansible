@@ -50,7 +50,7 @@ options:
       - Database port to connect to.
     default: 5432
   session_role:
-    version_added: "2.7"
+    version_added: "2.8"
     description: |
       Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
       Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.

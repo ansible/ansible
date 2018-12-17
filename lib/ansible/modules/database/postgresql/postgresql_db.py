@@ -42,7 +42,7 @@ options:
       - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
         is used as template.
   session_role:
-    version_added: "2.7"
+    version_added: "2.8"
     description: |
       Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
       Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
