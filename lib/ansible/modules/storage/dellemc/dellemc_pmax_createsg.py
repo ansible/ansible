@@ -60,7 +60,7 @@ options:
     description:
       - "Storage Resource Pool Name, Default is set to SRP_1, if your system
       has mainframe or multiple pools you can set this to a different value to
-      match your environment"
+      match your environment."
     required: false
     type: str
   unispherehost:
