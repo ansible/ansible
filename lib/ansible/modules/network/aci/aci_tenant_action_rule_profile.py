@@ -31,19 +31,23 @@ options:
   action_rule:
     description:
     - The name of the action rule profile.
+    type: str
     aliases: [ action_rule_name, name ]
   description:
     description:
     - The description for the action rule profile.
+    type: str
     aliases: [ descr ]
   tenant:
     description:
     - The name of the tenant.
+    type: str
     aliases: [ tenant_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

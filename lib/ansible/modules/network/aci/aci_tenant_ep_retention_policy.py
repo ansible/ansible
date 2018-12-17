@@ -31,10 +31,12 @@ options:
   tenant:
     description:
     - The name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   epr_policy:
     description:
     - The name of the end point retention policy.
+    type: str
     aliases: [ epr_name, name ]
   bounce_age:
     description:
@@ -46,6 +48,7 @@ options:
     description:
     - Determines if the bounce entries are installed by RARP Flood or COOP Protocol.
     - The APIC defaults to C(coop) when unset during creation.
+    type: str
     choices: [ coop, flood ]
   hold_interval:
     description:
@@ -74,11 +77,13 @@ options:
   description:
     description:
     - Description for the End point rentention policy.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
