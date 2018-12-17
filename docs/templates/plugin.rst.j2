@@ -137,7 +137,7 @@ Parameters
                     {% endif %}
                     {# Show possible choices and highlight details #}
                     {% if value.choices %}
-                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
+                        <ul><b>Choices:</b>
                             {% for choice in value.choices %}
                                 {# Turn boolean values in 'yes' and 'no' values #}
                                 {% if choice is sameas true %}
