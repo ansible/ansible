@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_dns_record
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage dns entries on a univention corporate server
 description:
     - "This module allows to manage dns records on a univention corporate server (UCS).
