@@ -15,12 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_chocolatey
-version_added: "1.9"
+version_added: '1.9'
 short_description: Manage packages using chocolatey
 description:
-- Manage packages using Chocolatey (U(http://chocolatey.org/)).
+- Manage packages using Chocolatey.
 - If Chocolatey is missing from the system, the module will install it.
-- List of packages can be found at U(http://chocolatey.org/packages).
 requirements:
 - chocolatey >= 0.10.5 (will be upgraded if older)
 options:
@@ -55,6 +54,7 @@ options:
       architecture.
     - When setting C(x86), will ensure Chocolatey installs the x86 package
       even when on an x64 bit OS.
+    type: str
     choices:
     - default
     - x86
@@ -204,32 +204,43 @@ options:
     - Specific version of the package to be installed.
     - When I(state) is set to C(absent), will uninstall the specific version
       otherwise all versions of that package will be removed.
+    - Provide as a string (e.g. C('6.1')), otherwise it is considered to be
+      a floating-point number and depending on the locale could become C(6,1),
+      which will cause a failure.
     type: str
 notes:
-- Provide the C(version) parameter value as a string (e.g. C('6.1')), otherwise it
-  is considered to be a floating-point number and depending on the locale could
-  become C(6,1), which will cause a failure.
-- When using verbosity 2 or less (C(-vv)) the C(stdout) output will be restricted.
-- When using verbosity 4 (C(-vvvv)) the C(stdout) output will be more verbose.
-- When using verbosity 5 (C(-vvvvv)) the C(stdout) output will include debug output.
 - This module will install or upgrade Chocolatey when needed.
+- When using verbosity 2 or less (C(-vv)) the C(stdout) output will be restricted.
+  When using verbosity 4 (C(-vvvv)) the C(stdout) output will be more verbose.
+  When using verbosity 5 (C(-vvvvv)) the C(stdout) output will include debug output.
 - Some packages, like hotfixes or updates need an interactive user logon in
-  order to install. You can use (C(become)) to achieve this, see
-  :doc:`/user_guide/become`.
-- Even if you are connecting as local Administrator, using (C(become)) to
+  order to install. You can use C(become) to achieve this, see
+  :ref:`become_windows`.
+  Even if you are connecting as local Administrator, using C(become) to
   become Administrator will give you an interactive user logon, see examples
   below.
-- If (C(become)) is unavailable, use (M(win_hotfix) to install hotfixes instead
-  of (M(win_chocolatey)) as (M(win_hotfix)) avoids using wusa.exe which cannot
-  be run without (C(become)).
+- If C(become) is unavailable, use M(win_hotfix) to install hotfixes instead
+  of M(win_chocolatey) as M(win_hotfix) avoids using C(wusa.exe) which cannot
+  be run without C(become).
 seealso:
 - module: win_chocolatey_config
 - module: win_chocolatey_facts
 - module: win_chocolatey_feature
 - module: win_chocolatey_source
 - module: win_feature
+- module: win_hotfix
+  description: Use when C(become) is unavailable, to avoid using C(wusa.exe).
 - module: win_package
 - module: win_updates
+- name: Chocolatey website
+  description: More information about the Chocolatey tool.
+  link: http://chocolatey.org/
+- name: Chocolatey packages
+  description: An overview of the available Chocolatey packages.
+  link: http://chocolatey.org/packages
+- ref: become_windows
+  description: Some packages, like hotfixes or updates need an interactive user logon
+    in order to install. You can use C(become) to achieve this.
 author:
 - Trond Hindenes (@trondhindenes)
 - Peter Mounce (@petemounce)
@@ -276,7 +287,7 @@ EXAMPLES = r'''
     name: git
     source: internal_repo
 
-- name: ensure Chocolatey itself is installed and use internal repo as source
+- name: Ensure Chocolatey itself is installed and use internal repo as source
   win_chocolatey:
     name: chocolatey
     source: http://someserver/chocolatey
@@ -303,7 +314,7 @@ EXAMPLES = r'''
   - putty
   - windirstat
 
-- name: uninstall multiple packages
+- name: Uninstall multiple packages
   win_chocolatey:
     name:
     - procexp

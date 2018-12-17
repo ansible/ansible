@@ -319,7 +319,7 @@ The deprecation warnings reflect this schedule. The task above, run in Ansible 2
    [DEPRECATION WARNING]: Param 'host' is deprecated. See the module docs for more information. This feature will be removed in version 2.9.
    Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
 
-We recommend using the new connection types ``network_cli`` and ``netconf`` (see below), using standard Ansible connection properties, and setting those properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). For more information, see the :ref:`using become with network modules<become-network>` guide and the :ref:`platform documentation<platform_options>`.
+We recommend using the new connection types ``network_cli`` and ``netconf`` (see below), using standard Ansible connection properties, and setting those properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). For more information, see the :ref:`using become with network modules<become_network>` guide and the :ref:`platform documentation<platform_options>`.
 
 Adding persistent connection types ``network_cli`` and ``netconf``
 ------------------------------------------------------------------

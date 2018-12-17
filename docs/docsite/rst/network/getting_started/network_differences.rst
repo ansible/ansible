@@ -94,4 +94,4 @@ And you use the ``eapi`` variable in your task(s):
 
 Note that while Ansible 2.6 supports the use of ``connection: local`` with ``provider`` dictionaries, this usage will be deprecated in the future and eventually removed.
 
-For more information, see :ref:`Become and Networks<become-network>`
+For more information, see :ref:`Become and Networks<become_network>`
