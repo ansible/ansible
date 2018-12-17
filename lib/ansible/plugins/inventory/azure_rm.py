@@ -524,7 +524,7 @@ class AzureHost(object):
                                  for s in vm_instanceview_model.get('statuses', []) if self._powerstate_regex.match(s.get('code', ''))), 'unknown')
 
     def _on_nic_response(self, nic_model, is_primary=False):
-        if 'type' in nic_model and nic_model['type'] == 'Microsoft.Network/networkInterfaces':
+        if nic_model.get('type') == 'Microsoft.Network/networkInterfaces':
             nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
             self.nics.append(nic)
 
