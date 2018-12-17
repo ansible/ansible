@@ -806,7 +806,7 @@ This filter expects an XPath expression and returns an empty string if nothing m
 
 
 The ``xml_findall`` filter expects an XPath expression and returns a list of all matching xml elements as strings.
-This filter returns an empty list if there is no match for the given XPath expression.
+This filter returns an empty list if there is no match for a given XPath expression.
 
 .. code-block:: yaml
 
