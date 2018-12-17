@@ -83,7 +83,7 @@
 
 - name: Assert that storage was successfully created
   assert:
-    that: "output['response']['name'] == '{{ storage_name }}'"
+    that: "output['response']['name'] == '{{ storageaccountname }}'"
 
 
 - name: Try to storage keys -- special case when subresource part has no name
