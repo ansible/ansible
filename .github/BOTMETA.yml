@@ -223,6 +223,7 @@ files:
   $modules/network/dellos6/: abirami-n skg-net
   $modules/network/dellos9/: Dhivyap skg-net
   $modules/network/edgeos/: samdoran
+  $modules/network/edgeswitch/: f-bor
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: trishnaguha
   $modules/network/exos/: rdvencioneck
@@ -549,6 +550,8 @@ files:
     maintainers: skg-net
   $module_utils/network/dellos10:
     maintainers: skg-net
+  $module_utils/network/edgeswitch:
+    maintainers: f-bor
   $module_utils/network/enos:
     maintainers: amuraleedhar
   $module_utils/network/eos:
@@ -845,6 +848,8 @@ files:
 
   $plugins/cliconf/:
     labels: networking
+  $plugins/cliconf/edgeswitch.py:
+    maintainers: f-bor
   $plugins/cliconf/eos.py:
     support: network
     maintainers: $team_networking
@@ -1036,6 +1041,8 @@ files:
     maintainers: skg-net
   $plugins/terminal/edgeos.py:
     maintainers: samdoran
+  $plugins/terminal/edgeswitch.py:
+    maintainers: f-bor
   $plugins/terminal/eos.py:
     support: network
     maintainers: $team_networking
