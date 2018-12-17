@@ -66,7 +66,7 @@ options:
     default: 'yes'
   ignore_selinux_state:
     description:
-    - Run independent of selinux runtime state
+    - Useful for scenarios (chrooted environment) that you can't get the real SELinux state.
     type: bool
     default: false
     version_added: '2.8'
