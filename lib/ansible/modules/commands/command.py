@@ -90,6 +90,7 @@ EXAMPLES = r'''
 - name: Run command if /path/to/database does not exist (without 'args').
   command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
+# 'args' is a task keyword, passed at the same level as the module
 - name: Run command if /path/to/database does not exist (with 'args').
   command: /usr/bin/make_database.sh db_user db_name
   args:
@@ -103,12 +104,12 @@ EXAMPLES = r'''
     chdir: somedir/
     creates: /path/to/database
 
-- name: Use 'argv' with 'args' to send a command as a list - be sure to leave 'command' empty
+# 'argv' is a parameter, indented one level from the module
+- name: Use 'argv' to send a command as a list - leave 'command' empty
   command:
-  args:
     argv:
-      - echo
-      - testing
+      - /usr/bin/backup_database.sh
+      - /usr/bin/optimize_database.sh
 
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
