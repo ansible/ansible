@@ -27,9 +27,10 @@ options:
     type: str
   state:
     description:
-      - State the action to perform. Use 'present' to create dhcp-filter and
-        'absent' to delete dhcp-filter 'update' to modify the dhcp-filter.
+      - State the action to perform. Use C(present) to create dhcp-filter and
+        C(absent) to delete dhcp-filter C(update) to modify the dhcp-filter.
     required: True
+    type: str
     choices: ['present', 'absent', 'update']
   pn_trusted_ports:
     description:
