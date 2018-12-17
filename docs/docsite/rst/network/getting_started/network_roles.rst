@@ -5,40 +5,292 @@
 Use Ansible network roles
 *************************
 
-Transition to roles
+Roles are sets of Ansible defaults, files, tasks, templates, variables, and other Ansible components that work together. As you saw on :ref:`first_network_playbook`, moving from a command to a playbook makes it easy to run multiple tasks and repeat the same tasks in the same order. Moving from a playbook to a role makes it even easier to reuse and share your ordered tasks. You can look at :ref:`Ansible Galaxy <ansible_galaxy>`, which lets you share your roles and use others' roles, either directly or as inspiration.
+
+.. contents::
+   :local:
+
+Understanding roles
 ===================
 
-Roles are sets of Ansible defaults, files, tasks, templates, variables, and other Ansible components that work together. As you saw on the Working with Playbooks page, moving from a command to a playbook makes it easy to run multiple tasks and repeat the same tasks in the same order. Moving from a playbook to a role makes it even easier to reuse and share your ordered tasks. For more details, see the :doc:`documentation on roles<../../user_guide/playbooks_reuse_roles>`. You can also look at :ref:`Ansible Galaxy <ansible_galaxy>`, which lets you share your roles and use others' roles, either directly or as inspiration.
+So what exactly is a role, and why should you care? Ansible roles are basically playbooks broken up into a known file structure.  The goal for roles is to create robust and reusable functions so users don’t have to recreate a playbook from scratch.  So for example, you don’t have to write your own DNS playbook. Instead, you specify a DNS server, and an Ansible role will configure it for you.  Roles will make adopting Ansible Network Automation faster, easier and in a more agnostic fashion resulting in freeing you from the burden of building the playbook logic yourself.
 
-Supported roles
-===============
-The Ansible Network team develops and supports a set of `network-related roles <https://galaxy.ansible.com/ansible-network>`_ on Galaxy. You can use these roles to jump start your network automation efforts. These roles are updated approximately every two weeks to give you access to the latest Ansible networking content.
+A sample DNS playbook
+---------------------
+
+To demonstrate the concept of what a role is, the example below is a single YAML file containing a two-task playbook.  This Ansible Playbook configures the hostname on a Cisco IOS XE device, then it configures the DNS (domain name system) servers.
+
+In the output below you will see three Linux commands commonly used.  The **cat** command allows us to quickly look and view the contents of a YAML file, while the **tree** command allows us to look at the directory structure of the current working directory.  Finally the **cd** command allows us to change directories.
+
+.. code-block:: bash
+
+   [user@ansible system-demo]$ cat playbook.yml
+   ---
+   - name: configure cisco routers
+     hosts: routers
+     connection: network_cli
+     gather_facts: no
+     vars:
+       dns: "8.8.8.8 8.8.4.4"
+
+     tasks:
+      - name: configure hostname
+        ios_config:
+          lines: hostname {{ inventory_hostname }}
+
+      - name: configure DNS
+        ios_config:
+          lines: ip name-server {{dns}}
+
+Next, we'll run this playbook using the ``ansible-playbook`` command.  For brevity we used ``-l`` option to limit the playbook to only executing on the **rtr1** node.
+
+.. code-block:: bash
+
+   [user@ansible ~]$ ansible-playbook playbook.yml -l rtr1
+
+   PLAY [configure cisco routers] *************************************************
+
+   TASK [configure hostname] ******************************************************
+   changed: [rtr1]
+
+   TASK [configure DNS] ***********************************************************
+   changed: [rtr1]
+
+   PLAY RECAP *********************************************************************
+   rtr1                       : ok=2    changed=2    unreachable=0    failed=0
+
+
+This playbook configured the hostname and DNS servers.  Let's verify that configuration on the Cisco IOS XE **rtr1** router:
+
+.. code-block:: bash
+
+   rtr1#sh run | i name
+   hostname rtr1
+   ip name-server 8.8.8.8 8.8.4.4
+   <<<rest of output removed for brevity>>>
+
+Convert the playbook into a role
+---------------------------------
+
+Now that we've seen a simple playbook in action, let's convert this into a reusable role. The Ansible Galaxy command line tool has the ability to create the standard framework for a role from scratch using the ``ansible-galaxy init`` command.  While not a requirement this can make it really easy to quickly start creating a role.
+
+.. code-block:: bash
+
+   [user@ansible ~]$ ansible-galaxy init system-demo
+   [user@ansible ~]$ cd system-demo/
+   [user@ansible system-demo]$ tree
+   .
+   ├── defaults
+   │   └── main.yml
+   ├── files
+   ├── handlers
+   │   └── main.yml
+   ├── meta
+   │   └── main.yml
+   ├── README.md
+   ├── tasks
+   │   └── main.yml
+   ├── templates
+   ├── tests
+   │   ├── inventory
+   │   └── test.yml
+   └── vars
+     └── main.yml
+
+For this first demonstration we'll only use the **tasks** and **vars** directories.  The directory structure would look as follows:
+
+.. code-block:: bash
+
+   [user@ansible system-demo]$ tree
+   .
+   ├── tasks
+   │   └── main.yml
+   └── vars
+       └── main.yml
+
+We'll now separate out the ``vars`` section and the ``tasks`` section from our original Ansible Playbook.  Move the two tasks into the ``tasks/main.yml`` file.  The file will look as follows:
+
+.. code-block:: bash
+
+   [user@ansible system-demo]$ cat tasks/main.yml
+   ---
+   - name: configure hostname
+     ios_config:
+       lines: hostname {{ inventory_hostname }}
+
+   - name: configure DNS
+     ios_config:
+       lines: ip name-server {{dns}}
+
+Move the vars into the ``vars/main.yml`` file.  The file will look as follows:
+
+.. code-block:: bash
+
+   [user@ansible system-demo]$ cat vars/main.yml
+   ---
+   dns: "8.8.8.8 8.8.4.4"
+
+Finally we'll modify the original Ansible Playbook to remove the keyword ``tasks`` and the keyword ``vars`` and then add the keyword ``roles``  with the name of the role, in this case ``system-demo``.  The playbook will now look like this:
+
+.. code-block:: bash
+
+   ---
+   - name: configure cisco routers
+     hosts: routers
+     connection: network_cli
+     gather_facts: no
+
+     roles:
+       - system-demo
+
+To summarize, we now have a total of three directories and three YAML files.  There is the ``system-demo`` folder, which represents the role.  This ``system-demo`` contains two folders, ``tasks`` and ``vars``.  There is a ``main.yml`` is each respective folder.  The ``vars/main.yml`` contains the variables from ``playbook.yml``.  The ``tasks/main.yml`` contains the tasks from ``playbook.yml``.  The ``playbook.yml`` file has been modified to call the role rather than specifying vars and tasks directly.  Here is a tree of the current working directory:
+
+.. code-block:: bash
+
+   [user@ansible ~]$ tree
+   .
+   ├── playbook.yml
+   └── system-demo
+       ├── tasks
+       │   └── main.yml
+       └── vars
+           └── main.yml
+
+Running the playbook results in identical behavior with slightly different output:
+
+.. code-block:: bash
+
+   [user@ansible ~]$ ansible-playbook playbook.yml -l rtr1
+
+   PLAY [configure cisco routers] *************************************************
+
+   TASK [system-demo : configure hostname] ****************************************
+   ok: [rtr1]
+
+   TASK [system-demo : configure DNS] *********************************************
+   ok: [rtr1]
+
+   PLAY RECAP *********************************************************************
+   rtr1             : ok=2    changed=0    unreachable=0    failed=0
+
+As seen above each task is now prepended with the role name, in this case ``system-demo``.  When running a playbook that contains several roles, this will help pinpoint where a task is being called from.  This playbook returned ``ok`` instead of ``changed`` because it has identical behavior for the single file playbook we started from.
+
+As before, the playbook will generate the following configuration on a Cisco IOS-XE router:
+
+.. code-block:: bash
+
+   rtr1#sh run | i name
+   hostname rtr1
+   ip name-server 8.8.8.8 8.8.4.4
+   <<<rest of output removed for brevity>>>
+
+This is why Ansible roles can be simply thought of as deconstructed playbooks. They are simple, effective and reusable.  Now another user can simply include the ``system-demo`` role instead of having to create a custom “hard coded” playbook.
+
+Variable precedence
+-------------------
+
+Hey hold on!  What if you want to change the DNS servers.  Are you expected to change the ``vars/main.yml`` within the role structure?  Absolutely not. Ansible has many places where you can specify variables for a given play. See :ref:`playbooks_variables` for details on variables and precedence. There are actually 21 places to put variables.  While this list can seem overwhelming at first glance, the vast majority of use cases only involve knowing the spot for variables of least precedence and how to pass variables with most precedence.
+
+Lowest precedence
+^^^^^^^^^^^^^^^^^
+
+The lowest precedence is the ``defaults`` directory within a role.  This means all the other 20 locations you could potentially specify the variable will all take higher precedence than ``defaults``, no matter what.  To immediately give the vars from the ``system-demo`` role the least precedence, rename the ``vars`` directory to ``defaults``.
+
+.. code-block:: bash
+
+   [user@ansible system-demo]$ mv vars defaults
+   [user@ansible system-demo]$ tree
+   .
+   ├── defaults
+   │   └── main.yml
+   ├── tasks
+   │   └── main.yml
+
+Add a new ``vars`` section to the playbook to override the default behavior (where the variable ``dns`` is set to 8.8.8.8 and 8.8.4.4).  For this demonstration, let's set ``dns`` to 1.1.1.1:
+
+.. code-block:: bash
+
+   [user@ansible ~]$ cat playbook.yml
+   ---
+   - name: configure cisco routers
+     hosts: routers
+     connection: network_cli
+     gather_facts: no
+     vars:
+       dns: 1.1.1.1
+     roles:
+       - system-demo
+
+We'll run this updated playbook on **rtr2**:
+
+.. code-block:: bash
+
+   [user@ansible ~]$ ansible-playbook playbook.yml -l rtr2
+
+The configuration on the **rtr2** Cisco router will look as follows:
+
+.. code-block:: bash
+
+   rtr2#sh run | i name-server
+   ip name-server 1.1.1.1
+
+The variable configured in the playbook now has precedence over the ``defaults`` directory.  In fact, any other spot we configure variables would win over the values in the ``defaults`` directory.
+
+Highest precedence
+^^^^^^^^^^^^^^^^^^
+
+Specifying variables in the ``defaults`` directory within a role will always take the lowest precedence, while specifying ``vars`` as extra vars with the ``-e`` or ``--extra-vars=`` will always take the highest precedence, no matter what.  Re-running the playbook with the ``-e`` option overrides both the ``defaults`` directory (8.8.4.4 and 8.8.8.8) as well as the newly created ``vars`` within the playbook that contains the 1.1.1.1 dns server.
+
+.. code-block:: bash
+
+   [user@ansible ~]$ ansible-playbook playbook.yml -e "dns=192.168.1.1" -l rtr3
+
+The result on the Cisco IOS XE router will only contain the highest precedence setting of 192.168.1.1:
+
+.. code-block:: bash
+
+   rtr3#sh run | i name-server
+   ip name-server 192.168.1.1
+
+How is this useful?  Why should you care?  Extra vars are commonly used by network operators to override defaults.  A powerful example of this is with Red Hat Ansible Tower and the Survey feature.  It is possible through the web UI to prompt a network operator to fill out parameters with a Web form.  This can be really simple for non-technical playbook writers to execute a playbook using their Web browser. See `Ansible Tower Job Template Surveys <https://docs.ansible.com/ansible-tower/latest/html/userguide/workflow_templates.html#surveys>`_ for more details.
+
+
+Ansible supported network roles
+===============================
+
+The Ansible Network team develops and supports a set of `network-related roles <https://galaxy.ansible.com/ansible-network>`_ on Ansible Galaxy. You can use these roles to jump start your network automation efforts. These roles are updated approximately every two weeks to give you access to the latest Ansible networking content.
 
 These roles come in the following categories:
 
 * **User roles** - User roles focus on tasks, such as managing your configuration. Use these roles, such as `config_manager <https://galaxy.ansible.com/ansible-network/config_manager>`_ and `cloud_vpn <https://galaxy.ansible.com/ansible-network/cloud_vpn>`_, directly in your playbooks. These roles are platform/provider agnostic, allowing you to use the same roles and playbooks across different network platforms or cloud providers.
-* **Platform provider roles** - Provider roles translate between the user roles and the various network OSs, each of which has a different API. Each provider role accepts input from a supported user role and translates it for a specific network OS. Network user roles depend on these provider roles to implement their functions. For example, the `config_manager <https://galaxy.ansible.com/ansible-network/config_manager>`_ role  uses the  `cisco_ios <https://galaxy.ansible.com/ansible-network/cisco_ios>`_ provider role to implement tasks on Cisco IOS network devices.
+* **Platform provider roles** - Provider roles translate between the user roles and the various network OSs, each of which has a different API. Each provider role accepts input from a supported user role and translates it for a specific network OS. Network user roles depend on these provider roles to implement their functions. For example, the `config_manager <https://galaxy.ansible.com/ansible-network/config_manager>`_ user role  uses the  `cisco_ios <https://galaxy.ansible.com/ansible-network/cisco_ios>`_ provider role to implement tasks on Cisco IOS network devices.
 * **Cloud provider and provisioner roles** - Similarly, cloud user roles depend on cloud provider and provisioner roles to implement cloud functions for specific cloud providers. For example, the `cloud_vpn <https://galaxy.ansible.com/ansible-network/cloud_vpn>`_ role depends on the `aws <https://galaxy.ansible.com/ansible-network/aws>`_ provider role to communicate with AWS.
 
-.. tip::
 
-    You need to install at least one platform provider role for your network user roles, and set ``ansible_network_provider`` to that provider (for example, ``ansible_network_provider: ansible-network.cisco_ios``). Galaxy automatically installs any other dependencies listed in the role details on Galaxy.
+You need to install at least one platform provider role for your network user roles, and set ``ansible_network_provider`` to that provider (for example, ``ansible_network_provider: ansible-network.cisco_ios``). Ansible Galaxy automatically installs any other dependencies listed in the role details on Ansible Galaxy.
 
-Roles are fully documented with examples in Galaxy on the **Read Me** tab for each role.
+For example, to use the ``config_manager`` role with Cisco IOS devices, you would use the following commands:
+
+.. code-block:: bash
+
+   [user@ansible]$ ansible-galaxy install ansible-network.cisco_ios
+   [user@ansible]$ ansible-galaxy install ansible-network.config_manager
+
+Roles are fully documented with examples in Ansible Galaxy on the **Read Me** tab for each role.
 
 Network roles release cycle
 ===========================
 
-The Ansible network team releases updates and new roles every two weeks. The role details on Galaxy lists the role versions available, and you can look in the GitHub repository to find the changelog file (for example, `CHANGELOG.rst <https://github.com/ansible-network/cisco_ios/blob/devel/CHANGELOG.rst>`_ ) that lists what has changed in each version of the role.
+The Ansible network team releases updates and new roles every two weeks. The role details on Ansible Galaxy lists the role versions available, and you can look in the GitHub repository to find the changelog file (for example,  the ``cisco_ios`` `CHANGELOG.rst <https://github.com/ansible-network/cisco_ios/blob/devel/CHANGELOG.rst>`_ ) that lists what has changed in each version of the role.
 
-The Galaxy role version has two components:
+The Ansible Galaxy role version has two components:
 
 * Major release number - (for example, 2.6) which shows the Ansible engine version this role supports.
 * Minor release number (for example .1) which denotes the role release cycle and does not reflect the Ansible engine minor release version.
 
 .. seealso::
 
-       `Galaxy documentation <https://galaxy.ansible.com/docs/>`_
-           Galaxy user guide
+       `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_
+           Ansible Galaxy user guide
        `Ansible supported network roles <https://galaxy.ansible.com/ansible-network>`_
-           List of Ansible-supported network and cloud roles on Galaxy
+           List of Ansible-supported network and cloud roles on Ansible Galaxy
