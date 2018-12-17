@@ -33,19 +33,23 @@ options:
   allocation_mode:
     description:
     - The method used for allocating encaps to resources.
-    aliases: [ mode ]
+    type: str
     choices: [ dynamic, inherit, static]
+    aliases: [ mode ]
   description:
     description:
     - Description for the pool encap block.
+    type: str
     aliases: [ descr ]
   pool:
     description:
     - The name of the pool that the encap block should be assigned to.
+    type: str
     aliases: [ pool_name ]
   pool_allocation_mode:
     description:
     - The method used for allocating encaps to resources.
+    type: str
     choices: [ dynamic, static]
     aliases: [ pool_mode ]
   block_end:
@@ -56,6 +60,7 @@ options:
   block_name:
     description:
     - The name to give to the encap block.
+    type: str
     aliases: [ name ]
   block_start:
     description:
@@ -66,6 +71,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

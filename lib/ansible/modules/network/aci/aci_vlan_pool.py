@@ -30,20 +30,24 @@ options:
   pool_allocation_mode:
     description:
     - The method used for allocating VLANs to resources.
-    aliases: [ allocation_mode, mode ]
+    type: str
     choices: [ dynamic, static]
+    aliases: [ allocation_mode, mode ]
   description:
     description:
     - Description for the C(pool).
+    type: str
     aliases: [ descr ]
   pool:
     description:
     - The name of the pool.
+    type: str
     aliases: [ name, pool_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

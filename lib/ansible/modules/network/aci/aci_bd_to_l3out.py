@@ -32,18 +32,22 @@ options:
   bd:
     description:
     - The name of the Bridge Domain.
+    type: str
     aliases: [ bd_name, bridge_domain ]
   l3out:
     description:
     - The name of the l3out to associate with th Bridge Domain.
+    type: str
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

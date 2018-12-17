@@ -28,11 +28,13 @@ options:
   aep:
     description:
     - The name of the Attachable Access Entity Profile.
+    type: str
     required: yes
     aliases: [ aep_name, name ]
   description:
     description:
     - Description for the AEP.
+    type: str
     aliases: [ descr ]
   infra_vlan:
     description:
@@ -47,6 +49,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     default: present
     choices: [ absent, present, query ]
 extends_documentation_fragment: aci

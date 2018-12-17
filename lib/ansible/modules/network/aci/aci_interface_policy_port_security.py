@@ -27,11 +27,13 @@ options:
   port_security:
     description:
     - The name of the port security.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the contract.
+    type: str
     aliases: [ descr ]
   max_end_points:
     description:
@@ -43,6 +45,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

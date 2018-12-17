@@ -28,16 +28,19 @@ options:
   leaf_interface_profile:
     description:
     - The name of the Fabric access policy leaf interface profile.
+    type: str
     required: yes
     aliases: [ name, leaf_interface_profile_name ]
   description:
     description:
     - Description for the Fabric access policy leaf interface profile.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

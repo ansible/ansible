@@ -32,6 +32,7 @@ options:
   serial:
     description:
     - Serial Number for the new Fabric Node Member.
+    type: str
     aliases: [ serial_number ]
   node_id:
     description:
@@ -40,20 +41,24 @@ options:
   switch:
     description:
     - Switch Name for the new Fabric Node Member.
+    type: str
     aliases: [ name, switch_name ]
   description:
     description:
     - Description for the new Fabric Node Member.
+    type: str
     aliases: [ descr ]
   role:
     description:
     - Role for the new Fabric Node Member.
+    type: str
     aliases: [ role_name ]
     choices: [ leaf, spine, unspecified ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

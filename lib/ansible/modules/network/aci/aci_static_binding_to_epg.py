@@ -34,18 +34,22 @@ options:
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     aliases: [ app_profile, app_profile_name ]
   epg:
     description:
     - The name of the end point group.
+    type: str
     aliases: [ epg_name ]
   description:
     description:
     - Description for the static path to EPG binding.
+    type: str
     aliases: [ descr ]
     version_added: '2.7'
   encap_id:
@@ -66,6 +70,7 @@ options:
     description:
     - The Deployement Immediacy of Static EPG on PC, VPC or Interface.
     - The APIC defaults to C(lazy) when unset during creation.
+    type: str
     choices: [ immediate, lazy ]
   interface_mode:
     description:
@@ -74,11 +79,13 @@ options:
     - Values C(access) and C(untagged) are identical.
     - Values C(regular), C(tagged) and C(trunk) are identical.
     - The APIC defaults to C(trunk) when unset during creation.
+    type: str
     choices: [ 802.1p, access, native, regular, tagged, trunk, untagged ]
     aliases: [ interface_mode_name, mode ]
   interface_type:
     description:
     - The type of interface for the static EPG deployement.
+    type: str
     choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
   pod_id:
@@ -93,11 +100,13 @@ options:
     - When C(interface_type) is C(switch_port), C(port_channel), or C(fex), then C(leafs) is a string of the leaf ID.
     - When C(interface_type) is C(vpc), then C(leafs) is a list with both leaf IDs.
     - The C(leafs) value is usually something like '101' or '101-102' depending on C(connection_type).
+    type: str
     aliases: [ leaves, nodes, paths, switches ]
   interface:
     description:
     - The C(interface) string value part of the tDn.
     - Usually a policy group like C(test-IntPolGrp) or an interface of the following format C(1/7) depending on C(interface_type).
+    type: str
   extpaths:
     description:
     - The C(extpaths) integer value part of the tDn.
@@ -108,6 +117,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

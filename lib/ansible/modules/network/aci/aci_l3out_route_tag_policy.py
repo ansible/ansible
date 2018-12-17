@@ -31,15 +31,18 @@ options:
   rtp:
     description:
     - The name of the route tag policy.
+    type: str
     required: yes
     aliases: [ name, rtp_name ]
   description:
     description:
     - The description for the route tag policy.
+    type: str
     aliases: [ descr ]
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
   tag:
@@ -52,6 +55,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
