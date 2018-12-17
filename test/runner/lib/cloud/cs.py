@@ -32,6 +32,7 @@ from lib.docker_util import (
     docker_inspect,
     docker_pull,
     docker_network_inspect,
+    docker_exec,
     get_docker_container_id,
 )
 
@@ -156,6 +157,11 @@ class CsCloudProvider(CloudProvider):
             display.info('Starting a new CloudStack simulator docker container.', verbosity=1)
             docker_pull(self.args, self.image)
             docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
+
+            # apply work-around for OverlayFS issue
+            # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
+            docker_exec(self.args, self.container_name, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'])
+
             if not self.args.explain:
                 display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
 
