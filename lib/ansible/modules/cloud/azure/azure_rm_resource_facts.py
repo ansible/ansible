@@ -190,7 +190,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
         header_parameters = {}
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
-        response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404])
+        response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
 
         try:
             response = json.loads(response.text)
