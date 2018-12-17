@@ -196,6 +196,8 @@ When run in --list mode (the default), container instances are grouped by:
  - container name
  - container short id
  - image_name  (image_<image name>)
+ - stack_name  (stack_<stack name>)
+ - service_name  (service_<service name>)
  - docker_host
  - running
  - stopped
@@ -621,6 +623,14 @@ class DockerInventory(object):
                 image_name = inspect.get('Config', dict()).get('Image')
                 if image_name:
                     self.groups["image_%s" % (image_name)].append(name)
+
+                stack_name = inspect.get('Config', dict()).get('Labels', dict()).get('com.docker.stack.namespace')
+                if stack_name:
+                    self.groups["stack_%s" % stack_name].append(name)
+
+                service_name = inspect.get('Config', dict()).get('Labels', dict()).get('com.docker.swarm.service.name')
+                if service_name:
+                    self.groups["service_%s" % service_name].append(name)
 
                 self.groups[id].append(name)
                 self.groups[name].append(name)
