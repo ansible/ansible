@@ -97,7 +97,7 @@
     resource_type: servers
     resource_name: "{{ dbname }}"
     body:
-      location: westus
+      location: westus2
       properties:
         administratorLogin: cloudsa
         administratorLoginPassword: Testpasswordxyz12!
