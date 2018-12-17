@@ -97,6 +97,10 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
 
+        # task verbosity check
+        if result._task.verbosity > self._display.verbosity:
+            return
+
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
 
         if isinstance(result._task, TaskInclude):
@@ -135,6 +139,10 @@ class CallbackModule(CallbackBase):
             self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
+
+        # task verbosity check
+        if result._task.verbosity > self._display.verbosity:
+            return
 
         if self.display_skipped_hosts:
 
@@ -189,7 +197,9 @@ class CallbackModule(CallbackBase):
             self._last_task_name = task.get_name().strip()
 
             # Display the task banner immediately if we're not doing any filtering based on task result
-            if self.display_skipped_hosts and self.display_ok_hosts:
+            # check task verbosity setting
+            # check of TaskInclude to fix stale included statements if banner is to be skipped
+            if isinstance(task, TaskInclude) or (self.display_skipped_hosts and self.display_ok_hosts and not task.verbosity > self._display.verbosity):
                 self._print_task_banner(task)
 
     def _print_task_banner(self, task):
