@@ -296,7 +296,7 @@ class AzureRMResource(AzureRMModuleBase):
                 try:
                     response = json.loads(response.text)
                 except:
-                    response = str(response)
+                    response = response.text
             else:
                 response = None
 
