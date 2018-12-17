@@ -996,12 +996,12 @@ class AzureRMAuth(object):
 
         # Use Subscription ID if specified by the client instead of the one in CLI
         if subscription_id is not None:
-             self.subscription_id = subscription_id
+            self.subscription_id = subscription_id
         else:
-             if self.credentials.get('subscription_id', None) is None and self.credentials.get('credentials') is None:
-                 self.fail("Credentials did not include a subscription_id value.")
-             self.log("setting subscription_id [%s]" % self.credentials['subscription_id'])
-             self.subscription_id = self.credentials['subscription_id']
+            if self.credentials.get('subscription_id', None) is None and self.credentials.get('credentials') is None:
+                self.fail("Credentials did not include a subscription_id value.")
+            self.log("setting subscription_id [%s]" % self.credentials['subscription_id'])
+            self.subscription_id = self.credentials['subscription_id']
 
         # get authentication authority
         # for adfs, user could pass in authority or not.
