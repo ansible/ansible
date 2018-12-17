@@ -36,11 +36,8 @@ options:
   name:
     description:
       - Description of a crontab entry or, if env is set, the name of environment variable.
-      - Required if C(state=absent).
-      - Note that if name is not set and C(state=present), then a
-        new crontab entry will always be created, regardless of existing ones.
-      - This parameter will always be required in future releases.
     type: str
+    required: yes
   user:
     description:
       - The specific user whose crontab should be modified.
@@ -559,7 +556,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str'),
+            name=dict(required=True, type='str'),
             user=dict(type='str'),
             job=dict(type='str', aliases=['value']),
             cron_file=dict(type='str'),
