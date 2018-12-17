@@ -307,7 +307,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.inventory.add_host(current_host)
 
         metadata = server.get('metadata', {})
-        for meta_key in metadata:
+        for meta_key, meta_value in server.get('metadata', {}).items():
+            hostvars[current_host][meta_key] = meta_value
             hostvars[current_host][meta_key] = metadata[meta_key]
 
         for group in self._get_groups_from_server(server, namegroup=namegroup):
