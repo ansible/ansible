@@ -1,32 +1,38 @@
 # -*- coding: utf-8 -*-
-
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
-# Copyright (c), Paul Martin <paule.marting@dell.com>,2018
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+# Copyright: (c) 2018, Paul Martin <paule.martin@dell.com>
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 VERSION = 1.1
 USER_AGENT_BASE = 'Ansible'
+
+try:
+    import PyU4V
+    HAS_PyU4V=True
+except ImportError:
+    HAS_PyU4V=False
+
+
+def dellemc_argument_spec():
+    return dict(
+        unispherehost=dict(required=True),
+        universion=dict(type='int', required=False),
+        verifycert=dict(type='bool', required=True),
+        user=dict(type='str', required=True),
+        password=dict(type='str', required=True, no_log=True),
+        array_id=dict(type='str', required=True),
+    )
+
+
+def pmaxapi(module):
+    if not HAS_PyU4V:
+        module.fail_json(msg='PyU4V is required for this module')
+    else:
+        conn = PyU4V.U4VConn(server_ip=module.params['unispherehost'],
+                             port=8443,
+                             array_id=module.params['array_id'],
+                             verify=module.params['verifycert'],
+                             username=module.params['user'],
+                             password=module.params['password'],
+                             u4v_version=module.params['universion'])
+    return conn
+
+
