@@ -252,11 +252,11 @@ matches:
     returned: when parameter 'print_match' is set
 msg:
     description: A message related to the performed action(s).
-    type: string
+    type: str
     returned: always
 xmlstring:
     description: An XML string of the resulting output.
-    type: string
+    type: str
     returned: when parameter 'xmlstring' is set
 '''
 

@@ -120,17 +120,17 @@ RETURN = '''
 changed:
     description: Whether Yarn changed any package data
     returned: always
-    type: boolean
+    type: bool
     sample: true
 msg:
     description: Provides an error message if Yarn syntax was incorrect
     returned: failure
-    type: string
+    type: str
     sample: "Package must be explicitly named when uninstalling."
 invocation:
     description: Parameters and values used during execution
     returned: success
-    type: dictionary
+    type: dict
     sample: {
             "module_args": {
                 "executable": null,
@@ -147,7 +147,7 @@ invocation:
 out:
     description: Output generated from Yarn with emojis removed.
     returned: always
-    type: string
+    type: str
     sample: "yarn add v0.16.1[1/4] Resolving packages...[2/4] Fetching packages...[3/4] Linking dependencies...[4/4]
     Building fresh packages...success Saved lockfile.success Saved 1 new dependency..left-pad@1.1.3 Done in 0.59s."
 '''

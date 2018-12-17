@@ -149,72 +149,72 @@ RETURN = '''
 id:
   description: ID of the volume.
   returned: success
-  type: string
+  type: str
   sample:
 name:
   description: Name of the volume.
   returned: success
-  type: string
+  type: str
   sample: web-volume-01
 display_name:
   description: Display name of the volume.
   returned: success
-  type: string
+  type: str
   sample: web-volume-01
 group:
   description: Group the volume belongs to
   returned: success
-  type: string
+  type: str
   sample: web
 domain:
   description: Domain the volume belongs to
   returned: success
-  type: string
+  type: str
   sample: example domain
 project:
   description: Project the volume belongs to
   returned: success
-  type: string
+  type: str
   sample: Production
 zone:
   description: Name of zone the volume is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 created:
   description: Date of the volume was created.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 attached:
   description: Date of the volume was attached.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 type:
   description: Disk volume type.
   returned: success
-  type: string
+  type: str
   sample: DATADISK
 size:
   description: Size of disk volume.
   returned: success
-  type: string
+  type: str
   sample: 20
 vm:
   description: Name of the vm the volume is attached to (not returned when detached)
   returned: success
-  type: string
+  type: str
   sample: web-01
 state:
   description: State of the volume
   returned: success
-  type: string
+  type: str
   sample: Attached
 device_id:
   description: Id of the device on user vm the volume is attached to (not returned when detached)
   returned: success
-  type: string
+  type: str
   sample: 1
 '''
 

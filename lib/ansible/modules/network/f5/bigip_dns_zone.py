@@ -127,7 +127,7 @@ allow_notify_from:
 notify_action:
   description: The new DNS Express Notify Action value.
   returned: changed
-  type: string
+  type: str
   sample: consume
 verify_tsig:
   description: The new DNS Express Verify Notify TSIG value.
@@ -137,7 +137,7 @@ verify_tsig:
 express_server:
   description: The new DNS Express Server value.
   returned: changed
-  type: string
+  type: str
   sample: server1
 response_policy:
   description: The new DNS Express Response Policy value.
@@ -152,7 +152,7 @@ nameservers:
 tsig_server_key:
   description: The new TSIG Server Key value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/key1
 '''
 

@@ -123,27 +123,27 @@ RETURN = '''
 capabilities:
   description: Capabilities of the host.
   returned: success
-  type: string
+  type: str
   sample: hvm
 cluster:
   description: Cluster of the host.
   returned: success
-  type: string
+  type: str
   sample: vcenter.example.com/zone/cluster01
 cluster_type:
   description: Type of the cluster of the host.
   returned: success
-  type: string
+  type: str
   sample: ExternalManaged
 cpu_allocated:
   description: Amount in percent of the host's CPU currently allocated.
   returned: success
-  type: string
+  type: str
   sample: 166.25%
 cpu_number:
   description: Number of CPUs of the host.
   returned: success
-  type: string
+  type: str
   sample: 24
 cpu_sockets:
   description: Number of CPU sockets of the host.
@@ -158,22 +158,22 @@ cpu_speed:
 cpu_used:
   description: Amount of the host's CPU currently used.
   returned: success
-  type: string
+  type: str
   sample: 33.6%
 cpu_with_overprovisioning:
   description: Amount of the host's CPU after applying the cpu.overprovisioning.factor.
   returned: success
-  type: string
+  type: str
   sample: 959520.0
 created:
   description: Date when the host was created.
   returned: success
-  type: string
+  type: str
   sample: 2015-05-03T15:05:51+0200
 disconnected:
   description: Date when the host was disconnected.
   returned: success
-  type: string
+  type: str
   sample: 2015-05-03T15:05:51+0200
 disk_size_allocated:
   description: Host's currently allocated disk size.
@@ -188,7 +188,7 @@ disk_size_total:
 events:
   description: Events available for the host
   returned: success
-  type: string
+  type: str
   sample: "Ping; HostDown; AgentConnected; AgentDisconnected; PingTimeout; ShutdownRequested; Remove; StartAgentRebalance; ManagementServerDown"
 ha_host:
   description: Whether the host is a HA host.
@@ -203,22 +203,22 @@ has_enough_capacity:
 host_tags:
   description: Comma-separated list of tags for the host.
   returned: success
-  type: string
+  type: str
   sample: "perf"
 hypervisor:
   description: Host's hypervisor.
   returned: success
-  type: string
+  type: str
   sample: VMware
 hypervisor_version:
   description: Hypervisor version.
   returned: success
-  type: string
+  type: str
   sample: 5.1
 ip_address:
   description: IP address of the host
   returned: success
-  type: string
+  type: str
   sample: 10.10.10.1
 is_local_storage_active:
   description: Whether the local storage is available or not.
@@ -228,7 +228,7 @@ is_local_storage_active:
 last_pinged:
   description: Date and time the host was last pinged.
   returned: success
-  type: string
+  type: str
   sample: "1970-01-17T17:27:32+0100"
 management_server_id:
   description: Management server ID of the host.
@@ -253,7 +253,7 @@ memory_used:
 name:
   description: Name of the host.
   returned: success
-  type: string
+  type: str
   sample: esx32.example.com
 network_kbs_read:
   description: Incoming network traffic on the host.
@@ -268,53 +268,53 @@ network_kbs_write:
 os_category:
   description: OS category name of the host.
   returned: success
-  type: string
+  type: str
   sample: ...
 out_of_band_management:
   description: Host out-of-band management information.
   returned: success
-  type: string
+  type: str
   sample: ...
 pod:
   description: Pod name of the host.
   returned: success
-  type: string
+  type: str
   sample: Pod01
 removed:
   description: Date and time the host was removed.
   returned: success
-  type: string
+  type: str
   sample: "1970-01-17T17:27:32+0100"
 resource_state:
   description: Resource state of the host.
   returned: success
-  type: string
+  type: str
   sample: Enabled
 allocation_state::
   description: Allocation state of the host.
   returned: success
-  type: string
+  type: str
   sample: enabled
 state:
   description: State of the host.
   returned: success
-  type: string
+  type: str
   sample: Up
 suitable_for_migration:
   description: Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM
                to it or not.
   returned: success
-  type: string
+  type: str
   sample: true
 host_type:
   description: Type of the host.
   returned: success
-  type: string
+  type: str
   sample: Routing
 host_version:
   description: Version of the host.
   returned: success
-  type: string
+  type: str
   sample: 4.5.2
 gpu_group:
   description: GPU cards present in the host.
@@ -324,7 +324,7 @@ gpu_group:
 zone:
   description: Zone of the host.
   returned: success
-  type: string
+  type: str
   sample: zone01
 '''
 

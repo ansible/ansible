@@ -176,17 +176,17 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: http
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 port:
   description: The new port the monitor checks the resource on.
   returned: changed
-  type: string
+  type: str
   sample: 8080
 interval:
   description: The new interval in which to run the monitor check.
@@ -206,12 +206,12 @@ ignore_down_response:
 send:
   description: The new send string for this monitor.
   returned: changed
-  type: string
+  type: str
   sample: tcp string to send
 receive:
   description: The new receive string for this monitor.
   returned: changed
-  type: string
+  type: str
   sample: tcp string to receive
 probe_timeout:
   description: The new timeout in which the system will timeout the monitor probe.

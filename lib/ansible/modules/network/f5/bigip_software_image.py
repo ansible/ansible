@@ -82,22 +82,22 @@ RETURN = r'''
 image_type:
   description: Whether the image is a release or hotfix image
   returned: changed
-  type: string
+  type: str
   sample: release
 version:
   description: Version of the software contained in the image.
   returned: changed
-  type: string
+  type: str
   sample: 13.1.0.8
 build:
   description: Build version of the software contained in the image.
   returned: changed
-  type: string
+  type: str
   sample: 0.0.3
 checksum:
   description: MD5 checksum of the ISO.
   returned: changed
-  type: string
+  type: str
   sample: 8cdbd094195fab4b2b47ff4285577b70
 file_size:
   description: Size of the uploaded image in MB.

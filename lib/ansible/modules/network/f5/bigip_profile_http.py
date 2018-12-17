@@ -197,12 +197,12 @@ RETURN = r'''
 description:
   description: Description of the profile.
   returned: changed
-  type: string
+  type: str
   sample: My profile
 proxy_type:
   description: Specify proxy mode of the profile.
   returned: changed
-  type: string
+  type: str
   sample: explicit
 insert_xforwarded_for:
   description: Insert X-Forwarded-For-Header.
@@ -212,7 +212,7 @@ insert_xforwarded_for:
 redirect_rewrite:
   description: Rewrite URI that are part of 3xx responses.
   returned: changed
-  type: string
+  type: str
   sample: all
 encrypt_cookies:
   description: Cookie names to encrypt.
@@ -222,7 +222,7 @@ encrypt_cookies:
 dns_resolver:
   description: Configured dns resolver.
   returned: changed
-  type: string
+  type: str
   sample: '/Common/FooBar'
 '''
 

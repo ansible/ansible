@@ -137,12 +137,12 @@ full_sync:
 description:
   description: The new description of the device group.
   returned: changed
-  type: string
+  type: str
   sample: this is a device group
 type:
   description: The new type of the device group.
   returned: changed
-  type: string
+  type: str
   sample: sync-failover
 auto_sync:
   description: The new auto_sync value of the device group.

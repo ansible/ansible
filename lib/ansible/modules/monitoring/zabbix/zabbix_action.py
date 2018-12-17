@@ -385,7 +385,7 @@ RETURN = '''
 msg:
     description: The result of the operation
     returned: success
-    type: string
+    type: str
     sample: 'Action Deleted: Register webservers, ID: 0001'
 '''
 

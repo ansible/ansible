@@ -173,12 +173,12 @@ trail:
         trail_arn:
             description: Full ARN of the CloudTrail resource
             returned: success
-            type: string
+            type: str
             sample: arn:aws:cloudtrail:us-east-1:123456789012:trail/default
         name:
             description: Name of the CloudTrail resource
             returned: success
-            type: string
+            type: str
             sample: default
         is_logging:
             description: Whether logging is turned on or paused for the Trail
@@ -188,12 +188,12 @@ trail:
         s3_bucket_name:
             description: S3 bucket name where log files are delivered
             returned: success
-            type: string
+            type: str
             sample: myBucket
         s3_key_prefix:
             description: Key prefix in bucket where log files are delivered (if any)
             returned: success when present
-            type: string
+            type: str
             sample: myKeyPrefix
         log_file_validation_enabled:
             description: Whether log file validation is enabled on the trail
@@ -218,32 +218,32 @@ trail:
         home_region:
             description: The home region where the trail was originally created and must be edited.
             returned: success
-            type: string
+            type: str
             sample: us-east-1
         sns_topic_name:
             description: The SNS topic name where log delivery notifications are sent.
             returned: success when present
-            type: string
+            type: str
             sample: myTopic
         sns_topic_arn:
             description: Full ARN of the SNS topic where log delivery notifications are sent.
             returned: success when present
-            type: string
+            type: str
             sample: arn:aws:sns:us-east-1:123456789012:topic/myTopic
         cloud_watch_logs_log_group_arn:
             description: Full ARN of the CloudWatch Logs log group where events are delivered.
             returned: success when present
-            type: string
+            type: str
             sample: arn:aws:logs:us-east-1:123456789012:log-group:CloudTrail/DefaultLogGroup:*
         cloud_watch_logs_role_arn:
             description: Full ARN of the IAM role that CloudTrail assumes to deliver events.
             returned: success when present
-            type: string
+            type: str
             sample: arn:aws:iam::123456789012:role/CloudTrail_CloudWatchLogs_Role
         kms_key_id:
             description: Full ARN of the KMS Key used to encrypt log files.
             returned: success when present
-            type: string
+            type: str
             sample: arn:aws:kms::123456789012:key/12345678-1234-1234-1234-123456789012
         tags:
             description: hash/dictionary of tags applied to this resource

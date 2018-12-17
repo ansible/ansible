@@ -65,7 +65,7 @@ RETURN = '''
 dest:
     description: destination file/path
     returned: success
-    type: string
+    type: str
     sample: "/etc/network/interfaces"
 ifaces:
     description: interfaces dictionary
@@ -75,27 +75,27 @@ ifaces:
       ifaces:
         description: interface dictionary
         returned: success
-        type: dictionary
+        type: dict
         contains:
           eth0:
             description: Name of the interface
             returned: success
-            type: dictionary
+            type: dict
             contains:
               address_family:
                 description: interface address family
                 returned: success
-                type: string
+                type: str
                 sample: "inet"
               method:
                 description: interface method
                 returned: success
-                type: string
+                type: str
                 sample: "manual"
               mtu:
                 description: other options, all values returned as strings
                 returned: success
-                type: string
+                type: str
                 sample: "1500"
               pre-up:
                 description: list of C(pre-up) scripts

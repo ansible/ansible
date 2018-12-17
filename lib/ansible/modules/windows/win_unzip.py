@@ -99,16 +99,16 @@ RETURN = r'''
 dest:
     description: The provided destination path
     returned: always
-    type: string
+    type: str
     sample: C:\ExtractedLogs\application-error-logs
 removed:
     description: Whether the module did remove any files during task run
     returned: always
-    type: boolean
+    type: bool
     sample: True
 src:
     description: The provided source path
     returned: always
-    type: string
+    type: str
     sample: C:\Logs\application-error-logs.gz
 '''

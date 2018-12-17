@@ -100,7 +100,7 @@ RETURN = '''
 install_state:
     description: Boot and install information.
     returned: always
-    type: dictionary
+    type: dict
     sample: {
     "install_state": [
         "Compatibility check is done:",

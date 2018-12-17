@@ -93,7 +93,7 @@ RETURN = '''
 msg:
   description: Output from stdout of keytool/openssl command after execution of given command or an error.
   returned: changed and failure
-  type: string
+  type: str
   sample: "Unable to find the current certificate fingerprint in ..."
 
 rc:
@@ -105,7 +105,7 @@ rc:
 cmd:
   description: Executed command to get action done
   returned: changed and failure
-  type: string
+  type: str
   sample: "openssl x509 -noout -in /tmp/cert.crt -fingerprint -sha1"
 '''
 

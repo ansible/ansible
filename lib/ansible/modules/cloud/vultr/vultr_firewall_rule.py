@@ -104,7 +104,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -119,7 +119,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_firewall_rule:
   description: Response from Vultr API
@@ -134,12 +134,12 @@ vultr_firewall_rule:
     action:
       description: Action of the firewall rule
       returned: success
-      type: string
+      type: str
       sample: accept
     protocol:
       description: Protocol of the firewall rule
       returned: success
-      type: string
+      type: str
       sample: tcp
     start_port:
       description: Start port of the firewall rule
@@ -154,12 +154,12 @@ vultr_firewall_rule:
     cidr:
       description: CIDR of the firewall rule (IPv4 or IPv6)
       returned: success and when port range
-      type: string
+      type: str
       sample: 0.0.0.0/0
     group:
       description: Firewall group the rule is into.
       returned: success
-      type: string
+      type: str
       sample: web
 '''
 

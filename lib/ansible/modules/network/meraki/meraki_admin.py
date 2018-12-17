@@ -128,17 +128,17 @@ data:
         email:
             description: Email address of administrator.
             returned: success
-            type: string
+            type: str
             sample: your@email.com
         id:
             description: Unique identification number of administrator.
             returned: success
-            type: string
+            type: str
             sample: 1234567890
         name:
             description: Given name of administrator.
             returned: success
-            type: string
+            type: str
             sample: John Doe
         networks:
             description: List of networks administrator has access on.
@@ -148,12 +148,12 @@ data:
                 id:
                      description: The network ID.
                      returned: when network permissions are set
-                     type: string
+                     type: str
                      sample: N_0123456789
                 access:
                      description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
                      returned: when network permissions are set
-                     type: string
+                     type: str
                      sample: read-only
         tags:
             description: Tags the adminsitrator has access on.
@@ -163,17 +163,17 @@ data:
                 tag:
                     description: Tag name.
                     returned: when tag permissions are set
-                    type: string
+                    type: str
                     sample: production
                 access:
                     description: Access level of administrator. Options are 'full', 'read-only', or 'none'.
                     returned: when tag permissions are set
-                    type: string
+                    type: str
                     sample: full
         orgAccess:
             description: The privilege of the dashboard administrator on the organization. Options are 'full', 'read-only', or 'none'.
             returned: success
-            type: string
+            type: str
             sample: full
 '''
 

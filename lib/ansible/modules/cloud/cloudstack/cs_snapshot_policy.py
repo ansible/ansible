@@ -135,17 +135,17 @@ RETURN = '''
 id:
   description: UUID of the snapshot policy.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 interval_type:
   description: interval type of the snapshot policy.
   returned: success
-  type: string
+  type: str
   sample: daily
 schedule:
   description: schedule of the snapshot policy.
   returned: success
-  type: string
+  type: str
   sample:
 max_snaps:
   description: maximum number of snapshots retained.
@@ -155,32 +155,32 @@ max_snaps:
 time_zone:
   description: the time zone of the snapshot policy.
   returned: success
-  type: string
+  type: str
   sample: Etc/UTC
 volume:
   description: the volume of the snapshot policy.
   returned: success
-  type: string
+  type: str
   sample: Etc/UTC
 zone:
   description: Name of zone the volume is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 project:
   description: Name of project the volume is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 account:
   description: Account the volume is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 domain:
   description: Domain the volume is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 '''
 

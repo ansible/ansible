@@ -190,22 +190,22 @@ RETURN = r'''
 description:
   description: The new description of the application of the resource.
   returned: changed
-  type: string
+  type: str
   sample: My application
 service_environment:
   description: The environment which the service was deployed to.
   returned: changed
-  type: string
+  type: str
   sample: my-ssg1
 inbound_virtual_destination:
   description: The destination of the virtual that was created.
   returned: changed
-  type: string
+  type: str
   sample: 6.7.8.9
 inbound_virtual_netmask:
   description: The network mask of the provided inbound destination.
   returned: changed
-  type: string
+  type: str
   sample: 255.255.255.0
 inbound_virtual_port:
   description: The port the inbound virtual address listens on.
@@ -220,7 +220,7 @@ servers:
     address:
       description: The IP address of the server.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.4.5
     port:
       description: The port that the server listens on.

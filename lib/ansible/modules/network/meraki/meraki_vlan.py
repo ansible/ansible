@@ -141,12 +141,12 @@ response:
     applianceIp:
       description: IP address of Meraki appliance in the VLAN
       returned: success
-      type: string
+      type: str
       sample: 192.0.1.1
     dnsnamservers:
       description: IP address or Meraki defined DNS servers which VLAN should use by default
       returned: success
-      type: string
+      type: str
       sample: upstream_dns
     fixedIpAssignments:
       description: List of MAC addresses which have IP addresses assigned.
@@ -161,12 +161,12 @@ response:
             ip:
               description: IP address which is assigned to the MAC address.
               returned: success
-              type: string
+              type: str
               sample: 192.0.1.4
             name:
               description: Descriptive name for binding.
               returned: success
-              type: string
+              type: str
               sample: fixed_ip
     reservedIpRanges:
       description: List of IP address ranges which are reserved for static assignment.
@@ -176,17 +176,17 @@ response:
         comment:
           description: Description for IP address reservation.
           returned: success
-          type: string
+          type: str
           sample: reserved_range
         end:
           description: Last IP address in reservation range.
           returned: success
-          type: string
+          type: str
           sample: 192.0.1.10
         start:
           description: First IP address in reservation range.
           returned: success
-          type: string
+          type: str
           sample: 192.0.1.5
     id:
       description: VLAN ID number.
@@ -196,17 +196,17 @@ response:
     name:
       description: Descriptive name of VLAN
       returned: success
-      type: string
+      type: str
       sample: TestVLAN
     networkId:
       description: ID number of Meraki network which VLAN is associated to.
       returned: success
-      type: string
+      type: str
       sample: N_12345
     subnet:
       description: CIDR notation IP subnet of VLAN.
       returned: success
-      type: string
+      type: str
       sample: 192.0.1.0/24
 '''
 

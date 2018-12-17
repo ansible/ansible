@@ -58,17 +58,17 @@ ansible_facts:
         source:
           description: Init system of the service. One of C(systemd), C(sysv), C(upstart).
           returned: always
-          type: string
+          type: str
           sample: sysv
         state:
           description: State of the service. Either C(running) or C(stopped).
           returned: always
-          type: string
+          type: str
           sample: running
         name:
           description: Name of the service.
           returned: always
-          type: string
+          type: str
           sample: arp-ethers.service
 '''
 

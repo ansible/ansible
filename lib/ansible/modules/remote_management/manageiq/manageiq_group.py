@@ -170,7 +170,7 @@ group:
     description:
       description: The group description
       returned: success
-      type: string
+      type: str
     id:
       description: The group id
       returned: success
@@ -178,15 +178,15 @@ group:
     group_type:
       description: The group type, system or user
       returned: success
-      type: string
+      type: str
     role:
       description: The group role name
       returned: success
-      type: string
+      type: str
     tenant:
       description: The group tenant name
       returned: success
-      type: string
+      type: str
     managed_filters:
       description: The tag values per category
       returned: success
@@ -198,7 +198,7 @@ group:
     created_on:
       description: Group creation date
       returned: success
-      type: string
+      type: str
       example: 2018-08-12T08:37:55+00:00
     updated_on:
       description: Group update date

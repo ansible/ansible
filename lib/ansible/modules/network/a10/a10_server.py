@@ -93,7 +93,7 @@ RETURN = '''
 content:
   description: the full info regarding the slb_server
   returned: success
-  type: string
+  type: str
   sample: "mynewserver"
 '''
 import json

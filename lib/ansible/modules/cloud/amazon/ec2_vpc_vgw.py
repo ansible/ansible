@@ -104,7 +104,7 @@ RETURN = '''
 result:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 import time

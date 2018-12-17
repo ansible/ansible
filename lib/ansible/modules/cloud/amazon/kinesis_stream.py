@@ -147,17 +147,17 @@ RETURN = '''
 stream_name:
   description: The name of the Kinesis Stream.
   returned: when state == present.
-  type: string
+  type: str
   sample: "test-stream"
 stream_arn:
   description: The amazon resource identifier
   returned: when state == present.
-  type: string
+  type: str
   sample: "arn:aws:kinesis:east-side:123456789:stream/test-stream"
 stream_status:
   description: The current state of the Kinesis Stream.
   returned: when state == present.
-  type: string
+  type: str
   sample: "ACTIVE"
 retention_period_hours:
   description: Number of hours messages will be kept for a Kinesis Stream.

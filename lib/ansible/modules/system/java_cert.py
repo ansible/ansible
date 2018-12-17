@@ -110,7 +110,7 @@ RETURN = '''
 msg:
   description: Output from stdout of keytool command after execution of given command.
   returned: success
-  type: string
+  type: str
   sample: "Module require existing keystore at keystore_path '/tmp/test/cacerts'"
 
 rc:
@@ -122,7 +122,7 @@ rc:
 cmd:
   description: Executed command to get action done
   returned: success
-  type: string
+  type: str
   sample: "keytool -importcert -noprompt -keystore"
 '''
 

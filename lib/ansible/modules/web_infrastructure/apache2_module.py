@@ -87,7 +87,7 @@ RETURN = '''
 result:
     description: message about action taken
     returned: always
-    type: string
+    type: str
 warnings:
     description: list of warning messages
     returned: when needed
@@ -99,11 +99,11 @@ rc:
 stdout:
     description: stdout of underlying command
     returned: failed
-    type: string
+    type: str
 stderr:
     description: stderr of underlying command
     returned: failed
-    type: string
+    type: str
 '''
 
 import re

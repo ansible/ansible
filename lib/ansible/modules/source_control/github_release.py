@@ -116,13 +116,13 @@ create_release:
     - Version of the created release
     - "For Ansible version 2.5 and later, if specified release version already exists, then State is unchanged"
     - "For Ansible versions prior to 2.5, if specified release version already exists, then State is skipped"
-    type: string
+    type: str
     returned: success
     sample: 1.1.0
 
 latest_release:
     description: Version of the latest release
-    type: string
+    type: str
     returned: success
     sample: 1.1.0
 '''

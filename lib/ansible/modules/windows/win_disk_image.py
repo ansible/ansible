@@ -34,7 +34,7 @@ RETURN = r'''
 mount_path:
     description: filesystem path where the target image is mounted, this has been deprecated in favour of C(mount_paths)
     returned: when C(state) is C(present)
-    type: string
+    type: str
     sample: F:\
 mount_paths:
     description: a list of filesystem paths mounted from the target image

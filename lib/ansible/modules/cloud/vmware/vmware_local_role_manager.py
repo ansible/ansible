@@ -127,7 +127,7 @@ RETURN = r'''
 local_role_name:
     description: Name of local role
     returned: always
-    type: string
+    type: str
 role_id:
     description: ESXi generated local role id
     returned: always
