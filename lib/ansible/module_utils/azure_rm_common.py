@@ -994,7 +994,7 @@ class AzureRMAuth(object):
                 except Exception as e:
                     self.fail("cloud_environment {0} could not be resolved: {1}".format(raw_cloud_env, e.message), exception=traceback.format_exc())
 
-        # Use Subscription ID if specified by the client instead of the one in CLI
+        # Use Subscription ID if specified by the client instead of the one in CLI
         if subscription_id is not None:
              self.subscription_id = subscription_id
         else:
