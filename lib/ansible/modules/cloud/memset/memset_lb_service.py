@@ -170,9 +170,8 @@ def create_lb_service(args=None, service=None):
     Creates or updates a service. Unique key is the service name
     so if this isn't matched a new service will be created.
     '''
-    has_changed, has_failed = False, False
-    memset_api, msg = None, None
-    payload, retvals = dict(), dict()
+    retvals, payload = dict(), dict()
+    retvals['changed'], retvals['failed'] = False, False
 
     # if the user hasn't provided an IP, we use the primary IP of the loadbalancer
     if not args['virtual_ip']:
@@ -192,15 +191,15 @@ def create_lb_service(args=None, service=None):
         payload['load_balancer'] = args['load_balancer']
         # create the service
         if args['check_mode']:
-            has_changed = True
+            retvals['changed'] = True
             # return what would have been created to the user
-            memset_api = payload
+            retvals['memset_api'] = payload
         else:
             api_method = 'loadbalancer.service.add'
-            has_failed, msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
-            if not has_failed:
-                has_changed = True
-                memset_api = payload
+            retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
+            if not retvals['failed']:
+                retvals['changed'] = True
+                retvals['memset_api'] = payload
                 # empty msg as we don't want to return a boatlad of json to the user.
                 msg = None
     else:
@@ -215,24 +214,22 @@ def create_lb_service(args=None, service=None):
             pass
 
         if _service == payload:
-            memset_api == payload
+            memset_api = payload
         else:
             # add load_balancer to the payload late so we can compare dicts beforehand
             payload['load_balancer'] = args['load_balancer']
             # update service
             if args['check_mode']:
-                has_changed = True
-                memset_api == payload
+                retvals['changed'] = True
+                retvals['memset_api'] = payload
             else:
                 api_method = 'loadbalancer.service.update'
-                has_failed, msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
-                if not has_failed:
-                    has_changed = True
-                    memset_api = payload
-                    # empty msg as we don't want to return a boatload of json to the user.
-                    msg = None
+                retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
+                if not retvals['failed']:
+                    retvals['changed'] = True
+                    retvals['memset_api'] = payload
 
-    return(has_changed, has_failed, memset_api, msg)
+    return(retvals)
 
 
 def delete_lb_service(args=None, service=None):
@@ -241,26 +238,23 @@ def delete_lb_service(args=None, service=None):
     attached to the service then it will fail as these must be
     detached first.
     '''
-    has_changed, has_failed = False, False
-    memset_api, msg = None, None
-    payload = dict()
+    retvals, payload = dict(), dict()
+    retvals['changed'], retvals['failed'] = False, False
 
     if service is not None:
         for arg in ['load_balancer', 'service_name']:
             payload[arg] = args[arg]
         if args['check_mode']:
-            has_changed = True
-            memset_api = payload
+            retvals['changed'] = True
+            retvals['memset_api'] = payload
         else:
             api_method = 'loadbalancer.service.remove'
-            has_failed, msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
-            if not has_failed:
-                has_changed = True
-                memset_api = payload
-                # empty msg as we don't want to return a boatload of json to the user.
-                msg = None
+            retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
+            if not retvals['_failed']:
+                retvals['changed'] = True
+                retvals['memset_api'] = payload
 
-    return(has_changed, has_failed, memset_api, msg)
+    return(retvals)
 
 
 def create_or_delete(args=None):
@@ -268,9 +262,11 @@ def create_or_delete(args=None):
     Performs initial auth validation and gets a list of
     existing services to provide to create/delete functions.
     '''
-    has_failed, has_changed = False, False
-    msg, memset_api, current_service = None, None, None
+    # has_failed, has_changed = False, False
+    # msg, memset_api, current_service = None, None, None
+    # retvals, payload = dict(), dict()
     retvals, payload = dict(), dict()
+    retvals['changed'], retvals['failed'] = False, False
 
     # get the current services and check if the relevant service exists.
     payload['load_balancer'] = args['load_balancer']
@@ -281,7 +277,7 @@ def create_or_delete(args=None):
         # this is the first time the API is called; incorrect credentials will
         # manifest themselves at this point so we need to ensure the user is
         # informed of the reason.
-        retvals['failed'] = _has_failed
+        retvals['failed'] = True
         retvals['msg'] = msg
         retvals['stderr'] = "API returned an error: {0}" . format(response.status_code)
         return(retvals)
@@ -291,16 +287,10 @@ def create_or_delete(args=None):
             current_service = service
 
     if args['state'] == 'present':
-        has_changed, has_failed, memset_api, msg = create_lb_service(args=args, service=current_service)
+        retvals = create_lb_service(args=args, service=current_service)
 
     if args['state'] == 'absent':
-        has_changed, has_failed, memset_api, msg = delete_lb_service(args=args, service=current_service)
-
-    retvals['changed'] = has_changed
-    retvals['failed'] = has_failed
-    for val in ['msg', 'memset_api']:
-        if eval(val) is not None:
-            retvals[val] = eval(val)
+        retvals = delete_lb_service(args=args, service=current_service)
 
     return(retvals)
 
