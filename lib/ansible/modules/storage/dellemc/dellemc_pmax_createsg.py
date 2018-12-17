@@ -21,7 +21,7 @@ Flash"
 version_added: "2.8"
 description:
   - "This module has been tested against UNI 9.0. Every effort has been made
-  to verify the scripts run with valid input. These modules are a tech preview"
+  to verify the scripts run with valid input. These modules are a tech preview."
 module: dellemc_pmax_createsg
 options:
   array_id:
