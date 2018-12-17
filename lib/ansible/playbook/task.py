@@ -82,6 +82,7 @@ class Task(Base, Conditional, Taggable, Become):
     _register = FieldAttribute(isa='string')
     _retries = FieldAttribute(isa='int', default=3)
     _until = FieldAttribute(isa='list', default=list)
+    _verbosity = FieldAttribute(isa='int', default=0)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
