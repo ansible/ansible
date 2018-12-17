@@ -142,43 +142,29 @@ EXAMPLES = '''
 RETURN = '''
 '''
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.dellemc import dellemc_argument_spec, pmaxapi
 
 
 def main():
     changed = False
-    module = AnsibleModule(
-        argument_spec=dict(
-            sgname=dict(type='str', required=True),
-            unispherehost=dict(required=True),
-            universion=dict(type='int', required=False),
-            verifycert=dict(type='bool', required=True),
-            user=dict(type='str', required=True),
-            password=dict(type='str', required=True, no_log=True),
-            array_id=dict(type='str', required=True),
-            srp_id=dict(type='str', required=False),
-            slo=dict(type='str', required=False),
-            workload=dict(type='str', required=False),
-            num_vols=dict(type='int', required=True),
-            vol_size=dict(type='int', required=True),
-            cap_unit=dict(type='str', required=True, choices=['GB',
-                                                              'TB',
-                                                              'MB', 'CYL']),
-            volumeIdentifier=dict(type='str', required=False)))
-    try:
-        import PyU4V
-    except:
-        module.fail_json(
-            msg='Requirements not met PyU4V is not installed, please install '
-                'via PIP')
-        module.exit_json(changed=changed)
-
-    conn = PyU4V.U4VConn(server_ip=module.params['unispherehost'], port=8443,
-                         array_id=module.params['array_id'],
-                         verify=module.params['verifycert'],
-                         username=module.params['user'],
-                         password=module.params['password'],
-                         u4v_version=module.params['universion'])
+    argument_spec = dellemc_argument_spec()
+    argument_spec.update(dict(
+        sgname=dict(type='str', required=True),
+        srp_id=dict(type='str', required=False),
+        slo=dict(type='str', required=False),
+        workload=dict(type='str', required=False),
+        num_vols=dict(type='int', required=True),
+        vol_size=dict(type='int', required=True),
+        cap_unit=dict(type='str', required=True, choices=['GB',
+                                                          'TB',
+                                                          'MB', 'CYL']),
+        volumeIdentifier=dict(type='str', required=False),
+    ))
+    module = AnsibleModule(argument_spec=argument_spec)
+    # Setup connection to API and import provisioning modules.
+    conn = pmaxapi(module)
     dellemc = conn.provisioning
+
     # Compile a list of existing storage groups.
     sglist = dellemc.get_storage_group_list()
     # Check if Storage Group already exists
