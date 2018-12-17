@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Backup
 
 Set-StrictMode -Version 2
 
@@ -77,12 +78,6 @@ function Compare-XmlDocs($actual, $expected) {
     elseif ($actual.get_InnerText()) {
         throw "actual has inner text but expected does not for actual=" + $actual.get_Name()
     }
-}
-
-function BackupFile($path) {
-	$backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
-	Copy-Item $path $backuppath;
-	return $backuppath;
 }
 
 $params = Parse-Args $args -supports_check_mode $true
@@ -175,9 +170,11 @@ if ($type -eq "element") {
 
     if ($changed) {
         $result.changed = $true
-        if (!$check_mode) {
+        if (-not $check_mode) {
             if ($backup) {
-                $result.backup = BackupFile($dest)
+                $result.backup_file = Backup-File -path $dest -obj $result
+                # Ensure backward compatibility (deprecate in future)
+                $result.backup = $result.backup_file
             }
             $xmlorig.Save($dest)
         } else {
@@ -193,7 +190,9 @@ if ($type -eq "element") {
         $result.changed = $true
         if (-Not $check_mode) {
             if ($backup) {
-                $result.backup = BackupFile($dest)
+                $result.backup_file = Backup-File -path $dest -obj $result
+                # Ensure backward compatibility (deprecate in future)
+                $result.backup = $result.backup_file
             }
             $node.set_InnerText($fragment)
             $xmlorig.Save($dest)
@@ -211,10 +210,12 @@ if ($type -eq "element") {
         $result.changed = $true
         if (-Not $check_mode) {
             if ($backup) {
-                $result.backup = BackupFile($dest)
+                $result.backup_file = Backup-File -path $dest -obj $result
+                # Ensure backward compatibility (deprecate in future)
+                $result.backup = $result.backup_file
             }
             if (!$node.HasAttribute($attribute)) {
-	            $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
+                $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
             }
             $node.SetAttribute($attribute, $fragment)
             $xmlorig.Save($dest)
@@ -226,7 +227,9 @@ if ($type -eq "element") {
         $result.changed = $true
         if (-Not $check_mode) {
             if ($backup) {
-                $result.backup = BackupFile($dest)
+                $result.backup_file = Backup-File -path $dest -obj $result
+                # Ensure backward compatibility (deprecate in future)
+                $result.backup = $result.backup_file
             }
             $node.RemoveAttribute($attribute)
             $xmlorig.Save($dest)
