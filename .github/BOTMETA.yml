@@ -1127,7 +1127,6 @@ files:
     labels: networking
     maintainers:
       - samccann
-      - gundalow
   docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
   docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
 ###############################
