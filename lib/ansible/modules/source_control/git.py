@@ -122,6 +122,7 @@ options:
         description:
             - The umask to set before doing any checkouts, or any other
               repository maintenance.
+        type: mode
         version_added: "2.2"
 
     recursive:
@@ -1025,7 +1026,7 @@ def main():
             bare=dict(default='no', type='bool'),
             recursive=dict(default='yes', type='bool'),
             track_submodules=dict(default='no', type='bool'),
-            umask=dict(default=None, type='raw'),
+            umask=dict(type='mode'),
             archive=dict(type='path'),
             separate_git_dir=dict(type='path'),
         ),

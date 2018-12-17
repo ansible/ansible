@@ -133,7 +133,8 @@ options:
       - NOTE':' Instances with the least IDs will be terminated first.
   mode:
     description:
-      - Set permission mode of the instance in octet format, e.g. C(600) to give owner C(use) and C(manage) and nothing to group and others.
+      - Set permission mode of the instance in octet format, e.g. C('0600') to give owner C(use) and C(manage) and nothing to group and others.
+    type: str
   owner_id:
     description:
       - ID of the user which will be set as the owner of the instance
@@ -192,12 +193,12 @@ EXAMPLES = '''
 - one_vm:
     template_id: 90
     group_id: 16
-    mode: 660
+    mode: '0660'
 
 # Change VM's permissions to 640
 - one_vm:
     instance_ids: 5
-    mode: 640
+    mode: '0640'
 
 # Deploy 2 new instances and set memory, vcpu, disk_size and 3 networks
 - one_vm:
@@ -1245,7 +1246,7 @@ def main():
             "choices": ['present', 'absent', 'rebooted', 'poweredoff', 'running'],
             "type": "str"
         },
-        "mode": {"required": False, "type": "str"},
+        "mode": {"required": False, "type": "mode_str"},
         "owner_id": {"required": False, "type": "int"},
         "group_id": {"required": False, "type": "int"},
         "wait": {"default": True, "type": "bool"},

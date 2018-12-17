@@ -81,7 +81,7 @@ suboption_schema = Schema(
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'str'),
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'mode', 'mode_str', 'path', 'raw', 'str'),
         # Recursive suboptions
         'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
     },
@@ -102,7 +102,7 @@ option_schema = Schema(
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'str'),
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'mode', 'mode_str', 'path', 'raw', 'str'),
     },
     extra=PREVENT_EXTRA
 )

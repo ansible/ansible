@@ -33,6 +33,7 @@ options:
   mode:
     description:
       - File mode applied on versioned plugins.
+    type: mode
   name:
     description:
       - Plugin name.
@@ -705,7 +706,7 @@ def main():
     argument_spec.update(
         group=dict(default='jenkins'),
         jenkins_home=dict(default='/var/lib/jenkins'),
-        mode=dict(default='0644', type='raw'),
+        mode=dict(type='mode', default='0644'),
         name=dict(required=True),
         owner=dict(default='jenkins'),
         params=dict(type='dict'),

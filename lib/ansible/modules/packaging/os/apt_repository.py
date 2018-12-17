@@ -36,6 +36,7 @@ options:
     mode:
         description:
             - The octal mode for newly created files in sources.list.d
+        type: mode
         default: '0644'
         version_added: "1.6"
     update_cache:
@@ -482,7 +483,7 @@ def main():
         argument_spec=dict(
             repo=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            mode=dict(type='raw'),
+            mode=dict(type='mode'),
             update_cache=dict(type='bool', default=True, aliases=['update-cache']),
             filename=dict(type='str'),
             # This should not be needed, but exists as a failsafe

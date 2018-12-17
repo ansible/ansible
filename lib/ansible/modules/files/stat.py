@@ -155,8 +155,8 @@ stat:
         mode:
             description: Unix permissions of the file in octal
             returned: success, path exists and user can read stats
-            type: octal
-            sample: 1755
+            type: mode
+            sample: '01755'
         isdir:
             description: Tells you if the path is a directory
             returned: success, path exists and user can read stats

@@ -101,6 +101,7 @@ options:
         restrictive umask by default (e.g., "0077") and you want to pip install
         packages which are to be used by all users. Note that this requires you
         to specify desired umask mode as an octal string, (e.g., "0022").
+    type: mode
     version_added: "2.1"
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
@@ -576,7 +577,7 @@ def main():
             editable=dict(type='bool', default=False),
             chdir=dict(type='path'),
             executable=dict(type='path'),
-            umask=dict(type='str'),
+            umask=dict(type='mode_str'),  # TODO: Replace this with type 'mode' in Ansible 2.12
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],

@@ -52,7 +52,7 @@ options:
     mode:
         description:
           - Mode the file should be.
-        required: false
+        type: mode
     force:
         description:
           - Key store will be created even if it already exists.

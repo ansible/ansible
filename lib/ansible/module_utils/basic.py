@@ -232,7 +232,7 @@ FILE_COMMON_ARGUMENTS = dict(
     # These are things we want. About setting metadata (mode, ownership, permissions in general) on
     # created files (these are used by set_fs_attributes_if_different and included in
     # load_file_common_arguments)
-    mode=dict(type='raw'),
+    mode=dict(type='mode'),
     owner=dict(),
     group=dict(),
     seuser=dict(),
@@ -254,7 +254,8 @@ FILE_COMMON_ARGUMENTS = dict(
     remote_src=dict(),  # used by assemble
     regexp=dict(),  # used by assemble
     delimiter=dict(),  # used by assemble
-    directory_mode=dict(),  # used by copy
+    # TODO: Replace type 'mode_str' with type 'mode' in Ansible 2.12
+    directory_mode=dict(type='mode_str'),  # used by copy
     unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
 )
 
@@ -832,6 +833,8 @@ class AnsibleModule(object):
 
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
             'str': self._check_type_str,
+            'mode_str': self._check_type_mode_str,  # TODO: Remove this type in Ansible 2.12
+            'mode': self._check_type_mode,
             'list': self._check_type_list,
             'dict': self._check_type_dict,
             'bool': self._check_type_bool,
@@ -1871,6 +1874,20 @@ class AnsibleModule(object):
                    'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
             self.warn(msg)
         return to_native(value, errors='surrogate_or_strict')
+
+    # FIXME: We would like to have separate types for 'umask' and 'mode' in the future (in Ansible 2.12)
+    # TODO: Switch to using type 'mode' in Ansible 2.12, get rid of 'mode_str'
+    def _check_type_mode_str(self, value):
+        if isinstance(value, string_types):
+            return value
+        self.deprecate("File/directory mode or umask must be defined as a string, you may need to use quotes, e.g. '0755' or '0022'.", version='2.12')
+        return str(value)
+
+    def _check_type_mode(self, value):
+        if not isinstance(value, string_types):
+            # TODO: This eventually becomes a hard error starting from Ansible 2.12
+            self.deprecate("File/directory mode or umask must be defined as a string, you may need to use quotes, e.g. '0755' or '0022'.", version='2.12')
+        return value
 
     def _check_type_list(self, value):
         if isinstance(value, list):

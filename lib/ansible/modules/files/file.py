@@ -130,7 +130,7 @@ EXAMPLES = r'''
     path: /work
     owner: root
     group: root
-    mode: '1777'
+    mode: '01777'
 
 - name: Create a symbolic link
   file:

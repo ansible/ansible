@@ -73,7 +73,8 @@ options:
     default: present
   mode:
     description:
-      - Set permission mode of a service instance in octet format, e.g. C(600) to give owner C(use) and C(manage) and nothing to group and others.
+      - Set permission mode of a service instance in octet format, e.g. C('0600') to give owner C(use) and C(manage) and nothing to group and others
+    type: mode
   owner_id:
     description:
       - ID of the user which will be set as the owner of the service
@@ -123,7 +124,7 @@ EXAMPLES = '''
     template_name: 'app1_template'
     service_name: 'app1'
     group_id: 1
-    mode: '660'
+    mode: '0660'
 
 # Instantiate a new service with template_id and pass custom_attrs dict
 - one_service:
@@ -153,7 +154,7 @@ EXAMPLES = '''
     service_name: 'app2'
     owner_id: 34
     group_id: 113
-    mode: '600'
+    mode: '0600'
 
 # Instantiate service and wait for it to become RUNNING
 -  one_service:
@@ -673,7 +674,7 @@ def main():
             "choices": ['present', 'absent'],
             "type": "str"
         },
-        "mode": {"required": False, "type": "str"},
+        "mode": {"required": False, "type": "mode_str"},  # TODO: Replace this with type 'mode' in Ansible 2.12
         "owner_id": {"required": False, "type": "int"},
         "group_id": {"required": False, "type": "int"},
         "unique": {"default": False, "type": "bool"},

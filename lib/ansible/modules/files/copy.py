@@ -74,13 +74,13 @@ options:
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
     - As of Ansible 2.3, the mode may also be the special string C(preserve).
     - C(preserve) means that the file will be given the same permissions as the source file.
-    type: path
+    type: mode
   directory_mode:
     description:
     - When doing a recursive copy set the mode for the directories.
     - If this is not set we will use the system defaults.
     - The mode is only set on directories which are newly created, and will not affect those that already existed.
-    type: raw
+    type: mode
     version_added: '1.5'
   remote_src:
     description:
@@ -477,7 +477,7 @@ def main():
             backup=dict(type='bool', default=False),
             force=dict(type='bool', default=True, aliases=['thirsty']),
             validate=dict(type='str'),
-            directory_mode=dict(type='raw'),
+            directory_mode=dict(type='mode'),
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),

@@ -25,7 +25,7 @@ options:
       C(u=rw,g=r,o=r)).
     - As of Ansible 2.6, the mode may also be the special string C(preserve).
     - When set to C(preserve) the file will be given the same permissions as the source file.
-    type: str
+    type: mode
   owner:
     description:
     - Name of the user that should own the file/directory, as would be fed to I(chown).

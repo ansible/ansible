@@ -186,6 +186,8 @@ lib/ansible/modules/cloud/oneandone/oneandone_private_network.py E326
 lib/ansible/modules/cloud/oneandone/oneandone_public_ip.py E324
 lib/ansible/modules/cloud/oneandone/oneandone_public_ip.py E326
 lib/ansible/modules/cloud/oneandone/oneandone_server.py E326
+lib/ansible/modules/cloud/opennebula/one_service.py E325
+lib/ansible/modules/cloud/opennebula/one_vm.py E325
 lib/ansible/modules/cloud/openstack/os_flavor_facts.py E324
 lib/ansible/modules/cloud/openstack/os_flavor_facts.py E335
 lib/ansible/modules/cloud/openstack/os_image.py E324
@@ -695,6 +697,7 @@ lib/ansible/modules/packaging/language/pear.py E322
 lib/ansible/modules/packaging/language/pear.py E326
 lib/ansible/modules/packaging/language/pip.py E322
 lib/ansible/modules/packaging/language/pip.py E324
+lib/ansible/modules/packaging/language/pip.py E325
 lib/ansible/modules/packaging/os/apk.py E326
 lib/ansible/modules/packaging/os/apt.py E322
 lib/ansible/modules/packaging/os/apt.py E324

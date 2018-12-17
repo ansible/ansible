@@ -361,7 +361,7 @@ def main():
             sambaCustomSettings=dict(type='list',
                                      aliases=['samba_custom_settings'],
                                      default=[]),
-            sambaDirectoryMode=dict(type='str',
+            sambaDirectoryMode=dict(type='mode_str',  # TODO: Replace this with type 'mode' in Ansible 2.12
                                     aliases=['samba_directory_mode'],
                                     default='0755'),
             sambaDirectorySecurityMode=dict(type='str',
