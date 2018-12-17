@@ -308,7 +308,7 @@ class Certificate(object):
                 temp_directory = tempfile.mkdtemp()
                 copy2(self.public_key, temp_directory)
                 args.extend([temp_directory + "/" + os.path.basename(self.public_key)])
-                module.run_command(args, environ_update=dict(TZ="UTC"))
+                module.run_command(args, environ_update=dict(TZ="UTC"), check_rc=True)
                 copy2(temp_directory + "/" + os.path.splitext(os.path.basename(self.public_key))[0] + "-cert.pub", self.path)
                 rmtree(temp_directory, ignore_errors=True)
                 proc = module.run_command([self.ssh_keygen, '-L', '-f', self.path])
@@ -384,7 +384,7 @@ class Certificate(object):
             for fmt in formats:
                 try:
                     return datetime.strptime(timestring, fmt)
-                except:
+                except ValueError:
                     pass
             module.fail_json(msg="'%s' is not a valid time format" % timestring)
 
@@ -392,6 +392,17 @@ class Certificate(object):
         if timestr.startswith("+") or timestr.startswith("-"):
             return True
         return False
+
+    def is_same_datetime(self, datetime_one, datetime_two):
+
+        # This function is for backwards compatability only because .total_seconds() is new in python2.7
+        def timedelta_total_seconds(timedelta):
+            return ((timedelta.microseconds + 0.0 + (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6)
+        # try to use .total_ seconds() from python2.7
+        try:
+            return (datetime_one - datetime_two).total_seconds() == 0.0
+        except AttributeError:
+            return timedelta_total_seconds(datetime_one - datetime_two) == 0.0
 
     def is_valid(self, module, perms_required=True):
 
@@ -409,18 +420,22 @@ class Certificate(object):
                 principals = None
             cert_type = re.findall("( user | host )", proc[1])[0].strip()
             validity = re.findall("(from (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}) to (\\d{4}-\\d{2}-\\d{2}T\\d{2}(:\\d{2}){2}))", proc[1])
-            if validity[0][1]:
-                cert_valid_from = self.convert_to_datetime(module, validity[0][1])
-                if (cert_valid_from - self.convert_to_datetime(module, "1970:01:01:01:01:01")).total_seconds() == 0.0:
+            if validity:
+                if validity[0][1]:
+                    cert_valid_from = self.convert_to_datetime(module, validity[0][1])
+                    if self.is_same_datetime(cert_valid_from, self.convert_to_datetime(module, "1970:01:01:01:01:01")):
+                        cert_valid_from = datetime(MINYEAR, 1, 1)
+                else:
                     cert_valid_from = datetime(MINYEAR, 1, 1)
-            else:
-                cert_valid_from = datetime(MINYEAR, 1, 1)
 
-            if validity[0][3]:
-                cert_valid_to = self.convert_to_datetime(module, validity[0][3])
-                if (cert_valid_to - self.convert_to_datetime(module, "2038:01:19:03:14:07")).total_seconds() == 0.0:
+                if validity[0][3]:
+                    cert_valid_to = self.convert_to_datetime(module, validity[0][3])
+                    if self.is_same_datetime(cert_valid_to, self.convert_to_datetime(module, "2038:01:19:03:14:07")):
+                        cert_valid_to = datetime(MAXYEAR, 12, 31)
+                else:
                     cert_valid_to = datetime(MAXYEAR, 12, 31)
             else:
+                cert_valid_from = datetime(MINYEAR, 1, 1)
                 cert_valid_to = datetime(MAXYEAR, 12, 31)
         else:
             return False
@@ -451,10 +466,10 @@ class Certificate(object):
                 last_time = self.convert_to_datetime(module, self.valid_to)
 
             if earliest_time:
-                if not (earliest_time - cert_valid_from).total_seconds() == 0.0:
+                if not self.is_same_datetime(earliest_time, cert_valid_from):
                     return False
             if last_time:
-                if not (last_time - cert_valid_to).total_seconds() == 0.0:
+                if not self.is_same_datetime(last_time, cert_valid_to):
                     return False
 
             if self.valid_at:
