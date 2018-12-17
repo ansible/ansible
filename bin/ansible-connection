@@ -90,7 +90,7 @@ class ConnectionProcess(object):
             messages = list()
             result = {}
 
-            messages.append('control socket path is %s' % self.socket_path)
+            messages.append(('vvvv', 'control socket path is %s' % self.socket_path))
 
             # If this is a relative path (~ gets expanded later) then plug the
             # key's path on to the directory we originally came from, so we can
@@ -100,17 +100,18 @@ class ConnectionProcess(object):
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     ansible_playbook_pid=self._ansible_playbook_pid)
             self.connection.set_options(var_options=variables)
+
             self.connection._connect()
 
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
-            messages.extend(sys.stdout.getvalue().splitlines())
-            messages.append('connection to remote device started successfully')
+            messages.extend([('vvvv', msg) for msg in sys.stdout.getvalue().splitlines()])
+            messages.append(('vvvv', 'connection to remote device started successfully'))
 
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.bind(self.socket_path)
             self.sock.listen(1)
-            messages.append('local domain socket listeners started successfully')
+            messages.append(('vvvv', 'local domain socket listeners started successfully'))
         except Exception as exc:
             result['error'] = to_text(exc)
             result['exception'] = traceback.format_exc()
@@ -282,7 +283,7 @@ def main():
                     os.close(w)
                     rfd = os.fdopen(r, 'r')
                     data = json.loads(rfd.read(), cls=AnsibleJSONDecoder)
-                    messages.extend([('vvvv', msg) for msg in data.pop('messages')])
+                    messages.extend(data.pop('messages'))
                     result.update(data)
 
             else:
