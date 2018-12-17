@@ -187,8 +187,8 @@ def write_data(text, output_dir, outputname, module=None):
 
         try:
             updated = update_file_if_different(fname, to_bytes(text))
-        except:
-            display.display("while rendering %s, an error occured:" % module)
+        except Exception as e:
+            display.display("while rendering %s, an error occured: %s" % (module, e))
             raise
         if updated:
             display.display("rendering: %s" % module)
