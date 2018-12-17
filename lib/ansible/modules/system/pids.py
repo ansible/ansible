@@ -47,7 +47,7 @@ import sys
 try:
     import psutil
     HAS_PSUTIL = True
-except:
+except Exception:
     pass
 else:
     HAS_PSUTIL = False
