@@ -62,6 +62,7 @@ options:
       has mainframe or multiple pools you can set this to a different value to
       match your environment"
     required: false
+    type: str
   unispherehost:
     description:
       - "Fully Qualified Domain Name or IP address of Unisphere for PowerMax
