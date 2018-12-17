@@ -92,6 +92,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get Manager NIC inventory information
+    redfish_facts:
+      category: Manager
+      command: GetManagerNicInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in the Manager category
     redfish_facts:
       category: Manager
