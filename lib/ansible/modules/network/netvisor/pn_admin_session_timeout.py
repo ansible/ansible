@@ -32,7 +32,6 @@ options:
     required: True
     type: str
     choices: ['update']
-    type: str
   pn_timeout:
     description:
       - Maximum time to wait for user activity before
