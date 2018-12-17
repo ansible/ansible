@@ -1,0 +1,2 @@
+bugfixes:
+  - setup - fix the rounding of the ansible_memtotal_mb value on VMWare vm's (https://github.com/ansible/ansible/issues/49608)
