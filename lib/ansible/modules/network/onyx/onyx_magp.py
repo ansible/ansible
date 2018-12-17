@@ -65,6 +65,7 @@ commands:
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
 
 from ansible.module_utils.network.onyx.onyx import BaseOnyxModule
 from ansible.module_utils.network.onyx.onyx import show_cmd
@@ -133,10 +134,17 @@ class OnyxMagpModule(BaseOnyxModule):
             router_mac=self.get_config_attr(item, "Virtual MAC"))
 
     def _update_magp_data(self, magp_data):
-        for magp_item in magp_data:
-            magp_id = self.get_magp_id(magp_item)
-            inst_data = self._create_magp_instance_data(magp_id, magp_item)
-            self._current_config[magp_id] = inst_data
+        if self._os_version >= self.ONYX_API_VERSION:
+            for magp_config in magp_data:
+                for magp_name, data in iteritems(magp_config):
+                    magp_id = int(magp_name.replace('MAGP ', ''))
+                    self._current_config[magp_id] = \
+                        self._create_magp_instance_data(magp_id, data[0])
+        else:
+            for magp_item in magp_data:
+                magp_id = self.get_magp_id(magp_item)
+                inst_data = self._create_magp_instance_data(magp_id, magp_item)
+                self._current_config[magp_id] = inst_data
 
     def _get_magp_config(self):
         cmd = "show magp"
@@ -144,6 +152,7 @@ class OnyxMagpModule(BaseOnyxModule):
 
     def load_current_config(self):
         # called in base class in run function
+        self._os_version = self._get_os_version()
         self._current_config = dict()
         magp_data = self._get_magp_config()
         if magp_data:
