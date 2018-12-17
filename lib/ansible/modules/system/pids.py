@@ -47,8 +47,11 @@ import sys
 try:
     import psutil
     HAS_PSUTIL = True
+except:
+    pass
 else:
     HAS_PSUTIL = False
+
 
 def get_pid(name, module):
     return [int(p.info['pid']) for p in psutil.process_iter(attrs=['pid', 'name']) if name in p.info['name']]
@@ -61,7 +64,7 @@ def main():
         }
     )
 	if not HAS_PSUTIL:
-        module.fail_json(msg="Missing required 'psutil' python module. Try installing it with: pip install psutil")
+		module.fail_json(msg="Missing required 'psutil' python module. Try installing it with: pip install psutil")
     name = module.params["name"]
     response = dict(pids=get_pid(name, module))
     module.exit_json(**response)
