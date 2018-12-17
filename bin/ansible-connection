@@ -179,6 +179,7 @@ class ConnectionProcess(object):
     def shutdown(self):
         """ Shuts down the local domain socket
         """
+        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(self.socket_path))
         if os.path.exists(self.socket_path):
             try:
                 if self.sock:
@@ -192,6 +193,10 @@ class ConnectionProcess(object):
                     os.remove(self.socket_path)
                     setattr(self.connection, '_socket_path', None)
                     setattr(self.connection, '_connected', False)
+
+        if os.path.exists(lock_path):
+            os.remove(lock_path)
+
         display.display('shutdown complete', log_only=True)
 
 
@@ -246,8 +251,8 @@ def main():
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         makedirs_safe(tmp_path)
 
-        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % (tmp_path, play_context.remote_addr))
         socket_path = unfrackpath(cp % dict(directory=tmp_path))
+        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(socket_path))
 
         with file_lock(lock_path):
             if not os.path.exists(socket_path):
