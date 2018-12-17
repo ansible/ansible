@@ -2,6 +2,7 @@
   set_fact:
     nsgname: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     storageaccountname: "stacc{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    dbname: "mdb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: Call REST API
@@ -94,7 +95,7 @@
     resource_group: "{{ resource_group }}"
     provider: DBforMariaDB
     resource_type: servers
-    resource_name: "mdb{{ rpfx }}"
+    resource_name: "{{ dbname }}"
     body:
       location: westus
       properties:
