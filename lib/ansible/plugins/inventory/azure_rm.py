@@ -416,7 +416,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         body_content = self._serializer.body(body_obj, 'object')
 
-        header = { 'x-ms-client-request-id': str(uuid.uuid4()) }
+        header = {'x-ms-client-request-id': str(uuid.uuid4())}
         header.update(self._default_header_parameters)
 
         request = self._client.post(url, query_parameters)
