@@ -2,6 +2,7 @@
   set_fact:
     nsgname: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     storageaccountname: "stacc{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    dbname: "mdb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: Call REST API
@@ -64,11 +65,26 @@
     resource_name: "{{ nsgname }}"
   register: output
 
-- name: Create storage account for Registry
-  azure_rm_storageaccount:
+- name: Create storage account that requires LRO polling
+  azure_rm_resource:
+    polling_timeout: 600
+    polling_interval: 60
+    api_version: '2018-07-01'
     resource_group: "{{ resource_group }}"
-    name: "{{ storageaccountname }}"
-    type: Standard_LRS
+    provider: Storage
+    resource_type: storageAccounts
+    resource_name: "{{ storageaccountname }}"
+    body:
+      sku:
+        name: Standard_GRS
+      kind: Storage
+      location: eastus
+  register: output
+
+- name: Assert that storage was successfully created
+  assert:
+    that: "output['response']['name'] == '{{ storageaccountname }}'"
+
 
 - name: Try to storage keys -- special case when subresource part has no name
   azure_rm_resource:
@@ -85,3 +101,14 @@
 - name: Assert that key was returned
   assert:
     that: keys['response']['keys'][0]['value'] | length > 0
+
+- name: Delete storage
+  azure_rm_resource:
+    polling_timeout: 600
+    polling_interval: 60
+    method: DELETE
+    api_version: '2018-07-01'
+    resource_group: "{{ resource_group }}"
+    provider: Storage
+    resource_type: storageAccounts
+    resource_name: "{{ storageaccountname }}"
