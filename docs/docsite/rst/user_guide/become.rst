@@ -235,7 +235,7 @@ To force ``become`` to open a new systemd session that goes through
 For more information, see `this systemd issue
 <https://github.com/systemd/systemd/issues/825#issuecomment-127917622>`_.
 
-.. _become-network:
+.. _become_network:
 
 Become and Networks
 ===================
@@ -324,7 +324,7 @@ Ansible still supports ``enable`` mode with ``connection: local`` for legacy pla
 
 We recommend updating your playbooks to use ``become`` for network-device ``enable`` mode consistently. The use of ``authorize`` and of ``provider`` dictionaries will be deprecated in future. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
 
-.. _become-windows:
+.. _become_windows:
 
 Become and Windows
 ==================
