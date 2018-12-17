@@ -58,7 +58,7 @@ options:
      description:
         - Whether the image can be accessed publicly. Note that publicizing an image requires admin role by default.
      type: bool
-     default: 'yes'
+     default: 'no'
    filename:
      description:
         - The path to the file which has to be uploaded
