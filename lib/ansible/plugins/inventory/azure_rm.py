@@ -143,6 +143,8 @@ exclude_host_filters:
 import hashlib
 import json
 import re
+import random
+import uuid
 
 try:
     from queue import Queue, Empty
@@ -380,7 +382,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                     query_parameters = {'api-version': item.api_version}
                     req = self._client.get(item.url, query_parameters)
 
-                    batch_requests.append(dict(httpMethod="GET", url=req.url))
+                    batch_requests.append(dict(httpMethod="GET", url=req.url, name="ansible" + str(random.randint(1, 1000000))))
                     batch_response_handlers.append(item)
                     batch_item_index += 1
             except Empty:
@@ -391,12 +393,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
             batch_resp = self._send_batch(batch_requests)
 
-            for idx, r in enumerate(batch_resp['responses']):
+            key_name = None
+            if 'responses' in batch_resp:
+                key_name = 'responses'
+            if 'value' in batch_resp:
+                key_name = 'value'
+
+            for idx, r in enumerate(batch_resp[key_name]):
                 status_code = r.get('httpStatusCode')
                 if status_code != 200:
                     # FUTURE: error-tolerant operation mode (eg, permissions)
                     raise AnsibleError("a batched request failed with status code {0}, url {1}".format(status_code, batch_requests[idx].get('url')))
-
                 item = batch_response_handlers[idx]
                 # FUTURE: store/handle errors from individual handlers
                 item.handler(r['content'], **item.handler_args)
@@ -409,8 +416,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         body_content = self._serializer.body(body_obj, 'object')
 
+        header = { 'x-ms-client-request-id': str(uuid.uuid4()) }
+        header.update(self._default_header_parameters)
+
         request = self._client.post(url, query_parameters)
-        initial_response = self._client.send(request, self._default_header_parameters, body_content)
+        initial_response = self._client.send(request, header, body_content)
 
         # FUTURE: configurable timeout?
         poller = ARMPolling(timeout=2)
@@ -499,7 +509,7 @@ class AzureHost(object):
                 pip_id = ipc['properties'].get('publicIPAddress', {}).get('id')
                 if pip_id:
                     pip = nic.public_ips[pip_id]
-                    new_hostvars['public_ipv4_addresses'].append(pip._pip_model['properties']['ipAddress'])
+                    new_hostvars['public_ipv4_addresses'].append(pip._pip_model['properties'].get('ipAddress', None))
                     pip_fqdn = pip._pip_model['properties'].get('dnsSettings', {}).get('fqdn')
                     if pip_fqdn:
                         new_hostvars['public_dns_hostnames'].append(pip_fqdn)
@@ -514,8 +524,9 @@ class AzureHost(object):
                                  for s in vm_instanceview_model.get('statuses', []) if self._powerstate_regex.match(s.get('code', ''))), 'unknown')
 
     def _on_nic_response(self, nic_model, is_primary=False):
-        nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
-        self.nics.append(nic)
+        if 'type' in nic_model and nic_model['type'] == 'Microsoft.Network/networkInterfaces':
+            nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
+            self.nics.append(nic)
 
 
 class AzureNic(object):
