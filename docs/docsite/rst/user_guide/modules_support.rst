@@ -22,7 +22,7 @@ Network
 Certified
 `````````
 
-Certified modules are part of a future planned program currently in development.
+`Certified <https://access.redhat.com/articles/3642632>`_ modules are maintained by Ansible Partners.
 
 Community
 `````````
