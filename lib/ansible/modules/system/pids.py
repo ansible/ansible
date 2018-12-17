@@ -63,8 +63,8 @@ def main():
             "name": {"required": True, "type": "str"}
         }
     )
-	if not HAS_PSUTIL:
-		module.fail_json(msg="Missing required 'psutil' python module. Try installing it with: pip install psutil")
+    if not HAS_PSUTIL:
+        module.fail_json(msg="Missing required 'psutil' python module. Try installing it with: pip install psutil")
     name = module.params["name"]
     response = dict(pids=get_pid(name, module))
     module.exit_json(**response)
