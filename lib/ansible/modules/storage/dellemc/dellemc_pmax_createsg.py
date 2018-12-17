@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright (C) 2018 DellEMC
+# Copyright: (C) 2018, DellEMC
 # Author(s): Paul Martin <paule.martin@dell.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -21,7 +21,7 @@ Flash"
 version_added: "2.8"
 description:
   - "This module has been tested against UNI 9.0. Every effort has been made
-  to verify the scripts run with valid input. These modules are a tech preview"
+  to verify the scripts run with valid input. These modules are a tech preview."
 module: dellemc_pmax_createsg
 options:
   array_id:
@@ -37,17 +37,18 @@ options:
     description:
       - "String value, default is set to GB"
     required: false
+    default: GB
   num_vols:
     description:
       - "integer value for the number of volumes. Minimum is 1, module will
       fail if less than one volume is specified or value is 0. If volumes are
       required of different sizes, additional tasks should be added to
-      playbooks to use dellemc_pmax_addvolume module"
+      playbooks to use M(dellemc_pmax_addvolume) module."
     required: true
   sgname:
     description:
       - "Storage Group name 32 Characters no special characters other than
-      underscore"
+      underscore."
     required: true
   slo:
     description:
@@ -59,8 +60,9 @@ options:
     description:
       - "Storage Resource Pool Name, Default is set to SRP_1, if your system
       has mainframe or multiple pools you can set this to a different value to
-      match your environment"
+      match your environment."
     required: false
+    type: str
   unispherehost:
     description:
       - "Fully Qualified Domain Name or IP address of Unisphere for PowerMax
