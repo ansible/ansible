@@ -37,6 +37,7 @@ options:
     description:
       - "String value, default is set to GB"
     required: false
+    default: GB
   num_vols:
     description:
       - "integer value for the number of volumes. Minimum is 1, module will
