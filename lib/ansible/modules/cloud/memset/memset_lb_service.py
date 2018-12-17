@@ -17,13 +17,13 @@ DOCUMENTATION = '''
 ---
 module: memset_lb_service
 author: "Simon Weald (@analbeard)"
-version_added: "2.7"
+version_added: "2.8"
 short_description: Manage Memset loadbalancer services.
 notes:
   - A loadbalancer service is logically the Internet-facing 'frontend'. This must
-    be backed by one or more servers using the C(memset_lb_server) module. An API key
-    generated via the Memset customer control panel is needed with the following
-    minimum scope - I(loadbalancer.service.add), I(loadbalancer.service.info),
+    be backed by one or more servers using the C(memset_lb_server) module.
+  - An API key generated via the Memset customer control panel is needed with the
+    following minimum scope - I(loadbalancer.service.add), I(loadbalancer.service.info),
     I(loadbalancer.service.list), I(loadbalancer.service.remove),
     I(loadbalancer.service.update).
 description:
