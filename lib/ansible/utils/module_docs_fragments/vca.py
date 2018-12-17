@@ -1,56 +1,53 @@
-# (c) 2016, Charles Paul <cpaul@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2016, Charles Paul <cpaul@ansible.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
     # Parameters for VCA modules
-    DOCUMENTATION = """
+    DOCUMENTATION = r'''
 options:
     username:
       description:
         - The vca username or email address, if not set the environment variable C(VCA_USER) is checked for the username.
-      aliases: ['user']
+      type: str
+      aliases: [ user ]
     password:
       description:
         - The vca password, if not set the environment variable C(VCA_PASS) is checked for the password.
-      aliases: ['pass', 'passwd']
+      type: str
+      aliases: [ pass, passwd]
     org:
       description:
-        - The org to login to for creating vapp. This option is required when the C(service_type) is I(vdc).
+        - The org to login to for creating vapp.
+        - This option is required when the C(service_type) is I(vdc).
+      type: str
     instance_id:
       description:
-        - The instance id in a vchs environment to be used for creating the vapp.
+        - The instance ID in a vchs environment to be used for creating the vapp.
+      type: str
     host:
       description:
         - The authentication host to be used when service type is vcd.
+      type: str
     api_version:
       description:
-        - The api version to be used with the vca.
+        - The API version to be used with the vca.
+      type: str
       default: "5.7"
     service_type:
       description:
         - The type of service we are authenticating against.
+      type: str
+      choices: [ vca, vcd, vchs ]
       default: vca
-      choices: [ "vca", "vchs", "vcd" ]
     state:
       description:
-        - If the object should be added or removed.
+        - Whether the object should be added or removed.
+      type: str
+      choices: [ absent, present ]
       default: present
-      choices: [ "present", "absent" ]
     verify_certs:
       description:
         - If the certificates of the authentication is to be verified.
@@ -59,8 +56,10 @@ options:
     vdc_name:
       description:
         - The name of the vdc where the gateway is located.
+      type: str
     gateway_name:
       description:
         - The name of the gateway of the vdc where the rule should be added.
+      type: str
       default: gateway
-"""
+'''
