@@ -58,7 +58,7 @@ options:
       - With Requester Pays buckets, the requester instead of the bucket owner pays the cost
         of the request and the data download from the bucket.
     type: bool
-    default: 'no'
+    default: False
   state:
     description:
       - Create or remove the s3 bucket
@@ -197,7 +197,7 @@ def create_or_update_bucket(s3_client, module, location):
         if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays is not None:
             module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     else:
-        if requester_pays is not None:
+        if requester_pays:
             payer = 'Requester' if requester_pays else 'BucketOwner'
             if requester_pays_status != payer:
                 put_bucket_request_payment(s3_client, name, payer)
@@ -545,7 +545,7 @@ def main():
             force=dict(required=False, default='no', type='bool'),
             policy=dict(required=False, default=None, type='json'),
             name=dict(required=True, type='str'),
-            requester_pays=dict(default='no', type='bool'),
+            requester_pays=dict(default=False, type='bool'),
             s3_url=dict(aliases=['S3_URL'], type='str'),
             state=dict(default='present', type='str', choices=['present', 'absent']),
             tags=dict(required=False, default=None, type='dict'),
