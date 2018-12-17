@@ -154,24 +154,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 
-# Common fields for the default rule that is contained within every VPC NACL.
-DEFAULT_RULE_FIELDS = {
-    'RuleNumber': 32767,
-    'RuleAction': 'deny',
-    'CidrBlock': '0.0.0.0/0',
-    'Protocol': '-1'
-}
-
-DEFAULT_RULE_FIELDS_IPV6 = {
-    'RuleNumber': 32768,
-    'RuleAction': 'deny',
-    'CidrBlock': '::/0',
-    'Protocol': '-1'
-}
-
-DEFAULT_INGRESS = [dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', False)]), dict(list(DEFAULT_RULE_FIELDS_IPV6.items()) + [('Egress', False)])]
-DEFAULT_EGRESS = [dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)]), dict(list(DEFAULT_RULE_FIELDS_IPV6.items()) + [('Egress', True)])]
-
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
 PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
@@ -181,13 +163,6 @@ PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
 def icmp_present(entry):
     if len(entry) == 6 and entry[1] == 'icmp' or entry[1] == 1:
         return True
-
-
-def match_default_rules(rule, egress):
-    default_rules = DEFAULT_EGRESS if egress else DEFAULT_INGRESS
-    for r in default_rules:
-        if r['RuleNumber'] == rule['RuleNumber']:
-            return True
 
 
 def load_tags(module):
@@ -250,10 +225,10 @@ def nacls_changed(nacl, client, module):
     nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
     nacl = describe_network_acl(client, module)
     entries = nacl['NetworkAcls'][0]['Entries']
-    tmp_egress = [entry for entry in entries if entry['Egress'] is True and not match_default_rules(entry, True)]
+    tmp_egress = [entry for entry in entries if entry['Egress'] is True and rule['RuleNumber'] < 32767]
     tmp_ingress = [entry for entry in entries if entry['Egress'] is False]
-    egress = [rule for rule in tmp_egress if not match_default_rules(rule, True)]
-    ingress = [rule for rule in tmp_ingress if not match_default_rules(rule, False)]
+    egress = [rule for rule in tmp_egress if rule['RuleNumber'] < 32767]
+    ingress = [rule for rule in tmp_ingress if rule['RuleNumber'] < 32767]
     if rules_changed(egress, params['egress'], True, nacl_id, client, module):
         changed = True
     if rules_changed(ingress, params['ingress'], False, nacl_id, client, module):
