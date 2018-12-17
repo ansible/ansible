@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-import re, socket
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -152,6 +151,8 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+import re
+import socket
 import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
