@@ -13,7 +13,7 @@ Roles are sets of Ansible defaults, files, tasks, templates, variables, and othe
 Understanding roles
 ===================
 
-So what exactly is a role, and why should you care? Ansible roles are basically playbooks broken up into a known file structure.  The goal for roles is to create robust and reusable functions so users don’t have to recreate a playbook from scratch.  So for example, you don’t have to write your own DNS playbook. Instead, you specify a DNS server, and an Ansible role will configure it for you.  Roles will make adopting Ansible Network Automation faster, easier and in a more agnostic fashion resulting in freeing you from the burden of building the playbook logic yourself.
+So what exactly is a role, and why should you care? Ansible roles are basically playbooks broken up into a known file structure.  The goal for roles is to create robust and reusable functions so users don't have to recreate a playbook from scratch.  So for example, you don't have to write your own DNS playbook. Instead, you specify a DNS server, and an Ansible role will configure it for you.  Roles will make adopting Ansible Network Automation faster, easier and in a more agnostic fashion resulting in freeing you from the burden of building the playbook logic yourself.
 
 A sample DNS playbook
 ---------------------
@@ -67,7 +67,6 @@ This playbook configured the hostname and DNS servers.  Let's verify that config
    rtr1#sh run | i name
    hostname rtr1
    ip name-server 8.8.8.8 8.8.4.4
-   <<<rest of output removed for brevity>>>
 
 Convert the playbook into a role
 ---------------------------------
@@ -182,9 +181,9 @@ As before, the playbook will generate the following configuration on a Cisco IOS
    rtr1#sh run | i name
    hostname rtr1
    ip name-server 8.8.8.8 8.8.4.4
-   <<<rest of output removed for brevity>>>
 
-This is why Ansible roles can be simply thought of as deconstructed playbooks. They are simple, effective and reusable.  Now another user can simply include the ``system-demo`` role instead of having to create a custom “hard coded” playbook.
+
+This is why Ansible roles can be simply thought of as deconstructed playbooks. They are simple, effective and reusable.  Now another user can simply include the ``system-demo`` role instead of having to create a custom "hard coded" playbook.
 
 Variable precedence
 -------------------
