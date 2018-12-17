@@ -42,12 +42,10 @@ EXAMPLES = """
 - name: Collect all facts from the device
   onyx_facts:
     gather_subset: all
-
 - name: Collect only the interfaces facts
   onyx_facts:
     gather_subset:
       - interfaces
-
 - name: Do not collect version facts
   onyx_facts:
     gather_subset:
@@ -59,19 +57,16 @@ ansible_net_gather_subset:
   description: The list of fact subsets collected from the device
   returned: always
   type: list
-
 # version
 ansible_net_version:
   description: A hash of all curently running system image information
   returned: when version is configured or when no gather_subset is provided
   type: dict
-
 # modules
 ansible_net_modules:
   description: A hash of all modules on the systeme with status
   returned: when modules is configured
   type: dict
-
 # interfaces
 ansible_net_interfaces:
   description: A hash of all interfaces running on the system
@@ -196,25 +191,38 @@ class Module(FactsBase):
 
 class Interfaces(FactsBase):
 
-    COMMANDS = ['show interfaces ethernet']
+    COMMANDS = ['show version', 'show interfaces ethernet']
 
     def populate(self):
         super(Interfaces, self).populate()
 
-        data = self.responses[0]
-        if data:
-            self.facts['interfaces'] = self.populate_interfaces(data)
+        version_data = self.responses[0]
+        os_version = version_data['Product release']
+        data = self.responses[1]
 
-    def populate_interfaces(self, interfaces):
+        if data:
+            self.facts['interfaces'] = self.populate_interfaces(data, os_version)
+
+    def extractIfData(self, interface_data):
+        return {"MAC Address": interface_data["Mac address"],
+                "Actual Speed": interface_data["Actual speed"],
+                "MTU": interface_data["MTU"],
+                "Admin State": interface_data["Admin state"],
+                "Operational State": interface_data["Operational state"]}
+
+    def populate_interfaces(self, interfaces, os_version):
         interfaces_dict = dict()
         for if_data in interfaces:
             if_dict = dict()
-            if_dict["MAC Address"] = if_data["Mac address"]
-            if_dict["Actual Speed"] = if_data["Actual speed"]
-            if_dict["MTU"] = if_data["MTU"]
-            if_dict["Admin State"] = if_data["Admin state"]
-            if_dict["Operational State"] = if_data["Operational state"]
-            if_name = if_dict["Interface Name"] = if_data["header"]
+            if os_version >= BaseOnyxModule.ONYX_API_VERSION:
+                for if_name, interface_data in iteritems(if_data):
+                    interface_data = interface_data[0]
+                    if_dict = self.extractIfData(interface_data)
+                    if_name = if_dict["Interface Name"] = if_name
+
+            else:
+                if_dict = self.extractIfData(if_data)
+                if_name = if_dict["Interface Name"] = if_data["header"]
             interfaces_dict[if_name] = if_dict
         return interfaces_dict
 
