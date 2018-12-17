@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: udm_user
 version_added: "2.2"
 author:
-- Tobias Rueetschi (@keachi)
+- Tobias Rüetschi (@keachi)
 short_description: Manage posix users on a univention corporate server
 description:
     - "This module allows to manage posix users on a univention corporate

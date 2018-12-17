@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: udm_share
 version_added: "2.2"
 author:
-- Tobias Rueetschi (@keachi)
+- Tobias Rüetschi (@keachi)
 short_description: Manage samba shares on a univention corporate server
 description:
     - "This module allows to manage samba shares on a univention corporate

@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: udm_group
 version_added: "2.2"
 author:
-- Tobias Rueetschi (@keachi)
+- Tobias Rüetschi (@keachi)
 short_description: Manage of the posix group
 description:
     - "This module allows to manage user groups on a univention corporate server (UCS).
