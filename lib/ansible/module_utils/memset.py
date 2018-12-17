@@ -198,3 +198,87 @@ def get_primary_ip(api_key, product):
         primary_ip = response.json()['primary_ip']
 
     return(primary_ip, msg)
+
+
+class MemsetServer(object):
+
+    def __init__(self, data):
+        '''
+        Create an object which can represent either a server
+        or a loadbalancer product.
+        '''
+        self.data = data
+        # support reboots for miniservers only
+        if self.data['type'] in ['miniserver', 'fullserver']:
+            self.has_reboot = True
+        else:
+            self.has_reboot = False
+
+    def primary_vlan(self):
+        '''
+        Look up the product's primary VLAN (untagged). It is only
+        possible to have one untagged VLAN and so safe to return the
+        first list item.
+        '''
+        if self.data['vlans']['untagged']:
+            return self.data['vlans']['untagged'][0]
+        else:
+            return None
+
+    def tagged_vlans(self):
+        '''
+        Return a list of the product's secondary VLANs (tagged).
+        '''
+        tagged_vlans = []
+
+        if len(self.data['vlans']['tagged']) > 0:
+            for vlan in self.data['vlans']['tagged']:
+                tagged_vlans.append(vlan)
+
+        return tagged_vlans
+
+    def primary_ip(self):
+        '''
+        Return the primary IP.
+        '''
+        ip = None
+
+        if self.data['primary_ip']:
+            ip = self.data['primary_ip']
+
+        return ip
+
+    def all_ips(self):
+        '''
+        Return a list of all IPs attached to the product. Note that
+        this list is generated from Memset's product info and may not
+        match those configured on the server itself.
+        '''
+        ips = []
+
+        for ip in self.data['ips']:
+            for key, val in ip.items():
+                if key == 'address':
+                    ips.append(val)
+
+        return ips
+
+    def network_zone(self):
+        '''
+        Return the product's network zone. This is exposed as a list,
+        however the product can only ever have one network zone.
+        '''
+        for zone in self.data['network_zones']:
+            return zone
+
+    def reboot_server(self, api_key=None):
+        '''
+        Reboots the server, provided it can be rebooted through
+        the API.
+        '''
+        payload = dict()
+
+        if self.has_reboot:
+            payload['name'] = self.data['name']
+            api_method = 'server.reboot'
+            has_failed, msg, response = memset_api_call(api_key=api_key, api_method=api_method, payload=payload)
