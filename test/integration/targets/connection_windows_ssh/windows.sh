@@ -4,7 +4,7 @@ set -eux
 
 cd ../connection
 
-INVENTORY=../connection_windows_ssh/test_connection.inventory ./test.sh \
+INVENTORY=~/ansible_testing/test_connection.inventory ./test.sh \
     -e target_hosts=windows-ssh \
     -e action_prefix=win_ \
     -e local_tmp=/tmp/ansible-local \
