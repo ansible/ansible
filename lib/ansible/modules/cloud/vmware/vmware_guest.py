@@ -1644,7 +1644,11 @@ class PyVmomiHelper(PyVmomi):
         for expected_disk_spec in self.params.get('disk'):
             disk_modified = False
             # If we are manipulating and existing objects which has disks and disk_index is in disks
+<<<<<<< HEAD
             if vm_obj is not None and disks is not None and disk_index < len(disks):
+=======
+            if vm_obj is not None and disks is not None and disk_index < (len(disks) if len(disks) < 7 else len(disks) + 1):
+>>>>>>> a94905b... Correct pep8 style
                 diskspec = vim.vm.device.VirtualDeviceSpec()
                 # set the operation to edit so that it knows to keep other settings
                 diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
