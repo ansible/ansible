@@ -87,31 +87,26 @@
   assert:
     that: keys['response']['keys'][0]['value'] | length > 0
 
-- name: Create a new MariaDB Server - resource with LRO
+- name: Create a new MySQL server - resource with LRO
   azure_rm_resource:
     polling_timeout: 600
     polling_interval: 60
-    api_version: '2018-06-01-preview'
+    api_version: '2017-04-30-preview'
     resource_group: "{{ resource_group }}"
-    provider: DBforMariaDB
+    provider: DBforMySQL
     resource_type: servers
     resource_name: "{{ dbname }}"
     body:
       location: westus
       properties:
         administratorLogin: cloudsa
-        administratorLoginPassword: pass$w0rd
+        administratorLoginPassword: Testpasswordxyz12!
+        storageMB: 5120
         sslEnforcement: Enabled
-        storageProfile:
-          storageMB: 128000
-          backupRetentionDays: 7
-          geoRedundantBackup: Enabled
         createMode: Default
       sku:
-        name: GP_Gen5_2
-        tier: GeneralPurpose
-        capacity: 2
-        family: Gen5
+        name: B_Gen5_1
+        tier: Basic
       tags:
         ElasticServer: 1
   register: output
@@ -119,3 +114,14 @@
 - name: Assert that server was indeed fully created
   assert:
     that: output['response']['propertues']['userVisibleState'] == 'Ready'
+
+- name: Delete server
+  azure_rm_resource:
+    polling_timeout: 600
+    polling_interval: 60
+    method: DELETE
+    api_version: '2017-04-30-preview'
+    resource_group: "{{ resource_group }}"
+    provider: DBforMySQL
+    resource_type: servers
+    resource_name: "{{ dbname }}"
