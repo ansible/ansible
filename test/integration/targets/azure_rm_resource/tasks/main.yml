@@ -87,42 +87,33 @@
   assert:
     that: keys['response']['keys'][0]['value'] | length > 0
 
-- name: Create a new MySQL server - resource with LRO
+- name: Create storage account that requires LRO polling
   azure_rm_resource:
     polling_timeout: 600
     polling_interval: 60
-    api_version: '2017-04-30-preview'
+    api_version: '2018-07-01'
     resource_group: "{{ resource_group }}"
-    provider: DBforMySQL
-    resource_type: servers
-    resource_name: "{{ dbname }}"
+    provider: Storage
+    resource_type: storageAccounts
+    resource_name: "{{ storage_name }}"
     body:
-      location: westus
-      properties:
-        administratorLogin: cloudsa
-        administratorLoginPassword: Testpasswordxyz12!
-        storageMB: 5120
-        sslEnforcement: Enabled
-        createMode: Default
       sku:
-        name: MYSQLB100
-        tier: Basic
-        capacity: 100
-      tags:
-        ElasticServer: 1
+        name: Standard_GRS
+      kind: Storage
+      location: eastus
   register: output
 
-- name: Assert that server was indeed fully created
+- name: Assert that storage was successfully created
   assert:
-    that: output['response']['properties']['userVisibleState'] == 'Ready'
+    that: "output['response']['name'] == '{{ storage_name }}'"
 
-- name: Delete server
+- name: Delete storage
   azure_rm_resource:
     polling_timeout: 600
     polling_interval: 60
     method: DELETE
-    api_version: '2017-04-30-preview'
+    api_version: '2018-07-01'
     resource_group: "{{ resource_group }}"
-    provider: DBforMySQL
-    resource_type: servers
-    resource_name: "{{ dbname }}"
+    provider: Storage
+    resource_type: storageAccounts
+    resource_name: "{{ storage_name }}"
