@@ -29,32 +29,35 @@ options:
   protection_group:
     description:
     - The name of the Explicit vPC Protection Group.
-    aliases: [ name, protection_group_name ]
+    type: str
     required: yes
+    aliases: [ name, protection_group_name ]
   protection_group_id:
     description:
     - The Explicit vPC Protection Group ID.
-    required: yes
     type: int
+    required: yes
     aliases: [ id ]
   vpc_domain_policy:
     description:
     - The vPC domain policy to be associated with the Explicit vPC Protection Group.
+    type: str
     aliases: [ vpc_domain_policy_name ]
   switch_1_id:
     description:
     - The ID of the first Leaf Switch for the Explicit vPC Protection Group.
-    required: yes
     type: int
+    required: yes
   switch_2_id:
     description:
     - The ID of the Second Leaf Switch for the Explicit vPC Protection Group.
-    required: yes
     type: int
+    required: yes
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

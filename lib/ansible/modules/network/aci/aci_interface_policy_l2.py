@@ -27,16 +27,19 @@ options:
   l2_policy:
     description:
     - The name of the Layer 2 interface policy.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description of the Layer 2 interface policy.
+    type: str
     aliases: [ descr ]
   qinq:
     description:
     - Determines if QinQ is disabled or if the port should be considered a core or edge port.
     - The APIC defaults to C(disabled) when unset during creation.
+    type: str
     choices: [ core, disabled, edge ]
   vepa:
     description:
@@ -47,11 +50,13 @@ options:
     description:
     - The scope of the VLAN.
     - The APIC defaults to C(global) when unset during creation.
+    type: str
     choices: [ global, portlocal ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

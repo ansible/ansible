@@ -32,14 +32,17 @@ options:
   tenant:
     description:
     - The name of the tenant.
+    type: str
     aliases: [ tenant_name ]
   subject:
     description:
     - The contract subject name.
+    type: str
     aliases: [ contract_subject, name, subject_name ]
   contract:
     description:
     - The name of the Contract.
+    type: str
     aliases: [ contract_name ]
   reverse_filter:
     description:
@@ -51,32 +54,38 @@ options:
     description:
     - The QoS class.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ level1, level2, level3, unspecified ]
   dscp:
     description:
     - The target DSCP.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43,
                CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
     aliases: [ target ]
   description:
     description:
     - Description for the contract subject.
+    type: str
     aliases: [ descr ]
   consumer_match:
     description:
     - The match criteria across consumers.
     - The APIC defaults to C(at_least_one) when unset during creation.
+    type: str
     choices: [ all, at_least_one, at_most_one, none ]
   provider_match:
     description:
     - The match criteria across providers.
     - The APIC defaults to C(at_least_one) when unset during creation.
+    type: str
     choices: [ all, at_least_one, at_most_one, none ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

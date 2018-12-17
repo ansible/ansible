@@ -34,10 +34,12 @@ options:
   bd:
     description:
     - The name of the Bridge Domain.
+    type: str
     aliases: [ bd_name ]
   description:
     description:
     - The description for the Subnet.
+    type: str
     aliases: [ descr ]
   enable_vip:
     description:
@@ -47,6 +49,7 @@ options:
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
+    type: str
     aliases: [ gateway_ip ]
   mask:
     description:
@@ -59,6 +62,7 @@ options:
   nd_prefix_policy:
     description:
     - The IPv6 Neighbor Discovery Prefix Policy to associate with the Subnet.
+    type: str
   preferred:
     description:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
@@ -68,9 +72,11 @@ options:
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
+    type: str
   route_profile_l3_out:
     description:
     - The L3 Out that contains the assocated Route Profile.
+    type: str
   scope:
     description:
     - Determines the scope of the Subnet.
@@ -92,19 +98,23 @@ options:
     - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
     - The APIC defaults to C(nd_ra) when unset during creation.
+    type: str
     choices: [ nd_ra, no_gw, querier_ip, unspecified ]
   subnet_name:
     description:
     - The name of the Subnet.
+    type: str
     aliases: [ name ]
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

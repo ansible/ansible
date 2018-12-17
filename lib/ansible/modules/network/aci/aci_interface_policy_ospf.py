@@ -28,6 +28,7 @@ options:
   tenant:
     description:
     - The name of the Tenant the OSPF interface policy should belong to.
+    type: str
     required: yes
     aliases: [ tenant_name ]
   ospf:
@@ -35,17 +36,20 @@ options:
     - The OSPF interface policy name.
     - This name can be between 1 and 64 alphanumeric characters.
     - Note that you cannot change this name after the object has been saved.
+    type: str
     required: yes
     aliases: [ ospf_interface, name ]
   description:
     description:
     - The description for the OSPF interface.
+    type: str
     aliases: [ descr ]
   network_type:
     description:
     - The OSPF interface policy network type.
     - OSPF supports broadcast and point-to-point.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ bcast, p2p ]
   cost:
     description:
@@ -64,6 +68,7 @@ options:
       interface subconfiguration mode command.
     - Accepted values range between C(1) and C(450).
     - The APIC defaults to C(0) when unset during creation.
+    type: str
   controls:
     description:
     - The interface policy controls.
@@ -126,6 +131,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

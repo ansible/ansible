@@ -32,26 +32,31 @@ options:
   taboo_contract:
     description:
     - The name of the Taboo Contract.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the Taboo Contract.
+    type: str
     aliases: [ descr ]
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
   scope:
     description:
     - The scope of a service contract.
     - The APIC defaults to C(context) when unset during creation.
+    type: str
     choices: [ application-profile, context, global, tenant ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

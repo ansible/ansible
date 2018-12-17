@@ -33,30 +33,36 @@ options:
   domain:
     description:
     - Name of the domain being associated with the Encap Pool.
+    type: str
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
     - Determines if the Domain is physical (phys) or virtual (vmm).
+    type: str
     choices: [ fc, l2dom, l3dom, phys, vmm ]
   pool:
     description:
     - The name of the pool.
+    type: str
     aliases: [ pool_name ]
   pool_allocation_mode:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, static]
     aliases: [ allocation_mode, mode ]
   pool_type:
     description:
     - The encap type of C(pool).
+    type: str
     required: yes
     choices: [ vlan, vsan, vxlan ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   vm_provider:
@@ -64,6 +70,7 @@ options:
     - The VM platform for VMM Domains.
     - Support for Kubernetes was added in ACI v3.0.
     - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
+    type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''

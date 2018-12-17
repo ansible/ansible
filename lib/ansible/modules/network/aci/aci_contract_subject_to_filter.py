@@ -34,30 +34,36 @@ options:
   contract:
     description:
     - The name of the contract.
+    type: str
     aliases: [ contract_name ]
   filter:
     description:
     - The name of the Filter to bind to the Subject.
+    type: str
     aliases: [ filter_name ]
   log:
     description:
     - Determines if the binding should be set to log.
     - The APIC defaults to C(none) when unset during creation.
+    type: str
     choices: [ log, none ]
     aliases: [ directive ]
   subject:
     description:
     - The name of the Contract Subject.
+    type: str
     aliases: [ contract_subject, subject_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci

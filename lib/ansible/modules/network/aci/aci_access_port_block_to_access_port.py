@@ -28,16 +28,19 @@ options:
   leaf_interface_profile:
     description:
     - The name of the Fabric access policy leaf interface profile.
+    type: str
     required: yes
     aliases: [ leaf_interface_profile_name ]
   access_port_selector:
     description:
     -  The name of the Fabric access policy leaf interface profile access port selector.
+    type: str
     required: yes
     aliases: [ name, access_port_selector_name ]
   leaf_port_blk:
     description:
     - The name of the Fabric access policy leaf interface profile access port block.
+    type: str
     required: yes
     aliases: [ leaf_port_blk_name ]
   leaf_port_blk_description:
@@ -46,25 +49,30 @@ options:
   from_port:
     description:
     - The beginning (from-range) of the port range block for the leaf access port block.
-    aliases: [ from, fromPort, from_port_range ]
+    type: str
     required: yes
+    aliases: [ from, fromPort, from_port_range ]
   to_port:
     description:
     - The end (to-range) of the port range block for the leaf access port block.
-    aliases: [ to, toPort, to_port_range ]
+    type: str
     required: yes
+    aliases: [ to, toPort, to_port_range ]
   from_card:
     description:
     - The beginning (from-range) of the card range block for the leaf access port block.
+    type: str
     aliases: [ from_card_range ]
   to_card:
     description:
     - The end (to-range) of the card range block for the leaf access port block.
+    type: str
     aliases: [ to_card_range ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

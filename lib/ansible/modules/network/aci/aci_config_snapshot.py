@@ -34,15 +34,18 @@ options:
   description:
     description:
     - The description for the Config Export Policy.
+    type: str
     aliases: [ descr ]
   export_policy:
     description:
     - The name of the Export Policy to use for Config Snapshots.
+    type: str
     aliases: [ name ]
   format:
     description:
     - Sets the config backup to be formatted in JSON or XML.
     - The APIC defaults to C(json) when unset.
+    type: str
     choices: [ json, xml ]
   include_secure:
     description:
@@ -58,10 +61,12 @@ options:
   snapshot:
     description:
     - The name of the snapshot to delete.
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
