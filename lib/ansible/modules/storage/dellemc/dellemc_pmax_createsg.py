@@ -36,7 +36,6 @@ options:
       - CYL
     description:
       - "String value, default is set to GB"
-    required: false
     default: GB
   num_vols:
     description:
@@ -155,9 +154,8 @@ def main():
         workload=dict(type='str', required=False),
         num_vols=dict(type='int', required=True),
         vol_size=dict(type='int', required=True),
-        cap_unit=dict(type='str', required=True, choices=['GB',
-                                                          'TB',
-                                                          'MB', 'CYL']),
+        cap_unit=dict(type='str', choices=['GB', 'TB', 'MB', 'CYL'],
+                      default='GB'),
         volumeIdentifier=dict(type='str', required=False),
     ))
     module = AnsibleModule(argument_spec=argument_spec)

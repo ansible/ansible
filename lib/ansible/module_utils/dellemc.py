@@ -6,9 +6,9 @@ USER_AGENT_BASE = 'Ansible'
 
 try:
     import PyU4V
-    HAS_PyU4V=True
+    HAS_PyU4V = True
 except ImportError:
-    HAS_PyU4V=False
+    HAS_PyU4V = False
 
 
 def dellemc_argument_spec():
@@ -34,5 +34,3 @@ def pmaxapi(module):
                              password=module.params['password'],
                              u4v_version=module.params['universion'])
     return conn
-
-
