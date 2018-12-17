@@ -491,6 +491,14 @@
   register: _multitest_1
   with_items: "{{ test_regexp }}"
 
+- name: Assert that the line is added once only
+  assert:
+    that:
+      - _multitest_1.results.0 is changed
+      - _multitest_1.results.1 is not changed
+      - _multitest_1.results.2 is not changed
+      - _multitest_1.results.3 is not changed
+
 - name: Do the same thing again to check for changes
   lineinfile:
     path: "{{ output_dir }}/testmultiple.txt"
@@ -499,14 +507,13 @@
   register: _multitest_2
   with_items: "{{ test_regexp }}"
 
-- name: Assert that the file was changed the first time but not the second time
+- name: Assert that the line is not added anymore
   assert:
     that:
-      - item.0 is changed
-      - item.1 is not changed
-  with_together:
-    - "{{ _multitest_1.results }}"
-    - "{{ _multitest_2.results }}"
+      - _multitest_2.results.0 is not changed
+      - _multitest_2.results.1 is not changed
+      - _multitest_2.results.2 is not changed
+      - _multitest_2.results.3 is not changed
 
 - name: Stat the insertafter file
   stat:
@@ -516,9 +523,23 @@
 - name: Assert that the insertafter file matches expected checksum
   assert:
     that:
-      - result.stat.checksum == '282fedf460b3ed7357667a9c8b457ec67b53b6ea'
+      - result.stat.checksum == 'c6733b6c53ddd0e11e6ba39daa556ef8f4840761'
 
 # Test insertbefore
+
+- name: Deploy the testmultiple file
+  copy:
+    src: testmultiple.txt
+    dest: "{{ output_dir }}/testmultiple.txt"
+  register: result
+
+- name: Assert that the testmultiple file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '3e0090a34fb641f3c01e9011546ff586260ea0ea'
+      - result.state == 'file'
+
 - name: Write the same line to a file inserted before different lines
   lineinfile:
     path: "{{ output_dir }}/testmultiple.txt"
@@ -526,6 +547,14 @@
     line: "{{ item.replace }}"
   register: _multitest_3
   with_items: "{{ test_regexp }}"
+
+- name: Assert that the line is added once only
+  assert:
+    that:
+      - _multitest_3.results.0 is changed
+      - _multitest_3.results.1 is not changed
+      - _multitest_3.results.2 is not changed
+      - _multitest_3.results.3 is not changed
 
 - name: Do the same thing again to check for changes
   lineinfile:
@@ -535,14 +564,13 @@
   register: _multitest_4
   with_items: "{{ test_regexp }}"
 
-- name: Assert that the file was changed the first time but not the second time
+- name: Assert that the line is not added anymore
   assert:
     that:
-      - item.0 is changed
-      - item.1 is not changed
-  with_together:
-    - "{{ _multitest_3.results }}"
-    - "{{ _multitest_4.results }}"
+      - _multitest_4.results.0 is not changed
+      - _multitest_4.results.1 is not changed
+      - _multitest_4.results.2 is not changed
+      - _multitest_4.results.3 is not changed
 
 - name: Stat the insertbefore file
   stat:
@@ -552,7 +580,7 @@
 - name: Assert that the insertbefore file matches expected checksum
   assert:
     that:
-      - result.stat.checksum == 'a8452bb3643be8d18ba3fc212632b1633bd9f885'
+      - result.stat.checksum == '5d298651fbc377b45257da10308a9dc2fe1f8be5'
 
 ###################################################################
 # Issue 36156
@@ -625,7 +653,7 @@
 - name: Assert that the file was changed when no regexp was provided
   assert:
     that:
-      - item is changed
+      - item is not changed
   with_items: "{{ _multitest_7.results }}"
 
 - name: Stat the file
@@ -636,7 +664,7 @@
 - name: Assert that the file contents match what is expected
   assert:
     that:
-      - result.stat.checksum == '5bf50f3d74afd20de4010ca5c04bc7037b062d30'
+      - result.stat.checksum == '06e2c456e5028dd7bcd0b117b5927a1139458c82'
 
 # Test insertbefore
 - name: Deploy the test.conf file
@@ -705,7 +733,7 @@
 - name: Assert that the file was changed when no regexp was provided
   assert:
     that:
-      - item is changed
+      - item is not changed
   with_items: "{{ _multitest_10.results }}"
 
 - name: Stat the file
@@ -716,7 +744,7 @@
 - name: Assert that the file contents match what is expected
   assert:
     that:
-      - result.stat.checksum == 'eca8d8ea089d4ea57a3b87d4091599ca8b60dfd2'
+      - result.stat.checksum == 'c3be9438a07c44d4c256cebfcdbca15a15b1db91'
 
 - name: Copy empty file to test with insertbefore
   copy:
