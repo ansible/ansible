@@ -45,13 +45,15 @@ options:
     - Using C(delete) is typically used for deleting objects.
     - Using C(get) is typically used for querying objects.
     - Using C(post) is typically used for modifying objects.
-    default: get
+    type: str
     choices: [ delete, get, post ]
+    default: get
     aliases: [ action ]
   path:
     description:
     - URI being used to execute API calls.
     - Must end in C(.xml) or C(.json).
+    type: str
     required: yes
     aliases: [ uri ]
   content:
@@ -60,6 +62,7 @@ options:
     - This may be convenient to template simple requests.
     - For anything complex use the C(template) lookup plugin (see examples)
       or the M(template) module with parameter C(src).
+    type: str
   src:
     description:
     - Name of the absolute path of the filname that includes the body

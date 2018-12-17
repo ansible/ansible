@@ -31,21 +31,25 @@ options:
   dst_group:
     description:
     - The name of the SPAN destination group.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description of the SPAN destination group.
+    type: str
     aliases: [ descr ]
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
