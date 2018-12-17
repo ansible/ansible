@@ -26,27 +26,33 @@ options:
   owner:
     description:
     - Name of the user that should own the file/directory, as would be fed to I(chown).
+    type: str
   group:
     description:
     - Name of the group that should own the file/directory, as would be fed to I(chown).
+    type: str
   seuser:
     description:
     - The user part of the SELinux file context.
     - By default it uses the C(system) policy, where applicable.
     - When set to C(_default), it will use the C(user) portion of the policy if available.
+    type: str
   serole:
     description:
     - The role part of the SELinux file context.
     - When set to C(_default), it will use the C(role) portion of the policy if available.
+    type: str
   setype:
     description:
     - The type part of the SELinux file context.
     - When set to C(_default), it will use the C(type) portion of the policy if available.
+    type: str
   selevel:
     description:
     - The level part of the SELinux file context.
     - This is the MLS/MCS attribute, sometimes known as the C(range).
     - When set to C(_default), it will use the C(level) portion of the policy if available.
+    type: str
     default: s0
   unsafe_writes:
     description:
@@ -66,6 +72,7 @@ options:
     - To get supported flags look at the man page for I(chattr) on the target system.
     - This string should contain the attributes in the same order as the one displayed by I(lsattr).
     - The C(=) operator is assumed as default, otherwise C(+) or C(-) operators need to be included in the string.
+    type: str
     aliases: [ attr ]
     version_added: '2.3'
 '''
