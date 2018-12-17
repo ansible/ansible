@@ -157,7 +157,7 @@ Certain network platforms, such as eos and ios, have the concept of different pr
    ansible_become=yes
    ansible_become_method=enable
 
-For more information, see the :ref:`using become with network modules<become-network>` guide.
+For more information, see the :ref:`using become with network modules<become_network>` guide.
 
 
 Jump hosts
