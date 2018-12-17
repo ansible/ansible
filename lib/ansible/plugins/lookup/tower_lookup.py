@@ -111,11 +111,9 @@ obj_type:
 
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.web_infrastructure.ansible_tower.api import client
-from ansible.module_utils.web_infrastructure.ansible_tower.conf import settings
+from ansible.module_utils.web_infrastructure.ansible_tower.api import AnsibleTowerLookup
 from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleError
-
 
 class LookupModule(LookupBase):
 
@@ -128,13 +126,12 @@ class LookupModule(LookupBase):
         return_fields = kwargs.pop('return_fields', None)
         filter_data = kwargs.pop('filter', {})
         provider = kwargs.pop('provider', {})
-        tower_auth = provider
         tower_module = '/' + tower_module + '/'
 
-        with settings.runtime_values(**tower_auth):
-            try:
-                result = client.request('GET', tower_module, filter_data)
-            except Exception as exc:
-                raise AnsibleError(to_text(exc))
+        try:
+            tower_lookup_obj = AnsibleTowerLookup(provider, tower_module, filter_data)
+            result = tower_lookup_obj.request_query()
+        except Exception as exc:
+            raise AnsibleError(to_text(exc))
 
-        return result.items()
+        return result
