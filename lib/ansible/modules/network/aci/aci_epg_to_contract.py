@@ -34,39 +34,47 @@ options:
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     aliases: [ app_profile, app_profile_name ]
   contract:
     description:
     - The name of the contract.
+    type: str
     aliases: [ contract_name ]
   contract_type:
     description:
     - Determines if the EPG should Provide or Consume the Contract.
+    type: str
     required: yes
     choices: [ consumer, provider ]
   epg:
     description:
     - The name of the end point group.
+    type: str
     aliases: [ epg_name ]
   priority:
     description:
     - QoS class.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ level1, level2, level3, unspecified ]
   provider_match:
     description:
     - The matching algorithm for Provided Contracts.
     - The APIC defaults to C(at_least_one) when unset during creation.
+    type: str
     choices: [ all, at_least_one, at_most_one, none ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 '''

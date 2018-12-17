@@ -32,39 +32,47 @@ options:
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     required: yes
     aliases: [ app_profile, app_profile_name ]
   epg:
     description:
     - Name of the end point group.
+    type: str
     required: yes
     aliases: [ epg_name, name ]
   bd:
     description:
     - Name of the bridge domain being associated with the EPG.
+    type: str
     aliases: [ bd_name, bridge_domain ]
   priority:
     description:
     - The QoS class.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ level1, level2, level3, unspecified ]
   intra_epg_isolation:
     description:
     - The Intra EPG Isolation.
     - The APIC defaults to C(unenforced) when unset during creation.
+    type: str
     choices: [ enforced, unenforced ]
   description:
     description:
     - Description for the EPG.
+    type: str
     aliases: [ descr ]
   fwd_control:
     description:
     - The forwarding control used by the EPG.
     - The APIC defaults to C(none) when unset during creation.
+    type: str
     choices: [ none, proxy-arp ]
   preferred_group:
     description:
@@ -77,6 +85,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

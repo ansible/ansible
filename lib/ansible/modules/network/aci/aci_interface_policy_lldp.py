@@ -27,11 +27,13 @@ options:
   lldp_policy:
     description:
     - The LLDP interface policy name.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the LLDP interface policy name.
+    type: str
     aliases: [ descr ]
   receive_state:
     description:
@@ -47,6 +49,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

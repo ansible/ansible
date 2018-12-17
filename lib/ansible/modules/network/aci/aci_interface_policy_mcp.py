@@ -27,11 +27,13 @@ options:
   mcp:
     description:
     - The name of the MCP interface.
+    type: str
     required: yes
     aliases: [ mcp_interface, name ]
   description:
     description:
     - The description for the MCP interface.
+    type: str
     aliases: [ descr ]
   admin_state:
     description:
@@ -42,6 +44,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

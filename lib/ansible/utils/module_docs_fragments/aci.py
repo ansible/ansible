@@ -7,38 +7,44 @@
 
 class ModuleDocFragment(object):
     # Standard files documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
   host:
     description:
     - IP Address or hostname of APIC resolvable by Ansible control host.
+    type: str
     required: yes
     aliases: [ hostname ]
   port:
     description:
     - Port number to be used for REST connection.
     - The default value depends on parameter `use_ssl`.
+    type: int
   username:
     description:
     - The username to use for authentication.
+    type: str
     default: admin
     aliases: [ user ]
   password:
     description:
     - The password to use for authentication.
     - This option is mutual exclusive with C(private_key). If C(private_key) is provided too, it will be used instead.
+    type: str
     required: yes
   private_key:
     description:
     - PEM formatted file that contains your private key to be used for signature-based authentication.
     - The name of the key (without extension) is used as the certificate name in ACI, unless C(certificate_name) is specified.
     - This option is mutual exclusive with C(password). If C(password) is provided too, it will be ignored.
+    type: str
     required: yes
     aliases: [ cert_key ]
   certificate_name:
     description:
     - The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
     - It defaults to the C(private_key) basename, without extension.
+    type: str
     aliases: [ cert_name ]
   output_level:
     description:
@@ -46,6 +52,7 @@ options:
     - C(normal) means the standard output, incl. C(current) dict
     - C(info) adds informational output, incl. C(previous), C(proposed) and C(sent) dicts
     - C(debug) adds debugging output, incl. C(filter_string), C(method), C(response), C(status) and C(url) information
+    type: str
     choices: [ debug, info, normal ]
     default: normal
   timeout:

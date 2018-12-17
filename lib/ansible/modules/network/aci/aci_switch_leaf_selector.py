@@ -33,21 +33,26 @@ options:
   description:
     description:
     - The description to assign to the C(leaf).
+    type: str
   leaf_profile:
     description:
     - Name of the Leaf Profile to which we add a Selector.
+    type: str
     aliases: [ leaf_profile_name ]
   leaf:
     description:
     - Name of Leaf Selector.
+    type: str
     aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
   leaf_node_blk:
     description:
     - Name of Node Block range to be added to Leaf Selector of given Leaf Profile.
+    type: str
     aliases: [ leaf_node_blk_name, node_blk_name ]
   leaf_node_blk_description:
     description:
     - The description to assign to the C(leaf_node_blk)
+    type: str
   from:
     description:
     - Start of Node Block range.
@@ -61,11 +66,13 @@ options:
   policy_group:
     description:
     - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile.
+    type: str
     aliases: [ name, policy_group_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

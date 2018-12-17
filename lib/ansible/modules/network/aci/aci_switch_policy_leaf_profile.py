@@ -29,15 +29,18 @@ options:
   leaf_profile:
     description:
     - The name of the Leaf Profile.
+    type: str
     aliases: [ leaf_profile_name, name ]
   description:
     description:
     - Description for the Leaf Profile.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

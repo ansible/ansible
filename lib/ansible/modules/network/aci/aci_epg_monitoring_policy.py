@@ -31,21 +31,25 @@ options:
   monitoring_policy:
     description:
     - The name of the monitoring policy.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - Description for the monitoring policy.
+    type: str
     aliases: [ descr ]
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

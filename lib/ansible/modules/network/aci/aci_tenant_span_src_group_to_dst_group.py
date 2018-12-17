@@ -33,22 +33,27 @@ options:
   description:
     description:
     - The description for Span source group to destination group binding.
+    type: str
     aliases: [ descr ]
   dst_group:
     description:
     - The Span destination group to associate with the source group.
+    type: str
   src_group:
     description:
     - The name of the Span source group.
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 '''

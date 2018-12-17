@@ -27,16 +27,19 @@ options:
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ name, tenant_name ]
   description:
     description:
     - Description for the tenant.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

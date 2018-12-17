@@ -27,11 +27,13 @@ options:
   port_channel:
     description:
     - Name of the port channel.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the port channel.
+    type: str
     aliases: [ descr ]
   max_links:
     description:
@@ -50,6 +52,7 @@ options:
     - Port channel interface policy mode.
     - Determines the LACP method to use for forming port-channels.
     - The APIC defaults to C(off) when unset during creation.
+    type: str
     choices: [ active, mac-pin, mac-pin-nicload, 'off', passive ]
   fast_select:
     description:
@@ -90,6 +93,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

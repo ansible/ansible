@@ -29,26 +29,30 @@ author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
 options:
-   tenant:
-     description:
-     - The name of an existing tenant.
-     required: yes
-     aliases: [ tenant_name ]
-   ap:
-     description:
-     - The name of the application network profile.
-     required: yes
-     aliases: [ app_profile, app_profile_name, name ]
-   description:
-     description:
-     - Description for the AP.
-     aliases: [ descr ]
-   state:
-     description:
-     - Use C(present) or C(absent) for adding or removing.
-     - Use C(query) for listing an object or multiple objects.
-     choices: [ absent, present, query ]
-     default: present
+  tenant:
+    description:
+    - The name of an existing tenant.
+    type: str
+    required: yes
+    aliases: [ tenant_name ]
+  ap:
+    description:
+    - The name of the application network profile.
+    type: str
+    required: yes
+    aliases: [ app_profile, app_profile_name, name ]
+  description:
+    description:
+    - Description for the AP.
+    type: str
+    aliases: [ descr ]
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    type: str
+    choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment: aci
 '''
 

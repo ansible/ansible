@@ -29,20 +29,24 @@ options:
   description:
     description:
     - Description for the C(pool).
+    type: str
     aliases: [ descr ]
   pool:
     description:
     - The name of the pool.
+    type: str
     aliases: [ name, pool_name ]
   pool_allocation_mode:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, static ]
     aliases: [ allocation_mode, mode ]
   pool_type:
     description:
     - The encap type of C(pool).
+    type: str
     required: yes
     aliases: [ type ]
     choices: [ vlan, vxlan, vsan]
@@ -50,6 +54,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

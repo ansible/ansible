@@ -31,15 +31,18 @@ options:
   leaf_profile:
     description:
     - Name of the Leaf Profile to which we add a Selector.
+    type: str
     aliases: [ leaf_profile_name ]
   interface_selector:
     description:
     - Name of Interface Profile Selector to be added and associated with the Leaf Profile.
+    type: str
     aliases: [ name, interface_selector_name, interface_profile_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

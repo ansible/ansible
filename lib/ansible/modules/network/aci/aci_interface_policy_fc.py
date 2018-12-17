@@ -27,21 +27,25 @@ options:
   fc_policy:
     description:
     - The name of the Fiber Channel interface policy.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description of the Fiber Channel interface policy.
+    type: str
     aliases: [ descr ]
   port_mode:
     description:
     - The Port Mode to use.
     - The APIC defaults to C(f) when unset during creation.
+    type: str
     choices: [ f, np ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
