@@ -230,10 +230,10 @@ class Connection(NetworkConnectionBase):
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
-                display.vvvv('loaded cliconf plugin for network_os %s' % self._network_os)
+                self.messages.append(('vvvv', 'loaded cliconf plugin for network_os %s' % self._network_os))
                 self._sub_plugin = {'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}
             else:
-                display.vvvv('unable to load cliconf for network_os %s' % self._network_os)
+                self.messages.append(('vvvv', 'unable to load cliconf for network_os %s' % self._network_os))
         else:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
@@ -311,7 +311,7 @@ class Connection(NetworkConnectionBase):
             ssh = self.paramiko_conn._connect()
 
             host = self.get_option('host')
-            display.vvvv('ssh connection done, setting terminal', host=host)
+            self.messages.append(('vvvv', 'ssh connection done, setting terminal'))
 
             self._ssh_shell = ssh.ssh.invoke_shell()
             self._ssh_shell.settimeout(self.get_option('persistent_command_timeout'))
@@ -320,20 +320,20 @@ class Connection(NetworkConnectionBase):
             if not self._terminal:
                 raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
-            display.vvvv('loaded terminal plugin for network_os %s' % self._network_os, host=host)
+            self.messages.append(('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os))
 
             self.receive(prompts=self._terminal.terminal_initial_prompt, answer=self._terminal.terminal_initial_answer,
                          newline=self._terminal.terminal_inital_prompt_newline)
 
-            display.vvvv('firing event: on_open_shell()', host=host)
+            self.messages.append(('vvvv', 'firing event: on_open_shell()'))
             self._terminal.on_open_shell()
 
             if self._play_context.become and self._play_context.become_method == 'enable':
-                display.vvvv('firing event: on_become', host=host)
+                self.messages.append(('vvvv', 'firing event: on_become'))
                 auth_pass = self._play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)
 
-            display.vvvv('ssh connection has completed successfully', host=host)
+            self.messages.append(('vvvv', 'ssh connection has completed successfully'))
             self._connected = True
 
         return self
@@ -344,17 +344,17 @@ class Connection(NetworkConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.debug("closing ssh connection to device", host=self._play_context.remote_addr)
+            self.messages.append(('debug', "closing ssh connection to device"))
             if self._ssh_shell:
-                display.debug("firing event: on_close_shell()")
+                self.messages.append(('debug', "firing event: on_close_shell()"))
                 self._terminal.on_close_shell()
                 self._ssh_shell.close()
                 self._ssh_shell = None
-                display.debug("cli session is now closed")
+                self.messages.append(('debug', "cli session is now closed"))
 
                 self.paramiko_conn.close()
                 self.paramiko_conn = None
-                display.debug("ssh connection has been closed successfully")
+                self.messages.append(('debug', "ssh connection has been closed successfully"))
         super(Connection, self).close()
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False, check_all=False):
@@ -449,13 +449,13 @@ class Connection(NetworkConnectionBase):
             response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
-            display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
+            self.messages.append(('vvvv', traceback.format_exc()))
             raise AnsibleConnectionFailure("timeout value %s seconds reached while trying to send command: %s"
                                            % (self._ssh_shell.gettimeout(), command.strip()))
 
     def _handle_buffer_read_timeout(self, signum, frame):
-        display.vvvv("Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds"
-                     % self.get_option('persistent_buffer_read_timeout'), host=self._play_context.remote_addr)
+        self.messages.append(('vvvv', "Response received, triggered 'persistent_buffer_read_timeout' timer of %s seconds" %
+                              self.get_option('persistent_buffer_read_timeout')))
         raise AnsibleCmdRespRecv()
 
     def _handle_command_timeout(self, signum, frame):
