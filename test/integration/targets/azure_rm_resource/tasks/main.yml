@@ -97,7 +97,7 @@
     resource_type: servers
     resource_name: "{{ dbname }}"
     body:
-      location: westus2
+      location: westus
       properties:
         administratorLogin: cloudsa
         administratorLoginPassword: Testpasswordxyz12!
@@ -105,15 +105,16 @@
         sslEnforcement: Enabled
         createMode: Default
       sku:
-        name: B_Gen5_1
+        name: MYSQLB100
         tier: Basic
+        capacity: 100
       tags:
         ElasticServer: 1
   register: output
 
 - name: Assert that server was indeed fully created
   assert:
-    that: output['response']['propertues']['userVisibleState'] == 'Ready'
+    that: output['response']['properties']['userVisibleState'] == 'Ready'
 
 - name: Delete server
   azure_rm_resource:
