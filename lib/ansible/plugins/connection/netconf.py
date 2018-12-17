@@ -188,8 +188,9 @@ try:
     from ncclient.operations import RPCError
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml
+    HAS_NCCLIENT = True
 except ImportError:
-    raise AnsibleError("ncclient is not installed")
+    HAS_NCCLIENT = False
 
 display = Display()
 
@@ -252,6 +253,12 @@ class Connection(NetworkConnectionBase):
             return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
     def _connect(self):
+        if not HAS_NCCLIENT:
+            raise AnsibleError(
+                'ncclient is required to use the netconf connection type.\n'
+                'Please run pip install ncclient'
+            )
+
         display.display('ssh connection done, starting ncclient', log_only=True)
 
         allow_agent = True

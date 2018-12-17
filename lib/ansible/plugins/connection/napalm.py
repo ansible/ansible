@@ -138,10 +138,7 @@ try:
     from napalm.base import ModuleImportError
     HAS_NAPALM = True
 except ImportError:
-    raise AnsibleError(
-        'Napalm is required to use the napalm connection type.\n'
-        'Please run pip install napalm'
-    )
+    HAS_NAPALM = False
 
 display = Display()
 
@@ -158,6 +155,11 @@ class Connection(NetworkConnectionBase):
         self.napalm = None
 
     def _connect(self):
+        if not HAS_NAPALM:
+            raise AnsibleError(
+                'Napalm is required to use the napalm connection type.\n'
+                'Please run pip install napalm'
+            )
         super(Connection, self)._connect()
 
         if not self.connected:
