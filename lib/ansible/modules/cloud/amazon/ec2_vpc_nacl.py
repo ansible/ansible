@@ -2,9 +2,9 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import socket
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+import re, socket
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -158,7 +158,7 @@ from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_conn
 
 
 # CIDR regex
-CIDR_REGEX = re.compile(r'(\w+)/\d+')
+CIDR_REGEX = re.compile(r'([a-fA-F0-9:.]+)/\d+')
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
@@ -268,7 +268,7 @@ def rules_changed(aws_rules, param_rules, Egress, nacl_id, client, module):
     changed = False
     rules = list()
     for entry in param_rules:
-        rules.append(process_rule_entry(entry, Egress))
+        rules.append(process_rule_entry(entry, Egress, module))
     if rules == aws_rules:
         return changed
     else:
@@ -290,7 +290,7 @@ def rules_changed(aws_rules, param_rules, Egress, nacl_id, client, module):
     return changed
 
 
-def process_rule_entry(entry, Egress):
+def process_rule_entry(entry, Egress, module):
     params = dict()
     params['RuleNumber'] = entry[0]
     params['Protocol'] = str(PROTOCOL_NUMBERS[entry[1]])
@@ -324,11 +324,11 @@ def restore_default_associations(assoc_ids, default_nacl_id, client, module):
 
 def construct_acl_entries(nacl, client, module):
     for entry in module.params.get('ingress'):
-        params = process_rule_entry(entry, Egress=False)
+        params = process_rule_entry(entry, Egress=False, module=module)
         params['NetworkAclId'] = nacl['NetworkAcl']['NetworkAclId']
         create_network_acl_entry(params, client, module)
     for rule in module.params.get('egress'):
-        params = process_rule_entry(rule, Egress=True)
+        params = process_rule_entry(rule, Egress=True, module=module)
         params['NetworkAclId'] = nacl['NetworkAcl']['NetworkAclId']
         create_network_acl_entry(params, client, module)
 
