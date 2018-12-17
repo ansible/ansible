@@ -5,12 +5,12 @@
 Use Ansible network roles
 ******************************************
 
-The Ansible Network team develops and supports a set of `network-related roles <https://galaxy.ansible.com/ansible-network>`_ on Galaxy. You can use these roles to jumpstart your network automation efforts. These roles are updated approximately every two weeks to give you access to the latest Ansible networking content.
+The Ansible Network team develops and supports a set of `network-related roles <https://galaxy.ansible.com/ansible-network>`_ on Galaxy. You can use these roles to jump start your network automation efforts. These roles are updated approximately every two weeks to give you access to the latest Ansible networking content.
 
 These roles come in the following categories:
 
-* **User roles** - You use these roles, such as `config_manager <https://galaxy.ansible.com/ansible-network/config_manager>`_ and `cloud_vpn <https://galaxy.ansible.com/ansible-network/cloud_vpn>`_, directly in your playbooks. These roles are platform/provider agnostic, allowing you to use the same roles and playbooks across different network platforms or cloud providers.
-* **Platform provider roles** - Network user roles depend on these provider roles to implement their functions. For example, the `config_manager <https://galaxy.ansible.com/ansible-network/config_manager>`_ role  uses the  `cisco_ios <https://galaxy.ansible.com/ansible-network/cisco_ios>`_ provider role to implement tasks on Cisco IOS network devices.
+* **User roles** - User roles focus on tasks, such as managing your configuration. Use these roles, such as `config_manager <https://galaxy.ansible.com/ansible-network/config_manager>`_ and `cloud_vpn <https://galaxy.ansible.com/ansible-network/cloud_vpn>`_, directly in your playbooks. These roles are platform/provider agnostic, allowing you to use the same roles and playbooks across different network platforms or cloud providers.
+* **Platform provider roles** - Provider roles translate between the user roles and the various network OSs, each of which has a different API. Each provider role accepts input from a supported user role and translates it for a specific network OS. Network user roles depend on these provider roles to implement their functions. For example, the `config_manager <https://galaxy.ansible.com/ansible-network/config_manager>`_ role  uses the  `cisco_ios <https://galaxy.ansible.com/ansible-network/cisco_ios>`_ provider role to implement tasks on Cisco IOS network devices.
 * **Cloud provider and provisioner roles** - Similarly, cloud user roles depend on cloud provider and provisioner roles to implement cloud functions for specific cloud providers. For example, the `cloud_vpn <https://galaxy.ansible.com/ansible-network/cloud_vpn>`_ role depends on the `aws <https://galaxy.ansible.com/ansible-network/aws>`_ provider role to communicate with AWS.
 
 .. tip::

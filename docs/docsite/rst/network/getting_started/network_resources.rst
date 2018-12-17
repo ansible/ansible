@@ -2,7 +2,7 @@
 .. _network_resources:
 
 ************************
-Resources and Next Steps
+Resources and next steps
 ************************
 
 .. contents::
@@ -16,7 +16,7 @@ Read more about Ansible for Network Automation:
 - Network Automation on the `Ansible website <https://www.ansible.com/overview/networking>`_
 - Ansible Network `Blog posts <https://www.ansible.com/blog/topic/networks>`_
 
-Events (on Video and in Person)
+Events (on video and in person)
 ===============================
 
 All sessions at Ansible events are recorded and include many Network-related topics (use Filter by Category to view only Network topics). You can also join us for future events in your area. See:
@@ -25,7 +25,7 @@ All sessions at Ansible events are recorded and include many Network-related top
 - `Recorded AnsibleAutomates <https://www.ansible.com/resources/webinars-training>`_
 - `Upcoming Ansible Events <https://www.ansible.com/community/events>`_ page.
 
-GitHub Repos
+GitHub repos
 ============
 
 Ansible hosts module code, examples, demonstrations, and other content on GitHub. Anyone with a GitHub account is able to create Pull Requests (PRs) or issues on these repos:
