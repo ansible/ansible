@@ -48,7 +48,7 @@ options:
   sgname:
     description:
       - "Storage Group name 32 Characters no special characters other than
-      underscore"
+      underscore."
     required: true
   slo:
     description:
