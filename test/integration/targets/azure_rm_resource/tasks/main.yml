@@ -111,4 +111,4 @@
     resource_group: "{{ resource_group }}"
     provider: Storage
     resource_type: storageAccounts
-    resource_name: "{{ storage_name }}"
+    resource_name: "{{ storageaccountname }}"
