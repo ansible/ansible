@@ -27,9 +27,10 @@ options:
     type: str
   state:
     description:
-      - State the action to perform. Use 'present' to create dscp-map and
-        'absent' to delete.
+      - State the action to perform. Use C(present) to create dscp-map and
+        C(absent) to delete.
     required: True
+    type: str
     choices: ["present", "absent"]
   pn_name:
     description:
@@ -40,7 +41,7 @@ options:
     description:
       - Scope for dscp map.
     required: False
-    choices: ['local', 'fabric']
+    choices: ["local", "fabric"]
 """
 
 EXAMPLES = """
