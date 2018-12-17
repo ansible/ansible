@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_dns_zone
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage dns zones on a univention corporate server
 description:
     - "This module allows to manage dns zones on a univention corporate server (UCS).

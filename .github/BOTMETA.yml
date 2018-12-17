@@ -129,7 +129,7 @@ files:
     ignored: sivel angstwad
   $modules/cloud/scaleway/scaleway_volume.py:
     ignored: hekonsek
-  $modules/cloud/univention/: 2-b
+  $modules/cloud/univention/: keachi
   $modules/cloud/vmware/:
     maintainers: $team_vmware
     ignored: cigamit jcpowermac mtnbikenc
