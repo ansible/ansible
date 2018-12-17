@@ -28,7 +28,7 @@ options:
           information on all configured clouds
      required: false
      default: []
-requirements: [ os-client-config ]
+requirements: [ openstacksdk ]
 author: "Monty Taylor (@emonty)"
 '''
 
@@ -47,11 +47,17 @@ EXAMPLES = '''
 '''
 
 try:
-    import os_client_config
-    from os_client_config import exceptions
-    HAS_OS_CLIENT_CONFIG = True
+    import openstack.config
+    from openstack.config import exceptions
+    HAS_OPENSTACKSDK = True
 except ImportError:
-    HAS_OS_CLIENT_CONFIG = False
+    HAS_OPENSTACKSDK = False
+    try:
+        import os_client_config
+        from os_client_config import exceptions
+        HAS_OS_CLIEMT_CONFIG = True
+    except ImportError:
+        HAS_OS_CLIENT_CONFIG = False
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -61,15 +67,23 @@ def main():
         clouds=dict(required=False, type='list', default=[]),
     ))
 
-    if not HAS_OS_CLIENT_CONFIG:
-        module.fail_json(msg='os-client-config is required for this module')
+    if not HAS_OPENSTACKSDK:
+        if not HAS_OS_CLIENT_CONFIG:
+            module.fail_json(msg='openstacksdk is required for this module')
+        else:
+            module.warn('openstacksdk is required for this module. os-client-config as a fallback is deprecated')
 
     p = module.params
 
     try:
-        config = os_client_config.OpenStackConfig()
+        if HAS_OPENSTACKSDK:
+            config = openstack.config.OpenStackConfig()
+            all_clouds = config.get_all()
+        else:
+            config = os_client_config.OpenStackConfig()
+            all_clouds = config.get_all_clouds()
         clouds = []
-        for cloud in config.get_all_clouds():
+        for cloud in all_clouds:
             if not p['clouds'] or cloud.name in p['clouds']:
                 cloud.config['name'] = cloud.name
                 clouds.append(cloud.config)
