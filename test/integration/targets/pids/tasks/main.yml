@@ -31,13 +31,14 @@
     mode: "u+rwx"
 
 - name: "Running the copy of 'sleep' binary"
-  command: "{{ output_dir }}/{{ random_name.stdout }} 100"
+  command: "sh obtainpid.sh {{ output_dir }}/{{ random_name.stdout }}"
   async: 100
   poll: 0
 
-- name: "Finding the process ID(PIDs)"
-  command: python {{ playbook_dir }}/targets/pids/tasks/obtainpid.py "{{ random_name.stdout }}"
-  register: find_process
+- name: "Reading pid from the file"
+  command: cat {{ output_dir }}/newpid.txt
+  register: newpid
+
 
 - name: "Checking the process IDs (PIDs) of sleep binary" 
   pids: 

@@ -15,6 +15,8 @@ description: "Retrieves a list of process IDs (PIDs) of all processes of the giv
 short_description: "Retrieves process IDs list if the process is running otherwise return empty list"
 author:
   - Saranya Sridharan (@saranyasridharan)
+requirements:
+  - psutil
 options:
   name:
     description: the name of the process you want to get PID for
@@ -42,7 +44,11 @@ pids:
 
 from ansible.module_utils.basic import AnsibleModule
 import sys
-import psutil
+try:
+    import psutil
+    HAS_PSUTIL = True
+else:
+    HAS_PSUTIL = False
 
 def get_pid(name, module):
     return [int(p.info['pid']) for p in psutil.process_iter(attrs=['pid', 'name']) if name in p.info['name']]
@@ -54,6 +60,8 @@ def main():
             "name": {"required": True, "type": "str"}
         }
     )
+	if not HAS_PSUTIL:
+        module.fail_json(msg="Missing required 'psutil' python module. Try installing it with: pip install psutil")
     name = module.params["name"]
     response = dict(pids=get_pid(name, module))
     module.exit_json(**response)
