@@ -119,6 +119,7 @@ def map_config_to_obj(module):
 
     return obj
 
+
 def map_params_to_obj(module):
     obj = []
 
@@ -128,7 +129,7 @@ def map_params_to_obj(module):
         'peer': module.params['peer'],
         'source_int': module.params['source_int'],
         'acl': module.params['acl']
-            })
+    })
     return obj
 
 
@@ -162,7 +163,6 @@ def map_obj_to_commands(updates, module):
             if acl:
                 commands.append('ntp access-group peer {0}'.format(acl))
 
-
     return commands
 
 
@@ -174,14 +174,14 @@ def main():
         source_int=dict(type='str'),
         acl=dict(type='str'),
         state=dict(choices=['absent', 'present'], default='present')
-        )
+    )
 
     argument_spec.update(ios_argument_spec)
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True
-        )
+    )
 
     warnings = list()
     check_args(module, warnings)
