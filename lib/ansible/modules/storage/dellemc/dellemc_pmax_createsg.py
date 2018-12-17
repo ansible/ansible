@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright (C) 2018 DellEMC
+# Copyright: (C) 2018, DellEMC
 # Author(s): Paul Martin <paule.martin@dell.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
