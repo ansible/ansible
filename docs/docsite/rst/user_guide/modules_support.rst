@@ -28,7 +28,7 @@ Network
 Certified
 ---------
 
-:ref:`Certified<certified_supported>` modules are maintained by Ansible Partners.
+`Certified <https://access.redhat.com/articles/3642632>`_ modules are maintained by Ansible Partners.
 
 Community
 ---------
