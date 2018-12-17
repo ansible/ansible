@@ -149,7 +149,7 @@ def main():
                         try:
                             cred = cred_res.get(name=scm_credential)
                         except (tower_cli.exceptions.MultipleResults) as multi_res_excinfo:
-                            module.warn('Multiple credentials found for {}, falling back looking in project organization'.format(scm_credential))
+                            module.warn('Multiple credentials found for {0}, falling back looking in project organization'.format(scm_credential))
                             cred = cred_res.get(name=scm_credential, organization=org['id'])
                         scm_credential = cred['id']
                     except (exc.NotFound) as excinfo:
