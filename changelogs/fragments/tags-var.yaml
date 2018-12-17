@@ -1,0 +1,2 @@
+bugfixes:
+- tags - allow tags to be specified by a variable (https://github.com/ansible/ansible/issues/49825)
