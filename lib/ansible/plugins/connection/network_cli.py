@@ -452,7 +452,7 @@ class Connection(NetworkConnectionBase):
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
-            raise AnsibleConnectionFailure("timeout: value is %s seconds trying to send command: %s"
+            raise AnsibleConnectionFailure("timeout value %s seconds reached while trying to send command: %s"
                                            % (self._ssh_shell.gettimeout(), command.strip()))
 
     def _handle_buffer_read_timeout(self, signum, frame):
