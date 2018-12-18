@@ -344,6 +344,7 @@ try:
 except ImportError:
     pass  # handled by AnsibleAWSModule
 
+
 class EcsServiceManager:
     """Handles ECS Services"""
 
@@ -407,9 +408,9 @@ class EcsServiceManager:
         if (expected['load_balancers'] or []) != existing['loadBalancers']:
             return False
 
-        # expected is params. DAEMON scheduling strategy returns desired count equal to 
+        # expected is params. DAEMON scheduling strategy returns desired count equal to
         # number of instances running; don't check desired count if scheduling strat is daemon
-        if (expected['scheduling_strategy']!='DAEMON'):
+        if (expected['scheduling_strategy'] != 'DAEMON'):
             if (expected['desired_count'] or 0) != existing['desiredCount']:
                 return False
 
@@ -419,6 +420,7 @@ class EcsServiceManager:
                        desired_count, client_token, role, deployment_configuration,
                        placement_constraints, placement_strategy, health_check_grace_period_seconds,
                        network_configuration, service_registries, launch_type, scheduling_strategy):
+
         params = dict(
             cluster=cluster_name,
             serviceName=service_name,
@@ -440,7 +442,7 @@ class EcsServiceManager:
             params['serviceRegistries'] = service_registries
         # desired count is not required if scheduling strategy is daemon
         if desired_count is not None:
-            params['desiredCount']=desired_count
+            params['desiredCount'] = desired_count
 
         if scheduling_strategy:
             params['schedulingStrategy'] = scheduling_strategy
@@ -457,15 +459,13 @@ class EcsServiceManager:
             deploymentConfiguration=deployment_configuration)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
-        if self.health_check_setable(params):
-            params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         if force_new_deployment:
             params['forceNewDeployment'] = force_new_deployment
-        if healthcheck_grace_period:
-            params['healthCheckGracePeriodSeconds'] = healthcheck_grace_period
+        if health_check_grace_period_seconds is not None:
+            params['healthCheckGracePeriodSeconds'] = health_check_grace_period_seconds
         # desired count is not required if scheduling strategy is daemon
         if desired_count is not None:
-            params['desiredCount']=desired_count
+            params['desiredCount'] = desired_count
 
         response = self.ecs.update_service(**params)
         return self.jsonize(response['service'])
@@ -519,11 +519,11 @@ def main():
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
-        health_check_grace_period_seconds=dict(required=False, type='int')
+        health_check_grace_period_seconds=dict(required=False, type='int'),
         network_configuration=dict(required=False, type='dict', options=dict(
             subnets=dict(type='list'),
             security_groups=dict(type='list'),
-            assign_public_ip=dict(type='bool'),
+            assign_public_ip=dict(type='bool')
         )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         service_registries=dict(required=False, type='list', default=[]),
@@ -537,7 +537,7 @@ def main():
                               required_together=[['load_balancers', 'role']])
 
     if module.params['state'] == 'present' and module.params['scheduling_strategy'] == 'REPLICA':
-        if module.params['desired_count']==None:
+        if module.params['desired_count'] is None:
             module.fail_json(msg='state is present, scheduling_strategy is REPLICA; missing desired_count')
 
     service_mgr = EcsServiceManager(module)
@@ -552,7 +552,7 @@ def main():
                                                 DEPLOYMENT_CONFIGURATION_TYPE_MAP)
 
     deploymentConfiguration = snake_dict_to_camel_dict(deployment_configuration)
-    serviceRegistries = list(map(lambda registry: snake_dict_to_camel_dict(registry), module.params['service_registries']))
+    serviceRegistries = list(map(snake_dict_to_camel_dict, module.params['service_registries']))
 
     try:
         existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
@@ -567,9 +567,9 @@ def main():
     if module.params['force_new_deployment']:
         if not module.botocore_at_least('1.8.4'):
             module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use force_new_deployment')
-    if module.params['healthcheck_grace_period']:
+    if module.params['health_check_grace_period_seconds']:
         if not module.botocore_at_least('1.8.20'):
-            module.fail_json(msg='botocore needs to be version 1.8.20 or higher to use healthcheck_grace_period')
+            module.fail_json(msg='botocore needs to be version 1.8.20 or higher to use health_check_grace_period_seconds')
 
     if module.params['state'] == 'present':
 
@@ -601,13 +601,11 @@ def main():
                     if 'containerPort' in loadBalancer:
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
-
                 if update:
                     # If boto is not up to snuff, getting params will fail;
                     # Move checks to where they matter vs generall at module level
-                    #So, boto3 of various versions supports various features.  Parameters that are not supported
+                    # So, boto3 of various versions supports various features.  Parameters that are not supported
 
-                    
                     if module.params['scheduling_strategy']:
                         if not module.botocore_at_least('1.10.37'):
                             module.fail_json(msg='botocore needs to be version 1.10.37 or higher to use scheduling_strategy')
@@ -621,7 +619,7 @@ def main():
                             module.fail_json(msg="It is not possible to update the service registries of an existing service")
 
                     if (existing['loadBalancers'] or []) != loadBalancers:
-                        module.fail_json(msg="It is not possible to update the load balancers of an existing service", existing=existing, loadBalancers=loadBalancers)
+                        module.fail_json(msg="It is not possible to update the load balancers of an existing service")
 
                     # update required
                     response = service_mgr.update_service(module.params['name'],
@@ -632,6 +630,7 @@ def main():
                                                           network_configuration,
                                                           module.params['health_check_grace_period_seconds'],
                                                           module.params['force_new_deployment'])
+
                 else:
                     try:
                         response = service_mgr.create_service(module.params['name'],
@@ -644,9 +643,8 @@ def main():
                                                               deploymentConfiguration,
                                                               module.params['placement_constraints'],
                                                               module.params['placement_strategy'],
-                                                              module.params['health_check_grace_period_seconds']
+                                                              module.params['health_check_grace_period_seconds'],
                                                               network_configuration,
-                                                              module.params['launch_type'],
                                                               serviceRegistries,
                                                               module.params['launch_type'],
                                                               module.params['scheduling_strategy']

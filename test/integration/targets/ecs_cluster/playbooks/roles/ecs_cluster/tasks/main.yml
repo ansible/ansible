@@ -479,7 +479,7 @@
           - "update_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.subnets|length == 2"
           - "update_ecs_service_with_vpc.service.networkConfiguration.awsvpcConfiguration.securityGroups|length == 1"
 
-    - name: create ecs_service using healthcheck_grace_period
+    - name: create ecs_service using health_check_grace_period_seconds
       ecs_service:
         name: "{{ ecs_service_name }}-mft"
         cluster: "{{ ecs_cluster_name }}"
@@ -489,20 +489,20 @@
             containerPort: "{{ ecs_task_container_port }}"
         task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
         scheduling_strategy: "REPLICA"
-        healthcheck_grace_period: 10
+        health_check_grace_period_seconds: 10
         desired_count: 1
         state: present
         <<: *aws_connection_info
       register: ecs_service_creation_hcgp
 
 
-    - name: healthcheck_grace_period sets HealthChecGracePeriodSeconds
+    - name: health_check_grace_period_seconds sets HealthChecGracePeriodSeconds
       assert:
         that:
           - ecs_service_creation_hcgp.changed
           - "{{ecs_service_creation_hcgp.service.healthCheckGracePeriodSeconds}} == 10"
 
-    - name: update ecs_service using healthcheck_grace_period
+    - name: update ecs_service using health_check_grace_period_seconds
       ecs_service:
         name: "{{ ecs_service_name }}-mft"
         cluster: "{{ ecs_cluster_name }}"
@@ -512,7 +512,7 @@
             containerPort: "{{ ecs_task_container_port }}"
         task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
         desired_count: 1
-        healthcheck_grace_period: 30
+        health_check_grace_period_seconds: 30
         state: present
         <<: *aws_connection_info
       register: ecs_service_creation_hcgp2
@@ -540,7 +540,6 @@
 #           registryArn: "{{ ecs_task_service_registry_arn }}"
 #       task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
 #       desired_count: 1
-#       healthcheck_grace_period: 30
 #       state: present
 #       <<: *aws_connection_info
 #     register: ecs_service_creation_sr
@@ -565,7 +564,6 @@
         scheduling_strategy: "REPLICA"
         task_definition: "{{ ecs_task_name }}:{{ ecs_task_definition.taskdefinition.revision }}"
         desired_count: 1
-        healthcheck_grace_period: 30
         state: present
         <<: *aws_connection_info
       register: ecs_service_creation_replica
