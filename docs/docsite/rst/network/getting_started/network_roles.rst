@@ -13,7 +13,9 @@ Roles are sets of Ansible defaults, files, tasks, templates, variables, and othe
 Understanding roles
 ===================
 
-So what exactly is a role, and why should you care? Ansible roles are basically playbooks broken up into a known file structure.  The goal for roles is to create robust and reusable functions so users don't have to recreate a playbook from scratch.  So for example, you don't have to write your own DNS playbook. Instead, you specify a DNS server, and an Ansible role will configure it for you.  Roles will make adopting Ansible Network Automation faster, easier and in a more agnostic fashion resulting in freeing you from the burden of building the playbook logic yourself.
+So what exactly is a role, and why should you care? Ansible roles are basically playbooks broken up into a known file structure. Moving to roles from a playbook makes sharing, reading, and updating your Ansible workflow easier. Users can write their own roles. So for example, you don't have to write your own DNS playbook. Instead, you specify a DNS server and a role to configure it for you.
+
+To simplify your workflow even further, the Ansible Network team has written a series of roles for common network use cases. Using these roles means you don't have to reinvent the wheel. Instead of writing and maintaining your own ``create_vlan`` playbooks or roles, you can concentrate on designing, codifying and maintaining the parser templates that describe your network topologies and inventory, and let Ansible's network roles do the work. See the `network-related roles <https://galaxy.ansible.com/ansible-network>`_ on Ansible Galaxy.
 
 A sample DNS playbook
 ---------------------
@@ -272,7 +274,7 @@ For example, to use the ``config_manager`` role with Cisco IOS devices, you woul
 
 .. code-block:: bash
 
-   [user@ansible]$ ansible-galaxy install ansible-network.cisco_ios
+   [user@ansible]$ ansible-galaxy install ansible-network.cisco_nxos
    [user@ansible]$ ansible-galaxy install ansible-network.config_manager
 
 Roles are fully documented with examples in Ansible Galaxy on the **Read Me** tab for each role.
@@ -290,12 +292,12 @@ The Ansible Galaxy role version has two components:
 Update an installed role
 ------------------------
 
-The Ansible Galaxy page for a role lists all available versions. To update a locally installed role to a new or different version, use the ``ansible-galaxy install`` command with the version and ``--force`` option. You will also need to manually update any dependent roles to match this version:
+The Ansible Galaxy page for a role lists all available versions. To update a locally installed role to a new or different version, use the ``ansible-galaxy install`` command with the version and ``--force`` option. You may also need to manually update any dependent roles to support this version. See the role **Read Me** tab in Galaxy for dependent role minimum version requirements.
 
 .. code-block:: bash
 
   [user@ansible]$ ansible-galaxy install ansible-network.network_engine,v2.7.0 --force
-  [user@ansible]$ ansible-galaxy install ansible-network.cisco_ios,v2.7.0 --force
+  [user@ansible]$ ansible-galaxy install ansible-network.cisco_nxos,v2.7.1 --force
 
 .. seealso::
 
