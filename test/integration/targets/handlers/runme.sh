@@ -2,7 +2,12 @@
 
 set -eux
 
+# simple handler test
 ansible-playbook test_handlers.yml -i inventory.handlers -v "$@" --tags scenario1
+
+# simple from_handlers test
+ansible-playbook from_handlers.yml -i inventory.handlers -v "$@" --tags scenario1
+
 ansible-playbook test_listening_handlers.yml -i inventory.handlers -v "$@"
 
 [ "$(ansible-playbook test_handlers.yml -i inventory.handlers -v "$@" --tags scenario2 -l A \
