@@ -29,10 +29,6 @@ options:
     description:
       - The name of the load balancer.
     required: true
-  region:
-    description:
-      - The AWS Region name.
-    required: true
   attachInstances:
     description:
       - An array of strings representing the instance name(s) you want to attach to your load balancer.
@@ -92,6 +88,51 @@ loadbalancer:
   description: load balancer info
   returned: when state is present
   type: dict
+  sample:
+    {
+        "changed":true,
+        "loadbalancer":{
+            "arn":"arn:aws:lightsail:eu-central-1:731382453814:LoadBalancer/de77b828-3aa0-49b8-8cc5-fb0e69da3782",
+            "configuration_options":{
+                "session_stickiness_enabled":"false",
+                "session_stickiness_lb__cookie_duration_seconds":"86400"
+            },
+            "created_at":"2018-12-18T10:12:47.878000+03:00",
+            "dns_name":"1438df7092a3bd6db5f749796584d140-1104323986.eu-central-1.elb.amazonaws.com",
+            "health_check_path":"/api/health",
+            "instance_health_summary":[
+                {
+                    "instance_health":"initial",
+                    "instance_health_reason":"Lb.RegistrationInProgress",
+                    "instance_name":"Ubuntu-512MB-Frankfurt-1"
+                },
+                {
+                    "instance_health":"initial",
+                    "instance_health_reason":"Lb.RegistrationInProgress",
+                    "instance_name":"Ubuntu-512MB-Frankfurt-2"
+                }
+            ],
+            "instance_port":80,
+            "location":{
+                "availability_zone":"all",
+                "region_name":"eu-central-1"
+            },
+            "name":"loadbalancer1",
+            "protocol":"HTTP",
+            "public_ports":[
+                80
+            ],
+            "resource_type":"LoadBalancer",
+            "state":"provisioning",
+            "support_code":"301507506052/arn:aws:elasticloadbalancing:eu-central-1:301507506052:loadbalancer/app/1438df7092a3bd6db5f749796584d140/e469715075649370",
+            "tags":[
+
+            ],
+            "tls_certificate_summaries":[
+
+            ]
+        }
+    }
 '''
 
 import traceback
@@ -108,7 +149,7 @@ except ImportError:
     # will be caught by imported HAS_BOTO3
     pass
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
                                       HAS_BOTO3, camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list)
 
@@ -218,16 +259,11 @@ def delete_load_balancer(module, client, lb_name):
 
 
 def core(module):
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    region = get_aws_connection_info(module, boto3=True)
     if not region:
         module.fail_json(msg='region must be specified')
 
-    client = None
-    try:
-        client = boto3_conn(module, conn_type='client', resource='lightsail',
-                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg='Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
+    client = module.client('lightsail')
 
     changed = False
     state = module.params['state']
@@ -245,27 +281,20 @@ def core(module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         attachInstances=dict(type='list', default=[]),
         port=dict(type='int', default=80),
         healthCheckPath=dict(type='str', default=None)
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='Python module "boto3" is missing, please install it')
-
-    if not HAS_BOTOCORE:
-        module.fail_json(msg='Python module "botocore" is missing, please install it')
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
     try:
         core(module)
     except (botocore.exceptions.ClientError, Exception) as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+        module.fail_json_aws(e)
 
 
 if __name__ == '__main__':
