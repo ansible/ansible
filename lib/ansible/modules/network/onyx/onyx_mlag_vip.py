@@ -148,8 +148,7 @@ class OnyxMLagVipModule(BaseOnyxModule):
         if req_ip is not None:
             ipaddr, mask = req_ip.split('/')
             if req_group != current_group or req_ip != current_ip:
-                self._commands.append(
-                                'mlag-vip %s ip %s /%s force' % (req_group, ipaddr, mask))
+                self._commands.append('mlag-vip %s ip %s /%s force' % (req_group, ipaddr, mask))
         elif req_group and req_group != current_group:
             self._commands.append('mlag-vip %s' % req_group)
 
