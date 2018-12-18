@@ -2,6 +2,19 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.15:
+
+v2.5.15
+=======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.15_Bugfixes:
+
+Bugfixes
+--------
+
+- Only template each hostvars var on-demand (https://github.com/ansible/ansible/issues/33259)
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.14:
 
 v2.5.14
