@@ -1256,7 +1256,7 @@ class ModuleValidator(Validator):
                         msg='argument_spec for "%s" defines type as %s but documentation defines type as %s' % (arg, data['type'], doc_type)
                     )
 
-            if 'type' not in data and doc_type in frozenset(('str', 'list', 'dict', 'bool', 'int', 'float')):
+            if 'type' not in data and doc_type in frozenset(('list', 'dict', 'bool', 'int', 'float')):
                 self.reporter.error(
                     path=self.object_path,
                     code=335,
