@@ -38,16 +38,21 @@ options:
     description:
     - Preference properties typically have simple values such as strings,
       integers, or lists of strings and integers. This is ignored if the state
-      is "get". See man xfconf-query(1)
+      is "get". For array mode, use a list of values. See man xfconf-query(1)
   value_type:
     description:
     - The type of value being set. This is ignored if the state is "get".
-    choices: [ int, bool, float, string ]
+      For array mode, use a list of types.
   state:
     description:
     - The action to take upon the property/value.
     choices: [ get, present, absent ]
     default: "present"
+  force_array:
+    description:
+    - Force array even if only one element
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -59,7 +64,6 @@ EXAMPLES = """
     value: "192"
   become: True
   become_user: johnsmith
-
 """
 
 RETURN = '''
@@ -83,7 +87,6 @@ RETURN = '''
     returned: success
     type: str
     sample: "192"
-...
 '''
 
 import pipes
@@ -93,12 +96,13 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class XfconfPreference(object):
-    def __init__(self, module, channel, property, value_type, value):
+    def __init__(self, module, channel, property, value_types, values, array):
         self.module = module
         self.channel = channel
         self.property = property
-        self.value_type = value_type
-        self.value = value
+        self.value_types = value_types
+        self.values = values
+        self.array = array
 
     def call(self, call_type, fail_onerr=True):
         """ Helper function to perform xfconf-query operations """
@@ -111,8 +115,11 @@ class XfconfPreference(object):
                                                         pipes.quote(self.property))
         try:
             if call_type == 'set':
-                cmd += " --type {0} --create --set {1}".format(pipes.quote(self.value_type),
-                                                               pipes.quote(self.value))
+                if self.array:
+                    cmd += " --force-array"
+                for i in range(len(self.values)):
+                    cmd += " --type {0} --create --set {1}".format(pipes.quote(self.value_types[i]),
+                                                                   pipes.quote(self.values[i]))
             elif call_type == 'unset':
                 cmd += " --reset"
 
@@ -136,13 +143,12 @@ def main():
         argument_spec=dict(
             channel=dict(required=True, type='str'),
             property=dict(required=True, type='str'),
-            value_type=dict(required=False,
-                            choices=['int', 'bool', 'float', 'string'],
-                            type='str'),
-            value=dict(required=False, default=None, type='str'),
+            value_type=dict(required=False, type='list'),
+            value=dict(required=False, type='list'),
             state=dict(default='present',
                        choices=['present', 'get', 'absent'],
-                       type='str')
+                       type='str'),
+            force_array=dict(default=False, type='bool')
         ),
         supports_check_mode=True
     )
@@ -152,25 +158,33 @@ def main():
     # Assign module values to dictionary values
     channel = module.params['channel']
     property = module.params['property']
-    value_type = module.params['value_type']
-    if module.params['value'].lower() == "true":
-        value = "true"
-    elif module.params['value'] == "false":
-        value = "false"
+    values = module.params['value']
+    value_types = module.params['value_type']
+    if values is not None and value_types is not None:
+        if len(values) != len(value_types):
+            module.fail_json(msg='Same number of "value" and "value_type" needed')
+        for i in range(len(values)):
+            if values[i].lower() == "true" or values[i].lower() == "false":
+                values[i] = values[i].lower()
+        for value_type in value_types:
+            if value_type not in ['int', 'bool', 'float', 'string']:
+                module.fail_json(msg='value_type %s is not supported'
+                                 % str(value_type))
     else:
-        value = module.params['value']
+        values = value_types = None
+    array = module.params['force_array'] or values is not None and len(values) > 1
 
     state = state_values[module.params['state']]
 
     # Initialize some variables for later
     change = False
-    new_value = ''
+    new_values = ''
 
     if state != "get":
-        if value is None or value == "":
+        if values is None or values[0] == "":
             module.fail_json(msg='State %s requires "value" to be set'
                              % str(state))
-        elif value_type is None or value_type == "":
+        elif value_types is None or value_types[0] == "":
             module.fail_json(msg='State %s requires "value_type" to be set'
                              % str(state))
 
@@ -178,35 +192,44 @@ def main():
     xfconf = XfconfPreference(module,
                               channel,
                               property,
-                              value_type,
-                              value)
-    # Now we get the current value, if not found don't fail
-    dummy, current_value = xfconf.call("get", fail_onerr=False)
+                              value_types,
+                              values,
+                              array)
+    # Now we get the current values, if not found don't fail
+    dummy, current_values = xfconf.call("get", fail_onerr=False)
 
-    # Check if the current value equals the value we want to set.  If not, make
-    # a change
-    if current_value != value:
+    # Convert current_values to array format
+    if "Value is an array with" in current_values:
+        current_values = current_values.split("\n")
+        current_values.pop(0)
+        current_values.pop(0)
+    else:
+        current_values = [current_values]
+
+    # Check if the current values equals the values we want to set.  If not,
+    # make a change
+    if current_values != values and state != "get":
         # If check mode, we know a change would have occurred.
         if module.check_mode:
             # So we will set the change to True
             change = True
-            # And set the new_value to the value that would have been set
-            new_value = value
+            # And set the new_values to the values that would have been set
+            new_values = values
         # If not check mode make the change.
         else:
-            change, new_value = xfconf.call(state)
-    # If the value we want to set is the same as the current_value, we will
-    # set the new_value to the current_value for reporting
+            change, new_values = xfconf.call(state)
+    # If the value we want to set is the same as the current_values, we will
+    # set the new_values to the current_values for reporting
     else:
-        new_value = current_value
+        new_values = current_values
 
     facts = dict(xfconf={'changed': change,
                          'channel': channel,
                          'property': property,
-                         'value_type': value_type,
-                         'new_value': new_value,
-                         'previous_value': current_value,
-                         'playbook_value': module.params['value']})
+                         'value_type': value_types,
+                         'new_value': new_values,
+                         'previous_value': current_values,
+                         'playbook_value': values})
 
     module.exit_json(changed=change, ansible_facts=facts)
 
