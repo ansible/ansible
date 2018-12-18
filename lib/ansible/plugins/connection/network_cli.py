@@ -192,9 +192,6 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import NetworkConnectionBase
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class AnsibleCmdRespRecv(Exception):
@@ -239,7 +236,7 @@ class Connection(NetworkConnectionBase):
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
             )
-        display.display('network_os is set to %s' % self._network_os, log_only=True)
+        self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
@@ -461,7 +458,7 @@ class Connection(NetworkConnectionBase):
     def _handle_command_timeout(self, signum, frame):
         msg = 'command timeout triggered, timeout value is %s secs.\nSee the timeout setting options in the Network Debug and Troubleshooting Guide.'\
               % self.get_option('persistent_command_timeout')
-        display.display(msg, log_only=True)
+        self.queue_message('log', msg)
         raise AnsibleConnectionFailure(msg)
 
     def _strip(self, data):

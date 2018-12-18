@@ -156,9 +156,6 @@ from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import httpapi_loader
 from ansible.plugins.connection import NetworkConnectionBase
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class Connection(NetworkConnectionBase):
@@ -187,7 +184,7 @@ class Connection(NetworkConnectionBase):
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
             )
-        display.display('network_os is set to %s' % self._network_os, log_only=True)
+        self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
     def update_play_context(self, pc_data):
         """Updates the play context information for the connection"""
