@@ -21,14 +21,7 @@ import sys
 
 from contextlib import contextmanager
 
-import mock
-
 from ansible.module_utils.six import reraise
-
-
-MODULE_CLASSES = [
-    'ansible.module_utils.basic.AnsibleModule',
-]
 
 
 class AnsibleModuleCallError(RuntimeError):
@@ -39,20 +32,39 @@ class AnsibleModuleImportError(ImportError):
     pass
 
 
+class _FakeAnsibleModuleInit:
+    def __init__(self):
+        self.args = tuple()
+        self.kwargs = {}
+        self.called = False
+
+    def __call__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        self.called = True
+        raise AnsibleModuleCallError('AnsibleModuleCallError')
+
+
+def _fake_load_params():
+    pass
+
+
 @contextmanager
-def add_mocks(filename):
+def setup_env(filename):
     # Used to clean up imports later
     pre_sys_modules = list(sys.modules.keys())
 
-    module_mock = mock.MagicMock()
-    for module_class in MODULE_CLASSES:
-        p = mock.patch('%s.__init__' % module_class, new=module_mock).start()
-        p.side_effect = AnsibleModuleCallError('AnsibleModuleCallError')
-    mock.patch('ansible.module_utils.basic._load_params').start()
+    fake = _FakeAnsibleModuleInit()
+    module = __import__('ansible.module_utils.basic').module_utils.basic
+    _original_init = module.AnsibleModule.__init__
+    _original_load_params = module._load_params
+    setattr(module.AnsibleModule, '__init__', fake)
+    setattr(module, '_load_params', _fake_load_params)
 
-    yield module_mock
+    yield fake
 
-    mock.patch.stopall()
+    setattr(module.AnsibleModule, '__init__', _original_init)
+    setattr(module, '_load_params', _original_load_params)
 
     # Clean up imports to prevent issues with mutable data being used in modules
     for k in list(sys.modules.keys()):
@@ -63,10 +75,13 @@ def add_mocks(filename):
 
 
 def get_argument_spec(filename):
-    with add_mocks(filename) as module_mock:
+    with setup_env(filename) as fake:
         try:
+            # We use ``module`` here instead of ``__main__``
+            # which helps with some import issues in this tool
+            # where modules may import things that conflict
             mod = imp.load_source('module', filename)
-            if not module_mock.call_args:
+            if not fake.called:
                 mod.main()
         except AnsibleModuleCallError:
             pass
@@ -74,10 +89,9 @@ def get_argument_spec(filename):
             reraise(AnsibleModuleImportError, AnsibleModuleImportError('%s' % e), sys.exc_info()[2])
 
     try:
-        args, kwargs = module_mock.call_args
         try:
-            return kwargs['argument_spec'], args, kwargs
+            return fake.kwargs['argument_spec'], fake.args, fake.kwargs
         except KeyError:
-            return args[0], args, kwargs
+            return fake.args[0], fake.args, fake.kwargs
     except TypeError:
         return {}, (), {}
