@@ -38,7 +38,7 @@ options:
     description:
     - The path to a certificate file.
     - This is required when I(state) is C(present) or C(exported).
-    - When I(state) is C(absent) and I(thumbprint) is not specified, the
+    - When I(state) is C(absent) and I(thumbprint) is not specified, the=
       thumbprint is derived from the certificate at this path.
     type: path
   thumbprint:
@@ -91,7 +91,7 @@ options:
   key_storage:
     description:
     - Specifies where Windows will store the private key when it is imported.
-    - When set to C(default), the default option as set by Windows is used- typically user.
+    - When set to C(default), the default option as set by Windows is used, typically C(user).
     - When set to C(machine), the key is stored in a path accessible by various
       users.
     - When set to C(user), the key is stored in a path only accessible by the
