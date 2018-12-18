@@ -21,6 +21,8 @@ __metaclass__ = type
 
 from units.compat import unittest
 from units.compat.mock import MagicMock
+
+from ansible import arguments
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible.template import Templar
@@ -31,10 +33,12 @@ from units.mock.loader import DictDataLoader
 class TestPlaybookExecutor(unittest.TestCase):
 
     def setUp(self):
-        pass
+        # Reset command line args for every test
+        arguments.CLIArgs._Singleton__instance = None
 
     def tearDown(self):
-        pass
+        # And cleanup after ourselves too
+        arguments.CLIArgs._Singleton__instance = None
 
     def test_get_serialized_batches(self):
         fake_loader = DictDataLoader({
@@ -77,11 +81,6 @@ class TestPlaybookExecutor(unittest.TestCase):
         mock_inventory = MagicMock()
         mock_var_manager = MagicMock()
 
-        # fake out options to use the syntax CLI switch, which will ensure
-        # the PlaybookExecutor doesn't create a TaskQueueManager
-        mock_options = MagicMock()
-        mock_options.syntax.value = True
-
         templar = Templar(loader=fake_loader)
 
         pbe = PlaybookExecutor(
@@ -89,7 +88,6 @@ class TestPlaybookExecutor(unittest.TestCase):
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
-            options=mock_options,
             passwords=[],
         )
 

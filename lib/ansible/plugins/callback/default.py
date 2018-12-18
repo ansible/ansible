@@ -19,6 +19,7 @@ DOCUMENTATION = '''
 '''
 
 from ansible import constants as C
+from ansible import context
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
@@ -370,15 +371,16 @@ class CallbackModule(CallbackBase):
             from os.path import basename
             self._display.banner("PLAYBOOK: %s" % basename(playbook._file_name))
 
+        # show CLI arguments
         if self._display.verbosity > 3:
-            # show CLI options
-            if self._options is not None:
-                for option in dir(self._options):
-                    if option.startswith('_') or option in ['read_file', 'ensure_value', 'read_module']:
-                        continue
-                    val = getattr(self._options, option)
-                    if val and self._display.verbosity > 3:
-                        self._display.display('%s: %s' % (option, val), color=C.COLOR_VERBOSE, screen_only=True)
+            if context.CLIARGS.get('args'):
+                self._display.display('Positional arguments: %s' % ' '.join(context.CLIARGS['args']),
+                                      color=C.COLOR_VERBOSE, screen_only=True)
+
+            for argument in (a for a in context.CLIARGS if a != 'args'):
+                val = context.CLIARGS[argument]
+                if val:
+                    self._display.display('%s: %s' % (argument, val), color=C.COLOR_VERBOSE, screen_only=True)
 
     def v2_runner_retry(self, result):
         task_name = result.task_name or result._task

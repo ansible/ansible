@@ -21,6 +21,7 @@ __metaclass__ = type
 import os
 import stat
 
+from ansible import context
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
@@ -35,10 +36,10 @@ class PlaybookCLI(CLI):
     ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
         See the project home page (https://docs.ansible.com) for more information. '''
 
-    def parse(self):
+    def init_parser(self):
 
         # create parser for CLI options
-        parser = CLI.base_parser(
+        super(PlaybookCLI, self).init_parser(
             usage="%prog [options] playbook.yml [playbook2 ...]",
             connect_opts=True,
             meta_opts=True,
@@ -54,49 +55,55 @@ class PlaybookCLI(CLI):
         )
 
         # ansible playbook specific opts
-        parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-                          help="list all tasks that would be executed")
-        parser.add_option('--list-tags', dest='listtags', action='store_true',
-                          help="list all available tags")
-        parser.add_option('--step', dest='step', action='store_true',
-                          help="one-step-at-a-time: confirm each task before running")
-        parser.add_option('--start-at-task', dest='start_at_task',
-                          help="start the playbook at the task matching this name")
+        self.parser.add_option('--list-tasks', dest='listtasks', action='store_true',
+                               help="list all tasks that would be executed")
+        self.parser.add_option('--list-tags', dest='listtags', action='store_true',
+                               help="list all available tags")
+        self.parser.add_option('--step', dest='step', action='store_true',
+                               help="one-step-at-a-time: confirm each task before running")
+        self.parser.add_option('--start-at-task', dest='start_at_task',
+                               help="start the playbook at the task matching this name")
 
-        self.parser = parser
-        super(PlaybookCLI, self).parse()
+        return self.parser
 
-        if len(self.args) == 0:
+    def post_process_args(self, options, args):
+        options, args = super(PlaybookCLI, self).post_process_args(options, args)
+
+        if len(args) == 0:
             raise AnsibleOptionsError("You must specify a playbook file to run")
 
-        display.verbosity = self.options.verbosity
-        self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
+        display.verbosity = options.verbosity
+        self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
+
+        options = self.normalize_become_options(options)
+
+        return options, args
 
     def run(self):
 
         super(PlaybookCLI, self).run()
 
         # Note: slightly wrong, this is written so that implicit localhost
-        # Manage passwords
+        # manages passwords
         sshpass = None
         becomepass = None
         passwords = {}
 
         # initial error check, to make sure all specified playbooks are accessible
         # before we start running anything through the playbook executor
-        for playbook in self.args:
+        for playbook in context.CLIARGS['args']:
             if not os.path.exists(playbook):
                 raise AnsibleError("the playbook: %s could not be found" % playbook)
             if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
                 raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
         # don't deal with privilege escalation or passwords when we don't need to
-        if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
-            self.normalize_become_options()
+        if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or
+                context.CLIARGS['listtags'] or context.CLIARGS['syntax']):
             (sshpass, becomepass) = self.ask_passwords()
             passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        loader, inventory, variable_manager = self._play_prereqs(self.options)
+        loader, inventory, variable_manager = self._play_prereqs()
 
         # (which is not returned in list_hosts()) is taken into account for
         # warning if inventory is empty.  But it can't be taken into account for
@@ -104,14 +111,15 @@ class PlaybookCLI(CLI):
         # limit if only implicit localhost was in inventory to start with.
         #
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
-        hosts = CLI.get_host_list(inventory, self.options.subset)
+        hosts = super(PlaybookCLI, self).get_host_list(inventory, context.CLIARGS['subset'])
 
         # flush fact cache if requested
-        if self.options.flush_cache:
+        if context.CLIARGS['flush_cache']:
             self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
-        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options,
+        pbex = PlaybookExecutor(playbooks=context.CLIARGS['args'], inventory=inventory,
+                                variable_manager=variable_manager, loader=loader,
                                 passwords=passwords)
 
         results = pbex.run()
@@ -131,7 +139,7 @@ class PlaybookCLI(CLI):
                     mytags = set(play.tags)
                     msg += '\tTAGS: [%s]' % (','.join(mytags))
 
-                    if self.options.listhosts:
+                    if context.CLIARGS['listhosts']:
                         playhosts = set(inventory.get_hosts(play.hosts))
                         msg += "\n    pattern: %s\n    hosts (%d):" % (play.hosts, len(playhosts))
                         for host in playhosts:
@@ -140,9 +148,9 @@ class PlaybookCLI(CLI):
                     display.display(msg)
 
                     all_tags = set()
-                    if self.options.listtags or self.options.listtasks:
+                    if context.CLIARGS['listtags'] or context.CLIARGS['listtasks']:
                         taskmsg = ''
-                        if self.options.listtasks:
+                        if context.CLIARGS['listtasks']:
                             taskmsg = '    tasks:\n'
 
                         def _process_block(b):
@@ -155,7 +163,7 @@ class PlaybookCLI(CLI):
                                         continue
 
                                     all_tags.update(task.tags)
-                                    if self.options.listtasks:
+                                    if context.CLIARGS['listtasks']:
                                         cur_tags = list(mytags.union(set(task.tags)))
                                         cur_tags.sort()
                                         if task.name:
@@ -167,14 +175,14 @@ class PlaybookCLI(CLI):
                             return taskmsg
 
                         all_vars = variable_manager.get_vars(play=play)
-                        play_context = PlayContext(play=play, options=self.options)
+                        play_context = PlayContext(play=play)
                         for block in play.compile():
                             block = block.filter_tagged_tasks(play_context, all_vars)
                             if not block.has_tasks():
                                 continue
                             taskmsg += _process_block(block)
 
-                        if self.options.listtags:
+                        if context.CLIARGS['listtags']:
                             cur_tags = list(mytags.union(all_tags))
                             cur_tags.sort()
                             taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)

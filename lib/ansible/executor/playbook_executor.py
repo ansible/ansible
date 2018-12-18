@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
+from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
 from ansible.playbook import Playbook
@@ -42,19 +43,20 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords):
+    def __init__(self, playbooks, inventory, variable_manager, loader, passwords):
         self._playbooks = playbooks
         self._inventory = inventory
         self._variable_manager = variable_manager
         self._loader = loader
-        self._options = options
         self.passwords = passwords
         self._unreachable_hosts = dict()
 
-        if options.listhosts or options.listtasks or options.listtags or options.syntax:
+        if context.CLIARGS.get('listhosts') or context.CLIARGS.get('listtasks') or \
+                context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
+            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager,
+                                         loader=loader, passwords=self.passwords)
 
         # Note: We run this here to cache whether the default ansible ssh
         # executable supports control persist.  Sometime in the future we may
@@ -127,7 +129,7 @@ class PlaybookExecutor:
                     templar = Templar(loader=self._loader, variables=all_vars)
                     play.post_validate(templar)
 
-                    if self._options.syntax:
+                    if context.CLIARGS['syntax']:
                         continue
 
                     if self._tqm is None:
@@ -218,15 +220,15 @@ class PlaybookExecutor:
             if self._loader:
                 self._loader.cleanup_all_tmp_files()
 
-        if self._options.syntax:
+        if context.CLIARGS['syntax']:
             display.display("No issues encountered")
             return result
 
-        if self._options.start_at_task and not self._tqm._start_at_done:
+        if context.CLIARGS['start_at_task'] and not self._tqm._start_at_done:
             display.error(
-                "No matching task \"%s\" found. "
-                "Note: --start-at-task can only follow static includes."
-                % self._options.start_at_task
+                "No matching task \"%s\" found."
+                " Note: --start-at-task can only follow static includes."
+                % context.CLIARGS['start_at_task']
             )
 
         return result

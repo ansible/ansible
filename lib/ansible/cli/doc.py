@@ -1,4 +1,5 @@
 # Copyright: (c) 2014, James Tanner <tanner.jc@gmail.com>
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -14,6 +15,7 @@ import yaml
 import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
+from ansible import context
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native
@@ -43,9 +45,9 @@ class DocCLI(CLI):
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
 
-    def parse(self):
+    def init_parser(self):
 
-        self.parser = CLI.base_parser(
+        self.parser = super(DocCLI, self).init_parser(
             usage='usage: %prog [-l|-F|-s] [options] [-t <plugin type> ] [plugin]',
             module_opts=True,
             desc="plugin documentation tool",
@@ -66,18 +68,27 @@ class DocCLI(CLI):
                                help='Choose which plugin type (defaults to "module"). '
                                     'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS),
                                choices=C.DOCUMENTABLE_PLUGINS)
-        super(DocCLI, self).parse()
+        return self.parser
 
-        if [self.options.all_plugins, self.options.json_dump, self.options.list_dir, self.options.list_files, self.options.show_snippet].count(True) > 1:
+    def post_process_args(self, options, args):
+        if [options.all_plugins, options.json_dump, options.list_dir, options.list_files, options.show_snippet].count(True) > 1:
             raise AnsibleOptionsError("Only one of -l, -F, -s, -j or -a can be used at the same time.")
 
-        display.verbosity = self.options.verbosity
+        display.verbosity = options.verbosity
+
+        # process all plugins of type
+        if options.all_plugins:
+            args = self.get_all_plugins_of_type(options['type'])
+            if options.module_path:
+                display.warning('Ignoring "--module-path/-M" option as "--all/-a" only displays builtins')
+
+        return options, args
 
     def run(self):
 
         super(DocCLI, self).run()
 
-        plugin_type = self.options.type
+        plugin_type = context.CLIARGS['type']
 
         if plugin_type in C.DOCUMENTABLE_PLUGINS:
             loader = getattr(plugin_loader, '%s_loader' % plugin_type)
@@ -85,17 +96,17 @@ class DocCLI(CLI):
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
 
         # add to plugin path from command line
-        if self.options.module_path:
-            for path in self.options.module_path:
+        if context.CLIARGS['module_path']:
+            for path in context.CLIARGS['module_path']:
                 if path:
                     loader.add_directory(path)
 
         # save only top level paths for errors
-        search_paths = DocCLI.print_paths(loader)
+        search_paths = self.print_paths(loader)
         loader._paths = None  # reset so we can use subdirs below
 
         # list plugins names and filepath for type
-        if self.options.list_files:
+        if context.CLIARGS['list_files']:
             paths = loader._get_paths()
             for path in paths:
                 self.plugin_list.update(self.find_plugins(path, plugin_type))
@@ -105,7 +116,7 @@ class DocCLI(CLI):
             return 0
 
         # list plugins for type
-        if self.options.list_dir:
+        if context.CLIARGS['list_dir']:
             paths = loader._get_paths()
             for path in paths:
                 self.plugin_list.update(self.find_plugins(path, plugin_type))
@@ -113,14 +124,8 @@ class DocCLI(CLI):
             self.pager(self.get_plugin_list_text(loader))
             return 0
 
-        # process all plugins of type
-        if self.options.all_plugins:
-            self.args = self.get_all_plugins_of_type(plugin_type)
-            if self.options.module_path:
-                display.warning('Ignoring "--module-path/-M" option as "--all/-a" only displays builtins')
-
         # dump plugin desc/metadata as JSON
-        if self.options.json_dump:
+        if context.CLIARGS['json_dump']:
             plugin_data = {}
             plugin_names = self.get_all_plugins_of_type(plugin_type)
             for plugin_name in plugin_names:
@@ -132,12 +137,12 @@ class DocCLI(CLI):
 
             return 0
 
-        if len(self.args) == 0:
+        if len(context.CLIARGS['args']) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
 
         # process command line list
         text = ''
-        for plugin in self.args:
+        for plugin in context.CLIARGS['args']:
             textret = self.format_plugin_doc(plugin, loader, plugin_type, search_paths)
 
             if textret:
@@ -165,7 +170,7 @@ class DocCLI(CLI):
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
 
         try:
-            doc, __, __, metadata = get_docstring(filename, fragment_loader, verbose=(self.options.verbosity > 0))
+            doc, __, __, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
         except Exception:
             display.vvv(traceback.format_exc())
             raise AnsibleError(
@@ -215,7 +220,7 @@ class DocCLI(CLI):
 
             try:
                 doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader,
-                                                                         verbose=(self.options.verbosity > 0))
+                                                                         verbose=(context.CLIARGS['verbosity'] > 0))
             except Exception:
                 display.vvv(traceback.format_exc())
                 display.error(
@@ -242,7 +247,7 @@ class DocCLI(CLI):
                 if 'docuri' in doc:
                     doc['docuri'] = doc[plugin_type].replace('_', '-')
 
-                if self.options.show_snippet and plugin_type == 'module':
+                if context.CLIARGS['show_snippet'] and plugin_type == 'module':
                     text += self.get_snippet_text(doc)
                 else:
                     text += self.get_man_text(doc)
@@ -516,13 +521,13 @@ class DocCLI(CLI):
 
     def get_man_text(self, doc):
 
-        self.IGNORE = self.IGNORE + (self.options.type,)
+        self.IGNORE = self.IGNORE + (context.CLIARGS['type'],)
         opt_indent = "        "
         text = []
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        text.append("> %s    (%s)\n" % (doc.get(self.options.type, doc.get('plugin_type')).upper(), doc.pop('filename')))
+        text.append("> %s    (%s)\n" % (doc.get(context.CLIARGS['type'], doc.get('plugin_type')).upper(), doc.pop('filename')))
 
         if isinstance(doc['description'], list):
             desc = " ".join(doc.pop('description'))

@@ -29,6 +29,7 @@ import shutil
 import sys
 import traceback
 
+from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_text
 
@@ -106,7 +107,6 @@ if __name__ == '__main__':
             exit_code = 6
         else:
             cli = mycli(args)
-            cli.parse()
             exit_code = cli.run()
 
     except AnsibleOptionsError as e:
@@ -134,9 +134,9 @@ if __name__ == '__main__':
             # Show raw stacktraces in debug mode, It also allow pdb to
             # enter post mortem mode.
             raise
-        have_cli_options = cli is not None and cli.options is not None
+        have_cli_options = bool(context.CLIARGS)
         display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
-        if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
+        if not have_cli_options or have_cli_options and context.CLIARGS['verbosity'] > 2:
             log_only = False
             if hasattr(e, 'orig_exc'):
                 display.vvv('\nexception type: %s' % to_text(type(e.orig_exc)))

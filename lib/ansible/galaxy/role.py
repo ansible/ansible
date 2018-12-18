@@ -31,6 +31,7 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
@@ -52,11 +53,10 @@ class GalaxyRole(object):
 
         self._metadata = None
         self._install_info = None
-        self._validate_certs = not galaxy.options.ignore_certs
+        self._validate_certs = not context.CLIARGS['ignore_certs']
 
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
-        self.options = galaxy.options
         self.galaxy = galaxy
 
         self.name = name
@@ -196,7 +196,7 @@ class GalaxyRole(object):
 
         if self.scm:
             # create tar file from scm url
-            tmp_file = RoleRequirement.scm_archive_role(keep_scm_meta=self.options.keep_scm_meta, **self.spec)
+            tmp_file = RoleRequirement.scm_archive_role(keep_scm_meta=context.CLIARGS['keep_scm_meta'], **self.spec)
         elif self.src:
             if os.path.isfile(self.src):
                 tmp_file = self.src
@@ -298,7 +298,7 @@ class GalaxyRole(object):
                         if os.path.exists(self.path):
                             if not os.path.isdir(self.path):
                                 raise AnsibleError("the specified roles path exists and is not a directory.")
-                            elif not getattr(self.options, "force", False):
+                            elif not context.CLIARGS.get("force", False):
                                 raise AnsibleError("the specified role %s appears to already exist. Use --force to replace it." % self.name)
                             else:
                                 # using --force, remove the old path

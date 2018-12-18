@@ -27,12 +27,23 @@ MAKE_IMMUTABLE_DATA = ((u'くらとみ', u'くらとみ'),
                         arguments.ImmutableDict({u'café': (1, frozenset(u'ñ'))})),
                        ([set((1, 2)), {u'くらとみ': 3}],
                         (frozenset((1, 2)), arguments.ImmutableDict({u'くらとみ': 3}))),
-                      )
+                       )
 
 
 @pytest.mark.parametrize('data, expected', MAKE_IMMUTABLE_DATA)
 def test_make_immutable(data, expected):
     assert arguments._make_immutable(data) == expected
+
+
+def test_cliargs_from_dict():
+    old_dict = {'tags': [u'production', u'webservers'],
+                'check_mode': True,
+                'start_at_task': u'Start with くらとみ'}
+    expected = frozenset((('tags', (u'production', u'webservers')),
+                          ('check_mode', True),
+                          ('start_at_task', u'Start with くらとみ')))
+
+    assert frozenset(arguments.CLIArgs(old_dict).items()) == expected
 
 
 def test_cliargs():
@@ -47,7 +58,7 @@ def test_cliargs():
                           ('check_mode', True),
                           ('start_at_task', u'Start with くらとみ')))
 
-    assert frozenset(arguments.CLIArgs(options).items()) == expected
+    assert frozenset(arguments.CLIArgs.from_options(options).items()) == expected
 
 
 @pytest.mark.skipIf(argparse is None)
@@ -69,8 +80,8 @@ def test_cliargs_argparse():
 def test_cliargs_optparse():
     parser = optparse.OptionParser(description='Process some integers.')
     parser.add_option('--sum', dest='accumulate', action='store_const',
-                        const=sum, default=max,
-                        help='sum the integers (default: find the max)')
+                      const=sum, default=max,
+                      help='sum the integers (default: find the max)')
     opts, args = parser.parse_args([u'--sum', u'1', u'2'])
     opts.integers = args
 

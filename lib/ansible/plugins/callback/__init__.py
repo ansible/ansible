@@ -46,11 +46,6 @@ else:
 
 global_display = Display()
 
-try:
-    from __main__ import cli
-except ImportError:
-    # using API w/o cli
-    cli = False
 
 __all__ = ["CallbackBase"]
 
@@ -71,11 +66,6 @@ class CallbackBase(AnsiblePlugin):
             self._display = display
         else:
             self._display = global_display
-
-        if cli:
-            self._options = cli.options
-        else:
-            self._options = None
 
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')

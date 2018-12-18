@@ -5,6 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pytest
+
+from ansible import context
 from ansible.cli.adhoc import AdHocCLI, display
 from ansible.errors import AnsibleOptionsError
 
@@ -22,7 +24,7 @@ def test_with_command():
     module_name = 'command'
     adhoc_cli = AdHocCLI(args=['-m', module_name, '-vv'])
     adhoc_cli.parse()
-    assert adhoc_cli.options.module_name == module_name
+    assert context.CLIARGS['module_name'] == module_name
     assert display.verbosity == 2
 
 
@@ -36,9 +38,8 @@ def test_with_extra_parameters():
 
 def test_simple_command():
     """ Test valid command and its run"""
-    adhoc_cli = AdHocCLI(['/bin/ansible', '-m', 'command', 'localhost'])
+    adhoc_cli = AdHocCLI(['/bin/ansible', '-m', 'command', 'localhost', '-a', 'echo "hi"'])
     adhoc_cli.parse()
-    adhoc_cli.options.module_args = "echo 'hi'"
     ret = adhoc_cli.run()
     assert ret == 0
 
@@ -63,9 +64,8 @@ def test_did_you_mean_playbook():
 
 def test_play_ds_positive():
     """ Test _play_ds"""
-    adhoc_cli = AdHocCLI(args=['/bin/ansible', 'localhost'])
+    adhoc_cli = AdHocCLI(args=['/bin/ansible', 'localhost', '-m', 'command'])
     adhoc_cli.parse()
-    adhoc_cli.options.module_name = 'command'
     ret = adhoc_cli._play_ds('command', 10, 2)
     assert ret['name'] == 'Ansible Ad-Hoc'
     assert ret['tasks'] == [{'action': {'module': 'command', 'args': {}}, 'async_val': 10, 'poll': 2}]
@@ -73,9 +73,8 @@ def test_play_ds_positive():
 
 def test_play_ds_with_include_role():
     """ Test include_role command with poll"""
-    adhoc_cli = AdHocCLI(args=['/bin/ansible', 'localhost'])
+    adhoc_cli = AdHocCLI(args=['/bin/ansible', 'localhost', '-m', 'include_role'])
     adhoc_cli.parse()
-    adhoc_cli.options.module_name = 'include_role'
     ret = adhoc_cli._play_ds('include_role', None, 2)
     assert ret['name'] == 'Ansible Ad-Hoc'
     assert ret['gather_facts'] == 'no'
@@ -88,5 +87,5 @@ def test_run_import_playbook():
     adhoc_cli.parse()
     with pytest.raises(AnsibleOptionsError) as exec_info:
         adhoc_cli.run()
-    assert adhoc_cli.options.module_name == import_playbook
+    assert context.CLIARGS['module_name'] == import_playbook
     assert "'%s' is not a valid action for ad-hoc commands" % import_playbook == str(exec_info.value)
