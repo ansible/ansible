@@ -148,6 +148,21 @@ Plugins
 
 * Order of enabled inventory plugins (:ref:`INVENTORY_ENABLED`) has been updated, :ref:`auto <auto_inventory>` is now before :ref:`yaml <yaml_inventory>` and :ref:`ini <ini_inventory>`.
 
+* The private ``_options`` attribute has been removed from the ``CallbackBase`` class of callback
+  plugins.  If you have a third-party callback plugin which needs to access the command line arguments,
+  use code like the following instead of trying to use ``self._options``:
+
+  .. code-block:: python
+
+     from ansible import context
+     [...]
+     tags = context.CLIARGS['tags']
+
+  ``context.CLIARGS`` is a read-only dictionary so normal dictionary retrieval methods like
+  ``CLIARGS.get('tags')`` and ``CLIARGS['tags']`` work as expected but you won't be able to modify
+  the cli arguments at all.
+
+
 Porting custom scripts
 ======================
 
