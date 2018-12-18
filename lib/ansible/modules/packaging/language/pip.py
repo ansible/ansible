@@ -5,6 +5,21 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
+import operator
+import os
+import re
+import shlex
+import sys
+import tempfile
+import traceback
+from distutils.version import LooseVersion
+
+from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import (AnsibleModule, is_executable,
+                                        missing_required_lib)
+from ansible.module_utils.six import PY3
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -249,14 +264,6 @@ virtualenv:
   sample: "/tmp/virtualenv"
 '''
 
-import os
-import re
-import sys
-import tempfile
-import operator
-import shlex
-import traceback
-from distutils.version import LooseVersion
 
 SETUPTOOLS_IMP_ERR = None
 try:
@@ -267,9 +274,6 @@ except ImportError:
     HAS_SETUPTOOLS = False
     SETUPTOOLS_IMP_ERR = traceback.format_exc()
 
-from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import PY3
 
 
 #: Python one-liners to be run at the command line that will determine the
@@ -761,9 +765,15 @@ def main():
 
         changed = changed or venv_created
 
-        module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                         state=state, requirements=requirements, constraints=constraints, virtualenv=env,
-                         stdout=out, stderr=err)
+        if constraints:
+            module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
+                             state=state, requirements=requirements, constraints=constraints, virtualenv=env,
+                             stdout=out, stderr=err)
+        else:
+            module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
+                             state=state, requirements=requirements, virtualenv=env,
+                             stdout=out, stderr=err)
+
     finally:
         if old_umask is not None:
             os.umask(old_umask)
