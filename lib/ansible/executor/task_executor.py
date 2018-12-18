@@ -1031,7 +1031,10 @@ class TaskExecutor:
                 if level in ('warning', 'error'):
                     getattr(display, level)(message)
                 else:
-                    getattr(display, level)(message, host=self._play_context.remote_addr)
+                    if hasattr(display, level):
+                        getattr(display, level)(message, host=self._play_context.remote_addr)
+                    else:
+                        display.vvvv(message, host=self._play_context.remote_addr)
 
         if 'error' in result:
             if self._play_context.verbosity > 2:
