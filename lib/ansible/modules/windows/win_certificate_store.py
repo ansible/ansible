@@ -187,7 +187,7 @@ EXAMPLES = r'''
     path: C:\Temp\cert.pfx
     file_type: pkcs12
     password: StrongPassword!
-    key_exportable: yes
+    store_location: LocalMachine
     key_storage: machine
     state: present
 '''
