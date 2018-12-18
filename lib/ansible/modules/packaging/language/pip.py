@@ -16,8 +16,8 @@ DOCUMENTATION = '''
 module: pip
 short_description: Manages Python library dependencies
 description:
-     - "Manage Python library dependencies. To use this module, one of the following keys is required: C(name)
-       or C(requirements)."
+     - "Manage Python library dependencies. To use this module, one of the following keys is required: C(name),
+       C(requirements)."
 version_added: "0.7"
 options:
   name:
@@ -30,6 +30,10 @@ options:
   requirements:
     description:
       - The path to a pip requirements file, which should be local to the remote system.
+        File can be specified as a relative path if using the chdir option.
+  constraints:
+    description:
+      - The path to a pip constraints file, which should be local to the remote system.
         File can be specified as a relative path if using the chdir option.
   virtualenv:
     description:
@@ -190,6 +194,11 @@ EXAMPLES = '''
     requirements: /my_app/requirements.txt
     extra_args: -i https://example.com/pypi/simple
 
+# Install specified python requirements with constraints.
+- pip:
+    requirements: /my_app/requirements/requirements.txt
+    constraints: /my_app/requirements/constraints.txt
+
 # Install (Bottle) for Python 3.3 specifically,using the 'pip-3.3' executable.
 - pip:
     name: bottle
@@ -223,6 +232,11 @@ requirements:
   returned: success, if a requirements file was provided
   type: string
   sample: "/srv/git/project/requirements.txt"
+constraints:
+  description: Path to the constraints file
+  returned: success, if a constraints file was provided
+  type: string
+  sample: "/srv/git/project/constraints.txt"
 version:
   description: Version of the package specified in 'name'
   returned: success, if a name and version were provided
@@ -567,6 +581,7 @@ def main():
             name=dict(type='list'),
             version=dict(type='str'),
             requirements=dict(type='str'),
+            constraints=dict(type='str'),
             virtualenv=dict(type='path'),
             virtualenv_site_packages=dict(type='bool', default=False),
             virtualenv_command=dict(type='path', default='virtualenv'),
@@ -591,6 +606,7 @@ def main():
     name = module.params['name']
     version = module.params['version']
     requirements = module.params['requirements']
+    constraints = module.params['constraints']
     extra_args = module.params['extra_args']
     chdir = module.params['chdir']
     umask = module.params['umask']
@@ -682,6 +698,8 @@ def main():
             cmd.extend(to_native(p) for p in packages)
         elif requirements:
             cmd.extend(['-r', requirements])
+            if constraints:
+                cmd.extend(['-c', constraints])
         else:
             module.exit_json(
                 changed=False,
@@ -744,7 +762,7 @@ def main():
         changed = changed or venv_created
 
         module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                         state=state, requirements=requirements, virtualenv=env,
+                         state=state, requirements=requirements, constraints=constraints, virtualenv=env,
                          stdout=out, stderr=err)
     finally:
         if old_umask is not None:
