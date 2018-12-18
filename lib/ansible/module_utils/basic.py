@@ -135,6 +135,7 @@ except Exception:
         pass
 
 from ansible.module_utils.common._collections_compat import (
+    KeysView,
     Mapping, MutableMapping,
     Sequence, MutableSequence,
     Set, MutableSet,
@@ -157,7 +158,6 @@ from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     handle_aliases,
     PASS_VARS,
-    SEQUENCETYPE,
 )
 
 from ansible.module_utils.six import (
@@ -175,7 +175,9 @@ from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
-
+# Note: When getting Sequence from collections, it matches with strings. If
+# this matters, make sure to check for strings before checking for sequencetype
+SEQUENCETYPE = frozenset, KeysView, Sequence
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
@@ -1570,6 +1572,7 @@ class AnsibleModule(object):
             spec = self.argument_spec
         if param is None:
             param = self.params
+
         # this uses exceptions as it happens before we can safely call fail_json
         alias_results, legal_inputs = handle_aliases(spec, param, self._legal_inputs)
         self._legal_inputs = legal_inputs
