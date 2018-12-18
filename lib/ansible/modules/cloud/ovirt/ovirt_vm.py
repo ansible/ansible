@@ -1406,7 +1406,7 @@ class VmsModule(BaseModule):
             disk_service = disks_service.disk_service(da.disk.id)
             wait(
                 service=disk_service,
-                condition=lambda disk: disk.status == otypes.DiskStatus.OK,
+                condition=lambda disk: disk.status == otypes.DiskStatus.OK if disk.storage_type == otypes.DiskStorageType.IMAGE else True,
                 wait=self.param('wait'),
                 timeout=self.param('timeout'),
             )

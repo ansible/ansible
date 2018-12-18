@@ -165,7 +165,11 @@ options:
         description:
             - "If the disk's Wipe After Delete is enabled, then the disk is first wiped."
         type: bool
+    activate:
+        description:
+            - I(True) if the disk should be activated.
         version_added: "2.8"
+        type: bool
 extends_documentation_fragment: ovirt
 '''
 
@@ -547,14 +551,15 @@ class DiskAttachmentsModule(DisksModule):
                 self._module.params.get('interface')
             ) if self._module.params.get('interface') else None,
             bootable=self._module.params.get('bootable'),
-            active=True,
+            active=self.param('activate'),
         )
 
     def update_check(self, entity):
         return (
             super(DiskAttachmentsModule, self)._update_check(follow_link(self._connection, entity.disk)) and
             equal(self._module.params.get('interface'), str(entity.interface)) and
-            equal(self._module.params.get('bootable'), entity.bootable)
+            equal(self._module.params.get('bootable'), entity.bootable) and
+            equal(self.param('activate'), entity.active)
         )
 
 
@@ -600,6 +605,7 @@ def main():
         image_provider=dict(default=None),
         host=dict(default=None),
         wipe_after_delete=dict(type='bool', default=None),
+        activate=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
