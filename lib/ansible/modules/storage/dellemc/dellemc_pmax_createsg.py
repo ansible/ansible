@@ -141,7 +141,7 @@ EXAMPLES = '''
 RETURN = '''
 dellemc_pmax_createsg:
     description: Information about storage group created
-    returned: success 
+    returned: success
     type: dict
     sample: '{
         "storagegroup_detail": {
