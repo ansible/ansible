@@ -33,7 +33,7 @@ ansible_facts:
   sample:
     ansible_os_product_id: 00326-10000-00000-AA698
     ansible_os_product_key: T49TD-6VFBW-VV7HY-B2PXY-MY47H
-    ansible_winlicense_edition = Windows(R), ServerStandard edition
-    ansible_winlicense_channel = Volume:MAK
-    ansible_winlicense_status = Licensed
+    ansible_winlicense_edition: Windows(R) ServerStandard edition
+    ansible_winlicense_channel: Volume:MAK
+    ansible_winlicense_status: Licensed
 '''
