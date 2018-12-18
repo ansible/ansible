@@ -36,3 +36,6 @@ def update_file_if_different(filename, b_data):
     if b_data_old != b_data:
         with open(filename, 'wb') as f:
             f.write(b_data)
+        return True
+
+    return False
