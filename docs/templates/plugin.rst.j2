@@ -20,7 +20,7 @@
 @{ '+' * title|length }@
 
 {% if version_added is defined and version_added != '' -%}
-.. versionadded:: v@{ version_added | default('') }@
+.. versionadded:: @{ version_added | default('') }@
 {% endif %}
 
 .. contents::
@@ -122,7 +122,7 @@ Parameters
                         <span style="color: purple">@{ value.type | documented_type }@</span>
                         {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
                     </div>
-                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in v@{value.version_added}@</div>{% endif %}
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 {# default / choices #}
                 <td>
@@ -296,7 +296,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
-                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in v@{value.version_added}@</div>{% endif %}
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
@@ -368,7 +368,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
                     <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
-                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in v@{value.version_added}@</div>{% endif %}
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
