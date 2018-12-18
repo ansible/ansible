@@ -38,7 +38,7 @@ options:
     description:
     - The path to a certificate file.
     - This is required when I(state) is C(present) or C(exported).
-    - When I(state) is C(absent) and I(thumbprint) is not specified, the=
+    - When I(state) is C(absent) and I(thumbprint) is not specified, the
       thumbprint is derived from the certificate at this path.
     type: path
   thumbprint:
