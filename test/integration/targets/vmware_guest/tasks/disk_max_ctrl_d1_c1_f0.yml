@@ -208,7 +208,7 @@
     that:
         - "disk_max_ctrl_d1_c1_f0_add_disk_8.results|map(attribute='changed')|unique|list == [true]"
 
-- name: Modify VMs to addi another 1 disk so number of disk is 9
+- name: Modify VMs to add another 1 disk so number of disk is 9
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcsim }}"
@@ -254,3 +254,73 @@
   assert:
     that:
         - "disk_max_ctrl_d1_c1_f0_add_disk_9.results|map(attribute='changed')|unique|list == [true]"
+
+- name: Modify VMs to add another too much disk
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    disk:
+        - size: 128mb  # index0
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index1
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index2
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index3
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index4
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index5
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index6
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index8 # Because index 7 is for scsi controller
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index9
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index10
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index11
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index12
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index13
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index14
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index15
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index16
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+  with_items: "{{ vmlist['json'] }}"
+  register: disk_max_ctrl_d1_c1_f0_add_disk_error
+  ignore_errors: True
+
+- debug: var=disk_max_ctrl_d1_c1_f0_add_disk_error
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "disk_max_ctrl_d1_c1_f0_add_disk_error.results|map(attribute='changed')|unique|list == [false]"
+
