@@ -41,7 +41,7 @@
   register: pids
       
 - name: "Reading pid from the file"
-  command: cat {{ playbook_dir}}/targets/pids/tasks/newpid.txt
+  command: cat /root/ansible/test/integration/targets/pids/tasks/
   register: newpid
 
 - name: "Verify that the Process IDs (PIDs) returned is not empty and also equal to the PIDs obtained in console"
