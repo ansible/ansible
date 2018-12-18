@@ -602,9 +602,7 @@ def main():
                         loadBalancer['containerPort'] = int(loadBalancer['containerPort'])
 
                 if update:
-                    # If boto is not up to snuff, getting params will fail;
-                    # Move checks to where they matter vs generall at module level
-                    # So, boto3 of various versions supports various features.  Parameters that are not supported
+                    # check various parameters and boto versions and give a helpful erro in boto is not new enough for feature
 
                     if module.params['scheduling_strategy']:
                         if not module.botocore_at_least('1.10.37'):
