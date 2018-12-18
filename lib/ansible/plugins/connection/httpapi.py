@@ -178,7 +178,7 @@ class Connection(NetworkConnectionBase):
             self.httpapi = httpapi_loader.get(self._network_os, self)
             if self.httpapi:
                 self._sub_plugin = {'type': 'httpapi', 'name': self._network_os, 'obj': self.httpapi}
-                display.vvvv('loaded API plugin for network_os %s' % self._network_os)
+                self.messages.append(('vvvv''loaded API plugin for network_os %s' % self._network_os))
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 
@@ -227,7 +227,7 @@ class Connection(NetworkConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.vvvv("closing http(s) connection to device", host=self._play_context.remote_addr)
+            self.messages.append(('vvvv'"closing http(s) connection to device"))
             self.logout()
 
         super(Connection, self).close()
