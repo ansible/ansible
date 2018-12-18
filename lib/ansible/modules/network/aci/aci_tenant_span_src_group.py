@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,8 +19,11 @@ description:
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(span:SrcGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(span:SrcGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -33,23 +36,28 @@ options:
   description:
     description:
     - The description for Span source group.
+    type: str
     aliases: [ descr ]
   dst_group:
     description:
     - The Span destination group to associate with the source group.
+    type: str
   src_group:
     description:
     - The name of the Span source group.
+    type: str
     aliases: [ name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 '''

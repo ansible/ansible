@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,9 +16,10 @@ module: aci_interface_policy_port_security
 short_description: Manage port security (l2:PortSecurityPol)
 description:
 - Manage port security on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(l2:PortSecurityPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(l2:PortSecurityPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -26,11 +27,13 @@ options:
   port_security:
     description:
     - The name of the port security.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the contract.
+    type: str
     aliases: [ descr ]
   max_end_points:
     description:
@@ -42,6 +45,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

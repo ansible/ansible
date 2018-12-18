@@ -110,6 +110,9 @@ options:
     version_added: '2.3'
 notes:
 - For non-Windows targets, use the M(service) module instead.
+seealso:
+- module: service
+- module: win_nssm
 author:
 - Chris Hoffman (@chrishoffman)
 '''

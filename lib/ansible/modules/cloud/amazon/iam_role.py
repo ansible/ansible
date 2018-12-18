@@ -17,7 +17,7 @@ author: "Rob White (@wimnat)"
 options:
   path:
     description:
-      - The path to the role. For more information about paths, see U(http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
+      - The path to the role. For more information about paths, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
     default: "/"
   name:
     description:

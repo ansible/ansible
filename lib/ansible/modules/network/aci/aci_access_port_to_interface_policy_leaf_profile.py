@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -17,9 +17,10 @@ module: aci_access_port_to_interface_policy_leaf_profile
 short_description: Manage Fabric interface policy leaf profile interface selectors (infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk)
 description:
 - Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC classes B(infra:HPortS), B(infra:RsAccBaseGrp) and B(infra:PortBlk) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/)
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:HPortS), B(infra:RsAccBaseGrp) and B(infra:PortBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -27,16 +28,19 @@ options:
   leaf_interface_profile:
     description:
     - The name of the Fabric access policy leaf interface profile.
+    type: str
     required: yes
     aliases: [ leaf_interface_profile_name ]
   access_port_selector:
     description:
     -  The name of the Fabric access policy leaf interface profile access port selector.
+    type: str
     required: yes
     aliases: [ name, access_port_selector_name ]
   description:
     description:
     - The description to assign to the C(access_port_selector)
+    type: str
   leaf_port_blk:
     description:
     - B(Deprecated)
@@ -44,6 +48,7 @@ options:
     - The parameter will be removed in Ansible 2.12.
     - HORIZONTALLINE
     - The name of the Fabric access policy leaf interface profile access port block.
+    type: str
     required: yes
     aliases: [ leaf_port_blk_name ]
   leaf_port_blk_description:
@@ -53,6 +58,7 @@ options:
     - The parameter will be removed in Ansible 2.12.
     - HORIZONTALLINE
     - The description to assign to the C(leaf_port_blk)
+    type: str
   from_port:
     description:
     - B(Deprecated)
@@ -60,8 +66,9 @@ options:
     - The parameter will be removed in Ansible 2.12.
     - HORIZONTALLINE
     - The beginning (from-range) of the port range block for the leaf access port block.
-    aliases: [ from, fromPort, from_port_range ]
+    type: str
     required: yes
+    aliases: [ from, fromPort, from_port_range ]
   to_port:
     description:
     - B(Deprecated)
@@ -69,8 +76,9 @@ options:
     - The parameter will be removed in Ansible 2.12.
     - HORIZONTALLINE
     - The end (to-range) of the port range block for the leaf access port block.
-    aliases: [ to, toPort, to_port_range ]
+    type: str
     required: yes
+    aliases: [ to, toPort, to_port_range ]
   from_card:
     description:
     - B(Deprecated)
@@ -78,6 +86,7 @@ options:
     - The parameter will be removed in Ansible 2.12.
     - HORIZONTALLINE
     - The beginning (from-range) of the card range block for the leaf access port block.
+    type: str
     aliases: [ from_card_range ]
     version_added: '2.6'
   to_card:
@@ -87,15 +96,18 @@ options:
     - The parameter will be removed in Ansible 2.12.
     - HORIZONTALLINE
     - The end (to-range) of the card range block for the leaf access port block.
+    type: str
     aliases: [ to_card_range ]
     version_added: '2.6'
   policy_group:
     description:
     - The name of the fabric access policy group to be associated with the leaf interface profile interface selector.
+    type: str
     aliases: [ policy_group_name ]
   interface_type:
     description:
     - The type of interface for the static EPG deployement.
+    type: str
     choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
     version_added: '2.6'
@@ -103,6 +115,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -118,7 +131,7 @@ EXAMPLES = r'''
     access_port_selector: accessportselectorname
     leaf_port_blk: leafportblkname
     from_port: 13
-    toi_port: 16
+    to_port: 16
     policy_group: policygroupname
     state: present
   delegate_to: localhost
@@ -266,6 +279,13 @@ url:
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+INTERFACE_TYPE_MAPPING = dict(
+    fex='uni/infra/funcprof/accportgrp-{0}',
+    port_channel='uni/infra/funcprof/accbundle-{0}',
+    switch_port='uni/infra/funcprof/accportgrp-{0}',
+    vpc='uni/infra/funcprof/accbundle-{0}',
+)
+
 
 def main():
     argument_spec = aci_argument_spec()
@@ -306,6 +326,30 @@ def main():
     interface_type = module.params['interface_type']
     state = module.params['state']
 
+    # Build child_configs dyanmically
+    child_configs = [dict(
+        infraPortBlk=dict(
+            attributes=dict(
+                descr=leaf_port_blk_description,
+                name=leaf_port_blk,
+                fromPort=from_port,
+                toPort=to_port,
+                fromCard=from_card,
+                toCard=to_card,
+            ),
+        ),
+    )]
+
+    # Add infraRsAccBaseGrp only when policy_group was defined
+    if policy_group is not None:
+        child_configs.append(dict(
+            infraRsAccBaseGrp=dict(
+                attributes=dict(
+                    tDn=INTERFACE_TYPE_MAPPING[interface_type].format(policy_group),
+                ),
+            ),
+        ))
+
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
@@ -324,13 +368,6 @@ def main():
         child_classes=['infraPortBlk', 'infraRsAccBaseGrp'],
     )
 
-    INTERFACE_TYPE_MAPPING = dict(
-        fex='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
-        port_channel='uni/infra/funcprof/accbundle-{0}'.format(policy_group),
-        switch_port='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
-        vpc='uni/infra/funcprof/accbundle-{0}'.format(policy_group),
-    )
-
     aci.get_existing()
 
     if state == 'present':
@@ -341,27 +378,7 @@ def main():
                 name=access_port_selector,
                 #  type='range',
             ),
-            child_configs=[
-                dict(
-                    infraPortBlk=dict(
-                        attributes=dict(
-                            descr=leaf_port_blk_description,
-                            name=leaf_port_blk,
-                            fromPort=from_port,
-                            toPort=to_port,
-                            fromCard=from_card,
-                            toCard=to_card,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsAccBaseGrp=dict(
-                        attributes=dict(
-                            tDn=INTERFACE_TYPE_MAPPING[interface_type],
-                        ),
-                    ),
-                ),
-            ],
+            child_configs=child_configs,
         )
 
         aci.get_diff(aci_class='infraHPortS')

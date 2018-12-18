@@ -32,58 +32,65 @@ DOCUMENTATION = '''
 ---
 module: gcp_pubsub_subscription
 description:
-    - A named resource representing the stream of messages from a single, specific topic,
-      to be delivered to the subscribing application.
+- A named resource representing the stream of messages from a single, specific topic,
+  to be delivered to the subscribing application.
 short_description: Creates a GCP Subscription
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  name:
+    description:
+    - Name of the subscription.
+    required: false
+  topic:
+    description:
+    - A reference to a Topic resource.
+    - 'This field represents a link to a Topic resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_pubsub_topic
+      task and then set this topic field to "{{ name-of-resource }}" Alternatively,
+      you can set this topic to a dictionary with the name key where the value is
+      the name of your Topic'
+    required: false
+  push_config:
+    description:
+    - If push delivery is used with this subscription, this field is used to configure
+      it. An empty pushConfig signifies that the subscriber will pull and ack messages
+      using API methods.
+    required: false
+    suboptions:
+      push_endpoint:
         description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    name:
-        description:
-            - Name of the subscription.
+        - A URL locating the endpoint to which messages should be pushed.
+        - For example, a Webhook endpoint might use "U(https://example.com/push".)
         required: false
-    topic:
-        description:
-            - A reference to a Topic resource.
-        required: false
-    push_config:
-        description:
-            - If push delivery is used with this subscription, this field is used to configure
-              it. An empty pushConfig signifies that the subscriber will pull and ack messages
-              using API methods.
-        required: false
-        suboptions:
-            push_endpoint:
-                description:
-                    - A URL locating the endpoint to which messages should be pushed.
-                    - For example, a Webhook endpoint might use "U(https://example.com/push".)
-                required: false
-    ack_deadline_seconds:
-        description:
-            - This value is the maximum time after a subscriber receives a message before the
-              subscriber should acknowledge the message. After message delivery but before the
-              ack deadline expires and before the message is acknowledged, it is an outstanding
-              message and will not be delivered again during that time (on a best-effort basis).
-            - For pull subscriptions, this value is used as the initial value for the ack deadline.
-              To override this value for a given message, call subscriptions.modifyAckDeadline
-              with the corresponding ackId if using pull. The minimum custom deadline you can
-              specify is 10 seconds. The maximum custom deadline you can specify is 600 seconds
-              (10 minutes).
-            - If this parameter is 0, a default value of 10 seconds is used.
-            - For push delivery, this value is also used to set the request timeout for the call
-              to the push endpoint.
-            - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
-              redeliver the message.
-        required: false
+  ack_deadline_seconds:
+    description:
+    - This value is the maximum time after a subscriber receives a message before
+      the subscriber should acknowledge the message. After message delivery but before
+      the ack deadline expires and before the message is acknowledged, it is an outstanding
+      message and will not be delivered again during that time (on a best-effort basis).
+    - For pull subscriptions, this value is used as the initial value for the ack
+      deadline. To override this value for a given message, call subscriptions.modifyAckDeadline
+      with the corresponding ackId if using pull. The minimum custom deadline you
+      can specify is 10 seconds. The maximum custom deadline you can specify is 600
+      seconds (10 minutes).
+    - If this parameter is 0, a default value of 10 seconds is used.
+    - For push delivery, this value is also used to set the request timeout for the
+      call to the push endpoint.
+    - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
+      redeliver the message.
+    required: false
 extends_documentation_fragment: gcp
 '''
 
@@ -105,54 +112,54 @@ EXAMPLES = '''
         push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    name:
-        description:
-            - Name of the subscription.
-        returned: success
-        type: str
-    topic:
-        description:
-            - A reference to a Topic resource.
-        returned: success
-        type: dict
-    push_config:
-        description:
-            - If push delivery is used with this subscription, this field is used to configure
-              it. An empty pushConfig signifies that the subscriber will pull and ack messages
-              using API methods.
-        returned: success
-        type: complex
-        contains:
-            push_endpoint:
-                description:
-                    - A URL locating the endpoint to which messages should be pushed.
-                    - For example, a Webhook endpoint might use "U(https://example.com/push".)
-                returned: success
-                type: str
-    ack_deadline_seconds:
-        description:
-            - This value is the maximum time after a subscriber receives a message before the
-              subscriber should acknowledge the message. After message delivery but before the
-              ack deadline expires and before the message is acknowledged, it is an outstanding
-              message and will not be delivered again during that time (on a best-effort basis).
-            - For pull subscriptions, this value is used as the initial value for the ack deadline.
-              To override this value for a given message, call subscriptions.modifyAckDeadline
-              with the corresponding ackId if using pull. The minimum custom deadline you can
-              specify is 10 seconds. The maximum custom deadline you can specify is 600 seconds
-              (10 minutes).
-            - If this parameter is 0, a default value of 10 seconds is used.
-            - For push delivery, this value is also used to set the request timeout for the call
-              to the push endpoint.
-            - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
-              redeliver the message.
-        returned: success
-        type: int
+name:
+  description:
+  - Name of the subscription.
+  returned: success
+  type: str
+topic:
+  description:
+  - A reference to a Topic resource.
+  returned: success
+  type: dict
+pushConfig:
+  description:
+  - If push delivery is used with this subscription, this field is used to configure
+    it. An empty pushConfig signifies that the subscriber will pull and ack messages
+    using API methods.
+  returned: success
+  type: complex
+  contains:
+    pushEndpoint:
+      description:
+      - A URL locating the endpoint to which messages should be pushed.
+      - For example, a Webhook endpoint might use "U(https://example.com/push".)
+      returned: success
+      type: str
+ackDeadlineSeconds:
+  description:
+  - This value is the maximum time after a subscriber receives a message before the
+    subscriber should acknowledge the message. After message delivery but before the
+    ack deadline expires and before the message is acknowledged, it is an outstanding
+    message and will not be delivered again during that time (on a best-effort basis).
+  - For pull subscriptions, this value is used as the initial value for the ack deadline.
+    To override this value for a given message, call subscriptions.modifyAckDeadline
+    with the corresponding ackId if using pull. The minimum custom deadline you can
+    specify is 10 seconds. The maximum custom deadline you can specify is 600 seconds
+    (10 minutes).
+  - If this parameter is 0, a default value of 10 seconds is used.
+  - For push delivery, this value is also used to set the request timeout for the
+    call to the push endpoint.
+  - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
+    redeliver the message.
+  returned: success
+  type: int
 '''
 
 ################################################################################
@@ -193,7 +200,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module))
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
             delete(module, self_link(module))
@@ -229,7 +237,7 @@ def resource_to_request(module):
     request = {
         u'name': module.params.get('name'),
         u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
-        u'pushConfig': SubscriptionPushConfig(module.params.get('push_config', {}), module).to_request(),
+        u'pushConfig': SubscriptionPushconfig(module.params.get('push_config', {}), module).to_request(),
         u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds')
     }
     request = encode_request(request, module)
@@ -241,9 +249,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'pubsub')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
@@ -254,9 +262,9 @@ def collection(module):
     return "https://pubsub.googleapis.com/v1/projects/{project}/subscriptions".format(**module.params)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -302,7 +310,7 @@ def response_to_hash(module, response):
     return {
         u'name': response.get(u'name'),
         u'topic': response.get(u'topic'),
-        u'pushConfig': SubscriptionPushConfig(response.get(u'pushConfig', {}), module).from_response(),
+        u'pushConfig': SubscriptionPushconfig(response.get(u'pushConfig', {}), module).from_response(),
         u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds')
     }
 
@@ -319,14 +327,14 @@ def decode_request(response, module):
 
 def encode_request(request, module):
     request['topic'] = '/'.join(['projects', module.params['project'],
-                                 'topics', module.params['topic']])
+                                 'topics', module.params['topic']['name']])
     request['name'] = '/'.join(['projects', module.params['project'],
                                 'subscriptions', module.params['name']])
 
     return request
 
 
-class SubscriptionPushConfig(object):
+class SubscriptionPushconfig(object):
     def __init__(self, request, module):
         self.module = module
         if request:

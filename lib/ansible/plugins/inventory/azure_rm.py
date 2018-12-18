@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
       - azure
     description:
         - Query VM details from Azure Resource Manager
-        - Requires a YAML configuration file whose name ends with '.azure_rm.yaml'
+        - Requires a YAML configuration file whose name ends with 'azure_rm.(yml|yaml)'
         - By default, sets C(ansible_host) to the first public IP address found (preferring the primary NIC). If no
           public IPs are found, the first private IP (also preferring the primary NIC). The default may be overridden
           via C(hostvar_expressions); see examples.
@@ -156,7 +156,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.azure_rm_common import AzureRMAuth
 from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from itertools import chain
 from msrest import ServiceClient, Serializer, Deserializer
 from msrestazure import AzureConfiguration
@@ -216,9 +216,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if re.match(r'.+\.azure_rm\.y(a)?ml$', path):
+            if re.match(r'.{0,}azure_rm\.y(a)?ml$', path):
                 return True
-        # display.debug("azure_rm inventory filename must match '*.azure_rm.yml' or '*.azure_rm.yaml'")
+        # display.debug("azure_rm inventory filename must end with 'azure_rm.yml' or 'azure_rm.yaml'")
         return False
 
     def parse(self, inventory, loader, path, cache=True):
@@ -450,7 +450,7 @@ class AzureHost(object):
         self.nics = []
 
         # Azure often doesn't provide a globally-unique filename, so use resource name + a chunk of ID hash
-        self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(vm_model['id']).hexdigest()[0:4])
+        self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(to_bytes(vm_model['id'])).hexdigest()[0:4])
 
         self._hostvars = {}
 

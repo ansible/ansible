@@ -11,7 +11,7 @@ __metaclass__ = type
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
-    'supported_by': 'community'
+    'supported_by': 'certified'
 }
 
 DOCUMENTATION = '''
@@ -21,7 +21,7 @@ short_description: NetApp ONTAP CIFS server configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
     - Creating / deleting and modifying the CIFS server.
@@ -127,7 +127,7 @@ class NetAppOntapcifsServer(object):
             workgroup=dict(required=False, type='str', default=None),
             domain=dict(required=False, type='str'),
             admin_user_name=dict(required=False, type='str'),
-            admin_password=dict(required=False, type='str'),
+            admin_password=dict(required=False, type='str', no_log=True),
             ou=dict(required=False, type='str'),
             force=dict(required=False, type='bool'),
             vserver=dict(required=True, type='str'),

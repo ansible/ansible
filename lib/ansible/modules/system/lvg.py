@@ -150,7 +150,7 @@ def main():
 
     dev_list = []
     if module.params['pvs']:
-        dev_list = module.params['pvs']
+        dev_list = list(module.params['pvs'])
     elif state == 'present':
         module.fail_json(msg="No physical volumes given.")
 
@@ -167,7 +167,7 @@ def main():
         # get pv list
         pvs_cmd = module.get_bin_path('pvs', True)
         if dev_list:
-            pvs_filter = ' || '. join(['pv_name = {0}'.format(x) for x in dev_list])
+            pvs_filter = ' || '. join(['pv_name = {0}'.format(x) for x in dev_list + module.params['pvs']])
             pvs_filter = "--select '%s'" % pvs_filter
         else:
             pvs_filter = ''

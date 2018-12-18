@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages configuration of an OSPF VPN instance on HUAWEI CloudEngine switches.
 description:
     - Manages configuration of an OSPF VPN instance on HUAWEI CloudEngine switches.
-author: Yang yang (@CloudEngine Ansible)
+author: Yang yang (@QijunPan)
 options:
     ospf:
         description:

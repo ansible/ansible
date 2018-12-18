@@ -78,6 +78,18 @@ options:
       - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
     default: no
     type: bool
+  polling_timeout:
+    description:
+      - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
+    default: 0
+    type: int
+    version_added: "2.8"
+  polling_interval:
+    description:
+      - If enabled, idempotency check will be done by using GET method first and then comparing with I(body)
+    default: 60
+    type: int
+    version_added: "2.8"
   state:
     description:
       - Assert the state of the resource. Use C(present) to create or update resource or C(absent) to delete resource.
@@ -171,6 +183,14 @@ class AzureRMResource(AzureRMModuleBase):
                 type='bool',
                 default=False
             ),
+            polling_timeout=dict(
+                type='int',
+                default=0
+            ),
+            polling_interval=dict(
+                type='int',
+                default=60
+            ),
             state=dict(
                 type='str',
                 default='present',
@@ -195,6 +215,8 @@ class AzureRMResource(AzureRMModuleBase):
         self.method = None
         self.status_code = []
         self.idempotency = False
+        self.polling_timeout = None
+        self.polling_interval = None
         self.state = None
         self.body = None
         super(AzureRMResource, self).__init__(self.module_arg_spec, supports_tags=False)
@@ -249,7 +271,7 @@ class AzureRMResource(AzureRMModuleBase):
         response = None
 
         if self.idempotency:
-            original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [200, 404])
+            original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [200, 404], 0, 0)
 
             if original.status_code == 404:
                 if self.state == 'absent':
@@ -258,15 +280,22 @@ class AzureRMResource(AzureRMModuleBase):
                 try:
                     response = json.loads(original.text)
                     needs_update = (dict_merge(response, self.body) != response)
-                except:
+                except Exception:
                     pass
 
         if needs_update:
-            response = self.mgmt_client.query(self.url, self.method, query_parameters, header_parameters, self.body, self.status_code)
+            response = self.mgmt_client.query(self.url,
+                                              self.method,
+                                              query_parameters,
+                                              header_parameters,
+                                              self.body,
+                                              self.status_code,
+                                              self.polling_timeout,
+                                              self.polling_interval)
             if self.state == 'present':
                 try:
                     response = json.loads(response.text)
-                except:
+                except Exception:
                     response = response.text
             else:
                 response = None

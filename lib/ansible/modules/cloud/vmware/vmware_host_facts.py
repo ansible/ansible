@@ -15,14 +15,15 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vmware_host_facts
 short_description: Gathers facts about remote ESXi hostsystem
 description:
     - This module can be used to gathers facts like CPU, memory, datastore, network and system etc. about ESXi host system.
     - Please specify hostname or IP address of ESXi host system as C(hostname).
-    - If hostname or IP address of vCenter is provided as C(hostname), then information about first ESXi hostsystem is returned.
+    - If hostname or IP address of vCenter is provided as C(hostname) and C(esxi_hostname) is not specified, then the
+      module will throw an error.
     - VSAN facts added in 2.7 version.
 version_added: 2.5
 author:
@@ -30,15 +31,31 @@ author:
 requirements:
     - python >= 2.6
     - PyVmomi
+options:
+  esxi_hostname:
+    description:
+    - ESXi hostname.
+    - Host facts about the specified ESXi server will be returned.
+    - By specifying this option, you can select which ESXi hostsystem is returned if connecting to a vCenter.
+    version_added: 2.8
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Gather vmware host facts
   vmware_host_facts:
     hostname: "{{ esxi_server }}"
     username: "{{ esxi_username }}"
     password: "{{ esxi_password }}"
+  register: host_facts
+  delegate_to: localhost
+
+- name: Gather vmware host facts from vCenter
+  vmware_host_facts:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    esxi_hostname: "{{ esxi_hostname }}"
   register: host_facts
   delegate_to: localhost
 
@@ -52,7 +69,7 @@ EXAMPLES = '''
     cluster_uuid: "{{ host_facts['ansible_facts']['vsan_cluster_uuid'] }}"
 '''
 
-RETURN = '''
+RETURN = r'''
 ansible_facts:
   description: system info about the host machine
   returned: always
@@ -115,7 +132,17 @@ except ImportError:
 class VMwareHostFactManager(PyVmomi):
     def __init__(self, module):
         super(VMwareHostFactManager, self).__init__(module)
-        self.host = find_obj(self.content, [vim.HostSystem], None)
+        esxi_host_name = self.params.get('esxi_hostname', None)
+        if self.is_vcenter():
+            if esxi_host_name is None:
+                self.module.fail_json(msg="Connected to a vCenter system without specifying esxi_hostname")
+            self.host = self.get_all_host_objs(esxi_host_name=esxi_host_name)
+            if len(self.host) > 1:
+                self.module.fail_json(msg="esxi_hostname matched multiple hosts")
+            self.host = self.host[0]
+        else:
+            self.host = find_obj(self.content, [vim.HostSystem], None)
+
         if self.host is None:
             self.module.fail_json(msg="Failed to find host system.")
 
@@ -213,6 +240,9 @@ class VMwareHostFactManager(PyVmomi):
 
 def main():
     argument_spec = vmware_argument_spec()
+    argument_spec.update(
+        esxi_hostname=dict(type='str', required=False),
+    )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 

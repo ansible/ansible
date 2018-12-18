@@ -1,0 +1,48 @@
+- name: Install required packages (Linux)
+  package:
+    name: lvm2
+    state: present
+  when: ansible_system == 'Linux'
+
+- name: Test lvg module
+  block:
+    - name: Create file to use as a disk device
+      command: "dd if=/dev/zero of={{ ansible_user_dir }}/ansible_testing/img1 bs=1M count=10"
+
+    - name: Create loop device for file
+      command: "losetup --show -f {{ ansible_user_dir }}/ansible_testing/img1"
+      register: loop_device1
+
+    - name: Create volume group on disk device
+      lvg:
+        vg: testvg
+        pvs: "{{ loop_device1.stdout }}"
+
+    - name: Create the volume group again to verify idempotence
+      lvg:
+        vg: testvg
+        pvs: "{{ loop_device1.stdout }}"
+      register: repeat_vg_create
+
+    - name: Do all assertions to verify expected results
+      assert:
+        that:
+          - repeat_vg_create is not changed
+
+  always:
+    - name: Remove test volume group
+      lvg:
+        vg: testvg
+        state: absent
+
+    - name: Detach loop device
+      command: "losetup -d {{ loop_device1.stdout }}"
+      when:
+        - loop_device1 is defined
+        - loop_device1.stdout is defined
+        - loop_device1.stdout is match("/dev/.*")
+
+    - name: Remove the file
+      file:
+        path: "{{ ansible_user_dir }}/ansible_testing/img1"
+        state: absent

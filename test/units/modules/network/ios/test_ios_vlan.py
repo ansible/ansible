@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.ios import ios_vlan
 from ansible.modules.network.ios.ios_vlan import parse_vlan_brief
 from units.modules.utils import set_module_args

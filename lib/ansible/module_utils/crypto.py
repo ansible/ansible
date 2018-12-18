@@ -36,25 +36,44 @@ class OpenSSLObjectError(Exception):
     pass
 
 
-def get_fingerprint(path, passphrase=None):
-    """Generate the fingerprint of the public key. """
+def get_fingerprint_of_bytes(source):
+    """Generate the fingerprint of the given bytes."""
 
     fingerprint = {}
+
+    try:
+        algorithms = hashlib.algorithms
+    except AttributeError:
+        try:
+            algorithms = hashlib.algorithms_guaranteed
+        except AttributeError:
+            return None
+
+    for algo in algorithms:
+        f = getattr(hashlib, algo)
+        h = f(source)
+        try:
+            # Certain hash functions have a hexdigest() which expects a length parameter
+            pubkey_digest = h.hexdigest()
+        except TypeError:
+            pubkey_digest = h.hexdigest(32)
+        fingerprint[algo] = ':'.join(pubkey_digest[i:i + 2] for i in range(0, len(pubkey_digest), 2))
+
+    return fingerprint
+
+
+def get_fingerprint(path, passphrase=None):
+    """Generate the fingerprint of the public key. """
 
     privatekey = load_privatekey(path, passphrase)
     try:
         publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
-        for algo in hashlib.algorithms:
-            f = getattr(hashlib, algo)
-            pubkey_digest = f(publickey).hexdigest()
-            fingerprint[algo] = ':'.join(pubkey_digest[i:i + 2] for i in range(0, len(pubkey_digest), 2))
+        return get_fingerprint_of_bytes(publickey)
     except AttributeError:
         # If PyOpenSSL < 16.0 crypto.dump_publickey() will fail.
         # By doing this we prevent the code from raising an error
         # yet we return no value in the fingerprint hash.
-        pass
-
-    return fingerprint
+        return None
 
 
 def load_privatekey(path, passphrase=None):

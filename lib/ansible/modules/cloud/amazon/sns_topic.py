@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -63,6 +63,7 @@ options:
         somebody could come back later and confirm the subscription. Sorry.
         Blame Amazon."
     default: 'yes'
+    type: bool
 extends_documentation_fragment:
   - aws
   - ec2

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,9 +16,10 @@ module: aci_interface_policy_mcp
 short_description: Manage MCP interface policies (mcp:IfPol)
 description:
 - Manage MCP interface policies on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(mcp:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(mcp:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -26,11 +27,13 @@ options:
   mcp:
     description:
     - The name of the MCP interface.
+    type: str
     required: yes
     aliases: [ mcp_interface, name ]
   description:
     description:
     - The description for the MCP interface.
+    type: str
     aliases: [ descr ]
   admin_state:
     description:
@@ -41,6 +44,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

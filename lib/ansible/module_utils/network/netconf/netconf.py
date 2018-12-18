@@ -131,7 +131,7 @@ def sanitize_xml(data):
         # remove attributes
         attribute = element.attrib
         if attribute:
-            for key in attribute:
+            for key in list(attribute):
                 if key not in IGNORE_XML_ATTRIBUTE:
                     attribute.pop(key)
     return to_text(tostring(tree), errors='surrogate_then_replace').strip()

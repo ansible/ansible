@@ -28,7 +28,7 @@ short_description: Manages NetStream template configuration on HUAWEI CloudEngin
 description:
     - Manages NetStream template configuration on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     state:
         description:

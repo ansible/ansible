@@ -68,14 +68,17 @@ options:
     description:
       - Attach a public network interface to the server.
     default: True
+    type: bool
   use_private_network:
     description:
       - Attach a private network interface to the server.
     default: False
+    type: bool
   use_ipv6:
     description:
       - Enable IPv6 on the public network interface.
     default: True
+    type: bool
   anti_affinity_with:
     description:
       - UUID of another server to create an anti-affinity group with.
@@ -360,10 +363,10 @@ def main():
 
     target_state = module.params['state']
     server = AnsibleCloudscaleServer(module)
-    # The server could be in a changeing or error state.
+    # The server could be in a changing or error state.
     # Wait for one of the allowed states before doing anything.
     # If an allowed state can't be reached, this module fails.
-    if not server.info['state'] in ALLOWED_STATES:
+    if server.info['state'] not in ALLOWED_STATES:
         server.wait_for_state(ALLOWED_STATES)
     current_state = server.info['state']
 

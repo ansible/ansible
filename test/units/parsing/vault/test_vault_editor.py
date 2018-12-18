@@ -25,8 +25,8 @@ import tempfile
 
 import pytest
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 
 from ansible import errors
 from ansible.parsing import vault

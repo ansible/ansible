@@ -63,3 +63,6 @@ set +e
 result="$(ansible-playbook test_handlers_any_errors_fatal.yml -e output_dir=$output_dir -i inventory.handlers -v "$@" 2>&1)"
 set -e
 [ ! -f $output_dir/should_not_exist_B ] || (rm -f $output_dir/should_not_exist_B && exit 1)
+
+# https://github.com/ansible/ansible/issues/47287
+[ "$(ansible-playbook test_handlers_including_task.yml -i ../../inventory -v "$@" | egrep -o 'failed=[0-9]+')" = "failed=0" ]

@@ -16,7 +16,7 @@
           print(response['Account'])
 
     - name: get the aws account id
-      command: python "{{ output_dir }}/sts.py"
+      command: "{{ ansible_python.executable }} '{{ output_dir }}/sts.py'"
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"

@@ -38,6 +38,7 @@ options:
         default: true
         description:
         - Should https certificates be validated?
+        type: bool
     state:
         description:
             - Whether to ensure the group is present or absent.
@@ -158,7 +159,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

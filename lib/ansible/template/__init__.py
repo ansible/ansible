@@ -27,7 +27,6 @@ import pwd
 import re
 import time
 
-from collections import Sequence, Mapping
 from functools import wraps
 from io import StringIO
 from numbers import Number
@@ -45,17 +44,15 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.common._collections_compat import Sequence, Mapping
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
+from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['Templar', 'generate_ansible_template_vars']
@@ -77,6 +74,11 @@ if C.DEFAULT_JINJA2_NATIVE:
     except ImportError:
         from jinja2 import Environment
         from jinja2.utils import concat as j2_concat
+        from jinja2 import __version__ as j2_version
+        display.warning(
+            'jinja2_native requires Jinja 2.10 and above. '
+            'Version detected: %s. Falling back to default.' % j2_version
+        )
 else:
     from jinja2 import Environment
     from jinja2.utils import concat as j2_concat
@@ -493,7 +495,7 @@ class Templar:
                 new = self.do_template(data, fail_on_undefined=True)
             except (AnsibleUndefinedVariable, UndefinedError):
                 return True
-            except:
+            except Exception:
                 return False
             return (new != data)
         elif isinstance(data, (list, tuple)):
@@ -513,7 +515,7 @@ class Templar:
         templatable = True
         try:
             self.template(data)
-        except:
+        except Exception:
             templatable = False
         return templatable
 
@@ -556,6 +558,18 @@ class Templar:
 
     def _fail_lookup(self, name, *args, **kwargs):
         raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
+
+    def _now_datetime(self, utc=False, fmt=None):
+        '''jinja2 global function to return current datetime, potentially formatted via strftime'''
+        if utc:
+            now = datetime.datetime.utcnow()
+        else:
+            now = datetime.datetime.now()
+
+        if fmt:
+            return now.strftime(fmt)
+
+        return now
 
     def _query_lookup(self, name, *args, **kwargs):
         ''' wrapper for lookup, force wantlist true'''
@@ -621,10 +635,7 @@ class Templar:
 
         # For preserving the number of input newlines in the output (used
         # later in this method)
-        if not USE_JINJA2_NATIVE:
-            data_newlines = _count_newlines_from_end(data)
-        else:
-            data_newlines = None
+        data_newlines = _count_newlines_from_end(data)
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
@@ -670,6 +681,8 @@ class Templar:
                 t.globals['lookup'] = self._lookup
                 t.globals['query'] = t.globals['q'] = self._query_lookup
 
+            t.globals['now'] = self._now_datetime
+
             t.globals['finalize'] = self._finalize
 
             jvars = AnsibleJ2Vars(self, t.globals)
@@ -690,7 +703,7 @@ class Templar:
                     display.debug("failing because of a type error, template data is: %s" % to_native(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
 
-            if USE_JINJA2_NATIVE:
+            if USE_JINJA2_NATIVE and not isinstance(res, string_types):
                 return res
 
             if preserve_trailing_newlines:

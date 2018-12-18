@@ -23,8 +23,8 @@ import os
 import json
 import tempfile
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_bytes
 
@@ -44,7 +44,7 @@ def load_fixture(name):
 
     try:
         data = json.loads(data)
-    except:
+    except Exception:
         pass
 
     fixture_data[path] = data

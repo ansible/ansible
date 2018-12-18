@@ -38,15 +38,12 @@ from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 
 __all__ = ['TaskQueueManager']
+
+display = Display()
 
 
 class TaskQueueManager:
@@ -93,10 +90,6 @@ class TaskQueueManager:
         # a special flag to help us exit cleanly
         self._terminated = False
 
-        # this dictionary is used to keep track of notified handlers
-        self._notified_handlers = dict()
-        self._listening_handlers = dict()
-
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
@@ -123,11 +116,6 @@ class TaskQueueManager:
         inventory hostnames for those hosts triggering the handler.
         '''
 
-        # Zero the dictionary first by removing any entries there.
-        # Proxied dicts don't support iteritems, so we have to use keys()
-        self._notified_handlers.clear()
-        self._listening_handlers.clear()
-
         def _process_block(b):
             temp_list = []
             for t in b.block:
@@ -140,23 +128,6 @@ class TaskQueueManager:
         handler_list = []
         for handler_block in play.handlers:
             handler_list.extend(_process_block(handler_block))
-        # then initialize it with the given handler list
-        self.update_handler_list(handler_list)
-
-    def update_handler_list(self, handler_list):
-        for handler in handler_list:
-            if handler._uuid not in self._notified_handlers:
-                display.debug("Adding handler %s to notified list" % handler.name)
-                self._notified_handlers[handler._uuid] = []
-            if handler.listen:
-                listeners = handler.listen
-                if not isinstance(listeners, list):
-                    listeners = [listeners]
-                for listener in listeners:
-                    if listener not in self._listening_handlers:
-                        self._listening_handlers[listener] = []
-                    display.debug("Adding handler %s to listening list" % handler.name)
-                    self._listening_handlers[listener].append(handler._uuid)
 
     def load_callbacks(self):
         '''
@@ -244,6 +215,10 @@ class TaskQueueManager:
         )
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
+        if (self._stdout_callback and
+                hasattr(self._stdout_callback, 'set_play_context')):
+            self._stdout_callback.set_play_context(play_context)
+
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)

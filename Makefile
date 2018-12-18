@@ -3,6 +3,8 @@
 # Makefile for Ansible
 #
 # useful targets:
+#   make clean ---------------- clean up
+#   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
 #   make srpm ----------------- produce a SRPM
 #   make rpm  ----------------- produce RPMs
@@ -217,7 +219,6 @@ clean:
 	rm -f AUTHORS.TXT
 	@echo "Cleaning up docsite"
 	$(MAKE) -C docs/docsite clean
-	$(MAKE) -C docs/api clean
 
 .PHONY: python
 python:
@@ -231,8 +232,12 @@ install_manpages:
 	gzip -9 $(wildcard ./docs/man/man1/ansible*.1)
 	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
 
+.PHONY: sdist_check
+sdist_check:
+	$(PYTHON) packaging/sdist/check-link-behavior.py
+
 .PHONY: sdist
-sdist: clean docs
+sdist: sdist_check clean docs
 	$(PYTHON) setup.py sdist
 
 .PHONY: sdist_upload
@@ -398,4 +403,3 @@ alldocs: docs webdocs
 
 version:
 	@echo $(VERSION)
-

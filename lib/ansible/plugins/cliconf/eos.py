@@ -41,17 +41,15 @@ options:
         version_added: '2.7'
 """
 
-import collections
 import json
 import time
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.plugins.cliconf import CliconfBase, enable_mode
-from ansible.plugins.connection.network_cli import Connection as NetworkCli
-from ansible.plugins.connection.httpapi import Connection as HttpApi
 
 
 class Cliconf(CliconfBase):
@@ -59,20 +57,6 @@ class Cliconf(CliconfBase):
     def __init__(self, *args, **kwargs):
         super(Cliconf, self).__init__(*args, **kwargs)
         self._session_support = None
-
-    def send_command(self, command, **kwargs):
-        """Executes a cli command and returns the results
-        This method will execute the CLI command on the connection and return
-        the results to the caller.  The command output will be returned as a
-        string
-        """
-        if isinstance(self._connection, NetworkCli):
-            resp = super(Cliconf, self).send_command(command, **kwargs)
-        elif isinstance(self._connection, HttpApi):
-            resp = self._connection.send_request(command, **kwargs)
-        else:
-            raise ValueError("Invalid connection type")
-        return resp
 
     @enable_mode
     def get_config(self, source='running', format='text', flags=None):
@@ -116,7 +100,7 @@ class Cliconf(CliconfBase):
         requests = []
         multiline = False
         for line in to_list(candidate):
-            if not isinstance(line, collections.Mapping):
+            if not isinstance(line, Mapping):
                 line = {'command': line}
 
             cmd = line['command']
@@ -175,7 +159,7 @@ class Cliconf(CliconfBase):
             raise ValueError("'commands' value is required")
         responses = list()
         for cmd in to_list(commands):
-            if not isinstance(cmd, collections.Mapping):
+            if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
 
             output = cmd.pop('output', None)
@@ -294,13 +278,8 @@ class Cliconf(CliconfBase):
         result['device_info'] = self.get_device_info()
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
+        result['network_api'] = 'cliconf'
 
-        if isinstance(self._connection, NetworkCli):
-            result['network_api'] = 'cliconf'
-        elif isinstance(self._connection, HttpApi):
-            result['network_api'] = 'eapi'
-        else:
-            raise ValueError("Invalid connection type")
         return json.dumps(result)
 
     def _get_command_with_output(self, command, output):

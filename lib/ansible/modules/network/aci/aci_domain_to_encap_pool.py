@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -20,8 +20,12 @@ description:
 notes:
 - The C(domain) and C(encap_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_encap_pool) can be used for these.
-- More information about the internal APIC class B(infra:RsVlanNs) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_domain
+- module: aci_encap_pool
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:RsVlanNs).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
@@ -29,30 +33,36 @@ options:
   domain:
     description:
     - Name of the domain being associated with the Encap Pool.
+    type: str
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
     - Determines if the Domain is physical (phys) or virtual (vmm).
+    type: str
     choices: [ fc, l2dom, l3dom, phys, vmm ]
   pool:
     description:
     - The name of the pool.
+    type: str
     aliases: [ pool_name ]
   pool_allocation_mode:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, static]
     aliases: [ allocation_mode, mode ]
   pool_type:
     description:
     - The encap type of C(pool).
+    type: str
     required: yes
     choices: [ vlan, vsan, vxlan ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   vm_provider:
@@ -60,6 +70,7 @@ options:
     - The VM platform for VMM Domains.
     - Support for Kubernetes was added in ACI v3.0.
     - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
+    type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''

@@ -15,7 +15,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -82,9 +82,13 @@ options:
       - Desired number of instances in group, if unspecified then the current group value will be used.
   replace_all_instances:
     description:
-      - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuration.
+      - In a rolling fashion, replace all instances that used the old launch configuration with one from the new launch configuration.
+        It increases the ASG size by C(replace_batch_size), waits for the new instances to be up and running.
+        After that, it terminates a batch of old instances, waits for the replacements, and repeats, until all old instances are replaced.
+        Once that's done the ASG size is reduced back to the expected size.
     version_added: "1.8"
     default: 'no'
+    type: bool
   replace_batch_size:
     description:
       - Number of instances you'd like to replace at a time.  Used with replace_all_instances.
@@ -101,11 +105,13 @@ options:
       - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_config.
     version_added: "1.8"
     default: 'yes'
+    type: bool
   lt_check:
     description:
       - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_template or launch_template version.
     version_added: "2.8"
     default: 'yes'
+    type: bool
   vpc_zone_identifier:
     description:
       - List of VPC subnets to use
@@ -143,6 +149,7 @@ options:
         instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
     version_added: "1.9"
     default: 'yes'
+    type: bool
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
@@ -578,7 +585,7 @@ def update_asg(connection, **params):
     connection.update_auto_scaling_group(**params)
 
 
-@AWSRetry.backoff(**backoff_params)
+@AWSRetry.backoff(catch_extra_error_codes=['ScalingActivityInProgress'], **backoff_params)
 def delete_asg(connection, asg_name, force_delete):
     connection.delete_auto_scaling_group(AutoScalingGroupName=asg_name, ForceDelete=force_delete)
 
@@ -1149,7 +1156,7 @@ def create_autoscaling_group(connection):
         else:
             try:
                 ag['LaunchConfigurationName'] = as_group['LaunchConfigurationName']
-            except:
+            except Exception:
                 launch_template = as_group['LaunchTemplate']
                 # Prefer LaunchTemplateId over Name as it's more specific.  Only one can be used for update_asg.
                 ag['LaunchTemplate'] = {"LaunchTemplateId": launch_template['LaunchTemplateId'], "Version": launch_template['Version']}

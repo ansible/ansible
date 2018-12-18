@@ -15,8 +15,8 @@ except ImportError:
 from argparse import ArgumentParser
 
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup.onepassword import OnePass, LookupModule
 from ansible.plugins.lookup.onepassword_raw import LookupModule as OnePasswordRawLookup
@@ -218,7 +218,7 @@ class TestOnePass(unittest.TestCase):
         op = MockOnePass()
         try:
             op.assert_logged_in()
-        except:
+        except Exception:
             self.fail()
 
     def test_onepassword_logged_out(self):

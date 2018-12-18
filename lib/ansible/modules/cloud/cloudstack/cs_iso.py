@@ -59,15 +59,18 @@ options:
   is_featured:
     description:
       - Register the ISO to be featured. Only used if C(state) is present.
+    type: bool
   is_dynamically_scalable:
     description:
       - Register the ISO having XS/VMWare tools installed inorder to support dynamic scaling of VM cpu/memory. Only used if C(state) is present.
+    type: bool
   checksum:
     description:
       - The MD5 checksum value of this ISO. If set, we search by checksum instead of name.
   bootable:
     description:
       - Register the ISO to be bootable. Only used if C(state) is present.
+    type: bool
   domain:
     description:
       - Domain the ISO is related to.
@@ -296,11 +299,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             args['zoneid'] = -1
 
         if args['bootable'] and not args['ostypeid']:
-            self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
+            self.module.fail_json(msg="OS type 'os_type' is required if 'bootable=true'.")
 
         args['url'] = self.module.params.get('url')
         if not args['url']:
-            self.module.fail_json(msg="URL is requried.")
+            self.module.fail_json(msg="URL is required.")
 
         self.result['changed'] = True
         if not self.module.check_mode:

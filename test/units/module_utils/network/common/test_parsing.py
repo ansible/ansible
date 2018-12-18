@@ -20,7 +20,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.network.common.parsing import Conditional
 
 test_results = ['result_1', 'result_2', 'result_3']

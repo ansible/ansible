@@ -2,7 +2,7 @@ import contextlib
 import json
 import os
 
-from ansible.compat.tests.mock import mock_open
+from units.compat.mock import mock_open
 from ansible.module_utils import basic
 from ansible.module_utils._text import to_native
 import ansible.module_utils.six
@@ -110,7 +110,7 @@ def test_without_required_parameters(capfd, patch_rhn):
 TESTED_MODULE = rhn_register.__name__
 TEST_CASES = [
     [
-        # Registering an unregistered host and subscribing to one channel
+        # Registering an unregistered host with channels
         {
             'channels': 'rhel-x86_64-server-6',
             'username': 'user',
@@ -137,9 +137,11 @@ TEST_CASES = [
         }
     ],
     [
-        # Registering an unregistered host with only an activationkey and without subscribing any channels
+        # Registering an unregistered host without channels
         {
             'activationkey': 'key',
+            'username': 'user',
+            'password': 'pass',
         },
         {
             'calls': [

@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_user
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage posix users on a univention corporate server
 description:
     - "This module allows to manage posix users on a univention corporate
@@ -476,7 +477,7 @@ def main():
                     obj.create()
                 elif changed:
                     obj.modify()
-        except:
+        except Exception:
             module.fail_json(
                 msg="Creating/editing user {} in {} failed".format(
                     username,
@@ -497,7 +498,7 @@ def main():
                         if not module.check_mode:
                             grp.modify()
                         changed = True
-        except:
+        except Exception:
             module.fail_json(
                 msg="Adding groups to user {} failed".format(username)
             )
@@ -508,7 +509,7 @@ def main():
             if not module.check_mode:
                 obj.remove()
             changed = True
-        except:
+        except Exception:
             module.fail_json(
                 msg="Removing user {} failed".format(username)
             )

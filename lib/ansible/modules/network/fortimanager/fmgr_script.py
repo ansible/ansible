@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: fmgr_script
 version_added: "2.5"
-author: Andrew Welsh
+author: Andrew Welsh (@Ghilli3)
 short_description: Add/Edit/Delete and execute scripts
 description: Create/edit/delete scripts and execute the scripts on the FortiManager using jsonrpc API
 
@@ -249,18 +249,18 @@ def main():
         # if state is present (default), then add the script
         if state == "present":
             results = set_script(fmg, script_name, script_type, script_content, script_description, script_target, adom)
-            if not results[0] == 0:
+            if results[0] != 0:
                 if isinstance(results[1], list):
                     module.fail_json(msg="Adding Script Failed", **results)
                 else:
                     module.fail_json(msg="Adding Script Failed")
         elif state == "execute":
             results = execute_script(fmg, script_name, script_scope, script_package, adom, vdom)
-            if not results[0] == 0:
+            if results[0] != 0:
                 module.fail_json(msg="Script Execution Failed", **results)
         elif state == "delete":
             results = delete_script(fmg, script_name, adom)
-            if not results[0] == 0:
+            if results[0] != 0:
                 module.fail_json(msg="Script Deletion Failed", **results)
 
         fmg.logout()

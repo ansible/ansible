@@ -161,7 +161,7 @@ def create_target_http_proxy(client, params, project_id):
                                                 name=params['target_proxy_name'],
                                                 project_id=project_id)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 
@@ -186,7 +186,7 @@ def delete_target_http_proxy(client, name, project_id):
             project=project_id, targetHttpProxy=name)
         return_data = GCPUtils.execute_api_client_req(req, client)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 
@@ -227,7 +227,7 @@ def update_target_http_proxy(client, target_proxy, params, name, project_id):
         return_data = GCPUtils.execute_api_client_req(
             req, client=client, raw=False)
         return (True, return_data)
-    except:
+    except Exception:
         raise
 
 

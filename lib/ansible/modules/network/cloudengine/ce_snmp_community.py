@@ -28,7 +28,7 @@ short_description: Manages SNMP community configuration on HUAWEI CloudEngine sw
 description:
     - Manages SNMP community configuration on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     acl_number:
         description:

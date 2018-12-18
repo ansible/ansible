@@ -1,0 +1,2 @@
+bugfixes:
+- Windows - prevent sensitive content from appearing in scriptblock logging (CVE 2018-16859)

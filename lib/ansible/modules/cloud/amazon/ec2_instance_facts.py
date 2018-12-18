@@ -30,7 +30,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
-        U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) for possible filters. Filter
+        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) for possible filters. Filter
         names and values are case sensitive.
     required: false
     default: {}
@@ -60,6 +60,12 @@ EXAMPLES = '''
 - ec2_instance_facts:
     filters:
       "tag:Name": Example
+
+# Gather facts about any instance in states "shutting-down", "stopping", "stopped"
+- ec2_instance_facts:
+    filters:
+      instance-state-name: [ "shutting-down", "stopping", "stopped" ]
+
 '''
 
 RETURN = '''

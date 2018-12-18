@@ -1,0 +1,2 @@
+minor_changes:
+- reboot - Expose timeout value in error message

@@ -51,6 +51,7 @@ options:
             - Always create new task definition
         required: False
         version_added: 2.5
+        type: bool
     containers:
         description:
             - A list of containers definitions

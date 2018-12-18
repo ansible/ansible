@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -224,7 +224,7 @@ def set_queue_attribute(queue, attribute, value, check_mode=False):
 
     try:
         existing_value = queue.get_attributes(attributes=attribute)[attribute]
-    except:
+    except Exception:
         existing_value = ''
 
     # convert dict attributes to JSON strings (sort keys for comparing)

@@ -92,6 +92,7 @@ options:
             - A boolean indicating whether this monitor needs a full window of data before it's evaluated. We highly recommend you set this to False for
               sparse metrics, otherwise some evaluations will be skipped.
         version_added: "2.3"
+        type: bool
     new_host_delay:
         description: ["A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
         This gives the host time to fully initialize."]
@@ -143,7 +144,7 @@ import traceback
 try:
     from datadog import initialize, api
     HAS_DATADOG = True
-except:
+except Exception:
     HAS_DATADOG = False
 
 from ansible.module_utils.basic import AnsibleModule

@@ -45,8 +45,8 @@ class Cliconf(CliconfBase):
         for cmd in chain(['configure'], to_list(candidate)):
             self.send_command(cmd)
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:

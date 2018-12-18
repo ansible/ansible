@@ -45,8 +45,9 @@ from os import environ
 from os import path
 import platform
 
-VERSION = 1.1
+VERSION = 1.2
 USER_AGENT_BASE = 'Ansible'
+API_AGENT_VERSION = 1.5
 
 
 def get_system(module):
@@ -75,13 +76,12 @@ def get_system(module):
 
 def get_blade(module):
     """Return System Object or Fail"""
-# Note: user_agent not included in FlashBlade API 1.1
-#    user_agent = '%(base)s %(class)s/%(version)s (%(platform)s)' % {
-#        'base': USER_AGENT_BASE,
-#        'class': __name__,
-#        'version': VERSION,
-#        'platform': platform.platform()
-#    }
+    user_agent = '%(base)s %(class)s/%(version)s (%(platform)s)' % {
+        'base': USER_AGENT_BASE,
+        'class': __name__,
+        'version': VERSION,
+        'platform': platform.platform()
+    }
     blade_name = module.params['fb_url']
     api = module.params['api_token']
 
@@ -90,6 +90,8 @@ def get_blade(module):
         blade.disable_verify_ssl()
         try:
             blade.login(api)
+            if API_AGENT_VERSION in blade.api_version.list_versions().versions:
+                blade._api_client.user_agent = user_agent
         except rest.ApiException as e:
             module.fail_json(msg="Pure Storage FlashBlade authentication failed. Check your credentials")
     elif environ.get('PUREFB_URL') and environ.get('PUREFB_API'):
@@ -97,6 +99,8 @@ def get_blade(module):
         blade.disable_verify_ssl()
         try:
             blade.login(environ.get('PUREFB_API'))
+            if API_AGENT_VERSION in blade.api_version.list_versions().versions:
+                blade._api_client.user_agent = user_agent
         except rest.ApiException as e:
             module.fail_json(msg="Pure Storage FlashBlade authentication failed. Check your credentials")
     else:

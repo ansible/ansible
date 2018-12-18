@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,8 +19,11 @@ description:
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(fv:EpRetPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:EpRetPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
@@ -28,10 +31,12 @@ options:
   tenant:
     description:
     - The name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   epr_policy:
     description:
     - The name of the end point retention policy.
+    type: str
     aliases: [ epr_name, name ]
   bounce_age:
     description:
@@ -43,6 +48,7 @@ options:
     description:
     - Determines if the bounce entries are installed by RARP Flood or COOP Protocol.
     - The APIC defaults to C(coop) when unset during creation.
+    type: str
     choices: [ coop, flood ]
   hold_interval:
     description:
@@ -71,11 +77,13 @@ options:
   description:
     description:
     - Description for the End point rentention policy.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

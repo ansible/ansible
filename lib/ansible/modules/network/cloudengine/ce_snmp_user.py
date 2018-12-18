@@ -28,7 +28,7 @@ short_description: Manages SNMP user configuration on HUAWEI CloudEngine switche
 description:
     - Manages SNMP user configurations on CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     acl_number:
         description:

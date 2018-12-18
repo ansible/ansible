@@ -22,7 +22,7 @@ short_description: Manages disk offerings on Apache CloudStack based clouds.
 version_added: "2.7"
 author:
   - "David Passante (@dpassante)"
-  - "René Moser(@resmo)"
+  - "René Moser (@resmo)"
 options:
   disk_size:
     description:

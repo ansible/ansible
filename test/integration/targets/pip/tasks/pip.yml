@@ -213,6 +213,27 @@
     that:
       - "not (q_check_mode is changed)"
 
+# Case with package name that has a different package name case and an
+# underscore instead of a hyphen
+- name: check for Junit-XML package
+  pip:
+    name: Junit-XML
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
+
+- name: check for Junit-XML package in check_mode
+  pip:
+    name: Junit-XML
+    virtualenv: "{{ output_dir }}/pipenv"
+    state: present
+  check_mode: True
+  register: diff_case_check_mode
+
+- name: make sure Junit-XML in check_mode doesn't report changed
+  assert:
+    that:
+      - "diff_case_check_mode is not changed"
+
 # ansible#23204
 - name: ensure is a fresh virtualenv
   file:
@@ -256,11 +277,11 @@
     extra_args: --user --upgrade --root {{ output_dir }}/pip_root
 
 - name: register python_site_lib
-  command: 'python -c "import site; print(site.USER_SITE)"'
+  command: '{{ ansible_python.executable }} -c "import site; print(site.USER_SITE)"'
   register: pip_python_site_lib
 
 - name: register python_user_base
-  command: 'python -c "import site; print(site.USER_BASE)"'
+  command: '{{ ansible_python.executable }} -c "import site; print(site.USER_BASE)"'
   register: pip_python_user_base
 
 - name: run test module
@@ -470,7 +491,38 @@
   assert:
     that: "version13 is failed"
 
+- name: try install package with setuptools extras
+  pip:
+    name: "{{pip_test_package}}[dev,test]"
+
 - name: clean up
   pip:
     name: "{{ pip_test_packages }}"
     state: absent
+
+# https://github.com/ansible/ansible/issues/47198
+# distribute is a legacy package that will fail on newer Python 3 versions
+- block:
+  - name: make sure the virtualenv does not exist
+    file:
+      state: absent
+      name: "{{ output_dir }}/pipenv"
+
+  - name: install distribute in the virtualenv
+    pip:
+      name: distribute
+      virtualenv: "{{ output_dir }}/pipenv"
+      state: present
+
+  - name: try to remove distribute
+    pip:
+      state: "absent"
+      name: "distribute"
+      virtualenv: "{{ output_dir }}/pipenv"
+    ignore_errors: yes
+    register: remove_distribute
+
+  - name: inspect the cmd
+    assert:
+      that: "'distribute' in remove_distribute.cmd"
+  when: ansible_python.version.major == 2

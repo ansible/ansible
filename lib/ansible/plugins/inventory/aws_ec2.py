@@ -16,7 +16,7 @@ DOCUMENTATION = '''
         - constructed
     description:
         - Get inventory hosts from Amazon Web Services EC2.
-        - Uses a <name>.aws_ec2.yaml (or <name>.aws_ec2.yml) YAML configuration file.
+        - Uses a YAML configuration file that ends with aws_ec2.(yml|yaml).
     options:
         plugin:
             description: token that ensures this is a source file for the 'aws_ec2' plugin.
@@ -133,18 +133,15 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
+from ansible.utils.display import Display
 
 try:
     import boto3
     import botocore
 except ImportError:
     raise AnsibleError('The ec2 dynamic inventory plugin requires boto3 and botocore.')
+
+display = Display()
 
 # The mappings give an array of keys to get from the filter name to the value
 # returned by boto3's EC2 describe_instances method.
@@ -422,31 +419,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._add_hosts(hosts=groups[group], group=group, hostnames=hostnames)
             self.inventory.add_child('all', group)
 
-    def _populate_from_source(self, source_data):
-        hostvars = source_data.pop('_meta', {}).get('hostvars', {})
-        for group in source_data:
-            if group == 'all':
-                continue
-            else:
-                self.inventory.add_group(group)
-                hosts = source_data[group].get('hosts', [])
-                for host in hosts:
-                    self._populate_host_vars([host], hostvars.get(host, {}), group)
-                self.inventory.add_child('all', group)
-
-    def _format_inventory(self, groups, hostnames):
-        results = {'_meta': {'hostvars': {}}}
-        for group in groups:
-            results[group] = {'hosts': []}
-            for host in groups[group]:
-                hostname = self._get_hostname(host, hostnames)
-                if not hostname:
-                    continue
-                results[group]['hosts'].append(hostname)
-                h = self.inventory.get_host(hostname)
-                results['_meta']['hostvars'][h.name] = h.vars
-        return results
-
     def _add_hosts(self, hosts, group, hostnames):
         '''
             :param hosts: a list of hosts to be added to a group
@@ -509,9 +481,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.aws_ec2.yml') or path.endswith('.aws_ec2.yaml'):
+            if path.endswith(('aws_ec2.yml', 'aws_ec2.yaml')):
                 return True
-        display.debug("aws_ec2 inventory filename must end with '*.aws_ec2.yml' or '*.aws_ec2.yaml'")
+        display.debug("aws_ec2 inventory filename must end with 'aws_ec2.yml' or 'aws_ec2.yaml'")
         return False
 
     def _get_query_options(self, config_data):
@@ -573,7 +545,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             cache = self.get_option('cache')
 
         # Generate inventory
-        formatted_inventory = {}
         cache_needs_update = False
         if cache:
             try:
@@ -581,15 +552,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             except KeyError:
                 # if cache expires or cache file doesn't exist
                 cache_needs_update = True
-            else:
-                self._populate_from_source(results)
 
         if not cache or cache_needs_update:
             results = self._query(regions, filters, strict_permissions)
-            self._populate(results, hostnames)
-            formatted_inventory = self._format_inventory(results, hostnames)
+
+        self._populate(results, hostnames)
 
         # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
-            self.cache.set(cache_key, formatted_inventory)
+            self.cache.set(cache_key, results)

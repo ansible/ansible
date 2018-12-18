@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,8 +19,12 @@ description:
 notes:
 - The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_ap) modules can be used for this.
-- More information about the internal APIC class B(fv:AEPg) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:AEPg).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
@@ -28,40 +32,47 @@ options:
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     required: yes
     aliases: [ app_profile, app_profile_name ]
   epg:
     description:
     - Name of the end point group.
+    type: str
     required: yes
     aliases: [ epg_name, name ]
   bd:
     description:
     - Name of the bridge domain being associated with the EPG.
-    required: yes
+    type: str
     aliases: [ bd_name, bridge_domain ]
   priority:
     description:
     - The QoS class.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ level1, level2, level3, unspecified ]
   intra_epg_isolation:
     description:
     - The Intra EPG Isolation.
     - The APIC defaults to C(unenforced) when unset during creation.
+    type: str
     choices: [ enforced, unenforced ]
   description:
     description:
     - Description for the EPG.
+    type: str
     aliases: [ descr ]
   fwd_control:
     description:
     - The forwarding control used by the EPG.
     - The APIC defaults to C(none) when unset during creation.
+    type: str
     choices: [ none, proxy-arp ]
   preferred_group:
     description:
@@ -74,6 +85,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -350,9 +362,13 @@ def main():
                 fwdCtrl=fwd_control,
                 prefGrMemb=preferred_group,
             ),
-            child_configs=[
-                dict(fvRsBd=dict(attributes=dict(tnFvBDName=bd))),
-            ],
+            child_configs=[dict(
+                fvRsBd=dict(
+                    attributes=dict(
+                        tnFvBDName=bd,
+                    ),
+                ),
+            )],
         )
 
         aci.get_diff(aci_class='fvAEPg')

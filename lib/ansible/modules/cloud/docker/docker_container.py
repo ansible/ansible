@@ -76,11 +76,9 @@ options:
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
-    default: 0
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota
-    default: 0
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
@@ -100,6 +98,78 @@ options:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
         in the format: <path_on_host>:<path_in_container>:<cgroup_permissions>"
+  device_read_bps:
+    description:
+      - "List of device path and read rate (bytes per second) from device."
+    type: list
+    suboptions:
+      path:
+        type: str
+        required: true
+        description:
+        - Device path in the container.
+      rate:
+        type: str
+        required: true
+        description:
+        - "Device read limit. Format: <number>[<unit>]"
+        - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+          C(T) (tebibyte), or C(P) (pebibyte)"
+        - "Omitting the unit defaults to bytes."
+    version_added: "2.8"
+  device_write_bps:
+    description:
+      - "List of device and write rate (bytes per second) to device."
+    type: list
+    suboptions:
+      path:
+        type: str
+        required: true
+        description:
+        - Device path in the container.
+      rate:
+        type: str
+        required: true
+        description:
+        - "Device read limit. Format: <number>[<unit>]"
+        - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+          C(T) (tebibyte), or C(P) (pebibyte)"
+        - "Omitting the unit defaults to bytes."
+    version_added: "2.8"
+  device_read_iops:
+    description:
+      - "List of device and read rate (IO per second) from device."
+    type: list
+    suboptions:
+      path:
+        type: str
+        required: true
+        description:
+        - Device path in the container.
+      rate:
+        type: int
+        required: true
+        description:
+        - "Device read limit."
+        - "Must be a positive integer."
+    version_added: "2.8"
+  device_write_iops:
+    description:
+      - "List of device and write rate (IO per second) to device."
+    type: list
+    suboptions:
+      path:
+        type: str
+        required: true
+        description:
+        - Device path in the container.
+      rate:
+        type: int
+        required: true
+        description:
+        - "Device read limit."
+        - "Must be a positive integer."
+    version_added: "2.8"
   dns_opts:
     description:
       - list of DNS options
@@ -116,6 +186,8 @@ options:
   env:
     description:
       - Dictionary of key,value pairs.
+      - Values which might be parsed as numbers, booleans or other types by the YAML parser must be quoted (e.g. C("true")) in order to avoid data loss.
+    type: dict
   env_file:
     version_added: "2.2"
     description:
@@ -147,6 +219,36 @@ options:
   groups:
     description:
       - List of additional group names and/or IDs that the container process will run as.
+  healthcheck:
+    version_added: "2.8"
+    type: dict
+    description:
+      - 'Configure a check that is run to determine whether or not containers for this service are "healthy".
+        See the docs for the L(HEALTHCHECK Dockerfile instruction,https://docs.docker.com/engine/reference/builder/#healthcheck)
+        for details on how healthchecks work.'
+      - 'I(interval), I(timeout) and I(start_period) are specified as durations. They accept duration as a string in a format
+        that look like: C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)'
+    suboptions:
+      test:
+        description:
+          - Command to run to check health.
+          - Must be either a string or a list. If it is a list, the first item must be one of C(NONE), C(CMD) or C(CMD-SHELL).
+      interval:
+        description:
+          - 'Time between running the check. (default: 30s)'
+        type: str
+      timeout:
+        description:
+          - 'Maximum time to allow one check to run. (default: 30s)'
+        type: str
+      retries:
+        description:
+          - 'Consecutive failures needed to report unhealthy. It accept integer value. (default: 3)'
+        type: int
+      start_period:
+        description:
+          - 'Start period for the container to initialize before starting health-retries countdown. (default: 0s)'
+        type: str
   hostname:
     description:
       - Container hostname.
@@ -163,7 +265,9 @@ options:
   image:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
-        will be pulled from the registry. If no tag is included, 'latest' will be used.
+        will be pulled from the registry. If no tag is included, C(latest) will be used.
+      - Can also be an image ID. If this is the case, the image is assumed to be available locally.
+        The C(pull) option is ignored for this case.
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
@@ -194,7 +298,6 @@ options:
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte). Minimum is C(4M)."
       - Omitting the unit defaults to bytes.
-    default: 0
   labels:
      description:
        - Dictionary of key value pairs.
@@ -229,18 +332,16 @@ options:
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
-    default: 0
   memory_swap:
     description:
       - "Total memory limit (memory + swap, format: C(<number>[<unit>])).
         Number is a positive integer. Unit can be C(B) (byte), C(K) (kibibyte, 1024B),
         C(M) (mebibyte), C(G) (gibibyte), C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
-    default: 0
   memory_swappiness:
     description:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
-    default: 0
+        - If not set, the value will be remain the same if container exists and will be inherited from the host machine if it is (re-)created.
   name:
     description:
       - Assign a name to a new container or match an existing container.
@@ -256,24 +357,43 @@ options:
   networks:
      description:
        - List of networks the container belongs to.
-       - Each network is a dict with keys C(name), C(ipv4_address), C(ipv6_address), C(links), C(aliases).
-       - For each network C(name) is required, all other keys are optional.
-       - If included, C(links) or C(aliases) are lists.
        - For examples of the data structure and usage see EXAMPLES below.
        - To remove a container from one or more networks, use the C(purge_networks) option.
        - Note that as opposed to C(docker run ...), M(docker_container) does not remove the default
          network if C(networks) is specified. You need to explicity use C(purge_networks) to enforce
          the removal of the default network (and all other networks not explicitly mentioned in C(networks)).
      version_added: "2.2"
+     type: list
+     suboptions:
+        name:
+           type: str
+           required: true
+           description:
+             - The network's name.
+        ipv4_address:
+           type: str
+           description:
+             - The container's IPv4 address in this network.
+        ipv6_address:
+           type: str
+           description:
+             - The container's IPv6 address in this network.
+        links:
+           type: list
+           description:
+             - A list of containers to link to.
+        aliases:
+           type: list
+           description:
+             - List of aliases for this container in this network. These names
+               can be used in the network to reach this container.
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
     type: bool
-    default: 'no'
   oom_score_adj:
     description:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
-    default: 0
     version_added: "2.2"
   output_logs:
     description:
@@ -288,7 +408,14 @@ options:
     default: 'no'
   pid_mode:
     description:
-      - Set the PID namespace mode for the container. Currently only supports 'host'.
+      - Set the PID namespace mode for the container.
+      - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
+  pids_limit:
+    description:
+      - Set PIDs limit for the container. It accepts an integer value.
+      - Set -1 for unlimited PIDs.
+    type: int
+    version_added: "2.8"
   privileged:
     description:
       - Give extended privileges to the container.
@@ -299,8 +426,13 @@ options:
       - List of ports to publish from the container to the host.
       - "Use docker CLI syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000), where 8000 is a
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
+      - Port ranges can be used for source and destination ports. If two ranges with
+        different lengths are specified, the shorter range will be used.
+      - "Bind addresses must be either IPv4 or IPv6 addresses. Hostnames are I(not) allowed. This
+        is different from the C(docker) command line utility. Use the L(dig lookup,../lookup/dig.html)
+        to resolve hostnames."
       - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
-      - A value of all will publish all exposed container ports to random host ports, ignoring
+      - A value of C(all) will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
         a bridge network with optional parameter com.docker.network.bridge.host_binding_ipv4.
@@ -312,7 +444,10 @@ options:
       - ports
   pull:
     description:
-       - If true, always pull the latest version of an image. Otherwise, will only pull an image when missing.
+       - If true, always pull the latest version of an image. Otherwise, will only pull an image
+         when missing.
+       - I(Note) that images are only pulled when specified by name. If the image is specified
+         as a image ID (hash), it cannot be pulled.
     type: bool
     default: 'no'
   purge_networks:
@@ -348,7 +483,10 @@ options:
   restart_retries:
     description:
        - Use with restart policy to control maximum number of restart attempts.
-    default: 0
+  runtime:
+    description:
+      - Runtime to use for the container.
+    version_added: "2.8"
   shm_size:
     description:
       - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
@@ -430,9 +568,13 @@ options:
     description:
       - List of volumes to mount within the container.
       - "Use docker CLI-style syntax: C(/host:/container[:mode])"
-      - You can specify a read mode for the mount with either C(ro) or C(rw).
+      - "Mount modes can be a comma-separated list of various modes such as C(ro), C(rw), C(consistent),
+        C(delegated), C(cached), C(rprivate), C(private), C(rshared), C(shared), C(rslave), C(slave).
+        Note that docker might not support all modes and combinations of such modes."
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
+      - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
+        C(z), and C(Z)."
   volume_driver:
     description:
       - The container volume driver.
@@ -504,7 +646,9 @@ EXAMPLES = '''
      - "8080:9000"
      - "127.0.0.1:8081:9001/udp"
     env:
-        SECRET_KEY: ssssh
+        SECRET_KEY: "ssssh"
+        # Values which might be parsed as numbers, booleans or other types by the YAML parser need to be quoted
+        BOOLEAN_KEY: "yes"
 
 - name: Container present
   docker_container:
@@ -622,8 +766,8 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: true
-      - arg2: whatever
+      - arg1: "true"
+      - arg2: "whatever"
     volumes:
       - /tmp:/tmp
     comparisons:
@@ -636,11 +780,48 @@ EXAMPLES = '''
     name: test
     image: ubuntu:18.04
     env:
-      - arg1: true
-      - arg2: whatever
+      - arg1: "true"
+      - arg2: "whatever"
     comparisons:
       '*': ignore  # by default, ignore *all* options (including image)
       env: strict   # except for environment variables; there, we want to be strict
+
+- name: Start container with healthstatus
+  docker_container:
+    name: nginx-proxy
+    image: nginx:1.13
+    state: started
+    healthcheck:
+      # Check if nginx server is healthy by curl'ing the server.
+      # If this fails or timeouts, the healthcheck fails.
+      test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+- name: Remove healthcheck from container
+  docker_container:
+    name: nginx-proxy
+    image: nginx:1.13
+    state: started
+    healthcheck:
+      # The "NONE" check needs to be specified
+      test: ["NONE"]
+
+- name: start container with block device read limit
+  docker_container:
+    name: test
+    image: ubuntu:18.04
+    state: started
+    device_read_bps:
+      # Limit read rate for /dev/sda to 20 mebibytes per second
+      - path: /dev/sda
+        rate: 20M
+    device_read_iops:
+      # Limit read rate for /dev/sdb to 300 IO per second
+      - path: /dev/sdb
+        rate: 300
 '''
 
 RETURN = '''
@@ -690,20 +871,26 @@ docker_container:
 import os
 import re
 import shlex
+from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, sanitize_result
+from ansible.module_utils.docker_common import (
+    AnsibleDockerClient,
+    DockerBaseClass, sanitize_result, is_image_name_id,
+    compare_generic, DifferenceTracker,
+)
 from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
-    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+    from ansible.module_utils.docker_common import docker_version
+    if LooseVersion(docker_version) >= LooseVersion('1.10.0'):
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
-    from ansible.module_utils.docker_common import docker_version
-except Exception as dummy:
+    from docker.errors import APIError, NotFound
+except Exception:
     # missing docker-py handled in ansible.module_utils.docker
     pass
 
@@ -716,7 +903,57 @@ REQUIRES_CONVERSION_TO_BYTES = [
     'shm_size'
 ]
 
-VOLUME_PERMISSIONS = ('rw', 'ro', 'z', 'Z')
+
+def is_volume_permissions(input):
+    for part in input.split(','):
+        if part not in ('rw', 'ro', 'z', 'Z', 'consistent', 'delegated', 'cached', 'rprivate', 'private', 'rshared', 'shared', 'rslave', 'slave'):
+            return False
+    return True
+
+
+def parse_port_range(range_or_port, module):
+    '''
+    Parses a string containing either a single port or a range of ports.
+
+    Returns a list of integers for each port in the list.
+    '''
+    if '-' in range_or_port:
+        start, end = [int(port) for port in range_or_port.split('-')]
+        if end < start:
+            module.fail_json(msg='Invalid port range: {0}'.format(range_or_port))
+        return list(range(start, end + 1))
+    else:
+        return [int(range_or_port)]
+
+
+def split_colon_ipv6(input, module):
+    '''
+    Split string by ':', while keeping IPv6 addresses in square brackets in one component.
+    '''
+    if '[' not in input:
+        return input.split(':')
+    start = 0
+    result = []
+    while start < len(input):
+        i = input.find('[', start)
+        if i < 0:
+            result.extend(input[start:].split(':'))
+            break
+        j = input.find(']', i)
+        if j < 0:
+            module.fail_json(msg='Cannot find closing "]" in input "{0}" for opening "[" at index {1}!'.format(input, i + 1))
+        result.extend(input[start:i].split(':'))
+        k = input.find(':', j)
+        if k < 0:
+            result[-1] += input[i:]
+            start = len(input)
+        else:
+            result[-1] += input[i:k]
+            if k == len(input):
+                result.append('')
+                break
+            start = k + 1
+    return result
 
 
 class TaskParameters(DockerBaseClass):
@@ -742,6 +979,10 @@ class TaskParameters(DockerBaseClass):
         self.detach = None
         self.debug = None
         self.devices = None
+        self.device_read_bps = None
+        self.device_write_bps = None
+        self.device_read_iops = None
+        self.device_write_iops = None
         self.dns_servers = None
         self.dns_opts = None
         self.dns_search_domains = None
@@ -753,6 +994,7 @@ class TaskParameters(DockerBaseClass):
         self.exposed_ports = None
         self.force_kill = None
         self.groups = None
+        self.healthcheck = None
         self.hostname = None
         self.ignore_image = None
         self.image = None
@@ -780,6 +1022,7 @@ class TaskParameters(DockerBaseClass):
         self.oom_score_adj = None
         self.paused = None
         self.pid_mode = None
+        self.pids_limit = None
         self.privileged = None
         self.purge_networks = None
         self.pull = None
@@ -788,6 +1031,7 @@ class TaskParameters(DockerBaseClass):
         self.restart = None
         self.restart_retries = None
         self.restart_policy = None
+        self.runtime = None
         self.shm_size = None
         self.security_opts = None
         self.state = None
@@ -845,8 +1089,12 @@ class TaskParameters(DockerBaseClass):
         self.ulimits = self._parse_ulimits()
         self.sysctls = self._parse_sysctls()
         self.log_config = self._parse_log_config()
+        self.healthcheck, self.disable_healthcheck = self._parse_healthcheck()
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
+        self.pid_mode = self._replace_container_names(self.pid_mode)
+        self.ipc_mode = self._replace_container_names(self.ipc_mode)
+        self.network_mode = self._replace_container_names(self.network_mode)
 
         self.log("volumes:")
         self.log(self.volumes, pretty_print=True)
@@ -855,8 +1103,6 @@ class TaskParameters(DockerBaseClass):
 
         if self.networks:
             for network in self.networks:
-                if not network.get('name'):
-                    self.fail("Parameter error: network must have a name attribute.")
                 network['id'] = self._get_network_id(network['name'])
                 if not network['id']:
                     self.fail("Parameter error: network named %s could not be found. Does it exist?" % network['name'])
@@ -876,6 +1122,14 @@ class TaskParameters(DockerBaseClass):
             if isinstance(self.command, list):
                 self.command = ' '.join([str(x) for x in self.command])
 
+        for param_name in ["device_read_bps", "device_write_bps"]:
+            if client.module.params.get(param_name):
+                self._process_rate_bps(option=param_name)
+
+        for param_name in ["device_read_iops", "device_write_iops"]:
+            if client.module.params.get(param_name):
+                self._process_rate_iops(option=param_name)
+
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
 
@@ -886,28 +1140,23 @@ class TaskParameters(DockerBaseClass):
         '''
 
         update_parameters = dict(
+            blkio_weight='blkio_weight',
             cpu_period='cpu_period',
             cpu_quota='cpu_quota',
             cpu_shares='cpu_shares',
             cpuset_cpus='cpuset_cpus',
+            cpuset_mems='cpuset_mems',
             mem_limit='memory',
             mem_reservation='memory_reservation',
             memswap_limit='memory_swap',
             kernel_memory='kernel_memory',
         )
 
-        if self.client.HAS_BLKIO_WEIGHT_OPT:
-            # blkio_weight is only supported in docker>=1.9
-            update_parameters['blkio_weight'] = 'blkio_weight'
-
-        if self.client.HAS_CPUSET_MEMS_OPT:
-            # cpuset_mems is only supported in docker>=2.3
-            update_parameters['cpuset_mems'] = 'cpuset_mems'
-
         result = dict()
         for key, value in update_parameters.items():
             if getattr(self, value, None) is not None:
-                result[key] = getattr(self, value)
+                if self.client.option_minimal_versions[value]['supported']:
+                    result[key] = getattr(self, value)
         return result
 
     @property
@@ -931,14 +1180,14 @@ class TaskParameters(DockerBaseClass):
             labels='labels',
             stop_signal='stop_signal',
             working_dir='working_dir',
+            stop_timeout='stop_timeout',
+            healthcheck='healthcheck',
         )
 
-        if not HAS_DOCKER_PY_3:
+        if self.client.docker_py_version < LooseVersion('3.0'):
+            # cpu_shares and volume_driver moved to create_host_config in > 3
             create_params['cpu_shares'] = 'cpu_shares'
             create_params['volume_driver'] = 'volume_driver'
-
-        if self.client.HAS_STOP_TIMEOUT_OPT:
-            create_params['stop_timeout'] = 'stop_timeout'
 
         result = dict(
             host_config=self._host_config(),
@@ -947,7 +1196,8 @@ class TaskParameters(DockerBaseClass):
 
         for key, value in create_params.items():
             if getattr(self, value, None) is not None:
-                result[key] = getattr(self, value)
+                if self.client.option_minimal_versions[value]['supported']:
+                    result[key] = getattr(self, value)
         return result
 
     def _expand_host_paths(self):
@@ -956,13 +1206,15 @@ class TaskParameters(DockerBaseClass):
             if ':' in vol:
                 if len(vol.split(':')) == 3:
                     host, container, mode = vol.split(':')
+                    if not is_volume_permissions(mode):
+                        self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if re.match(r'[.~]', host):
                         host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
                 elif len(vol.split(':')) == 2:
                     parts = vol.split(':')
-                    if parts[1] not in VOLUME_PERMISSIONS and re.match(r'[.~]', parts[0]):
+                    if not is_volume_permissions(parts[1]) and re.match(r'[.~]', parts[0]):
                         host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
                         continue
@@ -979,12 +1231,12 @@ class TaskParameters(DockerBaseClass):
             for vol in self.volumes:
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
-                        host, container, _ = vol.split(':')
+                        host, container, dummy = vol.split(':')
                         result.append(container)
                         continue
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             result.append(parts[1])
                             continue
                 result.append(vol)
@@ -1028,31 +1280,32 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode',
             tmpfs='tmpfs',
+            init='init',
+            uts_mode='uts',
+            runtime='runtime',
+            auto_remove='auto_remove',
+            device_read_bps='device_read_bps',
+            device_write_bps='device_write_bps',
+            device_read_iops='device_read_iops',
+            device_write_iops='device_write_iops',
+            pids_limit='pids_limit',
         )
 
-        if self.client.HAS_AUTO_REMOVE_OPT:
-            # auto_remove is only supported in docker>=2
-            host_config_params['auto_remove'] = 'auto_remove'
-
-        if self.client.HAS_BLKIO_WEIGHT_OPT:
-            # blkio_weight is only supported in docker>=1.9
+        if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
+            # blkio_weight can always be updated, but can only be set on creation
+            # when docker-py and docker API are new enough
             host_config_params['blkio_weight'] = 'blkio_weight'
 
-        if HAS_DOCKER_PY_3:
+        if self.client.docker_py_version >= LooseVersion('3.0'):
             # cpu_shares and volume_driver moved to create_host_config in > 3
             host_config_params['cpu_shares'] = 'cpu_shares'
             host_config_params['volume_driver'] = 'volume_driver'
 
-        if self.client.HAS_INIT_OPT:
-            host_config_params['init'] = 'init'
-
-        if self.client.HAS_UTS_MODE_OPT:
-            host_config_params['uts_mode'] = 'uts'
-
         params = dict()
         for key, value in host_config_params.items():
             if getattr(self, value, None) is not None:
-                params[key] = getattr(self, value)
+                if self.client.option_minimal_versions[value]['supported']:
+                    params[key] = getattr(self, value)
 
         if self.restart_policy:
             params['restart_policy'] = dict(Name=self.restart_policy,
@@ -1088,31 +1341,41 @@ class TaskParameters(DockerBaseClass):
 
         binds = {}
         for port in self.published_ports:
-            parts = str(port).split(':')
+            parts = split_colon_ipv6(str(port), self.client.module)
             container_port = parts[-1]
-            if '/' not in container_port:
-                container_port = int(parts[-1])
+            protocol = ''
+            if '/' in container_port:
+                container_port, protocol = parts[-1].split('/')
+            container_ports = parse_port_range(container_port, self.client.module)
 
             p_len = len(parts)
             if p_len == 1:
-                bind = (default_ip,)
+                port_binds = len(container_ports) * [(default_ip,)]
             elif p_len == 2:
-                bind = (default_ip, int(parts[0]))
+                port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client.module)]
             elif p_len == 3:
-                bind = (parts[0], int(parts[1])) if parts[1] else (parts[0],)
-
-            if container_port in binds:
-                old_bind = binds[container_port]
-                if isinstance(old_bind, list):
-                    old_bind.append(bind)
+                # We only allow IPv4 and IPv6 addresses for the bind address
+                if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', parts[0]):
+                    self.fail(('Bind addresses for published ports must be IPv4 or IPv6 addresses, not hostnames. '
+                               'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(parts[0]))
+                if parts[1]:
+                    port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client.module)]
                 else:
-                    binds[container_port] = [binds[container_port], bind]
-            else:
-                binds[container_port] = bind
+                    port_binds = len(container_ports) * [(parts[0],)]
+
+            for bind, container_port in zip(port_binds, container_ports):
+                idx = '{0}/{1}'.format(container_port, protocol) if protocol else container_port
+                if idx in binds:
+                    old_bind = binds[idx]
+                    if isinstance(old_bind, list):
+                        old_bind.append(bind)
+                    else:
+                        binds[idx] = [old_bind, bind]
+                else:
+                    binds[idx] = bind
         return binds
 
-    @staticmethod
-    def _get_volume_binds(volumes):
+    def _get_volume_binds(self, volumes):
         '''
         Extract host bindings, if any, from list of volume mapping strings.
 
@@ -1125,9 +1388,11 @@ class TaskParameters(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = (vol.split(':') + ['rw'])
                 if host is not None:
                     result[host] = dict(
@@ -1241,6 +1506,81 @@ class TaskParameters(DockerBaseClass):
         except ValueError as exc:
             self.fail('Error parsing logging options - %s' % (exc))
 
+    def _parse_healthcheck(self):
+        '''
+        Return dictionary of healthcheck parameters
+        '''
+        if (not self.healthcheck) or (not self.healthcheck.get('test')):
+            return None, None
+
+        result = dict()
+
+        # all the supported healthecheck parameters
+        options = dict(
+            test='test',
+            interval='interval',
+            timeout='timeout',
+            start_period='start_period',
+            retries='retries'
+        )
+
+        duration_options = ['interval', 'timeout', 'start_period']
+
+        for (key, value) in options.items():
+            if value in self.healthcheck:
+                if self.healthcheck.get(value) is None:
+                    # due to recursive argument_spec, all keys are always present
+                    # (but have default value None if not specified)
+                    continue
+                if value in duration_options:
+                    time = self._convert_duration_to_nanosecond(self.healthcheck.get(value))
+                    if time:
+                        result[key] = time
+                elif self.healthcheck.get(value):
+                    result[key] = self.healthcheck.get(value)
+                    if key == 'test':
+                        if isinstance(result[key], (tuple, list)):
+                            result[key] = [str(e) for e in result[key]]
+                        else:
+                            result[key] = ["CMD-SHELL", str(result[key])]
+                    elif key == 'retries':
+                        try:
+                            result[key] = int(result[key])
+                        except Exception as e:
+                            self.fail('Cannot parse number of retries for healthcheck. '
+                                      'Expected an integer, got "{0}".'.format(result[key]))
+
+        if result['test'] == ['NONE']:
+            # If the user explicitly disables the healthcheck, return None
+            # as the healthcheck object, and set disable_healthcheck to True
+            return None, True
+
+        return result, False
+
+    def _convert_duration_to_nanosecond(self, time_str):
+        '''
+        Return time duration in nanosecond
+        '''
+        if not isinstance(time_str, str):
+            self.fail("Missing unit in duration - %s" % time_str)
+
+        regex = re.compile(r'^(((?P<hours>\d+)h)?((?P<minutes>\d+)m(?!s))?((?P<seconds>\d+)s)?((?P<milliseconds>\d+)ms)?((?P<microseconds>\d+)us)?)$')
+        parts = regex.match(time_str)
+
+        if not parts:
+            self.fail("Invalid time duration - %s" % time_str)
+
+        parts = parts.groupdict()
+        time_params = {}
+        for (name, value) in parts.items():
+            if value:
+                time_params[name] = int(value)
+
+        time = timedelta(**time_params)
+        time_in_nanoseconds = int(time.total_seconds() * 1000000000)
+
+        return time_in_nanoseconds
+
     def _parse_tmpfs(self):
         '''
         Turn tmpfs into a hash of Tmpfs objects
@@ -1269,6 +1609,9 @@ class TaskParameters(DockerBaseClass):
                 final_env[name] = str(value)
         if self.env:
             for name, value in self.env.items():
+                if not isinstance(value, string_types):
+                    self.fail("Non-string value found for env option. "
+                              "Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s" % (name, ))
                 final_env[name] = str(value)
         return final_env
 
@@ -1282,6 +1625,47 @@ class TaskParameters(DockerBaseClass):
         except Exception as exc:
             self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
         return network_id
+
+    def _process_rate_bps(self, option):
+        """
+        Format device_read_bps and device_write_bps option
+        """
+        devices_list = []
+        for v in getattr(self, option):
+            device_dict = dict((x.title(), y) for x, y in v.items())
+            device_dict['Rate'] = human_to_bytes(device_dict['Rate'])
+            devices_list.append(device_dict)
+
+        setattr(self, option, devices_list)
+
+    def _process_rate_iops(self, option):
+        """
+        Format device_read_iops and device_write_iops option
+        """
+        devices_list = []
+        for v in getattr(self, option):
+            device_dict = dict((x.title(), y) for x, y in v.items())
+            devices_list.append(device_dict)
+
+        setattr(self, option, devices_list)
+
+    def _replace_container_names(self, mode):
+        """
+        Parse IPC and PID modes. If they contain a container name, replace
+        with the container's ID.
+        """
+        if mode is None or not mode.startswith('container:'):
+            return mode
+        container_name = mode[len('container:'):]
+        # Try to inspect container to see whether this is an ID or a
+        # name (and in the latter case, retrieve it's ID)
+        container = self.client.get_container(container_name)
+        if container is None:
+            # If we can't find the container, issue a warning and continue with
+            # what the user specified.
+            self.client.module.warn('Cannot find a container with name or ID "{0}"'.format(container_name))
+            return mode
+        return 'container:{0}'.format(container['Id'])
 
 
 class Container(DockerBaseClass):
@@ -1306,7 +1690,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_env = None
         self.parameters_map = dict()
         self.parameters_map['expected_links'] = 'links'
-        self.parameters_map['expected_ports'] = 'published_ports'
+        self.parameters_map['expected_ports'] = 'expected_ports'
         self.parameters_map['expected_exposed'] = 'exposed_ports'
         self.parameters_map['expected_volumes'] = 'volumes'
         self.parameters_map['expected_ulimits'] = 'ulimits'
@@ -1317,6 +1701,7 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_binds'] = 'volumes'
         self.parameters_map['expected_cmd'] = 'command'
         self.parameters_map['expected_devices'] = 'devices'
+        self.parameters_map['expected_healthcheck'] = 'healthcheck'
 
     def fail(self, msg):
         self.parameters.client.module.fail_json(msg=msg)
@@ -1332,79 +1717,17 @@ class Container(DockerBaseClass):
                 return True
         return False
 
-    def _compare_dict_allow_more_present(self, av, bv):
-        '''
-        Compare two dictionaries for whether every entry of the first is in the second.
-        '''
-        for key, value in av.items():
-            if key not in bv:
-                return False
-            if bv[key] != value:
-                return False
-        return True
+    @property
+    def paused(self):
+        if self.container and self.container.get('State'):
+            return self.container['State'].get('Paused', False)
+        return False
 
     def _compare(self, a, b, compare):
         '''
         Compare values a and b as described in compare.
         '''
-        method = compare['comparison']
-        if method == 'ignore':
-            return True
-        # If a or b is None:
-        if a is None or b is None:
-            # If both are None: equality
-            if a == b:
-                return True
-            # Otherwise, not equal for values, and equal
-            # if the other is empty for set/list/dict
-            if compare['type'] == 'value':
-                return False
-            return len(b if a is None else a) == 0
-        # Do proper comparison (both objects not None)
-        if compare['type'] == 'value':
-            return a == b
-        elif compare['type'] == 'list':
-            if method == 'strict':
-                return a == b
-            else:
-                set_a = set(a)
-                set_b = set(b)
-                return set_b >= set_a
-        elif compare['type'] == 'dict':
-            if method == 'strict':
-                return a == b
-            else:
-                return self._compare_dict_allow_more_present(a, b)
-        elif compare['type'] == 'set':
-            set_a = set(a)
-            set_b = set(b)
-            if method == 'strict':
-                return set_a == set_b
-            else:
-                return set_b >= set_a
-        elif compare['type'] == 'set(dict)':
-            for av in a:
-                found = False
-                for bv in b:
-                    if self._compare_dict_allow_more_present(av, bv):
-                        found = True
-                        break
-                if not found:
-                    return False
-            if method == 'strict':
-                # If we would know that both a and b do not contain duplicates,
-                # we could simply compare len(a) to len(b) to finish this test.
-                # We can assume that b has no duplicates (as it is returned by
-                # docker), but we don't know for a.
-                for bv in b:
-                    found = False
-                    for av in a:
-                        if self._compare_dict_allow_more_present(av, bv):
-                            found = True
-                            break
-                    if not found:
-                        return False
-            return True
+        return compare_generic(a, b, compare['comparison'], compare['type'])
 
     def has_different_configuration(self, image):
         '''
@@ -1423,6 +1746,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_env = self._get_expected_env(image)
         self.parameters.expected_cmd = self._get_expected_cmd()
         self.parameters.expected_devices = self._get_expected_devices()
+        self.parameters.expected_healthcheck = self._get_expected_healthcheck()
 
         if not self.container.get('HostConfig'):
             self.fail("has_config_diff: Error parsing container properties. HostConfig missing.")
@@ -1454,6 +1778,7 @@ class Container(DockerBaseClass):
             hostname=config.get('Hostname'),
             user=config.get('User'),
             detach=detach,
+            init=host_config.get('Init'),
             interactive=config.get('OpenStdin'),
             capabilities=host_config.get('CapAdd'),
             cap_drop=host_config.get('CapDrop'),
@@ -1480,8 +1805,8 @@ class Container(DockerBaseClass):
             expected_ports=host_config.get('PortBindings'),
             read_only=host_config.get('ReadonlyRootfs'),
             restart_policy=restart_policy.get('Name'),
-            # Cannot test shm_size, as shm_size is not included in container inspection results.
-            # shm_size=host_config.get('ShmSize'),
+            runtime=host_config.get('Runtime'),
+            shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
             tmpfs=host_config.get('Tmpfs'),
@@ -1491,29 +1816,60 @@ class Container(DockerBaseClass):
             uts=host_config.get('UTSMode'),
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
+            volume_driver=host_config.get('VolumeDriver'),
             volumes_from=host_config.get('VolumesFrom'),
-            working_dir=config.get('WorkingDir')
+            working_dir=config.get('WorkingDir'),
+            publish_all_ports=host_config.get('PublishAllPorts'),
+            expected_healthcheck=config.get('Healthcheck'),
+            disable_healthcheck=(not config.get('Healthcheck') or config.get('Healthcheck').get('Test') == ['NONE']),
+            device_read_bps=host_config.get('BlkioDeviceReadBps'),
+            device_write_bps=host_config.get('BlkioDeviceWriteBps'),
+            device_read_iops=host_config.get('BlkioDeviceReadIOps'),
+            device_write_iops=host_config.get('BlkioDeviceWriteIOps'),
+            pids_limit=host_config.get('PidsLimit'),
         )
+        # Options which don't make sense without their accompanying option
         if self.parameters.restart_policy:
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
         if self.parameters.log_driver:
             config_mapping['log_driver'] = log_config.get('Type')
             config_mapping['log_options'] = log_config.get('Config')
 
-        if self.parameters.client.HAS_AUTO_REMOVE_OPT:
-            # auto_remove is only supported in docker>=2
+        if self.parameters.client.option_minimal_versions['auto_remove']['supported']:
+            # auto_remove is only supported in docker>=2; unfortunately it has a default
+            # value, that's why we have to jump through the hoops here
             config_mapping['auto_remove'] = host_config.get('AutoRemove')
 
-        if self.parameters.client.HAS_STOP_TIMEOUT_OPT:
-            # stop_timeout is only supported in docker>=2.1
+        if self.parameters.client.option_minimal_versions['stop_timeout']['supported']:
+            # stop_timeout is only supported in docker>=2.1. Note that stop_timeout
+            # has a hybrid role, in that it used to be something only used for stopping
+            # containers, and is now also used as a container property. That's why
+            # it needs special handling here.
             config_mapping['stop_timeout'] = config.get('StopTimeout')
 
-        if HAS_DOCKER_PY_3:
-            # volume_driver moved to create_host_config in > 3
-            config_mapping['volume_driver'] = host_config.get('VolumeDriver')
+        if self.parameters.client.docker_api_version < LooseVersion('1.22'):
+            # For docker API < 1.22, update_container() is not supported. Thus
+            # we need to handle all limits which are usually handled by
+            # update_container() as configuration changes which require a container
+            # restart.
+            config_mapping.update(dict(
+                blkio_weight=host_config.get('BlkioWeight'),
+                cpu_period=host_config.get('CpuPeriod'),
+                cpu_quota=host_config.get('CpuQuota'),
+                cpu_shares=host_config.get('CpuShares'),
+                cpuset_cpus=host_config.get('CpusetCpus'),
+                cpuset_mems=host_config.get('CpusetMems'),
+                kernel_memory=host_config.get("KernelMemory"),
+                memory=host_config.get('Memory'),
+                memory_reservation=host_config.get('MemoryReservation'),
+                memory_swap=host_config.get('MemorySwap'),
+            ))
 
-        differences = []
+        differences = DifferenceTracker()
         for key, value in config_mapping.items():
+            minimal_version = self.parameters.client.option_minimal_versions.get(key, {})
+            if not minimal_version.get('supported', True):
+                continue
             compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
             self.log('check differences %s %s vs %s (%s)' % (key, getattr(self.parameters, key), str(value), compare))
             if getattr(self.parameters, key, None) is not None:
@@ -1521,14 +1877,24 @@ class Container(DockerBaseClass):
 
                 if not match:
                     # no match. record the differences
-                    item = dict()
-                    item[key] = dict(
-                        parameter=getattr(self.parameters, key),
-                        container=value
-                    )
-                    differences.append(item)
+                    p = getattr(self.parameters, key)
+                    c = value
+                    if compare['type'] == 'set':
+                        # Since the order does not matter, sort so that the diff output is better.
+                        if p is not None:
+                            p = sorted(p)
+                        if c is not None:
+                            c = sorted(c)
+                    elif compare['type'] == 'set(dict)':
+                        # Since the order does not matter, sort so that the diff output is better.
+                        # We sort the list of dictionaries by using the sorted items of a dict as its key.
+                        if p is not None:
+                            p = sorted(p, key=lambda x: sorted(x.items()))
+                        if c is not None:
+                            c = sorted(c, key=lambda x: sorted(x.items()))
+                    differences.add(key, parameter=p, active=c)
 
-        has_differences = True if len(differences) > 0 else False
+        has_differences = not differences.empty
         return has_differences, differences
 
     def has_different_resource_limits(self):
@@ -1537,34 +1903,26 @@ class Container(DockerBaseClass):
         '''
         if not self.container.get('HostConfig'):
             self.fail("limits_differ_from_container: Error parsing container properties. HostConfig missing.")
+        if self.parameters.client.docker_api_version < LooseVersion('1.22'):
+            # update_container() call not supported
+            return False, []
 
         host_config = self.container['HostConfig']
 
         config_mapping = dict(
+            blkio_weight=host_config.get('BlkioWeight'),
             cpu_period=host_config.get('CpuPeriod'),
             cpu_quota=host_config.get('CpuQuota'),
+            cpu_shares=host_config.get('CpuShares'),
             cpuset_cpus=host_config.get('CpusetCpus'),
+            cpuset_mems=host_config.get('CpusetMems'),
             kernel_memory=host_config.get("KernelMemory"),
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
-            oom_score_adj=host_config.get('OomScoreAdj'),
-            oom_killer=host_config.get('OomKillDisable'),
         )
 
-        if self.parameters.client.HAS_BLKIO_WEIGHT_OPT:
-            # blkio_weight is only supported in docker>=1.9
-            config_mapping['blkio_weight'] = host_config.get('BlkioWeight')
-
-        if self.parameters.client.HAS_CPUSET_MEMS_OPT:
-            # cpuset_mems is only supported in docker>=2.3
-            config_mapping['cpuset_mems'] = host_config.get('CpusetMems')
-
-        if HAS_DOCKER_PY_3:
-            # cpu_shares moved to create_host_config in > 3
-            config_mapping['cpu_shares'] = host_config.get('CpuShares')
-
-        differences = []
+        differences = DifferenceTracker()
         for key, value in config_mapping.items():
             if getattr(self.parameters, key, None):
                 compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
@@ -1572,13 +1930,8 @@ class Container(DockerBaseClass):
 
                 if not match:
                     # no match. record the differences
-                    item = dict()
-                    item[key] = dict(
-                        parameter=getattr(self.parameters, key),
-                        container=value
-                    )
-                    differences.append(item)
-        different = (len(differences) > 0)
+                    differences.add(key, parameter=getattr(self.parameters, key), active=value)
+        different = not differences.empty
         return different, differences
 
     def has_network_differences(self):
@@ -1608,21 +1961,15 @@ class Container(DockerBaseClass):
                     diff = True
                 if network.get('ipv6_address') and network['ipv6_address'] != connected_networks[network['name']].get('GlobalIPv6Address'):
                     diff = True
-                if network.get('aliases') and not connected_networks[network['name']].get('Aliases'):
-                    diff = True
-                if network.get('aliases') and connected_networks[network['name']].get('Aliases'):
-                    for alias in network.get('aliases'):
-                        if alias not in connected_networks[network['name']].get('Aliases', []):
-                            diff = True
-                if network.get('links') and not connected_networks[network['name']].get('Links'):
-                    diff = True
-                if network.get('links') and connected_networks[network['name']].get('Links'):
+                if network.get('aliases'):
+                    if not compare_generic(network['aliases'], connected_networks[network['name']].get('Aliases'), 'allow_more_present', 'set'):
+                        diff = True
+                if network.get('links'):
                     expected_links = []
                     for link, alias in network['links']:
                         expected_links.append("%s:%s" % (link, alias))
-                    for link in expected_links:
-                        if link not in connected_networks[network['name']].get('Links', []):
-                            diff = True
+                    if not compare_generic(expected_links, connected_networks[network['name']].get('Links'), 'allow_more_present', 'set'):
+                        diff = True
                 if diff:
                     different = True
                     differences.append(dict(
@@ -1738,9 +2085,11 @@ class Container(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = vol.split(':') + ['rw']
                 if host:
                     param_vols.append("%s:%s:%s" % (host, container, mode))
@@ -1787,9 +2136,11 @@ class Container(DockerBaseClass):
                 if ':' in vol:
                     if len(vol.split(':')) == 3:
                         host, container, mode = vol.split(':')
+                        if not is_volume_permissions(mode):
+                            self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if len(vol.split(':')) == 2:
                         parts = vol.split(':')
-                        if parts[1] not in VOLUME_PERMISSIONS:
+                        if not is_volume_permissions(parts[1]):
                             host, container, mode = vol.split(':') + ['rw']
                 new_vol = dict()
                 if container:
@@ -1871,6 +2222,16 @@ class Container(DockerBaseClass):
             return port + '/tcp'
         return port
 
+    def _get_expected_healthcheck(self):
+        self.log('_get_expected_healthcheck')
+        expected_healthcheck = dict()
+
+        if self.parameters.healthcheck:
+            expected_healthcheck.update([(k.title().replace("_", ""), v)
+                                         for k, v in self.parameters.healthcheck.items()])
+
+        return expected_healthcheck
+
 
 class ContainerManager(DockerBaseClass):
     '''
@@ -1883,7 +2244,9 @@ class ContainerManager(DockerBaseClass):
 
         if client.module.params.get('log_options') and not client.module.params.get('log_driver'):
             client.module.warn('log_options is ignored when log_driver is not specified')
-        if client.module.params.get('restart_retries') and not client.module.params.get('restart_policy'):
+        if client.module.params.get('healthcheck') and not client.module.params.get('healthcheck').get('test'):
+            client.module.warn('healthcheck is ignored when test is not specified')
+        if client.module.params.get('restart_retries') is not None and not client.module.params.get('restart_policy'):
             client.module.warn('restart_retries is ignored when restart_policy is not specified')
 
         self.client = client
@@ -1891,6 +2254,7 @@ class ContainerManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
         self.results = {'changed': False, 'actions': []}
         self.diff = {}
+        self.diff_tracker = DifferenceTracker()
         self.facts = {}
 
         state = self.parameters.state
@@ -1903,6 +2267,7 @@ class ContainerManager(DockerBaseClass):
             self.results.pop('actions')
 
         if self.client.module._diff or self.parameters.debug:
+            self.diff['before'], self.diff['after'] = self.diff_tracker.get_before_after()
             self.results['diff'] = self.diff
 
         if self.facts:
@@ -1910,49 +2275,81 @@ class ContainerManager(DockerBaseClass):
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
+        was_running = container.running
+        was_paused = container.paused
 
         # If the image parameter was passed then we need to deal with the image
-        # version comparison, otherwise we should not care
-        if self.parameters.image:
-            image = self._get_image()
-            self.log(image, pretty_print=True)
-            if not container.exists:
-                # New container
-                self.log('No container found')
-                new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+        # version comparison. Otherwise we handle this depending on whether
+        # the container already runs or not; in the former case, in case the
+        # container needs to be restarted, we use the existing container's
+        # image ID.
+        image = self._get_image()
+        self.log(image, pretty_print=True)
+        if not container.exists:
+            # New container
+            self.log('No container found')
+            if not self.parameters.image:
+                self.fail('Cannot create container when image is not specified!')
+            self.diff_tracker.add('exists', parameter=True, active=False)
+            new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
+            if new_container:
+                container = new_container
+        else:
+            # Existing container
+            different, differences = container.has_different_configuration(image)
+            image_different = False
+            if self.parameters.comparisons['image']['comparison'] == 'strict':
+                image_different = self._image_is_different(image, container)
+            if image_different or different or self.parameters.recreate:
+                self.diff_tracker.merge(differences)
+                self.diff['differences'] = differences.get_legacy_docker_container_diffs()
+                if image_different:
+                    self.diff['image_different'] = True
+                self.log("differences")
+                self.log(differences.get_legacy_docker_container_diffs(), pretty_print=True)
+                image_to_use = self.parameters.image
+                if not image_to_use and container and container.Image:
+                    image_to_use = container.Image
+                if not image_to_use:
+                    self.fail('Cannot recreate container when image is not specified or cannot be extracted from current container!')
+                if container.running:
+                    self.container_stop(container.Id)
+                self.container_remove(container.Id)
+                new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
-            else:
-                # Existing container
-                different, differences = container.has_different_configuration(image)
-                image_different = False
-                if self.parameters.comparisons['image']['comparison'] == 'strict':
-                    image_different = self._image_is_different(image, container)
-                if image_different or different or self.parameters.recreate:
-                    self.diff['differences'] = differences
-                    if image_different:
-                        self.diff['image_different'] = True
-                    self.log("differences")
-                    self.log(differences, pretty_print=True)
-                    if container.running:
-                        self.container_stop(container.Id)
-                    self.container_remove(container.Id)
-                    new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
-                    if new_container:
-                        container = new_container
 
         if container and container.exists:
             container = self.update_limits(container)
             container = self.update_networks(container)
 
             if state == 'started' and not container.running:
+                self.diff_tracker.add('running', parameter=True, active=was_running)
                 container = self.container_start(container.Id)
             elif state == 'started' and self.parameters.restart:
+                self.diff_tracker.add('running', parameter=True, active=was_running)
                 self.container_stop(container.Id)
                 container = self.container_start(container.Id)
             elif state == 'stopped' and container.running:
+                self.diff_tracker.add('running', parameter=False, active=was_running)
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
+
+            if state == 'started' and container.paused != self.parameters.paused:
+                self.diff_tracker.add('paused', parameter=self.parameters.paused, active=was_paused)
+                if not self.check_mode:
+                    try:
+                        if self.parameters.paused:
+                            self.client.pause(container=container.Id)
+                        else:
+                            self.client.unpause(container=container.Id)
+                    except Exception as exc:
+                        self.fail("Error %s container %s: %s" % (
+                            "pausing" if self.parameters.paused else "unpausing", container.Id, str(exc)
+                        ))
+                    container = self._get_container(container.Id)
+                self.results['changed'] = True
+                self.results['actions'].append(dict(set_paused=self.parameters.paused))
 
         self.facts = container.raw
 
@@ -1960,7 +2357,9 @@ class ContainerManager(DockerBaseClass):
         container = self._get_container(self.parameters.name)
         if container.exists:
             if container.running:
+                self.diff_tracker.add('running', parameter=False, active=True)
                 self.container_stop(container.Id)
+            self.diff_tracker.add('exists', parameter=False, active=True)
             self.container_remove(container.Id)
 
     def fail(self, msg, **kwargs):
@@ -1979,19 +2378,22 @@ class ContainerManager(DockerBaseClass):
         if not self.parameters.image:
             self.log('No image specified')
             return None
-        repository, tag = utils.parse_repository_tag(self.parameters.image)
-        if not tag:
-            tag = "latest"
-        image = self.client.find_image(repository, tag)
-        if not self.check_mode:
-            if not image or self.parameters.pull:
-                self.log("Pull the image.")
-                image, alreadyToLatest = self.client.pull_image(repository, tag)
-                if alreadyToLatest:
-                    self.results['changed'] = False
-                else:
-                    self.results['changed'] = True
-                    self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
+        if is_image_name_id(self.parameters.image):
+            image = self.client.find_image_by_id(self.parameters.image)
+        else:
+            repository, tag = utils.parse_repository_tag(self.parameters.image)
+            if not tag:
+                tag = "latest"
+            image = self.client.find_image(repository, tag)
+            if not self.check_mode:
+                if not image or self.parameters.pull:
+                    self.log("Pull the image.")
+                    image, alreadyToLatest = self.client.pull_image(repository, tag)
+                    if alreadyToLatest:
+                        self.results['changed'] = False
+                    else:
+                        self.results['changed'] = True
+                        self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
         self.log("image")
         self.log(image, pretty_print=True)
         return image
@@ -2000,6 +2402,7 @@ class ContainerManager(DockerBaseClass):
         if image and image.get('Id'):
             if container and container.Image:
                 if image.get('Id') != container.Image:
+                    self.diff_tracker.add('image', parameter=image.get('Id'), active=container.Image)
                     return True
         return False
 
@@ -2007,7 +2410,8 @@ class ContainerManager(DockerBaseClass):
         limits_differ, different_limits = container.has_different_resource_limits()
         if limits_differ:
             self.log("limit differences:")
-            self.log(different_limits, pretty_print=True)
+            self.log(different_limits.get_legacy_docker_container_diffs(), pretty_print=True)
+            self.diff_tracker.merge(different_limits)
         if limits_differ and not self.check_mode:
             self.container_update(container.Id, self.parameters.update_parameters)
             return self._get_container(container.Id)
@@ -2021,6 +2425,12 @@ class ContainerManager(DockerBaseClass):
                 self.diff['differences'].append(dict(network_differences=network_differences))
             else:
                 self.diff['differences'] = [dict(network_differences=network_differences)]
+            for netdiff in network_differences:
+                self.diff_tracker.add(
+                    'network.{0}'.format(netdiff['parameter']['name']),
+                    parameter=netdiff['parameter'],
+                    active=netdiff['container']
+                )
             self.results['changed'] = True
             updated_container = self._add_networks(container, network_differences)
 
@@ -2031,6 +2441,11 @@ class ContainerManager(DockerBaseClass):
                     self.diff['differences'].append(dict(purge_networks=extra_networks))
                 else:
                     self.diff['differences'] = [dict(purge_networks=extra_networks)]
+                for extra_network in extra_networks:
+                    self.diff_tracker.add(
+                        'network.{0}'.format(extra_network['name']),
+                        active=extra_network
+                    )
                 self.results['changed'] = True
                 updated_container = self._purge_networks(container, extra_networks)
         return updated_container
@@ -2047,12 +2462,10 @@ class ContainerManager(DockerBaseClass):
                         self.fail("Error disconnecting container from network %s - %s" % (diff['parameter']['name'],
                                                                                           str(exc)))
             # connect to the network
-            params = dict(
-                ipv4_address=diff['parameter'].get('ipv4_address', None),
-                ipv6_address=diff['parameter'].get('ipv6_address', None),
-                links=diff['parameter'].get('links', None),
-                aliases=diff['parameter'].get('aliases', None)
-            )
+            params = dict()
+            for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
+                if diff['parameter'].get(para):
+                    params[para] = diff['parameter'][para]
             self.results['actions'].append(dict(added_to_network=diff['parameter']['name'], network_parameters=params))
             if not self.check_mode:
                 try:
@@ -2100,19 +2513,24 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
 
             if not self.parameters.detach:
-                if HAS_DOCKER_PY_3:
+                if self.client.docker_py_version >= LooseVersion('3.0'):
                     status = self.client.wait(container_id)['StatusCode']
                 else:
                     status = self.client.wait(container_id)
-                config = self.client.inspect_container(container_id)
-                logging_driver = config['HostConfig']['LogConfig']['Type']
-
-                if logging_driver == 'json-file' or logging_driver == 'journald':
-                    output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                if self.parameters.auto_remove:
+                    output = "Cannot retrieve result as auto_remove is enabled"
                     if self.parameters.output_logs:
-                        self._output_logs(msg=output)
+                        self.client.module.warn('Cannot output_logs if auto_remove is enabled!')
                 else:
-                    output = "Result logged using `%s` driver" % logging_driver
+                    config = self.client.inspect_container(container_id)
+                    logging_driver = config['HostConfig']['LogConfig']['Type']
+
+                    if logging_driver == 'json-file' or logging_driver == 'journald':
+                        output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                        if self.parameters.output_logs:
+                            self._output_logs(msg=output)
+                    else:
+                        output = "Result logged using `%s` driver" % logging_driver
 
                 if status != 0:
                     self.fail(output, status=status)
@@ -2133,10 +2551,34 @@ class ContainerManager(DockerBaseClass):
         self.results['changed'] = True
         response = None
         if not self.check_mode:
-            try:
-                response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
-            except Exception as exc:
-                self.fail("Error removing container %s: %s" % (container_id, str(exc)))
+            count = 0
+            while True:
+                try:
+                    response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
+                except NotFound as exc:
+                    pass
+                except APIError as exc:
+                    if 'Unpause the container before stopping or killing' in exc.explanation:
+                        # New docker versions do not allow containers to be removed if they are paused
+                        # Make sure we don't end up in an infinite loop
+                        if count == 3:
+                            self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
+                        count += 1
+                        # Unpause
+                        try:
+                            self.client.unpause(container=container_id)
+                        except Exception as exc2:
+                            self.fail("Error unpausing container %s for removal: %s" % (container_id, str(exc2)))
+                        # Now try again
+                        continue
+                    if 'removal of container ' in exc.explanation and ' is already in progress' in exc.explanation:
+                        pass
+                    else:
+                        self.fail("Error removing container %s: %s" % (container_id, str(exc)))
+                except Exception as exc:
+                    self.fail("Error removing container %s: %s" % (container_id, str(exc)))
+                # We only loop when explicitly requested by 'continue'
+                break
         return response
 
     def container_update(self, container_id, update_parameters):
@@ -2174,17 +2616,44 @@ class ContainerManager(DockerBaseClass):
         self.results['changed'] = True
         response = None
         if not self.check_mode:
-            try:
-                if self.parameters.stop_timeout:
-                    response = self.client.stop(container_id, timeout=self.parameters.stop_timeout)
-                else:
-                    response = self.client.stop(container_id)
-            except Exception as exc:
-                self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
+            count = 0
+            while True:
+                try:
+                    if self.parameters.stop_timeout:
+                        response = self.client.stop(container_id, timeout=self.parameters.stop_timeout)
+                    else:
+                        response = self.client.stop(container_id)
+                except APIError as exc:
+                    if 'Unpause the container before stopping or killing' in exc.explanation:
+                        # New docker versions do not allow containers to be removed if they are paused
+                        # Make sure we don't end up in an infinite loop
+                        if count == 3:
+                            self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
+                        count += 1
+                        # Unpause
+                        try:
+                            self.client.unpause(container=container_id)
+                        except Exception as exc2:
+                            self.fail("Error unpausing container %s for removal: %s" % (container_id, str(exc2)))
+                        # Now try again
+                        continue
+                    self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
+                except Exception as exc:
+                    self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
+                # We only loop when explicitly requested by 'continue'
+                break
         return response
 
 
 class AnsibleDockerClientContainer(AnsibleDockerClient):
+    # A list of module options which are not docker container properties
+    __NON_CONTAINER_PROPERTY_OPTIONS = (
+        'docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
+        'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
+        'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks', 'recreate',
+        'restart', 'state', 'trust_image_content', 'networks', 'cleanup', 'kill_signal',
+        'output_logs', 'paused'
+    )
 
     def _parse_comparisons(self):
         comparisons = {}
@@ -2199,6 +2668,10 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             entrypoint='list',
             etc_hosts='set',
             ulimits='set(dict)',
+            device_read_bps='set(dict)',
+            device_write_bps='set(dict)',
+            device_read_iops='set(dict)',
+            device_write_iops='set(dict)',
         )
         all_options = set()  # this is for improving user feedback when a wrong option was specified for comparison
         default_values = dict(
@@ -2209,10 +2682,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             for alias in data.get('aliases', []):
                 all_options.add(alias)
             # Ignore options which aren't used as container properties
-            if option in ('docker_host', 'tls_hostname', 'api_version', 'timeout', 'cacert_path', 'cert_path',
-                          'key_path', 'ssl_version', 'tls', 'tls_verify', 'debug', 'env_file', 'force_kill',
-                          'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks', 'recreate',
-                          'restart', 'state', 'trust_image_content', 'networks'):
+            if option in self.__NON_CONTAINER_PROPERTY_OPTIONS:
                 continue
             # Determine option type
             if option in explicit_types:
@@ -2271,42 +2741,22 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                     comparisons[key_main]['comparison'] = value
                 else:
                     self.fail("Unknown comparison mode '%s'!" % value)
+        # Add implicit options
+        comparisons['publish_all_ports'] = dict(type='value', comparison='strict', name='published_ports')
+        comparisons['expected_ports'] = dict(type='dict', comparison=comparisons['published_ports']['comparison'], name='expected_ports')
+        comparisons['disable_healthcheck'] = dict(type='value',
+                                                  comparison='ignore' if comparisons['healthcheck']['comparison'] == 'ignore' else 'strict',
+                                                  name='disable_healthcheck')
         # Check legacy values
         if self.module.params['ignore_image'] and comparisons['image']['comparison'] != 'ignore':
             self.module.warn('The ignore_image option has been overridden by the comparisons option!')
         self.comparisons = comparisons
 
-    def __init__(self, **kwargs):
-        super(AnsibleDockerClientContainer, self).__init__(**kwargs)
-
-        docker_api_version = self.version()['ApiVersion']
-        init_supported = LooseVersion(docker_api_version) >= LooseVersion('1.25')
-        if self.module.params.get("init") and not init_supported:
-            self.fail('docker API version is %s. Minimum version required is 1.25 to set init option.' % (docker_api_version,))
-
-        init_supported = init_supported and LooseVersion(docker_version) >= LooseVersion('2.2')
-        if self.module.params.get("init") and not init_supported:
-            self.fail("docker or docker-py version is %s. Minimum version required is 2.2 to set init option. "
-                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
-
-        uts_mode_supported = LooseVersion(docker_version) >= LooseVersion('3.5')
-        if self.module.params.get("uts") is not None and not uts_mode_supported:
-            self.fail("docker or docker-py version is %s. Minimum version required is 3.5 to set uts option. "
-                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
-
-        blkio_weight_supported = LooseVersion(docker_version) >= LooseVersion('1.9')
-        if self.module.params.get("blkio_weight") is not None and not blkio_weight_supported:
-            self.fail("docker or docker-py version is %s. Minimum version required is 1.9 to set blkio_weight option.")
-
-        cpuset_mems_supported = LooseVersion(docker_version) >= LooseVersion('2.3')
-        if self.module.params.get("cpuset_mems") is not None and not cpuset_mems_supported:
-            self.fail("docker or docker-py version is %s. Minimum version required is 2.3 to set cpuset_mems option. "
-                      "If you use the 'docker-py' module, you have to switch to the docker 'Python' package." % (docker_version,))
-
-        stop_timeout_supported = LooseVersion(docker_api_version) >= LooseVersion('1.25')
+    def _get_additional_minimal_versions(self):
+        stop_timeout_supported = self.docker_api_version >= LooseVersion('1.25')
         stop_timeout_needed_for_update = self.module.params.get("stop_timeout") is not None and self.module.params.get('state') != 'absent'
         if stop_timeout_supported:
-            stop_timeout_supported = LooseVersion(docker_version) >= LooseVersion('2.1')
+            stop_timeout_supported = self.docker_py_version >= LooseVersion('2.1')
             if stop_timeout_needed_for_update and not stop_timeout_supported:
                 # We warn (instead of fail) since in older versions, stop_timeout was not used
                 # to update the container's configuration, but only when stopping a container.
@@ -2318,18 +2768,62 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
                 # We warn (instead of fail) since in older versions, stop_timeout was not used
                 # to update the container's configuration, but only when stopping a container.
                 self.module.warn("docker API version is %s. Minimum version required is 1.25 to set or "
-                                 "update the container's stop_timeout configuration." % (docker_api_version,))
+                                 "update the container's stop_timeout configuration." % (self.docker_api_version_str,))
+        self.option_minimal_versions['stop_timeout']['supported'] = stop_timeout_supported
 
-        self.HAS_INIT_OPT = init_supported
-        self.HAS_UTS_MODE_OPT = uts_mode_supported
-        self.HAS_BLKIO_WEIGHT_OPT = blkio_weight_supported
-        self.HAS_CPUSET_MEMS_OPT = cpuset_mems_supported
-        self.HAS_STOP_TIMEOUT_OPT = stop_timeout_supported
+    def __init__(self, **kwargs):
+        def detect_ipvX_address_usage():
+            '''
+            Helper function to detect whether any specified network uses ipv4_address or ipv6_address
+            '''
+            for network in self.module.params.get("networks") or []:
+                if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
+                    return True
+            return False
 
-        self.HAS_AUTO_REMOVE_OPT = HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3
-        if self.module.params.get('auto_remove') and not self.HAS_AUTO_REMOVE_OPT:
-            self.fail("'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
+        option_minimal_versions = dict(
+            # internal options
+            log_config=dict(),
+            publish_all_ports=dict(),
+            ports=dict(),
+            volume_binds=dict(),
+            name=dict(),
+            # normal options
+            device_read_bps=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
+            device_read_iops=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
+            device_write_bps=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
+            device_write_iops=dict(docker_py_version='1.9.0', docker_api_version='1.22'),
+            dns_opts=dict(docker_api_version='1.21', docker_py_version='1.10.0'),
+            ipc_mode=dict(docker_api_version='1.25'),
+            mac_address=dict(docker_api_version='1.25'),
+            oom_killer=dict(docker_py_version='2.0.0'),
+            oom_score_adj=dict(docker_api_version='1.22', docker_py_version='2.0.0'),
+            shm_size=dict(docker_api_version='1.22'),
+            stop_signal=dict(docker_api_version='1.21'),
+            tmpfs=dict(docker_api_version='1.22'),
+            volume_driver=dict(docker_api_version='1.21'),
+            memory_reservation=dict(docker_api_version='1.21'),
+            kernel_memory=dict(docker_api_version='1.21'),
+            auto_remove=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+            healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.24'),
+            init=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
+            runtime=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
+            sysctls=dict(docker_py_version='1.10.0', docker_api_version='1.24'),
+            userns_mode=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
+            uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
+            pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
+            # specials
+            ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
+                                        usage_msg='ipv4_address or ipv6_address in networks'),  # see above
+            stop_timeout=dict(),  # see _get_additional_minimal_versions()
+        )
 
+        super(AnsibleDockerClientContainer, self).__init__(
+            option_minimal_versions=option_minimal_versions,
+            option_minimal_versions_ignore_params=self.__NON_CONTAINER_PROPERTY_OPTIONS,
+            **kwargs
+        )
+        self._get_additional_minimal_versions()
         self._parse_comparisons()
 
 
@@ -2337,8 +2831,8 @@ def main():
     argument_spec = dict(
         auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
-        capabilities=dict(type='list'),
-        cap_drop=dict(type='list'),
+        capabilities=dict(type='list', elements='str'),
+        cap_drop=dict(type='list', elements='str'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         comparisons=dict(type='dict'),
@@ -2348,18 +2842,41 @@ def main():
         cpuset_mems=dict(type='str'),
         cpu_shares=dict(type='int'),
         detach=dict(type='bool', default=True),
-        devices=dict(type='list'),
-        dns_servers=dict(type='list'),
-        dns_opts=dict(type='list'),
-        dns_search_domains=dict(type='list'),
+        devices=dict(type='list', elements='str'),
+        device_read_bps=dict(type='list', elements='dict', options=dict(
+            path=dict(required=True, type='str'),
+            rate=dict(required=True, type='str'),
+        )),
+        device_write_bps=dict(type='list', elements='dict', options=dict(
+            path=dict(required=True, type='str'),
+            rate=dict(required=True, type='str'),
+        )),
+        device_read_iops=dict(type='list', elements='dict', options=dict(
+            path=dict(required=True, type='str'),
+            rate=dict(required=True, type='int'),
+        )),
+        device_write_iops=dict(type='list', elements='dict', options=dict(
+            path=dict(required=True, type='str'),
+            rate=dict(required=True, type='int'),
+        )),
+        dns_servers=dict(type='list', elements='str'),
+        dns_opts=dict(type='list', elements='str'),
+        dns_search_domains=dict(type='list', elements='str'),
         domainname=dict(type='str'),
-        entrypoint=dict(type='list'),
+        entrypoint=dict(type='list', elements='str'),
         env=dict(type='dict'),
         env_file=dict(type='path'),
         etc_hosts=dict(type='dict'),
-        exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
+        exposed_ports=dict(type='list', aliases=['exposed', 'expose'], elements='str'),
         force_kill=dict(type='bool', default=False, aliases=['forcekill']),
-        groups=dict(type='list'),
+        groups=dict(type='list', elements='str'),
+        healthcheck=dict(type='dict', options=dict(
+            test=dict(type='raw'),
+            interval=dict(type='str'),
+            timeout=dict(type='str'),
+            start_period=dict(type='str'),
+            retries=dict(type='int'),
+        )),
         hostname=dict(type='str'),
         ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
@@ -2370,7 +2887,7 @@ def main():
         kernel_memory=dict(type='str'),
         kill_signal=dict(type='str'),
         labels=dict(type='dict'),
-        links=dict(type='list'),
+        links=dict(type='list', elements='str'),
         log_driver=dict(type='str'),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
@@ -2380,14 +2897,21 @@ def main():
         memory_swappiness=dict(type='int'),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
-        networks=dict(type='list'),
+        networks=dict(type='list', elements='dict', options=dict(
+            name=dict(required=True, type='str'),
+            ipv4_address=dict(type='str'),
+            ipv6_address=dict(type='str'),
+            aliases=dict(type='list', elements='str'),
+            links=dict(type='list', elements='str'),
+        )),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
         output_logs=dict(type='bool', default=False),
         paused=dict(type='bool', default=False),
         pid_mode=dict(type='str'),
+        pids_limit=dict(type='int'),
         privileged=dict(type='bool', default=False),
-        published_ports=dict(type='list', aliases=['ports']),
+        published_ports=dict(type='list', aliases=['ports'], elements='str'),
         pull=dict(type='bool', default=False),
         purge_networks=dict(type='bool', default=False),
         read_only=dict(type='bool', default=False),
@@ -2395,22 +2919,23 @@ def main():
         restart=dict(type='bool', default=False),
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int', default=None),
-        security_opts=dict(type='list'),
+        runtime=dict(type='str', default=None),
+        security_opts=dict(type='list', elements='str'),
         shm_size=dict(type='str'),
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
         stop_signal=dict(type='str'),
         stop_timeout=dict(type='int'),
         sysctls=dict(type='dict'),
-        tmpfs=dict(type='list'),
+        tmpfs=dict(type='list', elements='str'),
         trust_image_content=dict(type='bool', default=False),
         tty=dict(type='bool', default=False),
-        ulimits=dict(type='list'),
+        ulimits=dict(type='list', elements='str'),
         user=dict(type='str'),
         userns_mode=dict(type='str'),
         uts=dict(type='str'),
         volume_driver=dict(type='str'),
-        volumes=dict(type='list'),
-        volumes_from=dict(type='list'),
+        volumes=dict(type='list', elements='str'),
+        volumes_from=dict(type='list', elements='str'),
         working_dir=dict(type='str'),
     )
 
@@ -2421,7 +2946,8 @@ def main():
     client = AnsibleDockerClientContainer(
         argument_spec=argument_spec,
         required_if=required_if,
-        supports_check_mode=True
+        supports_check_mode=True,
+        min_docker_api_version='1.20',
     )
 
     cm = ContainerManager(client)

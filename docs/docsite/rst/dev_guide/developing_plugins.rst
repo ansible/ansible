@@ -5,7 +5,8 @@
 Developing plugins
 ******************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Plugins augment Ansible's core functionality with logic and features that are accessible to all modules. Ansible ships with a number of handy plugins, and you can easily write your own. All plugins must:
 
@@ -73,6 +74,75 @@ Plugins that support embedded documentation (see :ref:`ansible-doc` for the list
 
 Developing particular plugin types
 ==================================
+
+.. _developing_actions:
+
+Action plugins
+--------------
+
+Action plugins let you integrate local processing and local data with module functionality.
+
+To create an action plugin, create a new class with the Base(ActionBase) class as the parent:
+
+.. code-block:: python
+
+    from ansible.plugins.action import ActionBase
+
+    class ActionModule(ActionBase):
+        pass
+
+From there, execute the module using the ``_execute_module`` method to call the original module.
+After successful execution of the module, you can modify the module return data.
+
+.. code-block:: python
+
+    module_return = self._execute_module(module_name='<NAME_OF_MODULE>',
+                                         module_args=module_args,
+                                         task_vars=task_vars, tmp=tmp)
+
+
+For example, if you wanted to check the time difference between your Ansible controller and your target machine(s), you could write an action plugin to check the local time and compare it to the return data from Ansible's ``setup`` module:
+
+.. code-block:: python
+
+    #!/usr/bin/python
+    # Make coding more python3-ish, this is required for contributions to Ansible
+    from __future__ import (absolute_import, division, print_function)
+    __metaclass__ = type
+
+    from ansible.plugins.action import ActionBase
+    from datetime import datetime
+
+
+    class ActionModule(ActionBase):
+        def run(self, tmp=None, task_vars=None):
+            super(ActionModule, self).run(tmp, task_vars)
+            module_args = self._task.args.copy()
+            module_return = self._execute_module(module_name='setup',
+                                                 module_args=module_args,
+                                                 task_vars=task_vars, tmp=tmp)
+            ret = dict()
+            remote_date = None
+            if not module_return.get('failed'):
+                for key, value in module_return['ansible_facts'].items():
+                    if key == 'ansible_date_time':
+                        remote_date = value['iso8601']
+
+            if remote_date:
+                remote_date_obj = datetime.strptime(remote_date, '%Y-%m-%dT%H:%M:%SZ')
+                time_delta = datetime.now() - remote_date_obj
+                ret['delta_seconds'] = time_delta.seconds
+                ret['delta_days'] = time_delta.days
+                ret['delta_microseconds'] = time_delta.microseconds
+
+            return dict(ansible_facts=dict(ret))
+
+
+This code checks the time on the controller, captures the date and time for the remote machine using the ``setup`` module, and calculates the difference between the captured time and
+the local time, returning the time delta in days, seconds and microseconds.
+
+For practical examples of action plugins,
+see the source code for the `action plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/action>`_
 
 .. _developing_callbacks:
 
@@ -236,12 +306,9 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
   """
   from ansible.errors import AnsibleError, AnsibleParserError
   from ansible.plugins.lookup import LookupBase
+  from ansible.utils.display import Display
 
-  try:
-      from __main__ import display
-  except ImportError:
-      from ansible.utils.display import Display
-      display = Display()
+  display = Display()
 
 
   class LookupModule(LookupBase):

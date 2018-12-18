@@ -21,13 +21,10 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
+from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_docstring
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def get_all_plugin_loaders():
@@ -574,10 +571,9 @@ class Jinja2Loader(PluginLoader):
 
 def _load_plugin_filter():
     filters = defaultdict(frozenset)
-
+    user_set = False
     if C.PLUGIN_FILTERS_CFG is None:
         filter_cfg = '/etc/ansible/plugin_filters.yml'
-        user_set = False
     else:
         filter_cfg = C.PLUGIN_FILTERS_CFG
         user_set = True
@@ -605,11 +601,17 @@ def _load_plugin_filter():
         if version == u'1.0':
             # Modules and action plugins share the same blacklist since the difference between the
             # two isn't visible to the users
-            filters['ansible.modules'] = frozenset(filter_data['module_blacklist'])
+            try:
+                filters['ansible.modules'] = frozenset(filter_data['module_blacklist'])
+            except TypeError:
+                display.warning(u'Unable to parse the plugin filter file {0} as'
+                                u' module_blacklist is not a list.'
+                                u' Skipping.'.format(filter_cfg))
+                return filters
             filters['ansible.plugins.action'] = filters['ansible.modules']
         else:
             display.warning(u'The plugin filter file, {0} was a version not recognized by this'
-                            u' version of Ansible. Skipping.')
+                            u' version of Ansible. Skipping.'.format(filter_cfg))
     else:
         if user_set:
             display.warning(u'The plugin filter file, {0} does not exist.'

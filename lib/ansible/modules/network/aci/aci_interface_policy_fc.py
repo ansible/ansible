@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,28 +19,33 @@ description:
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
-notes:
-- More information about the internal APIC class B(fc:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fc:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 options:
   fc_policy:
     description:
     - The name of the Fiber Channel interface policy.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description of the Fiber Channel interface policy.
+    type: str
     aliases: [ descr ]
   port_mode:
     description:
     - The Port Mode to use.
     - The APIC defaults to C(f) when unset during creation.
+    type: str
     choices: [ f, np ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

@@ -29,6 +29,29 @@
     <<: *aws_connection_info
   register: in_test_vpc
 
+- name: Make instance in the testing subnet created in the test VPC(check mode)
+  ec2_instance:
+    name: "{{ resource_prefix }}-test-basic-vpc-create-checkmode"
+    image_id: "{{ ec2_ami_image[aws_region] }}"
+    user_data: |
+      #cloud-config
+      package_upgrade: true
+      package_update: true
+    tags:
+      TestId: "{{ resource_prefix }}"
+      Something: else
+    security_groups: "{{ sg.group_id }}"
+    network:
+      source_dest_check: false
+    vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+    instance_type: t2.micro
+    volumes:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
+    <<: *aws_connection_info
+  check_mode: yes
+
 - name: Try to re-make the instance, hopefully this shows changed=False
   ec2_instance:
     name: "{{ resource_prefix }}-test-basic-vpc-create"
@@ -54,6 +77,28 @@
 - name: check that source_dest_check was set to false
   assert:
     that: 'not remake_in_test_vpc.instances[0].source_dest_check'
+
+- name: "fact presented ec2 instance"
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-basic-vpc-create"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: presented_instance_fact
+
+- name: "fact checkmode ec2 instance"
+  ec2_instance_facts:
+    filters:
+      "tag:Name": "{{ resource_prefix }}-test-basic-vpc-create-checkmode"
+      "instance-state-name": "running"
+    <<: *aws_connection_info
+  register: checkmode_instance_fact
+
+- name: "Confirm whether the check mode is working normally."
+  assert:
+    that:
+      - "{{ presented_instance_fact.instances | length }} > 0"
+      - "{{ checkmode_instance_fact.instances | length }} == 0"
 
 - name: Alter it by adding tags
   ec2_instance:

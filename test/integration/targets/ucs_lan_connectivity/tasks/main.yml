@@ -15,20 +15,33 @@
 - name: LAN Connectivity Policies absent
   ucs_lan_connectivity: &lan_connectivity_absent
     <<: *login_info
-    name: Cntr-LAN-Boot
+    name: Cntr-FC-Boot
     state: absent
 
 # Test present (check_mode)
 - name: LAN Connectivity Policies present (check_mode)
   ucs_lan_connectivity: &lan_connectivity_present
     <<: *login_info
-    name: Cntr-LAN-Boot
+    name: Cntr-FC-Boot
     vnic_list:
-    - name: Fabric-A
-      vnic_template: vNIC-Template-A
-    - name: Fabric-B
-      vnic_template: vNIC-Template-B
+    - name: eno1
+      vnic_template: Cntr-Template
       adapter_policy: Linux
+    - name: eno2
+      vnic_template: Container-NFS-A
+      adapter_policy: Linux
+    - name: eno3
+      vnic_template: Container-NFS-B
+      adapter_policy: Linux
+    iscsi_vnic_list:
+    - name: iSCSIa
+      overlay_vnic: eno1
+      iscsi_adapter_policy: default
+      vlan_name: Container-MGMT-VLAN
+    - name: iSCSIb
+      overlay_vnic: eno3
+      iscsi_adapter_policy: default
+      vlan_name: Container-TNT-A-NFS
   check_mode: yes
   register: cm_lan_connectivity_present
 
@@ -56,10 +69,29 @@
     - cm_lan_connectivity_present_again.changed == nm_lan_connectivity_present_again.changed == false
 
 # Test change (check_mode)
-- name: LAN Connectivity Policies description change (check_mode)
+- name: LAN Connectivity Policies change (check_mode)
   ucs_lan_connectivity: &lan_connectivity_change
-    <<: *lan_connectivity_present
-    descr: Testing Ansible
+    <<: *login_info
+    name: Cntr-FC-Boot
+    vnic_list:
+    - name: eno1
+      vnic_template: Cntr-Template
+      adapter_policy: Linux
+    - name: eno2
+      vnic_template: Container-NFS-A
+      adapter_policy: Linux
+    - name: eno3
+      vnic_template: Container-NFS-B
+      adapter_policy: default
+    iscsi_vnic_list:
+    - name: iSCSIa
+      overlay_vnic: eno1
+      iscsi_adapter_policy: default
+      vlan_name: Container-MGMT-VLAN
+    - name: iSCSIb
+      overlay_vnic: eno3
+      iscsi_adapter_policy: default
+      vlan_name: Container-TNT-A-NFS
   check_mode: yes
   register: cm_lan_connectivity_descr_change
 
@@ -85,6 +117,60 @@
     that:
     - cm_lan_connectivity_descr_change.changed == nm_lan_connectivity_descr_change.changed == true
     - cm_lan_connectivity_descr_change_again.changed == nm_lan_connectivity_descr_change_again.changed == false
+
+
+# Test vnic and iscsi vnic removal
+- name: LAN Connectivity Policies vnic removal (check_mode)
+  ucs_lan_connectivity: &lan_connectivity_vnic_change
+    <<: *login_info
+    name: Cntr-FC-Boot
+    vnic_list:
+    - name: eno1
+      vnic_template: Cntr-Template
+      adapter_policy: Linux
+    - name: eno2
+      vnic_template: Container-NFS-A
+      adapter_policy: Linux
+    - name: eno3
+      vnic_template: Container-NFS-B
+      adapter_policy: default
+      state: absent
+    iscsi_vnic_list:
+    - name: iSCSIa
+      overlay_vnic: eno1
+      iscsi_adapter_policy: default
+      vlan_name: Container-MGMT-VLAN
+      state: absent
+    - name: iSCSIb
+      overlay_vnic: eno3
+      iscsi_adapter_policy: default
+      vlan_name: Container-TNT-A-NFS
+      state: absent
+  check_mode: yes
+  register: cm_lan_connectivity_vnic_change
+
+# Change (normal mode)
+- name: LAN Connectivity Policies vnic removal (normal mode)
+  ucs_lan_connectivity: *lan_connectivity_vnic_change
+  register: nm_lan_connectivity_vnic_change
+
+# Test change again (idempotent)
+- name: LAN Connectivity Policies vnic removal again (check_mode)
+  ucs_lan_connectivity: *lan_connectivity_vnic_change
+  check_mode: yes
+  register: cm_lan_connectivity_vnic_change_again
+
+# Change again (normal mode)
+- name: LAN Connectivity Policies vnic removal again (normal mode)
+  ucs_lan_connectivity: *lan_connectivity_vnic_change
+  register: nm_lan_connectivity_vnic_change_again
+
+# Verfiy change
+- name: Verify LAN Connectivity Policies vnic removal results
+  assert:
+    that:
+    - cm_lan_connectivity_vnic_change.changed == nm_lan_connectivity_vnic_change.changed == true
+    - cm_lan_connectivity_vnic_change_again.changed == nm_lan_connectivity_vnic_change_again.changed == false
 
 # Teardown (clean environment)
 - name: LAN Connectivity Policies absent (check_mode)

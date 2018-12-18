@@ -316,7 +316,6 @@ RHEV_UNAVAILABLE = 2
 RHEV_TYPE_OPTS = ['server', 'desktop', 'host']
 STATE_OPTS = ['ping', 'present', 'absent', 'up', 'down', 'restart', 'cd', 'info']
 
-global msg, changed, failed
 msg = []
 changed = False
 failed = False
@@ -340,7 +339,7 @@ class RHEVConn(object):
             api = API(url=url, username=user, password=password, insecure=str(insecure_api))
             api.test()
             self.conn = api
-        except:
+        except Exception:
             raise Exception("Failed to connect to RHEV-M.")
 
     def __del__(self):

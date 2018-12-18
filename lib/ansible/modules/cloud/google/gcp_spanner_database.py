@@ -32,36 +32,44 @@ DOCUMENTATION = '''
 ---
 module: gcp_spanner_database
 description:
-    - A Cloud Spanner Database which is hosted on a Spanner instance.
+- A Cloud Spanner Database which is hosted on a Spanner instance.
 short_description: Creates a GCP Database
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    name:
-        description:
-            - A unique identifier for the database, which cannot be changed after the instance
-              is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-              The final segment of the name must be between 6 and 30 characters in length.
-        required: false
-    extra_statements:
-        description:
-            - 'An optional list of DDL statements to run inside the newly created database. Statements
-              can create tables, indexes, etc. These statements execute atomically with the creation
-              of the database: if there is an error in any statement, the database is not created.'
-        required: false
-    instance:
-        description:
-            - The instance to create the database on.
-        required: true
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  name:
+    description:
+    - A unique identifier for the database, which cannot be changed after the instance
+      is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
+      The final segment of the name must be between 6 and 30 characters in length.
+    required: false
+  extra_statements:
+    description:
+    - 'An optional list of DDL statements to run inside the newly created database.
+      Statements can create tables, indexes, etc. These statements execute atomically
+      with the creation of the database: if there is an error in any statement, the
+      database is not created.'
+    required: false
+  instance:
+    description:
+    - The instance to create the database on.
+    - 'This field represents a link to a Instance resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_spanner_instance
+      task and then set this instance field to "{{ name-of-resource }}" Alternatively,
+      you can set this instance to a dictionary with the name key where the value
+      is the name of your Instance'
+    required: true
 extends_documentation_fragment: gcp
 '''
 
@@ -85,31 +93,32 @@ EXAMPLES = '''
       name: webstore
       instance: "{{ instance }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    name:
-        description:
-            - A unique identifier for the database, which cannot be changed after the instance
-              is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-              The final segment of the name must be between 6 and 30 characters in length.
-        returned: success
-        type: str
-    extra_statements:
-        description:
-            - 'An optional list of DDL statements to run inside the newly created database. Statements
-              can create tables, indexes, etc. These statements execute atomically with the creation
-              of the database: if there is an error in any statement, the database is not created.'
-        returned: success
-        type: list
-    instance:
-        description:
-            - The instance to create the database on.
-        returned: success
-        type: dict
+name:
+  description:
+  - A unique identifier for the database, which cannot be changed after the instance
+    is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
+    The final segment of the name must be between 6 and 30 characters in length.
+  returned: success
+  type: str
+extraStatements:
+  description:
+  - 'An optional list of DDL statements to run inside the newly created database.
+    Statements can create tables, indexes, etc. These statements execute atomically
+    with the creation of the database: if there is an error in any statement, the
+    database is not created.'
+  returned: success
+  type: list
+instance:
+  description:
+  - The instance to create the database on.
+  returned: success
+  type: dict
 '''
 
 ################################################################################
@@ -147,7 +156,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module))
+                update(module, self_link(module))
+                fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
             delete(module, self_link(module))
@@ -194,9 +204,9 @@ def resource_to_request(module):
     return return_vals
 
 
-def fetch_resource(module, link):
+def fetch_resource(module, link, allow_not_found=True):
     auth = GcpSession(module, 'spanner')
-    return return_if_object(module, auth.get(link))
+    return return_if_object(module, auth.get(link), allow_not_found)
 
 
 def self_link(module):
@@ -216,9 +226,9 @@ def collection(module):
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases".format(**res)
 
 
-def return_if_object(module, response):
+def return_if_object(module, response, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.

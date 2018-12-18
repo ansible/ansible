@@ -51,6 +51,8 @@ notes:
       M(acme_challenge_cert_helper) module to prepare the challenge certificate."
    - "You can use the M(certificate_complete_chain) module to find the root certificate
       for the returned fullchain."
+   - "In case you want to debug problems, you might be interested in the M(acme_inspect)
+      module."
 extends_documentation_fragment:
   - acme
 options:
@@ -167,7 +169,7 @@ options:
     version_added: 2.6
 '''
 
-EXAMPLES = R'''
+EXAMPLES = r'''
 ### Example with HTTP challenge ###
 
 - name: Create a challenge for sample.com using a account key from a variable.
@@ -233,8 +235,9 @@ EXAMPLES = R'''
 #     record: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].record }}"
 #     type: TXT
 #     ttl: 60
+#     state: present
 #     # Note: route53 requires TXT entries to be enclosed in quotes
-#     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value }}"
+#     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
 #     when: sample_com_challenge is changed
 #
 # Alternative way:
@@ -244,9 +247,10 @@ EXAMPLES = R'''
 #     record: "{{ item.key }}"
 #     type: TXT
 #     ttl: 60
+#     state: present
 #     # Note: item.value is a list of TXT entries, and route53
 #     # requires every entry to be enclosed in quotes
-#     value: "{{ item.value | map('regex_replace', '^(.*)$', '\'\\1\'' ) | list }}"
+#     value: "{{ item.value | map('regex_replace', '^(.*)$', '\"\\1\"' ) | list }}"
 #     loop: "{{ sample_com_challenge.challenge_data_dns | dictsort }}"
 #     when: sample_com_challenge is changed
 
@@ -402,16 +406,21 @@ class ACMEClient(object):
             contact = []
             if module.params['account_email']:
                 contact.append('mailto:' + module.params['account_email'])
-            self.changed = self.account.init_account(
+            created, account_data = self.account.setup_account(
                 contact,
                 agreement=module.params.get('agreement'),
                 terms_agreed=module.params.get('terms_agreed'),
                 allow_creation=modify_account,
-                update_contact=modify_account
             )
+            if account_data is None:
+                raise ModuleFailException(msg='Account does not exist or is deactivated.')
+            updated = False
+            if not created and account_data and modify_account:
+                updated, account_data = self.account.update_account(account_data, contact)
+            self.changed = created or updated
         else:
             # This happens if modify_account is False and the ACME v1
-            # protocol is used. In this case, we do not call init_account()
+            # protocol is used. In this case, we do not call setup_account()
             # to avoid accidental creation of an account. This is OK
             # since for ACME v1, the account URI is not needed to send a
             # signed ACME request.

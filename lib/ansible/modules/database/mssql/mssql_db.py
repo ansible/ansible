@@ -111,7 +111,7 @@ def db_create(conn, cursor, db):
 def db_delete(conn, cursor, db):
     try:
         cursor.execute("ALTER DATABASE [%s] SET single_user WITH ROLLBACK IMMEDIATE" % db)
-    except:
+    except Exception:
         pass
     cursor.execute("DROP DATABASE [%s]" % db)
     return not db_exists(conn, cursor, db)

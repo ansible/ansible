@@ -10,7 +10,7 @@ from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 __metaclass__ = type
 
 import mock
-from ansible.compat.tests.mock import PropertyMock
+from units.compat.mock import PropertyMock
 
 
 class MgmtInterfaceTest(ModuleTestCase):

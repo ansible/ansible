@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - zabbix_hostmacro - Added missing validate_certs logic for running module against Zabbix servers with untrused SSL certificates (https://github.com/ansible/ansible/issues/47611)
+  - zabbix_hostmacro - Fixed support for user macros with context (https://github.com/ansible/ansible/issues/46953)

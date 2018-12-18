@@ -32,38 +32,45 @@ DOCUMENTATION = '''
 ---
 module: gcp_sql_user
 description:
-    - The Users resource represents a database user in a Cloud SQL instance.
+- The Users resource represents a database user in a Cloud SQL instance.
 short_description: Creates a GCP User
 version_added: 2.7
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
-    host:
-        description:
-            - The host name from which the user can connect. For insert operations, host defaults
-              to an empty string. For update operations, host is specified as part of the request
-              URL. The host name cannot be updated after insertion.
-        required: true
-    name:
-        description:
-            - The name of the user in the Cloud SQL instance.
-        required: true
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-        required: true
-    password:
-        description:
-            - The password for the user.
-        required: false
+  state:
+    description:
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  host:
+    description:
+    - The host name from which the user can connect. For insert operations, host defaults
+      to an empty string. For update operations, host is specified as part of the
+      request URL. The host name cannot be updated after insertion.
+    required: true
+  name:
+    description:
+    - The name of the user in the Cloud SQL instance.
+    required: true
+  instance:
+    description:
+    - The name of the Cloud SQL instance. This does not include the project ID.
+    - 'This field represents a link to a Instance resource in GCP. It can be specified
+      in two ways. You can add `register: name-of-resource` to a gcp_sql_instance
+      task and then set this instance field to "{{ name-of-resource }}" Alternatively,
+      you can set this instance to a dictionary with the name key where the value
+      is the name of your Instance'
+    required: true
+  password:
+    description:
+    - The password for the user.
+    required: false
 extends_documentation_fragment: gcp
 '''
 
@@ -91,34 +98,34 @@ EXAMPLES = '''
       password: secret-password
       instance: "{{ instance }}"
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    host:
-        description:
-            - The host name from which the user can connect. For insert operations, host defaults
-              to an empty string. For update operations, host is specified as part of the request
-              URL. The host name cannot be updated after insertion.
-        returned: success
-        type: str
-    name:
-        description:
-            - The name of the user in the Cloud SQL instance.
-        returned: success
-        type: str
-    instance:
-        description:
-            - The name of the Cloud SQL instance. This does not include the project ID.
-        returned: success
-        type: dict
-    password:
-        description:
-            - The password for the user.
-        returned: success
-        type: str
+host:
+  description:
+  - The host name from which the user can connect. For insert operations, host defaults
+    to an empty string. For update operations, host is specified as part of the request
+    URL. The host name cannot be updated after insertion.
+  returned: success
+  type: str
+name:
+  description:
+  - The name of the user in the Cloud SQL instance.
+  returned: success
+  type: str
+instance:
+  description:
+  - The name of the Cloud SQL instance. This does not include the project ID.
+  returned: success
+  type: dict
+password:
+  description:
+  - The password for the user.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -161,7 +168,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -231,9 +239,9 @@ def unwrap_resource(result, module):
         return None
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'sql')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def fetch_wrapped_resource(module, kind, wrap_kind, wrap_path):
@@ -270,9 +278,9 @@ def collection(module):
     return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users".format(**res)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -280,7 +288,7 @@ def return_if_object(module, response, kind):
         return None
 
     # SQL only: return on 403 if not exist
-    if response.status_code == 403:
+    if allow_not_found and response.status_code == 403:
         return None
 
     try:
@@ -290,8 +298,6 @@ def return_if_object(module, response, kind):
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -347,8 +353,6 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], 'message')
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
         op_result = fetch_resource(module, op_uri, 'sql#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result

@@ -124,7 +124,7 @@ RETURN = '''# '''
 try:
     import gitlab
     HAS_GITLAB_PACKAGE = True
-except:
+except Exception:
     HAS_GITLAB_PACKAGE = False
 
 from ansible.module_utils.basic import AnsibleModule
@@ -247,7 +247,6 @@ class GitLabUser(object):
 
 
 def main():
-    global user_id
     module = AnsibleModule(
         argument_spec=dict(
             server_url=dict(required=True),

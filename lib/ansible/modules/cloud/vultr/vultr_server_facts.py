@@ -114,7 +114,7 @@ class AnsibleVultrServerFacts(Vultr):
 
         self.returns = {
             "APPID": dict(key='application', convert_to='int', transform=self._get_application_name),
-            "FIREWALLGROUPID": dict(key='firewallgroup', convert_to='int', transform=self._get_firewallgroup_name),
+            "FIREWALLGROUPID": dict(key='firewallgroup', transform=self._get_firewallgroup_name),
             "SUBID": dict(key='id', convert_to='int'),
             "VPSPLANID": dict(key='plan', convert_to='int', transform=self._get_plan_name),
             "allowed_bandwidth_gb": dict(convert_to='int'),

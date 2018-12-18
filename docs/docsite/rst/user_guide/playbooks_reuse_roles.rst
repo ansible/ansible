@@ -173,9 +173,11 @@ Finally, you may wish to assign tags to the tasks inside the roles you specify. 
 
     - hosts: webservers
       roles:
-        - role: bar
-          tags: ["foo"]
-        # using YAML shorthand, this is equivalent to the above
+        - role: foo
+          tags:
+            - bar
+            - baz
+        # using YAML shorthand, this is equivalent to the above:
         - { role: foo, tags: ["bar", "baz"] }
 
 Or, again, using the newer syntax::
@@ -397,7 +399,7 @@ Ansible Galaxy
 
 The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles. 
 
-Read the Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>_ page for more information
+Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information
 
 .. seealso::
 

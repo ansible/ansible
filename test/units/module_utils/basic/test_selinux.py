@@ -12,7 +12,7 @@ import json
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
-from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock
+from units.compat.mock import patch, MagicMock, mock_open, Mock
 from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__

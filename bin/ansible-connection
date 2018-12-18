@@ -6,10 +6,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 __requires__ = ['ansible']
 
-try:
-    import pkg_resources
-except Exception:
-    pass
 
 import fcntl
 import hashlib
@@ -30,6 +26,7 @@ from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
+from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
@@ -119,7 +116,7 @@ class ConnectionProcess(object):
             result['exception'] = traceback.format_exc()
         finally:
             result['messages'] = messages
-            self.fd.write(json.dumps(result))
+            self.fd.write(json.dumps(result, cls=AnsibleJSONEncoder))
             self.fd.close()
 
     def run(self):
@@ -182,19 +179,24 @@ class ConnectionProcess(object):
     def shutdown(self):
         """ Shuts down the local domain socket
         """
+        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(self.socket_path))
         if os.path.exists(self.socket_path):
             try:
                 if self.sock:
                     self.sock.close()
                 if self.connection:
                     self.connection.close()
-            except:
+            except Exception:
                 pass
             finally:
                 if os.path.exists(self.socket_path):
                     os.remove(self.socket_path)
                     setattr(self.connection, '_socket_path', None)
                     setattr(self.connection, '_connected', False)
+
+        if os.path.exists(lock_path):
+            os.remove(lock_path)
+
         display.display('shutdown complete', log_only=True)
 
 
@@ -249,8 +251,8 @@ def main():
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
         makedirs_safe(tmp_path)
 
-        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % (tmp_path, play_context.remote_addr))
         socket_path = unfrackpath(cp % dict(directory=tmp_path))
+        lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(socket_path))
 
         with file_lock(lock_path):
             if not os.path.exists(socket_path):
@@ -279,7 +281,7 @@ def main():
                 else:
                     os.close(w)
                     rfd = os.fdopen(r, 'r')
-                    data = json.loads(rfd.read())
+                    data = json.loads(rfd.read(), cls=AnsibleJSONDecoder)
                     messages.extend(data.pop('messages'))
                     result.update(data)
 
@@ -310,10 +312,10 @@ def main():
     sys.stdout = saved_stdout
     if 'exception' in result:
         rc = 1
-        sys.stderr.write(json.dumps(result))
+        sys.stderr.write(json.dumps(result, cls=AnsibleJSONEncoder))
     else:
         rc = 0
-        sys.stdout.write(json.dumps(result))
+        sys.stdout.write(json.dumps(result, cls=AnsibleJSONEncoder))
 
     sys.exit(rc)
 

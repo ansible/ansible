@@ -20,7 +20,6 @@ DOCUMENTATION = r'''
 module: unarchive
 version_added: '1.4'
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
-extends_documentation_fragment: [ decrypt, files ]
 description:
      - The C(unarchive) module unpacks an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
@@ -86,7 +85,9 @@ options:
     type: 'bool'
     default: 'yes'
     version_added: "2.2"
-author: Michael DeHaan
+extends_documentation_fragment:
+- decrypt
+- files
 todo:
     - Re-implement tar support using native tarfile module.
     - Re-implement zip support using native zipfile module.
@@ -100,6 +101,9 @@ notes:
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
     - For Windows targets, use the M(win_unzip) module instead.
+seealso:
+- module: win_unzip
+author: Michael DeHaan
 '''
 
 EXAMPLES = r'''
@@ -144,7 +148,7 @@ import traceback
 from zipfile import ZipFile, BadZipfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_file
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:  # python 3.3+
@@ -162,9 +166,6 @@ MOD_TIME_DIFF_RE = re.compile(r': Mod time differs$')
 EMPTY_FILE_RE = re.compile(r': : Warning: Cannot stat: No such file or directory$')
 MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory$')
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
-# When downloading an archive, how much of the archive to download before
-# saving to a tempfile (64k)
-BUFSIZE = 65536
 
 
 def crc32(path):
@@ -240,7 +241,7 @@ class ZipArchive(object):
             try:
                 for item in archive.infolist():
                     self._infodict[item.filename] = int(item.CRC)
-            except:
+            except Exception:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
 
@@ -264,13 +265,15 @@ class ZipArchive(object):
         else:
             try:
                 for member in archive.namelist():
+                    exclude_flag = False
                     if self.excludes:
                         for exclude in self.excludes:
-                            if not fnmatch.fnmatch(member, exclude):
-                                self._files_in_archive.append(to_native(member))
-                    else:
+                            if fnmatch.fnmatch(member, exclude):
+                                exclude_flag = True
+                                break
+                    if not exclude_flag:
                         self._files_in_archive.append(to_native(member))
-            except:
+            except Exception:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
 
@@ -325,7 +328,7 @@ class ZipArchive(object):
         else:
             try:
                 fut_owner = run_owner
-            except:
+            except Exception:
                 pass
             fut_uid = run_uid
 
@@ -344,7 +347,7 @@ class ZipArchive(object):
         else:
             try:
                 fut_group = run_group
-            except:
+            except Exception:
                 pass
             fut_gid = run_gid
 
@@ -424,7 +427,7 @@ class ZipArchive(object):
             dest = os.path.join(self.dest, path)
             try:
                 st = os.lstat(dest)
-            except:
+            except Exception:
                 change = True
                 self.includes.append(path)
                 err += 'Path %s is missing\n' % path
@@ -664,11 +667,14 @@ class TgzArchive(object):
             if filename.startswith('/'):
                 filename = filename[1:]
 
+            exclude_flag = False
             if self.excludes:
                 for exclude in self.excludes:
-                    if not fnmatch.fnmatch(filename, exclude):
-                        self._files_in_archive.append(to_native(filename))
-            else:
+                    if fnmatch.fnmatch(filename, exclude):
+                        exclude_flag = True
+                        break
+
+            if not exclude_flag:
                 self._files_in_archive.append(to_native(filename))
 
         return self._files_in_archive
@@ -821,28 +827,7 @@ def main():
             module.fail_json(msg="Source '%s' failed to transfer" % src)
         # If remote_src=true, and src= contains ://, try and download the file to a temp directory.
         elif '://' in src:
-            new_src = os.path.join(module.tmpdir, to_native(src.rsplit('/', 1)[1], errors='surrogate_or_strict'))
-            try:
-                rsp, info = fetch_url(module, src)
-                # If download fails, raise a proper exception
-                if rsp is None:
-                    raise Exception(info['msg'])
-
-                # open in binary mode for python3
-                f = open(new_src, 'wb')
-                # Read 1kb at a time to save on ram
-                while True:
-                    data = rsp.read(BUFSIZE)
-                    data = to_bytes(data, errors='surrogate_or_strict')
-
-                    if len(data) < 1:
-                        break  # End of file, break while loop
-
-                    f.write(data)
-                f.close()
-                src = new_src
-            except Exception as e:
-                module.fail_json(msg="Failure downloading %s, %s" % (src, to_native(e)))
+            src = fetch_file(module, src)
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):

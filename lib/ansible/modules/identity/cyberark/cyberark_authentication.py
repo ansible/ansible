@@ -7,13 +7,16 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
 ---
 module: cyberark_authentication
 short_description: Module for CyberArk Vault Authentication using PAS Web Services SDK
-author: Edward Nunez @ CyberArk BizDev (@enunez-cyberark, @cyberark-bizdev, @erasmix)
+author:
+  - Edward Nunez (@enunez-cyberark) CyberArk BizDev
+  - Cyberark Bizdev (@cyberark-bizdev)
+  - erasmix (@erasmix)
 version_added: 2.4
 description:
     - Authenticates to CyberArk Vault using Privileged Account Security Web Services SDK and

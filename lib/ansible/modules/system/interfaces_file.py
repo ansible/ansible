@@ -30,6 +30,10 @@ options:
   iface:
     description:
       - Name of the interface, required for value changes or option remove
+  address_family:
+    description:
+      - Address family of the interface, useful if same interface name is used for both inet and inet6
+    version_added: "2.8"
   option:
     description:
       - Name of the option, required for value changes or option remove
@@ -148,8 +152,8 @@ def lineDict(line):
     return {'line': line, 'line_type': 'unknown'}
 
 
-def optionDict(line, iface, option, value):
-    return {'line': line, 'iface': iface, 'option': option, 'value': value, 'line_type': 'option'}
+def optionDict(line, iface, option, value, address_family):
+    return {'line': line, 'iface': iface, 'option': option, 'value': value, 'line_type': 'option', 'address_family': address_family}
 
 
 def getValueFromLine(s):
@@ -208,13 +212,14 @@ def read_interfaces_lines(module, line_strings):
                 currif['address_family'] = words[2]
             except IndexError:
                 currif['address_family'] = None
+            address_family = currif['address_family']
             try:
                 currif['method'] = words[3]
             except IndexError:
                 currif['method'] = None
 
             ifaces[iface_name] = currif
-            lines.append({'line': line, 'iface': iface_name, 'line_type': 'iface', 'params': currif})
+            lines.append({'line': line, 'iface': iface_name, 'line_type': 'iface', 'params': currif, 'address_family': address_family})
             currently_processing = "IFACE"
         elif words[0] == "auto":
             lines.append(lineDict(line))
@@ -233,7 +238,7 @@ def read_interfaces_lines(module, line_strings):
                 option_name = words[0]
                 # TODO: if option_name in currif.options
                 value = getValueFromLine(line)
-                lines.append(optionDict(line, iface_name, option_name, value))
+                lines.append(optionDict(line, iface_name, option_name, value, address_family))
                 if option_name in ["pre-up", "up", "down", "post-up"]:
                     currif[option_name].append(value)
                 else:
@@ -248,11 +253,14 @@ def read_interfaces_lines(module, line_strings):
     return lines, ifaces
 
 
-def setInterfaceOption(module, lines, iface, option, raw_value, state):
+def setInterfaceOption(module, lines, iface, option, raw_value, state, address_family=None):
     value = str(raw_value)
     changed = False
 
     iface_lines = [item for item in lines if "iface" in item and item["iface"] == iface]
+    if address_family is not None:
+        iface_lines = [item for item in iface_lines
+                       if "address_family" in item and item["address_family"] == address_family]
 
     if len(iface_lines) < 1:
         # interface not found
@@ -267,12 +275,12 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
             changed = True
             # add new option
             last_line_dict = iface_lines[-1]
-            lines = addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options)
+            lines = addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options, address_family)
         else:
             if option in ["pre-up", "up", "down", "post-up"]:
                 if len(list(filter(lambda i: i['value'] == value, target_options))) < 1:
                     changed = True
-                    lines = addOptionAfterLine(option, value, iface, lines, target_options[-1], iface_options)
+                    lines = addOptionAfterLine(option, value, iface, lines, target_options[-1], iface_options, address_family)
             else:
                 # if more than one option found edit the last one
                 if target_options[-1]['value'] != value:
@@ -280,6 +288,7 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
                     target_option = target_options[-1]
                     old_line = target_option['line']
                     old_value = target_option['value']
+                    address_family = target_option['address_family']
                     prefix_start = old_line.find(option)
                     optionLen = len(option)
                     old_value_position = re.search(r"\s+".join(old_value.split()), old_line[prefix_start + optionLen:])
@@ -287,7 +296,7 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
                     end = old_value_position.end() + prefix_start + optionLen
                     line = old_line[:start] + value + old_line[end:]
                     index = len(lines) - lines[::-1].index(target_option) - 1
-                    lines[index] = optionDict(line, iface, option, value)
+                    lines[index] = optionDict(line, iface, option, value, address_family)
     elif state == "absent":
         if len(target_options) >= 1:
             if option in ["pre-up", "up", "down", "post-up"] and value is not None and value != "None":
@@ -304,7 +313,7 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
     return changed, lines
 
 
-def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options):
+def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options, address_family):
     # Changing method of interface is not an addition
     if option == 'method':
         for ln in lines:
@@ -323,7 +332,7 @@ def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_option
         prefix += "    "
 
     line = prefix + "%s %s" % (option, value) + last_line[suffix_start:]
-    option_dict = optionDict(line, iface, option, value)
+    option_dict = optionDict(line, iface, option, value, address_family)
     index = len(lines) - lines[::-1].index(last_line_dict)
     lines.insert(index, option_dict)
     return lines
@@ -343,6 +352,7 @@ def main():
         argument_spec=dict(
             dest=dict(default='/etc/network/interfaces', required=False, type='path'),
             iface=dict(required=False),
+            address_family=dict(required=False),
             option=dict(required=False),
             value=dict(required=False),
             backup=dict(default='no', type='bool'),
@@ -354,6 +364,7 @@ def main():
 
     dest = module.params['dest']
     iface = module.params['iface']
+    address_family = module.params['address_family']
     option = module.params['option']
     value = module.params['value']
     backup = module.params['backup']
@@ -370,7 +381,7 @@ def main():
     changed = False
 
     if option is not None:
-        changed, lines = setInterfaceOption(module, lines, iface, option, value, state)
+        changed, lines = setInterfaceOption(module, lines, iface, option, value, state, address_family)
 
     if changed:
         _, ifaces = read_interfaces_lines(module, [d['line'] for d in lines if 'line' in d])

@@ -69,6 +69,7 @@ options:
     description:
       - By default the module will not create another VPC if there is another VPC with the same name and CIDR block. Specify this as true if you want
         duplicate VPCs created.
+    type: bool
     default: false
 requirements:
     - boto3

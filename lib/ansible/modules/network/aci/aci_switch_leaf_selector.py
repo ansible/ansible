@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -18,10 +18,14 @@ short_description: Bind leaf selectors to switch policy leaf profiles (infra:Lea
 description:
 - Bind leaf selectors (with node block range and policy group) to switch policy leaf profiles on Cisco ACI fabrics.
 notes:
-- This module is to be used with M(aci_switch_policy_leaf_profile)
+- This module is to be used with M(aci_switch_policy_leaf_profile).
   One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
-- More information about the internal APIC classes B(infra:LeafS), B(infra:NodeBlk) and B(infra:RsAccNodePGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_switch_policy_leaf_profile
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:LeafS),
+               B(infra:NodeBlk) and B(infra:RsAccNodePGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -29,21 +33,26 @@ options:
   description:
     description:
     - The description to assign to the C(leaf).
+    type: str
   leaf_profile:
     description:
     - Name of the Leaf Profile to which we add a Selector.
+    type: str
     aliases: [ leaf_profile_name ]
   leaf:
     description:
     - Name of Leaf Selector.
+    type: str
     aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
   leaf_node_blk:
     description:
     - Name of Node Block range to be added to Leaf Selector of given Leaf Profile.
+    type: str
     aliases: [ leaf_node_blk_name, node_blk_name ]
   leaf_node_blk_description:
     description:
     - The description to assign to the C(leaf_node_blk)
+    type: str
   from:
     description:
     - Start of Node Block range.
@@ -57,11 +66,13 @@ options:
   policy_group:
     description:
     - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile.
+    type: str
     aliases: [ name, policy_group_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -260,6 +271,30 @@ def main():
     policy_group = module.params['policy_group']
     state = module.params['state']
 
+    # Build child_configs dynamically
+    child_configs = [
+        dict(
+            infraNodeBlk=dict(
+                attributes=dict(
+                    descr=leaf_node_blk_description,
+                    name=leaf_node_blk,
+                    from_=from_,
+                    to_=to_,
+                ),
+            ),
+        ),
+    ]
+
+    # Add infraRsAccNodePGrp only when policy_group was defined
+    if policy_group is not None:
+        child_configs.append(dict(
+            infraRsAccNodePGrp=dict(
+                attributes=dict(
+                    tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group),
+                ),
+            ),
+        ))
+
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
@@ -289,25 +324,7 @@ def main():
                 descr=description,
                 name=leaf,
             ),
-            child_configs=[
-                dict(
-                    infraNodeBlk=dict(
-                        attributes=dict(
-                            descr=leaf_node_blk_description,
-                            name=leaf_node_blk,
-                            from_=from_,
-                            to_=to_,
-                        ),
-                    ),
-                ),
-                dict(
-                    infraRsAccNodePGrp=dict(
-                        attributes=dict(
-                            tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group),
-                        ),
-                    ),
-                ),
-            ],
+            child_configs=child_configs,
         )
 
         aci.get_diff(aci_class='infraLeafS')

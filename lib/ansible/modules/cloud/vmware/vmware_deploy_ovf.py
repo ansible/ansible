@@ -181,7 +181,7 @@ class TarFileProgressReader(tarfile.ExFileObject):
     def __exit__(self, exc_type, exc_value, traceback):
         try:
             self.close()
-        except:
+        except Exception:
             pass
 
     def read(self, size=10240):
@@ -343,7 +343,7 @@ class VMwareDeployOvf:
             for key, value in self.params['properties'].items():
                 property_mapping = vim.KeyValue()
                 property_mapping.key = key
-                property_mapping.value = value
+                property_mapping.value = str(value) if isinstance(value, bool) else value
                 params['propertyMapping'].append(property_mapping)
 
         if self.params['folder']:

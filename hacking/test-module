@@ -35,6 +35,7 @@ import sys
 import traceback
 import shutil
 
+from ansible.release import __version__
 import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.jsonify import jsonify
@@ -124,6 +125,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
     complex_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
     complex_args['_ansible_tmpdir'] = C.DEFAULT_LOCAL_TMP
     complex_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
+    complex_args['_ansible_version'] = __version__
 
     if args.startswith("@"):
         # Argument is a YAML file (JSON is a subset of YAML)
@@ -219,7 +221,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
         print(out)
         print(err)
         results = json.loads(out)
-    except:
+    except Exception:
         print("*" * 35)
         print("INVALID OUTPUT FORMAT")
         print(out)

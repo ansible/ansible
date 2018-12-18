@@ -39,11 +39,13 @@ options:
               setting another policy in the future.
         required: false
         default: false
+        type: bool
     delete_policy:
         description:
             - if yes, remove the policy from the repository
         required: false
         default: false
+        type: bool
     state:
         description:
             - create or destroy the repository
@@ -304,7 +306,7 @@ def run(ecr, params, verbosity):
                         ecr.set_repository_policy(
                             registry_id, name, policy_text, force_set_policy)
                         result['changed'] = True
-                except:
+                except Exception:
                     # Some failure w/ the policy. It's helpful to know what the
                     # policy is.
                     result['policy'] = policy_text

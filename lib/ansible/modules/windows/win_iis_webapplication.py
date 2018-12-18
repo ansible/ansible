@@ -36,8 +36,13 @@ options:
   application_pool:
     description:
     - The application pool in which the new site executes.
+seealso:
+- module: win_iis_virtualdirectory
+- module: win_iis_webapppool
+- module: win_iis_webbinding
+- module: win_iis_website
 author:
-- Henrik Wallström
+- Henrik Wallström (@henrikwallstrom)
 '''
 
 EXAMPLES = r'''

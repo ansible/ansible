@@ -30,6 +30,11 @@ options:
     - disabled
     - enabled
     default: enabled
+seealso:
+- module: win_chocolatey
+- module: win_chocolatey_config
+- module: win_chocolatey_facts
+- module: win_chocolatey_source
 author:
 - Jordan Borean (@jborean93)
 '''

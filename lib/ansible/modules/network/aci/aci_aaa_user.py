@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -22,18 +22,22 @@ notes:
   (even if that password was already set identically). This
   appears to be an inconsistency wrt. the idempotent nature
   of the APIC REST API. The vendor has been informed.
-- More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- More information about the internal APIC class B(aaa:User) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+seealso:
+- module: aci_aaa_user_certificate
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(aaa:User).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 requirements:
-  - python-dateutil
+- python-dateutil
 version_added: '2.5'
 options:
   aaa_password:
     description:
     - The password of the locally-authenticated user.
+    type: str
   aaa_password_lifetime:
     description:
     - The lifetime of the locally-authenticated user password.
@@ -45,6 +49,7 @@ options:
   aaa_user:
     description:
     - The name of the locally-authenticated user user to add.
+    type: str
     aliases: [ name, user ]
   clear_password_history:
     description:
@@ -53,10 +58,12 @@ options:
   description:
     description:
     - Description for the AAA user.
+    type: str
     aliases: [ descr ]
   email:
     description:
     - The email address of the locally-authenticated user.
+    type: str
   enabled:
     description:
     - The status of the locally-authenticated user account.
@@ -64,6 +71,7 @@ options:
   expiration:
     description:
     - The expiration date of the locally-authenticated user account.
+    type: str
   expires:
     description:
     - Whether to enable an expiration date for the locally-authenticated user account.
@@ -71,16 +79,20 @@ options:
   first_name:
     description:
     - The first name of the locally-authenticated user.
+    type: str
   last_name:
     description:
     - The last name of the locally-authenticated user.
+    type: str
   phone:
     description:
     - The phone number of the locally-authenticated user.
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci

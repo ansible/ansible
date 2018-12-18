@@ -130,9 +130,6 @@ def main():
                            required_if=[('action', 'rebuild', ['image'])],
                            **module_kwargs)
 
-    if module._name == 'os_server_actions':
-        module.deprecate("The 'os_server_actions' module is being renamed 'os_server_action'", version=2.8)
-
     action = module.params['action']
     wait = module.params['wait']
     timeout = module.params['timeout']

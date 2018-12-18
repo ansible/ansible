@@ -16,14 +16,10 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
+from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ConfigCLI(CLI):
@@ -82,7 +78,7 @@ class ConfigCLI(CLI):
                     raise AnsibleOptionsError("%s is not a valid file" % (self.config_file))
 
                 os.environ['ANSIBLE_CONFIG'] = to_native(self.config_file)
-            except:
+            except Exception:
                 if self.action in ['view']:
                     raise
                 elif self.action in ['edit', 'update']:
@@ -101,7 +97,7 @@ class ConfigCLI(CLI):
 
         # pylint: disable=unreachable
         if self.options.setting is None:
-            raise AnsibleOptionsError("update option requries a setting to update")
+            raise AnsibleOptionsError("update option requires a setting to update")
 
         (entry, value) = self.options.setting.split('=')
         if '.' in entry:

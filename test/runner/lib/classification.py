@@ -338,6 +338,17 @@ class PathMapper(object):
         if path.startswith('hacking/'):
             return minimal
 
+        if path.startswith('lib/ansible/executor/powershell/'):
+            units_path = 'test/units/executor/powershell/'
+
+            if units_path not in self.units_paths:
+                units_path = None
+
+            return {
+                'windows-integration': self.integration_all_target,
+                'units': units_path,
+            }
+
         if path.startswith('lib/ansible/modules/'):
             module_name = self.module_names_by_path.get(path)
 
@@ -612,6 +623,11 @@ class PathMapper(object):
             if path in self.units_paths:
                 return {
                     'units': path,
+                }
+
+            if path.startswith('test/units/compat/'):
+                return {
+                    'units': 'test/units/',
                 }
 
             # changes to files which are not unit tests should trigger tests from the nearest parent directory

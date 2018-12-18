@@ -131,22 +131,16 @@ options:
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.connection import NetworkConnectionBase
+from ansible.utils.display import Display
 
 try:
     from napalm import get_network_driver
     from napalm.base import ModuleImportError
     HAS_NAPALM = True
 except ImportError:
-    raise AnsibleError(
-        'Napalm is required to use the napalm connection type.\n'
-        'Please run pip install napalm'
-    )
+    HAS_NAPALM = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(NetworkConnectionBase):
@@ -161,6 +155,11 @@ class Connection(NetworkConnectionBase):
         self.napalm = None
 
     def _connect(self):
+        if not HAS_NAPALM:
+            raise AnsibleError(
+                'Napalm is required to use the napalm connection type.\n'
+                'Please run pip install napalm'
+            )
         super(Connection, self)._connect()
 
         if not self.connected:
@@ -186,7 +185,7 @@ class Connection(NetworkConnectionBase):
 
             self.napalm.open()
 
-            self._sub_plugins.append({'type': 'external', 'name': 'napalm', 'obj': self.napalm})
+            self._sub_plugin = {'type': 'external', 'name': 'napalm', 'obj': self.napalm}
             display.vvvv('created napalm device for network_os %s' % self._network_os, host=host)
             self._connected = True
 

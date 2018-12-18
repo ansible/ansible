@@ -109,6 +109,7 @@ options:
     description:
       - Whether or not to require SSL validation of API endpoints.
     version_added: 1.5
+    type: bool
 requirements:
   - "python >= 2.6"
   - pyrax

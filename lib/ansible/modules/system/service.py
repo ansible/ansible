@@ -14,9 +14,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: service
-author:
-    - Ansible Core Team
-    - Michael DeHaan
 version_added: "0.1"
 short_description:  Manage services
 description:
@@ -72,6 +69,11 @@ options:
         version_added: 2.2
 notes:
     - For Windows targets, use the M(win_service) module instead.
+seealso:
+- module: win_service
+author:
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''
@@ -479,7 +481,7 @@ class LinuxService(Service):
                     res = version_re.search(stdout)
                     if res:
                         self.upstart_version = LooseVersion(res.groups()[0])
-            except:
+            except Exception:
                 pass  # we'll use the default of 0.0.0
 
             self.svc_cmd = location['initctl']
@@ -718,7 +720,7 @@ class LinuxService(Service):
             if self.changed:
                 try:
                     write_to_override_file(override_file_name, override_state)
-                except:
+                except Exception:
                     self.module.fail_json(msg='Could not modify override file')
 
             return
@@ -1005,7 +1007,7 @@ class FreeBsdService(Service):
         rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
         try:
             rcvars = shlex.split(stdout, comments=True)
-        except:
+        except Exception:
             # TODO: add a warning to the output with the failure
             pass
 

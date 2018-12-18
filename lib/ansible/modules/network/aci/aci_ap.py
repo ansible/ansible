@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -18,34 +18,41 @@ description:
 - Manage top level Application Profile (AP) objects on Cisco ACI fabrics
 notes:
 - This module does not manage EPGs, see M(aci_epg) to do this.
-- The C(tenant) used must exist before using this module in your playbook.
+- The used C(tenant) must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(fv:Ap) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Ap).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
 options:
-   tenant:
-     description:
-     - The name of an existing tenant.
-     required: yes
-     aliases: [ tenant_name ]
-   ap:
-     description:
-     - The name of the application network profile.
-     required: yes
-     aliases: [ app_profile, app_profile_name, name ]
-   description:
-     description:
-     - Description for the AP.
-     aliases: [ descr ]
-   state:
-     description:
-     - Use C(present) or C(absent) for adding or removing.
-     - Use C(query) for listing an object or multiple objects.
-     choices: [ absent, present, query ]
-     default: present
+  tenant:
+    description:
+    - The name of an existing tenant.
+    type: str
+    required: yes
+    aliases: [ tenant_name ]
+  ap:
+    description:
+    - The name of the application network profile.
+    type: str
+    required: yes
+    aliases: [ app_profile, app_profile_name, name ]
+  description:
+    description:
+    - Description for the AP.
+    type: str
+    aliases: [ descr ]
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    type: str
+    choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment: aci
 '''
 

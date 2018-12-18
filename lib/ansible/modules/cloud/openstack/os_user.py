@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: os_user
 short_description: Manage OpenStack Identity Users
 extends_documentation_fragment: openstack
-author: David Shrewsbury
+author: David Shrewsbury (@Shrews)
 version_added: "2.0"
 description:
     - Manage OpenStack Identity users. Users can be created,
@@ -33,7 +33,7 @@ options:
      description:
         - Password for the user
    update_password:
-     default: always
+     required: false
      choices: ['always', 'on_create']
      version_added: "2.3"
      description:
@@ -97,6 +97,15 @@ EXAMPLES = '''
     email: demo@example.com
     domain: default
     default_project: demo
+
+# Create a user without password
+- os_user:
+    cloud: mycloud
+    state: present
+    name: demouser
+    email: demo@example.com
+    domain: default
+    default_project: demo
 '''
 
 
@@ -151,12 +160,12 @@ def _get_domain_id(cloud, domain):
     try:
         # We assume admin is passing domain id
         domain_id = cloud.get_domain(domain)['id']
-    except:
+    except Exception:
         # If we fail, maybe admin is passing a domain name.
         # Note that domains have unique names, just like id.
         try:
             domain_id = cloud.search_domains(filters={'name': domain})[0]['id']
-        except:
+        except Exception:
             # Ok, let's hope the user is non-admin and passing a sane id
             domain_id = domain
 
@@ -181,7 +190,7 @@ def main():
         domain=dict(required=False, default=None),
         enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
-        update_password=dict(default='always', choices=['always', 'on_create']),
+        update_password=dict(default=None, choices=['always', 'on_create']),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -201,11 +210,12 @@ def main():
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-        user = cloud.get_user(name)
-
         domain_id = None
         if domain:
             domain_id = _get_domain_id(cloud, domain)
+            user = cloud.get_user(name, domain_id=domain_id)
+        else:
+            user = cloud.get_user(name)
 
         if state == 'present':
             if update_password in ('always', 'on_create'):
@@ -271,7 +281,10 @@ def main():
             if user is None:
                 changed = False
             else:
-                cloud.delete_user(user['id'])
+                if domain:
+                    cloud.delete_user(user['id'], domain_id=domain_id)
+                else:
+                    cloud.delete_user(user['id'])
                 changed = True
             module.exit_json(changed=changed)
 

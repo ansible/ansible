@@ -60,6 +60,12 @@ options:
     description:
       - Set the stdin of the command directly to the specified value.
     version_added: "2.4"
+  stdin_add_newline:
+    type: bool
+    default: yes
+    description:
+      - If set to C(yes), append a newline to stdin data.
+    version_added: "2.8"
 notes:
   -  If you want to execute a command securely and predictably, it may be
      better to use the M(command) module instead. Best practices when writing
@@ -75,6 +81,11 @@ notes:
   - An alternative to using inline shell scripts with this module is to use
     the M(script) module possibly together with the M(template) module.
   - For Windows targets, use the M(win_shell) module instead.
+seealso:
+- module: command
+- module: raw
+- module: script
+- module: win_shell
 author:
     - Ansible Core Team
     - Michael DeHaan

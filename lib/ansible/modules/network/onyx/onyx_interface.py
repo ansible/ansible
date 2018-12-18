@@ -81,7 +81,7 @@ EXAMPLES = """
   onyx_interface:
       name: Eth1/2
       description: test-interface
-      speed: 100 GB
+      speed: 100G
       mtu: 512
 
 - name: make interface up
@@ -346,9 +346,12 @@ class OnyxInterfaceModule(BaseOnyxModule):
                 self._current_config[if_name] = self._create_if_data(
                     if_name, if_data)
         else:
+            if_data = dict()
             for if_config in config:
-                for if_name, if_data in iteritems(if_config):
-                    if_data = if_data[0]
+                for if_name, if_attr in iteritems(if_config):
+                    for config in if_attr:
+                        for key, value in iteritems(config):
+                            if_data[key] = value
                     self._current_config[if_name] = self._create_if_data(
                         if_name, if_data)
 

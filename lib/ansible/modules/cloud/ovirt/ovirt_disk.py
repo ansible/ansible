@@ -77,6 +77,7 @@ options:
         choices: ['raw', 'cow']
     sparse:
         required: False
+        type: bool
         version_added: "2.5"
         description:
             - "I(True) if the disk should be sparse (also known as I(thin provision)).
@@ -100,6 +101,7 @@ options:
             - "Please take a look at C(image_path) documentation to see the correct
                usage of this parameter."
         version_added: "2.3"
+        type: bool
     profile:
         description:
             - "Disk profile name to be attached to disk. By default profile is chosen by oVirt/RHV engine."
@@ -110,9 +112,11 @@ options:
     bootable:
         description:
             - "I(True) if the disk should be bootable. By default when disk is created it isn't bootable."
+        type: bool
     shareable:
         description:
             - "I(True) if the disk should be shareable. By default when disk is created it isn't shareable."
+        type: bool
     logical_unit:
         description:
             - "Dictionary which describes LUN to be directly attached to VM:"
@@ -132,6 +136,7 @@ options:
             - "Note that this parameter isn't idempotent, as it's not possible
                to check if the disk should be or should not be sparsified."
         version_added: "2.4"
+        type: bool
     openstack_volume_type:
         description:
             - "Name of the openstack volume type. This is valid when working
@@ -146,6 +151,25 @@ options:
                your playbook accordingly to not export the disk all the time.
                This option is valid only for template disks."
         version_added: "2.4"
+    host:
+        description:
+            - "When the hypervisor name is specified the newly created disk or
+               an existing disk will refresh its information about the
+               underlying storage( Disk size, Serial, Product ID, Vendor ID ...)
+               The specified host will be used for gathering the storage
+               related information. This option is only valid for passthrough
+               disks. This option requires at least the logical_unit.id to be
+               specified"
+        version_added: "2.8"
+    wipe_after_delete:
+        description:
+            - "If the disk's Wipe After Delete is enabled, then the disk is first wiped."
+        type: bool
+    activate:
+        description:
+            - I(True) if the disk should be activated.
+        version_added: "2.8"
+        type: bool
 extends_documentation_fragment: ovirt
 '''
 
@@ -253,12 +277,10 @@ import ssl
 
 from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
 from ansible.module_utils.six.moves.urllib.parse import urlparse
-
 try:
     import ovirtsdk4.types as otypes
 except ImportError:
     pass
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
     BaseModule,
@@ -444,6 +466,7 @@ class DisksModule(BaseModule):
             ],
             quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') else None,
             shareable=self._module.params.get('shareable'),
+            wipe_after_delete=self.param('wipe_after_delete'),
             lun_storage=otypes.HostStorage(
                 type=otypes.StorageType(
                     logical_unit.get('storage_type', 'iscsi')
@@ -514,7 +537,8 @@ class DisksModule(BaseModule):
             equal(self._module.params.get('description'), entity.description) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id', None)) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
-            equal(self._module.params.get('shareable'), entity.shareable)
+            equal(self._module.params.get('shareable'), entity.shareable) and
+            equal(self.param('wipe_after_delete'), entity.wipe_after_delete)
         )
 
 
@@ -527,14 +551,15 @@ class DiskAttachmentsModule(DisksModule):
                 self._module.params.get('interface')
             ) if self._module.params.get('interface') else None,
             bootable=self._module.params.get('bootable'),
-            active=True,
+            active=self.param('activate'),
         )
 
     def update_check(self, entity):
         return (
             super(DiskAttachmentsModule, self)._update_check(follow_link(self._connection, entity.disk)) and
             equal(self._module.params.get('interface'), str(entity.interface)) and
-            equal(self._module.params.get('bootable'), entity.bootable)
+            equal(self._module.params.get('bootable'), entity.bootable) and
+            equal(self.param('activate'), entity.active)
         )
 
 
@@ -578,11 +603,24 @@ def main():
         sparsify=dict(default=None, type='bool'),
         openstack_volume_type=dict(default=None),
         image_provider=dict(default=None),
+        host=dict(default=None),
+        wipe_after_delete=dict(type='bool', default=None),
+        activate=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    lun = module.params.get('logical_unit')
+    host = module.params['host']
+    # Fail when host is specified with the LUN id. Lun id is needed to identify
+    # an existing disk if already available inthe environment.
+    if (host and lun is None) or (host and lun.get("id") is None):
+        module.fail_json(
+            msg="Can not use parameter host ({0!s}) without "
+            "specifying the logical_unit id".format(host)
+        )
 
     check_sdk(module)
     check_params(module)
@@ -599,7 +637,6 @@ def main():
             service=disks_service,
         )
 
-        lun = module.params.get('logical_unit')
         if lun:
             disk = _search_by_lun(disks_service, lun.get('id'))
 
@@ -689,6 +726,13 @@ def main():
                     )
             elif state == 'detached':
                 ret = disk_attachments_module.remove()
+
+        # When the host parameter is specified and the disk is not being
+        # removed, refresh the information about the LUN.
+        if state != 'absent' and host:
+            hosts_service = connection.system_service().hosts_service()
+            host_id = get_id_by_name(hosts_service, host)
+            disks_service.disk_service(disk.id).refresh_lun(otypes.Host(id=host_id))
 
         module.exit_json(**ret)
     except Exception as e:

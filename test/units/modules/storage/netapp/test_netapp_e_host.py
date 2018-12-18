@@ -13,7 +13,7 @@ import unittest
 import mock
 import pytest
 import json
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.module_utils._text import to_bytes
 
 

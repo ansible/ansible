@@ -134,6 +134,11 @@ class ShellConfig(EnvironmentConfig):
         """
         super(ShellConfig, self).__init__(args, 'shell')
 
+        self.raw = args.raw  # type: bool
+
+        if self.raw:
+            self.httptester = False
+
 
 class SanityConfig(TestConfig):
     """Configuration for the sanity command."""

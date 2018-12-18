@@ -114,4 +114,24 @@
       - ipsecUser
       - biometricInfo
 
+- name: Create private key 3
+  openssl_privatekey:
+    path: "{{ output_dir }}/privatekey3.pem"
+
+- name: Create CSR 3
+  openssl_csr:
+    subject:
+      CN: www.example.com
+    privatekey_path: "{{ output_dir }}/privatekey3.pem"
+    path: "{{ output_dir }}/csr3.pem"
+        
+- name: Create certificate3 with notBefore and notAfter
+  openssl_certificate:
+    provider: selfsigned
+    selfsigned_not_before: 20181023133742Z
+    selfsigned_not_after: 20191023133742Z
+    path: "{{ output_dir }}/cert3.pem"
+    csr_path: "{{ output_dir }}/csr3.pem"
+    privatekey_path: "{{ output_dir }}/privatekey3.pem"
+        
 - import_tasks: ../tests/validate_selfsigned.yml

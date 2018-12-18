@@ -25,6 +25,7 @@ options:
   name:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features.
+      - To list all available features use the PowerShell command C(Get-WindowsFeature).
     required: yes
     type: list
   state:
@@ -49,6 +50,9 @@ options:
       - Not supported in Windows 2008 R2 and will be ignored.
       - Can either be C({driveletter}:\sources\sxs) or C(\\{IP}\share\sources\sxs).
     version_added: "2.1"
+seealso:
+- module: win_chocolatey
+- module: win_package
 author:
     - Paul Durivage (@angstwad)
     - Trond Hindenes (@trondhindenes)
