@@ -120,7 +120,7 @@ RETURN = """
 result:
     description: information about performed operation
     returned: always
-    type: string
+    type: str
     sample: {
         "changed": true,
         "dvswitch": "dvSwitch",

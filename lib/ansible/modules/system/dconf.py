@@ -71,7 +71,7 @@ RETURN = """
 value:
     description: value associated with the requested key
     returned: success, state was "read"
-    type: string
+    type: str
     sample: "'Default'"
 """
 

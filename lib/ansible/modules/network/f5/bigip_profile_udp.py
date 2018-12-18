@@ -86,7 +86,7 @@ RETURN = r'''
 parent:
   description: The new parent of the resource.
   returned: changed
-  type: string
+  type: str
   sample: udp
 idle_timeout:
   description: The new idle timeout of the resource.

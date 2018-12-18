@@ -51,22 +51,22 @@ repository_metadata:
     account_id:
       description: "The ID of the AWS account associated with the repository."
       returned: when state is present
-      type: string
+      type: str
       sample: "268342293637"
     arn:
       description: "The Amazon Resource Name (ARN) of the repository."
       returned: when state is present
-      type: string
+      type: str
       sample: "arn:aws:codecommit:ap-northeast-1:268342293637:username"
     clone_url_http:
       description: "The URL to use for cloning the repository over HTTPS."
       returned: when state is present
-      type: string
+      type: str
       sample: "https://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/reponame"
     clone_url_ssh:
       description: "The URL to use for cloning the repository over SSH."
       returned: when state is present
-      type: string
+      type: str
       sample: "ssh://git-codecommit.ap-northeast-1.amazonaws.com/v1/repos/reponame"
     creation_date:
       description: "The date and time the repository was created, in timestamp format."
@@ -76,22 +76,22 @@ repository_metadata:
     last_modified_date:
       description: "The date and time the repository was last modified, in timestamp format."
       returned: when state is present
-      type: string
+      type: str
       sample: "2018-10-16T13:21:41.261000+09:00"
     repository_description:
       description: "A comment or description about the repository."
       returned: when state is present
-      type: string
+      type: str
       sample: "test from ptux"
     repository_id:
       description: "The ID of the repository that was created or deleted"
       returned: always
-      type: string
+      type: str
       sample: "e62a5c54-i879-497b-b62f-9f99e4ebfk8e"
     repository_name:
       description: "The repository's name."
       returned: when state is present
-      type: string
+      type: str
       sample: "reponame"
 
 response_metadata:
@@ -106,17 +106,17 @@ response_metadata:
     http_status_code:
       description: "http status code of http response"
       returned: always
-      type: string
+      type: str
       sample: "200"
     request_id:
       description: "http request id"
       returned: always
-      type: string
+      type: str
       sample: "fb49cfca-d0fa-11e8-85cb-b3cc4b5045ef"
     retry_attempts:
       description: "numbers of retry attempts"
       returned: always
-      type: string
+      type: str
       sample: "0"
 '''
 

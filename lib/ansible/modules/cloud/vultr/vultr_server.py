@@ -149,7 +149,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -164,7 +164,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_server:
   description: Response from Vultr API with a few additions/modification
@@ -174,17 +174,17 @@ vultr_server:
     id:
       description: ID of the server
       returned: success
-      type: string
+      type: str
       sample: 10194376
     name:
       description: Name (label) of the server
       returned: success
-      type: string
+      type: str
       sample: "ansible-test-vm"
     plan:
       description: Plan used for the server
       returned: success
-      type: string
+      type: str
       sample: "1024 MB RAM,25 GB SSD,1.00 TB BW"
     allowed_bandwidth_gb:
       description: Allowed bandwidth to use in GB
@@ -209,57 +209,57 @@ vultr_server:
     date_created:
       description: Date when the server was created
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
     default_password:
       description: Password to login as root into the server
       returned: success
-      type: string
+      type: str
       sample: "!p3EWYJm$qDWYaFr"
     disk:
       description: Information about the disk
       returned: success
-      type: string
+      type: str
       sample: "Virtual 25 GB"
     v4_gateway:
       description: IPv4 gateway
       returned: success
-      type: string
+      type: str
       sample: "45.32.232.1"
     internal_ip:
       description: Internal IP
       returned: success
-      type: string
+      type: str
       sample: ""
     kvm_url:
       description: URL to the VNC
       returned: success
-      type: string
+      type: str
       sample: "https://my.vultr.com/subs/vps/novnc/api.php?data=xyz"
     region:
       description: Region the server was deployed into
       returned: success
-      type: string
+      type: str
       sample: "Amsterdam"
     v4_main_ip:
       description: Main IPv4
       returned: success
-      type: string
+      type: str
       sample: "45.32.233.154"
     v4_netmask:
       description: Netmask IPv4
       returned: success
-      type: string
+      type: str
       sample: "255.255.254.0"
     os:
       description: Operating system used for the server
       returned: success
-      type: string
+      type: str
       sample: "CentOS 6 x64"
     firewall_group:
       description: Firewall group the server is assinged to
       returned: success and available
-      type: string
+      type: str
       sample: "CentOS 6 x64"
     pending_charges:
       description: Pending charges
@@ -269,42 +269,42 @@ vultr_server:
     power_status:
       description: Power status of the server
       returned: success
-      type: string
+      type: str
       sample: "running"
     ram:
       description: Information about the RAM size
       returned: success
-      type: string
+      type: str
       sample: "1024 MB"
     server_state:
       description: State about the server
       returned: success
-      type: string
+      type: str
       sample: "ok"
     status:
       description: Status about the deployment of the server
       returned: success
-      type: string
+      type: str
       sample: "active"
     tag:
       description: TBD
       returned: success
-      type: string
+      type: str
       sample: ""
     v6_main_ip:
       description: Main IPv6
       returned: success
-      type: string
+      type: str
       sample: ""
     v6_network:
       description: Network IPv6
       returned: success
-      type: string
+      type: str
       sample: ""
     v6_network_size:
       description:  Network size IPv6
       returned: success
-      type: string
+      type: str
       sample: ""
     v6_networks:
       description: Networks IPv6

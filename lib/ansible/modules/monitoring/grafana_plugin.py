@@ -61,7 +61,7 @@ RETURN = '''
 ---
 version:
   description: version of the installed / removed plugin.
-  type: string
+  type: str
   returned: allways
 '''
 

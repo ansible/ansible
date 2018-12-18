@@ -74,27 +74,27 @@ ansible_net_gather_subset:
 ansible_net_model:
   description: The model name returned from the device
   returned: always
-  type: string
+  type: str
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_iostype:
   description: The operating system type (IOS or IOS-XE) running on the remote device
   returned: always
-  type: string
+  type: str
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
-  type: string
+  type: str
 ansible_net_image:
   description: The image file the device is running
   returned: always
-  type: string
+  type: str
 ansible_net_stacked_models:
   description: The model names of each device in the stack
   returned: when multiple devices are configured in a stack
@@ -126,7 +126,7 @@ ansible_net_memtotal_mb:
 ansible_net_config:
   description: The current active config from the device
   returned: when config is configured
-  type: string
+  type: str
 
 # interfaces
 ansible_net_all_ipv4_addresses:

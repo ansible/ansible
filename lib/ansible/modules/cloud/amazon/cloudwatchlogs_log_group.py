@@ -90,31 +90,31 @@ log_groups:
         log_group_name:
             description: The name of the log group.
             returned: always
-            type: string
+            type: str
         creation_time:
             description: The creation time of the log group.
             returned: always
-            type: integer
+            type: int
         retention_in_days:
             description: The number of days to retain the log events in the specified log group.
             returned: always
-            type: integer
+            type: int
         metric_filter_count:
             description: The number of metric filters.
             returned: always
-            type: integer
+            type: int
         arn:
             description: The Amazon Resource Name (ARN) of the log group.
             returned: always
-            type: string
+            type: str
         stored_bytes:
             description: The number of bytes stored.
             returned: always
-            type: string
+            type: str
         kms_key_id:
             description: The Amazon Resource Name (ARN) of the CMK to use when encrypting log data.
             returned: always
-            type: string
+            type: str
 '''
 
 import traceback

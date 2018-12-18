@@ -62,6 +62,6 @@ RETURN = r'''
 output:
     description: A message describing the task result.
     returned: always
-    type: string
+    type: str
     sample: "Route added"
 '''

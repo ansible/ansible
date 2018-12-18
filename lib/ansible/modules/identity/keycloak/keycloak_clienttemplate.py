@@ -212,7 +212,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: "Client template testclient has been updated"
 
 proposed:

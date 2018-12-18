@@ -54,7 +54,7 @@ RETURN = '''
 rebooted:
     description: Whether the device was instructed to reboot.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 '''
 

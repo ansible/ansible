@@ -159,22 +159,22 @@ external_host_provider:
     description: "Dictionary of all the external_host_provider attributes. External provider attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/external_host_provider."
     returned: "On success and if parameter 'type: foreman' is used."
-    type: dictionary
+    type: dict
 openstack_image_provider:
     description: "Dictionary of all the openstack_image_provider attributes. External provider attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_image_provider."
     returned: "On success and if parameter 'type: os_image' is used."
-    type: dictionary
+    type: dict
 openstack_volume_provider:
     description: "Dictionary of all the openstack_volume_provider attributes. External provider attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_volume_provider."
     returned: "On success and if parameter 'type: os_volume' is used."
-    type: dictionary
+    type: dict
 openstack_network_provider:
     description: "Dictionary of all the openstack_network_provider attributes. External provider attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_network_provider."
     returned: "On success and if parameter 'type: network' is used."
-    type: dictionary
+    type: dict
 '''
 
 import traceback

@@ -109,27 +109,27 @@ RETURN = '''
 id:
   description: UUID of the vpc offering.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: The name of the vpc offering
   returned: success
-  type: string
+  type: str
   sample: MyCustomVPCOffering
 display_text:
   description: The display text of the vpc offering
   returned: success
-  type: string
+  type: str
   sample: My vpc offering
 state:
   description: The state of the vpc offering
   returned: success
-  type: string
+  type: str
   sample: Enabled
 service_offering_id:
   description: The service offering ID.
   returned: success
-  type: string
+  type: str
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
 is_default:
   description: Whether VPC offering is the default offering or not.

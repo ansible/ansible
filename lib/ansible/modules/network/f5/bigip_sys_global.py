@@ -89,7 +89,7 @@ RETURN = r'''
 banner_text:
   description: The new text to present in the advisory banner.
   returned: changed
-  type: string
+  type: str
   sample: This is a corporate device. Do not touch.
 console_timeout:
   description:

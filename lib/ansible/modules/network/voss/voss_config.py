@@ -195,7 +195,7 @@ commands:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/vsp200_config.2018-08-21@15:00:21
 """
 from ansible.module_utils._text import to_text

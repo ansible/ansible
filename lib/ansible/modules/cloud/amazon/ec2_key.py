@@ -104,7 +104,7 @@ changed:
 msg:
   description: short message describing the action taken
   returned: always
-  type: string
+  type: str
   sample: key pair created
 key:
   description: details of the keypair (this is set to null when state is absent)
@@ -114,17 +114,17 @@ key:
     fingerprint:
       description: fingerprint of the key
       returned: when state is present
-      type: string
+      type: str
       sample: 'b0:22:49:61:d9:44:9d:0c:7e:ac:8a:32:93:21:6c:e8:fb:59:62:43'
     name:
       description: name of the keypair
       returned: when state is present
-      type: string
+      type: str
       sample: my_keypair
     private_key:
       description: private key of a newly created keypair
       returned: when a new keypair is created by AWS (key_material is not provided)
-      type: string
+      type: str
       sample: '-----BEGIN RSA PRIVATE KEY-----
         MIIEowIBAAKC...
         -----END RSA PRIVATE KEY-----'

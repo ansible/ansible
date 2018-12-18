@@ -215,7 +215,7 @@ RETURN = '''
 architecture:
     description: architecture of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "x86_64"
 block_device_mapping:
     description: block device mapping associated with image
@@ -233,22 +233,22 @@ block_device_mapping:
 creationDate:
     description: creation date of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "2015-10-15T22:43:44.000Z"
 description:
     description: description of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "nat-server"
 hypervisor:
     description: type of hypervisor
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "xen"
 image_id:
     description: id of the image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "ami-1234abcd"
 is_public:
     description: whether image is public
@@ -264,37 +264,37 @@ launch_permission:
 location:
     description: location of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "315210894379/nat-server"
 name:
     description: ami name of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "nat-server"
 ownerId:
     description: owner of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "435210894375"
 platform:
     description: platform of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: null
 root_device_name:
     description: root device name of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "/dev/sda1"
 root_device_type:
     description: root device type of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "ebs"
 state:
     description: state of image
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "available"
 tags:
     description: a dictionary of tags assigned to image
@@ -307,7 +307,7 @@ tags:
 virtualization_type:
     description: image virtualization type
     returned: when AMI is created or already exists
-    type: string
+    type: str
     sample: "hvm"
 snapshots_deleted:
     description: a list of snapshot ids deleted after deregistering image

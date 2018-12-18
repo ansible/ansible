@@ -73,17 +73,17 @@ RETURN = r'''
 expire_at_utc:
     description: Calculated utc date time when the notification expires.
     returned: allways
-    type: string
+    type: str
     sample: 07 July 2017 04:50:54
 no_toast_sent_reason:
     description: Text containing the reason why a notification was not sent.
     returned: when no logged in users are detected
-    type: string
+    type: str
     sample: No logged in users to notify
 sent_localtime:
     description: local date time when the notification was sent.
     returned: allways
-    type: string
+    type: str
     sample: 07 July 2017 05:45:54
 time_taken:
     description: How long the module took to run on the remote windows host in seconds.
@@ -93,6 +93,6 @@ time_taken:
 toast_sent:
     description: Whether the module was able to send a toast notification or not.
     returned: allways
-    type: boolean
+    type: bool
     sample: false
 '''

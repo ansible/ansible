@@ -79,12 +79,12 @@ block_device_mapping:
     }]"
 classic_link_vpc_security_groups:
     description: IDs of one or more security groups for the VPC specified in classic_link_vpc_id
-    type: string
+    type: str
     returned: always
     sample:
 created_time:
     description: The creation date and time for the launch configuration
-    type: string
+    type: str
     returned: always
     sample: "2016-05-27T13:47:44.216000+00:00"
 ebs_optimized:
@@ -94,7 +94,7 @@ ebs_optimized:
     sample: true,
 image_id:
     description: ID of the Amazon Machine Image (AMI)
-    type: string
+    type: str
     returned: always
     sample: "ami-12345678"
 instance_monitoring:
@@ -106,32 +106,32 @@ instance_monitoring:
     }"
 instance_type:
     description: Instance type
-    type: string
+    type: str
     returned: always
     sample: "t2.micro"
 kernel_id:
     description: ID of the kernel associated with the AMI
-    type: string
+    type: str
     returned: always
     sample:
 key_name:
     description: Name of the key pair
-    type: string
+    type: str
     returned: always
     sample: "user_app"
 launch_configuration_arn:
     description: Amazon Resource Name (ARN) of the launch configuration
-    type: string
+    type: str
     returned: always
     sample: "arn:aws:autoscaling:us-east-1:666612345678:launchConfiguration:ba785e3a-dd42-6f02-4585-ea1a2b458b3d:launchConfigurationName/lc-app"
 launch_configuration_name:
     description: Name of the launch configuration
-    type: string
+    type: str
     returned: always
     sample: "lc-app"
 ramdisk_id:
     description: ID of the RAM disk associated with the AMI
-    type: string
+    type: str
     returned: always
     sample:
 security_groups:
@@ -143,7 +143,7 @@ security_groups:
     ]"
 user_data:
     description: User data available
-    type: string
+    type: str
     returned: always
     sample:
 '''

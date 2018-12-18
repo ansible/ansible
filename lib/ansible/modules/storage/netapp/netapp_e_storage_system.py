@@ -87,7 +87,7 @@ EXAMPLES = '''
 RETURN = '''
 msg:
     description: State of request
-    type: string
+    type: str
     returned: always
     sample: 'Storage system removed.'
 '''

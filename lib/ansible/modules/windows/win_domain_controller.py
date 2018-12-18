@@ -81,7 +81,7 @@ RETURN = '''
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
-    type: boolean
+    type: bool
     sample: true
 
 '''

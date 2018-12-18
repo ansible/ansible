@@ -111,37 +111,37 @@ RETURN = '''
 name:
     description: BE name
     returned: always
-    type: string
+    type: str
     sample: pre-upgrade
 snapshot:
     description: ZFS snapshot to create BE from
     returned: always
-    type: string
+    type: str
     sample: rpool/ROOT/oi-hipster@fresh
 description:
     description: BE description
     returned: always
-    type: string
+    type: str
     sample: Upgrade from 9.0 to 10.0
 options:
     description: BE additional options
     returned: always
-    type: string
+    type: str
     sample: compression=on
 mountpoint:
     description: BE mountpoint
     returned: always
-    type: string
+    type: str
     sample: /mnt/be
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 force:
     description: if forced action is wanted
     returned: always
-    type: boolean
+    type: bool
     sample: False
 '''
 

@@ -150,7 +150,7 @@ RETURN = r'''
 cmd:
     description: The complete command line used by the module, including PsExec call and additional options.
     returned: always
-    type: string
+    type: str
     sample: psexec.exe -nobanner \\remote_server -u "DOMAIN\Administrator" -p "some_password" -accepteula E:\setup.exe
 rc:
     description: The return code for the command
@@ -160,11 +160,11 @@ rc:
 stdout:
     description: The standard output from the command
     returned: always
-    type: string
+    type: str
     sample: Success.
 stderr:
     description: The error output from the command
     returned: always
-    type: string
+    type: str
     sample: Error 15 running E:\setup.exe
 '''

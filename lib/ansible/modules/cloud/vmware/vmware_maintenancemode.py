@@ -85,17 +85,17 @@ RETURN = '''
 hostsystem:
     description: Name of vim reference
     returned: always
-    type: string
+    type: str
     sample: "'vim.HostSystem:host-236'"
 hostname:
     description: Name of host in vCenter
     returned: always
-    type: string
+    type: str
     sample: "esxi.local.domain"
 status:
     description: Action taken
     returned: always
-    type: string
+    type: str
     sample: "ENTER"
 '''
 

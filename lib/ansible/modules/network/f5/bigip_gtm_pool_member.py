@@ -198,7 +198,7 @@ member_order:
 monitor:
   description: The new monitor assigned to the pool member.
   returned: changed
-  type: string
+  type: str
   sample: /Common/monitor1
 packets_enabled:
   description: Whether the packets limit is enabled.
@@ -218,7 +218,7 @@ ratio:
 description:
   description: The new description of the member.
   returned: changed
-  type: string
+  type: str
   sample: My description
 '''
 

@@ -172,7 +172,7 @@ RETURN = '''
 user:
     description: The name of the user to add or remove.
     returned: success
-    type: string
+    type: str
 '''
 
 import os

@@ -90,12 +90,12 @@ RETURN = '''
 id:
   description: ID of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 password:
   description: The new default password.
   returned: success
-  type: string
+  type: str
   sample: ahQu5nuNge3keesh
 '''
 

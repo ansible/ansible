@@ -142,7 +142,7 @@ RETURN = """
 msg:
     description: Success message
     returned: on success
-    type: string
+    type: str
     sample: The ldap settings have been updated.
 """
 

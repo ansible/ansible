@@ -127,7 +127,7 @@ RETURN = '''
 result:
     description: Message detailing actions result
     returned: success
-    type: string
+    type: str
     sample: "Requested actions were successfully performed on all devices."
 '''
 

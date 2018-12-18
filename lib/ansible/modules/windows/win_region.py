@@ -90,6 +90,6 @@ RETURN = r'''
 restart_required:
     description: Whether a reboot is required for the change to take effect
     returned: success
-    type: boolean
+    type: bool
     sample: True
 '''

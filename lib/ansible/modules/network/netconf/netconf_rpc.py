@@ -123,7 +123,7 @@ stdout:
   description: The raw XML string containing configuration or state data
                received from the underlying ncclient library.
   returned: always apart from low-level errors (such as action plugin)
-  type: string
+  type: str
   sample: '...'
 stdout_lines:
   description: The value of stdout split into a list

@@ -163,37 +163,37 @@ RETURN = '''
 id:
   description: UUID of the account.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 name:
   description: Name of the account.
   returned: success
-  type: string
+  type: str
   sample: linus@example.com
 account_type:
   description: Type of the account.
   returned: success
-  type: string
+  type: str
   sample: user
 state:
   description: State of the account.
   returned: success
-  type: string
+  type: str
   sample: enabled
 network_domain:
   description: Network domain of the account.
   returned: success
-  type: string
+  type: str
   sample: example.local
 domain:
   description: Domain the account is related.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 role:
   description: The role name of the account
   returned: success
-  type: string
+  type: str
   sample: Domain Admin
 '''
 

@@ -391,7 +391,7 @@ RETURN = '''
 filename:
     description: Path to the generated Certificate
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/crt/www.ansible.com.crt
 '''
 

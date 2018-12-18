@@ -72,12 +72,12 @@ group:
         name:
             description: name of the Redshift subnet group
             returned: success
-            type: string
+            type: str
             sample: "redshift_subnet_group_name"
         vpc_id:
             description: Id of the VPC where the subnet is located
             returned: success
-            type: string
+            type: str
             sample: "vpc-aabb1122"
 '''
 

@@ -149,52 +149,52 @@ RETURN = r'''
 arp_log_level:
   description: Lowest level of ARP messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: error
 http_compression_log_level:
   description: Lowest level of HTTP compression messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: debug
 http_log_level:
   description: Lowest level of HTTP messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: notice
 ip_log_level:
   description: Lowest level of IP address messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: warning
 irule_log_level:
   description: Lowest level of iRule messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: error
 layer4_log_level:
   description: Lowest level of Layer 4 messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: notice
 net_log_level:
   description: Lowest level of network messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: critical
 os_log_level:
   description: Lowest level of operating system messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: critical
 pva_log_level:
   description: Lowest level of PVA messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: debug
 ssl_log_level:
   description: Lowest level of SSL messages from the tmm daemon to log.
   returned: changed
-  type: string
+  type: str
   sample: critical
 '''
 

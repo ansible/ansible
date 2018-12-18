@@ -58,7 +58,7 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
+  type: str
   sample: "Device is Reloading. Please wait..."
 '''
 

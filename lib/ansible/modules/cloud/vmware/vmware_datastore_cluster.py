@@ -74,7 +74,7 @@ RETURN = """
 result:
     description: information about datastore cluster operation
     returned: always
-    type: string
+    type: str
     sample: "Datastore cluster 'DSC2' created successfully."
 """
 

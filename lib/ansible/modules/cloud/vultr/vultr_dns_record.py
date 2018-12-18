@@ -132,7 +132,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -152,22 +152,22 @@ vultr_dns_record:
     name:
       description: The name of the DNS record.
       returned: success
-      type: string
+      type: str
       sample: web
     record_type:
       description: The name of the DNS record.
       returned: success
-      type: string
+      type: str
       sample: web
     data:
       description: Data of the DNS record.
       returned: success
-      type: string
+      type: str
       sample: 10.10.10.10
     domain:
       description: Domain the DNS record is related to.
       returned: success
-      type: string
+      type: str
       sample: example.com
     priority:
       description: Priority of the DNS record.

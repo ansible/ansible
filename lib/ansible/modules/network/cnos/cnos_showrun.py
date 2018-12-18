@@ -61,7 +61,7 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
+  type: str
   sample: "Running Configuration saved in file"
 '''
 

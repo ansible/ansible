@@ -78,7 +78,7 @@ id:
 status:
     description: status of newly launched job
     returned: success
-    type: string
+    type: str
     sample: pending
 '''
 

@@ -117,7 +117,7 @@ RETURN = """
 msg:
     description: Success message
     returned: on success
-    type: string
+    type: str
     sample: The settings have been updated.
 asup:
     description:

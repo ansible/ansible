@@ -107,32 +107,32 @@ RETURN = '''
 id:
   description: UUID of the Public IP address.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 ip_address:
   description: Public IP address.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 zone:
   description: Name of zone the IP address is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 project:
   description: Name of project the IP address is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 account:
   description: Account the IP address is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 domain:
   description: Domain the IP address is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 tags:
   description: List of resource tags associated with the IP address.

@@ -183,22 +183,22 @@ RETURN = '''
 device:
     description: device name of attached volume
     returned: when success
-    type: string
+    type: str
     sample: "/def/sdf"
 volume_id:
     description: the id of volume
     returned: when success
-    type: string
+    type: str
     sample: "vol-35b333d9"
 volume_type:
     description: the volume type
     returned: when success
-    type: string
+    type: str
     sample: "standard"
 volume:
     description: a dictionary containing detailed attributes of the volume
     returned: when success
-    type: string
+    type: str
     sample: {
         "attachment_set": {
             "attach_time": "2015-10-23T00:22:29.000Z",

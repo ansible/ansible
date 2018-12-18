@@ -79,7 +79,7 @@ RETURN = '''
 changed:
   description: response to whether or not the api call completed successfully
   returned: always
-  type: boolean
+  type: bool
   sample: true
 
 stdout:

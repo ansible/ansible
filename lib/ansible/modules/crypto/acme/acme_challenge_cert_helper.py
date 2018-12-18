@@ -97,12 +97,12 @@ domain:
   description:
     - "The domain the challenge is for."
   returned: always
-  type: string
+  type: str
 challenge_certificate:
   description:
     - "The challenge certificate in PEM format."
   returned: always
-  type: string
+  type: str
 regular_certificate:
   description:
     - "A self-signed certificate for the challenge domain."
@@ -110,7 +110,7 @@ regular_certificate:
        https in the first place if that is needed for providing
        the challenge."
   returned: always
-  type: string
+  type: str
 '''
 
 from ansible.module_utils.acme import (

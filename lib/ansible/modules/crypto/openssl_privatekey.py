@@ -163,7 +163,7 @@ size:
 type:
     description: Algorithm used to generate the TLS/SSL private key
     returned: changed or success
-    type: string
+    type: str
     sample: RSA
 curve:
     description: Elliptic curve used to generate the TLS/SSL private key
@@ -173,7 +173,7 @@ curve:
 filename:
     description: Path to the generated TLS/SSL private key file
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/private/ansible.com.pem
 fingerprint:
     description: The fingerprint of the public key. Fingerprint will be generated for

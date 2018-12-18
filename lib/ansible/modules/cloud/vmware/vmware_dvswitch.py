@@ -196,7 +196,7 @@ RETURN = """
 result:
     description: information about performed operation
     returned: always
-    type: string
+    type: str
     sample: {
         "changed": false,
         "contact": null,

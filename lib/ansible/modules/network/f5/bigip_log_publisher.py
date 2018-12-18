@@ -67,7 +67,7 @@ RETURN = r'''
 description:
   description: The new description of the resource.
   returned: changed
-  type: string
+  type: str
   sample: "Security log publisher"
 destinations:
   description: The new list of destinations for the resource.

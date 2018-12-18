@@ -76,17 +76,17 @@ RETURN = r'''
 description:
   description: The new description of the management route.
   returned: changed
-  type: string
+  type: str
   sample: Route to TACACS
 gateway:
   description: The new gateway of the management route.
   returned: changed
-  type: string
+  type: str
   sample: 10.10.10.10
 network:
   description: The new network to use for the management route.
   returned: changed
-  type: string
+  type: str
   sample: default
 '''
 

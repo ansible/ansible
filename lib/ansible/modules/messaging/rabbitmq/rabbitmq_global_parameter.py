@@ -58,12 +58,12 @@ RETURN = '''
 name:
     description: name of the global parameter being set
     returned: success
-    type: string
+    type: str
     sample: "cluster_name"
 value:
     description: value of the global parameter, as a JSON term
     returned: changed
-    type: string
+    type: str
     sample: "the-cluster-name"
 '''
 

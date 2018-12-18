@@ -85,11 +85,11 @@ RETURN = '''
 before:
     description: value before modification
     returned: success
-    type: string
+    type: str
 after:
     description: value after modification
     returned: success
-    type: string
+    type: str
 '''
 
 import os

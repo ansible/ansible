@@ -139,38 +139,38 @@ alarms:
         alarm_arn:
             description: The Amazon Resource Name (ARN) of the alarm
             returned: when state present
-            type: string
+            type: str
         alarm_name:
             description: The name of the alarm
             returned: when state present
-            type: string
+            type: str
 service_namespace:
     description: The namespace of the AWS service.
     returned: when state present
-    type: string
+    type: str
     sample: ecs
 resource_id:
     description: The identifier of the resource associated with the scalable target.
     returned: when state present
-    type: string
+    type: str
     sample: service/cluster-name/service-name
 scalable_dimension:
     description: The scalable dimension associated with the scalable target.
     returned: when state present
-    type: string
+    type: str
     sample: ecs:service:DesiredCount
 policy_arn:
     description: The Amazon Resource Name (ARN) of the scaling policy..
     returned: when state present
-    type: string
+    type: str
 policy_name:
     description: The name of the scaling policy.
     returned: when state present
-    type: string
+    type: str
 policy_type:
     description: The policy type.
     returned: when state present
-    type: string
+    type: str
 min_capacity:
     description: The minimum value to scale to in response to a scale in event. Required if I(state) is C(present).
     returned: when state present
@@ -184,7 +184,7 @@ max_capacity:
 role_arn:
     description: The ARN of an IAM role that allows Application Auto Scaling to modify the scalable target on your behalf. Required if I(state) is C(present).
     returned: when state present
-    type: string
+    type: str
     sample: arn:aws:iam::123456789123:role/roleName
 step_scaling_policy_configuration:
     description: The step scaling policy.
@@ -194,7 +194,7 @@ step_scaling_policy_configuration:
         adjustment_type:
             description: The adjustment type
             returned: when state present and the policy type is StepScaling
-            type: string
+            type: str
             sample: "ChangeInCapacity, PercentChangeInCapacity, ExactCapacity"
         cooldown:
             description: The amount of time, in seconds, after a scaling activity completes
@@ -205,7 +205,7 @@ step_scaling_policy_configuration:
         metric_aggregation_type:
             description: The aggregation type for the CloudWatch metrics
             returned: when state present and the policy type is StepScaling
-            type: string
+            type: str
             sample: "Average, Minimum, Maximum"
         step_adjustments:
             description: A set of adjustments that enable you to scale based on the size of the alarm breach
@@ -224,12 +224,12 @@ target_tracking_scaling_policy_configuration:
                 predefined_metric_type:
                     description: The metric type
                     returned: when state present and the policy type is TargetTrackingScaling
-                    type: string
+                    type: str
                     sample: "ECSServiceAverageCPUUtilization, ECSServiceAverageMemoryUtilization"
                 resource_label:
                     description: Identifies the resource associated with the metric type
                     returned: when metric type is ALBRequestCountPerTarget
-                    type: string
+                    type: str
         scale_in_cooldown:
             description: The amount of time, in seconds, after a scale in activity completes before another scale in activity can start
             returned: when state present and the policy type is TargetTrackingScaling
@@ -248,7 +248,7 @@ target_tracking_scaling_policy_configuration:
 creation_time:
     description: The Unix timestamp for when the scalable target was created.
     returned: when state present
-    type: string
+    type: str
     sample: '2017-09-28T08:22:51.881000-03:00'
 '''  # NOQA
 

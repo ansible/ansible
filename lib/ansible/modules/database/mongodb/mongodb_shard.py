@@ -117,7 +117,7 @@ RETURN = '''
 mongodb_shard:
     description: The name of the shard to create.
     returned: success
-    type: string
+    type: str
 '''
 
 import os

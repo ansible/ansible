@@ -211,7 +211,7 @@ RETURN = '''
 cmd:
   description: pip command used by the module
   returned: success
-  type: string
+  type: str
   sample: pip2 install ansible six
 name:
   description: list of python modules targetted by pip
@@ -221,17 +221,17 @@ name:
 requirements:
   description: Path to the requirements file
   returned: success, if a requirements file was provided
-  type: string
+  type: str
   sample: "/srv/git/project/requirements.txt"
 version:
   description: Version of the package specified in 'name'
   returned: success, if a name and version were provided
-  type: string
+  type: str
   sample: "2.5.1"
 virtualenv:
   description: Path to the virtualenv
   returned: success, if a virtualenv path was provided
-  type: string
+  type: str
   sample: "/tmp/virtualenv"
 '''
 

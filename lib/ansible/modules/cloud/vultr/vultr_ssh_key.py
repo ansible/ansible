@@ -61,7 +61,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -76,7 +76,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_ssh_key:
   description: Response from Vultr API
@@ -86,22 +86,22 @@ vultr_ssh_key:
     id:
       description: ID of the ssh key
       returned: success
-      type: string
+      type: str
       sample: 5904bc6ed9234
     name:
       description: Name of the ssh key
       returned: success
-      type: string
+      type: str
       sample: my ssh key
     date_created:
       description: Date the ssh key was created
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
     ssh_key:
       description: SSH public key
       returned: success
-      type: string
+      type: str
       sample: "ssh-rsa AA... someother@example.com"
 '''
 

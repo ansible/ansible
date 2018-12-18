@@ -58,7 +58,7 @@ RETURN = '''
 ping:
     description: value provided with the data parameter
     returned: success
-    type: string
+    type: str
     sample: pong
 '''
 

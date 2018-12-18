@@ -125,7 +125,7 @@ result:
     description:
     - string stating about result
     returned: success
-    type: string
+    type: str
     sample: "Folder 'sub_network_folder' of type 'vm' created under vm_folder successfully."
 '''
 

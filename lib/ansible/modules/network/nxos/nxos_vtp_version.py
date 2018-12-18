@@ -79,7 +79,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 from ansible.module_utils.network.nxos.nxos import load_config, run_commands

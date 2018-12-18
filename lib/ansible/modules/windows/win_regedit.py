@@ -186,7 +186,7 @@ EXAMPLES = r'''
     path: HKLM:\ANSIBLE\Control Panel\Mouse
     name: MouseTrails
     data: 10
-    type: string
+    type: str
     state: present
     hive: C:\Users\Default\NTUSER.dat
 '''
@@ -195,11 +195,11 @@ RETURN = r'''
 data_changed:
     description: whether this invocation changed the data in the registry value
     returned: success
-    type: boolean
+    type: bool
     sample: False
 data_type_changed:
     description: whether this invocation changed the datatype of the registry value
     returned: success
-    type: boolean
+    type: bool
     sample: True
 '''

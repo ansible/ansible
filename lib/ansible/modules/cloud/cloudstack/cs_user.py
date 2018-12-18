@@ -118,67 +118,67 @@ RETURN = '''
 id:
   description: UUID of the user.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 username:
   description: Username of the user.
   returned: success
-  type: string
+  type: str
   sample: johndoe
 fist_name:
   description: First name of the user.
   returned: success
-  type: string
+  type: str
   sample: John
 last_name:
   description: Last name of the user.
   returned: success
-  type: string
+  type: str
   sample: Doe
 email:
   description: Emailof the user.
   returned: success
-  type: string
+  type: str
   sample: john.doe@example.com
 user_api_key:
   description: API key of the user.
   returned: success
-  type: string
+  type: str
   sample: JLhcg8VWi8DoFqL2sSLZMXmGojcLnFrOBTipvBHJjySODcV4mCOo29W2duzPv5cALaZnXj5QxDx3xQfaQt3DKg
 user_api_secret:
   description: API secret of the user.
   returned: success
-  type: string
+  type: str
   sample: FUELo3LB9fa1UopjTLPdqLv_6OXQMJZv9g9N4B_Ao3HFz8d6IGFCV9MbPFNM8mwz00wbMevja1DoUNDvI8C9-g
 account:
   description: Account name of the user.
   returned: success
-  type: string
+  type: str
   sample: developers
 account_type:
   description: Type of the account.
   returned: success
-  type: string
+  type: str
   sample: user
 timezone:
   description: Timezone of the user.
   returned: success
-  type: string
+  type: str
   sample: enabled
 created:
   description: Date the user was created.
   returned: success
-  type: string
+  type: str
   sample: Doe
 state:
   description: State of the user.
   returned: success
-  type: string
+  type: str
   sample: enabled
 domain:
   description: Domain the user is related.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 '''
 

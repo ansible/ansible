@@ -237,17 +237,17 @@ RETURN = '''
 group_name:
   description: Security group name
   sample: My Security Group
-  type: string
+  type: str
   returned: on create/update
 group_id:
   description: Security group id
   sample: sg-abcd1234
-  type: string
+  type: str
   returned: on create/update
 description:
   description: Description of security group
   sample: My Security Group
-  type: string
+  type: str
   returned: on create/update
 tags:
   description: Tags associated with the security group
@@ -259,7 +259,7 @@ tags:
 vpc_id:
   description: ID of VPC to which the security group belongs
   sample: vpc-abcd1234
-  type: string
+  type: str
   returned: on create/update
 ip_permissions:
   description: Inbound rules associated with the security group.

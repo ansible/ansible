@@ -148,15 +148,15 @@ RETURN = '''
 id:
     description: Unique UUID.
     returned: success
-    type: string
+    type: str
 name:
     description: Name given to the port.
     returned: success
-    type: string
+    type: str
 network_id:
     description: Network ID this port belongs in.
     returned: success
-    type: string
+    type: str
 security_groups:
     description: Security group(s) associated with this port.
     returned: success
@@ -164,7 +164,7 @@ security_groups:
 status:
     description: Port's status.
     returned: success
-    type: string
+    type: str
 fixed_ips:
     description: Fixed ip(s) associated with this port.
     returned: success
@@ -172,7 +172,7 @@ fixed_ips:
 tenant_id:
     description: Tenant id associated with this port.
     returned: success
-    type: string
+    type: str
 allowed_address_pairs:
     description: Allowed address pairs with this port.
     returned: success

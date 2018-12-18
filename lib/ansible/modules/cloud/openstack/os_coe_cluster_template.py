@@ -132,7 +132,7 @@ RETURN = '''
 id:
     description: The cluster UUID.
     returned: On success when I(state) is 'present'
-    type: string
+    type: str
     sample: "39007a7e-ee4f-4d13-8283-b4da2e037c69"
 cluster_template:
     description: Dictionary describing the template.
@@ -141,15 +141,15 @@ cluster_template:
     contains:
       coe:
           description: The Container Orchestration Engine for this clustertemplate
-          type: string
+          type: str
           sample: kubernetes
       dns_nameserver:
           description: The DNS nameserver address
-          type: string
+          type: str
           sample: '8.8.8.8'
       docker_storage_driver:
           description: Docker storage driver
-          type: string
+          type: str
           sample: devicemapper
       docker_volume_size:
           description: The size in GB of the docker volume
@@ -157,21 +157,21 @@ cluster_template:
           sample: 5
       external_network_id:
           description: The external network to attach to the Cluster
-          type: string
+          type: str
           sample: public
       fixed_network:
           description: The fixed network name to attach to the Cluster
-          type: string
+          type: str
           sample: 07767ec6-85f5-44cb-bd63-242a8e7f0d9d
       fixed_subnet:
           description:
             - The fixed subnet name to attach to the Cluster
-          type: string
+          type: str
           sample: 05567ec6-85f5-44cb-bd63-242a8e7f0d9d
       flavor_id:
           description:
             - The flavor of the minion node for this ClusterTemplate
-          type: string
+          type: str
           sample: c1.c1r1
       floating_ip_enabled:
           description:
@@ -181,12 +181,12 @@ cluster_template:
       keypair_id:
           description:
             - Name or ID of the keypair to use.
-          type: string
+          type: str
           sample: mykey
       image_id:
           description:
             - Image id the cluster will be based on
-          type: string
+          type: str
           sample: 05567ec6-85f5-44cb-bd63-242a8e7f0e9d
       labels:
           description: One or more key/value pairs
@@ -196,18 +196,18 @@ cluster_template:
           description:
             - Address of a proxy that will receive all HTTP requests and relay them
               The format is a URL including a port number
-          type: string
+          type: str
           sample: http://10.0.0.11:9090
       https_proxy:
           description:
             - Address of a proxy that will receive all HTTPS requests and relay
               them. The format is a URL including a port number
-          type: string
+          type: str
           sample: https://10.0.0.10:8443
       master_flavor_id:
           description:
             - The flavor of the master node for this ClusterTemplate
-          type: string
+          type: str
           sample: c1.c1r1
       master_lb_enabled:
           description:
@@ -218,18 +218,18 @@ cluster_template:
       name:
           description:
             - Name that has to be given to the cluster template
-          type: string
+          type: str
           sample: k8scluster
       network_driver:
           description:
             - The name of the driver used for instantiating container networks
-          type: string
+          type: str
           sample: calico
       no_proxy:
           description:
             - A comma separated list of IPs for which proxies should not be
               used in the cluster
-          type: string
+          type: str
           sample: 10.0.0.4,10.0.0.5
       public:
           description:
@@ -244,7 +244,7 @@ cluster_template:
       server_type:
           description:
             - Server type for this ClusterTemplate
-          type: string
+          type: str
           sample: vm
       tls_disabled:
           description:
@@ -254,7 +254,7 @@ cluster_template:
       volume_driver:
           description:
             - The name of the driver used for instantiating container volumes
-          type: string
+          type: str
           sample: cinder
 '''
 

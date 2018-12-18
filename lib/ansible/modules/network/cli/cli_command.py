@@ -99,7 +99,7 @@ RETURN = """
 stdout:
   description: The response from the command
   returned: when sendonly is false
-  type: string
+  type: str
   sample: 'Version:      VyOS 1.1.7[...]'
 
 json:

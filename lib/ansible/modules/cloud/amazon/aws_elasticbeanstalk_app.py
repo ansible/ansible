@@ -77,7 +77,7 @@ app:
 output:
     description: message indicating what change will occur
     returned: in check mode
-    type: string
+    type: str
     sample: App is up-to-date
 '''
 

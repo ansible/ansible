@@ -227,32 +227,32 @@ RETURN = '''
 after:
     description: last commit revision of the repository retrieved during the update
     returned: success
-    type: string
+    type: str
     sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
 before:
     description: commit revision before the repository was updated, "null" for new repository
     returned: success
-    type: string
+    type: str
     sample: 67c04ebe40a003bda0efb34eacfb93b0cafdf628
 remote_url_changed:
     description: Contains True or False whether or not the remote URL was changed.
     returned: success
-    type: boolean
+    type: bool
     sample: True
 warnings:
     description: List of warnings if requested features were not available due to a too old git version.
     returned: error
-    type: string
+    type: str
     sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
 git_dir_now:
     description: Contains the new path of .git directory if it's changed
     returned: success
-    type: string
+    type: str
     sample: /path/to/new/git/dir
 git_dir_before:
     description: Contains the original path of .git directory if it's changed
     returned: success
-    type: string
+    type: str
     sample: /path/to/old/git/dir
 '''
 

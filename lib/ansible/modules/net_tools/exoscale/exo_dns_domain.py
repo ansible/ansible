@@ -68,12 +68,12 @@ exo_dns_domain:
         created_at:
             description: When the domain was created
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
         expires_on:
             description: When the domain expires
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
         id:
             description: ID of the domain
@@ -88,7 +88,7 @@ exo_dns_domain:
         name:
             description: Domain name
             returned: success
-            type: string
+            type: str
             sample: example.com
         record_count:
             description: Number of records related to this domain
@@ -108,22 +108,22 @@ exo_dns_domain:
         state:
             description: State of the domain
             returned: success
-            type: string
+            type: str
             sample: "hosted"
         token:
             description: Token
             returned: success
-            type: string
+            type: str
             sample: "r4NzTRp6opIeFKfaFYvOd6MlhGyD07jl"
         unicode_name:
             description: Domain name as unicode
             returned: success
-            type: string
+            type: str
             sample: "example.com"
         updated_at:
             description: When the domain was updated last.
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
         user_id:
             description: ID of the user

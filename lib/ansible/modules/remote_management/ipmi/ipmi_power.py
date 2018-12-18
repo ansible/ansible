@@ -61,7 +61,7 @@ RETURN = '''
 powerstate:
     description: The current power state of the machine.
     returned: success
-    type: string
+    type: str
     sample: on
 '''
 

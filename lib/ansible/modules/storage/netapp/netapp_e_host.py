@@ -128,13 +128,13 @@ msg:
     description:
         - A user-readable description of the actions performed.
     returned: on success
-    type: string
+    type: str
     sample: The host has been created.
 id:
     description:
         - the unique identifier of the host on the E-Series storage-system
     returned: on success when state=present
-    type: string
+    type: str
     sample: 00000000600A098000AAC0C3003004700AD86A52
     version_added: "2.6"
 
@@ -142,7 +142,7 @@ ssid:
     description:
         - the unique identifer of the E-Series storage-system with the current api
     returned: on success
-    type: string
+    type: str
     sample: 1
     version_added: "2.6"
 
@@ -150,7 +150,7 @@ api_url:
     description:
         - the url of the API that this request was proccessed by
     returned: on success
-    type: string
+    type: str
     sample: https://webservices.example.com:8443
     version_added: "2.6"
 

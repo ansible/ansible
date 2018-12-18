@@ -163,14 +163,14 @@ RETURN = '''
 id:
     description: Id of the redis cache.
     returned: always
-    type: string
+    type: str
     sample: {
         "id": "/subscriptions/<subs_id>/resourceGroups/rg/providers/Microsoft.Cache/Redis/redis1"
     }
 host_name:
     description: Host name of the redis cache.
     returned: state is present
-    type: string
+    type: str
     sample: {
         "host_name": "redis1.redis.cache.windows.net"
     }

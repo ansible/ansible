@@ -128,7 +128,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: http
 description:
   description: The description of the monitor.
@@ -138,7 +138,7 @@ description:
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.

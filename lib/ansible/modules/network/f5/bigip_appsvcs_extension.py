@@ -103,7 +103,7 @@ action:
   description:
     - The action performed.
   returned: changed
-  type: string
+  type: str
   sample: deploy
 '''
 

@@ -141,14 +141,14 @@ instance_target_groups:
     contains:
         target_group_arn:
             description: The ARN of the target group
-            type: string
+            type: str
             returned: always
             sample:
                 - "arn:aws:elasticloadbalancing:eu-west-1:111111111111:targetgroup/target-group/deadbeefdeadbeef"
         target_group_type:
             description: Which target type is used for this group
             returned: always
-            type: string
+            type: str
             sample:
                 - ip
                 - instance

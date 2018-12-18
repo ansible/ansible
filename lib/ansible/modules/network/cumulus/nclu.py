@@ -151,7 +151,7 @@ changed:
 msg:
     description: human-readable report of success or failure
     returned: always
-    type: string
+    type: str
     sample: "interface bond0 config updated"
 '''
 

@@ -76,7 +76,7 @@ RETURN = r'''
 description:
   description: The new description of the policy.
   returned: changed
-  type: string
+  type: str
   sample: My firewall policy
 rules:
   description: The list of rules, in the order that they are evaluated, on the device.

@@ -100,7 +100,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Json facts for the volume that was created.
 """
 HEADERS = {

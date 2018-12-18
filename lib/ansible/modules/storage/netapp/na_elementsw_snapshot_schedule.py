@@ -175,7 +175,7 @@ RETURN = """
 schedule_id:
     description: Schedule ID of the newly created schedule
     returned: success
-    type: string
+    type: str
 """
 import traceback
 from ansible.module_utils.basic import AnsibleModule

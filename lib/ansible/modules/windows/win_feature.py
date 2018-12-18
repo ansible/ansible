@@ -94,7 +94,7 @@ RETURN = r'''
 exitcode:
     description: The stringified exit code from the feature installation/removal command
     returned: always
-    type: string
+    type: str
     sample: Success
 feature_result:
     description: List of features that were installed or removed
@@ -105,7 +105,7 @@ feature_result:
         display_name:
             description: Feature display name
             returned: always
-            type: string
+            type: str
             sample: "Telnet Client"
         id:
             description: A list of KB article IDs that apply to the update
@@ -120,27 +120,27 @@ feature_result:
         reboot_required:
             description: True when the target server requires a reboot as a result of installing or removing this feature
             returned: always
-            type: boolean
+            type: bool
             sample: True
         restart_needed:
             description: DEPRECATED in Ansible 2.4 (refer to C(reboot_required) instead). True when the target server requires a reboot as a
                          result of installing or removing this feature
             returned: always
-            type: boolean
+            type: bool
             sample: True
         skip_reason:
             description: The reason a feature installation or removal was skipped
             returned: always
-            type: string
+            type: str
             sample: NotSkipped
         success:
             description: If the feature installation or removal was successful
             returned: always
-            type: boolean
+            type: bool
             sample: True
 reboot_required:
     description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
     returned: success
-    type: boolean
+    type: bool
     sample: True
 '''

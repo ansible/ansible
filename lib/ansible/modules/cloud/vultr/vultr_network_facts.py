@@ -41,7 +41,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -56,7 +56,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_network_facts:
   description: Response from Vultr API

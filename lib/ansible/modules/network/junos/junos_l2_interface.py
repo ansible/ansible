@@ -124,7 +124,7 @@ RETURN = """
 diff:
   description: Configuration difference before and after applying change.
   returned: when configuration is changed and diff option is enabled.
-  type: string
+  type: str
   sample: >
         [edit interfaces]
         +   ge-0/0/1 {

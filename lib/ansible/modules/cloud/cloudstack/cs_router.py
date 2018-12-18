@@ -107,22 +107,22 @@ RETURN = '''
 id:
   description: UUID of the router.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the router.
   returned: success
-  type: string
+  type: str
   sample: r-40-VM
 created:
   description: Date of the router was created.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 template_version:
   description: Version of the system VM template.
   returned: success
-  type: string
+  type: str
   sample: 4.5.1
 requires_upgrade:
   description: Whether the router needs to be upgraded to the new template.
@@ -132,37 +132,37 @@ requires_upgrade:
 redundant_state:
   description: Redundant state of the router.
   returned: success
-  type: string
+  type: str
   sample: UNKNOWN
 role:
   description: Role of the router.
   returned: success
-  type: string
+  type: str
   sample: VIRTUAL_ROUTER
 zone:
   description: Name of zone the router is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 service_offering:
   description: Name of the service offering the router has.
   returned: success
-  type: string
+  type: str
   sample: System Offering For Software Router
 state:
   description: State of the router.
   returned: success
-  type: string
+  type: str
   sample: Active
 domain:
   description: Domain the router is related to.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 account:
   description: Account the router is related to.
   returned: success
-  type: string
+  type: str
   sample: admin
 '''
 

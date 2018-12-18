@@ -254,7 +254,7 @@ class NetAppONTAPNFS(object):
         :param:
             name : Name of the vserver
         :return: status of nfs. None if not found.
-        :rtype: boolean
+        :rtype: bool
         """
         nfs_status = netapp_utils.zapi.NaElement('nfs-status')
         result = self.server.invoke_successfully(nfs_status, True)

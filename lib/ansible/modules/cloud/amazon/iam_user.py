@@ -78,23 +78,23 @@ user:
     contains:
         arn:
             description: the Amazon Resource Name (ARN) specifying the user
-            type: string
+            type: str
             sample: "arn:aws:iam::1234567890:user/testuser1"
         create_date:
             description: the date and time, in ISO 8601 date-time format, when the user was created
-            type: string
+            type: str
             sample: "2017-02-08T04:36:28+00:00"
         user_id:
             description: the stable and unique string identifying the user
-            type: string
+            type: str
             sample: AGPAIDBWE12NSFINE55TM
         user_name:
             description: the friendly name that identifies the user
-            type: string
+            type: str
             sample: testuser1
         path:
             description: the path to the user
-            type: string
+            type: str
             sample: /
 '''
 

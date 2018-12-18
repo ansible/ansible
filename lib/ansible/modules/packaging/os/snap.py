@@ -89,15 +89,15 @@ EXAMPLES = '''
 RETURN = '''
 classic:
     description: Whether or not the snaps were installed with the classic confinement
-    type: boolean
+    type: bool
     returned: When snaps are installed
 channel:
     description: The channel the snaps were installed from
-    type: string
+    type: str
     returned: When snaps are installed
 cmd:
     description: The command that was executed on the host
-    type: string
+    type: str
     returned: When changed is true
 snaps_installed:
     description: The list of actually installed snaps

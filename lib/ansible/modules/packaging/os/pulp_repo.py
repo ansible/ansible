@@ -188,7 +188,7 @@ RETURN = '''
 repo:
   description: Name of the repo that the action was performed on.
   returned: success
-  type: string
+  type: str
   sample: my_repo
 '''
 

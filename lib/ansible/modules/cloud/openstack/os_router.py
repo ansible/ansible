@@ -169,27 +169,27 @@ router:
     contains:
         id:
             description: Router ID.
-            type: string
+            type: str
             sample: "474acfe5-be34-494c-b339-50f06aa143e4"
         name:
             description: Router name.
-            type: string
+            type: str
             sample: "router1"
         admin_state_up:
             description: Administrative state of the router.
-            type: boolean
+            type: bool
             sample: true
         status:
             description: The router status.
-            type: string
+            type: str
             sample: "ACTIVE"
         tenant_id:
             description: The tenant ID.
-            type: string
+            type: str
             sample: "861174b82b43463c9edc5202aadc60ef"
         external_gateway_info:
             description: The external gateway parameters.
-            type: dictionary
+            type: dict
             sample: {
                       "enable_snat": true,
                       "external_fixed_ips": [

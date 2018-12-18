@@ -156,32 +156,32 @@ RETURN = '''
 create_time:
   description: The ISO 8601 date time format in UTC.
   returned: In all cases.
-  type: string
+  type: str
   sample: "2016-03-05T05:19:20.282000+00:00'"
 nat_gateway_id:
   description: id of the VPC NAT Gateway
   returned: In all cases.
-  type: string
+  type: str
   sample: "nat-0d1e3a878585988f8"
 subnet_id:
   description: id of the Subnet
   returned: In all cases.
-  type: string
+  type: str
   sample: "subnet-12345"
 state:
   description: The current state of the NAT Gateway.
   returned: In all cases.
-  type: string
+  type: str
   sample: "available"
 vpc_id:
   description: id of the VPC.
   returned: In all cases.
-  type: string
+  type: str
   sample: "vpc-12345"
 nat_gateway_addresses:
   description: List of dictionairies containing the public_ip, network_interface_id, private_ip, and allocation_id.
   returned: In all cases.
-  type: string
+  type: str
   sample: [
       {
           'public_ip': '52.52.52.52',

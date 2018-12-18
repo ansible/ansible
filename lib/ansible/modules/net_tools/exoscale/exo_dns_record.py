@@ -131,17 +131,17 @@ exo_dns_record:
         content:
             description: value of the record
             returned: success
-            type: string
+            type: str
             sample: 1.2.3.4
         created_at:
             description: When the record was created
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
         domain:
             description: Name of the domain
             returned: success
-            type: string
+            type: str
             sample: example.com
         domain_id:
             description: ID of the domain
@@ -156,7 +156,7 @@ exo_dns_record:
         name:
             description: name of the record
             returned: success
-            type: string
+            type: str
             sample: www
         parent_id:
             description: ID of the parent
@@ -171,7 +171,7 @@ exo_dns_record:
         record_type:
             description: Priority of the record
             returned: success
-            type: string
+            type: str
             sample: A
         system_record:
             description: Whether the record is a system record or not
@@ -186,7 +186,7 @@ exo_dns_record:
         updated_at:
             description: When the record was updated
             returned: success
-            type: string
+            type: str
             sample: "2016-08-12T15:24:23.989Z"
 '''
 

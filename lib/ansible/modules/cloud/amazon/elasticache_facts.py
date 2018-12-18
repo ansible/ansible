@@ -47,22 +47,22 @@ elasticache_clusters:
     cache_cluster_create_time:
       description: Date and time cluster was created
       returned: always
-      type: string
+      type: str
       sample: '2017-09-15T05:43:46.038000+00:00'
     cache_cluster_id:
       description: ID of the cache cluster
       returned: always
-      type: string
+      type: str
       sample: abcd-1234-001
     cache_cluster_status:
       description: Status of Elasticache cluster
       returned: always
-      type: string
+      type: str
       sample: available
     cache_node_type:
       description: Instance type of Elasticache nodes
       returned: always
-      type: string
+      type: str
       sample: cache.t2.micro
     cache_nodes:
       description: List of Elasticache nodes in the cluster
@@ -72,22 +72,22 @@ elasticache_clusters:
         cache_node_create_time:
           description: Date and time node was created
           returned: always
-          type: string
+          type: str
           sample: '2017-09-15T05:43:46.038000+00:00'
         cache_node_id:
           description: ID of the cache node
           returned: always
-          type: string
+          type: str
           sample: '0001'
         cache_node_status:
           description: Status of the cache node
           returned: always
-          type: string
+          type: str
           sample: available
         customer_availability_zone:
           description: Availability Zone in which the cache node was created
           returned: always
-          type: string
+          type: str
           sample: ap-southeast-2b
         endpoint:
           description: Connection details for the cache node
@@ -97,7 +97,7 @@ elasticache_clusters:
             address:
               description: URL of the cache node endpoint
               returned: always
-              type: string
+              type: str
               sample: abcd-1234-001.bgiz2p.0001.apse2.cache.amazonaws.com
             port:
               description: Port of the cache node endpoint
@@ -107,7 +107,7 @@ elasticache_clusters:
         parameter_grou_status:
           description: Status of the Cache Parameter Group
           returned: always
-          type: string
+          type: str
           sample: in-sync
     cache_parameter_group:
       description: Contents of the Cache Parameter GGroup
@@ -122,12 +122,12 @@ elasticache_clusters:
         cache_parameter_group_name:
           description: Name of the cache parameter group
           returned: always
-          type: string
+          type: str
           sample: default.redis3.2
         parameter_apply_status:
           description: Status of parameter updates
           returned: always
-          type: string
+          type: str
           sample: in-sync
     cache_security_groups:
       description: Security Groups used by the cache
@@ -138,22 +138,22 @@ elasticache_clusters:
     cache_subnet_group_name:
       description: Elasticache Subnet Group used by the cache
       returned: always
-      type: string
+      type: str
       sample: abcd-subnet-group
     client_download_landing_page:
       description: URL of client download web page
       returned: always
-      type: string
+      type: str
       sample: 'https://console.aws.amazon.com/elasticache/home#client-download:'
     engine:
       description: Engine used by elasticache
       returned: always
-      type: string
+      type: str
       sample: redis
     engine_version:
       description: Version of elasticache engine
       returned: always
-      type: string
+      type: str
       sample: 3.2.4
     notification_configuration:
       description: Configuration of notifications
@@ -163,12 +163,12 @@ elasticache_clusters:
         topic_arn:
           description: ARN of notification destination topic
           returned: if notifications are enabled
-          type: string
+          type: str
           sample: arn:aws:sns:*:123456789012:my_topic
         topic_name:
           description: Name of notification destination topic
           returned: if notifications are enabled
-          type: string
+          type: str
           sample: MyTopic
     num_cache_nodes:
       description: Number of Cache Nodes
@@ -183,17 +183,17 @@ elasticache_clusters:
     preferred_availability_zone:
       description: Preferred Availability Zone
       returned: always
-      type: string
+      type: str
       sample: ap-southeast-2b
     preferred_maintenance_window:
       description: Time slot for preferred maintenance window
       returned: always
-      type: string
+      type: str
       sample: sat:12:00-sat:13:00
     replication_group_id:
       description: Replication Group Id
       returned: always
-      type: string
+      type: str
       sample: replication-001
     security_groups:
       description: List of Security Groups associated with Elasticache
@@ -203,12 +203,12 @@ elasticache_clusters:
         security_group_id:
           description: Security Group ID
           returned: always
-          type: string
+          type: str
           sample: sg-abcd1234
         status:
           description: Status of Security Group
           returned: always
-          type: string
+          type: str
           sample: active
     tags:
       description: Tags applied to the elasticache cluster

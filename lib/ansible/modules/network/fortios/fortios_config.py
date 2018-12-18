@@ -65,11 +65,11 @@ RETURN = """
 running_config:
   description: full config string
   returned: always
-  type: string
+  type: str
 change_string:
   description: The commands really executed by the module
   returned: only if config changed
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule

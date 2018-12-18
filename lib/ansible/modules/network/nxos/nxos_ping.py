@@ -103,7 +103,7 @@ packets_tx:
 packet_loss:
     description: Percentage of packets lost
     returned: always
-    type: string
+    type: str
     sample: "0.00%"
 '''
 from ansible.module_utils.network.nxos.nxos import run_commands

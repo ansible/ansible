@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright(c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
+# Copyright: (c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -75,16 +75,17 @@ EXAMPLES = '''
 #    state = absent|present (default: present)
 
 import base64
+import errno
 import hashlib
 import hmac
 import os
 import os.path
-import tempfile
-import errno
 import re
+import tempfile
 
-from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.file import FileLock
+from ansible.module_utils._text import to_bytes, to_native
 
 
 def enforce_state(module, params):

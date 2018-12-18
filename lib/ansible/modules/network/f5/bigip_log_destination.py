@@ -259,32 +259,32 @@ RETURN = r'''
 forward_to:
   description: The new Forward To value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/dest1
 pool:
   description: The new Pool value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/pool1
 distribution:
   description: The new Distribution Method value.
   returned: changed
-  type: string
+  type: str
   sample: balanced
 protocol:
   description: The new Protocol value.
   returned: changed
-  type: string
+  type: str
   sample: tcp
 syslog_format:
   description: The new Syslog format value.
   returned: changed
-  type: string
+  type: str
   sample: syslog
 address:
   description: The new Address value.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.3.2
 port:
   description: The new Port value.
@@ -304,12 +304,12 @@ template_retransmit_interval:
 transport_profile:
   description: The new Transport Profile value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/tcp
 server_ssl_profile:
   description: The new Server SSL Profile value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/serverssl
 '''
 

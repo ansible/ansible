@@ -143,24 +143,24 @@ RETURN = r'''
 lacp_mode:
   description: Operation mode for LACP if the lacp option is enabled for the trunk.
   returned: changed
-  type: string
+  type: str
   sample: active
 lacp_timeout:
   description: Rate at which the system sends the LACP control packets.
   returned: changed
-  type: string
+  type: str
   sample: long
 link_selection_policy:
   description:
     - LACP policy that the trunk uses to determine which member link (interface)
       can handle new traffic.
   returned: changed
-  type: string
+  type: str
   sample: auto
 frame_distribution_hash:
   description: Hash that the system uses as the frame distribution algorithm.
   returned: changed
-  type: string
+  type: str
   sample: src-dst-ipport
 lacp_enabled:
   description: Whether the system supports the link aggregation control protocol (LACP) or not.
@@ -175,12 +175,12 @@ interfaces:
 description:
   description: Description of the trunk.
   returned: changed
-  type: string
+  type: str
   sample: My trunk
 qinq_ethertype:
   description: Ether-type value used for the packets handled on this trunk when it is a member in a QinQ vlan.
   returned: changed
-  type: string
+  type: str
   sample: 0x9100
 '''
 
