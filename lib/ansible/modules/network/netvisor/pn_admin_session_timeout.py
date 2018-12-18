@@ -42,19 +42,19 @@ options:
 
 EXAMPLES = """
 - name: admin session timeout functionality
-  pn_admin_session_timeout.py:
+  pn_admin_session_timeout:
     pn_cliswitch: "sw01"
     state: "update"
     pn_timeout: "61s"
 
 - name: admin session timeout functionality
-  pn_admin_session_timeout.py:
+  pn_admin_session_timeout:
     pn_cliswitch: "sw01"
     state: "update"
     pn_timeout: "1d"
 
 - name: admin session timeout functionality
-  pn_admin_session_timeout.py:
+  pn_admin_session_timeout:
     pn_cliswitch: "sw01"
     state: "update"
     pn_timeout: "10d20m3h15s"
@@ -86,7 +86,6 @@ from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, run_cli
 def main():
     """ This section is for arguments parsing """
 
-    global state_map
     state_map = dict(
         update='admin-session-timeout-modify'
     )
