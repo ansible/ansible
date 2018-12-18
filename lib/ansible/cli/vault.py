@@ -46,7 +46,7 @@ class VaultCLI(CLI):
     The password used with vault currently must be the same for all files you wish to use together at the same time.
     '''
 
-    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view")
+    VALID_ACTIONS = frozenset(("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view"))
 
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
@@ -114,7 +114,7 @@ class VaultCLI(CLI):
         self.parser = CLI.base_parser(
             vault_opts=True,
             vault_rekey_opts=True,
-            usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
+            usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(sorted(self.VALID_ACTIONS)),
             desc="encryption/decryption utility for Ansible data files",
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )

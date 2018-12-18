@@ -50,7 +50,7 @@ class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url")
-    VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
+    VALID_ACTIONS = frozenset(("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup"))
 
     def __init__(self, args):
         self.api = None
@@ -135,7 +135,7 @@ class GalaxyCLI(CLI):
         ''' create an options parser for bin/ansible '''
 
         self.parser = CLI.base_parser(
-            usage="usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
+            usage="usage: %%prog [%s] [--help] [options] ..." % "|".join(sorted(self.VALID_ACTIONS)),
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
             desc="Perform various Role related operations.",
         )
