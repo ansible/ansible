@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Adam Miller (maxamillion@fedoraproject.org)
+# Copyright: (c) 2013, Adam Miller <maxamillion@fedoraproject.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: firewalld
 short_description: Manage arbitrary ports/services with firewalld
@@ -23,36 +23,46 @@ version_added: "1.4"
 options:
   service:
     description:
-      - "Name of a service to add/remove to/from firewalld - service must be listed in output of firewall-cmd --get-services."
+      - Name of a service to add/remove to/from firewalld.
+      - The service must be listed in output of firewall-cmd --get-services.
+    type: str
   port:
     description:
-      - "Name of a port or port range to add/remove to/from firewalld. Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges."
+      - Name of a port or port range to add/remove to/from firewalld.
+      - Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges.
+    type: str
   rich_rule:
     description:
-      - "Rich rule to add/remove to/from firewalld."
+      - Rich rule to add/remove to/from firewalld.
+    type: str
   source:
     description:
-      - 'The source/network you would like to add/remove to/from firewalld'
+      - The source/network you would like to add/remove to/from firewalld.
+    type: str
     version_added: "2.0"
   interface:
     description:
-      - 'The interface you would like to add/remove to/from a zone in firewalld'
+      - The interface you would like to add/remove to/from a zone in firewalld.
+    type: str
     version_added: "2.1"
   icmp_block:
     description:
-      - 'The icmp block you would like to add/remove to/from a zone in firewalld'
+      - The icmp block you would like to add/remove to/from a zone in firewalld.
+    type: str
     version_added: "2.8"
   icmp_block_inversion:
     description:
-      - 'Enable/Disable inversion of icmp blocks for a zone in firewalld'
+      - Enable/Disable inversion of icmp blocks for a zone in firewalld.
+    type: str
     version_added: "2.8"
   zone:
     description:
       - >
-        The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices
-        can be extended based on per-system configs, listed here are "out of the box" defaults).
+        The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream.
+      - Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).
+      - Possible values include C(block), C(dmz), C(drop), C(external), C(home), C(internal), C(public), C(trusted), C(work) ]
+    type: str
     default: system-default(public)
-    choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block" ]
   permanent:
     description:
       - >
@@ -61,26 +71,33 @@ options:
     type: bool
   immediate:
     description:
-      - "Should this configuration be applied immediately, if set as permanent"
+      - Should this configuration be applied immediately, if set as permanent.
     type: bool
-    default: 'no'
+    default: no
     version_added: "1.9"
   state:
     description:
-      - >
-        Enable or disable a setting.
-        For ports: Should this port accept(enabled) or reject(disabled) connections.
-        The states "present" and "absent" can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
+      - Enable or disable a setting.
+      - 'For ports: Should this port accept(enabled) or reject(disabled) connections.'
+      - The states C(present) and C(absent) can only be used in zone level operations (i.e. when no other parameters but zone and state are set).
+    type: str
     required: true
-    choices: [ "enabled", "disabled", "present", "absent" ]
+    choices: [ absent, disabled, enabled, present ]
   timeout:
     description:
-      - "The amount of time the rule should be in effect for when non-permanent."
+      - The amount of time the rule should be in effect for when non-permanent.
+    type: int
     default: 0
   masquerade:
     description:
-      - 'The masquerade setting you would like to enable/disable to/from zones within firewalld'
+      - The masquerade setting you would like to enable/disable to/from zones within firewalld.
+    type: str
     version_added: "2.1"
+  offline:
+    description:
+      - Whether to run this module even when firewalld is offline.
+    type: bool
+    version_added: "2.3"
 notes:
   - Not tested on any Debian based system.
   - Requires the python2 bindings of firewalld, which may not be installed by default.
@@ -96,7 +113,7 @@ requirements: [ 'firewalld >= 0.2.11' ]
 author: "Adam Miller (@maxamillion)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - firewalld:
     service: https
     permanent: yes
@@ -119,7 +136,7 @@ EXAMPLES = '''
     state: enabled
 
 - firewalld:
-    rich_rule: 'rule service name="ftp" audit limit value="1/m" accept'
+    rich_rule: rule service name="ftp" audit limit value="1/m" accept
     permanent: yes
     state: enabled
 
@@ -159,14 +176,11 @@ EXAMPLES = '''
 
 - name: Redirect port 443 to 8443 with Rich Rule
   firewalld:
-    rich_rule: rule family={{ item }} forward-port port=443 protocol=tcp to-port=8443
-    zone:      public
+    rich_rule: rule forward-port port=443 protocol=tcp to-port=8443
+    zone: public
     permanent: yes
     immediate: yes
-    state:     enabled
-  loop:
-    - ipv4
-    - ipv6
+    state: enabled
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -618,20 +632,20 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            icmp_block=dict(required=False, default=None),
-            icmp_block_inversion=dict(required=False, default=None),
-            service=dict(required=False, default=None),
-            port=dict(required=False, default=None),
-            rich_rule=dict(required=False, default=None),
-            zone=dict(required=False, default=None),
+            icmp_block=dict(type='str'),
+            icmp_block_inversion=dict(type='str'),
+            service=dict(type='str'),
+            port=dict(type='str'),
+            rich_rule=dict(type='str'),
+            zone=dict(type='str'),
             immediate=dict(type='bool', default=False),
-            source=dict(required=False, default=None),
-            permanent=dict(type='bool', required=False, default=None),
-            state=dict(choices=['enabled', 'disabled', 'present', 'absent'], required=True),
-            timeout=dict(type='int', required=False, default=0),
-            interface=dict(required=False, default=None),
-            masquerade=dict(required=False, default=None),
-            offline=dict(type='bool', required=False, default=None),
+            source=dict(type='str'),
+            permanent=dict(type='bool'),
+            state=dict(type='str', required=True, choices=['absent', 'disabled', 'enabled', 'present']),
+            timeout=dict(type='int', default=0),
+            interface=dict(type='str'),
+            masquerade=dict(type='str'),
+            offline=dict(type='bool'),
         ),
         supports_check_mode=True
     )

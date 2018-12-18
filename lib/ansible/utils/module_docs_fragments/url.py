@@ -55,10 +55,10 @@ options:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
       - This file can also include the key as well, and if the key is included, C(client_key) is not required.
-    type: str
+    type: path
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL client authentication.
       - If C(client_cert) contains both the certificate and key, this option is not required.
-    type: str
+    type: path
 '''

@@ -441,12 +441,12 @@ def format_output(module, path, st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(required=True, type='path'),
-            follow=dict(type='bool', default='no'),
+            path=dict(type='path', required=True),
+            follow=dict(type='bool', default=False),
             get_md5=dict(type='bool'),
-            get_checksum=dict(type='bool', default='yes'),
+            get_checksum=dict(type='bool', default=True),
             get_mime=dict(type='bool', default='yes', aliases=['mime', 'mime_type', 'mime-type']),
-            get_attributes=dict(type='bool', default='yes', aliases=['attr', 'attributes']),
+            get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
             checksum_algorithm=dict(type='str', default='sha1',
                                     choices=['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
                                     aliases=['checksum', 'checksum_algo']),
