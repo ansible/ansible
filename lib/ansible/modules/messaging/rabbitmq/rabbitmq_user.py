@@ -34,7 +34,9 @@ options:
         C(update_password=always).
   tags:
     description:
-      - User tags specified as comma delimited
+      - User tags specified as a comma delimited string or a list of strings. If it is not
+        present and the user is present the user's tags will not be modified. Set to an empty
+        string or list if you wish a user's tag list to be emptied.
   permissions:
     description:
       - a list of dicts, each dict contains vhost, configure_priv, write_priv, and read_priv,
@@ -129,15 +131,12 @@ class RabbitMqUser(object):
         self.username = username
         self.password = password
         self.node = node
-        if not tags:
-            self.tags = list()
-        else:
-            self.tags = tags.split(',')
+        self.tags_to_set = None if tags is None else self._parse_tags(tags)
 
         self.permissions = permissions
         self.bulk_permissions = bulk_permissions
 
-        self._tags = None
+        self.existing_tags = None
         self._permissions = []
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
@@ -160,17 +159,17 @@ class RabbitMqUser(object):
             user, tags = user_tag.split('\t')
 
             if user == self.username:
-                for c in ['[', ']', ' ']:
-                    tags = tags.replace(c, '')
-
-                if tags != '':
-                    self._tags = tags.split(',')
-                else:
-                    self._tags = list()
-
+                self.existing_tags = self._parse_tags(tags.replace('[', '').replace(']', ''))
                 self._permissions = self._get_permissions()
                 return True
         return False
+
+    def _parse_tags(self, tags):
+        if isinstance(tags, list):
+            if any(map(lambda item: not isinstance(item, str), tags)):
+                raise Exception("Tags must be a list of strings")
+            return tags
+        return [tag for tag in map(lambda tag: tag.strip(), tags.split(',')) if tag]
 
     def _get_permissions(self):
         """Get permissions of the user from RabbitMQ."""
@@ -209,7 +208,10 @@ class RabbitMqUser(object):
             self._exec(['clear_password', self.username])
 
     def set_tags(self):
-        self._exec(['set_user_tags', self.username] + self.tags)
+        if self.tags_to_set is None:
+            return
+        args = ['set_user_tags', self.username] + (self.tags_to_set or [''])
+        self._exec(args)
 
     def set_permissions(self):
         permissions_to_clear = [permission for permission in self._permissions if permission not in self.permissions]
@@ -223,8 +225,8 @@ class RabbitMqUser(object):
                    .format(username=self.username, **permission))
             self._exec(cmd.split(' '))
 
-    def has_tags_modifications(self):
-        return set(self.tags) != set(self._tags)
+    def should_change_tags(self):
+        return self.tags_to_set is not None and set(self.tags_to_set) != set(self.existing_tags)
 
     def has_permissions_modifications(self):
         def to_permission_tuple(vhost_permission_dict):
@@ -237,10 +239,15 @@ class RabbitMqUser(object):
 
 
 def main():
+    def list_or_str(value):
+        if not isinstance(value, list) and not isinstance(value, str):
+            raise ValueError()
+        return value
+
     arg_spec = dict(
         user=dict(required=True, aliases=['username', 'name']),
         password=dict(default=None, no_log=True),
-        tags=dict(default=None),
+        tags=dict(default=None, type=list_or_str),
         permissions=dict(default=list(), type='list'),
         vhost=dict(default='/'),
         configure_priv=dict(default='^$'),
@@ -303,7 +310,7 @@ def main():
                     rabbitmq_user.change_password()
                     result['changed'] = True
 
-            if rabbitmq_user.has_tags_modifications():
+            if rabbitmq_user.should_change_tags():
                 rabbitmq_user.set_tags()
                 result['changed'] = True
 

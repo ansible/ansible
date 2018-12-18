@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from ansible.modules.messaging.rabbitmq import rabbitmq_user
-from units.compat.mock import patch
+from units.compat.mock import call, patch
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 
@@ -42,9 +42,9 @@ class TestRabbitMQUserModule(ModuleTestCase):
     @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.get')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.check_password')
-    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.has_tags_modifications')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.should_change_tags')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.has_permissions_modifications')
-    def test_password_changes_only_when_needed(self, has_permissions_modifications, has_tags_modifications,
+    def test_password_changes_only_when_needed(self, has_permissions_modifications, should_change_tags,
                                                check_password, get, get_bin_path):
         set_module_args({
             'user': 'someuser',
@@ -55,7 +55,7 @@ class TestRabbitMQUserModule(ModuleTestCase):
         get.return_value = True
         get_bin_path.return_value = '/rabbitmqctl'
         check_password.return_value = True
-        has_tags_modifications.return_value = False
+        should_change_tags.return_value = False
         has_permissions_modifications.return_value = False
         try:
             self.module.main()
@@ -66,8 +66,8 @@ class TestRabbitMQUserModule(ModuleTestCase):
     @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
-    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.has_tags_modifications')
-    def test_same_permissions_not_changing(self, has_tags_modifications, _get_permissions, _exec, get_bin_path):
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.should_change_tags')
+    def test_same_permissions_not_changing(self, should_change_tags, _get_permissions, _exec, get_bin_path):
         set_module_args({
             'user': 'someuser',
             'password': 'somepassword',
@@ -77,7 +77,7 @@ class TestRabbitMQUserModule(ModuleTestCase):
         _get_permissions.return_value = [{'vhost': '/', 'configure_priv': '.*', 'write_priv': '.*', 'read_priv': '.*'}]
         _exec.return_value = ['someuser\t[]']
         get_bin_path.return_value = '/rabbitmqctl'
-        has_tags_modifications.return_value = False
+        should_change_tags.return_value = False
         try:
             self.module.main()
         except AnsibleExitJson as e:
@@ -88,8 +88,8 @@ class TestRabbitMQUserModule(ModuleTestCase):
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.set_permissions')
-    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.has_tags_modifications')
-    def test_permissions_are_fixed(self, has_tags_modifications, set_permissions, _get_permissions, _exec, get_bin_path):
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.should_change_tags')
+    def test_permissions_are_fixed(self, should_change_tags, set_permissions, _get_permissions, _exec, get_bin_path):
         set_module_args({
             'user': 'someuser',
             'password': 'somepassword',
@@ -100,7 +100,7 @@ class TestRabbitMQUserModule(ModuleTestCase):
         _get_permissions.return_value = []
         _exec.return_value = ['someuser\t[]']
         get_bin_path.return_value = '/rabbitmqctl'
-        has_tags_modifications.return_value = False
+        should_change_tags.return_value = False
         try:
             self.module.main()
         except AnsibleExitJson as e:
@@ -112,8 +112,8 @@ class TestRabbitMQUserModule(ModuleTestCase):
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.set_permissions')
-    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.has_tags_modifications')
-    def test_permissions_are_fixed_with_different_host(self, has_tags_modifications, set_permissions, _get_permissions,
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.should_change_tags')
+    def test_permissions_are_fixed_with_different_host(self, should_change_tags, set_permissions, _get_permissions,
                                                        _exec, get_bin_path):
         set_module_args({
             'user': 'someuser',
@@ -125,10 +125,182 @@ class TestRabbitMQUserModule(ModuleTestCase):
         _get_permissions.return_value = [{'vhost': 'monitoring', 'configure_priv': '.*', 'write_priv': '.*', 'read_priv': '.*'}]
         _exec.return_value = ['someuser\t[]']
         get_bin_path.return_value = '/rabbitmqctl'
-        has_tags_modifications.return_value = False
+        should_change_tags.return_value = False
         try:
             self.module.main()
         except AnsibleExitJson as e:
             self._assert(e, 'changed', True)
             self._assert(e, 'state', 'present')
             assert set_permissions.call_count == 1
+
+    @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.set_tags')
+    def test_tags_are_not_changed_if_empty(self, set_tags, _get_permissions, _exec, get_bin_path):
+        set_module_args({
+            'user': 'someuser',
+            'password': 'somepassword',
+            'state': 'present',
+            'tags': '',
+        })
+        _get_permissions.return_value = [
+            {
+                'vhost': '/',
+                'configure_priv': '^$',
+                'write_priv': '^$',
+                'read_priv': '^$'
+            }
+        ]
+        set_tags.return_value = None
+        _exec.return_value = ['someuser\t[]']
+        get_bin_path.return_value = '/rabbitmqctl'
+        try:
+            self.module.main()
+        except AnsibleExitJson as e:
+            self._assert(e, 'changed', False)
+            self._assert(e, 'state', 'present')
+            assert set_tags.call_count == 0
+
+    @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.set_tags')
+    def test_tags_are_not_changed_if_same(self, set_tags, _get_permissions, _exec, get_bin_path):
+        set_module_args({
+            'user': 'someuser',
+            'password': 'somepassword',
+            'state': 'present',
+            'tags': ' tag1,tag2 ',
+        })
+        _get_permissions.return_value = [
+            {
+                'vhost': '/',
+                'configure_priv': '^$',
+                'write_priv': '^$',
+                'read_priv': '^$'
+            }
+        ]
+        set_tags.return_value = None
+        _exec.return_value = ['someuser\t[tag1, tag2]']
+        get_bin_path.return_value = '/rabbitmqctl'
+        try:
+            self.module.main()
+        except AnsibleExitJson as e:
+            self._assert(e, 'changed', False)
+            self._assert(e, 'state', 'present')
+            assert set_tags.call_count == 0
+
+    @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.set_tags')
+    def test_tags_are_not_touched(self, set_tags, _get_permissions, _exec, get_bin_path):
+        set_module_args({
+            'user': 'someuser',
+            'password': 'somepassword',
+            'state': 'present',
+        })
+        _get_permissions.return_value = [
+            {
+                'vhost': '/',
+                'configure_priv': '^$',
+                'write_priv': '^$',
+                'read_priv': '^$'
+            }
+        ]
+        set_tags.return_value = None
+        _exec.return_value = ['someuser\t[tag1, tag2]']
+        get_bin_path.return_value = '/rabbitmqctl'
+        try:
+            self.module.main()
+        except AnsibleExitJson as e:
+            self._assert(e, 'changed', False)
+            self._assert(e, 'state', 'present')
+            assert set_tags.call_count == 0
+
+    @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
+    def test_tags_are_emptied(self, _get_permissions, _exec, get_bin_path):
+        set_module_args({
+            'user': 'someuser',
+            'password': 'somepassword',
+            'state': 'present',
+            'tags': []
+        })
+        _get_permissions.return_value = [
+            {
+                'vhost': '/',
+                'configure_priv': '^$',
+                'write_priv': '^$',
+                'read_priv': '^$'
+            }
+        ]
+        _exec.return_value = ['someuser\t[tag1, tag2]']
+        get_bin_path.return_value = '/rabbitmqctl'
+        try:
+            self.module.main()
+        except AnsibleExitJson as e:
+            self._assert(e, 'changed', True)
+            self._assert(e, 'state', 'present')
+            assert _exec.call_count == 2
+            assert _exec.call_args_list == [call(['list_users'], True), call(['set_user_tags', 'someuser', ''])]
+
+    @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
+    def test_tags_are_changed(self, _get_permissions, _exec, get_bin_path):
+        set_module_args({
+            'user': 'someuser',
+            'password': 'somepassword',
+            'state': 'present',
+            'tags': 'tag1, tag2'
+        })
+        _get_permissions.return_value = [
+            {
+                'vhost': '/',
+                'configure_priv': '^$',
+                'write_priv': '^$',
+                'read_priv': '^$'
+            }
+        ]
+        _exec.return_value = ['someuser\t[tag1]']
+        get_bin_path.return_value = '/rabbitmqctl'
+        try:
+            self.module.main()
+        except AnsibleExitJson as e:
+            self._assert(e, 'changed', True)
+            self._assert(e, 'state', 'present')
+            assert _exec.call_count == 2
+            assert _exec.call_args_list == [call(['list_users'], True),
+                                            call(['set_user_tags', 'someuser', 'tag1', 'tag2'])]
+
+    @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
+    def test_tags_passed_as_list(self, _get_permissions, _exec, get_bin_path):
+        set_module_args({
+            'user': 'someuser',
+            'password': 'somepassword',
+            'state': 'present',
+            'tags': ['tag1', 'tag2']
+        })
+        _get_permissions.return_value = [
+            {
+                'vhost': '/',
+                'configure_priv': '^$',
+                'write_priv': '^$',
+                'read_priv': '^$'
+            }
+        ]
+        _exec.return_value = ['someuser\t[tag1]']
+        get_bin_path.return_value = '/rabbitmqctl'
+        try:
+            self.module.main()
+        except AnsibleExitJson as e:
+            self._assert(e, 'changed', True)
+            self._assert(e, 'state', 'present')
+            assert _exec.call_count == 2
+            assert _exec.call_args_list == [call(['list_users'], True),
+                                            call(['set_user_tags', 'someuser', 'tag1', 'tag2'])]
