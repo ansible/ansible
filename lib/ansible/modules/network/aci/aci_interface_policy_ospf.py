@@ -68,7 +68,7 @@ options:
       interface subconfiguration mode command.
     - Accepted values range between C(1) and C(450).
     - The APIC defaults to C(0) when unset during creation.
-    type: str
+    type: int
   controls:
     description:
     - The interface policy controls.

@@ -100,7 +100,7 @@ options:
     - When C(interface_type) is C(switch_port), C(port_channel), or C(fex), then C(leafs) is a string of the leaf ID.
     - When C(interface_type) is C(vpc), then C(leafs) is a list with both leaf IDs.
     - The C(leafs) value is usually something like '101' or '101-102' depending on C(connection_type).
-    type: str
+    type: list
     aliases: [ leaves, nodes, paths, switches ]
   interface:
     description:
