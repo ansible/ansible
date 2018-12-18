@@ -170,6 +170,10 @@ options:
       - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
     default: yes
+    unix_socket:
+    description:
+    - Path to Unix domain socket to use for connection
+    version_added: '2.8'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
@@ -516,7 +520,7 @@ def main():
         status_code=dict(type='list', default=[200]),
         timeout=dict(type='int', default=30),
         headers=dict(type='dict', default={}),
-        unix_socket=dict(),
+        unix_socket=dict(type='path'),
     )
 
     module = AnsibleModule(
