@@ -72,8 +72,8 @@ options:
         description:
             - Use with state 'present' to generalize the machine. Set to true to generalize the machine.
             - Please note that this operation is irreversible.
-        default: true
         type: bool
+        version_added: "2.8"
     restarted:
         description:
             - Use with state 'present' to restart a running VM.
@@ -1370,7 +1370,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             result['powerstate'] = next((s.code.replace('PowerState/', '')
                                          for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
             for s in vm.instance_view.statuses:
-                if s.code == "OSState/generalized":
+                if s.code.lower() == "osstate/generalized":
                     result['powerstate'] = 'generalized'
 
         # Expand network interfaces to include config properties
