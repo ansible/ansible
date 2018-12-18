@@ -18,7 +18,7 @@ options:
   port:
     description:
     - Port number to be used for REST connection.
-    - The default value depends on parameter `use_ssl`.
+    - The default value depends on parameter C(use_ssl).
     type: int
   username:
     description:
@@ -37,7 +37,7 @@ options:
     - PEM formatted file that contains your private key to be used for signature-based authentication.
     - The name of the key (without extension) is used as the certificate name in ACI, unless C(certificate_name) is specified.
     - This option is mutual exclusive with C(password). If C(password) is provided too, it will be ignored.
-    type: str
+    type: path
     required: yes
     aliases: [ cert_key ]
   certificate_name:
@@ -62,20 +62,20 @@ options:
     default: 30
   use_proxy:
     description:
-      - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+    - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
-    default: 'yes'
+    default: yes
   use_ssl:
     description:
     - If C(no), an HTTP connection will be used instead of the default HTTPS connection.
     type: bool
-    default: 'yes'
+    default: yes
   validate_certs:
     description:
     - If C(no), SSL certificates will not be validated.
     - This should only set to C(no) when used on personally controlled sites using self-signed certificates.
     type: bool
-    default: 'yes'
+    default: yes
 seealso:
 - ref: aci_guide
   description: Detailed information on how to manage your ACI infrastructure using Ansible.

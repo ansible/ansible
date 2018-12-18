@@ -74,8 +74,9 @@ options:
     choices: [ bgp, eigrp, ospf, pim, static ]
   asn:
     description:
-    - The AS number for the L3Out. Only applicable when using 'eigrp' as the l3protocol
-    type: str
+    - The AS number for the L3Out.
+    - Only applicable when using 'eigrp' as the l3protocol
+    type: int
     aliases: [ as_number ]
     version_added: '2.8'
   description:
