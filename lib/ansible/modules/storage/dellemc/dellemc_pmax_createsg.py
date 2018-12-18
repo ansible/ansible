@@ -191,7 +191,7 @@ def main():
 
     # Compile a list of existing storage groups.
     sglist = dellemc.get_storage_group_list()
-    # Check if Storage Group already exists
+    # Check if Storage Group already exists.
     if module.params['sgname'] not in sglist:
         dellemc.create_storage_group(srp_id='SRP_1',
                                      sg_id=module.params['sgname'],
