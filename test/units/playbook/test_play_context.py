@@ -11,8 +11,10 @@ import os
 
 import pytest
 
+from ansible import arguments
 from ansible import constants as C
-from ansible.cli import CLI
+from ansible import context
+from ansible import cli
 from units.compat import unittest
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six.moves import shlex_quote
@@ -23,7 +25,7 @@ from units.mock.loader import DictDataLoader
 
 @pytest.fixture
 def parser():
-    parser = CLI.base_parser(runas_opts=True, meta_opts=True,
+    parser = cli.base_parser(runas_opts=True, meta_opts=True,
                              runtask_opts=True, vault_opts=True,
                              async_opts=True, connect_opts=True,
                              subset_opts=True, check_opts=True,
@@ -31,9 +33,18 @@ def parser():
     return parser
 
 
-def test_play_context(mocker, parser):
+@pytest.fixture
+def reset_cli_args():
+    arguments.GlobalCLIArgs._Singleton__instance = None
+    yield
+    arguments.GlobalCLIArgs._Singleton__instance = None
+
+
+def test_play_context(mocker, parser, reset_cli_args):
     (options, args) = parser.parse_args(['-vv', '--check'])
-    play_context = PlayContext(options=options)
+    options.args = args
+    context._init_global_context(options)
+    play_context = PlayContext()
 
     assert play_context._attributes['connection'] == C.DEFAULT_TRANSPORT
     assert play_context.remote_addr is None
@@ -56,7 +67,7 @@ def test_play_context(mocker, parser):
     mock_play.become_user = 'mockroot'
     mock_play.no_log = True
 
-    play_context = PlayContext(play=mock_play, options=options)
+    play_context = PlayContext(play=mock_play)
     assert play_context.connection == 'mock'
     assert play_context.remote_user == 'mock'
     assert play_context.password == ''
@@ -83,7 +94,7 @@ def test_play_context(mocker, parser):
 
     mock_templar = mocker.MagicMock()
 
-    play_context = PlayContext(play=mock_play, options=options)
+    play_context = PlayContext(play=mock_play)
     play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
 
     assert play_context.connection == 'mock_inventory'
@@ -100,9 +111,11 @@ def test_play_context(mocker, parser):
     assert play_context.no_log is False
 
 
-def test_play_context_make_become_cmd(parser):
+def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
     (options, args) = parser.parse_args([])
-    play_context = PlayContext(options=options)
+    options.args = args
+    context._init_global_context(options)
+    play_context = PlayContext()
 
     default_cmd = "/bin/foo"
     default_exe = "/bin/bash"
