@@ -1,0 +1,259 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+- name: create new VMs with 14 disk
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 128mb  # index0
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index1
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index2
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index3
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index4
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index5
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index6
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index8 because index 7 is scsi controller
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index9
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index10
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index11
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index12
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index13
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index14
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: disk_max_ctrl_d1_c1_f0_14disk
+
+- debug: var=disk_max_ctrl_d1_c1_f0_14disk
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "disk_max_ctrl_d1_c1_f0_14disk.results|map(attribute='changed')|unique|list == [true]"
+
+- name: delete the new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    state: absent
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: disk_max_ctrl_d1_c1_f0_delete
+
+- debug: var=disk_max_ctrl_d1_c1_f0_delete
+
+- name: assert that changes were made with deletion
+  assert:
+    that:
+        - "disk_max_ctrl_d1_c1_f0_delete.results|map(attribute='changed')|unique|list == [true]"
+
+- name: create new VMs with 7 disk
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 128mb  # index0
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index1
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index2
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index3
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index4
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index5
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index6
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: disk_max_ctrl_d1_c1_f0_7disk
+
+- debug: var=disk_max_ctrl_d1_c1_f0_7disk
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "disk_max_ctrl_d1_c1_f0_7disk.results|map(attribute='changed')|unique|list == [true]"
+
+- name: Modify VMs to add 1 disk so number of disk is 8
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    disk:
+        - size: 128mb  # index0
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index1
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index2
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index3
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index4
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index5
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index6
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index8 # Because index 7 is for scsi controller
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+  with_items: "{{ vmlist['json'] }}"
+  register: disk_max_ctrl_d1_c1_f0_add_disk_8
+
+
+- debug: var=disk_max_ctrl_d1_c1_f0_add_disk_8
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "disk_max_ctrl_d1_c1_f0_add_disk_8.results|map(attribute='changed')|unique|list == [true]"
+
+
+- name: Modify VMs to addi another 1 disk so number of disk is 9
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    disk:
+        - size: 128mb  # index0
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index1
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index2
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index3
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index4
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index5
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index6
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index8 # Because index 7 is for scsi controller
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index9
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+  with_items: "{{ vmlist['json'] }}"
+  register: disk_max_ctrl_d1_c1_f0_add_disk_9
+
+
+- debug: var=disk_max_ctrl_d1_c1_f0_add_disk_9
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "disk_max_ctrl_d1_c1_f0_add_disk_9.results|map(attribute='changed')|unique|list == [true]"
+
