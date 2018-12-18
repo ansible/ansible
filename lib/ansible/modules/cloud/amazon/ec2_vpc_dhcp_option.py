@@ -114,7 +114,7 @@ new_options:
       domain-name: "my.example.com"
 dhcp_options_id:
     description: The aws resource id of the primary DCHP options set created, found or removed
-    type: string
+    type: str
     returned: when available
 changed:
     description: Whether the dhcp options were changed

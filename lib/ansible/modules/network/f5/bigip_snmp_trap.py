@@ -110,7 +110,7 @@ RETURN = r'''
 snmp_version:
   description: The new C(snmp_version) configured on the remote device.
   returned: changed and success
-  type: string
+  type: str
   sample: 2c
 community:
   description: The new C(community) name for the trap destination.
@@ -120,17 +120,17 @@ community:
 destination:
   description: The new address for the trap destination in either IP or hostname form.
   returned: changed and success
-  type: string
+  type: str
   sample: 1.2.3.4
 port:
   description: The new C(port) of the trap destination.
   returned: changed and success
-  type: string
+  type: str
   sample: 900
 network:
   description: The new name of the network the SNMP trap is on.
   returned: changed and success
-  type: string
+  type: str
   sample: management
 '''
 

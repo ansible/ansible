@@ -113,7 +113,7 @@ EXAMPLES = '''
 RETURN = '''
 name:
     description: The name used to create, modify or delete the host
-    type: string
+    type: str
     returned: always
 data:
     description: The data structure used for create, modify or delete of the host

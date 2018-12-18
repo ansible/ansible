@@ -104,7 +104,7 @@ RETURN = '''
 msg:
     description: module return status.
     returned: as needed
-    type: string
+    type: str
     sample: "domain 'domain_name' created successfully."
 '''
 

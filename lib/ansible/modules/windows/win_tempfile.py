@@ -60,6 +60,6 @@ RETURN = r'''
 path:
   description: Path to created file or directory
   returned: success
-  type: string
+  type: str
   sample: C:\Users\Administrator\AppData\Local\Temp\ansible.bMlvdk
 '''

@@ -114,12 +114,12 @@ RETURN = """
 msg:
   description: Human-readable diagnostic information
   returned: always
-  type: string
+  type: str
   sample: OK
 message_id:
   description: The message ID of the submitted message
   returned: when success
-  type: string
+  type: str
   sample: 2f681ef0-6d76-5c94-99b2-4ae3996ce57b
 """
 

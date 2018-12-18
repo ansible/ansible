@@ -70,7 +70,7 @@ EXAMPLES = '''
 - osx_defaults:
     domain: NSGlobalDomain
     key: AppleMeasurementUnits
-    type: string
+    type: str
     value: Centimeters
     state: present
 
@@ -83,7 +83,7 @@ EXAMPLES = '''
 
 - osx_defaults:
     key: AppleMeasurementUnits
-    type: string
+    type: str
     value: Centimeters
 
 - osx_defaults:

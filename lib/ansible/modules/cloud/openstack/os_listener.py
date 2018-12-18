@@ -63,7 +63,7 @@ RETURN = '''
 id:
     description: The listener UUID.
     returned: On success when I(state) is 'present'
-    type: string
+    type: str
     sample: "39007a7e-ee4f-4d13-8283-b4da2e037c69"
 listener:
     description: Dictionary describing the listener.
@@ -72,19 +72,19 @@ listener:
     contains:
         id:
             description: Unique UUID.
-            type: string
+            type: str
             sample: "39007a7e-ee4f-4d13-8283-b4da2e037c69"
         name:
             description: Name given to the listener.
-            type: string
+            type: str
             sample: "test"
         description:
             description: The listener description.
-            type: string
+            type: str
             sample: "description"
         load_balancer_id:
             description: The load balancer UUID this listener belongs to.
-            type: string
+            type: str
             sample: "b32eef7e-d2a6-4ea4-a301-60a873f89b3b"
         loadbalancers:
             description: A list of load balancer IDs..
@@ -92,11 +92,11 @@ listener:
             sample: [{"id": "b32eef7e-d2a6-4ea4-a301-60a873f89b3b"}]
         provisioning_status:
             description: The provisioning status of the listener.
-            type: string
+            type: str
             sample: "ACTIVE"
         operating_status:
             description: The operating status of the listener.
-            type: string
+            type: str
             sample: "ONLINE"
         is_admin_state_up:
             description: The administrative state of the listener.
@@ -104,7 +104,7 @@ listener:
             sample: true
         protocol:
             description: The protocol for the listener.
-            type: string
+            type: str
             sample: "HTTP"
         protocol_port:
             description: The protocol port number for the listener.

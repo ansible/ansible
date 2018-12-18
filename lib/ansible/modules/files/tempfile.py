@@ -70,7 +70,7 @@ RETURN = '''
 path:
   description: Path to created file or directory
   returned: success
-  type: string
+  type: str
   sample: "/tmp/ansible.bMlvdk"
 '''
 

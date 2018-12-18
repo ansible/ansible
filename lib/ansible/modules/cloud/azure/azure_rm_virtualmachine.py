@@ -504,7 +504,7 @@ RETURN = '''
 powerstate:
     description: Indicates if the state is running, stopped, deallocated, generalized
     returned: always
-    type: string
+    type: str
     example: running
 deleted_vhd_uris:
     description: List of deleted Virtual Hard Disk URIs.

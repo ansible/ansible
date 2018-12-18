@@ -132,12 +132,12 @@ id:
 description:
   description: The description of the route domain.
   returned: changed
-  type: string
+  type: str
   sample: route domain foo
 strict:
   description: The new strict isolation setting.
   returned: changed
-  type: string
+  type: str
   sample: enabled
 parent:
   description: The new parent route domain.
@@ -157,7 +157,7 @@ routing_protocol:
 bwc_policy:
   description: The new bandwidth controller.
   returned: changed
-  type: string
+  type: str
   sample: /Common/foo
 connection_limit:
   description: The new connection limit for the route domain.
@@ -167,17 +167,17 @@ connection_limit:
 flow_eviction_policy:
   description: The new eviction policy to use with this route domain.
   returned: changed
-  type: string
+  type: str
   sample: /Common/default-eviction-policy
 service_policy:
   description: The new service policy to use with this route domain.
   returned: changed
-  type: string
+  type: str
   sample: /Common-my-service-policy
 fw_enforced_policy:
   description: Specfies AFM policy to be attached to route domain.
   returned: changed
-  type: string
+  type: str
   sample: /Common/afm-blocking-policy
 '''
 

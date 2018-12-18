@@ -122,12 +122,12 @@ RETURN = '''
 name:
   description: Name of the jenkins job.
   returned: success
-  type: string
+  type: str
   sample: test-job
 state:
   description: State of the jenkins job.
   returned: success
-  type: string
+  type: str
   sample: present
 enabled:
   description: Whether the jenkins job is enabled or not.
@@ -137,12 +137,12 @@ enabled:
 user:
   description: User used for authentication.
   returned: success
-  type: string
+  type: str
   sample: admin
 url:
   description: Url to connect to the Jenkins server.
   returned: success
-  type: string
+  type: str
   sample: https://jenkins.mydomain.com
 '''
 

@@ -139,7 +139,7 @@ RETURN = '''
 task:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 try:

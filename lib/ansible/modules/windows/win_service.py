@@ -232,32 +232,32 @@ RETURN = r'''
 exists:
     description: Whether the service exists or not.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 name:
     description: The service name or id of the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: CoreMessagingRegistrar
 display_name:
     description: The display name of the installed service.
     returned: success and service exists
-    type: string
+    type: str
     sample: CoreMessaging
 state:
     description: The current running status of the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: stopped
 start_mode:
     description: The startup type of the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: manual
 path:
     description: The path to the service executable.
     returned: success and service exists
-    type: string
+    type: str
     sample: C:\Windows\system32\svchost.exe -k LocalServiceNoNetwork
 can_pause_and_continue:
     description: Whether the service can be paused and unpaused.
@@ -267,17 +267,17 @@ can_pause_and_continue:
 description:
     description: The description of the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: Manages communication between system components.
 username:
     description: The username that runs the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: LocalSystem
 desktop_interact:
     description: Whether the current user is allowed to interact with the desktop.
     returned: success and service exists
-    type: boolean
+    type: bool
     sample: False
 dependencies:
     description: A list of services that is depended by this service.

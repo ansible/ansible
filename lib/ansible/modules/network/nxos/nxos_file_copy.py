@@ -140,17 +140,17 @@ transfer_status:
     description: Whether a file was transferred. "No Transfer" or "Sent".
                  If file_pull is successful, it is set to "Received".
     returned: success
-    type: string
+    type: str
     sample: 'Sent'
 local_file:
     description: The path of the local file.
     returned: success
-    type: string
+    type: str
     sample: '/path/to/local/file'
 remote_file:
     description: The path of the remote file.
     returned: success
-    type: string
+    type: str
     sample: '/path/to/remote/file'
 '''
 

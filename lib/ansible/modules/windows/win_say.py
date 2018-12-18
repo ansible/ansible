@@ -100,16 +100,16 @@ RETURN = r'''
 message_text:
     description: the text that the module attempted to speak
     returned: success
-    type: string
+    type: str
     sample: "Warning, deployment commencing in 5 minutes."
 voice:
     description: the voice used to speak the text.
     returned: success
-    type: string
+    type: str
     sample: Microsoft Hazel Desktop
 voice_info:
     description: the voice used to speak the text.
     returned: when requested voice could not be loaded
-    type: string
+    type: str
     sample: Could not load voice TestVoice, using system default voice
 '''

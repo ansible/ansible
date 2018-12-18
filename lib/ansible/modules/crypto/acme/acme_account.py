@@ -114,7 +114,7 @@ RETURN = '''
 account_uri:
   description: ACME account URI, or None if account does not exist.
   returned: always
-  type: string
+  type: str
 '''
 
 from ansible.module_utils.acme import (

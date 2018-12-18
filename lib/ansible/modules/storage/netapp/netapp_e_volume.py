@@ -106,7 +106,7 @@ RETURN = '''
 ---
 msg:
     description: State of volume
-    type: string
+    type: str
     returned: always
     sample: "Standard volume [workload_vol_1] has been created."
 '''

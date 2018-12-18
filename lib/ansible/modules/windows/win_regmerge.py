@@ -66,7 +66,7 @@ RETURN = r'''
 compare_to_key_found:
     description: whether the parent registry key has been found for comparison
     returned: when comparison key not found in registry
-    type: boolean
+    type: bool
     sample: false
 difference_count:
     description: number of differences between the registry and the file
@@ -76,6 +76,6 @@ difference_count:
 compared:
     description: whether a comparison has taken place between the registry and the file
     returned: when a comparison key has been supplied and comparison has been attempted
-    type: boolean
+    type: bool
     sample: true
 '''

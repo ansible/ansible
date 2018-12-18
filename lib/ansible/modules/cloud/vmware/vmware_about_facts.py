@@ -54,7 +54,7 @@ about_facts:
     description:
     - dict about VMware server
     returned: success
-    type: string
+    type: str
     sample:
         {
             "api_type": "VirtualCenter",

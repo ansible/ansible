@@ -131,7 +131,7 @@ RETURN = '''
 uid:
   description: uid or slug of the created / deleted / exported dashboard.
   returned: success
-  type: string
+  type: str
   sample: 000000063
 '''
 

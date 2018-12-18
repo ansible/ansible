@@ -149,11 +149,11 @@ tenant:
     name:
       description: The tenant name
       returned: success
-      type: string
+      type: str
     description:
       description: The tenant description
       returned: success
-      type: string
+      type: str
     parent_id:
       description: The id of the parent tenant
       returned: success

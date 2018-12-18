@@ -249,12 +249,12 @@ RETURN = '''
 privatekey:
     description: Path to the TLS/SSL private key the CSR was generated for
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/private/ansible.com.pem
 filename:
     description: Path to the generated Certificate Signing Request
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/csr/www.ansible.com.csr
 subject:
     description: A list of the subject tuples attached to the CSR

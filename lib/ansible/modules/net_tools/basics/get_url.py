@@ -223,22 +223,22 @@ RETURN = r'''
 backup_file:
     description: name of backup file created after download
     returned: changed and if backup=yes
-    type: string
+    type: str
     sample: /path/to/file.txt.2015-02-12@22:09~
 checksum_dest:
     description: sha1 checksum of the file after copy
     returned: success
-    type: string
+    type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 checksum_src:
     description: sha1 checksum of the file
     returned: success
-    type: string
+    type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 dest:
     description: destination file/path
     returned: success
-    type: string
+    type: str
     sample: /path/to/file.txt
 elapsed:
     description: The number of seconds that elapsed while performing the download
@@ -253,32 +253,32 @@ gid:
 group:
     description: group of the file
     returned: success
-    type: string
+    type: str
     sample: "httpd"
 md5sum:
     description: md5 checksum of the file after download
     returned: when supported
-    type: string
+    type: str
     sample: "2a5aeecc61dc98c4d780b14b330e3282"
 mode:
     description: permissions of the target
     returned: success
-    type: string
+    type: str
     sample: "0644"
 msg:
     description: the HTTP message from the request
     returned: always
-    type: string
+    type: str
     sample: OK (unknown bytes)
 owner:
     description: owner of the file
     returned: success
-    type: string
+    type: str
     sample: httpd
 secontext:
     description: the SELinux security context of the file
     returned: success
-    type: string
+    type: str
     sample: unconfined_u:object_r:user_tmp_t:s0
 size:
     description: size of the target
@@ -288,12 +288,12 @@ size:
 src:
     description: source file used after download
     returned: always
-    type: string
+    type: str
     sample: /tmp/tmpAdFLdV
 state:
     description: state of the target
     returned: success
-    type: string
+    type: str
     sample: file
 status_code:
     description: the HTTP status code from the request
@@ -308,7 +308,7 @@ uid:
 url:
     description: the actual URL used for the request
     returned: always
-    type: string
+    type: str
     sample: https://www.ansible.com/
 '''
 

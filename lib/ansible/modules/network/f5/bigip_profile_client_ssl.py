@@ -277,7 +277,7 @@ RETURN = r'''
 ciphers:
   description: The ciphers applied to the profile.
   returned: changed
-  type: string
+  type: str
   sample: "!SSLv3:!SSLv2:ECDHE+AES-GCM+SHA256:ECDHE-RSA-AES128-CBC-SHA"
 options:
   description: The list of options for SSL processing.
@@ -287,7 +287,7 @@ options:
 secure_renegotation:
   description: The method of secure SSL renegotiation.
   returned: changed
-  type: string
+  type: str
   sample: request
 allow_non_ssl:
   description: Acceptance of non-SSL connections.

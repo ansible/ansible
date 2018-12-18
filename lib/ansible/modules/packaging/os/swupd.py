@@ -92,11 +92,11 @@ RETURN = '''
 stdout:
   description: stdout of swupd
   returned: always
-  type: string
+  type: str
 stderr:
   description: stderr of swupd
   returned: always
-  type: string
+  type: str
 '''
 
 import os

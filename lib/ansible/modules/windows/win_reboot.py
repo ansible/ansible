@@ -111,7 +111,7 @@ RETURN = r'''
 rebooted:
   description: true if the machine was rebooted
   returned: always
-  type: boolean
+  type: bool
   sample: true
 elapsed:
   description: The number of seconds that elapsed waiting for the system to be rebooted.

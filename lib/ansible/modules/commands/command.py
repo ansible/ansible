@@ -124,17 +124,17 @@ cmd:
 delta:
   description: cmd end time - cmd start time
   returned: always
-  type: string
+  type: str
   sample: 0:00:00.001529
 end:
   description: cmd end time
   returned: always
-  type: string
+  type: str
   sample: '2017-09-29 22:03:48.084657'
 start:
   description: cmd start time
   returned: always
-  type: string
+  type: str
   sample: '2017-09-29 22:03:48.083128'
 '''
 

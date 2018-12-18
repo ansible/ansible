@@ -233,17 +233,17 @@ record:
         content:
             description: the record content (details depend on record type)
             returned: success
-            type: string
+            type: str
             sample: 192.0.2.91
         created_on:
             description: the record creation date
             returned: success
-            type: string
+            type: str
             sample: 2016-03-25T19:09:42.516553Z
         data:
             description: additional record data
             returned: success, if type is SRV, DS, SSHFP or TLSA
-            type: dictionary
+            type: dict
             sample: {
                 name: "jabber",
                 port: 8080,
@@ -256,27 +256,27 @@ record:
         id:
             description: the record id
             returned: success
-            type: string
+            type: str
             sample: f9efb0549e96abcb750de63b38c9576e
         locked:
             description: No documentation available
             returned: success
-            type: boolean
+            type: bool
             sample: False
         meta:
             description: No documentation available
             returned: success
-            type: dictionary
+            type: dict
             sample: { auto_added: false }
         modified_on:
             description: record modification date
             returned: success
-            type: string
+            type: str
             sample: 2016-03-25T19:09:42.516553Z
         name:
             description: the record name as FQDN (including _service and _proto for SRV)
             returned: success
-            type: string
+            type: str
             sample: www.sample.com
         priority:
             description: priority of the MX record
@@ -286,12 +286,12 @@ record:
         proxiable:
             description: whether this record can be proxied through cloudflare
             returned: success
-            type: boolean
+            type: bool
             sample: False
         proxied:
             description: whether the record is proxied through cloudflare
             returned: success
-            type: boolean
+            type: bool
             sample: False
         ttl:
             description: the time-to-live for the record
@@ -301,17 +301,17 @@ record:
         type:
             description: the record type
             returned: success
-            type: string
+            type: str
             sample: A
         zone_id:
             description: the id of the zone containing the record
             returned: success
-            type: string
+            type: str
             sample: abcede0bf9f0066f94029d2e6b73856a
         zone_name:
             description: the name of the zone containing the record
             returned: success
-            type: string
+            type: str
             sample: sample.com
 '''
 

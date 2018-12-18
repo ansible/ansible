@@ -162,7 +162,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: ldap
 description:
   description: The description of the monitor.
@@ -172,7 +172,7 @@ description:
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -192,7 +192,7 @@ time_until_up:
 security:
   description: The new Security setting of the resource.
   returned: changed
-  type: string
+  type: str
   sample: ssl
 debug:
   description: The new Debug setting of the resource.
@@ -217,12 +217,12 @@ manual_resume:
 filter:
   description: The new LDAP Filter setting of the resource.
   returned: changed
-  type: string
+  type: str
   sample: filter1
 base:
   description: The new LDAP Base setting of the resource.
   returned: changed
-  type: string
+  type: str
   sample: base
 '''
 

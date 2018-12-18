@@ -63,12 +63,12 @@ RETURN = """
 msg:
   description: The message you attempted to send
   returned: success
-  type: string
+  type: str
   sample: "Ansible task finished"
 telegram_error:
   description: Error message gotten from Telegram API
   returned: failure
-  type: string
+  type: str
   sample: "Bad Request: message text is empty"
 """
 

@@ -143,17 +143,17 @@ RETURN = r'''
 dest:
     description: destination file/path
     returned: changed
-    type: string
+    type: str
     sample: C:\Temp\
 src:
     description: source file used for the copy on the target machine
     returned: changed
-    type: string
+    type: str
     sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
 checksum:
     description: sha1 checksum of the file after running copy
     returned: success, src is a file
-    type: string
+    type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 size:
     description: size of the target, after execution
@@ -163,11 +163,11 @@ size:
 operation:
     description: whether a single file copy took place or a folder copy
     returned: success
-    type: string
+    type: str
     sample: file_copy
 original_basename:
     description: basename of the copied file
     returned: changed, src is a file
-    type: string
+    type: str
     sample: foo.txt
 '''

@@ -62,12 +62,12 @@ RETURN = '''
 changed:
   description: check to see if a change was made to the rules
   returned: always
-  type: boolean
+  type: bool
   sample: true
 name:
   description: name of bucket
   returned: always
-  type: string
+  type: str
   sample: 'bucket-name'
 rules:
   description: list of current rules

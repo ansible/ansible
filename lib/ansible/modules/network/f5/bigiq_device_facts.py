@@ -91,25 +91,25 @@ applications:
       description:
         - The type of F5 Web Application Security Service protection on the application.
       returned: changed
-      type: string
+      type: str
       sample: Not Protected
     id:
       description:
         - ID of the application as known to the BIG-IQ.
       returned: changed
-      type: string
+      type: str
       sample: 996baae8-5d1d-3662-8a2d-3612fa2aceae
     name:
       description:
         - Name of the application.
       returned: changed
-      type: string
+      type: str
       sample: site12http.example.com
     status:
       description:
         - Current state of the application.
       returned: changed
-      type: string
+      type: str
       sample: DEPLOYED
     transactions_per_second:
       description:
@@ -139,7 +139,7 @@ applications:
       description:
         - Health of the application.
       returned: changed
-      type: string
+      type: str
       sample: Good
     active_alerts:
       description:
@@ -176,37 +176,37 @@ managed_devices:
       description:
         - Address where the device was discovered.
       returned: changed
-      type: string
+      type: str
       sample: 10.10.10.10
     build:
       description:
         - Build of the version.
       returned: changed
-      type: string
+      type: str
       sample: 0.0.4
     device_uri:
       description:
         - URI to reach the management interface of the device.
       returned: changed
-      type: string
+      type: str
       sample: "https://10.10.10.10:443"
     edition:
       description:
         - Edition string of the product version.
       returned: changed
-      type: string
+      type: str
       sample: Final
     group_name:
       description:
         - BIG-IQ group that the device is a member of.
       returned: changed
-      type: string
+      type: str
       sample: cm-bigip-allBigIpDevices
     hostname:
       description:
         - Discovered hostname of the device.
       returned: changed
-      type: string
+      type: str
       sample: tier2labB1.lab.fp.foo.com
     https_port:
       description:
@@ -236,37 +236,37 @@ managed_devices:
       description:
         - Machine specific ID assigned to this device by BIG-IQ.
       returned: changed
-      type: string
+      type: str
       sample: c141bc88-f734-4434-be64-a3e9ea98356e
     management_address:
       description:
         - IP address of the management interface on the device.
       returned: changed
-      type: string
+      type: str
       sample: 10.10.10.10
     mcp_device_name:
       description:
         - Device name as known by MCPD on the BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/tier2labB1.lab.fp.foo.com
     product:
       description:
         - Product that the managed device is identified as.
       returned: changed
-      type: string
+      type: str
       sample: BIG-IP
     rest_framework_version:
       description:
         - REST framework version running on the device
       returned: changed
-      type: string
+      type: str
       sample: 13.1.1-0.0.4
     self_link:
       description:
         - Internal reference to the managed device in BIG-IQ.
       returned: changed
-      type: string
+      type: str
       sample: "https://localhost/mgmt/shared/resolver/device-groups/cm-bigip-allBigIpDevices/devices/c141bc88-f734-4434-be64-a3e9ea98356e"
     slots:
       description:
@@ -278,7 +278,7 @@ managed_devices:
       description:
         - State of the device.
       returned: changed
-      type: string
+      type: str
       sample: ACTIVE
     tags:
       description:
@@ -290,19 +290,19 @@ managed_devices:
       description:
         - GUID of the trust domain the device is part of.
       returned: changed
-      type: string
+      type: str
       sample: 40ddf541-e604-4905-bde3005056813e36
     uuid:
       description:
         - UUID of the device in BIG-IQ.
       returned: changed
-      type: string
+      type: str
       sample: c141bc88-f734-4434-be64-a3e9ea98356e
     version:
       description:
         - Version of TMOS installed on the device.
       returned: changed
-      type: string
+      type: str
       sample: 13.1.1
   sample: hash/dictionary of values
 purchased_pool_licenses:
@@ -314,13 +314,13 @@ purchased_pool_licenses:
       description:
         - Base registration key of the purchased pool
       returned: changed
-      type: string
+      type: str
       sample: XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
     dossier:
       description:
         - Dossier of the purchased pool license
       returned: changed
-      type: string
+      type: str
       sample: d6bd4b8ba5...e9a1a1199b73af9932948a
     free_device_licenses:
       description:
@@ -332,13 +332,13 @@ purchased_pool_licenses:
       description:
         - Name of the purchased pool
       returned: changed
-      type: string
+      type: str
       sample: my-pool1
     state:
       description:
         - State of the purchased pool license
       returned: changed
-      type: string
+      type: str
       sample: LICENSED
     total_device_licenses:
       description:
@@ -350,55 +350,55 @@ purchased_pool_licenses:
       description:
         - UUID of the purchased pool license
       returned: changed
-      type: string
+      type: str
       sample: b2112329-cba7-4f1f-9a26-fab9be416d60
     vendor:
       description:
         - Vendor who provided the license
       returned: changed
-      type: string
+      type: str
       sample: F5 Networks, Inc
     licensed_date_time:
       description:
         - Timestamp that the pool was licensed.
       returned: changed
-      type: string
+      type: str
       sample: "2018-09-10T00:00:00-07:00"
     licensed_version:
       description:
         - Version of BIG-IQ that is licensed.
       returned: changed
-      type: string
+      type: str
       sample: 6.0.1
     evaluation_start_date_time:
       description:
         - Date that evaluation license starts.
       returned: changed
-      type: string
+      type: str
       sample: "2018-09-09T00:00:00-07:00"
     evaluation_end_date_time:
       description:
         - Date that evaluation license ends.
       returned: changed
-      type: string
+      type: str
       sample: "2018-10-11T00:00:00-07:00"
     license_end_date_time:
       description:
         - Date that the license expires.
       returned: changed
-      type: string
+      type: str
       sample: "2018-10-11T00:00:00-07:00"
     license_start_date_time:
       description:
         - Date that the license starts.
       returned: changed
-      type: string
+      type: str
       sample: "2018-09-09T00:00:00-07:00"
     registration_key:
       description:
         - Purchased pool license key.
       returned: changed
-      type: string
+      type: str
       sample: XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
   sample: hash/dictionary of values
 regkey_pools:
@@ -410,13 +410,13 @@ regkey_pools:
       description:
         - Name of the regkey pool.
       returned: changed
-      type: string
+      type: str
       sample: pool1
     id:
       description:
         - ID of the regkey pool.
       returned: changed
-      type: string
+      type: str
       sample: 4f9b565c-0831-4657-b6c2-6dde6182a502
     total_offerings:
       description:
@@ -432,61 +432,61 @@ regkey_pools:
           description:
             - Dossier of the license.
           returned: changed
-          type: string
+          type: str
           sample: d6bd4b8ba5...e9a1a1199b73af9932948a
         name:
           description:
             - Name of the regkey.
           returned: changed
-          type: string
+          type: str
           sample: regkey1
         state:
           description:
             - State of the regkey license
           returned: changed
-          type: string
+          type: str
           sample: LICENSED
         licensed_date_time:
           description:
             - Timestamp that the regkey was licensed.
           returned: changed
-          type: string
+          type: str
           sample: "2018-09-10T00:00:00-07:00"
         licensed_version:
           description:
             - Version of BIG-IQ that is licensed.
           returned: changed
-          type: string
+          type: str
           sample: 6.0.1
         evaluation_start_date_time:
           description:
             - Date that evaluation license starts.
           returned: changed
-          type: string
+          type: str
           sample: "2018-09-09T00:00:00-07:00"
         evaluation_end_date_time:
           description:
             - Date that evaluation license ends.
           returned: changed
-          type: string
+          type: str
           sample: "2018-10-11T00:00:00-07:00"
         license_end_date_time:
           description:
             - Date that the license expires.
           returned: changed
-          type: string
+          type: str
           sample: "2018-10-11T00:00:00-07:00"
         license_start_date_time:
           description:
             - Date that the license starts.
           returned: changed
-          type: string
+          type: str
           sample: "2018-09-09T00:00:00-07:00"
         registration_key:
           description:
             - Registration license key.
           returned: changed
-          type: string
+          type: str
           sample: XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
       sample: hash/dictionary of values
   sample: hash/dictionary of values
@@ -499,13 +499,13 @@ system_info:
       description:
         - Media Access Control address (MAC address) of the device.
       returned: changed
-      type: string
+      type: str
       sample: "fa:16:3e:c3:42:6f"
     marketing_name:
       description:
         - Marketing name of the device platform.
       returned: changed
-      type: string
+      type: str
       sample: BIG-IQ Virtual Edition
     time:
       description:
@@ -558,17 +558,17 @@ system_info:
         model:
           description:
             - The model of the hardware.
-          type: string
+          type: str
           sample: Virtual Disk
         name:
           description:
             - The name of the hardware.
-          type: string
+          type: str
           sample: HD1
         type:
           description:
             - The type of hardware.
-          type: string
+          type: str
           sample: physical-disk
         versions:
           description:
@@ -578,12 +578,12 @@ system_info:
             name:
               description:
                 - Name of the property
-              type: string
+              type: str
               sample: Size
             version:
               description:
                 - Value of the property
-              type: string
+              type: str
               sample: 154.00G
     is_admin_password_changed:
       description:
@@ -607,27 +607,27 @@ system_info:
       description:
         - Displays the software edition.
       returned: changed
-      type: string
+      type: str
       sample: Point Release 7
     package_version:
       description:
         - A string combining the C(product_build) and C(product_build_date).
-      type: string
+      type: str
       sample: "Build 0.0.1 - Tue May 15 15:26:30 PDT 2018"
     product_code:
       description:
         - Code identifying the product.
-      type: string
+      type: str
       sample: BIG-IQ
     product_build:
       description:
         - Build version of the release version.
-      type: string
+      type: str
       sample: 0.0.1
     product_version:
       description:
         - Major product version of the running software.
-      type: string
+      type: str
       sample: 6.0.0
     product_built:
       description:
@@ -637,7 +637,7 @@ system_info:
     product_build_date:
       description:
         - Human readable build date.
-      type: string
+      type: str
       sample: "Tue May 15 15:26:30 PDT 2018"
     product_changelist:
       description:
@@ -652,29 +652,29 @@ system_info:
     chassis_serial:
       description:
         - Serial of the chassis
-      type: string
+      type: str
       sample: 11111111-2222-3333-444444444444
     host_board_part_revision:
       description:
         - Revision of the host board.
-      type: string
+      type: str
     host_board_serial:
       description:
         - Serial of the host board.
-      type: string
+      type: str
     platform:
       description:
         - Platform identifier.
-      type: string
+      type: str
       sample: Z100
     switch_board_part_revision:
       description:
         - Switch board revision.
-      type: string
+      type: str
     switch_board_serial:
       description:
         - Serial of the switch board.
-      type: string
+      type: str
     uptime:
       description:
         - Time, in seconds, since the system booted.
@@ -691,25 +691,25 @@ vlans:
         - Allows the system to send return traffic to the MAC address that transmitted the
           request, even if the routing table points to a different network or interface.
       returned: changed
-      type: string
+      type: str
       sample: enabled
     cmp_hash_algorithm:
       description:
         - Specifies how the traffic on the VLAN will be disaggregated.
       returned: changed
-      type: string
+      type: str
       sample: default
     description:
       description:
         - Description of the VLAN.
       returned: changed
-      type: string
+      type: str
       sample: My vlan
     failsafe_action:
       description:
         - Action for the system to take when the fail-safe mechanism is triggered.
       returned: changed
-      type: string
+      type: str
       sample: reboot
     failsafe_enabled:
       description:
@@ -736,7 +736,7 @@ vlans:
         - Whether switch ports placed in the VLAN are configured for switch learning,
           forwarding only, or dropped.
       returned: changed
-      type: string
+      type: str
       sample: enable-forward
     interfaces:
       description:
@@ -748,13 +748,13 @@ vlans:
           description:
             - Full name of the resource as known to BIG-IP.
           returned: changed
-          type: string
+          type: str
           sample: 1.3
         name:
           description:
             - Relative name of the resource in BIG-IP.
           returned: changed
-          type: string
+          type: str
           sample: 1.3
         tagged:
           description:
@@ -804,7 +804,7 @@ vlans:
       description:
         - Media access control (MAC) address for the lowest-numbered interface assigned to this VLAN.
       returned: changed
-      type: string
+      type: str
       sample: "fa:16:3e:10:da:ff"
     tag:
       description:

@@ -66,7 +66,7 @@ RETURN = '''
 msg:
     description: The command standard output
     returned: always
-    type: string
+    type: str
     sample: [u'Using default tag: latest ...']
 '''
 import traceback

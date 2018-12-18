@@ -69,12 +69,12 @@ memset_api:
     domain:
       description: Domain name
       returned: always
-      type: string
+      type: str
       sample: "example.com"
     id:
       description: Domain ID
       returned: always
-      type: string
+      type: str
       sample: "b0bb1ce851aeea6feeb2dc32fe83bf9c"
 '''
 

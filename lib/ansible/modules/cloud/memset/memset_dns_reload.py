@@ -71,17 +71,17 @@ memset_api:
     id:
       description: Job ID.
       returned: always
-      type: string
+      type: str
       sample: "c9cc8ad2a3e3fb8c63ed83c424928ef8"
     status:
       description: Job status.
       returned: always
-      type: string
+      type: str
       sample: "DONE"
     type:
       description: Job type.
       returned: always
-      type: string
+      type: str
       sample: "dns"
 '''
 

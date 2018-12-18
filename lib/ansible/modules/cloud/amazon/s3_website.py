@@ -87,7 +87,7 @@ index_document:
         suffix:
             description: suffix that is appended to a request that is for a directory on the website endpoint
             returned: success
-            type: string
+            type: str
             sample: index.html
 error_document:
     description: error document
@@ -97,7 +97,7 @@ error_document:
         key:
             description:  object key name to use when a 4XX class error occurs
             returned: when error_document parameter set
-            type: string
+            type: str
             sample: error.html
 redirect_all_requests_to:
     description: where to redirect requests
@@ -107,7 +107,7 @@ redirect_all_requests_to:
         host_name:
             description: name of the host where requests will be redirected.
             returned: when redirect all requests parameter set
-            type: string
+            type: str
             sample: ansible.com
 routing_rules:
     description: routing rules
@@ -118,20 +118,20 @@ routing_rules:
             host_name:
                 description: name of the host where requests will be redirected.
                 returned: when host name set as part of redirect rule
-                type: string
+                type: str
                 sample: ansible.com
         condition:
             key_prefix_equals:
             description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be
                      ExamplePage.html
             returned: when routing rule present
-            type: string
+            type: str
             sample: docs/
         redirect:
             replace_key_prefix_with:
                 description: object key prefix to use in the redirect request
                 returned: when routing rule present
-                type: string
+                type: str
                 sample: documents/
 '''
 

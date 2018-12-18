@@ -574,17 +574,17 @@ RETURN = r'''
 description:
   description: New description of the virtual server.
   returned: changed
-  type: string
+  type: str
   sample: This is my description
 default_persistence_profile:
   description: Default persistence profile set on the virtual server.
   returned: changed
-  type: string
+  type: str
   sample: /Common/dest_addr
 destination:
   description: Destination of the virtual server.
   returned: changed
-  type: string
+  type: str
   sample: 1.1.1.1
 disabled:
   description: Whether the virtual server is disabled, or not.
@@ -609,7 +609,7 @@ enabled_vlans:
 fallback_persistence_profile:
   description: Fallback persistence profile set on the virtual server.
   returned: changed
-  type: string
+  type: str
   sample: /Common/source_addr
 irules:
   description: iRules set on the virtual server.
@@ -619,7 +619,7 @@ irules:
 pool:
   description: Pool that the virtual server is attached to.
   returned: changed
-  type: string
+  type: str
   sample: /Common/my-pool
 policies:
   description: List of policies attached to the virtual.
@@ -639,12 +639,12 @@ profiles:
 snat:
   description: SNAT setting of the virtual server.
   returned: changed
-  type: string
+  type: str
   sample: Automap
 source:
   description: Source address, in CIDR form, set on the virtual server.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.3.4/32
 metadata:
   description: The new value of the virtual.
@@ -664,7 +664,7 @@ port_translation:
 source_port:
   description: Specifies whether the system preserves the source port of the connection.
   returned: changed
-  type: string
+  type: str
   sample: change
 mirror:
   description: Specifies that the system mirrors connections on each member of a redundant pair.
@@ -679,12 +679,12 @@ ip_protocol:
 firewall_enforced_policy:
   description: The new enforcing firewall policy.
   returned: changed
-  type: string
+  type: str
   sample: /Common/my-enforced-fw
 firewall_staged_policy:
   description: The new staging firewall policy.
   returned: changed
-  type: string
+  type: str
   sample: /Common/my-staged-fw
 security_log_profiles:
   description: The new list of security log profiles.
@@ -694,7 +694,7 @@ security_log_profiles:
 ip_intelligence_policy:
   description: The new IP Intelligence Policy assigned to the virtual.
   returned: changed
-  type: string
+  type: str
   sample: /Common/ip-intelligence
 '''
 

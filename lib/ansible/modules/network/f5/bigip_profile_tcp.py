@@ -89,7 +89,7 @@ RETURN = r'''
 parent:
   description: The new parent of the resource.
   returned: changed
-  type: string
+  type: str
   sample: f5-tcp-optimized
 idle_timeout:
   description: The new idle timeout of the resource.

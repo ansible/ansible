@@ -101,7 +101,7 @@ RETURN = '''
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Json facts for the pool that was created.
 '''
 

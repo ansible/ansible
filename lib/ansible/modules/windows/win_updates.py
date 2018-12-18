@@ -174,7 +174,7 @@ RETURN = r'''
 reboot_required:
     description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
     returned: success
-    type: boolean
+    type: bool
     sample: True
 
 updates:
@@ -186,7 +186,7 @@ updates:
         title:
             description: Display name
             returned: always
-            type: string
+            type: str
             sample: "Security Update for Windows Server 2012 R2 (KB3004365)"
         kb:
             description: A list of KB article IDs that apply to the update
@@ -196,12 +196,12 @@ updates:
         id:
             description: Internal Windows Update GUID
             returned: always
-            type: string (guid)
+            type: str (guid)
             sample: "fb95c1c8-de23-4089-ae29-fd3351d55421"
         installed:
             description: Was the update successfully installed
             returned: always
-            type: boolean
+            type: bool
             sample: True
         categories:
             description: A list of category strings for this update
@@ -211,7 +211,7 @@ updates:
         failure_hresult_code:
             description: The HRESULT code from a failed update
             returned: on install failure
-            type: boolean
+            type: bool
             sample: 2147942402
 
 filtered_updates:
@@ -225,7 +225,7 @@ filtered_updates:
         filtered_reason:
             description: The reason why this update was filtered
             returned: always
-            type: string
+            type: str
             sample: 'skip_hidden'
 
 found_update_count:

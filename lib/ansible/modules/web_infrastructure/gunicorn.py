@@ -92,7 +92,7 @@ RETURN = '''
 gunicorn:
     description: process id of gunicorn
     returned: changed
-    type: string
+    type: str
     sample: "1234"
 '''
 

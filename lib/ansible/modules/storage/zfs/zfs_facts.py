@@ -76,22 +76,22 @@ RETURN = '''
 name:
     description: ZFS dataset name
     returned: always
-    type: string
+    type: str
     sample: rpool/var/spool
 parsable:
     description: if parsable output should be provided in machine friendly format.
     returned: if 'parsable' is set to True
-    type: boolean
+    type: bool
     sample: True
 recurse:
     description: if we should recurse over ZFS dataset
     returned: if 'recurse' is set to True
-    type: boolean
+    type: bool
     sample: True
 zfs_datasets:
     description: ZFS dataset facts
     returned: always
-    type: string
+    type: str
     sample:
             {
                 "aclinherit": "restricted",

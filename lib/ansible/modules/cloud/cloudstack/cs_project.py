@@ -103,32 +103,32 @@ RETURN = '''
 id:
   description: UUID of the project.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the project.
   returned: success
-  type: string
+  type: str
   sample: web project
 display_text:
   description: Display text of the project.
   returned: success
-  type: string
+  type: str
   sample: web project
 state:
   description: State of the project.
   returned: success
-  type: string
+  type: str
   sample: Active
 domain:
   description: Domain the project is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the project is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 tags:
   description: List of resource tags associated with the project.

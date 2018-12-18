@@ -127,37 +127,37 @@ RETURN = '''
 id:
   description: UUID of the network offering.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: The name of the network offering.
   returned: success
-  type: string
+  type: str
   sample: MyCustomNetworkOffering
 display_text:
   description: The display text of the network offering.
   returned: success
-  type: string
+  type: str
   sample: My network offering
 state:
   description: The state of the network offering.
   returned: success
-  type: string
+  type: str
   sample: Enabled
 guest_ip_type:
   description: Guest type of the network offering.
   returned: success
-  type: string
+  type: str
   sample: Isolated
 availability:
   description: The availability of network offering.
   returned: success
-  type: string
+  type: str
   sample: Optional
 service_offering_id:
   description: The service offering ID.
   returned: success
-  type: string
+  type: str
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
 max_connections:
   description: The maximum number of concurrents connections to be handled by LB.
@@ -172,12 +172,12 @@ network_rate:
 traffic_type:
   description: The traffic type.
   returned: success
-  type: string
+  type: str
   sample: Guest
 egress_default_policy:
   description: Default egress policy.
   returned: success
-  type: string
+  type: str
   sample: allow
 is_persistent:
   description: Whether persistent networks are supported or not.

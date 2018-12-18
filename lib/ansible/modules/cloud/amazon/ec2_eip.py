@@ -155,12 +155,12 @@ RETURN = '''
 allocation_id:
   description: allocation_id of the elastic ip
   returned: on success
-  type: string
+  type: str
   sample: eipalloc-51aa3a6c
 public_ip:
   description: an elastic ip address
   returned: on success
-  type: string
+  type: str
   sample: 52.88.159.209
 '''
 

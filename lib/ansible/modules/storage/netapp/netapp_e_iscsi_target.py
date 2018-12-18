@@ -87,20 +87,20 @@ RETURN = """
 msg:
     description: Success message
     returned: on success
-    type: string
+    type: str
     sample: The iSCSI target settings have been updated.
 alias:
     description:
         - The alias assigned to the iSCSI target.
     returned: on success
     sample: myArray
-    type: string
+    type: str
 iqn:
     description:
         - The iqn (iSCSI Qualified Name), assigned to the iSCSI target.
     returned: on success
     sample: iqn.1992-08.com.netapp:2800.000a132000b006d2000000005a0e8f45
-    type: string
+    type: str
 """
 import json
 import logging

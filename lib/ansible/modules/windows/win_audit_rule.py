@@ -121,7 +121,7 @@ current_audit_rules:
     - The current rules on the defined I(path)
     - Will return "No audit rules defined on I(path)"
   returned: always
-  type: dictionary
+  type: dict
   sample: |
     {
       "audit_flags": "Success",
@@ -136,5 +136,5 @@ path_type:
     - The type of I(path) being targetted.
     - Will be one of file, directory, registry.
   returned: always
-  type: string
+  type: str
 '''

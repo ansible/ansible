@@ -293,7 +293,7 @@ RETURN = r'''
 monitor_type:
   description: The contact that was set on the datacenter.
   returned: changed
-  type: string
+  type: str
   sample: admin@root.local
 quorum:
   description: The quorum that was set on the pool.
@@ -308,17 +308,17 @@ monitors:
 service_down_action:
   description: Service down action that is set on the pool.
   returned: changed
-  type: string
+  type: str
   sample: reset
 description:
   description: Description set on the pool.
   returned: changed
-  type: string
+  type: str
   sample: Pool of web servers
 lb_method:
   description: The LB method set for the pool.
   returned: changed
-  type: string
+  type: str
   sample: round-robin
 slow_ramp_time:
   description: The new value that is set for the slow ramp-up time.

@@ -95,52 +95,52 @@ RETURN = '''
 category:
   description: Category of the configuration.
   returned: success
-  type: string
+  type: str
   sample: Advanced
 scope:
   description: Scope (zone/cluster/storagepool/account) of the parameter that needs to be updated.
   returned: success
-  type: string
+  type: str
   sample: storagepool
 description:
   description: Description of the configuration.
   returned: success
-  type: string
+  type: str
   sample: Setup the host to do multipath
 name:
   description: Name of the configuration.
   returned: success
-  type: string
+  type: str
   sample: zone.vlan.capacity.notificationthreshold
 value:
   description: Value of the configuration.
   returned: success
-  type: string
+  type: str
   sample: "0.75"
 account:
   description: Account of the configuration.
   returned: success
-  type: string
+  type: str
   sample: admin
 Domain:
   description: Domain of account of the configuration.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 zone:
   description: Zone of the configuration.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-01
 cluster:
   description: Cluster of the configuration.
   returned: success
-  type: string
+  type: str
   sample: cluster01
 storage:
   description: Storage of the configuration.
   returned: success
-  type: string
+  type: str
   sample: storage01
 '''
 

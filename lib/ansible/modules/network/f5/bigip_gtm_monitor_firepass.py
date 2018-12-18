@@ -172,17 +172,17 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: firepass_gtm
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 port:
   description: The new port the monitor checks the resource on.
   returned: changed
-  type: string
+  type: str
   sample: 8080
 interval:
   description: The new interval in which to run the monitor check.
@@ -207,7 +207,7 @@ probe_timeout:
 cipher_list:
   description: The new value for the cipher list.
   returned: changed
-  type: string
+  type: str
   sample: +3DES:+kEDH
 max_load_average:
   description: The new value for the max load average.

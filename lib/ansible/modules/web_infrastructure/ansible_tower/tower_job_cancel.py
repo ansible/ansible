@@ -50,7 +50,7 @@ id:
 status:
     description: status of the cancel request
     returned: success
-    type: string
+    type: str
     sample: canceled
 '''
 

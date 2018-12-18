@@ -211,7 +211,7 @@ RETURN = '''
 task:
   description: The result of the create, accept, reject or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 try:

@@ -158,7 +158,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: snmp_dca
 description:
   description: The description of the monitor.
@@ -183,17 +183,17 @@ time_until_up:
 community:
   description: The new community for the monitor.
   returned: changed
-  type: string
+  type: str
   sample: foobar
 version:
   description: The new new SNMP version to be used by the monitor.
   returned: changed
-  type: string
+  type: str
   sample: v2c
 agent_type:
   description: The new agent type to be used by the monitor.
   returned: changed
-  type: string
+  type: str
   sample: UCD
 cpu_coefficient:
   description: The new CPU coefficient.

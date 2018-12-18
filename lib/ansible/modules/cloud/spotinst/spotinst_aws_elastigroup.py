@@ -742,7 +742,7 @@ instances:
 group_id:
     description: Created / Updated group's ID.
     returned: success
-    type: string
+    type: str
     sample: "sig-12345"
 
 '''

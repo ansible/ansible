@@ -333,7 +333,7 @@ service:
                       IPAddress:
                           description: The IP address assigned to the container.
                           returned: success
-                          type: string
+                          type: str
                           example: 172.17.0.2
                       IPPrefixLen:
                           description: Number of bits used by the subnet.
@@ -399,11 +399,11 @@ actions:
                       name:
                           description: name of the image
                           returned: always
-                          type: string
+                          type: str
                       id:
                           description: image hash
                           returned: always
-                          type: string
+                          type: str
               built_image:
                   description: Provides image details when a new image is built for the service.
                   returned: on image build
@@ -412,11 +412,11 @@ actions:
                       name:
                           description: name of the image
                           returned: always
-                          type: string
+                          type: str
                       id:
                           description: image hash
                           returned: always
-                          type: string
+                          type: str
 
               action:
                   description: A descriptive name of the action to be performed on the service's containers.
@@ -426,15 +426,15 @@ actions:
                       id:
                           description: the container's long ID
                           returned: always
-                          type: string
+                          type: str
                       name:
                           description: the container's name
                           returned: always
-                          type: string
+                          type: str
                       short_id:
                           description: the container's short ID
                           returned: always
-                          type: string
+                          type: str
 '''
 
 import os

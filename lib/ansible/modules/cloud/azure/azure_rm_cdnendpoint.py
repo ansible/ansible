@@ -145,7 +145,7 @@ RETURN = '''
 state:
     description: Current state of the Azure CDN endpoint
     returned: always
-    type: string
+    type: str
 id:
     description:
         - Id of the CDN endpoint.

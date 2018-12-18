@@ -175,12 +175,12 @@ RETURN = r'''
 auth_pam_idle_timeout:
   description: The new number of seconds for GUI timeout.
   returned: changed
-  type: string
+  type: str
   sample: 1200
 auth_name:
   description: The new authentication realm name.
   returned: changed
-  type: string
+  type: str
   sample: 'foo'
 auth_pam_validate_ip:
   description: The new authPamValidateIp setting.
@@ -205,7 +205,7 @@ hostname_lookup:
 log_level:
   description: The new minimum httpd log level.
   returned: changed
-  type: string
+  type: str
   sample: crit
 max_clients:
   description: The new maximum number of clients that can connect to the GUI at once.
@@ -225,17 +225,17 @@ ssl_port:
 ssl_cipher_suite:
   description: The new ciphers that the system uses.
   returned: changed
-  type: string
+  type: str
   sample: ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA
 ssl_cipher_suite_list:
   description: List of the new ciphers that the system uses.
   returned: changed
-  type: string
+  type: str
   sample: ['ECDHE-RSA-AES256-GCM-SHA384', 'ECDHE-RSA-AES128-SHA']
 ssl_protocols:
   description: The new list of SSL protocols to accept on the management console.
   returned: changed
-  type: string
+  type: str
   sample: all -SSLv2 -SSLv3
 '''
 

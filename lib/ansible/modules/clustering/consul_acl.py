@@ -138,13 +138,13 @@ RETURN = """
 token:
     description: the token associated to the ACL (the ACL's ID)
     returned: success
-    type: string
+    type: str
     sample: a2ec332f-04cf-6fba-e8b8-acf62444d3da
 rules:
     description: the HCL JSON representation of the rules associated to the ACL, in the format described in the
                  Consul documentation (https://www.consul.io/docs/guides/acl.html#rule-specification).
     returned: I(status) == "present"
-    type: string
+    type: str
     sample: {
         "key": {
             "foo": {
@@ -158,7 +158,7 @@ rules:
 operation:
     description: the operation performed on the ACL
     returned: changed
-    type: string
+    type: str
     sample: update
 """
 

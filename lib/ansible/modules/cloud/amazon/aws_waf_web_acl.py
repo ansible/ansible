@@ -90,12 +90,12 @@ web_acl:
     metric_name:
       description: Metric name used as an identifier
       returned: always
-      type: string
+      type: str
       sample: mywebacl
     name:
       description: Friendly name of the Web ACL
       returned: always
-      type: string
+      type: str
       sample: my web acl
     rules:
       description: List of rules
@@ -116,17 +116,17 @@ web_acl:
         rule_id:
           description: Rule ID
           returned: always
-          type: string
+          type: str
           sample: a6fc7ab5-287b-479f-8004-7fd0399daf75
         type:
           description: Type of rule (either REGULAR or RATE_BASED)
           returned: always
-          type: string
+          type: str
           sample: REGULAR
     web_acl_id:
       description: Unique identifier of Web ACL
       returned: always
-      type: string
+      type: str
       sample: 10fff965-4b6b-46e2-9d78-24f6d2e2d21c
 '''
 

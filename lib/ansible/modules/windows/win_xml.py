@@ -75,7 +75,7 @@ RETURN = r'''
 msg:
     description: what was done
     returned: always
-    type: string
+    type: str
     sample: "xml added"
 err:
     description: xml comparison exceptions
@@ -85,6 +85,6 @@ err:
 backup:
     description: name of the backup file, if created
     returned: changed
-    type: string
+    type: str
     sample: C:\config.xml.19700101-000000
 '''

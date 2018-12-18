@@ -191,12 +191,12 @@ files:
 matched:
     description: number of matches
     returned: success
-    type: string
+    type: str
     sample: 14
 examined:
     description: number of filesystem objects looked at
     returned: success
-    type: string
+    type: str
     sample: 34
 '''
 

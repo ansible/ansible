@@ -213,7 +213,7 @@ RETURN = """
 msg:
     description: Success message
     returned: on success
-    type: string
+    type: str
     sample: The interface settings have been updated.
 enabled:
     description:

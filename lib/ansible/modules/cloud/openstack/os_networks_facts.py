@@ -94,15 +94,15 @@ openstack_networks:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the network.
             returned: success
-            type: string
+            type: str
         status:
             description: Network status.
             returned: success
-            type: string
+            type: str
         subnets:
             description: Subnet(s) included in this network.
             returned: success
@@ -110,11 +110,11 @@ openstack_networks:
         tenant_id:
             description: Tenant id associated with this network.
             returned: success
-            type: string
+            type: str
         shared:
             description: Network shared flag.
             returned: success
-            type: boolean
+            type: bool
 '''
 
 from ansible.module_utils.basic import AnsibleModule

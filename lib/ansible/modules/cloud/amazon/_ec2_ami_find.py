@@ -168,12 +168,12 @@ RETURN = '''
 ami_id:
     description: id of found amazon image
     returned: when AMI found
-    type: string
+    type: str
     sample: "ami-e9095e8c"
 architecture:
     description: architecture of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "x86_64"
 block_device_mapping:
     description: block device mapping associated with image
@@ -190,17 +190,17 @@ block_device_mapping:
 creationDate:
     description: creation date of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "2015-10-15T22:43:44.000Z"
 description:
     description: description of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "test-server01"
 hypervisor:
     description: type of hypervisor
     returned: when AMI found
-    type: string
+    type: str
     sample: "xen"
 is_public:
     description: whether image is public
@@ -210,37 +210,37 @@ is_public:
 location:
     description: location of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "435210894375/test-server01-20151015-234343"
 name:
     description: ami name of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "test-server01-20151015-234343"
 owner_id:
     description: owner of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "435210894375"
 platform:
     description: platform of image
     returned: when AMI found
-    type: string
+    type: str
     sample: null
 root_device_name:
     description: root device name of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "/dev/xvda"
 root_device_type:
     description: root device type of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "ebs"
 state:
     description: state of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "available"
 tags:
     description: tags assigned to image
@@ -254,7 +254,7 @@ tags:
 virtualization_type:
     description: image virtualization type
     returned: when AMI found
-    type: string
+    type: str
     sample: "hvm"
 '''
 

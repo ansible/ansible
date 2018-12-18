@@ -138,7 +138,7 @@ RETURN = '''
 changed:
     description: Values changed on the API
     returned: changed
-    type: boolean
+    type: bool
     sample: false
 msg:
     description: Information returned from the API when updating a runner, a create only returns the id and token.

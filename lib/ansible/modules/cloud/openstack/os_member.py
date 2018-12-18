@@ -64,7 +64,7 @@ RETURN = '''
 id:
     description: The member UUID.
     returned: On success when I(state) is 'present'
-    type: string
+    type: str
     sample: "39007a7e-ee4f-4d13-8283-b4da2e037c69"
 member:
     description: Dictionary describing the member.
@@ -73,23 +73,23 @@ member:
     contains:
         id:
             description: Unique UUID.
-            type: string
+            type: str
             sample: "39007a7e-ee4f-4d13-8283-b4da2e037c69"
         name:
             description: Name given to the member.
-            type: string
+            type: str
             sample: "test"
         description:
             description: The member description.
-            type: string
+            type: str
             sample: "description"
         provisioning_status:
             description: The provisioning status of the member.
-            type: string
+            type: str
             sample: "ACTIVE"
         operating_status:
             description: The operating status of the member.
-            type: string
+            type: str
             sample: "ONLINE"
         is_admin_state_up:
             description: The administrative state of the member.
@@ -101,11 +101,11 @@ member:
             sample: 80
         subnet_id:
             description: The subnet ID the member service is accessible from.
-            type: string
+            type: str
             sample: "489247fa-9c25-11e8-9679-00224d6b7bc1"
         address:
             description: The IP address of the backend member server.
-            type: string
+            type: str
             sample: "192.168.2.10"
 '''
 

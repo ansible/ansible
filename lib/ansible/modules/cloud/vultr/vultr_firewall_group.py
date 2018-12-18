@@ -56,7 +56,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -71,7 +71,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_firewall_group:
   description: Response from Vultr API
@@ -81,22 +81,22 @@ vultr_firewall_group:
     id:
       description: ID of the firewall group
       returned: success
-      type: string
+      type: str
       sample: 1234abcd
     name:
       description: Name of the firewall group
       returned: success
-      type: string
+      type: str
       sample: my firewall group
     date_created:
       description: Date the firewall group was created
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
     date_modified:
       description: Date the firewall group was modified
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
 '''
 

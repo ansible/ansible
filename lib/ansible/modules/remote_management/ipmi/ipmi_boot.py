@@ -79,7 +79,7 @@ RETURN = '''
 bootdev:
     description: The boot device name which will be used beyond next boot.
     returned: success
-    type: string
+    type: str
     sample: default
 persistent:
     description: If True, system firmware will use this device beyond next boot.

@@ -61,7 +61,7 @@ RETURN = """
 msg:
     description: Gathered facts for <StorageArrayId>.
     returned: always
-    type: string
+    type: str
 """
 import json
 

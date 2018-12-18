@@ -99,17 +99,17 @@ RETURN = r'''
 cmd:
     description: The used command line
     returned: always
-    type: string
+    type: str
     sample: robocopy C:\DirectoryOne C:\DirectoryTwo /e /purge
 src:
     description: The Source file/directory of the sync.
     returned: always
-    type: string
+    type: str
     sample: C:\Some\Path
 dest:
     description: The Destination file/directory of the sync.
     returned: always
-    type: string
+    type: str
     sample: C:\Some\Path
 recurse:
     description: Whether or not the recurse flag was toggled.
@@ -124,7 +124,7 @@ purge:
 flags:
     description: Any flags passed in by the user.
     returned: always
-    type: string
+    type: str
     sample: /e /purge
 rc:
     description: The return code returned by robocopy.
@@ -134,11 +134,11 @@ rc:
 output:
     description: The output of running the robocopy command.
     returned: success
-    type: string
+    type: str
     sample: "------------------------------------\\n   ROBOCOPY     ::     Robust File Copy for Windows         \\n------------------------------------\\n "
 msg:
     description: Output intrepreted into a concise message.
     returned: always
-    type: string
+    type: str
     sample: No files copied!
 '''

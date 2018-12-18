@@ -39,17 +39,17 @@ RETURN = r'''
 power_plan_name:
   description: Value of the intended power plan
   returned: always
-  type: string
+  type: str
   sample: balanced
 power_plan_enabled:
   description: State of the intended power plan
   returned: success
-  type: boolean
+  type: bool
   sample: True
 all_available_plans:
   description: The name and enabled state of all power plans
   returned: always
-  type: dictionary
+  type: dict
   sample: |
     {
         "High performance":  false,

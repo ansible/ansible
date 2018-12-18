@@ -145,7 +145,7 @@ cache_error_timeout:
 cache_timeout:
   description: The new Response Caching Timeout value.
   returned: changed
-  type: string
+  type: str
   sample: indefinite
 clock_skew:
   description: The new Response Validation Clock Skew value.
@@ -160,37 +160,37 @@ connections_limit:
 dns_resolver:
   description: The new DNS Resolver value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/resolver1
 route_domain:
   description: The new Route Domain value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/0
 hash_algorithm:
   description: The new Request Signing Hash Algorithm value.
   returned: changed
-  type: string
+  type: str
   sample: sha256
 certificate:
   description: The new Request Signing Certificate value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/cert1
 key:
   description: The new Request Signing Key value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/key1
 proxy_server_pool:
   description: The new Proxy Server Pool value.
   returned: changed
-  type: string
+  type: str
   sample: /Common/pool1
 responder_url:
   description: The new Connection Responder URL value.
   returned: changed
-  type: string
+  type: str
   sample: "http://responder.site.com"
 status_age:
   description: The new Response Validation Status Age value.

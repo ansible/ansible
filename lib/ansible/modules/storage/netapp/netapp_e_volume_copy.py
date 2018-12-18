@@ -84,14 +84,14 @@ EXAMPLES = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Json facts for the volume copy that was created.
 """
 RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Created Volume Copy Pair with ID
 """
 

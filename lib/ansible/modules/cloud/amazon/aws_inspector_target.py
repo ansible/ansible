@@ -64,23 +64,23 @@ RETURN = '''
 arn:
   description: The ARN that specifies the Amazon Inspector assessment target.
   returned: success
-  type: string
+  type: str
   sample: "arn:aws:inspector:eu-west-1:123456789012:target/0-O4LnL7n1"
 created_at:
   description: The time at which the assessment target was created.
   returned: success
-  type: string
+  type: str
   sample: "2018-01-29T13:48:51.958000+00:00"
 name:
   description: The name of the Amazon Inspector assessment target.
   returned: success
-  type: string
+  type: str
   sample: "my_target"
 resource_group_arn:
   description: The ARN that specifies the resource group that is associated
                with the assessment target.
   returned: success
-  type: string
+  type: str
   sample: "arn:aws:inspector:eu-west-1:123456789012:resourcegroup/0-qY4gDel8"
 tags:
   description: The tags of the resource group that is associated with the
@@ -91,7 +91,7 @@ tags:
 updated_at:
   description: The time at which the assessment target was last updated.
   returned: success
-  type: string
+  type: str
   sample: "2018-01-29T13:48:51.958000+00:00"
 '''
 

@@ -282,7 +282,7 @@ append:
 comment:
   description: Comment section from passwd file, usually the user name
   returned: When user exists
-  type: string
+  type: str
   sample: Agent Smith
 create_home:
   description: Whether or not to create the home directory
@@ -302,12 +302,12 @@ group:
 groups:
   description: List of groups of which the user is a member
   returned: When C(groups) is not empty and C(state) is 'present'
-  type: string
+  type: str
   sample: 'chrony,apache'
 home:
   description: "Path to user's home directory"
   returned: When C(state) is 'present'
-  type: string
+  type: str
   sample: '/home/asmith'
 move_home:
   description: Whether or not to move an existing home directory
@@ -317,12 +317,12 @@ move_home:
 name:
   description: User account name
   returned: always
-  type: string
+  type: str
   sample: asmith
 password:
   description: Masked value of the password
   returned: When C(state) is 'present' and C(password) is not empty
-  type: string
+  type: str
   sample: 'NOT_LOGGING_PASSWORD'
 remove:
   description: Whether or not to remove the user account
@@ -332,22 +332,22 @@ remove:
 shell:
   description: User login shell
   returned: When C(state) is 'present'
-  type: string
+  type: str
   sample: '/bin/bash'
 ssh_fingerprint:
   description: Fingerprint of generated SSH key
   returned: When C(generate_ssh_key) is C(True)
-  type: string
+  type: str
   sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
 ssh_key_file:
   description: Path to generated SSH public key file
   returned: When C(generate_ssh_key) is C(True)
-  type: string
+  type: str
   sample: /home/asmith/.ssh/id_rsa
 ssh_public_key:
   description: Generated SSH public key file
   returned: When C(generate_ssh_key) is C(True)
-  type: string
+  type: str
   sample: >
     'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC95opt4SPEC06tOYsJQJIuN23BbLMGmYo8ysVZQc4h2DZE9ugbjWWGS1/pweUGjVstgzMkBEeBCByaEf/RJKNecKRPeGd2Bw9DCj/bn5Z6rGfNENKBmo
     618mUJBvdlEgea96QGjOwSB7/gmonduC7gsWDMNcOdSE3wJMTim4lddiBx4RgC9yXsJ6Tkz9BHD73MXPpT5ETnse+A3fw3IGVSjaueVnlUyUmOBf7fzmZbhlFVXf2Zi2rFTXqvbdGHKkzpw1U8eB8xFPP7y
@@ -355,12 +355,12 @@ ssh_public_key:
 stderr:
   description: Standard error from running commands
   returned: When stderr is returned by a command that is run
-  type: string
+  type: str
   sample: Group wheels does not exist
 stdout:
   description: Standard output from running commands
   returned: When standard output is returned by the command that is run
-  type: string
+  type: str
   sample:
 system:
   description: Whether or not the account is a system account

@@ -270,12 +270,12 @@ RETURN = '''
 msg:
   description: msg indicating the status of the operation
   returned: always
-  type: string
+  type: str
   sample: PUT operation complete
 url:
   description: url of the object
   returned: (for put and geturl operations)
-  type: string
+  type: str
   sample: https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
 expiry:
   description: number of seconds the presigned url is valid for
@@ -285,7 +285,7 @@ expiry:
 contents:
   description: contents of the object as string
   returned: (for getstr operation)
-  type: string
+  type: str
   sample: "Hello, world!"
 s3_keys:
   description: list of object keys

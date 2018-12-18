@@ -125,7 +125,7 @@ id:
     sample: 153
 name:
     description: image name
-    type: string
+    type: str
     returned: success
     sample: app1
 group_id:
@@ -135,7 +135,7 @@ group_id:
     sample: 1
 group_name:
     description: image's group name
-    type: string
+    type: str
     returned: success
     sample: one-users
 owner_id:
@@ -145,12 +145,12 @@ owner_id:
     sample: 143
 owner_name:
     description: image's owner name
-    type: string
+    type: str
     returned: success
     sample: ansible-test
 state:
     description: state of image instance
-    type: string
+    type: str
     returned: success
     sample: READY
 used:

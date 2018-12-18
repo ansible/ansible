@@ -69,7 +69,7 @@ enabled:
 profiles:
     description: chosen profile
     returned: always
-    type: string
+    type: str
     sample: Domain
 state:
     description: desired state of the given firewall profile(s)

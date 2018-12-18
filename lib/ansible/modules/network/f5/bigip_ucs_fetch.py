@@ -88,24 +88,24 @@ RETURN = r'''
 checksum:
   description: The SHA1 checksum of the downloaded file
   returned: success or changed
-  type: string
+  type: str
   sample: 7b46bbe4f8ebfee64761b5313855618f64c64109
 dest:
   description: Location on the ansible host that the UCS was saved to
   returned: success
-  type: string
+  type: str
   sample: /path/to/file.txt
 src:
   description:
     - Name of the UCS file on the remote BIG-IP to download. If not
       specified, then this will be a randomly generated filename
   returned: changed
-  type: string
+  type: str
   sample: cs_backup.ucs
 backup_file:
   description: Name of backup file created
   returned: changed and if backup=yes
-  type: string
+  type: str
   sample: /path/to/file.txt.2015-02-12@22:09~
 gid:
   description: Group id of the UCS file, after execution
@@ -115,12 +115,12 @@ gid:
 group:
   description: Group of the UCS file, after execution
   returned: success
-  type: string
+  type: str
   sample: httpd
 owner:
   description: Owner of the UCS file, after execution
   returned: success
-  type: string
+  type: str
   sample: httpd
 uid:
   description: Owner id of the UCS file, after execution
@@ -130,12 +130,12 @@ uid:
 md5sum:
   description: The MD5 checksum of the downloaded file
   returned: changed or success
-  type: string
+  type: str
   sample: 96cacab4c259c4598727d7cf2ceb3b45
 mode:
   description: Permissions of the target UCS, after execution
   returned: success
-  type: string
+  type: str
   sample: 0644
 size:
   description: Size of the target UCS, after execution

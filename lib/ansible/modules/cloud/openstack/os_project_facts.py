@@ -83,15 +83,15 @@ openstack_projects:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the project.
             returned: success
-            type: string
+            type: str
         description:
             description: Description of the project
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the project is enabled
             returned: success

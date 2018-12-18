@@ -166,7 +166,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/aireos_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.network.aireos.aireos import run_commands, get_config, load_config

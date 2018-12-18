@@ -109,7 +109,7 @@ RETURN = '''
 content:
   description: the full info regarding the slb_service_group
   returned: success
-  type: string
+  type: str
   sample: "mynewservicegroup"
 '''
 import json

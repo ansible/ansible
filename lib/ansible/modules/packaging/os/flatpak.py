@@ -121,12 +121,12 @@ RETURN = r'''
 command:
   description: The exact flatpak command that was executed
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "/usr/bin/flatpak install --user -y flathub org.gnome.Calculator"
 msg:
   description: Module error message
   returned: failure
-  type: string
+  type: str
   sample: "Executable '/usr/local/bin/flatpak' was not found on the system."
 rc:
   description: Return code from flatpak binary
@@ -136,12 +136,12 @@ rc:
 stderr:
   description: Error output from flatpak binary
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "error: Error searching remote flathub: Can't find ref org.gnome.KDE"
 stdout:
   description: Output from flatpak binary
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "org.gnome.Calendar/x86_64/stable\tcurrent\norg.gnome.gitg/x86_64/stable\tcurrent\n"
 '''
 

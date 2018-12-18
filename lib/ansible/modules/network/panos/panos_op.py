@@ -79,13 +79,13 @@ RETURN = '''
 stdout:
     description: output of the given OP command as JSON formatted string
     returned: success
-    type: string
+    type: str
     sample: "{system: {app-release-date: 2017/05/01  15:09:12}}"
 
 stdout_xml:
     description: output of the given OP command as JSON formatted string
     returned: success
-    type: string
+    type: str
     sample: "<response status=success><result><system><hostname>fw2</hostname>"
 '''
 
