@@ -73,17 +73,17 @@ RETURN = r'''
 timer_policy:
   description: The new timer policy attached to the resource.
   returned: changed
-  type: str
+  type: string
   sample: /Common/timer1
 port_misuse_policy:
   description: The new port misuse policy attached to the resource.
   returned: changed
-  type: str
+  type: string
   sample: /Common/misuse1
 description:
   description: New description of the resource.
   returned: changed
-  type: str
+  type: string
   sample: My service policy description
 '''
 

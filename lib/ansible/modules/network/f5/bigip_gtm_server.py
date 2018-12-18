@@ -366,22 +366,22 @@ monitors:
 link_discovery:
   description: The new C(link_discovery) configured on the remote device.
   returned: changed
-  type: str
+  type: string
   sample: enabled
 virtual_server_discovery:
   description: The new C(virtual_server_discovery) name for the trap destination.
   returned: changed
-  type: str
+  type: string
   sample: disabled
 server_type:
   description: The new type of the server.
   returned: changed
-  type: str
+  type: string
   sample: bigip
 datacenter:
   description: The new C(datacenter) which the server is part of.
   returned: changed
-  type: str
+  type: string
   sample: datacenter01
 packets_enabled:
   description: Whether the packets limit is enabled.

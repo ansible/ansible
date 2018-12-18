@@ -107,7 +107,7 @@ route_domain:
 description:
   description: The description of the partition.
   returned: changed and success
-  type: str
+  type: string
   sample: Example partition
 '''
 

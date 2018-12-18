@@ -84,17 +84,17 @@ RETURN = r'''
 destination_address:
   description: The new Destination IP Address.
   returned: changed
-  type: str
+  type: string
   sample: 1.2.3.4/32
 source_address:
   description: The new Source IP address.
   returned: changed
-  type: str
+  type: string
   sample: 2.3.4.5/32
 ipsec_policy:
   description: The new IPSec policy.
   returned: changed
-  type: str
+  type: string
   sample: /Common/policy1
 order:
   description: The new sort order.

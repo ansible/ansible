@@ -183,12 +183,12 @@ RETURN = r'''
 lb_method:
   description: The new load balancing method used by the wide IP.
   returned: changed
-  type: str
+  type: string
   sample: topology
 state:
   description: The new state of the wide IP.
   returned: changed
-  type: str
+  type: string
   sample: disabled
 irules:
   description: iRules set on the Wide IP.

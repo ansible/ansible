@@ -210,12 +210,12 @@ enable_cache:
 cache_name:
   description: Name of the cache used by DNS.
   returned: changed
-  type: str
+  type: string
   sample: /Common/cache1
 unhandled_query_action:
   description: What to do with unhandled queries
   returned: changed
-  type: str
+  type: string
   sample: allow
 '''
 

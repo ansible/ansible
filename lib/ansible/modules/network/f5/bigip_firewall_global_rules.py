@@ -68,22 +68,22 @@ RETURN = r'''
 enforced_policy:
   description: The new global Enforced Policy.
   returned: changed
-  type: str
+  type: string
   sample: /Common/enforced1
 service_policy:
   description: The new global Service Policy.
   returned: changed
-  type: str
+  type: string
   sample: /Common/service1
 staged_policy:
   description: The new global Staged Policy.
   returned: changed
-  type: str
+  type: string
   sample: /Common/staged1
 description:
   description: The new description.
   returned: changed
-  type: str
+  type: string
   sample: My description
 '''
 

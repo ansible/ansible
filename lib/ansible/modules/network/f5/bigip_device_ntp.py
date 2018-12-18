@@ -73,7 +73,7 @@ ntp_servers:
 timezone:
   description: The timezone that was set on the device
   returned: changed
-  type: str
+  type: string
   sample: true
 '''
 

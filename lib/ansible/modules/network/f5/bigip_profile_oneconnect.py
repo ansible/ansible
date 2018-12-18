@@ -137,12 +137,12 @@ RETURN = r'''
 source_mask:
   description: Value that the system applies to the source address to determine its eligibility for reuse.
   returned: changed
-  type: str
+  type: string
   sample: 255.255.255.255
 description:
   description: Description of the profile.
   returned: changed
-  type: str
+  type: string
   sample: My profile
 maximum_size:
   description: Maximum number of connections that the system holds in the connection reuse pool.
@@ -162,12 +162,12 @@ maximum_reuse:
 idle_timeout_override:
   description: The new idle timeout override.
   returned: changed
-  type: str
+  type: string
   sample: disabled
 limit_type:
   description: New limit type of the profile.
   returned: changed
-  type: str
+  type: string
   sample: idle
 share_pools:
   description: Share connections among similar virtual servers.

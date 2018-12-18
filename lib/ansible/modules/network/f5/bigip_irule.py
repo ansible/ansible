@@ -90,17 +90,17 @@ RETURN = r'''
 module:
   description: The module that the iRule was added to
   returned: changed and success
-  type: str
+  type: string
   sample: gtm
 src:
   description: The filename that included the iRule source
   returned: changed and success, when provided
-  type: str
+  type: string
   sample: /opt/src/irules/example1.tcl
 content:
   description: The content of the iRule that was managed
   returned: changed and success
-  type: str
+  type: string
   sample: "when LB_FAILED { set wipHost [LB::server addr] }"
 '''
 

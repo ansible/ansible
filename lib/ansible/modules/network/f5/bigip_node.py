@@ -255,7 +255,7 @@ monitor_type:
   description:
     - Changed value for the monitor_type of the node.
   returned: changed and success
-  type: str
+  type: string
   sample: m_of_n
 quorum:
   description:
@@ -273,19 +273,19 @@ description:
   description:
     - Changed value for the description of the node.
   returned: changed and success
-  type: str
+  type: string
   sample: E-Commerce webserver in ORD
 session:
   description:
     - Changed value for the internal session of the node.
   returned: changed and success
-  type: str
+  type: string
   sample: user-disabled
 state:
   description:
     - Changed value for the internal state of the node.
   returned: changed and success
-  type: str
+  type: string
   sample: m_of_n
 '''
 

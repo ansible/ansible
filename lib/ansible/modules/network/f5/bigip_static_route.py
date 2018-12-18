@@ -104,17 +104,17 @@ RETURN = r'''
 vlan:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: str
+  type: string
   sample: true
 gateway_address:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: str
+  type: string
   sample: true
 destination:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: str
+  type: string
   sample: true
 route_domain:
   description: Route domain of the static route.
@@ -124,27 +124,27 @@ route_domain:
 netmask:
   description: Netmask of the destination.
   returned: changed
-  type: str
+  type: string
   sample: 255.255.255.255
 pool:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: str
+  type: string
   sample: true
 partition:
   description: The partition that the static route was created on.
   returned: changed
-  type: str
+  type: string
   sample: Common
 description:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: str
+  type: string
   sample: true
 reject:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: str
+  type: string
   sample: true
 '''
 

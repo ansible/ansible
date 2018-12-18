@@ -118,14 +118,14 @@ allow:
 banner:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: str
+  type: string
   sample: true
 banner_text:
   description:
     - Specifies the text included on the pre-login banner that
       displays when a user attempts to login to the system using SSH.
   returned: changed and success
-  type: str
+  type: string
   sample: This is a corporate device. Connecting to it without...
 inactivity_timeout:
   description:
@@ -137,7 +137,7 @@ inactivity_timeout:
 log_level:
   description: The minimum SSHD message level to include in the system log.
   returned: changed
-  type: str
+  type: string
   sample: debug
 login:
   description: Specifies that the system accepts SSH communications or not.

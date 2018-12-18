@@ -169,7 +169,7 @@ param1:
 param2:
   description: The new param2 value of the resource.
   returned: changed
-  type: str
+  type: string
   sample: Foo is bar
 '''
 

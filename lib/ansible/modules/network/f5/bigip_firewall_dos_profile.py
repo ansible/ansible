@@ -79,17 +79,17 @@ RETURN = r'''
 threshold_sensitivity:
   description: The new threshold sensitivity of the profile.
   returned: changed
-  type: str
+  type: string
   sample: low
 default_whitelist:
   description: The new whitelist attached to the profile.
   returned: changed
-  type: str
+  type: string
   sample: /Common/whitelist1
 description:
   description: The description of the profile.
   returned: changed
-  type: str
+  type: string
   sample: New description
 '''
 

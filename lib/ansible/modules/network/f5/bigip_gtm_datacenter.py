@@ -77,12 +77,12 @@ RETURN = r'''
 contact:
   description: The contact that was set on the datacenter.
   returned: changed
-  type: str
+  type: string
   sample: admin@root.local
 description:
   description: The description that was set for the datacenter.
   returned: changed
-  type: str
+  type: string
   sample: Datacenter in NYC
 enabled:
   description: Whether the datacenter is enabled or not
@@ -97,12 +97,12 @@ disabled:
 state:
   description: State of the datacenter.
   returned: changed
-  type: str
+  type: string
   sample: disabled
 location:
   description: The location that is set for the datacenter.
   returned: changed
-  type: str
+  type: string
   sample: 222 West 23rd
 '''
 

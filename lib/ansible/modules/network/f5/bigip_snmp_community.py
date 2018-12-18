@@ -197,52 +197,52 @@ RETURN = r'''
 community:
   description: The new community value.
   returned: changed
-  type: str
+  type: string
   sample: community1
 oid:
   description: The new OID value.
   returned: changed
-  type: str
+  type: string
   sample: .1
 ip_version:
   description: The new IP version value.
   returned: changed
-  type: str
+  type: string
   sample: .1
 snmp_auth_protocol:
   description: The new SNMP auth protocol.
   returned: changed
-  type: str
+  type: string
   sample: sha
 snmp_privacy_protocol:
   description: The new SNMP privacy protocol.
   returned: changed
-  type: str
+  type: string
   sample: aes
 access:
   description: The new access level for the MIB.
   returned: changed
-  type: str
+  type: string
   sample: ro
 source:
   description: The new source address to access the MIB.
   returned: changed
-  type: str
+  type: string
   sample: 1.1.1.1
 snmp_username:
   description: The new SNMP username.
   returned: changed
-  type: str
+  type: string
   sample: user1
 snmp_auth_password:
   description: The new password of the given snmp_username.
   returned: changed
-  type: str
+  type: string
   sample: secret1
 snmp_privacy_password:
   description: The new password of the given snmp_username.
   returned: changed
-  type: str
+  type: string
   sample: secret2
 '''
 

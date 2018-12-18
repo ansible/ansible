@@ -108,7 +108,7 @@ RETURN = r'''
 route_domain:
   description: The new route domain of the resource.
   returned: changed
-  type: str
+  type: string
   sample: /Common/0
 cache_size:
   description: The new cache size of the resource.

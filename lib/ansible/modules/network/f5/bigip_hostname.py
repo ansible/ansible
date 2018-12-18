@@ -46,7 +46,7 @@ RETURN = r'''
 hostname:
   description: The new hostname of the device
   returned: changed
-  type: str
+  type: string
   sample: big-ip01.internal
 '''
 

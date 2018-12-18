@@ -89,7 +89,7 @@ RETURN = r'''
 address:
   description: Address which the nameserver listens for DNS messages.
   returned: changed
-  type: str
+  type: string
   sample: 127.0.0.1
 service_port:
   description: Service port on which the nameserver listens for DNS messages.
