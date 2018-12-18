@@ -31,7 +31,7 @@
     mode: "u+rwx"
 
 - name: "Running the copy of 'sleep' binary"
-  command: "sh obtainpid.sh {{ output_dir }}/{{ random_name.stdout }}"
+  command: "sh /root/ansible/test/integration/targets/pids/tasks/obtainpid.sh {{ output_dir }}/{{ random_name.stdout }}"
   async: 100
   poll: 0
 
@@ -48,4 +48,4 @@
   assert:
     that:
     - "pids.pids | length > 0"
-    - "pids.pids | join(' ')  == find_process.stdout | trim"
+    - "pids.pids | join(' ')  == newpid.stdout | trim"
