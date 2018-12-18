@@ -201,14 +201,12 @@
   with_items: "{{ vmlist['json'] }}"
   register: disk_max_ctrl_d1_c1_f0_add_disk_8
 
-
 - debug: var=disk_max_ctrl_d1_c1_f0_add_disk_8
 
 - name: assert that changes were made
   assert:
     that:
         - "disk_max_ctrl_d1_c1_f0_add_disk_8.results|map(attribute='changed')|unique|list == [true]"
-
 
 - name: Modify VMs to addi another 1 disk so number of disk is 9
   vmware_guest:
@@ -250,11 +248,9 @@
   with_items: "{{ vmlist['json'] }}"
   register: disk_max_ctrl_d1_c1_f0_add_disk_9
 
-
 - debug: var=disk_max_ctrl_d1_c1_f0_add_disk_9
 
 - name: assert that changes were made
   assert:
     that:
         - "disk_max_ctrl_d1_c1_f0_add_disk_9.results|map(attribute='changed')|unique|list == [true]"
-
