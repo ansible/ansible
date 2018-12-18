@@ -407,8 +407,11 @@ class EcsServiceManager:
         if (expected['load_balancers'] or []) != existing['loadBalancers']:
             return False
 
-        if (expected['desired_count'] or 0) != existing['desiredCount']:
-            return False
+        # expected is params. DAEMON scheduling strategy returns desired count equal to 
+        # number of instances running; don't check desired count if scheduling strat is daemon
+        if (expected['scheduling_strategy']!='DAEMON'):
+            if (expected['desired_count'] or 0) != existing['desiredCount']:
+                return False
 
         return True
 
