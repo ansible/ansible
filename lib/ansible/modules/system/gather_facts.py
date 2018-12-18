@@ -27,8 +27,8 @@ options:
         description:
             - A toggle that controls if the fact modules are executed in parallel or serially and in order.
               This can guarantee the merge order of module facts at the expense of performance.
+            - By default it will be true if more than one fact module is used.
         type: bool
-        default: True
 notes:
     - This module is mostly a wrapper around other fact gathering modules.
     - Options passed to this module must be supported by all the underlying fact modules configured.

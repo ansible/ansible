@@ -37,7 +37,7 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', True))
+        parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
 
         modules = task_vars.get('ansible_facts_modules', {}).keys()
         override_vars = {}
@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
 
         failed = {}
         skipped = {}
-        if not parallel or len(modules) == 1:
+        if parallel is False or (len(modules) == 1 and parallel is None):
             # serially execute each module
             for fact_module in modules:
                 # just one module, no need for fancy async
