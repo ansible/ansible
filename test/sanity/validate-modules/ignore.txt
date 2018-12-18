@@ -885,10 +885,7 @@ lib/ansible/modules/system/cron.py E324
 lib/ansible/modules/system/cronvar.py E324
 lib/ansible/modules/system/crypttab.py E324
 lib/ansible/modules/system/debconf.py E326
-lib/ansible/modules/system/firewalld.py E322
 lib/ansible/modules/system/firewalld.py E324
-lib/ansible/modules/system/firewalld.py E325
-lib/ansible/modules/system/firewalld.py E326
 lib/ansible/modules/system/iptables.py E326
 lib/ansible/modules/system/java_cert.py E324
 lib/ansible/modules/system/known_hosts.py E324
