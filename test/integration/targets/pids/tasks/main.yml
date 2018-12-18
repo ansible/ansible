@@ -31,7 +31,7 @@
     mode: "u+rwx"
 
 - name: "Running the copy of 'sleep' binary"
-  command: "sh /root/ansible/test/integration/targets/pids/tasks/obtainpid.sh {{ output_dir }}/{{ random_name.stdout }}"
+  command: "sh {{ role_path }}/obtainpid.sh {{ output_dir }}/{{ random_name.stdout }}"
   async: 100
   poll: 0
 
