@@ -146,7 +146,7 @@ privileges_previous:
 local_role_name:
     description: Name of local role
     returned: always
-    type: string
+    type: str
 new_privileges:
     description: List of privileges
     returned: always
