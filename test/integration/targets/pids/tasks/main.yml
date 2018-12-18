@@ -4,18 +4,18 @@
 
 - pip:
     name: psutil
-    
+
 - name: "Checking the empty result" 
   pids: 
     name: "blahblah"
   register: emptypids
-   
+
 - name: "Verify that the list of Process IDs (PIDs) returned is empty"
   assert:
     that:
     - emptypids is not changed
     - emptypids.pids == [] 
-    
+
 - name: "Picking a random process name"
   command: echo "{{ 99999999 | random }}"
   register: random_name
@@ -39,7 +39,7 @@
   pids: 
     name: "{{ random_name.stdout }}"
   register: pids
-      
+    
 - name: "Reading pid from the file"
   command: cat /root/ansible/test/integration/targets/pids/tasks/obtainpid.txt
   register: newpid
