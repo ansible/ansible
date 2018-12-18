@@ -128,8 +128,6 @@ changed:
   type: bool
 """
 
-import shlex
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, booleanArgs, run_cli
 
