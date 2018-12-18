@@ -61,6 +61,11 @@ options:
     type: bool
     default: 'no'
     version_added: '2.7'
+  handlers_from:
+    description:
+      - File to load from a role's C(handlers/) directory.
+    default: main
+    version_added: '2.8'
 notes:
   - Handlers are made available to the whole play.
   - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
