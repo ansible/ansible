@@ -185,9 +185,25 @@ def write_data(text, output_dir, outputname, module=None):
         fname = os.path.join(output_dir, outputname)
         fname = fname.replace(".py", "")
 
-        update_file_if_different(fname, to_bytes(text))
+        try:
+            updated = update_file_if_different(fname, to_bytes(text))
+        except Exception as e:
+            display.display("while rendering %s, an error occured: %s" % (module, e))
+            raise
+        if updated:
+            display.display("rendering: %s" % module)
     else:
         print(text)
+
+
+IS_STDOUT_TTY = sys.stdout.isatty()
+
+
+def show_progress(progress):
+    '''Show a little process indicator.'''
+    if IS_STDOUT_TTY:
+        sys.stdout.write('\r%s\r' % ("-/|\\"[progress % 4]))
+        sys.stdout.flush()
 
 
 def get_plugin_info(module_dir, limit_to=None, verbose=False):
@@ -231,6 +247,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         glob.glob("%s/*/*/*/*.py" % module_dir)
     )
 
+    module_index = 0
     for module_path in files:
         # Do not list __init__.py files
         if module_path.endswith('__init__.py'):
@@ -265,6 +282,9 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         #
         # Regular module to process
         #
+
+        module_index += 1
+        show_progress(module_index)
 
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
@@ -399,9 +419,10 @@ def too_old(added):
 
 
 def process_plugins(module_map, templates, outputname, output_dir, ansible_version, plugin_type):
-    for module in module_map:
+    for module_index, module in enumerate(module_map):
 
-        display.display("rendering: %s" % module)
+        show_progress(module_index)
+
         fname = module_map[module]['path']
         display.vvvvv(pp.pformat(('process_plugins info: ', module_map[module])))
 
@@ -658,6 +679,8 @@ def main():
     display.verbosity = options.verbosity
     plugin_type = options.plugin_type
 
+    display.display("Evaluating %s files..." % plugin_type)
+
     # prep templating
     templates = jinja2_environment(options.template_dir, options.type, plugin_type)
 
@@ -682,15 +705,18 @@ def main():
 
     categories['all'] = {'_modules': plugin_info.keys()}
 
-    display.vvv(pp.pformat(categories))
-    display.vvvvv(pp.pformat(plugin_info))
+    if display.verbosity >= 3:
+        display.vvv(pp.pformat(categories))
+    if display.verbosity >= 5:
+        display.vvvvv(pp.pformat(plugin_info))
 
     # Transform the data
     if options.type == 'rst':
         display.v('Generating rst')
         for key, record in plugin_info.items():
             display.vv(key)
-            display.vvvvv(pp.pformat(('record', record)))
+            if display.verbosity >= 5:
+                display.vvvvv(pp.pformat(('record', record)))
             if record.get('doc', None):
                 short_desc = record['doc']['short_description'].rstrip('.')
                 if short_desc is None:
