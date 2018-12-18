@@ -9,7 +9,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.module_utils.common._collections_compat import Sequence
-from ansible.module_utils.common.collections import is_iterable, is_sequence
+from ansible.module_utils.common.collections import ImmutableDict, is_iterable, is_sequence
 
 
 class SeqStub:
@@ -100,3 +100,57 @@ def test_iterable_including_strings(string_input):
 @pytest.mark.parametrize('string_input', TEST_STRINGS)
 def test_iterable_excluding_strings(string_input):
     assert not is_iterable(string_input, include_strings=False)
+
+
+class TestImmutableDict:
+    def test_scalar(self):
+        imdict = ImmutableDict({1: 2})
+        assert imdict[1] == 2
+
+    def test_string(self):
+        imdict = ImmutableDict({u'café': u'くらとみ'})
+        assert imdict[u'café'] == u'くらとみ'
+
+    def test_container(self):
+        imdict = ImmutableDict({(1, 2): ['1', '2']})
+        assert imdict[(1, 2)] == ['1', '2']
+
+    def test_from_tuples(self):
+        imdict = ImmutableDict((('a', 1), ('b', 2)))
+        assert frozenset(imdict.items()) == frozenset((('a', 1), ('b', 2)))
+
+    def test_from_kwargs(self):
+        imdict = ImmutableDict(a=1, b=2)
+        assert frozenset(imdict.items()) == frozenset((('a', 1), ('b', 2)))
+
+    def test_immutable(self):
+        imdict = ImmutableDict({1: 2})
+
+        with pytest.raises(TypeError) as exc_info:
+            imdict[1] = 3
+        assert exc_info.value.args[0] == "'ImmutableDict' object does not support item assignment"
+
+        with pytest.raises(TypeError) as exc_info:
+            imdict[5] = 3
+        assert exc_info.value.args[0] == "'ImmutableDict' object does not support item assignment"
+
+    def test_hashable(self):
+        # ImmutableDict is hashable when all of its values are hashable
+        imdict = ImmutableDict({u'café': u'くらとみ'})
+        assert hash(imdict)
+
+    def test_nonhashable(self):
+        # ImmutableDict is unhashable when one of its values is unhashable
+        imdict = ImmutableDict({u'café': u'くらとみ', 1: [1, 2]})
+
+        with pytest.raises(TypeError) as exc_info:
+            hash(imdict)
+        assert exc_info.value.args[0] == "unhashable type: 'list'"
+
+    def test_len(self):
+        imdict = ImmutableDict({1: 2, 'a': 'b'})
+        assert len(imdict) == 2
+
+    def test_repr(self):
+        imdict = ImmutableDict({1: 2, 'a': 'b'})
+        assert repr(imdict) == "ImmutableDict({1: 2, 'a': 'b'})"
