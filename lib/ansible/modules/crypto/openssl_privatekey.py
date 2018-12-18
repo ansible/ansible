@@ -631,15 +631,6 @@ def main():
         private_key = PrivateKeyCryptography(module)
 
     if private_key.state == 'present':
-        # A value of 'path' should be a regular file.
-        # It should be failed if symblic link specified as a 'path' value.
-        if os.path.islink(module.params['path']) and not module.params['force']:
-            module.fail_json(
-                msg=(
-                    'The symbolic link is unable to specify'
-                    ' as a value of `path`: %s'
-                ) % module.params['path'])
-
         if module.check_mode:
             result = private_key.dump()
             result['changed'] = module.params['force'] or not private_key.check(module)

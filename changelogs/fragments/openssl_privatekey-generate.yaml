@@ -1,3 +1,2 @@
 bugfixes:
-  - openssl_privatekey can't create files which only have read permissions #48656(https://github.com/ansible/ansible/issues/48656)
-  - Overwrite the symbolic link with a file only when the force option is specified
+  - openssl_privatekey can't create files which only have read permissions (https://github.com/ansible/ansible/issues/48656)

@@ -70,6 +70,18 @@
       - privatekey6.stdout == '4096'
   when: openssl_version.stdout is version('0.9.8zh', '>=')
 
+
+- name: Validate privatekey7 (test - Privatekey file mode)
+  stat:
+    path: '{{ output_dir }}/privatekey7.pem'
+  register: privatekey7
+
+- name: Validate privatekey7 (assert - Privatekey file mode)
+  assert:
+    that:
+      - privatekey7.stat.mode == "0400"
+
+
 - name: Validate ECC generation (dump with OpenSSL)
   shell: "openssl ec -in {{ output_dir }}/privatekey-{{ item.item.curve }}.pem -noout -text | grep 'ASN1 OID: ' | sed 's/ASN1 OID: \\([^ ]*\\)/\\1/'"
   loop: "{{ privatekey_ecc_generate.results }}"
