@@ -49,3 +49,4 @@
     that:
     - "pids.pids | length > 0"
     - "pids.pids | join(' ')  == newpid.stdout | trim"
+
