@@ -1206,14 +1206,17 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         pass
 
                     if 'imageReference' in vm_dict['properties']['storageProfile'].keys():
-                        image_reference = self.compute_models.ImageReference(
-                                    id=vm_dict['properties']['storageProfile']['imageReference']['id'],
-                                ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
-                                    publisher=vm_dict['properties']['storageProfile']['imageReference'].get('publisher'),
-                                    offer=vm_dict['properties']['storageProfile']['imageReference'].get('offer'),
-                                    sku=vm_dict['properties']['storageProfile']['imageReference'].get('sku'),
-                                    version=vm_dict['properties']['storageProfile']['imageReference'].get('version')
-                                )
+                        if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys():
+                            image_reference = self.compute_models.ImageReference(
+                                id=vm_dict['properties']['storageProfile']['imageReference']['id']
+                            )
+                        else:
+                            image_reference = self.compute_models.ImageReference(
+                                publisher=vm_dict['properties']['storageProfile']['imageReference'].get('publisher'),
+                                offer=vm_dict['properties']['storageProfile']['imageReference'].get('offer'),
+                                sku=vm_dict['properties']['storageProfile']['imageReference'].get('sku'),
+                                version=vm_dict['properties']['storageProfile']['imageReference'].get('version')
+                            )
                     else:
                         image_reference = None
 
