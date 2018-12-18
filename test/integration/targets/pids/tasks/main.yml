@@ -47,5 +47,5 @@
 - name: "Verify that the Process IDs (PIDs) returned is not empty and also equal to the PIDs obtained in console"
   assert:
     that:
+    - "pids.pids | join(' ')  == newpid.stdout | trim
     - "pids.pids | length > 0"
-    - "pids.pids | join(' ')  == newpid.stdout | trim"
