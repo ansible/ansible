@@ -44,13 +44,14 @@ options:
         type: bool
     daemon_reload:
         description:
-            - run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+            - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+            - When set to C(yes), runs daemon-reload even if the module does not start or stop anything.
         type: bool
         default: 'no'
         aliases: [ daemon-reload ]
     daemon_reexec:
         description:
-            - run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
+            - Run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
         type: bool
         default: 'no'
         aliases: [ daemon-reexec ]
