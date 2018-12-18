@@ -32,7 +32,7 @@ class AnsibleModuleImportError(ImportError):
     pass
 
 
-class _FakeAnsibleModule:
+class _FakeAnsibleModuleInit:
     def __init__(self):
         self.args = tuple()
         self.kwargs = {}
@@ -44,9 +44,6 @@ class _FakeAnsibleModule:
         self.called = True
         raise AnsibleModuleCallError('AnsibleModuleCallError')
 
-    def _load_params(self):
-        pass
-
 
 def _fake_load_params():
     pass
@@ -57,12 +54,17 @@ def setup_env(filename):
     # Used to clean up imports later
     pre_sys_modules = list(sys.modules.keys())
 
-    fake = _FakeAnsibleModule()
+    fake = _FakeAnsibleModuleInit()
     module = __import__('ansible.module_utils.basic').module_utils.basic
-    setattr(module, 'AnsibleModule', fake)
+    _original_init = module.AnsibleModule.__init__
+    _original_load_params = module._load_params
+    setattr(module.AnsibleModule, '__init__', fake)
     setattr(module, '_load_params', _fake_load_params)
 
     yield fake
+
+    setattr(module.AnsibleModule, '__init__', _original_init)
+    setattr(module, '_load_params', _original_load_params)
 
     # Clean up imports to prevent issues with mutable data being used in modules
     for k in list(sys.modules.keys()):
