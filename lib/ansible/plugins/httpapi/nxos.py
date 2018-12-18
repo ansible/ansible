@@ -72,7 +72,7 @@ class HttpApi(HttpApiBase):
 
     def _run_queue(self, queue, output):
         if self._become:
-            self.connection.messages.append(('vvvv', 'firing event: on_become'))
+            self.connection.queue_message('vvvv', 'firing event: on_become')
             queue.insert(0, 'enable')
 
         request = request_builder(queue, output)

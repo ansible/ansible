@@ -221,7 +221,7 @@ class HttpApi(HttpApiBase):
         return None
 
     def _display(self, http_method, title, msg=''):
-        self.connection.messages.append(('vvvv', 'REST:%s:%s:%s\n%s' % (http_method, self.connection._url, title, msg)))
+        self.connection.queue_message('vvvv', 'REST:%s:%s:%s\n%s' % (http_method, self.connection._url, title, msg))
 
     @staticmethod
     def _get_response_value(response_data):

@@ -70,7 +70,7 @@ class HttpApi(HttpApiBase):
     def send_request(self, data, **message_kwargs):
         data = to_list(data)
         if self._become:
-            self.connection.messages.append(('vvvv', 'firing event: on_become'))
+            self.connection.queue_message('vvvv', 'firing event: on_become')
             data.insert(0, {"cmd": "enable", "input": self._become_pass})
 
         output = message_kwargs.get('output', 'text')

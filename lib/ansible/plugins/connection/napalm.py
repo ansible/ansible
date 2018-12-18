@@ -186,7 +186,7 @@ class Connection(NetworkConnectionBase):
             self.napalm.open()
 
             self._sub_plugin = {'type': 'external', 'name': 'napalm', 'obj': self.napalm}
-            display.vvvv('created napalm device for network_os %s' % self._network_os, host=host)
+            self.queue_message('vvvv', 'created napalm device for network_os %s' % self._network_os)
             self._connected = True
 
     def close(self):

@@ -178,7 +178,7 @@ class Connection(NetworkConnectionBase):
             self.httpapi = httpapi_loader.get(self._network_os, self)
             if self.httpapi:
                 self._sub_plugin = {'type': 'httpapi', 'name': self._network_os, 'obj': self.httpapi}
-                self.messages.append(('vvvv''loaded API plugin for network_os %s' % self._network_os))
+                self.queue_message('vvvv', 'loaded API plugin for network_os %s' % self._network_os)
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 
@@ -199,13 +199,13 @@ class Connection(NetworkConnectionBase):
         play_context = PlayContext()
         play_context.deserialize(pc_data)
 
-        self.messages.append(('vvvv', 'updating play_context for connection'))
+        self.queue_message('vvvv', 'updating play_context for connection')
         if self._play_context.become ^ play_context.become:
             self.set_become(play_context)
             if play_context.become is True:
-                self.messages.append(('vvvv', 'authorizing connection'))
+                self.queue_message('vvvv', 'authorizing connection')
             else:
-                self.messages.append(('vvvv', 'deauthorizing connection'))
+                self.queue_message('vvvv', 'deauthorizing connection')
 
         self._play_context = play_context
 
@@ -227,7 +227,7 @@ class Connection(NetworkConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            self.messages.append(('vvvv'"closing http(s) connection to device"))
+            self.queue_message('vvvv', "closing http(s) connection to device")
             self.logout()
 
         super(Connection, self).close()
