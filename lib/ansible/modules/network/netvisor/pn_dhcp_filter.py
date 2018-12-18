@@ -110,7 +110,6 @@ def check_cli(module, cli):
 def main():
     """ This section is for arguments parsing """
 
-    global state_map
     state_map = dict(
         present='dhcp-filter-create',
         absent='dhcp-filter-delete',
