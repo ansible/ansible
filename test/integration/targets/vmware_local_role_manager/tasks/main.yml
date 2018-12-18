@@ -30,6 +30,22 @@
 
 - debug: var=vcsim_instance
 
+- name: Create a role without privileges in check mode
+  vmware_local_role_manager:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    local_role_name: SampleRole_0001
+    validate_certs: no
+    state: present
+  register: role_creation
+  check_mode: yes
+
+- name: Verify if role was created
+  assert:
+    that:
+      - role_creation.changed
+
 - name: Create a role without privileges
   vmware_local_role_manager:
     hostname: "{{ vcsim }}"
@@ -40,12 +56,10 @@
     state: present
   register: role_creation_0001
 
-- name: Verify if role is created
+- name: Verify if role was created
   assert:
     that:
-      - "{{ role_creation_0001.changed == true }}"
-      - "{{ role_creation_0001.role_id is defined }}"
-      - "{{ role_creation_0001.local_role_name is defined }}"
+      - role_creation_0001.changed
 
 - name: Again create a role without privileges
   vmware_local_role_manager:
@@ -60,7 +74,7 @@
 - name: verify if role is not created again
   assert:
     that:
-      - "{{ role_creation_0001.changed == false }}"
+      - not role_creation_0001.changed
 
 - name: Delete a role
   vmware_local_role_manager:
@@ -75,7 +89,7 @@
 - name: Verify if role is not present
   assert:
     that:
-      - "{{ role_creation_0001.changed == true }}"
+      - role_creation_0001.changed
 
 - name: Delete role again
   vmware_local_role_manager:
@@ -90,7 +104,7 @@
 - name: Verify if role is absent again
   assert:
     that:
-      - "{{ role_creation_0001.changed == false }}"
+      - not role_creation_0001.changed
 
 - name: Create a role with privileges
   vmware_local_role_manager:
@@ -106,8 +120,7 @@
 - name: Verify if role is created with privileges
   assert:
     that:
-      - "{{ role_creation_0001.changed == true }}"
-      - "{{ role_creation_0001.role_id is defined }}"
+      - role_creation_0001.changed
 
 - name: Add a privilege to existing privileges
   vmware_local_role_manager:
@@ -119,15 +132,12 @@
     local_privilege_ids: ['Folder.Create']
     action: add
     state: present
-  register: role_creation_0001
+  register: role_add
 
 - name: Verify if role is updated with updated privileges
   assert:
     that:
-      - "{{ role_creation_0001.changed == true }}"
-      - "{{ role_creation_0001.role_id is defined }}"
-      - "{{ role_creation_0001.old_privileges is defined }}"
-      - "{{ role_creation_0001.new_privileges is defined }}"
+      - role_add.changed
 
 - name: Again add a privilege to existing privileges
   vmware_local_role_manager:
@@ -139,15 +149,12 @@
     local_privilege_ids: ['Folder.Create']
     action: add
     state: present
-  register: role_creation_0001
+  register: role_add_0002
 
 - name: Verify if role is not updated
   assert:
     that:
-      - "{{ role_creation_0001.changed == false }}"
-      - "{{ role_creation_0001.role_id is defined }}"
-      - "{{ role_creation_0001.old_privileges is defined }}"
-      - "{{ role_creation_0001.new_privileges is defined }}"
+      - not role_add_0002.changed
 
 - name: Remove a privilege from existing privileges
   vmware_local_role_manager:
@@ -158,16 +165,12 @@
     validate_certs: no
     local_privilege_ids: ['Folder.Create']
     action: remove
-  register: role_creation_0001
+  register: role_remove
 
 - name: verify if role is updated with privileges
   assert:
     that:
-      - "{{ role_creation_0001.changed == true }}"
-      - "{{ role_creation_0001.role_id is defined }}"
-      - "{{ role_creation_0001.old_privileges is defined }}"
-      - "{{ role_creation_0001.new_privileges is defined }}"
-      - "{{ 'Folder.Create' not in role_creation_0001.new_privileges }}"
+      - role_remove.changed
 
 - name: Again remove a privilege from existing privileges
   vmware_local_role_manager:
@@ -178,17 +181,12 @@
     validate_certs: no
     local_privilege_ids: ['Folder.Create']
     action: remove
-  register: role_creation_0001
+  register: role_remove_0002
 
 - name: Verify if role is not updated
   assert:
     that:
-      - "{{ role_creation_0001.changed == false }}"
-      - "{{ role_creation_0001.role_id is defined }}"
-      - "{{ role_creation_0001.old_privileges is defined }}"
-      - "{{ role_creation_0001.new_privileges is defined }}"
-      - "{{ 'Folder.Create' not in role_creation_0001.new_privileges }}"
-      - "{{ 'Folder.Create' not in role_creation_0001.old_privileges }}"
+      - not role_remove_0002.changed
 
 - name: Set a privilege to an existing role
   vmware_local_role_manager:
@@ -199,22 +197,12 @@
     validate_certs: no
     local_privilege_ids: ['Folder.Create']
     action: set
-  register: role_creation_0001
+  register: role_set
 
 - name: Verify if role is updated with privileges
   assert:
     that:
-      - "{{ role_creation_0001.changed == true }}"
-      - "{{ role_creation_0001.role_id is defined }}"
-      - "{{ role_creation_0001.old_privileges is defined }}"
-      - "{{ role_creation_0001.new_privileges is defined }}"
-      - "{{ 'Folder.Create' in role_creation_0001.new_privileges }}"
-      - "{{ 'System.Anonymous' in role_creation_0001.new_privileges }}"
-      - "{{ 'System.Read' in role_creation_0001.new_privileges }}"
-      - "{{ 'System.View' in role_creation_0001.new_privileges }}"
-      - "{{ 'System.Anonymous' in role_creation_0001.old_privileges }}"
-      - "{{ 'System.Read' in role_creation_0001.old_privileges }}"
-      - "{{ 'System.View' in role_creation_0001.old_privileges }}"
+      - role_set.changed
 
 - name: Again set a privilege to an existing role
   vmware_local_role_manager:
@@ -225,17 +213,9 @@
     validate_certs: no
     local_privilege_ids: ['Folder.Create']
     action: set
-  register: role_creation_0001
+  register: role_set_0002
 
 - name: verify if role is not updated
   assert:
     that:
-      - "{{ role_creation_0001.changed == false }}"
-      - "{{ 'Folder.Create' in role_creation_0001.new_privileges }}"
-      - "{{ 'System.Anonymous' in role_creation_0001.new_privileges }}"
-      - "{{ 'System.Read' in role_creation_0001.new_privileges }}"
-      - "{{ 'System.View' in role_creation_0001.new_privileges }}"
-      - "{{ 'Folder.Create' in role_creation_0001.old_privileges }}"
-      - "{{ 'System.Anonymous' in role_creation_0001.old_privileges }}"
-      - "{{ 'System.Read' in role_creation_0001.old_privileges }}"
-      - "{{ 'System.View' in role_creation_0001.old_privileges }}"
+      - not role_set_0002.changed
