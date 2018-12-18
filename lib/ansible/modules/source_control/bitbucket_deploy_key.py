@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: bitbucket_deploy_key
-version_added: "2.5"
+version_added: "2.8"
 author: "Ali (@bincyber)"
 short_description: Manages deploy keys for BitBucket repositories.
 description:
@@ -25,47 +25,49 @@ options:
   account_name:
     description:
       - The name of the team or individual account that owns the BitBucket repository.
-    required: true
-    default: null
+    required: True
+    type: str
     aliases: [ 'account', 'organization' ]
   repository:
     description:
       - The name of the BitBucket repository.
-    required: true
-    default: null
+    required: True
+    type: str
     aliases: [ 'repo' ]
   label:
     description:
       - The user-visible label on the deploy key.
-    required: true
-    default: null
+    required: True
+    type: str
   key:
     description:
       - The SSH public key to add to the repository as a deploy key.
-    required: true
-    default: null
+    required: True
+    type: str
   state:
     description:
       - The state of the deploy key.
-    required: false
+    required: False
     default: "present"
     choices: [ "present", "absent" ]
+    type: str
   force:
     description:
       - If C(true), forcefully adds the deploy key by deleting any existing deploy key with the same public key or title.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    required: False
+    default: False
+    choices: [ True, False ]
+    type: bool
   username:
     description:
       - The username to authenticate with.
-    required: true
-    default: null
+    required: True
+    type: str
   password:
     description:
       - The password to authenticate with. You can use app passwords here.
-    required: true
-    default: null
+    required: True
+    type: str
 requirements:
    - python-requests
 notes:
@@ -102,7 +104,6 @@ EXAMPLES = '''
     force: yes
     username: "johndoe"
     password: "supersecretpassword"
-    force: yes
 
 # re-add a deploy key to a BitBucket repository but with a different label
 - bitbucket_deploy_key:
@@ -188,7 +189,7 @@ class BitBucketDeployKey(object):
             key_id = response_body["pk"]
             self.module.exit_json(changed=True, msg="Deploy key successfully added", pk=key_id)
         elif status_code == 400:
-            existing_key_msg = "Someone has already registered this key as a deploy key for this repository"
+            existing_key_msg = "Someone has already added that access key to this repository"
             if existing_key_msg in info["body"]:
                 self.module.exit_json(changed=False, msg="Deploy key already exists")
             else:
@@ -225,7 +226,7 @@ def main():
             label=dict(required=True, type='str'),
             key=dict(required=True, type='str'),
             state=dict(default='present', choices=['present', 'absent']),
-            force=dict(required=False, type='bool', default=False),
+            force=dict(required=False, type='bool', default=False, choices=[True, False]),
             username=dict(required=True, type='str'),
             password=dict(required=True, type='str', no_log=True),
         ),
@@ -246,7 +247,7 @@ def main():
     module.params['url_password'] = module.params['password']
     module.params['force_basic_auth'] = True
 
-    BITBUCKET_API_URL = "https://api.bitbucket.org/1.0/repositories/{}/{}/deploy-keys".format(account_name, repository)
+    BITBUCKET_API_URL = "https://api.bitbucket.org/1.0/repositories/{0}/{1}/deploy-keys".format(account_name, repository)
 
     deploy_key = BitBucketDeployKey(module, BITBUCKET_API_URL, state)
 
