@@ -47,9 +47,7 @@ import sys
 try:
     import psutil
     HAS_PSUTIL = True
-except Exception:
-    pass
-else:
+except ImportError:
     HAS_PSUTIL = False
 
 
