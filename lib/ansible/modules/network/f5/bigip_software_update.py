@@ -78,7 +78,7 @@ auto_phone_home:
 frequency:
   description: Frequency of auto update checks
   returned: changed
-  type: string
+  type: str
   sample: weekly
 '''
 

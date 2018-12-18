@@ -139,7 +139,7 @@ config:
 file:
   description: Path to the client configuration file
   returned: success
-  type: string
+  type: str
   sample: "/etc/sensu/conf.d/client.json"
 '''
 

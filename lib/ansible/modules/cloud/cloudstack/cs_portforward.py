@@ -142,17 +142,17 @@ RETURN = '''
 id:
   description: UUID of the public IP address.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 ip_address:
   description: Public IP address.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 protocol:
   description: Protocol.
   returned: success
-  type: string
+  type: str
   sample: tcp
 private_port:
   description: Start port on the virtual machine's IP address.
@@ -181,27 +181,27 @@ tags:
 vm_name:
   description: Name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_display_name:
   description: Display name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_guest_ip:
   description: IP of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: 10.101.65.152
 vpc:
   description: Name of the VPC.
   returned: success
-  type: string
+  type: str
   sample: my_vpc
 network:
   description: Name of the network.
   returned: success
-  type: string
+  type: str
   sample: dmz
 '''
 

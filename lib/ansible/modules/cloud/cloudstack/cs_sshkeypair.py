@@ -85,22 +85,22 @@ RETURN = '''
 id:
   description: UUID of the SSH public key.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the SSH public key.
   returned: success
-  type: string
+  type: str
   sample: linus@example.com
 fingerprint:
   description: Fingerprint of the SSH public key.
   returned: success
-  type: string
+  type: str
   sample: "86:5e:a3:e8:bd:95:7b:07:7c:c2:5c:f7:ad:8b:09:28"
 private_key:
   description: Private key of generated SSH keypair.
   returned: changed
-  type: string
+  type: str
   sample: "-----BEGIN RSA PRIVATE KEY-----\nMII...8tO\n-----END RSA PRIVATE KEY-----\n"
 '''
 

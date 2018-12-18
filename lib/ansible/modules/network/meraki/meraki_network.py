@@ -103,32 +103,32 @@ data:
       id:
         description: Identification string of network.
         returned: success
-        type: string
+        type: str
         sample: N_12345
       name:
         description: Written name of network.
         returned: success
-        type: string
+        type: str
         sample: YourNet
       organizationId:
         description: Organization ID which owns the network.
         returned: success
-        type: string
+        type: str
         sample: 0987654321
       tags:
         description: Space delimited tags assigned to network.
         returned: success
-        type: string
+        type: str
         sample: " production wireless "
       timeZone:
         description: Timezone where network resides.
         returned: success
-        type: string
+        type: str
         sample: America/Chicago
       type:
         description: Functional type of network.
         returned: success
-        type: string
+        type: str
         sample: switch
       disableMyMerakiCom:
         description: States whether U(my.meraki.com) and other device portals should be disabled.

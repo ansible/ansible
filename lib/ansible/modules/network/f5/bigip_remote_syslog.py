@@ -89,7 +89,7 @@ remote_port:
 local_ip:
   description: The new local IP of the remote syslog server
   returned: changed
-  type: string
+  type: str
   sample: 10.10.10.10
 '''
 

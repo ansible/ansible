@@ -108,7 +108,7 @@ RETURN = '''
 schema:
     description: Name of the schema
     returned: success, changed
-    type: string
+    type: str
     sample: "acme"
 '''
 

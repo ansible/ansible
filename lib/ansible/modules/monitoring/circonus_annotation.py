@@ -88,7 +88,7 @@ annotation:
         _cid:
             description: annotation identifier
             returned: success
-            type: string
+            type: str
             sample: /annotation/100000
         _created:
             description: creation timestamp
@@ -103,22 +103,22 @@ annotation:
         _last_modified_by:
             description: last modified by
             returned: success
-            type: string
+            type: str
             sample: /user/1000
         category:
             description: category of the created annotation
             returned: success
-            type: string
+            type: str
             sample: alerts
         title:
             description: title of the created annotation
             returned: success
-            type: string
+            type: str
             sample: WARNING
         description:
             description: description of the created annotation
             returned: success
-            type: string
+            type: str
             sample: Host is down.
         start:
             description: timestamp, since annotation applies
@@ -128,7 +128,7 @@ annotation:
         stop:
             description: timestamp, since annotation ends
             returned: success
-            type: string
+            type: str
             sample: Host is down.
         rel_metrics:
             description: Array of metrics related to this annotation, each metrics is a string.

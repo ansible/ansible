@@ -86,7 +86,7 @@ RETURN = '''
 msg:
     description: success of the module
     returned: always
-    type: string
+    type: str
     sample: Lun mapping is complete
 '''
 import json

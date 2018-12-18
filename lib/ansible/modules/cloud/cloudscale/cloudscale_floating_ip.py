@@ -116,37 +116,37 @@ RETURN = '''
 href:
   description: The API URL to get details about this floating IP.
   returned: success when state == present
-  type: string
+  type: str
   sample: https://api.cloudscale.ch/v1/floating-ips/2001:db8::cafe
 network:
   description: The CIDR notation of the network that is routed to your server.
   returned: success when state == present
-  type: string
+  type: str
   sample: 2001:db8::cafe/128
 next_hop:
   description: Your floating IP is routed to this IP address.
   returned: success when state == present
-  type: string
+  type: str
   sample: 2001:db8:dead:beef::42
 reverse_ptr:
   description: The reverse pointer for this floating IP address.
   returned: success when state == present
-  type: string
+  type: str
   sample: 185-98-122-176.cust.cloudscale.ch
 server:
   description: The floating IP is routed to this server.
   returned: success when state == present
-  type: string
+  type: str
   sample: 47cec963-fcd2-482f-bdb6-24461b2d47b1
 ip:
   description: The floating IP address or network. This is always present and used to identify floating IPs after creation.
   returned: success
-  type: string
+  type: str
   sample: 185.98.122.176
 state:
   description: The current status of the floating IP.
   returned: success
-  type: string
+  type: str
   sample: present
 '''
 

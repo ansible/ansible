@@ -217,22 +217,22 @@ RETURN = r'''
 preferred_lb_method:
   description: New preferred load balancing method for the pool.
   returned: changed
-  type: string
+  type: str
   sample: topology
 alternate_lb_method:
   description: New alternate load balancing method for the pool.
   returned: changed
-  type: string
+  type: str
   sample: drop-packet
 fallback_lb_method:
   description: New fallback load balancing method for the pool.
   returned: changed
-  type: string
+  type: str
   sample: fewest-hops
 fallback_ip:
   description: New fallback IP used when load balacing using the C(fallback_ip) method.
   returned: changed
-  type: string
+  type: str
   sample: 10.10.10.10
 monitors:
   description: The new list of monitors for the resource.
@@ -247,11 +247,11 @@ members:
     server:
       description: The name of the server portion of the member.
       returned: changed
-      type: string
+      type: str
     virtual_server:
       description: The name of the virtual server portion of the member.
       returned: changed
-      type: string
+      type: str
 max_answers_returned:
   description: The new Maximum Answers Returned value.
   returned: changed

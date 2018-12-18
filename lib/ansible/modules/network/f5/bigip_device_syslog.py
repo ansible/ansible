@@ -261,12 +261,12 @@ RETURN = r'''
 auth_priv_from:
   description: The new lowest user authentication logging level
   returned: changed
-  type: string
+  type: str
   sample: alert
 auth_priv_to:
   description: The new highest user authentication logging level.
   returned: changed
-  type: string
+  type: str
   sample: emerg
 console_log:
   description: Whether logging to console is enabled or not.
@@ -281,77 +281,77 @@ iso_date:
 cron_from:
   description: The new lowest time-based scheduling logging level.
   returned: changed
-  type: string
+  type: str
   sample: emerg
 cron_to:
   description: The new highest time-based scheduling logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 daemon_from:
   description: The new lowest daemon performance logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 daemon_to:
   description: The new highest daemon performance logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 include:
   description: The new extra syslog-ng configuration to include in syslog config.
   returned: changed
-  type: string
+  type: str
   sample: "filter f_remote_syslog { not (facility(local6)) };"
 kern_from:
   description: The new lowest kernel messages logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 kern_to:
   description: The new highest kernel messages logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 local6_from:
   description: The new lowest local6 facility logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 local6_to:
   description: The new highest local6 facility logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 mail_from:
   description: The new lowest mail log logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 mail_to:
   description: The new highest mail log logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 messages_from:
   description: The new lowest system logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 messages_to:
   description: The new highest system logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 user_log_from:
   description: The new lowest user account logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 user_log_to:
   description: The new highest user account logging level.
   returned: changed
-  type: string
+  type: str
   sample: alert
 '''
 

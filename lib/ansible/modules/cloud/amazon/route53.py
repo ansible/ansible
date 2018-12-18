@@ -173,7 +173,7 @@ set:
     record:
       description: domain name for the record set
       returned: always
-      type: string
+      type: str
       sample: new.foo.com.
     region:
       description: ""
@@ -183,17 +183,17 @@ set:
     ttl:
       description: resource record cache TTL
       returned: always
-      type: string
+      type: str
       sample: '3600'
     type:
       description: record set type
       returned: always
-      type: string
+      type: str
       sample: A
     value:
       description: value
       returned: always
-      type: string
+      type: str
       sample: 52.43.18.27
     values:
       description: values
@@ -204,12 +204,12 @@ set:
     weight:
       description: weight of the record
       returned: always
-      type: string
+      type: str
       sample: '3'
     zone:
       description: zone this record set belongs to
       returned: always
-      type: string
+      type: str
       sample: foo.bar.com.
 '''
 

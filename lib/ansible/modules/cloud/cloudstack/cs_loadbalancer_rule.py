@@ -129,67 +129,67 @@ RETURN = '''
 id:
   description: UUID of the rule.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 zone:
   description: Name of zone the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 project:
   description: Name of project the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 account:
   description: Account the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 domain:
   description: Domain the rule is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 algorithm:
   description: Load balancer algorithm used.
   returned: success
-  type: string
+  type: str
   sample: "source"
 cidr:
   description: CIDR to forward traffic from.
   returned: success
-  type: string
+  type: str
   sample: ""
 name:
   description: Name of the rule.
   returned: success
-  type: string
+  type: str
   sample: "http-lb"
 description:
   description: Description of the rule.
   returned: success
-  type: string
+  type: str
   sample: "http load balancer rule"
 protocol:
   description: Protocol of the rule.
   returned: success
-  type: string
+  type: str
   sample: "tcp"
 public_port:
   description: Public port.
   returned: success
-  type: string
+  type: str
   sample: 80
 private_port:
   description: Private IP address.
   returned: success
-  type: string
+  type: str
   sample: 80
 public_ip:
   description: Public IP address.
   returned: success
-  type: string
+  type: str
   sample: "1.2.3.4"
 tags:
   description: List of resource tags associated with the rule.
@@ -199,7 +199,7 @@ tags:
 state:
   description: State of the rule.
   returned: success
-  type: string
+  type: str
   sample: "Add"
 '''
 

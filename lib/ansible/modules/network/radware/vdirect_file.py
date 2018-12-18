@@ -106,7 +106,7 @@ RETURN = '''
 result:
     description: Message detailing upload result
     returned: success
-    type: string
+    type: str
     sample: "Workflow template created"
 '''
 

@@ -109,27 +109,27 @@ RETURN = '''
 name:
     description: name used to find the service
     returned: success
-    type: string
+    type: str
     sample: "sshd"
 service_path:
     description: resolved path for the service
     returned: success
-    type: string
+    type: str
     sample: "/var/sv/sshd"
 enabled:
     description: whether the service is enabled at system bootstrap
     returned: success
-    type: boolean
+    type: bool
     sample: True
 preset:
     description: whether the enabled status reflects the one set in the relevant C(*.preset) file
     returned: success
-    type: boolean
+    type: bool
     sample: False
 state:
     description: service process run state, C(None) if the service is not loaded and will not be started
     returned: if state option is used
-    type: string
+    type: str
     sample: "reloaded"
 status:
     description: a dictionary with the key=value pairs returned by `system-control show-json` or C(None) if the service is not loaded
@@ -188,7 +188,7 @@ status:
 user:
     description: whether the user-level service manager is called
     returned: success
-    type: boolean
+    type: bool
     sample: False
 '''
 

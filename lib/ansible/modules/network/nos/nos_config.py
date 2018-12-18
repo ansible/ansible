@@ -187,7 +187,7 @@ commands:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/nos_config.2018-02-12@18:26:34
 """
 

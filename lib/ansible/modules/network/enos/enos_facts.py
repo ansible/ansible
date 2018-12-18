@@ -109,11 +109,11 @@ RETURN = '''
   ansible_net_hostname:
     description: The configured hostname of the device
     returned: always
-    type: string
+    type: str
   ansible_net_image:
     description: Indicates the active image for the device
     returned: always
-    type: string
+    type: str
 # hardware
   ansible_net_memfree_mb:
     description: The available free memory on the remote device in MB

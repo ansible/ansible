@@ -373,12 +373,12 @@ RETURN = '''
 repo:
     description: repository name
     returned: success
-    type: string
+    type: str
     sample: "epel"
 state:
     description: state of the target, after execution
     returned: success
-    type: string
+    type: str
     sample: "present"
 '''
 

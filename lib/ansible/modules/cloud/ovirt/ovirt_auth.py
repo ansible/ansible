@@ -159,12 +159,12 @@ ovirt_auth:
         token:
             description: SSO token which is used for connection to oVirt/RHV engine.
             returned: success
-            type: string
+            type: str
             sample: "kdfVWp9ZgeewBXV-iq3Js1-xQJZPSEQ334FLb3eksoEPRaab07DhZ8ED8ghz9lJd-MQ2GqtRIeqhvhCkrUWQPw"
         url:
             description: URL of the oVirt/RHV engine API endpoint.
             returned: success
-            type: string
+            type: str
             sample: "https://ovirt.example.com/ovirt-engine/api"
         ca_file:
             description: CA file, which is used to verify SSL/TLS connection.

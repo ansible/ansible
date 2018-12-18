@@ -229,7 +229,7 @@ addresses:
 old_state:
   description: The old state of the container
   returned: when state is started or restarted
-  type: string
+  type: str
   sample: "stopped"
 logs:
   description: The logs of requests and responses.

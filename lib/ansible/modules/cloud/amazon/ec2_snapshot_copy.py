@@ -102,7 +102,7 @@ RETURN = '''
 snapshot_id:
     description: snapshot id of the newly created snapshot
     returned: when snapshot copy is successful
-    type: string
+    type: str
     sample: "snap-e9095e8c"
 '''
 

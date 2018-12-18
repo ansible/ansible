@@ -64,12 +64,12 @@ RETURN = r'''
 msg:
     description: Test of the message that was sent.
     returned: changed
-    type: string
+    type: str
     sample: Automated upgrade about to start.  Please save your work and log off before 22 July 2016 18:00:00
 display_seconds:
     description: Value of display_seconds module parameter.
     returned: success
-    type: string
+    type: str
     sample: 10
 rc:
     description: The return code of the API call
@@ -79,16 +79,16 @@ rc:
 runtime_seconds:
     description: How long the module took to run on the remote windows host.
     returned: success
-    type: string
+    type: str
     sample: 22 July 2016 17:45:51
 sent_localtime:
     description: local time from windows host when the message was sent.
     returned: success
-    type: string
+    type: str
     sample: 22 July 2016 17:45:51
 wait:
     description: Value of wait module parameter.
     returned: success
-    type: boolean
+    type: bool
     sample: false
 '''

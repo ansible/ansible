@@ -66,7 +66,7 @@ exists:
 account_uri:
   description: ACME account URI, or None if account does not exist.
   returned: always
-  type: string
+  type: str
 
 account:
   description: The account information, as retrieved from the ACME server.

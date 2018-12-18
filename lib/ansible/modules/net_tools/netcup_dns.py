@@ -137,17 +137,17 @@ records:
         name:
             description: the record name
             returned: success
-            type: string
+            type: str
             sample: fancy-hostname
         type:
             description: the record type
             returned: succcess
-            type: string
+            type: str
             sample: A
         value:
             description: the record destination
             returned: success
-            type: string
+            type: str
             sample: 127.0.0.1
         priority:
             description: the record priority (only relevant if type=MX)

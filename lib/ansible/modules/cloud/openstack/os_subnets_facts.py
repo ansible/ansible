@@ -93,23 +93,23 @@ openstack_subnets:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the subnet.
             returned: success
-            type: string
+            type: str
         network_id:
             description: Network ID this subnet belongs in.
             returned: success
-            type: string
+            type: str
         cidr:
             description: Subnet's CIDR.
             returned: success
-            type: string
+            type: str
         gateway_ip:
             description: Subnet's gateway ip.
             returned: success
-            type: string
+            type: str
         enable_dhcp:
             description: DHCP enable flag for this subnet.
             returned: success
@@ -121,7 +121,7 @@ openstack_subnets:
         tenant_id:
             description: Tenant id associated with this subnet.
             returned: success
-            type: string
+            type: str
         dns_nameservers:
             description: DNS name servers for this subnet.
             returned: success

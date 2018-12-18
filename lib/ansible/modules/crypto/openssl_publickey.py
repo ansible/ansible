@@ -97,17 +97,17 @@ RETURN = '''
 privatekey:
     description: Path to the TLS/SSL private key the public key was generated from
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/private/ansible.com.pem
 format:
     description: The format of the public key (PEM, OpenSSH, ...)
     returned: changed or success
-    type: string
+    type: str
     sample: PEM
 filename:
     description: Path to the generated TLS/SSL public key file
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/public/ansible.com.pem
 fingerprint:
     description: The fingerprint of the public key. Fingerprint will be generated for each hashlib.algorithms available.

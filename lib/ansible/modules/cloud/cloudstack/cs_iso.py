@@ -151,93 +151,93 @@ RETURN = '''
 id:
   description: UUID of the ISO.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the ISO.
   returned: success
-  type: string
+  type: str
   sample: Debian 7 64-bit
 display_text:
   description: Text to be displayed of the ISO.
   returned: success
-  type: string
+  type: str
   sample: Debian 7.7 64-bit minimal 2015-03-19
 zone:
   description: Name of zone the ISO is registered in.
   returned: success
-  type: string
+  type: str
   sample: zuerich
 status:
   description: Status of the ISO.
   returned: success
-  type: string
+  type: str
   sample: Successfully Installed
 is_ready:
   description: True if the ISO is ready to be deployed from.
   returned: success
-  type: boolean
+  type: bool
   sample: true
 is_public:
   description: True if the ISO is public.
   returned: success
-  type: boolean
+  type: bool
   sample: true
   version_added: "2.4"
 bootable:
   description: True if the ISO is bootable.
   returned: success
-  type: boolean
+  type: bool
   sample: true
   version_added: "2.4"
 is_featured:
   description: True if the ISO is featured.
   returned: success
-  type: boolean
+  type: bool
   sample: true
   version_added: "2.4"
 format:
   description: Format of the ISO.
   returned: success
-  type: string
+  type: str
   sample: ISO
   version_added: "2.4"
 os_type:
   description: Typo of the OS.
   returned: success
-  type: string
+  type: str
   sample: CentOS 6.5 (64-bit)
   version_added: "2.4"
 checksum:
   description: MD5 checksum of the ISO.
   returned: success
-  type: string
+  type: str
   sample: 0b31bccccb048d20b551f70830bb7ad0
 created:
   description: Date of registering.
   returned: success
-  type: string
+  type: str
   sample: 2015-03-29T14:57:06+0200
 cross_zones:
   description: true if the ISO is managed across all zones, false otherwise.
   returned: success
-  type: boolean
+  type: bool
   sample: false
   version_added: "2.4"
 domain:
   description: Domain the ISO is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the ISO is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Project the ISO is related to.
   returned: success
-  type: string
+  type: str
   sample: example project
 tags:
   description: List of resource tags associated with the ISO.

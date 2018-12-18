@@ -95,12 +95,12 @@ RETURN = r'''
 peer_server:
   description: The remote IP address of the trusted peer.
   returned: changed
-  type: string
+  type: str
   sample: 10.0.2.15
 peer_hostname:
   description: The remote hostname used to identify the trusted peer.
   returned: changed
-  type: string
+  type: str
   sample: test-bigip-02.localhost.localdomain
 '''
 

@@ -154,12 +154,12 @@ RETURN = '''
 network_acl:
   description: Name of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: customer acl
 cidr:
   description: CIDR of the network ACL rule.
   returned: success
-  type: string
+  type: str
   sample: 0.0.0.0/0
 rule_position:
   description: Position of the network ACL rule.
@@ -169,17 +169,17 @@ rule_position:
 action_policy:
   description: Action policy of the network ACL rule.
   returned: success
-  type: string
+  type: str
   sample: deny
 traffic_type:
   description: Traffic type of the network ACL rule.
   returned: success
-  type: string
+  type: str
   sample: ingress
 protocol:
   description: Protocol of the network ACL rule.
   returned: success
-  type: string
+  type: str
   sample: tcp
 protocol_number:
   description: Protocol number in case protocol is by number.
@@ -209,12 +209,12 @@ icmp_type:
 state:
   description: State of the network ACL rule.
   returned: success
-  type: string
+  type: str
   sample: Active
 vpc:
   description: VPC of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: customer vpc
 tags:
   description: List of resource tags associated with the network ACL rule.
@@ -224,22 +224,22 @@ tags:
 domain:
   description: Domain the network ACL rule is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the network ACL rule is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the network ACL rule is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 zone:
   description: Zone the VPC is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 '''
 

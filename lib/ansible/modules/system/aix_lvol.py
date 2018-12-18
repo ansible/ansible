@@ -111,7 +111,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 msg:
-  type: string
+  type: str
   description: A friendly message describing the task result.
   returned: always
   sample: Logical volume testlv created.

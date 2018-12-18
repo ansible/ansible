@@ -114,12 +114,12 @@ RETURN = r'''
 attribute_string:
   description: The new attribute string of the resource.
   returned: changed
-  type: string
+  type: str
   sample: "memberOf=cn=ldap_group,cn=ldap.group,ou=ldap"
 terminal_access:
   description: The terminal setting of the remote role.
   returned: changed
-  type: string
+  type: str
   sample: tmsh
 line_order:
   description: Order of the remote role for LDAP and Active Directory servers.
@@ -129,12 +129,12 @@ line_order:
 assigned_role:
   description: System role that this remote role is associated with.
   returned: changed
-  type: string
+  type: str
   sample: administrator
 partition_access:
   description: Partition that the role has access to.
   returned: changed
-  type: string
+  type: str
   sample: all
 remote_access:
   description: Whether remote access is allowed or not.

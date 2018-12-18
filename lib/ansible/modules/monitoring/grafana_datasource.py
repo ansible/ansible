@@ -305,7 +305,7 @@ RETURN = '''
 name:
   description: name of the datasource created.
   returned: success
-  type: string
+  type: str
   sample: test-ds
 id:
   description: Id of the datasource

@@ -86,17 +86,17 @@ RETURN = '''
 description:
     description: The zone's description
     returned: success
-    type: string
+    type: str
     sample: This is an awesome zone
 state:
     description: Whether the zone is present or absent
     returned: success
-    type: string
+    type: str
     sample: present
 zone:
     description: The zone's DNS name
     returned: success
-    type: string
+    type: str
     sample: example.com.
 '''
 

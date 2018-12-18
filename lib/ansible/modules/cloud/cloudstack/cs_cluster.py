@@ -142,57 +142,57 @@ RETURN = '''
 id:
   description: UUID of the cluster.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the cluster.
   returned: success
-  type: string
+  type: str
   sample: cluster01
 allocation_state:
   description: State of the cluster.
   returned: success
-  type: string
+  type: str
   sample: Enabled
 cluster_type:
   description: Type of the cluster.
   returned: success
-  type: string
+  type: str
   sample: ExternalManaged
 cpu_overcommit_ratio:
   description: The CPU overcommit ratio of the cluster.
   returned: success
-  type: string
+  type: str
   sample: 1.0
 memory_overcommit_ratio:
   description: The memory overcommit ratio of the cluster.
   returned: success
-  type: string
+  type: str
   sample: 1.0
 managed_state:
   description: Whether this cluster is managed by CloudStack.
   returned: success
-  type: string
+  type: str
   sample: Managed
 ovm3_vip:
   description: Ovm3 VIP to use for pooling and/or clustering
   returned: success
-  type: string
+  type: str
   sample: 10.10.10.101
 hypervisor:
   description: Hypervisor of the cluster
   returned: success
-  type: string
+  type: str
   sample: VMware
 zone:
   description: Name of zone the cluster is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 pod:
   description: Name of pod the cluster is in.
   returned: success
-  type: string
+  type: str
   sample: pod01
 '''
 

@@ -310,7 +310,7 @@ msg:
   description: Success or failure message. Upon any failure, the method returns
    an error display string.
   returned: always
-  type: string
+  type: str
 '''
 
 import sys

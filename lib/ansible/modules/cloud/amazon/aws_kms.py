@@ -91,7 +91,7 @@ changes_needed:
   sample: { "role": "add", "role grant": "add" }
 had_invalid_entries:
   description: there are invalid (non-ARN) entries in the KMS entry. These don't count as a change, but will be removed if any changes are being made.
-  type: boolean
+  type: bool
   returned: always
 '''
 

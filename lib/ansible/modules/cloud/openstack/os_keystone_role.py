@@ -63,11 +63,11 @@ role:
     contains:
         id:
             description: Unique role ID.
-            type: string
+            type: str
             sample: "677bfab34c844a01b88a217aa12ec4c2"
         name:
             description: Role name.
-            type: string
+            type: str
             sample: "demo"
 '''
 

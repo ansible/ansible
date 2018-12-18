@@ -245,7 +245,7 @@ elapsed:
 msg:
   description: The HTTP message from the request
   returned: always
-  type: string
+  type: str
   sample: OK (unknown bytes)
 redirected:
   description: Whether the request was redirected
@@ -260,7 +260,7 @@ status:
 url:
   description: The actual URL used for the request
   returned: always
-  type: string
+  type: str
   sample: https://www.ansible.com/
 '''
 

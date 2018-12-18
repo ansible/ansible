@@ -85,7 +85,7 @@ RETURN = r'''
 description:
   description: The new description of the license key.
   returned: changed
-  type: string
+  type: str
   sample: My license for BIG-IP 1
 '''
 

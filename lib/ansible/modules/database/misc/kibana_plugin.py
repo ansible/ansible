@@ -84,31 +84,31 @@ RETURN = '''
 cmd:
     description: the launched command during plugin management (install / remove)
     returned: success
-    type: string
+    type: str
 name:
     description: the plugin name to install or remove
     returned: success
-    type: string
+    type: str
 url:
     description: the url from where the plugin is installed from
     returned: success
-    type: string
+    type: str
 timeout:
     description: the timeout for plugin download
     returned: success
-    type: string
+    type: str
 stdout:
     description: the command stdout
     returned: success
-    type: string
+    type: str
 stderr:
     description: the command stderr
     returned: success
-    type: string
+    type: str
 state:
     description: the state for the managed plugin
     returned: success
-    type: string
+    type: str
 '''
 
 import os

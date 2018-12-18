@@ -75,11 +75,11 @@ RETURN = r'''
 before_value:
   description: the value of the environment key before a change, this is null if it didn't exist
   returned: always
-  type: string
+  type: str
   sample: C:\Windows\System32
 value:
   description: the value the environment key has been set to, this is null if removed
   returned: always
-  type: string
+  type: str
   sample: C:\Program Files\jdk1.8
 '''

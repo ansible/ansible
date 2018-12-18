@@ -174,12 +174,12 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: gateway-icmp
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -204,7 +204,7 @@ adaptive:
 allowed_divergence_type:
   description: Type of divergence used for adaptive response time monitoring.
   returned: changed
-  type: string
+  type: str
   sample: absolute
 allowed_divergence_value:
   description:
@@ -238,7 +238,7 @@ port:
     - Alias port or service for the monitor to check, on behalf of the pools or pool
       members with which the monitor is associated.
   returned: changed
-  type: string
+  type: str
   sample: 80
 transparent:
   description: Whether the monitor operates in transparent mode.

@@ -111,19 +111,19 @@ task:
         taskArn:
             description: The Amazon Resource Name (ARN) that identifies the task.
             returned: always
-            type: string
+            type: str
         clusterArn:
             description: The Amazon Resource Name (ARN) of the of the cluster that hosts the task.
             returned: only when details is true
-            type: string
+            type: str
         taskDefinitionArn:
             description: The Amazon Resource Name (ARN) of the task definition.
             returned: only when details is true
-            type: string
+            type: str
         containerInstanceArn:
             description: The Amazon Resource Name (ARN) of the container running the task.
             returned: only when details is true
-            type: string
+            type: str
         overrides:
             description: The container overrides set for this task.
             returned: only when details is true
@@ -131,11 +131,11 @@ task:
         lastStatus:
             description: The last recorded status of the task.
             returned: only when details is true
-            type: string
+            type: str
         desiredStatus:
             description: The desired status of the task.
             returned: only when details is true
-            type: string
+            type: str
         containers:
             description: The container details.
             returned: only when details is true
@@ -143,23 +143,23 @@ task:
         startedBy:
             description: The used who started the task.
             returned: only when details is true
-            type: string
+            type: str
         stoppedReason:
             description: The reason why the task was stopped.
             returned: only when details is true
-            type: string
+            type: str
         createdAt:
             description: The timestamp of when the task was created.
             returned: only when details is true
-            type: string
+            type: str
         startedAt:
             description: The timestamp of when the task was started.
             returned: only when details is true
-            type: string
+            type: str
         stoppedAt:
             description: The timestamp of when the task was stopped.
             returned: only when details is true
-            type: string
+            type: str
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule

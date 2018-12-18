@@ -103,17 +103,17 @@ RETURN = '''
 name:
     description: name of the adjusted inittab entry
     returned: always
-    type: string
+    type: str
     sample: startmyservice
 msg:
     description: action done with the inittab entry
     returned: changed
-    type: string
+    type: str
     sample: changed inittab entry startmyservice
 changed:
     description: whether the inittab changed or not
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

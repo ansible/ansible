@@ -93,34 +93,34 @@ result:
     contains:
         _ref:
             description: The reference name of the object
-            type: string
+            type: str
         _locked:
             description: Whether or not the object is currently locked
-            type: boolean
+            type: bool
         name:
             description: The name of the object
-            type: string
+            type: str
         address:
             description: The ipv4 address of the object
-            type: string
+            type: str
         address6:
             description: The ipv6 adress of the object
-            type: string
+            type: str
         comment:
             description: The comment string
-            type: string
+            type: str
         hostname:
             description: The hostname of the object
-            type: string
+            type: str
         interface:
             description: The reference name of the interface the object is associated with
-            type: string
+            type: str
         resolved:
             description: Whether the ipv4 address is resolved or not
-            type: boolean
+            type: bool
         resolved6:
             description: Whether the ipv6 address is resolved or not
-            type: boolean
+            type: bool
         timeout:
             description: The timeout until a new resolving will be attempted
             type: int

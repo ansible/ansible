@@ -199,12 +199,12 @@ actions:
     type:
       description: The action type
       returned: changed
-      type: string
+      type: str
       sample: forward
     pool:
       description: Pool for forward to
       returned: changed
-      type: string
+      type: str
       sample: foo-pool
   sample: hash/dictionary of values
 conditions:
@@ -215,7 +215,7 @@ conditions:
     type:
       description: The condition type.
       returned: changed
-      type: string
+      type: str
       sample: http_uri
     path_begins_with_any:
       description: List of strings that the URI begins with.
@@ -226,7 +226,7 @@ conditions:
 description:
   description: The new description of the rule.
   returned: changed
-  type: string
+  type: str
   sample: My rule
 '''
 

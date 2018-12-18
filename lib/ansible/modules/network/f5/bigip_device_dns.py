@@ -78,7 +78,7 @@ RETURN = r'''
 cache:
   description: The new value of the DNS caching
   returned: changed
-  type: string
+  type: str
   sample: enabled
 name_servers:
   description: List of name servers that were set

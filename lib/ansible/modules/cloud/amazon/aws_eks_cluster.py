@@ -80,7 +80,7 @@ RETURN = '''
 arn:
   description: ARN of the EKS cluster
   returned: when state is present
-  type: string
+  type: str
   sample: arn:aws:eks:us-west-2:111111111111:cluster/my-eks-cluster
 certificate_authority:
   description: Dictionary containing Certificate Authority Data for cluster
@@ -90,21 +90,21 @@ certificate_authority:
     data:
       description: Base-64 encoded Certificate Authority Data for cluster
       returned: when the cluster has been created and is active
-      type: string
+      type: str
 endpoint:
   description: Kubernetes API server endpoint
   returned: when the cluster has been created and is active
-  type: string
+  type: str
   sample: https://API_SERVER_ENDPOINT.yl4.us-west-2.eks.amazonaws.com
 created_at:
   description: Cluster creation date and time
   returned: when state is present
-  type: string
+  type: str
   sample: '2018-06-06T11:56:56.242000+00:00'
 name:
   description: EKS cluster name
   returned: when state is present
-  type: string
+  type: str
   sample: my-eks-cluster
 resources_vpc_config:
   description: VPC configuration of the cluster
@@ -129,24 +129,24 @@ resources_vpc_config:
     vpc_id:
       description: VPC id
       returned: always
-      type: string
+      type: str
       sample: vpc-a1b2c3d4
 role_arn:
   description: ARN of the IAM role used by the cluster
   returned: when state is present
-  type: string
+  type: str
   sample: arn:aws:iam::111111111111:role/aws_eks_cluster_role
 status:
   description: status of the EKS cluster
   returned: when state is present
-  type: string
+  type: str
   sample:
   - CREATING
   - ACTIVE
 version:
   description: Kubernetes version of the cluster
   returned: when state is present
-  type: string
+  type: str
   sample: '1.10'
 '''
 

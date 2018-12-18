@@ -63,27 +63,27 @@ RETURN = '''
 name:
     description: VLAN name
     returned: always
-    type: string
+    type: str
     sample: vlan42
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 temporary:
     description: specifies if operation will persist across reboots
     returned: always
-    type: boolean
+    type: bool
     sample: True
 link:
     description: VLAN's underlying link name
     returned: always
-    type: string
+    type: str
     sample: e100g0
 vlan_id:
     description: VLAN ID
     returned: always
-    type: string
+    type: str
     sample: 42
 '''
 

@@ -65,20 +65,20 @@ RETURN = '''
 id:
     description: Unique UUID.
     returned: success
-    type: string
+    type: str
 name:
     description: Name given to the keypair.
     returned: success
-    type: string
+    type: str
 public_key:
     description: The public key value for the keypair.
     returned: success
-    type: string
+    type: str
 private_key:
     description: The private key value for the keypair.
     returned: Only when a keypair is generated for the user (e.g., when creating one
               and a public key is not specified).
-    type: string
+    type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule

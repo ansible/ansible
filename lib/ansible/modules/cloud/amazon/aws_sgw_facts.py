@@ -57,27 +57,27 @@ gateways:
     gateway_arn:
       description: "Storage Gateway ARN"
       returned: always
-      type: string
+      type: str
       sample: "arn:aws:storagegateway:eu-west-1:367709993819:gateway/sgw-9999F888"
     gateway_id:
       description: "Storage Gateway ID"
       returned: always
-      type: string
+      type: str
       sample: "sgw-9999F888"
     gateway_name:
       description: "Storage Gateway friendly name"
       returned: always
-      type: string
+      type: str
       sample: "my-sgw-01"
     gateway_operational_state:
       description: "Storage Gateway operational state"
       returned: always
-      type: string
+      type: str
       sample: "ACTIVE"
     gateway_type:
       description: "Storage Gateway type"
       returned: always
-      type: string
+      type: str
       sample: "FILE_S3"
     file_shares:
       description: "Storage gateway file shares"
@@ -87,17 +87,17 @@ gateways:
         file_share_arn:
           description: "File share ARN"
           returned: always
-          type: string
+          type: str
           sample: "arn:aws:storagegateway:eu-west-1:399805793479:share/share-AF999C88"
         file_share_id:
           description: "File share ID"
           returned: always
-          type: string
+          type: str
           sample: "share-AF999C88"
         file_share_status:
           description: "File share status"
           returned: always
-          type: string
+          type: str
           sample: "AVAILABLE"
     tapes:
         description: "Storage Gateway tapes"
@@ -107,22 +107,22 @@ gateways:
           tape_arn:
             description: "Tape ARN"
             returned: always
-            type: string
+            type: str
             sample: "arn:aws:storagegateway:eu-west-1:399805793479:tape/tape-AF999C88"
           tape_barcode:
             description: "Tape ARN"
             returned: always
-            type: string
+            type: str
             sample: "tape-AF999C88"
           tape_size_in_bytes:
             description: "Tape ARN"
             returned: always
-            type: integer
+            type: int
             sample: 555887569
           tape_status:
             description: "Tape ARN"
             returned: always
-            type: string
+            type: str
             sample: "AVAILABLE"
     local_disks:
       description: "Storage gateway local disks"
@@ -132,32 +132,32 @@ gateways:
         disk_allocation_type:
           description: "Disk allocation type"
           returned: always
-          type: string
+          type: str
           sample: "CACHE STORAGE"
         disk_id:
           description: "Disk ID on the system"
           returned: always
-          type: string
+          type: str
           sample: "pci-0000:00:1f.0"
         disk_node:
           description: "Disk parent block device"
           returned: always
-          type: string
+          type: str
           sample: "/dev/sdb"
         disk_path:
           description: "Disk path used for the cache"
           returned: always
-          type: string
+          type: str
           sample: "/dev/nvme1n1"
         disk_size_in_bytes:
           description: "Disk size in bytes"
           returned: always
-          type: integer
+          type: int
           sample: 107374182400
         disk_status:
           description: "Disk status"
           returned: always
-          type: string
+          type: str
           sample: "present"
 '''
 

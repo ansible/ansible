@@ -98,7 +98,7 @@ RETURN = '''
 changed:
     description: If module has modified a host
     returned: success
-    type: string
+    type: str
 lease:
     description: dictionary containing host information
     returned: success
@@ -107,12 +107,12 @@ lease:
         ip-address:
             description: IP address, if there is.
             returned: success
-            type: string
+            type: str
             sample: '192.168.1.5'
         hardware-address:
             description: MAC address
             returned: success
-            type: string
+            type: str
             sample: '00:11:22:33:44:55'
         hardware-type:
             description: hardware type, generally '1'
@@ -122,7 +122,7 @@ lease:
         name:
             description: hostname
             returned: success
-            type: string
+            type: str
             sample: 'mydesktop'
 '''
 

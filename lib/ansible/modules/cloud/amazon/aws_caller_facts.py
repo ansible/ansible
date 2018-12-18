@@ -39,24 +39,24 @@ RETURN = '''
 account:
     description: The account id the access credentials are associated with.
     returned: success
-    type: string
+    type: str
     sample: "123456789012"
 account_alias:
     description: The account alias the access credentials are associated with.
     returned: when caller has the iam:ListAccountAliases permission
-    type: string
+    type: str
     sample: "acme-production"
 arn:
     description: The arn identifying the user the credentials are associated with.
     returned: success
-    type: string
+    type: str
     sample: arn:aws:sts::123456789012:federated-user/my-federated-user-name
 user_id:
     description: |
         The user id the access credentials are associated with. Note that this may not correspond to
         anything you can look up in the case of roles or federated identities.
     returned: success
-    type: string
+    type: str
     sample: 123456789012:my-federated-user-name
 '''
 

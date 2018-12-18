@@ -80,32 +80,32 @@ RETURN = '''
 id:
   description: UUID of the VPN site-to-site gateway.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 public_ip:
   description: IP address of the VPN site-to-site gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.100.212.10
 vpc:
   description: Name of the VPC.
   returned: success
-  type: string
+  type: str
   sample: My VPC
 domain:
   description: Domain the VPN site-to-site gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the VPN site-to-site gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the VPN site-to-site gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 '''
 

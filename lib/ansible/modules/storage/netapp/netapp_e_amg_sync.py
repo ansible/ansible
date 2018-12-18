@@ -81,7 +81,7 @@ RETURN = """
 json:
     description: The object attributes of the AMG.
     returned: success
-    type: string
+    type: str
     example:
         {
             "changed": false,

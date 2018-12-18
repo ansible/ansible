@@ -193,27 +193,27 @@ allow_service:
 address:
   description: The address for the Self IP
   returned: changed
-  type: string
+  type: str
   sample: 192.0.2.10
 name:
   description: The name of the Self IP
   returned: created
-  type: string
+  type: str
   sample: self1
 netmask:
   description: The netmask of the Self IP
   returned: changed
-  type: string
+  type: str
   sample: 255.255.255.0
 traffic_group:
   description: The traffic group that the Self IP is a member of
   returned: changed
-  type: string
+  type: str
   sample: traffic-group-local-only
 vlan:
   description: The VLAN set on the Self IP
   returned: changed
-  type: string
+  type: str
   sample: vlan1
 '''
 

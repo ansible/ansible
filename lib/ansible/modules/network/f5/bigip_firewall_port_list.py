@@ -146,7 +146,7 @@ RETURN = r'''
 description:
   description: The new description of the port list.
   returned: changed
-  type: string
+  type: str
   sample: My port list
 ports:
   description: The new list of ports applied to the port list.

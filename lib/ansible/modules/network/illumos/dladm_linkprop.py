@@ -66,27 +66,27 @@ RETURN = '''
 property:
     description: property name
     returned: always
-    type: string
+    type: str
     sample: mtu
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 temporary:
     description: specifies if operation will persist across reboots
     returned: always
-    type: boolean
+    type: bool
     sample: True
 link:
     description: link name
     returned: always
-    type: string
+    type: str
     sample: e100g0
 value:
     description: property value
     returned: always
-    type: string
+    type: str
     sample: 9000
 '''
 

@@ -114,7 +114,7 @@ website_state:
     - Can be helpful in case you accidentally cause a binding collision
       which can result in the targetted site being stopped
   returned: always
-  type: string
+  type: str
   sample: "Started"
   version_added: "2.5"
 operation_type:
@@ -122,14 +122,14 @@ operation_type:
     - The type of operation performed
     - Can be removed, updated, matched, or added
   returned: on success
-  type: string
+  type: str
   sample: "removed"
   version_added: "2.5"
 binding_info:
   description:
     - Information on the binding being manipulated
   returned: on success
-  type: dictionary
+  type: dict
   sample: |-
     "binding_info": {
       "bindingInformation": "127.0.0.1:443:",

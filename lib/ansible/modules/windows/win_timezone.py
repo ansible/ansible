@@ -52,11 +52,11 @@ RETURN = r'''
 previous_timezone:
     description: The previous timezone if it was changed, otherwise the existing timezone
     returned: success
-    type: string
+    type: str
     sample: Central Standard Time
 timezone:
     description: The current timezone (possibly changed)
     returned: success
-    type: string
+    type: str
     sample: Central Standard Time
 '''

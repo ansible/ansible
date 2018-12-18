@@ -46,12 +46,12 @@ RETURN = '''
 gateway_id:
     description: The ID of the Egress Only Internet Gateway or Null.
     returned: always
-    type: string
+    type: str
     sample: eigw-0e00cf111ba5bc11e
 vpc_id:
     description: The ID of the VPC to attach or detach gateway from.
     returned: always
-    type: string
+    type: str
     sample: vpc-012345678
 '''
 

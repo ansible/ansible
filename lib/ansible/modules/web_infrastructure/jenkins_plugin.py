@@ -252,12 +252,12 @@ RETURN = '''
 plugin:
     description: plugin name
     returned: success
-    type: string
+    type: str
     sample: build-pipeline-plugin
 state:
     description: state of the target, after execution
     returned: success
-    type: string
+    type: str
     sample: "present"
 '''
 

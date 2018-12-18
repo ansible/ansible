@@ -131,19 +131,19 @@ RETURN = r'''
 name:
   description: Name of the ASM policy to be exported.
   returned: changed
-  type: string
+  type: str
   sample: Asm_APP1_Transparent
 dst:
   description: Local path to download exported ASM policy.
   returned: changed
-  type: string
+  type: str
   sample: /root/downloads/foobar.xml
 file:
   description:
     - Name of the policy file on the remote BIG-IP to download. If not
       specified, then this will be a randomly generated filename.
   returned: changed
-  type: string
+  type: str
   sample: foobar.xml
 inline:
   description: Set when ASM policy to be exported inline

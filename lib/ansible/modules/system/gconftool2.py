@@ -66,17 +66,17 @@ RETURN = '''
   key:
     description: The key specified in the module parameters
     returned: success
-    type: string
+    type: str
     sample: /desktop/gnome/interface/font_name
   value_type:
     description: The type of the value that was changed
     returned: success
-    type: string
+    type: str
     sample: string
   value:
     description: The value of the preference key after executing the module
     returned: success
-    type: string
+    type: str
     sample: "Serif 12"
 ...
 '''

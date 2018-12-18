@@ -90,22 +90,22 @@ RETURN = '''
 name:
   description: Name of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: customer acl
 description:
   description: Description of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: Example description of a network ACL
 vpc:
   description: VPC of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: customer vpc
 zone:
   description: Zone the VPC is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 '''
 

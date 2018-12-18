@@ -42,7 +42,7 @@ RETURN = '''
 data:
     description: DigitalOcean account facts
     returned: success
-    type: dictionary
+    type: dict
     sample: {
         "droplet_limit": 10,
         "email": "testuser1@gmail.com",

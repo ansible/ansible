@@ -371,7 +371,7 @@ lxc_container:
         name:
             description: name of the lxc container
             returned: success
-            type: string
+            type: str
             sample: test_host
         init_pid:
             description: pid of the lxc init process
@@ -391,17 +391,17 @@ lxc_container:
         state:
             description: resulting state of the container
             returned: success
-            type: string
+            type: str
             sample: "running"
         archive:
             description: resulting state of the container
             returned: success, when archive is true
-            type: string
+            type: str
             sample: "/tmp/test-container-config.tar"
         clone:
             description: if the container was cloned
             returned: success, when clone_name is specified
-            type: boolean
+            type: bool
             sample: True
 """
 

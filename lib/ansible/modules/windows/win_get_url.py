@@ -146,7 +146,7 @@ RETURN = r'''
 dest:
     description: destination file/path
     returned: always
-    type: string
+    type: str
     sample: C:\Users\RandomUser\earthrise.jpg
 elapsed:
     description: The elapsed seconds between the start of poll and the end of the module.
@@ -156,12 +156,12 @@ elapsed:
 url:
     description: requested url
     returned: always
-    type: string
+    type: str
     sample: http://www.example.com/earthrise.jpg
 msg:
     description: Error message, or HTTP status message from web-server
     returned: always
-    type: string
+    type: str
     sample: OK
 status_code:
     description: HTTP status code

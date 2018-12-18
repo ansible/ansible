@@ -94,11 +94,11 @@ changes:
         path:
             description: Path to value changed
             returned: always
-            type: string
+            type: str
         from:
             description: Previous value if any, else null
             returned: When previous value is present on value change
-            type: string
+            type: str
         to:
             description: Current value if any, else null.
             returned: When new value is present on value change
@@ -131,11 +131,11 @@ diffs:
         path:
             description: keypath to service changed
             returned: always
-            type: string
+            type: str
         diff:
             description: configuration difference triggered the re-deploy
             returned: always
-            type: string
+            type: str
 '''
 
 from ansible.module_utils.network.nso.nso import connect, verify_version, nso_argument_spec

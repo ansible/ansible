@@ -114,7 +114,7 @@ RETURN = """
 result:
     description: information about performed operation
     returned: always
-    type: string
+    type: str
     sample: "vSwitch 'vSwitch_1002' is created successfully"
 """
 

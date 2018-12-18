@@ -63,7 +63,7 @@ RETURN = '''
 current_audit_policy:
   description: details on the policy being targetted
   returned: always
-  type: dictionary
+  type: dict
   sample: |-
     {
       "File Share":"failure"

@@ -91,11 +91,11 @@ cyberark_session:
     sample:
         api_base_url:
             description: Base URL for API calls. Returned in the cyberark_session, so it can be used in subsequent calls.
-            type: string
+            type: str
             returned: always
         token:
             description: The token that identifies the session, encoded in BASE 64.
-            type: string
+            type: str
             returned: always
         use_shared_logon_authentication:
             description: Whether or not Shared Logon Authentication was used to establish the session.

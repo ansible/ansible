@@ -89,12 +89,12 @@ memset_api:
     id:
       description: Zone id
       returned: always
-      type: string
+      type: str
       sample: "b0bb1ce851aeea6feeb2dc32fe83bf9c"
     nickname:
       description: Zone name
       returned: always
-      type: string
+      type: str
       sample: "example.com"
     records:
       description: List of DNS records for domains in this zone

@@ -163,7 +163,7 @@ cluster:
         identifier:
             description: Id of the cluster.
             returned: success
-            type: string
+            type: str
             sample: "new_redshift_cluster"
         create_time:
             description: Time of the cluster creation as timestamp.
@@ -173,32 +173,32 @@ cluster:
         status:
             description: Stutus of the cluster.
             returned: success
-            type: string
+            type: str
             sample: "available"
         db_name:
             description: Name of the database.
             returned: success
-            type: string
+            type: str
             sample: "new_db_name"
         availability_zone:
             description: Amazon availability zone where the cluster is located.
             returned: success
-            type: string
+            type: str
             sample: "us-east-1b"
         maintenance_window:
             description: Time frame when maintenance/upgrade are done.
             returned: success
-            type: string
+            type: str
             sample: "sun:09:30-sun:10:00"
         private_ip_address:
             description: Private IP address of the main node.
             returned: success
-            type: string
+            type: str
             sample: "10.10.10.10"
         public_ip_address:
             description: Public IP address of the main node.
             returned: success
-            type: string
+            type: str
             sample: "0.0.0.0"
         port:
             description: Port of the cluster.
@@ -208,7 +208,7 @@ cluster:
         url:
             description: FQDN of the main cluster node.
             returned: success
-            type: string
+            type: str
             sample: "new-redshift_cluster.jfkdjfdkj.us-east-1.redshift.amazonaws.com"
 '''
 

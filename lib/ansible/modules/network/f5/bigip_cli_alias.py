@@ -73,12 +73,12 @@ RETURN = r'''
 command:
   description: The new command that is aliased.
   returned: changed
-  type: string
+  type: str
   sample: run /util bash
 description:
   description: The new description of the alias.
   returned: changed
-  type: string
+  type: str
   sample: Run the bash shell
 '''
 

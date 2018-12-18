@@ -102,7 +102,7 @@ EXAMPLES = """
 RETURN = """
 ---
 msg:
-  type: string
+  type: str
   description: Over all firmware update status.
   returned: always
   sample: "Successfully updated the firmware."

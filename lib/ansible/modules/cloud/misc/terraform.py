@@ -139,19 +139,19 @@ outputs:
       returned: always
       description: Whether Terraform has marked this value as sensitive
     type:
-      type: string
+      type: str
       returned: always
       description: The type of the value (string, int, etc)
     value:
       returned: always
       description: The value of the output as interpolated by Terraform
 stdout:
-  type: string
+  type: str
   description: Full `terraform` command stdout, in case you want to display it or examine the event log
   returned: always
   sample: ''
 command:
-  type: string
+  type: str
   description: Full `terraform` command built by this module, in case you want to re-run the command outside the module or debug a problem.
   returned: always
   sample: terraform apply ...

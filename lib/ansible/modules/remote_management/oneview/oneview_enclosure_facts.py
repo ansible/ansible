@@ -124,7 +124,7 @@ enclosures:
 enclosure_script:
     description: Has all the OneView facts about the script of an Enclosure.
     returned: When requested, but can be null.
-    type: string
+    type: str
 
 enclosure_environmental_configuration:
     description: Has all the OneView facts about the environmental configuration of an Enclosure.

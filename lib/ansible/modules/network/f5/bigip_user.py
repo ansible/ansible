@@ -180,7 +180,7 @@ RETURN = r'''
 full_name:
   description: Full name of the user
   returned: changed and success
-  type: string
+  type: str
   sample: John Doe
 partition_access:
   description:
@@ -192,7 +192,7 @@ partition_access:
 shell:
   description: The shell assigned to the user account
   returned: changed and success
-  type: string
+  type: str
   sample: tmsh
 '''
 

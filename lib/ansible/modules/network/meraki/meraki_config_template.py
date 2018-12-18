@@ -107,7 +107,7 @@ data:
         name:
           description: Name of configuration template
           returned: success
-          type: string
+          type: str
           sample: YourTemplate
 '''
 

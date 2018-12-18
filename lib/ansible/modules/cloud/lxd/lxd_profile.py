@@ -155,7 +155,7 @@ RETURN = '''
 old_state:
   description: The old state of the profile
   returned: success
-  type: string
+  type: str
   sample: "absent"
 logs:
   description: The logs of requests and responses.

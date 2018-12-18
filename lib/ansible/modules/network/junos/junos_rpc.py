@@ -83,11 +83,11 @@ RETURN = """
 xml:
   description: The xml return string from the rpc request.
   returned: always
-  type: string
+  type: str
 output:
   description: The rpc rely converted to the output format.
   returned: always
-  type: string
+  type: str
 output_lines:
   description: The text output split into lines for readability.
   returned: always

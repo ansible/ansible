@@ -85,7 +85,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: json for newly created flash cache
 """
 import json

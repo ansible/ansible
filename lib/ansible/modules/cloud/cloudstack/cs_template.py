@@ -245,107 +245,107 @@ RETURN = '''
 id:
   description: UUID of the template or extracted object.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the template or extracted object.
   returned: success
-  type: string
+  type: str
   sample: Debian 7 64-bit
 display_text:
   description: Display text of the template.
   returned: if available
-  type: string
+  type: str
   sample: Debian 7.7 64-bit minimal 2015-03-19
 checksum:
   description: MD5 checksum of the template.
   returned: if available
-  type: string
+  type: str
   sample: 0b31bccccb048d20b551f70830bb7ad0
 status:
   description: Status of the template or extracted object.
   returned: success
-  type: string
+  type: str
   sample: Download Complete
 is_ready:
   description: True if the template is ready to be deployed from.
   returned: if available
-  type: boolean
+  type: bool
   sample: true
 is_public:
   description: True if the template is public.
   returned: if available
-  type: boolean
+  type: bool
   sample: true
 is_featured:
   description: True if the template is featured.
   returned: if available
-  type: boolean
+  type: bool
   sample: true
 is_extractable:
   description: True if the template is extractable.
   returned: if available
-  type: boolean
+  type: bool
   sample: true
 format:
   description: Format of the template.
   returned: if available
-  type: string
+  type: str
   sample: OVA
 os_type:
   description: Type of the OS.
   returned: if available
-  type: string
+  type: str
   sample: CentOS 6.5 (64-bit)
 password_enabled:
   description: True if the reset password feature is enabled, false otherwise.
   returned: if available
-  type: boolean
+  type: bool
   sample: false
 sshkey_enabled:
   description: true if template is sshkey enabled, false otherwise.
   returned: if available
-  type: boolean
+  type: bool
   sample: false
 cross_zones:
   description: true if the template is managed across all zones, false otherwise.
   returned: if available
-  type: boolean
+  type: bool
   sample: false
 template_type:
   description: Type of the template.
   returned: if available
-  type: string
+  type: str
   sample: USER
 created:
   description: Date of registering.
   returned: success
-  type: string
+  type: str
   sample: 2015-03-29T14:57:06+0200
 template_tag:
   description: Template tag related to this template.
   returned: if available
-  type: string
+  type: str
   sample: special
 hypervisor:
   description: Hypervisor related to this template.
   returned: if available
-  type: string
+  type: str
   sample: VMware
 mode:
   description: Mode of extraction
   returned: on state=extracted
-  type: string
+  type: str
   sample: http_download
 state:
   description: State of the extracted template
   returned: on state=extracted
-  type: string
+  type: str
   sample: DOWNLOAD_URL_CREATED
 url:
   description: Url to which the template is extracted to
   returned: on state=extracted
-  type: string
+  type: str
   sample: "http://1.2.3.4/userdata/eb307f13-4aca-45e8-b157-a414a14e6b04.ova"
 tags:
   description: List of resource tags associated with the template.
@@ -355,22 +355,22 @@ tags:
 zone:
   description: Name of zone the template is registered in.
   returned: success
-  type: string
+  type: str
   sample: zuerich
 domain:
   description: Domain the template is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the template is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the template is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 '''
 

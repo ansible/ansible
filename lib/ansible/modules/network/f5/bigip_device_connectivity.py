@@ -110,17 +110,17 @@ changed:
 config_sync_ip:
   description: The new value of the C(config_sync_ip) setting.
   returned: changed
-  type: string
+  type: str
   sample: 10.1.1.1
 mirror_primary_address:
   description: The new value of the C(mirror_primary_address) setting.
   returned: changed
-  type: string
+  type: str
   sample: 10.1.1.2
 mirror_secondary_address:
   description: The new value of the C(mirror_secondary_address) setting.
   returned: changed
-  type: string
+  type: str
   sample: 10.1.1.3
 unicast_failover:
   description: The new value of the C(unicast_failover) setting.
@@ -134,22 +134,22 @@ failover_multicast:
 multicast_interface:
   description: The new value of the C(multicast_interface) setting.
   returned: changed
-  type: string
+  type: str
   sample: eth0
 multicast_address:
   description: The new value of the C(multicast_address) setting.
   returned: changed
-  type: string
+  type: str
   sample: 224.0.0.245
 multicast_port:
   description: The new value of the C(multicast_port) setting.
   returned: changed
-  type: string
+  type: str
   sample: 1026
 cluster_mirroring:
   description: The current cluster-mirroring setting.
   returned: changed
-  type: string
+  type: str
   sample: between-clusters
 '''
 

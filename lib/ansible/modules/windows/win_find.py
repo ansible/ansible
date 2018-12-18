@@ -215,12 +215,12 @@ files:
         attributes:
             description: attributes of the file at path in raw form
             returned: success, path exists
-            type: string
+            type: str
             sample: "Archive, Hidden"
         checksum:
             description: The checksum of a file based on checksum_algorithm specified
             returned: success, path exists, path is a file, get_checksum == True
-            type: string
+            type: str
             sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
         creationtime:
             description: the create time of the file represented in seconds since epoch
@@ -230,37 +230,37 @@ files:
         extension:
             description: the extension of the file at path
             returned: success, path exists, path is a file
-            type: string
+            type: str
             sample: ".ps1"
         isarchive:
             description: if the path is ready for archiving or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         isdir:
             description: if the path is a directory or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         ishidden:
             description: if the path is hidden or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         islnk:
             description: if the path is a symbolic link or junction or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         isreadonly:
             description: if the path is read only or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         isshared:
             description: if the path is shared or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         lastaccesstime:
             description: the last access time of the file represented in seconds since epoch
@@ -275,22 +275,22 @@ files:
         lnk_source:
             description: the target of the symbolic link, will return null if not a link or the link is broken
             return: success, path exists, path is a symbolic link
-            type: string
+            type: str
             sample: C:\temp
         owner:
             description: the owner of the file
             returned: success, path exists
-            type: string
+            type: str
             sample: BUILTIN\Administrators
         path:
             description: the full absolute path to the file
             returned: success, path exists
-            type: string
+            type: str
             sample: BUILTIN\Administrators
         sharename:
             description: the name of share if folder is shared
             returned: success, path exists, path is a directory and isshared == True
-            type: string
+            type: str
             sample: file-share
         size:
             description: the size in bytes of a file or folder

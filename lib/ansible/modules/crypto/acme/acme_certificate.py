@@ -281,7 +281,7 @@ challenge_data:
     resource:
       description: the challenge resource that must be created for validation
       returned: changed
-      type: string
+      type: str
       sample: .well-known/acme-challenge/evaGxfADs6pSRb2LAv9IZf17Dt3juxGJ-PCt92wr-oA
     resource_value:
       description:
@@ -294,12 +294,12 @@ challenge_data:
            for details. To do this, you might need the C(b64decode) Jinja filter
            to extract the binary blob from this return value."
       returned: changed
-      type: string
+      type: str
       sample: IlirfxKKXA...17Dt3juxGJ-PCt92wr-oA
     record:
       description: the full DNS record's name for the challenge
       returned: changed and challenge is C(dns-01)
-      type: string
+      type: str
       sample: _acme-challenge.example.com
       version_added: "2.5"
 challenge_data_dns:
@@ -319,17 +319,17 @@ authorizations:
 order_uri:
   description: ACME order URI.
   returned: changed
-  type: string
+  type: str
   version_added: "2.5"
 finalization_uri:
   description: ACME finalization URI.
   returned: changed
-  type: string
+  type: str
   version_added: "2.5"
 account_uri:
   description: ACME account URI.
   returned: changed
-  type: string
+  type: str
   version_added: "2.5"
 '''
 

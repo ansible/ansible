@@ -140,7 +140,7 @@ config_id:
   description:
     - The ID assigned by Docker to the config object.
   returned: success and C(state == "present")
-  type: string
+  type: str
   sample: 'hzehrmyjigmcp2gb6nlhmjqcv'
 '''
 

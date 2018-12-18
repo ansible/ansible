@@ -113,12 +113,12 @@ flavor:
         id:
             description: Flavor ID.
             returned: success
-            type: string
+            type: str
             sample: "515256b8-7027-4d73-aa54-4e30a4a4a339"
         name:
             description: Flavor name.
             returned: success
-            type: string
+            type: str
             sample: "tiny"
         disk:
             description: Size of local disk, in GB.

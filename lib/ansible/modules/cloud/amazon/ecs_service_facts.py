@@ -72,7 +72,7 @@ services:
         clusterArn:
             description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
             returned: always
-            type: string
+            type: str
         desiredCount:
             description: The desired number of instantiations of the task definition to keep running on the service.
             returned: always
@@ -85,11 +85,11 @@ services:
                 loadBalancerName:
                     description: the name
                     returned: always
-                    type: string
+                    type: str
                 containerName:
                     description: The name of the container to associate with the load balancer.
                     returned: always
-                    type: string
+                    type: str
                 containerPort:
                     description: The port on the container to associate with the load balancer.
                     returned: always
@@ -105,19 +105,19 @@ services:
         serviceArn:
             description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
             returned: always
-            type: string
+            type: str
         serviceName:
             description: A user-generated string used to identify the service
             returned: always
-            type: string
+            type: str
         status:
             description: The valid values are ACTIVE, DRAINING, or INACTIVE.
             returned: always
-            type: string
+            type: str
         taskDefinition:
             description: The ARN of a task definition to use for tasks in the service.
             returned: always
-            type: string
+            type: str
         deployments:
             description: list of service deployments
             returned: always

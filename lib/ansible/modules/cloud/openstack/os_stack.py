@@ -92,7 +92,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description: Stack ID.
-    type: string
+    type: str
     sample: "97a3f543-8136-4570-920e-fd7605c989d6"
     returned: always
 
@@ -103,27 +103,27 @@ stack:
     contains:
         action:
             description: Action, could be Create or Update.
-            type: string
+            type: str
             sample: "CREATE"
         creation_time:
             description: Time when the action has been made.
-            type: string
+            type: str
             sample: "2016-07-05T17:38:12Z"
         description:
             description: Description of the Stack provided in the heat template.
-            type: string
+            type: str
             sample: "HOT template to create a new instance and networks"
         id:
             description: Stack ID.
-            type: string
+            type: str
             sample: "97a3f543-8136-4570-920e-fd7605c989d6"
         name:
             description: Name of the Stack
-            type: string
+            type: str
             sample: "test-stack"
         identifier:
             description: Identifier of the current Stack action.
-            type: string
+            type: str
             sample: "test-stack/97a3f543-8136-4570-920e-fd7605c989d6"
         links:
             description: Links to the current Stack.

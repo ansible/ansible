@@ -115,17 +115,17 @@ RETURN = '''
 backend_service_created:
     description: Indicator Backend Service was created.
     returned: When a Backend Service is created.
-    type: boolean
+    type: bool
     sample: "True"
 backend_service_deleted:
     description: Indicator Backend Service was deleted.
     returned: When a Backend Service is deleted.
-    type: boolean
+    type: bool
     sample: "True"
 backend_service_name:
     description: Name of the Backend Service.
     returned: Always.
-    type: string
+    type: str
     sample: "my-backend-service"
 backends:
     description: List of backends (comprised of instance_group) that
@@ -136,7 +136,7 @@ backends:
 enable_cdn:
     description: If Cloud CDN is enabled. null if not set.
     returned: When a backend service exists.
-    type: boolean
+    type: bool
     sample: "True"
 healthchecks:
     description: List of healthchecks applied to the Backend Service.
@@ -146,12 +146,12 @@ healthchecks:
 protocol:
     description: Protocol used to communicate with the Backends.
     returned: When a Backend Service exists.
-    type: string
+    type: str
     sample: "HTTP"
 port_name:
     description: Name of Backend Port.
     returned: When a Backend Service exists.
-    type: string
+    type: str
     sample: "myhttpport"
 timeout:
     description: In seconds, how long before a request sent to a backend is

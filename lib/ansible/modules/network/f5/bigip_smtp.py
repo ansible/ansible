@@ -117,7 +117,7 @@ RETURN = r'''
 smtp_server:
   description: The new C(smtp_server) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: mail.mydomain.com
 smtp_server_port:
   description: The new C(smtp_server_port) value of the SMTP configuration.
@@ -127,17 +127,17 @@ smtp_server_port:
 local_host_name:
   description: The new C(local_host_name) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: smtp.mydomain.com
 from_address:
   description: The new C(from_address) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: no-reply@mydomain.com
 encryption:
   description: The new C(encryption) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: tls
 authentication:
   description: Whether the authentication parameters are active or not.

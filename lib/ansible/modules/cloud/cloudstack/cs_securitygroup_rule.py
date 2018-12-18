@@ -121,32 +121,32 @@ RETURN = '''
 id:
   description: UUID of the of the rule.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 security_group:
   description: security group of the rule.
   returned: success
-  type: string
+  type: str
   sample: default
 type:
   description: type of the rule.
   returned: success
-  type: string
+  type: str
   sample: ingress
 cidr:
   description: CIDR of the rule.
   returned: success and cidr is defined
-  type: string
+  type: str
   sample: 0.0.0.0/0
 user_security_group:
   description: user security group of the rule.
   returned: success and user_security_group is defined
-  type: string
+  type: str
   sample: default
 protocol:
   description: protocol of the rule.
   returned: success
-  type: string
+  type: str
   sample: tcp
 start_port:
   description: start port of the rule.
