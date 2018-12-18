@@ -34,6 +34,7 @@ from abc import ABCMeta, abstractmethod
 
 import ansible
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
@@ -45,6 +46,7 @@ from ansible.utils.path import unfrackpath
 from ansible.utils.vars import load_extra_vars, load_options_vars
 from ansible.vars.manager import VariableManager
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
+
 
 display = Display()
 
@@ -612,6 +614,9 @@ class CLI(with_metaclass(ABCMeta, object)):
                 self.options.inventory = [unfrackpath(opt, follow=False) if ',' not in opt else opt for opt in self.options.inventory]
             else:
                 self.options.inventory = C.DEFAULT_HOST_LIST
+
+        self.options.args = self.args
+        context.init_global_context(self.options)
 
     @staticmethod
     def version(prog):

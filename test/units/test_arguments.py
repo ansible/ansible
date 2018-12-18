@@ -27,7 +27,7 @@ MAKE_IMMUTABLE_DATA = ((u'くらとみ', u'くらとみ'),
                         arguments.ImmutableDict({u'café': (1, frozenset(u'ñ'))})),
                        ([set((1, 2)), {u'くらとみ': 3}],
                         (frozenset((1, 2)), arguments.ImmutableDict({u'くらとみ': 3}))),
-                      )
+                       )
 
 
 @pytest.mark.parametrize('data, expected', MAKE_IMMUTABLE_DATA)
@@ -69,8 +69,8 @@ def test_cliargs_argparse():
 def test_cliargs_optparse():
     parser = optparse.OptionParser(description='Process some integers.')
     parser.add_option('--sum', dest='accumulate', action='store_const',
-                        const=sum, default=max,
-                        help='sum the integers (default: find the max)')
+                      const=sum, default=max,
+                      help='sum the integers (default: find the max)')
     opts, args = parser.parse_args([u'--sum', u'1', u'2'])
     opts.integers = args
 
