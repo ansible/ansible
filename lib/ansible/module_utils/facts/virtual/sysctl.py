@@ -30,7 +30,7 @@ class VirtualSysctlDetectionMixin(object):
         if self.sysctl_path:
             rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
             if rc == 0:
-                if re.match('(KVM|Bochs|SmartDC).*', out):
+                if re.match('(KVM|kvm|Bochs|SmartDC).*', out):
                     virtual_product_facts['virtualization_type'] = 'kvm'
                     virtual_product_facts['virtualization_role'] = 'guest'
                 elif re.match('.*VMware.*', out):

@@ -1,0 +1,2 @@
+bugfixes:
+  - Detect FreeBSD KVM guests in facts (https://github.com/ansible/ansible/issues/49158)
