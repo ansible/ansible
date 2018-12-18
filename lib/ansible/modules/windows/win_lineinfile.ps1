@@ -183,7 +183,7 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 		$result.msg = "line added";
 	}
 	ElseIf ($insertafter -eq "EOF" -or $index[1] -eq -1) {
-		$lines.Add($line);
+		$lines.Add($line) > $null;
 		$result.changed = $true;
 		$result.msg = "line added";
 	}
@@ -265,11 +265,11 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 			$match_found = $line -ceq $cur_line;
 		}
 		If ($match_found) {
-			$found.Add($cur_line);
+			$found.Add($cur_line) > $null;
 			$result.changed = $true;
 		}
 		Else {
-			$left.Add($cur_line);
+			$left.Add($cur_line) > $null;
 		}
 	}
 
@@ -351,7 +351,7 @@ ElseIf (Test-Path -Path $path) {
 			$max_preamble_len = $plen;
 		}
 		If ($plen -gt 0) {
-			$sortedlist.Add(-($plen * 1000000 + $encoding.CodePage), $encoding);
+			$sortedlist.Add(-($plen * 1000000 + $encoding.CodePage), $encoding) > $null;
 		}
 	}
 
