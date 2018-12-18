@@ -1,3 +1,4 @@
+---
 - name: Incluse OS-specific variables
   include_vars: '{{ ansible_os_family }}.yml'
   when: not ansible_os_family == "Darwin"
