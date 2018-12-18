@@ -27,8 +27,9 @@ options:
     type: str
   state:
     description:
-      - State the action to perform. Use 'update' to modify the admin-service.
+      - State the action to perform. Use C(update) to modify the admin-service.
     required: True
+    type: str
     choices: ['update']
   pn_web:
     description:
@@ -130,8 +131,7 @@ changed:
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, booleanArgs
-from ansible.module_utils.network.netvisor.pn_nvos import run_cli
+from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, booleanArgs, run_cli
 
 
 def main():
