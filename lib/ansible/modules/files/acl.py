@@ -22,8 +22,9 @@ options:
   path:
     description:
     - The full path of the file or object.
-    aliases: [ name ]
+    type: path
     required: yes
+    aliases: [ name ]
   state:
     description:
     - Define whether the ACL should be present or not.
@@ -84,6 +85,12 @@ options:
     choices: [ default, mask, no_mask ]
     default: default
     version_added: '2.7'
+  use_nfsv4_acls:
+    description:
+    - Use NFSv4 ACLs instead of POSIX ACLs.
+    type: bool
+    default: no
+    version_added: '2.8'
 author:
 - Brian Coca (@bcoca)
 - Jérémie Astori (@astorije)
@@ -259,31 +266,28 @@ def run_acl(module, cmd, check_rc=True):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(required=True, aliases=['name'], type='path'),
-            entry=dict(required=False, type='str'),
-            entity=dict(required=False, type='str', default=''),
+            path=dict(type='path', required=True, aliases=['name']),
+            entry=dict(type='str'),
+            entity=dict(type='str', default=''),
             etype=dict(
-                required=False,
-                choices=['other', 'user', 'group', 'mask'],
-                type='str'
+                type='str',
+                choices=['group', 'mask', 'other', 'user'],
             ),
-            permissions=dict(required=False, type='str'),
+            permissions=dict(type='str'),
             state=dict(
-                required=False,
+                type='str',
                 default='query',
-                choices=['query', 'present', 'absent'],
-                type='str'
+                choices=['absent', 'present', 'query'],
             ),
-            follow=dict(required=False, type='bool', default=True),
-            default=dict(required=False, type='bool', default=False),
-            recursive=dict(required=False, type='bool', default=False),
+            follow=dict(type='bool', default=True),
+            default=dict(type='bool', default=False),
+            recursive=dict(type='bool', default=False),
             recalculate_mask=dict(
-                required=False,
+                type='str',
                 default='default',
                 choices=['default', 'mask', 'no_mask'],
-                type='str'
             ),
-            use_nfsv4_acls=dict(required=False, type='bool', default=False)
+            use_nfsv4_acls=dict(type='bool', default=False)
         ),
         supports_check_mode=True,
     )

@@ -33,57 +33,62 @@ options:
         target server to existing archive file to unpack.
       - If C(remote_src=yes) and C(src) contains C(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
         simple cases, for full download support use the M(get_url) module.
+    type: path
     required: true
   dest:
     description:
       - Remote absolute path where the archive should be unpacked.
+    type: path
     required: true
   copy:
     description:
       - If true, the file is copied from local 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine.
       - This option has been deprecated in favor of C(remote_src).
       - This option is mutually exclusive with C(remote_src).
-    type: 'bool'
-    default: 'yes'
+    type: bool
+    default: yes
   creates:
     description:
       - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
+    type: path
     version_added: "1.6"
   list_files:
     description:
       - If set to True, return the list of files that are contained in the tarball.
-    type: 'bool'
-    default: 'no'
+    type: bool
+    default: no
     version_added: "2.0"
   exclude:
     description:
       - List the directory and file entries that you would like to exclude from the unarchive action.
+    type: list
     version_added: "2.1"
   keep_newer:
     description:
       - Do not replace existing files that are newer than files from the archive.
-    type: 'bool'
-    default: 'no'
+    type: bool
+    default: no
     version_added: "2.1"
   extra_opts:
     description:
       - Specify additional options by passing in an array.
+    type: list
     default: ""
     version_added: "2.1"
   remote_src:
     description:
       - Set to C(yes) to indicate the archived file is already on the remote system and not local to the Ansible controller.
       - This option is mutually exclusive with C(copy).
-    type: 'bool'
-    default: 'no'
+    type: bool
+    default: no
     version_added: "2.2"
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
       - This should only set to C(no) used on personally controlled sites using self-signed certificate.
       - Prior to 2.2 the code worked as if this was set to C(yes).
-    type: 'bool'
-    default: 'yes'
+    type: bool
+    default: yes
     version_added: "2.2"
 extends_documentation_fragment:
 - decrypt
@@ -102,6 +107,7 @@ notes:
       are ignored for purposes of deciding if the archive should be unpacked or not.
     - For Windows targets, use the M(win_unzip) module instead.
 seealso:
+- module: archive
 - module: win_unzip
 author: Michael DeHaan
 '''
