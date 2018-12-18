@@ -90,7 +90,7 @@ Authors
 =======
 
 Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
-(michael.dehaan/gmail/com) and has contributions from over 3700 users
+(michael.dehaan/gmail/com) and has contributions from over 4000 users
 (and growing). Thanks everyone!
 
 `Ansible <https://www.ansible.com>`_ is sponsored by `Red Hat, Inc.
