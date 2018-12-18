@@ -205,7 +205,6 @@ def main():
         changed = True
     else:
         module.fail_json(msg='Storage Group Already Exists')
-
     facts = dellemc.get_storage_group(storage_group_name=module.params['sgname'])
     result = {'state': 'info', 'changed': changed}
     module.exit_json(ansible_facts={'storagegroup_detail': facts}, **result)
