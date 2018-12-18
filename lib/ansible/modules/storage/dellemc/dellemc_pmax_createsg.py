@@ -139,6 +139,32 @@ EXAMPLES = '''
         volumeIdentifier: 'REDO'
 '''
 RETURN = '''
+dellemc_pmax_createsg:
+    description: Information about storage group created
+    returned: success 
+    type: dict
+    sample: '{
+        "storagegroup_detail": {
+            "VPSaved": "100.0%",
+            "base_slo_name": "Diamond",
+            "cap_gb": 1.0,
+            "compression": true,
+            "device_emulation": "FBA",
+            "num_of_child_sgs": 0,
+            "num_of_masking_views": 0,
+            "num_of_parent_sgs": 0,
+            "num_of_snapshots": 0,
+            "num_of_vols": 1,
+            "service_level": "Diamond",
+            "slo": "Diamond",
+            "slo_compliance": "STABLE",
+            "srp": "SRP_1",
+            "storageGroupId": "Ansible_SG",
+            "type": "Standalone",
+            "unprotected": true,
+            "vp_saved_percent": 100.0
+            }
+        }'
 '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.dellemc import dellemc_argument_spec, pmaxapi
@@ -179,7 +205,10 @@ def main():
         changed = True
     else:
         module.fail_json(msg='Storage Group Already Exists')
-    module.exit_json(changed=changed)
+
+    facts = dellemc.get_storage_group(storage_group_name=module.params['sgname'])
+    result = {'state': 'info', 'changed': changed}
+    module.exit_json(ansible_facts={'storagegroup_detail': facts}, **result)
 
 
 if __name__ == '__main__':
