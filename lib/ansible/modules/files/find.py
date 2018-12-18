@@ -31,7 +31,7 @@ options:
               You can choose seconds, minutes, hours, days, or weeks by specifying the
               first letter of any of those words (e.g., "1w").
     patterns:
-        default: '*'
+        default: []
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
@@ -39,6 +39,7 @@ options:
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
+            - Defaults to '*', or '.*' when use_regex enabled
         type: list
         aliases: ['pattern']
     excludes:
@@ -350,7 +351,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             paths=dict(type='list', required=True, aliases=['name', 'path']),
-            patterns=dict(type='list', default=['*'], aliases=['pattern']),
+            patterns=dict(type='list', default=[], aliases=['pattern']),
             excludes=dict(type='list', aliases=['exclude']),
             contains=dict(type='str'),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
@@ -368,6 +369,16 @@ def main():
     )
 
     params = module.params
+
+    # Set the default match pattern to either a match-all glob or
+    # regex depending on use_regex being set.  This makes sure if you
+    # set excludes: without a pattern pfilter gets something it can
+    # handle.
+    if not params['patterns']:
+        if params['use_regex']:
+            params['patterns'] = ['.*']
+        else:
+            params['patterns'] = ['*']
 
     filelist = []
 
