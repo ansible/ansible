@@ -96,7 +96,7 @@ class InvalidOptsParser(SortedOptParser):
 class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
 
-    VALID_ACTIONS = []
+    VALID_ACTIONS = frozenset()
 
     _ITALIC = re.compile(r"I\(([^)]+)\)")
     _BOLD = re.compile(r"B\(([^)]+)\)")

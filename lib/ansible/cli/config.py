@@ -25,7 +25,7 @@ display = Display()
 class ConfigCLI(CLI):
     """ Config command line class """
 
-    VALID_ACTIONS = ("view", "dump", "list")  # TODO: edit, update, search
+    VALID_ACTIONS = frozenset(("view", "dump", "list"))  # TODO: edit, update, search
 
     def __init__(self, args, callback=None):
 
@@ -36,7 +36,7 @@ class ConfigCLI(CLI):
     def parse(self):
 
         self.parser = CLI.base_parser(
-            usage="usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(self.VALID_ACTIONS),
+            usage="usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(sorted(self.VALID_ACTIONS)),
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
             desc="View, edit, and manage ansible configuration.",
         )
