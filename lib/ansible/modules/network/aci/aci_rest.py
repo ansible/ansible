@@ -62,7 +62,7 @@ options:
     - This may be convenient to template simple requests.
     - For anything complex use the C(template) lookup plugin (see examples)
       or the M(template) module with parameter C(src).
-    type: str
+    type: raw
   src:
     description:
     - Name of the absolute path of the filname that includes the body
