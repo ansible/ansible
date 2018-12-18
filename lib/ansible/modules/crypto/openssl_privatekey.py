@@ -168,7 +168,7 @@ type:
 curve:
     description: Elliptic curve used to generate the TLS/SSL private key
     returned: changed or success, and I(type) is C(ECC)
-    type: string
+    type: str
     sample: secp256k1
 filename:
     description: Path to the generated TLS/SSL private key file

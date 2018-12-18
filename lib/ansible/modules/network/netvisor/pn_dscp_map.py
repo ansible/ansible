@@ -63,7 +63,7 @@ RETURN = """
 command:
   description: the CLI command run on the target node.
   returned: always
-  type: string
+  type: str
 stdout:
   description: set of responses from the dscp-map command.
   returned: always
