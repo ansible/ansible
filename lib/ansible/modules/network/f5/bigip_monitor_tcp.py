@@ -125,12 +125,12 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: tcp
 send:
   description: The new send string for this monitor.
   returned: changed
-  type: string
+  type: str
   sample: tcp string to send
 description:
   description: The description of the monitor.
@@ -140,17 +140,17 @@ description:
 receive:
   description: The new receive string for this monitor.
   returned: changed
-  type: string
+  type: str
   sample: tcp string to receive
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 port:
   description: The new port of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: admin@root.local
 interval:
   description: The new interval in which to run the monitor check.

@@ -100,7 +100,7 @@ RETURN = '''
 id:
     description: Unique identifier of a Block Storage volume returned during creation.
     returned: changed
-    type: string
+    type: str
     sample: "69b25d9a-494c-12e6-a5af-001f53126b44"
 '''
 

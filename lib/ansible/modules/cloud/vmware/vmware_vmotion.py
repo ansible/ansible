@@ -97,7 +97,7 @@ RETURN = '''
 running_host:
     description: List the host the virtual machine is registered to
     returned: changed or success
-    type: string
+    type: str
     sample: 'host1.example.com'
 '''
 

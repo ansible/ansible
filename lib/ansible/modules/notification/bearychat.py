@@ -86,7 +86,7 @@ RETURN = """
 msg:
     description: execution result
     returned: success
-    type: string
+    type: str
     sample: "OK"
 """
 

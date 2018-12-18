@@ -105,7 +105,7 @@ root:
     description:
         - "The root certificate in PEM format."
     returned: success
-    type: string
+    type: str
 chain:
     description:
         - "The chain added to the given input chain. Includes the root certificate."

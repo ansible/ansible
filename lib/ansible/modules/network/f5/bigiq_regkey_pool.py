@@ -66,7 +66,7 @@ RETURN = r'''
 description:
   description: New description of the regkey pool.
   returned: changed
-  type: string
+  type: str
   sample: My description
 '''
 

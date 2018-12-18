@@ -110,7 +110,7 @@ RETURN = r'''
 description:
   description: The new description of the address list.
   returned: changed
-  type: string
+  type: str
   sample: My address list
 addresses:
   description: The new list of addresses applied to the address list.
@@ -140,12 +140,12 @@ geo_locations:
     country:
       description: Country of the geo location.
       returned: changed
-      type: string
+      type: str
       sample: US
     region:
       description: Region of the geo location.
       returned: changed
-      type: string
+      type: str
       sample: California
 '''
 

@@ -81,17 +81,17 @@ RETURN = r'''
 name:
   description: The key in the system database that was specified
   returned: changed and success
-  type: string
+  type: str
   sample: setup.run
 default_value:
   description: The default value of the key
   returned: changed and success
-  type: string
+  type: str
   sample: true
 value:
   description: The value that you set the key to
   returned: changed and success
-  type: string
+  type: str
   sample: false
 '''
 

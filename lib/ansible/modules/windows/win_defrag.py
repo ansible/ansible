@@ -68,7 +68,7 @@ RETURN = r'''
 cmd:
     description: The complete command line used by the module
     returned: always
-    type: string
+    type: str
     sample: defrag.exe /C /V
 rc:
     description: The return code for the command
@@ -78,17 +78,17 @@ rc:
 stdout:
     description: The standard output from the command
     returned: always
-    type: string
+    type: str
     sample: Success.
 stderr:
     description: The error output from the command
     returned: always
-    type: string
+    type: str
     sample:
 msg:
     description: Possible error message on failure
     returned: failed
-    type: string
+    type: str
     sample: Command 'defrag.exe' not found in $env:PATH.
 changed:
     description: Whether or not any changes were made.

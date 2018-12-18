@@ -67,12 +67,12 @@ synchronization:
 synchronization_group_name:
   description: The synchronization group name.
   returned: changed
-  type: string
+  type: str
   sample: my-group
 synchronize_zone_files:
   description: Whether or not the system will sync zone files.
   returned: changed
-  type: string
+  type: str
   sample: my-group
 '''
 

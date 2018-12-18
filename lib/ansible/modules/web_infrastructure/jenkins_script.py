@@ -98,7 +98,7 @@ RETURN = '''
 output:
     description: Result of script
     returned: success
-    type: string
+    type: str
     sample: 'Result: true'
 '''
 

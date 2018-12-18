@@ -516,7 +516,7 @@ EXAMPLES = r'''
       - id: remoteIP
         category: Backup
         label: Backup server IP
-        type: string
+        type: str
         value: 10.10.10.1
       - id: old_property
         operation: remove

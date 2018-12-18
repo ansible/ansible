@@ -118,7 +118,7 @@ RETURN = r'''
 description:
   description: The new description of the resource.
   returned: changed
-  type: string
+  type: str
   sample: My custom profile
 buffer_size:
   description: The new buffer size of the profile.

@@ -125,7 +125,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: json facts for newly created snapshot group.
 """
 HEADERS = {

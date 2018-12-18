@@ -231,14 +231,14 @@ change_count:
     version_added: 2.4
 new_rule:
     description: The changes to the rule.  This was available in Ansible version 2.4 and 2.5.  It was removed in 2.6.
-    type: string
+    type: str
     sample: None      None None sha512 shadow try_first_pass use_authtok
     returned: success
     version_added: 2.4
 updated_rule_(n):
     description: The rule(s) that was/were changed.  This is only available in
       Ansible version 2.4 and was removed in 2.5.
-    type: string
+    type: str
     sample:
     - password      sufficient  pam_unix.so sha512 shadow try_first_pass
       use_authtok
@@ -250,7 +250,7 @@ action:
       insert_before_rule, insert_after_rule, args_present, args_absent,
       absent. This was available in Ansible version 2.4 and removed in 2.8"
     returned: always
-    type: string
+    type: str
     sample: "update_rule"
     version_added: 2.4
 dest:
@@ -258,13 +258,13 @@ dest:
     - "Path to pam.d service that was changed.  This is only available in
       Ansible version 2.3 and was removed in 2.4."
     returned: success
-    type: string
+    type: str
     sample: "/etc/pam.d/system-auth"
 backupdest:
     description:
     - "The file name of the backup file, if created."
     returned: success
-    type: string
+    type: str
     version_added: 2.6
 ...
 '''

@@ -251,17 +251,17 @@ RETURN = '''
 overwrite:
     description: Whether to the module was allowed to overwrite the record
     returned: success
-    type: boolean
+    type: bool
     sample: True
 record:
     description: Fully-qualified domain name of the resource record
     returned: success
-    type: string
+    type: str
     sample: mail.example.com.
 state:
     description: Whether the record is present or absent
     returned: success
-    type: string
+    type: str
     sample: present
 ttl:
     description: The time-to-live of the resource record
@@ -271,7 +271,7 @@ ttl:
 type:
     description: The type of the resource record
     returned: success
-    type: string
+    type: str
     sample: A
 record_data:
     description: The resource record values
@@ -281,12 +281,12 @@ record_data:
 zone:
     description: The dns name of the zone
     returned: success
-    type: string
+    type: str
     sample: example.com.
 zone_id:
     description: The Google Cloud DNS ID of the zone
     returned: success
-    type: string
+    type: str
     sample: example-com
 '''
 

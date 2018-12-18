@@ -82,47 +82,47 @@ RETURN = '''
 id:
   description: UUID of the ip_address.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 ip_address:
   description: Public IP address.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 vm_name:
   description: Name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_display_name:
   description: Display name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_guest_ip:
   description: IP of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: 10.101.65.152
 zone:
   description: Name of zone the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 project:
   description: Name of project the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 account:
   description: Account the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 domain:
   description: Domain the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 '''
 

@@ -224,7 +224,7 @@ headers:
 output_text:
   description: The raw text output
   returned: always
-  type: string
+  type: str
   sample: "{\\n  \\\"id\\\": 12345,\\n  \\\"key\\\": {\\n    \\\"kty\\\": \\\"RSA\\\",\\n ..."
 output_json:
   description: The output parsed as JSON

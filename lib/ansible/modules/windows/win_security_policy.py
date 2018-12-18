@@ -91,33 +91,33 @@ stdout:
   description: The output of the STDOUT buffer after a failure when running
     SecEdit.exe.
   returned: failure with secedit calls
-  type: string
+  type: str
   sample: check log for error details
 stderr:
   description: The output of the STDERR buffer after a failure when running
     SecEdit.exe.
   returned: failure with secedit calls
-  type: string
+  type: str
   sample: failed to import security policy
 import_log:
   description: The log of the SecEdit.exe /configure job that configured the
     local policies. This is used for debugging purposes on failures.
   returned: secedit.exe /import run and change occurred
-  type: string
+  type: str
   sample: Completed 6 percent (0/15) \tProcess Privilege Rights area.
 key:
   description: The key in the section passed to the module to modify.
   returned: success
-  type: string
+  type: str
   sample: NewGuestName
 section:
   description: The section passed to the module to modify.
   returned: success
-  type: string
+  type: str
   sample: System Access
 value:
   description: The value passed to the module to modify to.
   returned: success
-  type: string
+  type: str
   sample: Guest Account
 '''
