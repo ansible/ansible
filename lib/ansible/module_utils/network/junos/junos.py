@@ -174,6 +174,7 @@ def commit_configuration(module, confirm=False, check=False, comment=None, confi
             else:
                 reply = conn.commit(comment=comment, confirmed=confirm, at_time=at_time, synchronize=synchronize)
     except ConnectionError as exc:
+        discard_changes(module)
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     return reply
 
