@@ -285,7 +285,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                 type='int'
             ),
             shard_count=dict(
-                type='ints'
+                type='int'
             ),
             static_ip=dict(
                 type='str'

@@ -1,7 +1,8 @@
 #!/usr/bin/python
-#
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-# Copyright (c) 2016 Dell Inc.
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Peter Sprygada <psprygada@ansible.com>
+# Copyright: (c) 2016, Dell Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -34,6 +35,7 @@ options:
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of retries has expired.
+    type: list
     required: true
   wait_for:
     description:
@@ -42,6 +44,7 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of I(retries), the task fails.
         See examples.
+    type: list
     version_added: "2.2"
   match:
     description:
@@ -51,8 +54,9 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
+    type: str
     default: all
-    choices: ['any', 'all']
+    choices: [ all, any ]
     version_added: "2.5"
   retries:
     description:
@@ -60,6 +64,7 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
+    type: int
     default: 10
   interval:
     description:
@@ -67,6 +72,7 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
+    type: int
     default: 1
 """
 

@@ -1180,16 +1180,16 @@ def url_argument_spec():
     that will be requesting content via urllib/urllib2
     '''
     return dict(
-        url=dict(),
-        force=dict(default='no', aliases=['thirsty'], type='bool'),
-        http_agent=dict(default='ansible-httpget'),
-        use_proxy=dict(default='yes', type='bool'),
-        validate_certs=dict(default='yes', type='bool'),
-        url_username=dict(required=False),
-        url_password=dict(required=False, no_log=True),
-        force_basic_auth=dict(required=False, type='bool', default='no'),
-        client_cert=dict(required=False, type='path', default=None),
-        client_key=dict(required=False, type='path', default=None),
+        url=dict(type='str'),
+        force=dict(type='bool', default=False, aliases=['thirsty']),
+        http_agent=dict(type='str', default='ansible-httpget'),
+        use_proxy=dict(type='bool', default=True),
+        validate_certs=dict(type='bool', default=True),
+        url_username=dict(type='str'),
+        url_password=dict(type='str', no_log=True),
+        force_basic_auth=dict(type='bool', default=False),
+        client_cert=dict(type='path'),
+        client_key=dict(type='path'),
     )
 
 

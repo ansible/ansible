@@ -36,8 +36,8 @@ options:
     description:
         - Enable, disable, or reset the SNMP agent.
     type: str
-    choices: [ enabled, disabled, reset ]
-    default: 'disabled'
+    choices: [ disabled, enabled, reset ]
+    default: disabled
   community:
     description:
         - List of SNMP community strings.
@@ -54,10 +54,10 @@ options:
     default: []
   trap_filter:
     description:
-        - Comma separated list of trap oids for traps not to be sent by agent.
-        - E.g. [ 1.3.6.1.4.1.6876.4.1.1.0, 1.3.6.1.4.1.6876.4.1.1.1 ]
+        - A list of trap oids for traps not to be sent by agent,
+          e.g. [ 1.3.6.1.4.1.6876.4.1.1.0, 1.3.6.1.4.1.6876.4.1.1.1 ]
         - Use value C(reset) to clear settings.
-    type: str
+    type: list
   send_trap:
     description:
         - Send a test trap to validate the configuration.
@@ -69,13 +69,13 @@ options:
         - The embedded SNMP agent receives hardware events either from IPMI sensors C(sensors) or CIM indications C(indications).
     type: str
     choices: [ indications, sensors ]
-    default: 'indications'
+    default: indications
   log_level:
     description:
         - Syslog logging level.
     type: str
     choices: [ debug, info, warning, error ]
-    default: 'info'
+    default: info
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -468,13 +468,13 @@ def main():
     """Main"""
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        state=dict(default='disabled', choices=['enabled', 'disabled', 'reset']),
+        state=dict(type='str', default='disabled', choices=['enabled', 'disabled', 'reset']),
         snmp_port=dict(type='int', default=161),
         community=dict(type='list', default=[]),
-        trap_targets=dict(type='list', default=list(), required=False),
-        trap_filter=dict(type='list', required=False),
-        hw_source=dict(default='indications', choices=['indications', 'sensors']),
-        log_level=dict(default='info', choices=['debug', 'info', 'warning', 'error']),
+        trap_targets=dict(type='list', default=list()),
+        trap_filter=dict(type='list'),
+        hw_source=dict(type='str', default='indications', choices=['indications', 'sensors']),
+        log_level=dict(type='str', default='info', choices=['debug', 'info', 'warning', 'error']),
         send_trap=dict(type='bool', default=False),
     )
 

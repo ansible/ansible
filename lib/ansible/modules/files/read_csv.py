@@ -24,7 +24,7 @@ options:
   path:
     description:
     - The CSV filename to read data from.
-    type: str
+    type: path
     required: yes
     aliases: [ filename ]
   key:
