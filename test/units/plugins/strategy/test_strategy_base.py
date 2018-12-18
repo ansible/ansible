@@ -66,7 +66,6 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm = MagicMock(TaskQueueManager)
         mock_tqm._final_q = mock_queue
-        mock_tqm._options = MagicMock()
         strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base.cleanup()
 
@@ -106,7 +105,6 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm._failed_hosts = dict()
         mock_tqm._unreachable_hosts = dict()
-        mock_tqm._options = MagicMock()
         strategy_base = StrategyBase(tqm=mock_tqm)
 
         mock_host = MagicMock()
@@ -187,15 +185,13 @@ class TestStrategyBase(unittest.TestCase):
         mock_host.has_hostkey = True
         mock_inventory = MagicMock()
         mock_inventory.get.return_value = mock_host
-        mock_options = MagicMock()
-        mock_options.module_path = None
 
         tqm = TaskQueueManager(
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
-            options=mock_options,
             passwords=None,
+            forks=5,
         )
         tqm._initialize_processes(3)
         tqm.hostvars = dict()
@@ -520,15 +516,13 @@ class TestStrategyBase(unittest.TestCase):
         mock_iterator._play = mock_play
 
         fake_loader = DictDataLoader()
-        mock_options = MagicMock()
-        mock_options.module_path = None
 
         tqm = TaskQueueManager(
             inventory=mock_inventory,
             variable_manager=mock_var_mgr,
             loader=fake_loader,
-            options=mock_options,
             passwords=None,
+            forks=5,
         )
         tqm._initialize_processes(3)
         tqm._initialize_notified_handlers(mock_play)
