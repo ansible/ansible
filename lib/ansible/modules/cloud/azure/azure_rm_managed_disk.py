@@ -263,12 +263,13 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         # unmount from the old virtual machine and mount to the new virtual machine
         vm_name = parse_resource_id(disk_instance.get('managed_by', '')).get('name') if disk_instance else None
         if self.managed_by != vm_name:
-            changed = True
             if not self.check_mode:
                 if vm_name:
-                    self.detach(vm_name, result)
+                    if self.detach(vm_name, result):
+                        changed = True
                 if self.managed_by:
-                    self.attach(self.managed_by, result)
+                    if self.attach(self.managed_by, result):
+                        changed = True
                 result = self.get_managed_disk()
 
         if self.state == 'absent' and disk_instance:
@@ -293,14 +294,21 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
         vm.storage_profile.data_disks.append(data_disk)
         self._update_vm(vm_name, vm)
+        return True
 
     def detach(self, vm_name, disk):
         vm = self._get_vm(vm_name)
+
+        # don't detach if it's an os disk
+        if vm.storage_profile.os_disk.name.lower() == disk.get('name').lower():
+            return False
+
         leftovers = [d for d in vm.storage_profile.data_disks if d.name.lower() != disk.get('name').lower()]
         if len(vm.storage_profile.data_disks) == len(leftovers):
             self.fail("No disk with the name '{0}' was found".format(disk.get('name')))
         vm.storage_profile.data_disks = leftovers
         self._update_vm(vm_name, vm)
+        return True
 
     def _update_vm(self, name, params):
         try:
