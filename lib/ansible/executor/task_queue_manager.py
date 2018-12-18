@@ -24,6 +24,7 @@ import os
 import tempfile
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
@@ -65,25 +66,25 @@ class TaskQueueManager:
     RUN_FAILED_BREAK_PLAY = 8
     RUN_UNKNOWN_ERROR = 255
 
-    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
+    def __init__(self, inventory, variable_manager, loader, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False, forks=None):
 
         self._inventory = inventory
         self._variable_manager = variable_manager
         self._loader = loader
-        self._options = options
         self._stats = AggregateStats()
         self.passwords = passwords
         self._stdout_callback = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
         self._run_tree = run_tree
+        self._forks = forks or 5
 
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done = False
 
         # make sure any module paths (if specified) are added to the module_loader
-        if options.module_path:
-            for path in options.module_path:
+        if context.CLIARGS.get('module_path', False):
+            for path in context.CLIARGS['module_path']:
                 if path:
                     module_loader.add_directory(path)
 
@@ -214,7 +215,7 @@ class TaskQueueManager:
             loader=self._loader,
         )
 
-        play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
+        play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
         if (self._stdout_callback and
                 hasattr(self._stdout_callback, 'set_play_context')):
             self._stdout_callback.set_play_context(play_context)
@@ -239,7 +240,7 @@ class TaskQueueManager:
         )
 
         # adjust to # of workers to configured forks or size of batch, whatever is lower
-        self._initialize_processes(min(self._options.forks, iterator.batch_size))
+        self._initialize_processes(min(self._forks, iterator.batch_size))
 
         # load the specified strategy (or the default linear one)
         strategy = strategy_loader.get(new_play.strategy, self)
@@ -259,7 +260,7 @@ class TaskQueueManager:
         # during initialization, the PlayContext will clear the start_at_task
         # field to signal that a matching task was found, so check that here
         # and remember it so we don't try to skip tasks on future plays
-        if getattr(self._options, 'start_at_task', None) is not None and play_context.start_at_task is None:
+        if context.CLIARGS.get('start_at_task') is not None and play_context.start_at_task is None:
             self._start_at_done = True
 
         # and run the play using the strategy and cleanup on way out
