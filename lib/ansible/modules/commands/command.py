@@ -37,7 +37,9 @@ options:
     required: yes
   argv:
     description:
-      - Allows the user to provide the command as a list vs. a string.  Only the string or the list form can be
+      - Passes the command as a list rather than a string.
+      - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
+      - Only the string or the list form can be
         provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
@@ -108,8 +110,9 @@ EXAMPLES = r'''
 - name: Use 'argv' to send a command as a list - leave 'command' empty
   command:
     argv:
-      - /usr/bin/backup_database.sh
-      - /usr/bin/optimize_database.sh
+      - /usr/bin/make_database.sh
+      - Username with whitespace
+      - dbname with whitespace
 
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
