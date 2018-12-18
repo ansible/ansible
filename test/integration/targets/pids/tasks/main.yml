@@ -36,7 +36,7 @@
   poll: 0
 
 - name: "Reading pid from the file"
-  command: cat {{ playbook_dir}}/newpid.txt
+  command: cat {{ playbook_dir}}/targets/pids/tasks/newpid.txt
   register: newpid
 
 
