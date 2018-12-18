@@ -92,6 +92,14 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
 
+  - name: Get Manager NIC inventory information
+    redfish_facts:
+      category: Manager
+      command: GetManagerNicInventory
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
   - name: Get all information available in the Manager category
     redfish_facts:
       category: Manager
@@ -127,7 +135,7 @@ CATEGORY_COMMANDS_ALL = {
     "Chassis": ["GetFanInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
-    "Manager": ["GetManagerAttributes", "GetLogs"],
+    "Manager": ["GetManagerAttributes", "GetManagerNicInventory", "GetLogs"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -208,7 +216,7 @@ def main():
                 elif command == "GetCpuInventory":
                     result["cpu"] = rf_utils.get_cpu_inventory()
                 elif command == "GetNicInventory":
-                    result["nic"] = rf_utils.get_nic_inventory()
+                    result["nic"] = rf_utils.get_nic_inventory(category)
                 elif command == "GetStorageControllerInventory":
                     result["storage_controller"] = rf_utils.get_storage_controller_inventory()
                 elif command == "GetDiskInventory":
@@ -257,6 +265,8 @@ def main():
             for command in command_list:
                 if command == "GetManagerAttributes":
                     result["manager_attributes"] = rf_utils.get_manager_attributes()
+                elif command == "GetManagerNicInventory":
+                    result["manager_nics"] = rf_utils.get_nic_inventory(resource_type=category)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 
