@@ -237,11 +237,11 @@ class LinuxNetwork(Network):
                             scope = words[3]
                         if 'ipv6' not in interfaces[device]:
                             interfaces[device]['ipv6'] = []
-                            interfaces[device]['ipv6'].append({
-                                'address': address,
-                                'prefix': prefix,
-                                'scope': scope
-                            })
+                        interfaces[device]['ipv6'].append({
+                            'address': address,
+                            'prefix': prefix,
+                            'scope': scope
+                        })
                         # If this is the default address, update default_ipv6
                         if 'address' in default_ipv6 and default_ipv6['address'] == address:
                             default_ipv6['prefix'] = prefix
