@@ -1,3 +1,4 @@
+---
 - name: Validate privatekey1 (test - RSA key with size 4096 bits)
   shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey1.pem  | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey1
@@ -18,14 +19,14 @@
       - privatekey2.stdout == '2048'
 
 
-- name: Validate privatekey3 (test - DSA key with size 4096 bits)
+- name: Validate privatekey3 (test - DSA key with size 3072 bits)
   shell: "openssl dsa -noout -text -in {{ output_dir }}/privatekey3.pem  | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey3
 
-- name: Validate privatekey3 (assert - DSA key with size 4096 bits)
+- name: Validate privatekey3 (assert - DSA key with size 3072 bits)
   assert:
     that:
-      - privatekey3.stdout == '4096'
+      - privatekey3.stdout == '3072'
 
 
 - name: Validate privatekey4 (test - Ensure key has been removed)
@@ -68,3 +69,38 @@
     that:
       - privatekey6.stdout == '4096'
   when: openssl_version.stdout is version('0.9.8zh', '>=')
+
+- name: Validate ECC generation (dump with OpenSSL)
+  shell: "openssl ec -in {{ output_dir }}/privatekey-{{ item.item.curve }}.pem -noout -text | grep 'ASN1 OID: ' | sed 's/ASN1 OID: \\([^ ]*\\)/\\1/'"
+  loop: "{{ privatekey_ecc_generate.results }}"
+  register: privatekey_ecc_dump
+  when: openssl_version.stdout is version('0.9.8zh', '>=') and 'skip_reason' not in item
+  loop_control:
+    label: "{{ item.item.curve }}"
+
+- name: Validate ECC generation
+  assert:
+    that:
+    - item is changed
+  loop: "{{ privatekey_ecc_generate.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.curve }}"
+
+- name: Validate ECC generation (curve type)
+  assert:
+    that:
+    - "'skip_reason' in item or item.item.item.openssl_name == item.stdout"
+  loop: "{{ privatekey_ecc_dump.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.item }} - {{ item.stdout if 'stdout' in item else '<unsupported>' }}"
+
+- name: Validate ECC generation idempotency
+  assert:
+    that:
+    - item is not changed
+  loop: "{{ privatekey_ecc_idempotency.results }}"
+  when: "'skip_reason' not in item"
+  loop_control:
+    label: "{{ item.item.curve }}"
