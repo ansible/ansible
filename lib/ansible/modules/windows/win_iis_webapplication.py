@@ -58,11 +58,11 @@ RETURN = r'''
 application_pool:
     description: The used/implemented application_pool value
     returned: success
-    type: string
+    type: str
     sample: DefaultAppPool
 physical_path:
     description: The used/implemented physical_path value
     returned: success
-    type: string
+    type: str
     sample: C:\apps\acme\api
 '''

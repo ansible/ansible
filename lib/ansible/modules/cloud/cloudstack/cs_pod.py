@@ -90,42 +90,42 @@ RETURN = '''
 id:
   description: UUID of the pod.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the pod.
   returned: success
-  type: string
+  type: str
   sample: pod01
 start_ip:
   description: Starting IP of the pod.
   returned: success
-  type: string
+  type: str
   sample: 10.100.1.101
 end_ip:
   description: Ending IP of the pod.
   returned: success
-  type: string
+  type: str
   sample: 10.100.1.254
 netmask:
   description: Netmask of the pod.
   returned: success
-  type: string
+  type: str
   sample: 255.255.255.0
 gateway:
   description: Gateway of the pod.
   returned: success
-  type: string
+  type: str
   sample: 10.100.1.1
 allocation_state:
   description: State of the pod.
   returned: success
-  type: string
+  type: str
   sample: Enabled
 zone:
   description: Name of zone the pod is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 '''
 

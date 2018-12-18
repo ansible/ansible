@@ -66,7 +66,7 @@ RETURN = r'''
 name:
     description: The name of the target local group.
     returned: always
-    type: string
+    type: str
     sample: Administrators
 added:
     description: A list of members added when C(state) is C(present); this is

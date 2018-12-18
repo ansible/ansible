@@ -109,12 +109,12 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: tcp
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 description:
   description: The description of the monitor.

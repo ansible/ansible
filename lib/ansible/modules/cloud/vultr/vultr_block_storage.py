@@ -66,7 +66,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -81,7 +81,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_block_storage:
   description: Response from Vultr API
@@ -91,7 +91,7 @@ vultr_block_storage:
     attached_to_id:
       description: The ID of the server the volume is attached to
       returned: success
-      type: string
+      type: str
       sample: "10194376"
     cost_per_month:
       description: Cost per month for the volume
@@ -101,22 +101,22 @@ vultr_block_storage:
     date_created:
       description: Date when the volume was created
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
     id:
       description: ID of the block storage volume
       returned: success
-      type: string
+      type: str
       sample: "1234abcd"
     name:
       description: Name of the volume
       returned: success
-      type: string
+      type: str
       sample: "ansible-test-volume"
     region:
       description: Region the volume was deployed into
       returned: success
-      type: string
+      type: str
       sample: "New Jersey"
     size:
       description: Information about the volume size in GB
@@ -126,7 +126,7 @@ vultr_block_storage:
     status:
       description: Status about the deployment of the volume
       returned: success
-      type: string
+      type: str
       sample: "active"
 
 '''

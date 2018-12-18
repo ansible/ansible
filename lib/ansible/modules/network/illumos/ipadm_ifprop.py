@@ -88,7 +88,7 @@ interface:
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 value:
     description: property's value

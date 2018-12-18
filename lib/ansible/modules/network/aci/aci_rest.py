@@ -200,27 +200,27 @@ error_code:
 error_text:
   description: The REST ACI descriptive text, useful for troubleshooting on failure
   returned: always
-  type: string
+  type: str
   sample: unknown managed object class foo
 imdata:
   description: Converted output returned by the APIC REST (register this for post-processing)
   returned: always
-  type: string
+  type: str
   sample: [{"error": {"attributes": {"code": "122", "text": "unknown managed object class foo"}}}]
 payload:
   description: The (templated) payload send to the APIC REST API (xml or json)
   returned: always
-  type: string
+  type: str
   sample: '<foo bar="boo"/>'
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 response:
   description: HTTP response string
   returned: always
-  type: string
+  type: str
   sample: 'HTTP Error 400: Bad Request'
 status:
   description: HTTP status code
@@ -230,12 +230,12 @@ status:
 totalCount:
   description: Number of items in the imdata array
   returned: always
-  type: string
+  type: str
   sample: '0'
 url:
   description: URL used for APIC REST call
   returned: success
-  type: string
+  type: str
   sample: https://1.2.3.4/api/mo/uni/tn-[Dag].json?rsp-subtree=modified
 '''
 

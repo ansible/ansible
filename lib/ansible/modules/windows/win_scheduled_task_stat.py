@@ -69,7 +69,7 @@ actions:
 folder_exists:
   description: Whether the folder set at path exists.
   returned: always
-  type: boolean
+  type: bool
   sample: True
 folder_task_count:
   description: The number of tasks that exist in the folder.
@@ -219,7 +219,7 @@ settings:
     idle_settings:
       description: The idle settings of the task.
       returned: ''
-      type: dictionary
+      type: dict
       sample: {
           "idle_duration": "PT10M",
           "restart_on_idle": false,
@@ -240,7 +240,7 @@ settings:
     network_settings:
       description: The network settings of the task.
       returned: ''
-      type: dictionary
+      type: dict
       sample: {
           "id": null,
           "name": null
@@ -335,7 +335,7 @@ state:
 task_exists:
   description: Whether the task at the folder exists.
   returned: name is specified
-  type: boolean
+  type: bool
   sample: True
 triggers:
   description: A list of triggers.

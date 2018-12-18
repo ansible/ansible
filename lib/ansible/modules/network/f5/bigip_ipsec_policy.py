@@ -164,12 +164,12 @@ RETURN = r'''
 auth_algorithm:
   description: The new IKE Phase 2 Authentication Algorithm value.
   returned: changed
-  type: string
+  type: str
   sample: sha512
 encrypt_algorithm:
   description: The new IKE Phase 2 Encryption Algorithm value.
   returned: changed
-  type: string
+  type: str
   sample: aes256
 lifetime:
   description: The new IKE Phase 2 Lifetime value.
@@ -184,37 +184,37 @@ kb_lifetime:
 perfect_forward_secrecy:
   description: The new IKE Phase 2 Perfect Forward Secrecy value.
   returned: changed
-  type: string
+  type: str
   sample: modp2048
 tunnel_local_address:
   description: The new Tunnel Local Address value.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.2.1
 tunnel_remote_address:
   description: The new Tunnel Remote Address value.
   returned: changed
-  type: string
+  type: str
   sample: 2.1.1.2
 mode:
   description: The new Mode value.
   returned: changed
-  type: string
+  type: str
   sample: tunnel
 protocol:
   description: The new IPsec Protocol value.
   returned: changed
-  type: string
+  type: str
   sample: ah
 ipcomp:
   description: The new IKE Phase 2 IPComp value.
   returned: changed
-  type: string
+  type: str
   sample: deflate
 description:
   description: The new description value.
   returned: changed
-  type: string
+  type: str
   sample: My policy
 route_domain:
   description: The new Route Domain value when in Tunnel mode.

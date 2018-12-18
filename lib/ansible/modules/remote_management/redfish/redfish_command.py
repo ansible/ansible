@@ -134,7 +134,7 @@ RETURN = '''
 msg:
     description: Message with action result or error description
     returned: always
-    type: string
+    type: str
     sample: "Action was successful"
 '''
 

@@ -89,7 +89,7 @@ ansible_net_version:
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
-  type: string
+  type: str
 
 # hardware
 ansible_net_memfree_mb:

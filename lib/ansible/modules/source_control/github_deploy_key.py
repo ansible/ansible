@@ -129,7 +129,7 @@ RETURN = '''
 msg:
     description: the status message describing what occurred
     returned: always
-    type: string
+    type: str
     sample: "Deploy key added successfully"
 
 http_status_code:
@@ -141,7 +141,7 @@ http_status_code:
 error:
     description: the error message returned by the GitHub API
     returned: failed
-    type: string
+    type: str
     sample: "key is already in use"
 
 id:

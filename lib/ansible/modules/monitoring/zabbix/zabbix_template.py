@@ -166,7 +166,7 @@ RETURN = '''
 template_json:
   description: The JSON dump of the template
   returned: when state is dump
-  type: string
+  type: str
   sample: {
         "zabbix_export":{
             "date":"2017-11-29T16:37:24Z",

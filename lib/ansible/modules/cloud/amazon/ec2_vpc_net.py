@@ -102,7 +102,7 @@ vpc:
     cidr_block:
       description: The CIDR of the VPC
       returned: always
-      type: string
+      type: str
       sample: 10.0.0.0/16
     cidr_block_association_set:
       description: IPv4 CIDR blocks associated with the VPC
@@ -126,17 +126,17 @@ vpc:
     dhcp_options_id:
       description: the id of the DHCP options assocaited with this VPC
       returned: always
-      type: string
+      type: str
       sample: dopt-0fb8bd6b
     id:
       description: VPC resource id
       returned: always
-      type: string
+      type: str
       sample: vpc-c2e00da5
     instance_tenancy:
       description: indicates whether VPC uses default or dedicated tenancy
       returned: always
-      type: string
+      type: str
       sample: default
     is_default:
       description: indicates whether this is the default VPC
@@ -146,7 +146,7 @@ vpc:
     state:
       description: state of the VPC
       returned: always
-      type: string
+      type: str
       sample: available
     tags:
       description: tags attached to the VPC, includes name
@@ -156,7 +156,7 @@ vpc:
         Name:
           description: name tag for the VPC
           returned: always
-          type: string
+          type: str
           sample: pk_vpc4
 '''
 

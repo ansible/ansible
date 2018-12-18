@@ -230,7 +230,7 @@ routes:
             }]
 state:
   description: The status of the VPN connection.
-  type: string
+  type: str
   returned: I(state=present)
   sample:
     state: available

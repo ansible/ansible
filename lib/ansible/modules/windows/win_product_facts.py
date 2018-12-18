@@ -29,7 +29,7 @@ RETURN = '''
 ansible_facts:
   description: returned facts by this module
   returned: always
-  type: dictionary
+  type: dict
   sample:
     ansible_os_product_id: 00326-10000-00000-AA698
     ansible_os_product_key: T49TD-6VFBW-VV7HY-B2PXY-MY47H

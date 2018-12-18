@@ -289,12 +289,12 @@ RETURN = r'''
 client_timeout:
   description: The new client timeout value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: true
 description:
   description: The new description.
   returned: changed
-  type: string
+  type: str
   sample: My description
 explicit_flow_migration:
   description: The new flow migration setting.
@@ -304,27 +304,27 @@ explicit_flow_migration:
 idle_timeout:
   description: The new idle timeout setting.
   returned: changed
-  type: string
+  type: str
   sample: 123
 ip_df_mode:
   description: The new Don't Fragment Flag (DF) setting.
   returned: changed
-  type: string
+  type: str
   sample: clear
 ip_tos_to_client:
   description: The new IP ToS to Client setting.
   returned: changed
-  type: string
+  type: str
   sample: 100
 ip_tos_to_server:
   description: The new IP ToS to Server setting.
   returned: changed
-  type: string
+  type: str
   sample: 100
 ip_ttl_mode:
   description: The new Time To Live (TTL) setting.
   returned: changed
-  type: string
+  type: str
   sample: proxy
 ip_ttl_v4:
   description: The new Time To Live (TTL) v4 setting.
@@ -349,12 +349,12 @@ late_binding:
 link_qos_to_client:
   description: The new Link QoS to Client setting.
   returned: changed
-  type: string
+  type: str
   sample: pass-through
 link_qos_to_server:
   description: The new Link QoS to Server setting.
   returned: changed
-  type: string
+  type: str
   sample: 123
 loose_close:
   description: The new Loose Close setting.
@@ -414,7 +414,7 @@ syn_cookie_mss:
 tcp_close_timeout:
   description: The new TCP Close Timeout setting.
   returned: changed
-  type: string
+  type: str
   sample: 100
 tcp_generate_isn:
   description: The new Generate Initial Sequence Number setting.
@@ -439,17 +439,17 @@ tcp_time_wait_timeout:
 tcp_timestamp_mode:
   description: The new TCP Timestamp Mode setting.
   returned: changed
-  type: string
+  type: str
   sample: rewrite
 tcp_wscale_mode:
   description: The new TCP Window Scale Mode setting.
   returned: changed
-  type: string
+  type: str
   sample: strip
 timeout_recovery:
   description: The new Timeout Recovery setting.
   returned: changed
-  type: string
+  type: str
   sample: fallback
 '''
 

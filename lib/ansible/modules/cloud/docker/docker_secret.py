@@ -135,7 +135,7 @@ secret_id:
   description:
     - The ID assigned by Docker to the secret object.
   returned: success
-  type: string
+  type: str
   sample: 'hzehrmyjigmcp2gb6nlhmjqcv'
 '''
 

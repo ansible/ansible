@@ -99,7 +99,7 @@ RETURN = r'''
 level:
   description: The new provisioning level of the module.
   returned: changed
-  type: string
+  type: str
   sample: minimum
 '''
 

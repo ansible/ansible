@@ -117,23 +117,23 @@ user:
     contains:
         default_project_id:
             description: User default project ID. Only present with Keystone >= v3.
-            type: string
+            type: str
             sample: "4427115787be45f08f0ec22a03bfc735"
         domain_id:
             description: User domain ID. Only present with Keystone >= v3.
-            type: string
+            type: str
             sample: "default"
         email:
             description: User email address
-            type: string
+            type: str
             sample: "demo@example.com"
         id:
             description: User ID
-            type: string
+            type: str
             sample: "f59382db809c43139982ca4189404650"
         name:
             description: User name
-            type: string
+            type: str
             sample: "demouser"
 '''
 from distutils.version import StrictVersion

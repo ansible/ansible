@@ -115,12 +115,12 @@ RETURN = r'''
 command:
   description: The exact flatpak command that was executed
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "/usr/bin/flatpak remote-add --system flatpak-test https://dl.flathub.org/repo/flathub.flatpakrepo"
 msg:
   description: Module error message
   returned: failure
-  type: string
+  type: str
   sample: "Executable '/usr/local/bin/flatpak' was not found on the system."
 rc:
   description: Return code from flatpak binary
@@ -130,12 +130,12 @@ rc:
 stderr:
   description: Error output from flatpak binary
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "error: GPG verification enabled, but no summary found (check that the configured URL in remote config is correct)\n"
 stdout:
   description: Output from flatpak binary
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "flathub\tFlathub\thttps://dl.flathub.org/repo/\t1\t\n"
 '''
 

@@ -144,12 +144,12 @@ stat:
         exists:
             description: if the destination path actually exists or not
             returned: success
-            type: boolean
+            type: bool
             sample: True
         path:
             description: The full path of the file/object to get the facts of
             returned: success and if path exists
-            type: string
+            type: str
             sample: '/path/to/file'
         mode:
             description: Unix permissions of the file in octal
@@ -159,37 +159,37 @@ stat:
         isdir:
             description: Tells you if the path is a directory
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         ischr:
             description: Tells you if the path is a character device
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         isblk:
             description: Tells you if the path is a block device
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         isreg:
             description: Tells you if the path is a regular file
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: True
         isfifo:
             description: Tells you if the path is a named pipe
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         islnk:
             description: Tells you if the path is a symbolic link
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         issock:
             description: Tells you if the path is a unix domain socket
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         uid:
             description: Numeric id representing the file owner
@@ -239,67 +239,67 @@ stat:
         wusr:
             description: Tells you if the owner has write permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: True
         rusr:
             description: Tells you if the owner has read permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: True
         xusr:
             description: Tells you if the owner has execute permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: True
         wgrp:
             description: Tells you if the owner's group has write permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         rgrp:
             description: Tells you if the owner's group has read permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: True
         xgrp:
             description: Tells you if the owner's group has execute permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: True
         woth:
             description: Tells you if others have write permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         roth:
             description: Tells you if others have read permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: True
         xoth:
             description: Tells you if others have execute permission
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: True
         isuid:
             description: Tells you if the invoking user's id matches the owner's id
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         isgid:
             description: Tells you if the invoking user's group id matches the owner's group id
             returned: success, path exists and user can read stats
-            type: boolean
+            type: bool
             sample: False
         lnk_source:
             description: Target of the symlink normalized for the remote filesystem
             returned: success, path exists and user can read stats and the path is a symbolic link
-            type: string
+            type: str
             sample: /home/foobar/21102015-1445431274-908472971
         lnk_target:
             description: Target of the symlink.  Note that relative paths remain relative
             returned: success, path exists and user can read stats and the path is a symbolic link
-            type: string
+            type: str
             sample: ../foobar/21102015-1445431274-908472971
             version_added: 2.4
         md5:
@@ -307,54 +307,54 @@ stat:
                 favor of the checksum return value
             returned: success, path exists and user can read stats and path
                 supports hashing and md5 is supported
-            type: string
+            type: str
             sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
         checksum:
             description: hash of the path
             returned: success, path exists, user can read stats, path supports
                 hashing and supplied checksum algorithm is available
-            type: string
+            type: str
             sample: 50ba294cdf28c0d5bcde25708df53346825a429f
         pw_name:
             description: User name of owner
             returned: success, path exists and user can read stats and installed python supports it
-            type: string
+            type: str
             sample: httpd
         gr_name:
             description: Group name of owner
             returned: success, path exists and user can read stats and installed python supports it
-            type: string
+            type: str
             sample: www-data
         mimetype:
             description: file magic data or mime-type
             returned: success, path exists and user can read stats and
                 installed python supports it and the `mime` option was true, will
                 return 'unknown' on error.
-            type: string
+            type: str
             sample: application/pdf; charset=binary
         charset:
             description: file character set or encoding
             returned: success, path exists and user can read stats and
                 installed python supports it and the `mime` option was true, will
                 return 'unknown' on error.
-            type: string
+            type: str
             sample: us-ascii
         readable:
             description: Tells you if the invoking user has the right to read the path
             returned: success, path exists and user can read the path
-            type: boolean
+            type: bool
             sample: False
             version_added: 2.2
         writeable:
             description: Tells you if the invoking user has the right to write the path
             returned: success, path exists and user can write the path
-            type: boolean
+            type: bool
             sample: False
             version_added: 2.2
         executable:
             description: Tells you if the invoking user has the execute the path
             returned: success, path exists and user can execute the path
-            type: boolean
+            type: bool
             sample: False
             version_added: 2.2
         attributes:

@@ -91,27 +91,27 @@ cloud_front_origin_access_identity:
         caller_reference:
           description: a caller reference for the oai
           returned: always
-          type: string
+          type: str
         comment:
           description: a comment describing the oai
           returned: always
-          type: string
+          type: str
     id:
       description: a unique identifier of the oai
       returned: always
-      type: string
+      type: str
     s3_canonical_user_id:
       description: the cannonical user id of the user who created the oai
       returned: always
-      type: string
+      type: str
 e_tag:
   description: The current version of the origin access identity created.
   returned: always
-  type: string
+  type: str
 location:
   description: The fully qualified URI of the new origin access identity just created.
   returned: when initially created
-  type: string
+  type: str
 
 '''
 
