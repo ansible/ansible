@@ -1028,11 +1028,13 @@ class TaskExecutor:
 
         if 'messages' in result:
             for level, message in result['messages']:
-                if level in ('warning', 'error'):
-                    getattr(display, level)(message)
+                if level == 'log':
+                    display.display(message, log_only=True)
+                elif level in ('debug', 'v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'vvvvvv'):
+                    getattr(display, level)(message, host=self._play_context.remote_addr)
                 else:
                     if hasattr(display, level):
-                        getattr(display, level)(message, host=self._play_context.remote_addr)
+                        getattr(display, level)(message)
                     else:
                         display.vvvv(message, host=self._play_context.remote_addr)
 
