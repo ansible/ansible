@@ -6,7 +6,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# (c) 2017 Red Hat, Inc.
+# Copyright: (c) 2017, Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -26,7 +26,7 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+
 
 import collections
 import json
@@ -44,43 +44,43 @@ from ansible.module_utils.urls import fetch_url
 _DEVICE_CONNECTION = None
 
 nxos_provider_spec = {
-    'host': dict(),
+    'host': dict(type='str'),
     'port': dict(type='int'),
 
-    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
-    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE'])),
+    'username': dict(type='str', fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(type='str', no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    'ssh_keyfile': dict(type='str', fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE'])),
 
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
+    'authorize': dict(type='bool', fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE'])),
+    'auth_pass': dict(type='str', no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
     'use_ssl': dict(type='bool'),
-    'use_proxy': dict(default=True, type='bool'),
+    'use_proxy': dict(type='bool', default=True),
     'validate_certs': dict(type='bool'),
 
     'timeout': dict(type='int'),
 
-    'transport': dict(default='cli', choices=['cli', 'nxapi'])
+    'transport': dict(type='str', default='cli', choices=['cli', 'nxapi'])
 }
 nxos_argument_spec = {
     'provider': dict(type='dict', options=nxos_provider_spec),
 }
 nxos_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
+    'host': dict(type='str', removed_in_version=2.9),
+    'port': dict(type='int', removed_in_version=2.9),
 
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9),
+    'username': dict(type='str', removed_in_version=2.9),
+    'password': dict(type='str', no_log=True, removed_in_version=2.9),
+    'ssh_keyfile': dict(type='str', removed_in_version=2.9),
 
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(removed_in_version=2.9, no_log=True),
+    'authorize': dict(type='bool', fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE'])),
+    'auth_pass': dict(type='str', no_log=True, removed_in_version=2.9),
 
-    'use_ssl': dict(removed_in_version=2.9, type='bool'),
-    'validate_certs': dict(removed_in_version=2.9, type='bool'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
+    'use_ssl': dict(type='bool', removed_in_version=2.9),
+    'validate_certs': dict(type='bool', removed_in_version=2.9),
+    'timeout': dict(type='int', removed_in_version=2.9),
 
-    'transport': dict(removed_in_version=2.9, choices=['cli', 'nxapi'])
+    'transport': dict(type='str', choices=['cli', 'nxapi'], removed_in_version=2.9)
 }
 nxos_argument_spec.update(nxos_top_spec)
 

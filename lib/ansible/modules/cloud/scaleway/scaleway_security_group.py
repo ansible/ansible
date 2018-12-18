@@ -24,26 +24,27 @@ version_added: "2.8"
 author: Antoine Barbare (@abarbare)
 description:
     - This module manages Security Group on Scaleway account
-      U(https://developer.scaleway.com)
+      U(https://developer.scaleway.com).
 extends_documentation_fragment: scaleway
 
 options:
   state:
     description:
       - Indicate desired state of the Security Group.
+    type: str
+    choices: [ absent, present ]
     default: present
-    choices:
-      - present
-      - absent
 
   organization:
     description:
-      - Organization identifier
+      - Organization identifier.
+    type: str
     required: true
 
   region:
     description:
       - Scaleway region to use (for example C(par1)).
+    type: str
     required: true
     choices:
       - ams1
@@ -53,37 +54,37 @@ options:
 
   name:
     description:
-      - Name of the Security Group
+      - Name of the Security Group.
+    type: str
     required: true
 
   description:
     description:
-      - Description of the Security Group
+      - Description of the Security Group.
+    type: str
 
   stateful:
     description:
-      - Create a stateful security group which allows established connections in and out
-    required: true
+      - Create a stateful security group which allows established connections in and out.
     type: bool
+    required: true
 
   inbound_default_policy:
     description:
-      - Default policy for incoming trafic
-    choices:
-      - accept
-      - drop
+      - Default policy for incoming trafic.
+    type: str
+    choices: [ accept, drop ]
 
   outbound_default_policy:
     description:
-      - Default policy for outcoming trafic
-    choices:
-      - accept
-      - drop
+      - Default policy for outcoming trafic.
+    type: str
+    choices: [ accept, drop ]
 
   organization_default:
-    type: bool
     description:
-      - Create security group to be the default one
+      - Create security group to be the default one.
+    type: bool
 '''
 
 EXAMPLES = '''
@@ -215,15 +216,15 @@ def core(module):
 def main():
     argument_spec = scaleway_argument_spec()
     argument_spec.update(dict(
-        state=dict(default='present', choices=['absent', 'present']),
-        organization=dict(required=True),
-        name=dict(required=True),
-        description=dict(),
-        region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
-        stateful=dict(required=True, type=bool),
-        inbound_default_policy=dict(choices=['accept', 'drop']),
-        outbound_default_policy=dict(choices=['accept', 'drop']),
-        organization_default=dict(type=bool),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        organization=dict(type='str', required=True),
+        name=dict(type='str', required=True),
+        description=dict(type='str'),
+        region=dict(type='str', required=True, choices=SCALEWAY_LOCATION.keys()),
+        stateful=dict(type='bool', required=True),
+        inbound_default_policy=dict(type='str', choices=['accept', 'drop']),
+        outbound_default_policy=dict(type='str', choices=['accept', 'drop']),
+        organization_default=dict(type='bool'),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
