@@ -158,6 +158,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         Subclasses must implement this method.  It does the actual work of
         running an Ansible command.
         """
+        self.parse()
 
         display.vv(to_text(self.parser.get_version()))
 
@@ -569,7 +570,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         something like this::
 
             def parse(self):
-                parser = super(MyCLI, self).base_parser(usage="My Ansible CLI", inventory_opts=True)
+                parser = self.base_parser(usage="My Ansible CLI", inventory_opts=True)
                 parser.add_option('--my-option', dest='my_option', action='store')
                 self.parser = parser
                 super(MyCLI, self).parse()

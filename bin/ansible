@@ -106,7 +106,6 @@ if __name__ == '__main__':
             exit_code = 6
         else:
             cli = mycli(args)
-            cli.parse()
             exit_code = cli.run()
 
     except AnsibleOptionsError as e:

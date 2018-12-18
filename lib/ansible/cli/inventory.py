@@ -134,6 +134,7 @@ class InventoryCLI(CLI):
         # Initialize needed objects
         self.loader, self.inventory, self.vm = self._play_prereqs(self.options)
 
+        results = None
         if self.options.host:
             hosts = self.inventory.get_hosts(self.options.host)
             if len(hosts) != 1:
