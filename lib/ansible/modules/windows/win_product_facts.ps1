@@ -107,9 +107,9 @@ try {
 $module.Result.ansible_facts = @{
     ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
     ansible_os_product_key = $product_key
-    ansible_winlicense_edition = $winlicense_edition
-    ansible_winlicense_channel = $winlicense_channel 
-    ansible_winlicense_status = $winlicense_status 
+    ansible_os_license_edition = $winlicense_edition
+    ansible_os_license_channel = $winlicense_channel 
+    ansible_os_license_status = $winlicense_status 
 }
 
 $module.ExitJson()
