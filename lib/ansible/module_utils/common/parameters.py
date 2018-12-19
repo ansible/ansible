@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common._collections_compat import Iterable, Mapping
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.collections import is_iterable
 
 from ansible.module_utils.six import (

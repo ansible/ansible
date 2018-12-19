@@ -180,6 +180,7 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, 
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
 SEQUENCETYPE = frozenset, KeysView, Sequence
+
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
 imap = map
