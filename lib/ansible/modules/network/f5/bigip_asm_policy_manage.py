@@ -159,17 +159,17 @@ active:
 state:
   description: Action performed on the target device.
   returned: changed
-  type: string
+  type: str
   sample: absent
 template:
   description: Name of the built-in ASM policy template
   returned: changed
-  type: string
+  type: str
   sample: OWA Exchange 2007 (https)
 name:
   description: Name of the ASM policy to be managed/created
   returned: changed
-  type: string
+  type: str
   sample: Asm_APP1_Transparent
 '''
 
