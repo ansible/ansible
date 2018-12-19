@@ -43,6 +43,17 @@
       - "result.changed == true"
       - "'ge-0/0/2' in result.diff.prepared"
 
+- name: remove root-authethication (test error scenario)
+  cli_config:
+    config: "delete system root-authentication"
+  ignore_errors: True
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'Missing mandatory statement' in result.msg"
+
 - name: teardown
   cli_config: *rm1
 
