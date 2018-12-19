@@ -521,9 +521,6 @@ class LinuxHardware(Hardware):
                 # avoid cpu churn
                 time.sleep(0.1)
 
-        pool.terminate()  # force any stuck jobs to finish
-        pool.join()
-
         return {'mounts': mounts}
 
     def get_device_links(self, link_dir):
