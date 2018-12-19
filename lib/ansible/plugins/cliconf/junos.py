@@ -25,6 +25,7 @@ import re
 from itertools import chain
 from functools import wraps
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
@@ -103,7 +104,12 @@ class Cliconf(CliconfBase):
             if not isinstance(line, Mapping):
                 line = {'command': line}
             cmd = line['command']
-            results.append(self.send_command(**line))
+            try:
+                results.append(self.send_command(**line))
+            except AnsibleConnectionFailure as exc:
+                if "error: commit failed" in exc.message:
+                    self.discard_changes()
+                raise
             requests.append(cmd)
 
         diff = self.compare_configuration()
@@ -149,12 +155,19 @@ class Cliconf(CliconfBase):
             command += ' peers-synchronize'
 
         command += ' and-quit'
-        return self.send_command(command)
+
+        try:
+            response = self.send_command(command)
+        except AnsibleConnectionFailure:
+            self.discard_changes()
+            raise
+
+        return response
 
     @configure
     def discard_changes(self):
         command = 'rollback 0'
-        for cmd in chain(to_list(command), 'exit'):
+        for cmd in chain(to_list(command), ['exit']):
             self.send_command(cmd)
 
     @configure
