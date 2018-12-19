@@ -670,6 +670,22 @@ class ApiParameters(Parameters):
             return None
         return matches.group('least')
 
+    @property
+    def fqdn_auto_populate(self):
+        if self._values['fqdn'] is None:
+            return None
+        if 'autopopulate' in self._values['fqdn']:
+            if self._values['fqdn']['autopopulate'] == 'enabled':
+                return True
+            return False
+
+    @property
+    def fqdn(self):
+        if self._values['fqdn'] is None:
+            return None
+        if 'tmName' in self._values['fqdn']:
+            return self._values['fqdn']['tmName']
+
 
 class NodeApiParameters(Parameters):
     pass
