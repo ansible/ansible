@@ -35,6 +35,17 @@ def test_make_immutable(data, expected):
     assert arguments._make_immutable(data) == expected
 
 
+def test_cliargs_from_dict():
+    old_dict = {'tags': [u'production', u'webservers'],
+                'check_mode': True,
+                'start_at_task': u'Start with くらとみ'}
+    expected = frozenset((('tags', (u'production', u'webservers')),
+                          ('check_mode', True),
+                          ('start_at_task', u'Start with くらとみ')))
+
+    assert frozenset(arguments.CLIArgs(old_dict).items()) == expected
+
+
 def test_cliargs():
     class FakeOptions:
         pass
@@ -47,7 +58,7 @@ def test_cliargs():
                           ('check_mode', True),
                           ('start_at_task', u'Start with くらとみ')))
 
-    assert frozenset(arguments.CLIArgs(options).items()) == expected
+    assert frozenset(arguments.CLIArgs.from_options(options).items()) == expected
 
 
 @pytest.mark.skipIf(argparse is None)
