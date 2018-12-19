@@ -57,50 +57,32 @@ if (-not $product_key) {
     }
 }
 
-try {
-    $license_info = Get-CimInstance SoftwareLicensingProduct | Where-Object PartialProductKey
+# Retrieve license information
+$license_info = Get-CimInstance SoftwareLicensingProduct | Where-Object PartialProductKey
 
-    switch ($license_info.LicenseStatus){
-        0 {
-            $winlicense_status="Unlicensed"
-        }
+$winlicense_status = switch ($license_info.LicenseStatus) {
+    0 { "Unlicensed" }
+    1 { "Licensed" }
+    2 { "OOBGrace" }
+    3 { "OOTGrace" }
+    4 { "NonGenuineGrace" }
+    5 { "Notification" }
+    6 { "ExtendedGrace" }
+    default { $null }
+}
 
-        1 {
-            $winlicense_status="Licensed"
-        }
-
-        2 {
-            $winlicense_status="OOBGrace"
-        }
-
-        3 {
-            $winlicense_status="OOTGrace"
-        }
-
-        4 {
-            $winlicense_status="NonGenuineGrace"
-        }
-
-        5 {
-            $winlicense_status="Notification"
-        }
-
-        6 {
-            $winlicense_status="ExtendedGrace"
-        }
-
-        default {
-            $winlicense_status="NA"
-        }
-    }
-
+if ($license_info.Name) {
     $winlicense_edition = $license_info.Name
-    $winlicense_channel = $license_info.ProductKeyChannel
+}
+else {
+    $winlicense_edition = $null
+}
 
-} catch {
-    $winlicense_edition = "NA"
-    $winlicense_channel = "NA"
-    $winlicense_status = "NA"
+if ($license_info.ProductKeyChannel) {
+    $winlicense_channel = $license_info.ProductKeyChannel
+}
+else {
+    $winlicense_channel = $null
 }
 
 
