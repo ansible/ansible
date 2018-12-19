@@ -63,9 +63,18 @@ def _return_datastructure_name(obj):
 
 
 def list_no_log_values(argument_spec, params):
-    ''' Return list of no log values and deprecations '''
+    """Return set of no log values
+
+    :arg argument_spec: An argument spec dictionary from a module
+    :arg params: Dictionary of all module parameters
+
+    :returns: Set of strings that should be hidden from output::
+
+        {'secret_dict_value', 'secret_list_item_one', 'secret_list_item_two', 'secret_string'}
+    """
 
     no_log_values = set()
+
     for arg_name, arg_opts in argument_spec.items():
 
         if arg_opts.get('no_log', False):
@@ -78,10 +87,19 @@ def list_no_log_values(argument_spec, params):
     return no_log_values
 
 
-def list_deprications(argument_spec, params):
-    '''Return a list of deprecations'''
+def list_deprecations(argument_spec, params):
+    """Return a list of deprecations
 
-    deprecations = list()
+    :arg argument_spec: An argument spec dictionary from a module
+    :arg params: Dictionary of all module parameters
+
+    :returns: List of dictionaries containing a message and version in which
+        the deprecated parameter will be removed, or an empty list::
+
+            [{'msg': "Param 'deptest' is deprecated. See the module docs for more information", 'version': '2.9'}]
+    """
+
+    deprecations = []
     for arg_name, arg_opts in argument_spec.items():
         if arg_opts.get('removed_in_version') is not None and arg_name in params:
             deprecations.append({

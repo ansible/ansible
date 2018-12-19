@@ -1555,7 +1555,7 @@ class AnsibleModule(object):
             param = self.params
 
         no_log_values = list_no_log_values(spec, param)
-        deprecations = list_deprications(spec, param)
+        deprecations = list_deprecations(spec, param)
 
         if no_log_values:
         for arg_name, arg_opts in spec.items():
