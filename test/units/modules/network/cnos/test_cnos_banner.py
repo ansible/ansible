@@ -60,4 +60,3 @@ class TestCnosBannerModule(TestCnosModule):
         banner_text = load_fixture('cnos_banner_show_banner.txt').strip()
         set_module_args(dict(banner='login', text=banner_text))
         self.execute_module()
-
