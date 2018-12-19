@@ -50,6 +50,11 @@
     cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
     select_crypto_backend: '{{ select_crypto_backend }}'
 
+- name: Generate privatekey7 - standard - with mode option
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey7.pem'
+    mode: 0400
+
 - set_fact:
     ecc_types: []
   when: select_crypto_backend == 'pyopenssl'
