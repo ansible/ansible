@@ -23,6 +23,7 @@ import json
 import re
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
@@ -67,7 +68,12 @@ class Cliconf(CliconfBase):
 
     def edit_config(self, command):
         for cmd in chain(['configure'], to_list(command)):
-            self.send_command(cmd)
+            try:
+                self.send_command(cmd)
+            except AnsibleConnectionFailure as exc:
+                if "error: commit failed" in exc.message:
+                    self.discard_changes()
+                raise
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
@@ -82,11 +88,18 @@ class Cliconf(CliconfBase):
         if comment:
             command += ' comment {0}'.format(comment)
         command += ' and-quit'
-        return self.send_command(command)
+
+        try:
+            response = self.send_command(command)
+        except AnsibleConnectionFailure:
+            self.discard_changes()
+            raise
+
+        return response
 
     def discard_changes(self):
         command = 'rollback 0'
-        for cmd in chain(to_list(command), 'exit'):
+        for cmd in chain(to_list(command), ['exit']):
             self.send_command(cmd)
 
     def get_capabilities(self):
