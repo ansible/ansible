@@ -41,7 +41,6 @@ description:
   - This will configure both login and motd banners on remote devices
     running Lenovo CNOS.  It allows playbooks to add or remote
     banner text from the active running configuration.
-extends_documentation_fragment: cnos
 notes:
   - Tested against CNOS 10.8.1
 options:
