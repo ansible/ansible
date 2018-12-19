@@ -146,6 +146,9 @@ class OnyxMLagVipModule(BaseOnyxModule):
             req_mac = req_mac.lower()
 
         if req_ip is not None:
+            if req_group is None:
+                self._module.fail_json(msg='Inorder to configure Mlag-Vip you must send '
+                                           'group name param beside IPaddress')
             ipaddr, mask = req_ip.split('/')
             if req_group != current_group or req_ip != current_ip:
                 self._commands.append('mlag-vip %s ip %s /%s force' % (req_group, ipaddr, mask))
