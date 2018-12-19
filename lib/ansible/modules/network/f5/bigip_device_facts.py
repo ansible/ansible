@@ -289,7 +289,7 @@ asm_policies:
         - Lists the response status codes between 400 and 599 that the security profile considers legal.
       returned: changed
       type: list
-      sample: ['400', '404]
+      sample: ['400', '404']
     description:
       description:
         - Description of the resource.
@@ -496,7 +496,6 @@ asm_server_technologies:
         link:
           description:
             - A self link to an associated server technology.
-      type: string
       sample: https://localhost/mgmt/tm/asm/server-technologies/NQG7CT02OBC2cQWbnP7T-A?ver=13.1.0
   sample: hash/dictionary of values
 asm_signature_sets:
@@ -549,7 +548,7 @@ asm_signature_sets:
       sample: yes
     default_block:
       description:
-        - Displays, when the security policy’s enforcement mode is Blocking,
+        - Displays, when the security policy's enforcement mode is Blocking,
           how the system treats requests that match a signature included in the signature set.
       returned: changed
       type: bool
