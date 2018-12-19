@@ -93,7 +93,7 @@ def find_user(module, client, user_name):
             if u_name['user'] == user_name:
                 name = u_name
                 break
-    except ansible.module_utils.urls.ConnectionError as e:
+    except (ansible.module_utils.urls.ConnectionError, influx.exceptions.InfluxDBClientError) as e:
         module.fail_json(msg=str(e))
     return name
 
