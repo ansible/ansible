@@ -11,7 +11,7 @@
 {% endfor %}
 
 {% if short_description %}
-{%   set title = module + ' - ' + short_description | rst_ify %}
+{%   set title = module + ' -- ' + short_description | rst_ify %}
 {% else %}
 {%   set title = module %}
 {% endif %}
@@ -405,40 +405,37 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
 
 {% endif %}
 
-Support
--------
+Status
+------
 
 {% if deprecated %}
 
-This @{ plugin_type }@ is flagged as **deprecated** and will be removed in version @{ deprecated['removed_in'] | default('') | string | rst_ify }@. For more information see `DEPRECATED`_.
+- This @{ plugin_type }@ will be removed in version @{ deprecated['removed_in'] | default('') | string | rst_ify }@. *[deprecated]*
+- For more information see `DEPRECATED`_.
 
 {% else %}
 
-Status
-~~~~~~
-
 {%   set support = { 'core': 'the Ansible Core Team', 'network': 'the Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'the Ansible Community', 'curated': 'a Third Party'} %}
-{%   set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
+{%   set module_states = { 'preview': 'not guaranteed to have a backwards compatible interface', 'stableinterface': 'guaranteed to have no backward incompatible interface changes going forward'} %}
 
 {%   if metadata %}
 {%     if metadata.status %}
 
 {%       for cur_state in metadata.status %}
-This @{ plugin_type }@ is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
+- This @{ plugin_type }@ is @{ module_states[cur_state] }@. *[@{ cur_state }@]*
 {%       endfor %}
 
 {%     endif %}
 
 {%     if metadata.supported_by %}
-
-Maintenance
-~~~~~~~~~~~
-
 {%       set supported_by = support[metadata.supported_by] %}
-This @{ plugin_type }@ is flagged as **@{metadata.supported_by}@** which means that it is :ref:`maintained by @{ supported_by }@ <modules_support>`.
+- This @{ plugin_type }@ is :ref:`maintained by @{ supported_by }@ <modules_support>`. *[@{ metadata.supported_by }@]*
 
 {%       if metadata.supported_by in ('core', 'network') %}
-More information about Red Hat's support of this @{ plugin_type }@ is available from this `Knowledge Base article <https://access.redhat.com/articles/3166901>`_.
+Red Hat Support
+~~~~~~~~~~~~~~~
+
+More information about Red Hat's support of this @{ plugin_type }@ is available from this `Red Hat Knowledge Base article <https://access.redhat.com/articles/3166901>`_.
 {%       endif %}
 
 {%     endif %}
@@ -448,9 +445,8 @@ More information about Red Hat's support of this @{ plugin_type }@ is available 
 {% endif %}
 
 {% if author is defined -%}
-
-Author
-~~~~~~
+Authors
+~~~~~~~
 
 {%   for author_name in author %}
 - @{ author_name }@
