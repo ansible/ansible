@@ -156,9 +156,6 @@ from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import httpapi_loader
 from ansible.plugins.connection import NetworkConnectionBase
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class Connection(NetworkConnectionBase):
@@ -178,7 +175,7 @@ class Connection(NetworkConnectionBase):
             self.httpapi = httpapi_loader.get(self._network_os, self)
             if self.httpapi:
                 self._sub_plugin = {'type': 'httpapi', 'name': self._network_os, 'obj': self.httpapi}
-                display.vvvv('loaded API plugin for network_os %s' % self._network_os)
+                self.queue_message('vvvv', 'loaded API plugin for network_os %s' % self._network_os)
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 
@@ -187,7 +184,7 @@ class Connection(NetworkConnectionBase):
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
             )
-        display.display('network_os is set to %s' % self._network_os, log_only=True)
+        self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
     def update_play_context(self, pc_data):
         """Updates the play context information for the connection"""
@@ -199,16 +196,15 @@ class Connection(NetworkConnectionBase):
         play_context = PlayContext()
         play_context.deserialize(pc_data)
 
-        messages = ['updating play_context for connection']
+        self.queue_message('vvvv', 'updating play_context for connection')
         if self._play_context.become ^ play_context.become:
             self.set_become(play_context)
             if play_context.become is True:
-                messages.append('authorizing connection')
+                self.queue_message('vvvv', 'authorizing connection')
             else:
-                messages.append('deauthorizing connection')
+                self.queue_message('vvvv', 'deauthorizing connection')
 
         self._play_context = play_context
-        return messages
 
     def _connect(self):
         if not self.connected:
@@ -228,7 +224,7 @@ class Connection(NetworkConnectionBase):
         '''
         # only close the connection if its connected.
         if self._connected:
-            display.vvvv("closing http(s) connection to device", host=self._play_context.remote_addr)
+            self.queue_message('vvvv', "closing http(s) connection to device")
             self.logout()
 
         super(Connection, self).close()

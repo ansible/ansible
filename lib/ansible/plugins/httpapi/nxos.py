@@ -22,9 +22,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.httpapi import HttpApiBase
-from ansible.utils.display import Display
-
-display = Display()
 
 
 OPTIONS = {
@@ -75,7 +72,7 @@ class HttpApi(HttpApiBase):
 
     def _run_queue(self, queue, output):
         if self._become:
-            display.vvvv('firing event: on_become')
+            self.connection.queue_message('vvvv', 'firing event: on_become')
             queue.insert(0, 'enable')
 
         request = request_builder(queue, output)

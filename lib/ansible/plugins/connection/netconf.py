@@ -181,7 +181,6 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.plugins.loader import netconf_loader
 from ansible.plugins.connection import NetworkConnectionBase
-from ansible.utils.display import Display
 
 try:
     from ncclient import manager
@@ -191,8 +190,6 @@ try:
     HAS_NCCLIENT = True
 except ImportError:
     HAS_NCCLIENT = False
-
-display = Display()
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
@@ -219,12 +216,12 @@ class Connection(NetworkConnectionBase):
         netconf = netconf_loader.get(self._network_os, self)
         if netconf:
             self._sub_plugin = {'type': 'netconf', 'name': self._network_os, 'obj': netconf}
-            display.display('loaded netconf plugin for network_os %s' % self._network_os, log_only=True)
+            self.queue_message('log', 'loaded netconf plugin for network_os %s' % self._network_os)
         else:
             netconf = netconf_loader.get("default", self)
             self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': netconf}
-            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
-        display.display('network_os is set to %s' % self._network_os, log_only=True)
+            self.queue_message('display', 'unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
+        self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
         self._manager = None
         self.key_filename = None
@@ -259,7 +256,7 @@ class Connection(NetworkConnectionBase):
                 'Please run pip install ncclient'
             )
 
-        display.display('ssh connection done, starting ncclient', log_only=True)
+        self.queue_message('log', 'ssh connection done, starting ncclient')
 
         allow_agent = True
         if self._play_context.password is not None:
@@ -274,7 +271,7 @@ class Connection(NetworkConnectionBase):
             for cls in netconf_loader.all(class_only=True):
                 network_os = cls.guess_network_os(self)
                 if network_os:
-                    display.display('discovered network_os %s' % network_os, log_only=True)
+                    self.queue_message('log', 'discovered network_os %s' % network_os)
                     self._network_os = network_os
 
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
@@ -307,7 +304,7 @@ class Connection(NetworkConnectionBase):
         if not self._manager.connected:
             return 1, b'', b'not connected'
 
-        display.display('ncclient manager object created successfully', log_only=True)
+        self.queue_message('log', 'ncclient manager object created successfully')
 
         self._connected = True
 

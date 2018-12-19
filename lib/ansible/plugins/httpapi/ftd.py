@@ -60,7 +60,6 @@ from ansible.plugins.httpapi import HttpApiBase
 from urllib3 import encode_multipart_formdata
 from urllib3.fields import RequestField
 from ansible.module_utils.connection import ConnectionError
-from ansible.utils.display import Display
 
 BASE_HEADERS = {
     'Content-Type': 'application/json',
@@ -69,8 +68,6 @@ BASE_HEADERS = {
 
 TOKEN_EXPIRATION_STATUS_CODE = 408
 UNAUTHORIZED_STATUS_CODE = 401
-
-display = Display()
 
 
 class HttpApi(HttpApiBase):
@@ -224,7 +221,7 @@ class HttpApi(HttpApiBase):
         return None
 
     def _display(self, http_method, title, msg=''):
-        display.vvvv('REST:%s:%s:%s\n%s' % (http_method, self.connection._url, title, msg))
+        self.connection.queue_message('vvvv', 'REST:%s:%s:%s\n%s' % (http_method, self.connection._url, title, msg))
 
     @staticmethod
     def _get_response_value(response_data):
