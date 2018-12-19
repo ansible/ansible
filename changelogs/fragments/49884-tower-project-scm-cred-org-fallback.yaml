@@ -1,0 +1,2 @@
+minor_changes:
+  - "tower_project - getting project credential falls back to project organization if there's more than one cred with the same name"
