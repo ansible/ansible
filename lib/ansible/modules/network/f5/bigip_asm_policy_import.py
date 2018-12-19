@@ -87,17 +87,17 @@ RETURN = r'''
 file:
   description: Local path to ASM policy file.
   returned: changed
-  type: string
+  type: str
   sample: /root/some_policy.xml
 inline:
   description: Contents of policy as an inline string
   returned: changed
-  type: string
+  type: str
   sample: <xml>foobar contents</xml>
 name:
   description: Name of the ASM policy to be created/overwritten
   returned: changed
-  type: string
+  type: str
   sample: Asm_APP1_Transparent
 force:
   description: Set when overwriting an existing policy
