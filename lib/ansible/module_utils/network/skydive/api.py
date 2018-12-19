@@ -49,7 +49,7 @@ SKYDIVE_LOOKUP_BY_NAME = 'Name'
 
 
 class skydive_base(object):
-    ''' Base class for implementing Infoblox WAPI API '''
+    ''' Base class for implementing Skydive Rest API '''
 
     def __init__(self, host="localhost:8082", user="admin", password="password"):
         try:
