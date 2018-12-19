@@ -333,10 +333,10 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         try:
             spec, args, kwargs = get_argument_spec(module_path)
         except AnsibleModuleImportError as e:
-            display.error(e)
+            display.error('Error importing %s: %s' % (module_path, e))
             spec = dict()
-        except:
-            display.error(e)
+        except Exception as e:
+            display.error('Error importing %s: %s' % (module_path, e))
             spec = dict()
 
         for arg, data in spec.items():
