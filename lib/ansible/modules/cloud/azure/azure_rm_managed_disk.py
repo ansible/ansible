@@ -263,14 +263,14 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         # unmount from the old virtual machine and mount to the new virtual machine
         vm_name = parse_resource_id(disk_instance.get('managed_by', '')).get('name') if disk_instance else None
         if self.managed_by != vm_name:
-            if not self.check_mode:
-                if vm_name:
-                    if self.detach(vm_name, result):
-                        changed = True
-                if self.managed_by:
-                    if self.attach(self.managed_by, result):
-                        changed = True
-                result = self.get_managed_disk()
+            if vm_name:
+                if self.detach(vm_name, result):
+                    result = self.get_managed_disk()
+                    changed = True
+            if self.managed_by:
+                if self.attach(self.managed_by, result):
+                    result = self.get_managed_disk()
+                    changed = True
 
         if self.state == 'absent' and disk_instance:
             changed = True
