@@ -32,7 +32,7 @@
     mode: "u+rwx"
 
 - name: "Running the copy of 'sleep' binary"
-  command: "sh {{ ansible_facts.env['PWD'] }}/obtainpid.sh {{ output_dir }}/{{ random_name.stdout }}"
+  command: "sh {{ ansible_facts.env['PWD'] }}/obtainpid.sh {{ output_dir }}/{{ random_name.stdout }} {{ ansible_facts.env['PWD'] }}"
   async: 100
   poll: 0
 
