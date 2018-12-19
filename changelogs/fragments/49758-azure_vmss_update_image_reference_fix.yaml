@@ -1,0 +1,2 @@
+minor_changes:
+- Image reference change in Azure VMSS is detected and applied correctly.
