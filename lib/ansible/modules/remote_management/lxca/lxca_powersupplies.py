@@ -77,7 +77,7 @@ EXAMPLES = '''
 RETURN = r'''
 result:
     description: powersupplies detail from lxca
-    returned: always
+    returned: success
     type: dict
     sample:
       powerSupplyList:
