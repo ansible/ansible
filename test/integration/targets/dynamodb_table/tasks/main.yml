@@ -60,7 +60,7 @@
            - '"Authentication failure" in result.msg'
 
 - module_defaults:
-    group / aws:
+    dynamodb_table:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       region: "{{ aws_region }}"
@@ -73,8 +73,8 @@
       dynamodb_table:
         name: '{{ table_name }}'
         hash_key_name: "myhashkey"
+        range_key_name: "myrangekey"
         state: present
-        region: "{{ aws_region }}"
         indexes:
           - name: NamedIndex
             type: global_all
@@ -84,8 +84,9 @@
             hash_key_name: myhashkey
             range_key_name: myrangekey
           - name: NamedLocalIndex
-            type: all
-            hash_key_name: mylocalhashkey
+            type: keys_only
+            hash_key_name: myhashkey
+            range_key_name: mylocalrangekey
         tags:
           newtag: "hellotag"
           ntak: "helovdg"
