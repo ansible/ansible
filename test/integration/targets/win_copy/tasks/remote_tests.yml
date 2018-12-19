@@ -412,3 +412,60 @@
     - remote_copy_folder_content_to_folder_after_change_actual.matched == 2
     - remote_copy_folder_content_to_folder_after_change_actual.files[0].checksum == 'b54ba7f5621240d403f06815f7246006ef8c7d43'
     - remote_copy_folder_content_to_folder_after_change_actual.files[1].checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'
+
+# https://github.com/ansible/ansible/issues/50077
+- name: create empty nested directory
+  win_file:
+    path: '{{ test_win_copy_path }}\source\empty-nested\nested-dir'
+    state: directory
+
+- name: copy empty nested directory (check mode)
+  win_copy:
+    src: '{{ test_win_copy_path }}\source\empty-nested'
+    dest: '{{ test_win_copy_path }}\target'
+    remote_src: True
+  check_mode: True
+  register: copy_empty_dir_check
+
+- name: get result of copy empty nested directory (check mode)
+  win_stat:
+    path: '{{ test_win_copy_path }}\target\empty-nested'
+  register: copy_empty_dir_actual_check
+
+- name: assert copy empty nested directory (check mode)
+  assert:
+    that:
+    - copy_empty_dir_check is changed
+    - copy_empty_dir_check.operation == "folder_copy"
+    - not copy_empty_dir_actual_check.stat.exists
+
+- name: copy empty nested directory
+  win_copy:
+    src: '{{ test_win_copy_path }}\source\empty-nested'
+    dest: '{{ test_win_copy_path }}\target'
+    remote_src: True
+  register: copy_empty_dir
+
+- name: get result of copy empty nested directory
+  win_stat:
+    path: '{{ test_win_copy_path }}\target\empty-nested\nested-dir'
+  register: copy_empty_dir_actual
+
+- name: assert copy empty nested directory
+  assert:
+    that:
+    - copy_empty_dir is changed
+    - copy_empty_dir.operation == "folder_copy"
+    - copy_empty_dir_actual.stat.exists
+
+- name: copy empty nested directory (idempotent)
+  win_copy:
+    src: '{{ test_win_copy_path }}\source\empty-nested'
+    dest: '{{ test_win_copy_path }}\target'
+    remote_src: True
+  register: copy_empty_dir_again
+
+- name: assert copy empty nested directory (idempotent)
+  assert:
+    that:
+    - not copy_empty_dir_again is changed
