@@ -27,7 +27,6 @@ from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
-from ansible.utils.display import Display
 
 try:
     from ncclient import manager
@@ -36,8 +35,6 @@ try:
     from ncclient.xml_ import to_ele, to_xml, new_ele
 except ImportError:
     raise AnsibleError("ncclient is not installed")
-
-display = Display()
 
 
 class Netconf(NetconfBase):

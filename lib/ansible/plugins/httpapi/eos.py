@@ -32,9 +32,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.httpapi import HttpApiBase
-from ansible.utils.display import Display
-
-display = Display()
 
 
 OPTIONS = {
@@ -73,7 +70,7 @@ class HttpApi(HttpApiBase):
     def send_request(self, data, **message_kwargs):
         data = to_list(data)
         if self._become:
-            display.vvvv('firing event: on_become')
+            self.connection.queue_message('vvvv', 'firing event: on_become')
             data.insert(0, {"cmd": "enable", "input": self._become_pass})
 
         output = message_kwargs.get('output', 'text')
