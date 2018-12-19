@@ -613,11 +613,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_dict['zones'] = self.zones
 
                 nicConfigs = vmss_dict['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations']
-                if (len(nicConfigs) != 1 or len(nicConfigs[0]['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools']) != 1):
+                backend_address_pool = nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('loadBalancerBackendAddressPools', [])
+                if (len(nicConfigs) != 1 or len(load_balancer_pool) != 1):
                     support_lb_change = False  # Currenly not support for the vmss contains more than one loadbalancer
                 else:
                     load_balancer_id = "{0}/".format(load_balancer.id) if load_balancer else None
-                    backend_address_pool_id = (nicConfigs[0]['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
+                    backend_address_pool_id = load_balancer_pool[0].get('id')
                     if bool(load_balancer_id) != bool(backend_address_pool_id) and not backend_address_pool_id.startswith(load_balancer_id):
                         differences.append('load_balancer')
                         changed = True

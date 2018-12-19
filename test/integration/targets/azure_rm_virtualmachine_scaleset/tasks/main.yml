@@ -208,6 +208,10 @@
     format: curated
   register: output_scaleset
 
+- assert:
+    that:
+        - output_scaleset.vmss[0].load_balancer == "testLB1"
+
 - name: Retrieve scaleset VMs facts
   azure_rm_virtualmachinescalesetinstance_facts:
     resource_group: "{{ resource_group }}"
