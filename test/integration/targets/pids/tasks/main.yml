@@ -33,7 +33,7 @@
     mode: "u+rwx"
 
 - name: "Running the copy of 'sleep' binary"
-  command: "sh {{ lookup('env', 'PWD') }}/obtainpid.sh {{ output_dir }}/{{ random_name.stdout }}"
+  command: "sh {{ playbook_dir }}/obtainpid.sh {{ output_dir }}/{{ random_name.stdout }}"
   async: 100
   poll: 0
 
