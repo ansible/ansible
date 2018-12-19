@@ -89,6 +89,8 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
+# In all examples the durability of the configuration created is dependent on the 'save' option value:
+
 # Create bond on eth0 and eth1 interface, and put 'myvlan' network on top of it and persist the new configuration:
 - name: Bonds
   ovirt_host_network:
@@ -108,7 +110,7 @@ EXAMPLES = '''
         gateway: 1.2.3.4
         version: v4
 
-# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon temporarily:
+# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon:
 - name: Bonds
   ovirt_host_network:
     name: myhost
@@ -121,14 +123,14 @@ EXAMPLES = '''
         - eth1
         - eth2
 
-# Remove bond0 bond from host interfaces temporarily:
+# Remove bond0 bond from host interfaces:
 - ovirt_host_network:
     state: absent
     name: myhost
     bond:
       name: bond0
 
-# Assign myvlan1 and myvlan2 vlans to host eth0 interface temporarily:
+# Assign myvlan1 and myvlan2 vlans to host eth0 interface:
 - ovirt_host_network:
     name: myhost
     interface: eth0
@@ -136,7 +138,7 @@ EXAMPLES = '''
       - name: myvlan1
       - name: myvlan2
 
-# Remove myvlan2 vlan from host eth0 interface temporarily:
+# Remove myvlan2 vlan from host eth0 interface:
 - ovirt_host_network:
     state: absent
     name: myhost
@@ -144,7 +146,7 @@ EXAMPLES = '''
     networks:
       - name: myvlan2
 
-# Remove all networks/vlans from host eth0 interface temporarily:
+# Remove all networks/vlans from host eth0 interface:
 - ovirt_host_network:
     state: absent
     name: myhost
