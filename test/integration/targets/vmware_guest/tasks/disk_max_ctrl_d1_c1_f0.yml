@@ -228,7 +228,7 @@
     that:
         - "disk_max_ctrl_d1_c1_f0_6disk.results|map(attribute='changed')|unique|list == [true]"
 
-- name: Modify VMs to add 1 disk so number of disk is 7
+- name: Modify VMs to add 2 disk so number of disk is 7
   vmware_guest:
     validate_certs: False
     hostname: "{{ vcsim }}"
@@ -256,6 +256,9 @@
           type: thin
           autoselect_datastore: True
         - size: 128mb  # index6
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index8 # Because index 7 is for scsi controller
           type: thin
           autoselect_datastore: True
     state: poweredoff
