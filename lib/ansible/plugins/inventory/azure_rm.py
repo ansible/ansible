@@ -382,7 +382,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
                     query_parameters = {'api-version': item.api_version}
                     req = self._client.get(item.url, query_parameters)
 
-                    batch_requests.append(dict(httpMethod="GET", url=req.url, name="ansible" + str(random.randint(1, 1000000))))
+                    batch_requests.append(dict(httpMethod="GET", url=req.url, name=str(uuid.uuid4())))
                     batch_response_handlers.append(item)
                     batch_item_index += 1
             except Empty:
