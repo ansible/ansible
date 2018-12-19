@@ -91,14 +91,14 @@ EXAMPLES = '''
 # Authenticate with token, and return all pods and services for all namespaces
 plugin: openshift
 connections:
-    host: https://192.168.64.4:8443
-    token: xxxxxxxxxxxxxxxx
-    ssl_verify: false
+  - host: https://192.168.64.4:8443
+    api_key: xxxxxxxxxxxxxxxx
+    verify_ssl: false
 
 # Use default config (~/.kube/config) file and active context, and return objects for a specific namespace
 plugin: openshift
 connections:
-    namespaces:
+  - namespaces:
     - testing
 
 # Use a custom config file, and a specific context.
