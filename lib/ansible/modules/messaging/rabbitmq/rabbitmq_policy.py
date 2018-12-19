@@ -82,6 +82,9 @@ EXAMPLES = '''
 '''
 
 import json
+import re
+from distutils.version import LooseVersion as Version
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -98,28 +101,55 @@ class RabbitMqPolicy(object):
         self._node = module.params['node']
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
-    def _exec(self, args, run_in_check_mode=False):
+        self._version = self._rabbit_version()
+
+    def _exec(self, args, run_in_check_mode=False, split_lines=True):
         if not self._module.check_mode or (self._module.check_mode and run_in_check_mode):
             cmd = [self._rabbitmqctl, '-q', '-n', self._node]
             args.insert(1, '-p')
             args.insert(2, self._vhost)
             rc, out, err = self._module.run_command(cmd + args, check_rc=True)
-            return out.splitlines()
+            if split_lines:
+                return out.splitlines()
+
+            return out
         return list()
+
+    def _rabbit_version(self):
+        status = self._exec(['status'], True, False)
+
+        version_match = re.search('{rabbit,".*","(?P<version>.*)"}', status)
+        if version_match:
+            return Version(version_match.group('version'))
+
+        return None
+
+    def _list_policies(self):
+        if self._version and self._version >= Version('3.7.9'):
+            # Remove first header line from policies list for version > 3.7.9
+            return self._exec(['list_policies'], True)[1:]
+
+        return self._exec(['list_policies'], True)
 
     def has_modifications(self):
         if self._pattern is None or self._tags is None:
-            self._module.fail_json(msg=('pattern and tags are required for '
-                                        'state=present'))
+            self._module.fail_json(
+                msg=('pattern and tags are required for '
+                     'state=present'))
 
-        policies = self._exec(['list_policies'], True)
-
-        return not any(self._policy_check(policy) for policy in policies)
+        if self._version and self._version >= Version('3.7.0'):
+            # Change fields order in rabbitmqctl output in version 3.7
+            return not any(
+                self._policy_check(policy, apply_to_fno=3, pattern_fno=2)
+                for policy in self._list_policies())
+        else:
+            return not any(
+                self._policy_check(policy) for policy in self._list_policies())
 
     def should_be_deleted(self):
-        policies = self._exec(['list_policies'], True)
-
-        return any(self._policy_check_by_name(policy) for policy in policies)
+        return any(
+            self._policy_check_by_name(policy)
+            for policy in self._list_policies())
 
     def set(self):
         args = ['set_policy']
@@ -136,23 +166,27 @@ class RabbitMqPolicy(object):
     def clear(self):
         return self._exec(['clear_policy', self._name])
 
-    def _policy_check(self, policy):
+    def _policy_check(self,
+                      policy,
+                      name_fno=1,
+                      apply_to_fno=2,
+                      pattern_fno=3,
+                      tags_fno=4,
+                      priority_fno=5):
         if not policy:
             return False
 
         policy_data = policy.split('\t')
 
-        policy_name = policy_data[1]
-        apply_to = policy_data[2]
-        pattern = policy_data[3].replace('\\\\', '\\')
-        tags = json.loads(policy_data[4])
-        priority = policy_data[5]
+        policy_name = policy_data[name_fno]
+        apply_to = policy_data[apply_to_fno]
+        pattern = policy_data[pattern_fno].replace('\\\\', '\\')
+        tags = json.loads(policy_data[tags_fno])
+        priority = policy_data[priority_fno]
 
-        return (policy_name == self._name and
-                apply_to == self._apply_to and
-                tags == self._tags and
-                priority == self._priority and
-                pattern == self._pattern)
+        return (policy_name == self._name and apply_to == self._apply_to
+                and tags == self._tags and priority == self._priority
+                and pattern == self._pattern)
 
     def _policy_check_by_name(self, policy):
         if not policy:
