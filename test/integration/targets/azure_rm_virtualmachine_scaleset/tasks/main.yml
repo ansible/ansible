@@ -58,11 +58,21 @@
       publisher: Canonical
       sku: 16.04-LTS
       version: latest
-- name: Generalize VM
+- name: Stop VM before it can be generalized and image captured
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "vmforimage{{ rpfx }}"
-    generalized: yes
+    started: no
+- name: Call REST API - VirtualMachines_Generalize
+  azure_rm_resource:
+    api_version: '2017-12-01'
+    method: POST
+    resource_group: "{{ resource_group }}"
+    provider: compute
+    resource_type: virtualmachines
+    resource_name: "vmforimage{{ rpfx }}"
+    subresource:
+    - type: generalize
 - name: Create image A
   azure_rm_image:
     resource_group: "{{ resource_group }}"
