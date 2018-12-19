@@ -240,19 +240,19 @@ asm_policies:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/foo_policy
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: foo_policy
     policy_id:
       description:
         - Generated ID of the ASM policy resource.
       returned: changed
-      type: string
+      type: str
       sample: l0Ckxe-7yHsXp8U5tTgbFQ
     active:
       description:
@@ -276,7 +276,7 @@ asm_policies:
       description:
         - The type of policy, can be C(Security) or C(Parent).
       returned: changed
-      type: string
+      type: str
       sample: security
     virtual_servers:
       description:
@@ -294,19 +294,19 @@ asm_policies:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: Significant Policy Description
     learning_mode:
       description:
         - Determine how the policy is built.
       returned: changed
-      type: string
+      type: str
       sample: manual
     enforcement_mode:
       description:
         - Specifies whether blocking is active or inactive for the ASM policy.
       returned: changed
-      type: string
+      type: str
       sample: blocking
     trust_xff:
       description:
@@ -318,7 +318,7 @@ asm_policies:
       description:
         - List of custom XFF headers trusted by the system.
       returned: changed
-      type: string
+      type: str
       sample: asm-proxy1
     case_insensitive:
       description:
@@ -350,13 +350,13 @@ asm_policies:
       description:
         - Specifies how the system handles path parameters that are attached to path segments in URIs.
       returned: changed
-      type: string
+      type: str
       sample: ignore
     trigger_asm_irule_event:
       description:
         - Indicates if iRule event is enabled.
       returned: changed
-      type: string
+      type: str
       sample: disabled
     inspect_http_uploads:
       description:
@@ -392,13 +392,13 @@ asm_policies:
       description:
         - The language encoding for the web application.
       returned: changed
-      type: string
+      type: str
       sample: utf-8
     disallowed_geolocations:
       description:
         - Displays countries that may not access the web application.
       returned: changed
-      type: string
+      type: str
       sample: Argentina
     csrf_protection_enabled:
       description:
@@ -431,7 +431,7 @@ asm_policies:
             - Indicates whether to ignore or require one of the specified parameters is present
               in a request when checking if the URL entry matches the request.
           returned: changed
-          type: string
+          type: str
           sample: ignore
         csrf_url_parameters_list:
           description:
@@ -443,31 +443,31 @@ asm_policies:
           description:
             - Specifies an URL to protect.
           returned: changed
-          type: string
+          type: str
           sample: ['/foo.html']
         csrf_url_method:
           description:
             - Method for the specified URL.
           returned: changed
-          type: string
+          type: str
           sample: POST
         csrf_url_enforcement_action:
           description:
             - Indicates the action specified for the system to take when the URL entry matches.
           returned: changed
-          type: string
+          type: str
           sample: none
         csrf_url_id:
           description:
             - Specified the generated ID for the configured CSRF url resource.
           returned: changed
-          type: string
+          type: str
           sample: l0Ckxe-7yHsXp8U5tTgbFQ
         csrf_url_wildcard_order:
           description:
             - Specified the order in which the wildcard URLs are enforced.
           returned: changed
-          type: string
+          type: str
           sample: 1
   sample: hash/dictionary of values
 asm_server_technologies:
@@ -479,13 +479,13 @@ asm_server_technologies:
       description:
         - Displays the generated ID for the server technology resource.
       returned: changed
-      type: string
+      type: str
       sample: l0Ckxe-7yHsXp8U5tTgbFQ
     server_technology_name:
       description:
         - Human friendly name of the server technology resource.
       returned: changed
-      type: string
+      type: str
       sample: Wordpress
     server_technology_references:
       description:
@@ -507,25 +507,25 @@ asm_signature_sets:
       description:
         - Name of the signature set
       returned: changed
-      type: string
+      type: str
       sample: WebSphere signatures
     id:
       description:
         - Displays the generated ID for the signature set resource.
       returned: changed
-      type: string
+      type: str
       sample: l0Ckxe-7yHsXp8U5tTgbFQ
     type:
       description:
         - The method used to select signatures to be a part of the signature set.
       returned: changed
-      type: string
+      type: str
       sample: filter-based
     category:
       description:
         - Displays the category of the signature set.
       returned: changed
-      type: string
+      type: str
       sample: filter-based
     is_user_defined:
       description:
@@ -570,13 +570,13 @@ client_ssl_profiles:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/bigip02.internal
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: bigip02.internal
     alert_timeout:
       description:
@@ -601,13 +601,13 @@ client_ssl_profiles:
       description:
         - Specifies how often the system authenticates a user.
       returned: changed
-      type: string
+      type: str
       sample: once
     ca_file:
       description:
         - Specifies the certificate authority (CA) file name.
       returned: changed
-      type: string
+      type: str
       sample: /Common/default-ca.crt
     cache_size:
       description:
@@ -627,38 +627,38 @@ client_ssl_profiles:
           management system for the purpose of terminating or initiating
           an SSL connection.
       returned: changed
-      type: string
+      type: str
       sample: /Common/default.crt
     chain_file:
       description:
         - Specifies or builds a certificate chain file that a client can
           use to authenticate the profile.
       returned: changed
-      type: string
+      type: str
       sample: /Common/ca-chain.crt
     ciphers:
       description:
         - Specifies a list of cipher names.
       returned: changed
-      type: string
+      type: str
       sample: ['DEFAULT']
     crl_file:
       description:
         - Specifies the certificate revocation list file name.
       returned: changed
-      type: string
+      type: str
       sample: /Common/default.crl
     parent:
       description:
         - Parent of the profile
       returned: changed
-      type: string
+      type: str
       sample: /Common/clientssl
     description:
       description:
         - Description of the profile.
       returned: changed
-      type: string
+      type: str
       sample: My profile
     modssl_methods:
       description:
@@ -670,7 +670,7 @@ client_ssl_profiles:
       description:
         - Specifies the peer certificate mode.
       returned: changed
-      type: string
+      type: str
       sample: ignore
     sni_require:
       description:
@@ -729,7 +729,7 @@ client_ssl_profiles:
           indication) extension information in ClientHello from a client
           connection.
       returned: changed
-      type: string
+      type: str
       sample: bigip01
     session_ticket:
       description:
@@ -755,7 +755,7 @@ client_ssl_profiles:
       description:
         - Specifies the secure renegotiation mode.
       returned: changed
-      type: string
+      type: str
       sample: require
     handshake_timeout:
       description:
@@ -796,21 +796,21 @@ client_ssl_profiles:
           certification authority key when SSL forward proxy feature is
           enabled.
       returned: changed
-      type: string
+      type: str
     forward_proxy_ca_certificate_file:
       description:
         - Specifies the name of the certificate file that is used as the
           certification authority certificate when SSL forward proxy feature
           is enabled.
       returned: changed
-      type: string
+      type: str
     forward_proxy_ca_key_file:
       description:
         - Specifies the name of the key file that is used as the
           certification authority key when SSL forward proxy feature is
           enabled.
       returned: changed
-      type: string
+      type: str
   sample: hash/dictionary of values
 devices:
   description: Device related facts.
@@ -821,13 +821,13 @@ devices:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/bigip02.internal
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: bigip02.internal
     active_modules:
       description:
@@ -839,91 +839,91 @@ devices:
       description:
         - Media Access Control address (MAC address) of the device.
       returned: changed
-      type: string
+      type: str
       sample: "fa:16:3e:c3:42:6f"
     build:
       description:
         - The minor version information of the total product version.
       returned: changed
-      type: string
+      type: str
       sample: 0.0.1
     chassis_id:
       description:
         - Serial number of the device.
       returned: changed
-      type: string
+      type: str
       sample: 11111111-2222-3333-444444444444
     chassis_type:
       description:
         - Displays the chassis type. The possible values are C(individual) and C(viprion).
       returned: changed
-      type: string
+      type: str
       sample: individual
     comment:
       description:
         - User comments about the device.
       returned: changed
-      type: string
+      type: str
       sample: My device
     configsync_address:
       description:
         - IP address used for configuration synchronization.
       returned: changed
-      type: string
+      type: str
       sample: 10.10.10.10
     contact:
       description:
         - Administrator contact information.
       returned: changed
-      type: string
+      type: str
       sample: The User
     description:
       description:
         - Description of the device.
       returned: changed
-      type: string
+      type: str
       sample: My device
     edition:
       description:
         - Displays the software edition.
       returned: changed
-      type: string
+      type: str
       sample: Point Release 7
     failover_state:
       description:
         - Device failover state.
       returned: changed
-      type: string
+      type: str
       sample: active
     hostname:
       description:
         - Device hostname
       returned: changed
-      type: string
+      type: str
       sample: bigip02.internal
     location:
       description:
         - Specifies the physical location of the device.
       returned: changed
-      type: string
+      type: str
       sample: London
     management_address:
       description:
         - IP address of the management interface.
       returned: changed
-      type: string
+      type: str
       sample: 3.3.3.3
     marketing_name:
       description:
         - Marketing name of the device platform.
       returned: changed
-      type: string
+      type: str
       sample: BIG-IP Virtual Edition
     multicast_address:
       description:
         - Specifies the multicast IP address used for failover.
       returned: changed
-      type: string
+      type: str
       sample: 4.4.4.4
     optional_modules:
       description:
@@ -935,25 +935,25 @@ devices:
       description:
         - Displays the device platform identifier.
       returned: changed
-      type: string
+      type: str
       sample: Z100
     primary_mirror_address:
       description:
         - Specifies the IP address used for state mirroring.
       returned: changed
-      type: string
+      type: str
       sample: 5.5.5.5
     product:
       description:
         - Displays the software product name.
       returned: changed
-      type: string
+      type: str
       sample: BIG-IP
     secondary_mirror_address:
       description:
         - Secondary IP address used for state mirroring.
       returned: changed
-      type: string
+      type: str
       sample: 2.2.2.2
     self:
       description:
@@ -965,7 +965,7 @@ devices:
       description:
         - Displays the software version number.
       returned: changed
-      type: string
+      type: str
       sample: 13.1.0.7
     timelimited_modules:
       description:
@@ -977,7 +977,7 @@ devices:
       description:
         - Displays the time zone configured on the device.
       returned: changed
-      type: string
+      type: str
       sample: UTC
     unicast_addresses:
       description:
@@ -989,7 +989,7 @@ devices:
           description:
             - The IP address that peers can use to reach this unicast address IP.
           returned: changed
-          type: string
+          type: str
           sample: 5.4.3.5
         effective_port:
           description:
@@ -1001,7 +1001,7 @@ devices:
           description:
             - The IP address that the failover daemon will listen on for packets from its peers.
           returned: changed
-          type: string
+          type: str
           sample: 5.4.3.5
         port:
           description:
@@ -1019,13 +1019,13 @@ device_groups:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/fasthttp
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: fasthttp
     autosync_enabled:
       description:
@@ -1037,7 +1037,7 @@ device_groups:
       description:
         - Description of the device group.
       returned: changed
-      type: string
+      type: str
       sample: My device group
     devices:
       description:
@@ -1068,7 +1068,7 @@ device_groups:
       description:
         - Specifies the type of device group.
       returned: changed
-      type: string
+      type: str
       sample: sync-only
     asm_sync_enabled:
       description:
@@ -1086,41 +1086,41 @@ external_monitors:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/external
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: external
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: external
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My monitor
     destination:
       description:
         - Specifies the IP address and service port of the resource that is
           the destination of this monitor.
-      type: string
+      type: str
       sample: "*:*"
     args:
       description:
         - Specifies any command-line arguments that the script requires.
-      type: string
+      type: str
       sample: arg1 arg2 arg3
     external_program:
       description:
         - Specifies the name of the file for the monitor to use.
-      type: string
+      type: str
       sample: /Common/arg_example
     variables:
       description:
@@ -1168,13 +1168,13 @@ fasthttp_profiles:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/fasthttp
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: fasthttp
     client_close_timeout:
       description:
@@ -1227,13 +1227,13 @@ fasthttp_profiles:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: fasthttp
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My profile
     force_http_1_0_response:
       description:
@@ -1247,7 +1247,7 @@ fasthttp_profiles:
         - A string that the system inserts as a header in an HTTP request. If the header
           exists already, the system does not replace it.
       returned: changed
-      type: string
+      type: str
       sample: "X-F5-Authentication: foo"
     http_1_1_close_workarounds:
       description:
@@ -1328,7 +1328,7 @@ fasthttp_profiles:
         - How the system handles closing connections. Values provided may be C(enabled), C(disabled),
           or C(fast).
       returned: changed
-      type: string
+      type: str
       sample: enabled
   sample: hash/dictionary of values
 fastl4_profiles:
@@ -1340,13 +1340,13 @@ fastl4_profiles:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/fastl4
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: fastl4
     client_timeout:
       description:
@@ -1363,13 +1363,13 @@ fastl4_profiles:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: fastl4
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My profile
     explicit_flow_migration:
       description:
@@ -1406,7 +1406,7 @@ fastl4_profiles:
         - When C(set), sets the outgoing packet's IP Header DF bit.
         - When C(clear), clears the outgoing packet's IP Header DF bit.
       returned: changed
-      type: string
+      type: str
       sample: pmtu
     ip_tos_to_client:
       description:
@@ -1414,7 +1414,7 @@ fastl4_profiles:
         - This option specifies the ToS level that the traffic management
           system assigns to IP packets when sending them to clients.
       returned: changed
-      type: string or int
+      type: str or int
       sample: 200
     ip_tos_to_server:
       description:
@@ -1422,7 +1422,7 @@ fastl4_profiles:
         - This option specifies the ToS level that the traffic management system assigns
           to IP packets when sending them to servers.
       returned: changed
-      type: string or int
+      type: str or int
       sample: pass-through
     ttl_mode:
       description:
@@ -1436,7 +1436,7 @@ fastl4_profiles:
         - When C(set), sets the outgoing IP Header TTL value to a specific value(as
           specified by C(ttl_v4) or C(ttl_v6).
       returned: changed
-      type: string
+      type: str
       sample: preserve
     ttl_v4:
       description:
@@ -1530,7 +1530,7 @@ fastl4_profiles:
       description:
         - Specifies the Packet Velocity(r) ASIC acceleration policy.
       returned: changed
-      type: string
+      type: str
       sample: full
     pva_dynamic_client_packets:
       description:
@@ -1574,7 +1574,7 @@ fastl4_profiles:
         - When C(establish), implies TCP 3WAY handshaking or UDP CS round trip are
           confirmed.
       returned: changed
-      type: string
+      type: str
       sample: embryonic
     reassemble_fragments:
       description:
@@ -1688,13 +1688,13 @@ fastl4_profiles:
       description:
         - Specifies how you want to handle the TCP timestamp.
       returned: changed
-      type: string
+      type: str
       sample: preserve
     tcp_window_scale_mode:
       description:
         - Specifies how you want to handle the TCP window scale.
       returned: changed
-      type: string
+      type: str
       sample: preserve
     timeout_recovery:
       description:
@@ -1705,7 +1705,7 @@ fastl4_profiles:
         - When C(fallback), the normal FastL4 load-balancing methods are acceptable
           to pick a server.
       returned: changed
-      type: string
+      type: str
       sample: fallback
   sample: hash/dictionary of values
 gateway_icmp_monitors:
@@ -1717,25 +1717,25 @@ gateway_icmp_monitors:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/gateway_icmp
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: gateway_icmp
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: gateway_icmp
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My monitor
     adaptive:
       description:
@@ -1746,7 +1746,7 @@ gateway_icmp_monitors:
       description:
         - Specifies whether the adaptive-divergence-value is C(relative) or
           C(absolute).
-      type: string
+      type: str
       sample: relative
     adaptive_divergence_value:
       description:
@@ -1770,7 +1770,7 @@ gateway_icmp_monitors:
       description:
         - Specifies the IP address and service port of the resource that is
           the destination of this monitor.
-      type: string
+      type: str
       sample: "*:*"
     interval:
       description:
@@ -1821,19 +1821,19 @@ gtm_pools:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/pool1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: pool1
     alternate_mode:
       description:
         - The load balancing mode that the system uses to load balance name resolution
           requests among the members of the pool.
-      type: string
+      type: str
       sample: drop-packet
     dynamic_ratio:
       description:
@@ -1854,12 +1854,12 @@ gtm_pools:
         - Specifies the load balancing mode that the system uses to load balance
           name resolution amongst the pool members if the preferred and alternate
           modes are unsuccessful in picking a pool.
-      type: string
+      type: str
     load_balancing_mode:
       description:
         - Specifies the preferred load balancing mode that the system uses to load
           balance requests across pool members.
-      type: string
+      type: str
     manual_resume:
       description:
         - Whether manual resume is enabled for this pool
@@ -1941,18 +1941,18 @@ gtm_servers:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/server1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: server1
     datacenter:
       description:
         - Full name of the datacenter this server belongs to.
-      type: string
+      type: str
     enabled:
       description:
         - Whether the server is enabled.
@@ -2023,7 +2023,7 @@ gtm_servers:
     link_discovery:
       description:
         - Specifies whether the system auto-discovers the links for this server.
-      type: string
+      type: str
     monitors:
       description:
         - Specifies health monitors that the system uses to determine whether this
@@ -2035,7 +2035,7 @@ gtm_servers:
       description:
         - Whether one or monitors need to pass, or all monitors need to pass.
       returned: changed
-      type: string
+      type: str
       sample: and_list
     product:
       description:
@@ -2050,7 +2050,7 @@ gtm_servers:
     virtual_server_discovery:
       description:
         - Whether the system auto-discovers the virtual servers for this server.
-      type: string
+      type: str
     addresses:
       description:
         - Specifies the server IP addresses for the server.
@@ -2076,13 +2076,13 @@ gtm_wide_ips:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/wide1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: wide1
     description:
       description:
@@ -2143,25 +2143,25 @@ http_monitors:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/http
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: http
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: http
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My monitor
     adaptive:
       description:
@@ -2172,7 +2172,7 @@ http_monitors:
       description:
         - Specifies whether the adaptive-divergence-value is C(relative) or
           C(absolute).
-      type: string
+      type: str
       sample: relative
     adaptive_divergence_value:
       description:
@@ -2196,7 +2196,7 @@ http_monitors:
       description:
         - Specifies the IP address and service port of the resource that is
           the destination of this monitor.
-      type: string
+      type: str
       sample: "*:*"
     interval:
       description:
@@ -2220,14 +2220,14 @@ http_monitors:
       description:
         - Specifies the text string that the monitor looks for in the
           returned resource.
-      type: string
+      type: str
       sample: check string
     receive_disable_string:
       description:
         - Specifies a text string that the monitor looks for in the returned
           resource. If the text string is matched in the returned resource,
           the corresponding node or pool member is marked session disabled.
-      type: string
+      type: str
       sample: check disable string
     reverse:
       description:
@@ -2240,7 +2240,7 @@ http_monitors:
       description:
         - Specifies the text string that the monitor sends to the target
           object.
-      type: string
+      type: str
       sample: "GET /\\r\\n"
     time_until_up:
       description:
@@ -2269,7 +2269,7 @@ http_monitors:
       description:
         - Specifies the username, if the monitored target requires
           authentication.
-      type: string
+      type: str
       sample: user1
   sample: hash/dictionary of values
 https_monitors:
@@ -2281,25 +2281,25 @@ https_monitors:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/http
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: http
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: http
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My monitor
     adaptive:
       description:
@@ -2310,7 +2310,7 @@ https_monitors:
       description:
         - Specifies whether the adaptive-divergence-value is C(relative) or
           C(absolute).
-      type: string
+      type: str
       sample: relative
     adaptive_divergence_value:
       description:
@@ -2334,7 +2334,7 @@ https_monitors:
       description:
         - Specifies the IP address and service port of the resource that is
           the destination of this monitor.
-      type: string
+      type: str
       sample: "*:*"
     interval:
       description:
@@ -2358,14 +2358,14 @@ https_monitors:
       description:
         - Specifies the text string that the monitor looks for in the
           returned resource.
-      type: string
+      type: str
       sample: check string
     receive_disable_string:
       description:
         - Specifies a text string that the monitor looks for in the returned
           resource. If the text string is matched in the returned resource,
           the corresponding node or pool member is marked session disabled.
-      type: string
+      type: str
       sample: check disable string
     reverse:
       description:
@@ -2378,12 +2378,12 @@ https_monitors:
       description:
         - Specifies the text string that the monitor sends to the target
           object.
-      type: string
+      type: str
       sample: "GET /\\r\\n"
     ssl_profile:
       description:
         - Specifies the SSL profile to use for the HTTPS monitor.
-      type: string
+      type: str
       sample: /Common/serverssl
     time_until_up:
       description:
@@ -2412,7 +2412,7 @@ https_monitors:
       description:
         - Specifies the username, if the monitored target requires
           authentication.
-      type: string
+      type: str
       sample: user1
   sample: hash/dictionary of values
 http_profiles:
@@ -2424,25 +2424,25 @@ http_profiles:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/http
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: http
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: http
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My profile
     accept_xff:
       description:
@@ -2467,7 +2467,7 @@ http_profiles:
           exceeded by the client.
         - When C(reject), rejects the connection.
       returned: changed
-      type: string
+      type: str
       sample: reject
     excess_server_headers:
       description:
@@ -2475,7 +2475,7 @@ http_profiles:
           exceeded by the server.
         - When C(reject), rejects the connection.
       returned: changed
-      type: string
+      type: str
       sample: reject
     known_methods:
       description:
@@ -2512,33 +2512,33 @@ http_profiles:
         - Specifies the pass-through behavior when the C(max_header_size) value
           is exceeded by the client.
       returned: changed
-      type: string
+      type: str
       sample: reject
     oversize_server_headers:
       description:
         - Specifies the pass-through behavior when the C(max_header_size) value
           is exceeded by the server.
       returned: changed
-      type: string
+      type: str
       sample: reject
     pipeline_action:
       description:
         - Enables or disables HTTP/1.1 pipelining.
       returned: changed
-      type: string
+      type: str
       sample: allow
     unknown_method:
       description:
         - Specifies the behavior (allow, reject, or pass through) when an unknown
           HTTP method is parsed.
       returned: changed
-      type: string
+      type: str
       sample: allow
     default_connect_handling:
       description:
         - Specifies the behavior of the proxy service when handling outbound requests.
       returned: changed
-      type: string
+      type: str
       sample: deny
     hsts_include_subdomains:
       description:
@@ -2577,32 +2577,32 @@ http_profiles:
       description:
         - Specifies the proxy mode for this profile. Either reverse, explicit, or transparent.
       returned: changed
-      type: string
+      type: str
       sample: reverse
     redirect_rewrite:
       description:
         - Specifies whether the system rewrites the URIs that are part of HTTP
           redirect (3XX) responses
       returned: changed
-      type: string
+      type: str
       sample: none
     request_chunking:
       description:
         - Specifies how the system handles HTTP content that is chunked by a client.
       returned: changed
-      type: string
+      type: str
       sample: preserve
     response_chunking:
       description:
         - Specifies how the system handles HTTP content that is chunked by a server.
       returned: changed
-      type: string
+      type: str
       sample: selective
     server_agent_name:
       description:
         - Specifies the string used as the server name in traffic generated by LTM.
       returned: changed
-      type: string
+      type: str
       sample: BigIP
     sflow_poll_interval:
       description:
@@ -2621,14 +2621,14 @@ http_profiles:
         - Specifies whether to Remove, Preserve, or Append Via headers included in
           a client request to an origin web server.
       returned: changed
-      type: string
+      type: str
       sample: preserve
     via_response:
       description:
         - Specifies whether to Remove, Preserve, or Append Via headers included in
           an origin web server response to a client.
       returned: changed
-      type: string
+      type: str
       sample: preserve
   sample: hash/dictionary of values
 iapp_services:
@@ -2640,19 +2640,19 @@ iapp_services:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/service1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: service1
     device_group:
       description:
         - The device group the iApp service is part of.
       returned: changed
-      type: string
+      type: str
       sample: /Common/dg1
     inherited_device_group:
       description:
@@ -2683,7 +2683,7 @@ iapp_services:
       description:
         - Traffic group the service is a part of.
       returned: changed
-      type: string
+      type: str
       sample: /Common/tg
     tables:
       description:
@@ -2713,7 +2713,7 @@ iapp_services:
       description:
         - Description of the service
       returned: changed
-      type: string
+      type: str
       sample: My service
   sample: hash/dictionary of values
 icmp_monitors:
@@ -2725,25 +2725,25 @@ icmp_monitors:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/icmp
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: icmp
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: icmp
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My monitor
     adaptive:
       description:
@@ -2754,7 +2754,7 @@ icmp_monitors:
       description:
         - Specifies whether the adaptive-divergence-value is C(relative) or
           C(absolute).
-      type: string
+      type: str
       sample: relative
     adaptive_divergence_value:
       description:
@@ -2778,7 +2778,7 @@ icmp_monitors:
       description:
         - Specifies the IP address and service port of the resource that is
           the destination of this monitor.
-      type: string
+      type: str
       sample: "*:*"
     interval:
       description:
@@ -2826,45 +2826,45 @@ interfaces:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/irul1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: irule1
     active_media_type:
       description:
         - Displays the current media setting for the interface.
       returned: changed
-      type: string
+      type: str
       sample: 100TX-FD
     flow_control:
       description:
         - Specifies how the system controls the sending of PAUSE frames for
           flow control.
       returned: changed
-      type: string
+      type: str
       sample: tx-rx
     description:
       description:
         - Description of the interface
       returned: changed
-      type: string
+      type: str
       sample: My interface
     bundle:
       description:
         - The bundle capability on the port.
       returned: changed
-      type: string
+      type: str
       sample: not-supported
     bundle_speed:
       description:
         - The bundle-speed on the port when bundle capability is
           enabled.
       returned: changed
-      type: string
+      type: str
       sample: 100G
     enabled:
       description:
@@ -2883,20 +2883,20 @@ interfaces:
         - Displays the 6-byte ethernet address in non-case-sensitive
           hexadecimal colon notation.
       returned: changed
-      type: string
+      type: str
       sample: "00:0b:09:88:00:9a"
     media_sfp:
       description:
         - The settings for an SFP (pluggable) interface.
       returned: changed
-      type: string
+      type: str
       sample: auto
     lldp_admin:
       description:
         - Sets the sending or receiving of LLDP packets on that interface.
           Should be one of C(disable), C(txonly), C(rxonly) or C(txrx).
       returned: changed
-      type: string
+      type: str
       sample: txonly
     mtu:
       description:
@@ -2911,7 +2911,7 @@ interfaces:
         - Indicates which side of a combo port the interface uses, if both
           sides of the port have the potential for external links.
       returned: changed
-      type: string
+      type: str
       sample: sfp
     sflow_poll_interval:
       description:
@@ -2943,7 +2943,7 @@ interfaces:
       description:
         - Specifies the STP link type for the interface.
       returned: changed
-      type: string
+      type: str
       sample: auto
   sample: hash/dictionary of values
 irules:
@@ -2955,13 +2955,13 @@ irules:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/irul1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: irule1
     ignore_verification:
       description:
@@ -2973,19 +2973,19 @@ irules:
       description:
         - Checksum of the iRule as calculated by BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: d41d8cd98f00b204e9800998ecf8427e
     definition:
       description:
         - The actual definition of the iRule.
       returned: changed
-      type: string
+      type: str
       sample: when HTTP_REQUEST ...
     signature:
       description:
         - The calculated signature of the iRule.
       returned: changed
-      type: string
+      type: str
       sample: WsYy2M6xMqvosIKIEH/FSsvhtWMe6xKOA6i7f...
   sample: hash/dictionary of values
 ltm_pools:
@@ -3045,7 +3045,7 @@ ltm_pools:
       description:
         - The availability of the pool.
       returned: changed
-      type: string
+      type: str
       sample: offline
     allow_nat:
       description:
@@ -3065,7 +3065,7 @@ ltm_pools:
           based on the targeted pool.
         - Values can range from C(0) to C(255), or be set to C(pass-through) or C(mimic).
       returned: changed
-      type: string
+      type: str
       sample: pass-through
     client_link_qos:
       description:
@@ -3073,7 +3073,7 @@ ltm_pools:
           based on the targeted pool.
         - Values can range from C(0) to C(7), or be set to C(pass-through).
       returned: changed
-      type: string
+      type: str
       sample: pass-through
     current_sessions:
       descriptions:
@@ -3085,19 +3085,19 @@ ltm_pools:
       description:
         - Description of the pool.
       returned: changed
-      type: string
+      type: str
       sample: my pool
     enabled_status:
       description:
         - The enabled-ness of the pool.
       returned: changed
-      type: string
+      type: str
       sample: enabled
     full_path:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/pool1
     ignore_persisted_weight:
       description:
@@ -3109,7 +3109,7 @@ ltm_pools:
       description:
         - Load balancing method used by the pool.
       returned: changed
-      type: string
+      type: str
       sample: round-robin
     member_count:
       description:
@@ -3141,7 +3141,7 @@ ltm_pools:
         - The action to take if the C(minimum_up_members_checking) is enabled and the number of active pool
           members falls below the number specified in C(minimum_up_members).
       returned: changed
-      type: string
+      type: str
       sample: failover
     minimum_up_members_checking:
       description:
@@ -3153,7 +3153,7 @@ ltm_pools:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: pool1
     pool_avg_queue_entry_age:
       description:
@@ -3223,7 +3223,7 @@ ltm_pools:
           can be considered a generalization of all available sessions, instead of the
           specific value of the session.
       returned: changed
-      type: string
+      type: str
       sample: monitor-enabled
     real_state:
       description:
@@ -3232,7 +3232,7 @@ ltm_pools:
           can be considered a generalization of all available states, instead of the
           specific value of the state.
       returned: changed
-      type: string
+      type: str
       sample: up
     reselect_tries:
       description:
@@ -3244,19 +3244,19 @@ ltm_pools:
       description:
         - The Type of Service (ToS) level to use when sending packets to a server.
       returned: changed
-      type: string
+      type: str
       sample: pass-through
     server_link_qos:
       description:
         - The Quality of Service (QoS) level to use when sending packets to a server.
       returned: changed
-      type: string
+      type: str
       sample: pass-through
     service_down_action:
       description:
         - The action to take if the service specified in the pool is marked down.
       returned: changed
-      type: string
+      type: str
       sample: none
     server_side_bits_in:
       description:
@@ -3312,7 +3312,7 @@ ltm_pools:
       description:
         - If there is a problem with the status of the pool, that problem is reported here.
       returned: changed
-      type: string
+      type: str
       sample: The children pool member(s) are down.
     members:
       description: List of LTM (Local Traffic Manager) pools.
@@ -3322,7 +3322,7 @@ ltm_pools:
         address:
           description: IP address of the pool member.
           returned: changed
-          type: string
+          type: str
           sample: 1.1.1.1
         connection_limit:
           description: The maximum number of concurrent connections allowed for a pool member.
@@ -3332,7 +3332,7 @@ ltm_pools:
         description:
           description: The description of the pool member.
           returned: changed
-          type: string
+          type: str
           sample: pool member 1
         dynamic_ratio:
           description:
@@ -3357,7 +3357,7 @@ ltm_pools:
             - Full name of the resource as known to BIG-IP.
             - Includes the port in the name
           returned: changed
-          type: string
+          type: str
           sample: "/Common/member:80"
         inherit_profile:
           description:
@@ -3381,13 +3381,13 @@ ltm_pools:
           description:
             - Relative name of the resource in BIG-IP.
           returned: changed
-          type: string
+          type: str
           sample: "member:80"
         partition:
           description:
             - Partition that the member exists on.
           returned: changed
-          type: string
+          type: str
           sample: Common
         priority_group:
           description:
@@ -3399,7 +3399,7 @@ ltm_pools:
           description:
             - The encapsulation profile to use for the pool member.
           returned: changed
-          type: string
+          type: str
           sample: ip4ip4
         rate_limit:
           description:
@@ -3417,13 +3417,13 @@ ltm_pools:
           description:
             - Enables or disables the pool member for new sessions.
           returned: changed
-          type: string
+          type: str
           sample: monitor-enabled
         state:
           description:
             - Controls the state of the pool member, overriding any monitors.
           returned: changed
-          type: string
+          type: str
           sample: down
     total_requests:
       description:
@@ -3441,13 +3441,13 @@ nodes:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/5.6.7.8
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: 5.6.7.8
     ratio:
       description:
@@ -3459,7 +3459,7 @@ nodes:
       description:
         - Description of the node.
       returned: changed
-      type: string
+      type: str
       sample: My node
     connection_limit:
       description:
@@ -3471,7 +3471,7 @@ nodes:
       description:
         - IP address of the node.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.4.5
     dynamic_ratio:
       description:
@@ -3490,37 +3490,37 @@ nodes:
         - Status of the node as reported by the monitor(s) associated with it.
         - This value is also used in determining node C(state).
       returned: changed
-      type: string
+      type: str
       sample: down
     session_status:
       description:
         - This value is also used in determining node C(state).
       returned: changed
-      type: string
+      type: str
       sample: enabled
     availability_status:
       description:
         - The availability of the node.
       returned: changed
-      type: string
+      type: str
       sample: offline
     enabled_status:
       description:
         - The enabled-ness of the node.
       returned: changed
-      type: string
+      type: str
       sample: enabled
     status_reason:
       description:
         - If there is a problem with the status of the node, that problem is reported here.
       returned: changed
-      type: string
+      type: str
       sample: /Common/https_443 No successful responses received...
     monitor_rule:
       description:
         - A string representation of the full monitor rule.
       returned: changed
-      type: string
+      type: str
       sample: /Common/https_443 and /Common/icmp
     monitors:
       description:
@@ -3533,7 +3533,7 @@ nodes:
         - The C(monitor_type) field related to the C(bigip_node) module, for this nodes
           monitors.
       returned: changed
-      type: string
+      type: str
       sample: and_list
   sample: hash/dictionary of values
 oneconnect_profiles:
@@ -3545,25 +3545,25 @@ oneconnect_profiles:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/oneconnect
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: oneconnect
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: oneconnect
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My profile
     idle_timeout_override:
       description:
@@ -3583,7 +3583,7 @@ oneconnect_profiles:
           connections from being made until they expire, even if they could
           otherwise be reused.
       returned: changed
-      type: string
+      type: str
       sample: idle
     max_age:
       description:
@@ -3620,7 +3620,7 @@ oneconnect_profiles:
         - Specifies a source IP mask.
         - If no mask is provided, the value C(any6) is used.
       returned: changed
-      type: string
+      type: str
       sample: 255.255.255.0
   sample: hash/dictionary of values
 partitions:
@@ -3632,19 +3632,19 @@ partitions:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: Common
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: Common
     description:
       description:
         - Description of the partition.
       returned: changed
-      type: string
+      type: str
       sample: Tenant 1
     default_route_domain:
       description:
@@ -3663,13 +3663,13 @@ provision_info:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: asm
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: asm
     cpu_ratio:
       description:
@@ -3713,25 +3713,25 @@ self_ips:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/self1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: self1
     description:
       description:
         - Description of the Self-IP.
       returned: changed
-      type: string
+      type: str
       sample: My self-ip
     netmask:
       description:
         - Netmask portion of the IP address. In dotted notation.
       returned: changed
-      type: string
+      type: str
       sample: 255.255.255.0
     netmask_cidr:
       description:
@@ -3749,19 +3749,19 @@ self_ips:
       description:
         - Traffic group the Self-IP is associated with.
       returned: changed
-      type: string
+      type: str
       sample: /Common/traffic-group-local-only
     service_policy:
       description:
         - Service policy assigned to the Self-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/service1
     vlan:
       description:
         - VLAN associated with the Self-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/vlan1
     allow_access_list:
       description:
@@ -3788,32 +3788,32 @@ server_ssl_profiles:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: serverssl
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: serverssl
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My profile
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: serverssl
     alert_timeout:
       description:
         - Maximum time period in seconds to keep the SSL
           session active after alert message is sent, or indefinite.
       returned: changed
-      type: string
+      type: str
       sample: 100
     allow_expired_crl:
       description:
@@ -3825,7 +3825,7 @@ server_ssl_profiles:
       description:
         - Specifies the frequency of authentication.
       returned: changed
-      type: string
+      type: str
       sample: once
     authenticate_depth:
       description:
@@ -3838,7 +3838,7 @@ server_ssl_profiles:
         - Common Name (CN) that is embedded in a server certificate.
         - The system authenticates a server based on the specified CN.
       returned: changed
-      type: string
+      type: str
       sample: foo
     bypass_on_client_cert_fail:
       description:
@@ -3858,14 +3858,14 @@ server_ssl_profiles:
         - Name of the certificate file that is used as the
           certification authority certificate when SSL client certificate
           constrained delegation is enabled.
-      type: string
+      type: str
       sample: /Common/cacert.crt
     c3d_ca_key:
       description:
         - Name of the key file that is used as the
           certification authority key when SSL client certificate
           constrained delegation is enabled.
-      type: string
+      type: str
       sample: /Common/default.key
     c3d_cert_extension_includes:
       description:
@@ -3883,7 +3883,7 @@ server_ssl_profiles:
     ca_file:
       description:
         - Certificate authority file name.
-      type: string
+      type: str
       sample: default.crt
     cache_size:
       description:
@@ -3901,49 +3901,49 @@ server_ssl_profiles:
         - The name of the certificate installed on the traffic
           management system for the purpose of terminating or initiating an
           SSL connection.
-      type: string
+      type: str
       sample: /Common/default.crt
     chain:
       description:
         - Specifies or builds a certificate chain file that a client can use
           to authenticate the profile.
-      type: string
+      type: str
       sample: /Common/default.crt
     cipher_group:
       description:
         - Specifies a cipher group.
-      type: string
+      type: str
     ciphers:
       description:
         - Specifies a cipher name
-      type: string
+      type: str
       sample: DEFAULT
     crl_file:
       description:
         - Specifies the certificate revocation list file name.
-      type: string
+      type: str
     expire_cert_response_control:
       description:
         - Specifies the BIGIP action when the server certificate has
           expired.
-      type: string
+      type: str
       sample: drop
     handshake_timeout:
       description:
         - Specifies the handshake timeout in seconds.
-      type: string
+      type: str
       sample: 10
     key:
       description:
         - Specifies the key file name. Specifies the name of the key
           installed on the traffic management system for the purpose of
           terminating or initiating an SSL connection.
-      type: string
+      type: str
       sample: /Common/default.key
     max_active_handshakes:
       description:
         - Specifies the maximum number allowed SSL active handshakes.
-      type: string
+      type: str
       sample: 100
     mod_ssl_methods:
       description:
@@ -3959,7 +3959,7 @@ server_ssl_profiles:
       description:
         - Specifies the name of ocsp profile for purpose of validating
           status of server certificate.
-      type: string
+      type: str
     options:
       description:
         - Enables options, including some industry-related workarounds.
@@ -3968,7 +3968,7 @@ server_ssl_profiles:
     peer_cert_mode:
       description:
         - Specifies the peer certificate mode.
-      type: string
+      type: str
       sample: ignore
     proxy_ssl:
       description:
@@ -3987,12 +3987,12 @@ server_ssl_profiles:
       description:
         - Number of seconds from the initial connect time
           after which the system renegotiates an SSL session.
-      type: string
+      type: str
       sample: indefinite
     renegotiate_size:
       description:
         - Specifies a throughput size, in megabytes, of SSL renegotiation.
-      type: string
+      type: str
       sample: indefinite
     renegotiation:
       description:
@@ -4013,13 +4013,13 @@ server_ssl_profiles:
     secure_renegotiation:
       description:
         - Specifies the secure renegotiation mode.
-      type: string
+      type: str
       sample: require
     server_name:
       description:
         - Server name to be included in SNI (server name
           indication) extension during SSL handshake in ClientHello.
-      type: string
+      type: str
     session_mirroring:
       description:
         - Enables or disables the mirroring of sessions to high availability
@@ -4060,7 +4060,7 @@ server_ssl_profiles:
         - Specifies SSL sign hash algorithm which is used to sign and verify
           SSL Server Key Exchange and Certificate Verify messages for the
           specified SSL profiles.
-      type: string
+      type: str
       sample: sha1
     ssl_forward_proxy_bypass:
       description:
@@ -4085,7 +4085,7 @@ server_ssl_profiles:
       description:
         - Specifies the BIGIP action when the server certificate has
           untrusted CA.
-      type: string
+      type: str
       sample: drop
   sample: hash/dictionary of values
 software_hotfixes:
@@ -4097,20 +4097,20 @@ software_hotfixes:
       description:
         - Name of the image.
       returned: changed
-      type: string
+      type: str
       sample: Hotfix-BIGIP-13.0.0.3.0.1679-HF3.iso
     full_path:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: Hotfix-BIGIP-13.0.0.3.0.1679-HF3.iso
     build:
       description:
         - Build number of the image.
         - This is usually a sub-string of the C(name).
       returned: changed
-      type: string
+      type: str
       sample: 3.0.1679
     checksum:
       description:
@@ -4118,26 +4118,26 @@ software_hotfixes:
         - Note that this is the checksum that is stored inside the ISO. It is not
           the actual checksum of the ISO.
       returned: changed
-      type: string
+      type: str
       sample: df1ec715d2089d0fa54c0c4284656a98
     product:
       description:
         - Product contained in the ISO.
       returned: changed
-      type: string
+      type: str
       sample: BIG-IP
     id:
       description:
         - ID component of the image.
         - This is usually a sub-string of the C(name).
       returned: changed
-      type: string
+      type: str
       sample: HF3
     title:
       description:
         - Human friendly name of the image.
       returned: changed
-      type: string
+      type: str
       sample: Hotfix Version 3.0.1679
     verified:
       description:
@@ -4150,7 +4150,7 @@ software_hotfixes:
         - Version of software contained in the image.
         - This is a sub-string of the C(name).
       returned: changed
-      type: string
+      type: str
       sample: 13.0.0
   sample: hash/dictionary of values
 software_images:
@@ -4162,26 +4162,26 @@ software_images:
       description:
         - Name of the image.
       returned: changed
-      type: string
+      type: str
       sample: BIGIP-13.1.0.7-0.0.1.iso
     full_path:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: BIGIP-13.1.0.7-0.0.1.iso
     build:
       description:
         - Build number of the image.
         - This is usually a sub-string of the C(name).
       returned: changed
-      type: string
+      type: str
       sample: 0.0.1
     build_date:
       description:
         - Date of the build.
       returned: changed
-      type: string
+      type: str
       sample: "2018-05-05T15:26:30"
     checksum:
       description:
@@ -4189,7 +4189,7 @@ software_images:
         - Note that this is the checksum that is stored inside the ISO. It is not
           the actual checksum of the ISO.
       returned: changed
-      type: string
+      type: str
       sample: df1ec715d2089d0fa54c0c4284656a98
     file_size:
       description:
@@ -4201,13 +4201,13 @@ software_images:
       description:
         - Last modified date of the ISO.
       returned: changed
-      type: string
+      type: str
       sample: "2018-05-05T15:26:30"
     product:
       description:
         - Product contained in the ISO.
       returned: changed
-      type: string
+      type: str
       sample: BIG-IP
     verified:
       description:
@@ -4220,7 +4220,7 @@ software_images:
         - Version of software contained in the image.
         - This is a sub-string of the C(name).
       returned: changed
-      type: string
+      type: str
       sample: 13.1.0.7
   sample: hash/dictionary of values
 software_volumes:
@@ -4241,19 +4241,19 @@ software_volumes:
         - When a hotfix is installed, this refers to the base version of software
           that the hotfix requires.
       returned: changed
-      type: string
+      type: str
       sample: 0.0.6
     build:
       description:
         - Build version of the software installed in the volume.
       returned: changed
-      type: string
+      type: str
       sample: 0.0.6
     full_path:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: HD1.1
     default_boot_location:
       description:
@@ -4266,27 +4266,27 @@ software_volumes:
         - Relative name of the resource in BIG-IP.
         - This usually matches the C(full_name).
       returned: changed
-      type: string
+      type: str
       sample: HD1.1
     product:
       description:
         - The F5 product installed in this slot.
         - This should always be BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: BIG-IP
     status:
       description:
         - Status of the software installed, or being installed, in the volume.
         - When C(complete), indicates that the software has completed installing.
       returned: changed
-      type: string
+      type: str
       sample: complete
     version:
       description:
         - Version of software installed in the volume, excluding the C(build) number.
       returned: changed
-      type: string
+      type: str
       sample: 13.1.0.4
   sample: hash/dictionary of values
 ssl_certs:
@@ -4298,19 +4298,19 @@ ssl_certs:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/cert1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: cert1
     key_type:
       description:
         - Specifies the type of cryptographic key associated with this certificate.
       returned: changed
-      type: string
+      type: str
       sample: rsa-private
     key_size:
       description:
@@ -4322,32 +4322,32 @@ ssl_certs:
       description:
         - Path on the BIG-IP where the cert can be found.
       returned: changed
-      type: string
+      type: str
       sample: /config/ssl/ssl.crt/f5-irule.crt
     sha1_checksum:
       description:
         - SHA1 checksum of the certificate.
       returned: changed
-      type: string
+      type: str
       sample: 1306e84e1e6a2da53816cefe1f684b80d6be1e3e
     subject:
       description:
         - Specifies X509 information of the certificate's subject.
       returned: changed
-      type: string
+      type: str
       sample: "emailAddress=support@f5.com,CN=..."
     last_update_time:
       description:
         - Specifies the last time at which the file-object was
           updated/modified.
       returned: changed
-      type: string
+      type: str
       sample: "2018-05-15T21:11:15Z"
     issuer:
       description:
         - Specifies X509 information of the certificate's issuer.
       returned: changed
-      type: string
+      type: str
       sample: "emailAddress=support@f5.com,...CN=support.f5.com,"
     is_bundle:
       description:
@@ -4360,14 +4360,14 @@ ssl_certs:
       description:
         - Displays the SHA-256 fingerprint of the certificate.
       returned: changed
-      type: string
+      type: str
       sample: "SHA256/88:A3:05:...:59:01:EA:5D:B0"
     expiration_date:
       description:
         - Specifies a string representation of the expiration date of the
           certificate.
       returned: changed
-      type: string
+      type: str
       sample: "Aug 13 21:21:29 2031 GMT"
     expiration_timestamp:
       description:
@@ -4380,7 +4380,7 @@ ssl_certs:
       description:
         - Specifies the time at which the file-object was created.
       returned: changed
-      type: string
+      type: str
       sample: "2018-05-15T21:11:15Z"
   sample: hash/dictionary of values
 ssl_keys:
@@ -4392,20 +4392,20 @@ ssl_keys:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/key1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: key1
     key_type:
       description:
         - Specifies the cryptographic type of the key in question. That is,
           which algorithm this key is compatible with.
       returned: changed
-      type: string
+      type: str
       sample: rsa-private
     key_size:
       description:
@@ -4418,19 +4418,19 @@ ssl_keys:
       description:
         - Specifies the type of security used to handle or store the key.
       returned: changed
-      type: string
+      type: str
       sample: normal
     system_path:
       description:
         - The path on the filesystem where the key is stored.
       returned: changed
-      type: string
+      type: str
       sample: /config/ssl/ssl.key/default.key
     sha1_checksum:
       description:
         - The SHA1 checksum of the key.
       returned: changed
-      type: string
+      type: str
       sample: 1fcf7de3dd8e834d613099d8e10b2060cd9ecc9f
   sample: hash/dictionary of values
 system_db:
@@ -4442,37 +4442,37 @@ system_db:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: vendor.wwwurl
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: vendor.wwwurl
     default:
       description:
         - Default value of the key.
       returned: changed
-      type: string
+      type: str
       sample: www.f5.com
     scf_config:
       description:
         - Whether the database key would be found in an SCF config or not.
       returned: changed
-      type: string
+      type: str
       sample: false
     value:
       description:
         - The value of the key
       returned: changed
-      type: string
+      type: str
       sample: www.f5.com
     value_range:
       description:
         - The accepted range of values for the key
       returned: changed
-      type: string
+      type: str
       sample: string
   sample: hash/dictionary of values
 system_info:
@@ -4484,13 +4484,13 @@ system_info:
       description:
         - Media Access Control address (MAC address) of the device.
       returned: changed
-      type: string
+      type: str
       sample: "fa:16:3e:c3:42:6f"
     marketing_name:
       description:
         - Marketing name of the device platform.
       returned: changed
-      type: string
+      type: str
       sample: BIG-IP Virtual Edition
     time:
       description:
@@ -4543,17 +4543,17 @@ system_info:
         model:
           description:
             - The model of the hardware.
-          type: string
+          type: str
           sample: Virtual Disk
         name:
           description:
             - The name of the hardware.
-          type: string
+          type: str
           sample: HD1
         type:
           description:
             - The type of hardware.
-          type: string
+          type: str
           sample: physical-disk
         versions:
           description:
@@ -4563,38 +4563,38 @@ system_info:
             name:
               description:
                 - Name of the property
-              type: string
+              type: str
               sample: Size
             version:
               description:
                 - Value of the property
-              type: string
+              type: str
               sample: 154.00G
     package_edition:
       description:
         - Displays the software edition.
       returned: changed
-      type: string
+      type: str
       sample: Point Release 7
     package_version:
       description:
         - A string combining the C(product_build) and C(product_build_date).
-      type: string
+      type: str
       sample: "Build 0.0.1 - Tue May 15 15:26:30 PDT 2018"
     product_code:
       description:
         - Code identifying the product.
-      type: string
+      type: str
       sample: BIG-IP
     product_build:
       description:
         - Build version of the release version.
-      type: string
+      type: str
       sample: 0.0.1
     product_version:
       description:
         - Major product version of the running software.
-      type: string
+      type: str
       sample: 13.1.0.7
     product_built:
       description:
@@ -4604,7 +4604,7 @@ system_info:
     product_build_date:
       description:
         - Human readable build date.
-      type: string
+      type: str
       sample: "Tue May 15 15:26:30 PDT 2018"
     product_changelist:
       description:
@@ -4619,29 +4619,29 @@ system_info:
     chassis_serial:
       description:
         - Serial of the chassis
-      type: string
+      type: str
       sample: 11111111-2222-3333-444444444444
     host_board_part_revision:
       description:
         - Revision of the host board.
-      type: string
+      type: str
     host_board_serial:
       description:
         - Serial of the host board.
-      type: string
+      type: str
     platform:
       description:
         - Platform identifier.
-      type: string
+      type: str
       sample: Z100
     switch_board_part_revision:
       description:
         - Switch board revision.
-      type: string
+      type: str
     switch_board_serial:
       description:
         - Serial of the switch board.
-      type: string
+      type: str
     uptime:
       description:
         - Time, in seconds, since the system booted.
@@ -4657,25 +4657,25 @@ tcp_monitors:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/tcp
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: tcp
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: tcp
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My monitor
     adaptive:
       description:
@@ -4686,7 +4686,7 @@ tcp_monitors:
       description:
         - Specifies whether the adaptive-divergence-value is C(relative) or
           C(absolute).
-      type: string
+      type: str
       sample: relative
     adaptive_divergence_value:
       description:
@@ -4710,7 +4710,7 @@ tcp_monitors:
       description:
         - Specifies the IP address and service port of the resource that is
           the destination of this monitor.
-      type: string
+      type: str
       sample: "*:*"
     interval:
       description:
@@ -4770,31 +4770,31 @@ tcp_half_open_monitors:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/tcp
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: tcp
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: tcp
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My monitor
     destination:
       description:
         - Specifies the IP address and service port of the resource that is
           the destination of this monitor.
-      type: string
+      type: str
       sample: "*:*"
     interval:
       description:
@@ -4842,25 +4842,25 @@ tcp_profiles:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: tcp
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/tcp
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: tcp
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My profile
     abc:
       description:
@@ -4903,7 +4903,7 @@ tcp_profiles:
           after entering the LAST-ACK state.
         - When C(indefinite), specifies that TCP connections in the LAST-ACK state
           do not close until they meet the maximum retransmissions timeout.
-      type: string
+      type: str
       sample: indefinite
     congestion_metrics_cache:
       description:
@@ -4926,7 +4926,7 @@ tcp_profiles:
         - Return values may include, C(high-speed), C(cdg), C(chd), C(none), C(cubic),
           C(illinois), C(new-reno), C(reno), C(scalable), C(vegas), C(westwood), and
           C(woodside).
-      type: string
+      type: str
       sample: high-speed
     deferred_accept:
       description:
@@ -4992,19 +4992,19 @@ tcp_profiles:
       description:
         - Specifies the length of time that a TCP connection is in the FIN-WAIT-1 or
           CLOSING state before quitting.
-      type: string
+      type: str
       sample: indefinite
     fin_wait_2:
       description:
         - Specifies the length of time that a TCP connection is in the FIN-WAIT-2 state
           before quitting.
-      type: string
+      type: str
       sample: 100
     idle_timeout:
       description:
         - Specifies the length of time that a connection is idle (has no traffic) before
           the connection is eligible for deletion.
-      type: string
+      type: str
       sample: 300
     initial_congestion_window_size:
       description:
@@ -5020,18 +5020,18 @@ tcp_profiles:
       description:
         - Specifies the Don't Fragment (DF) bit setting in the IP Header of the outgoing
           TCP packet.
-      type: string
+      type: str
       sample: pmtu
     ip_tos:
       description:
         - Specifies the L3 Type of Service (ToS) level that the system inserts in TCP
           packets destined for clients.
-      type: string
+      type: str
       sample: mimic
     time_to_live:
       description:
         - Specifies the outgoing TCP packet's IP Header TTL mode.
-      type: string
+      type: str
       sample: proxy
     time_to_live_v4:
       description:
@@ -5047,7 +5047,7 @@ tcp_profiles:
       description:
         - Specifies how frequently the system sends data over an idle TCP
           connection, to determine whether the connection is still valid.
-      type: string
+      type: str
       sample: 50
     limited_transmit_recovery:
       description:
@@ -5060,7 +5060,7 @@ tcp_profiles:
       description:
         - Specifies the L2 Quality of Service (QoS) level that the system inserts
           in TCP packets destined for clients.
-      type: string
+      type: str
       sample: 200
     max_segment_retrans:
       description:
@@ -5114,7 +5114,7 @@ tcp_profiles:
       description:
         - Specifies an action on fallback, that is, when MPTCP transitions
           to regular TCP, because something prevents MPTCP from working correctly.
-      type: string
+      type: str
       sample: reset
     mptcp_fast_join:
       description:
@@ -5218,7 +5218,7 @@ tcp_profiles:
     push_flag:
       description:
         - Specifies how the BIG-IP system receives ACKs.
-      type: string
+      type: str
       sample: default
     rate_pace:
       description:
@@ -5311,7 +5311,7 @@ tcp_profiles:
       description:
         - Specifies the length of time that a TCP connection remains in the
           TIME-WAIT state before entering the CLOSED state.
-      type: string
+      type: str
       sample: 2000
     timestamps:
       description:
@@ -5329,7 +5329,7 @@ tcp_profiles:
       description:
         - Specifies the timeout in milliseconds for terminating a connection
           with an effective zero length TCP transmit window.
-      type: string
+      type: str
       sample: 2000
   sample: hash/dictionary of values
 traffic_groups:
@@ -5341,19 +5341,19 @@ traffic_groups:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/tg1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: tg1
     description:
       description:
         - Description of the traffic group.
       returned: changed
-      type: string
+      type: str
       sample: My traffic group
     auto_failback_enabled:
       description:
@@ -5394,7 +5394,7 @@ traffic_groups:
       description:
         - Specifies a MAC address for the traffic group.
       returned: changed
-      type: string
+      type: str
       sample: "00:98:76:54:32:10"
   sample: hash/dictionary of values
 trunks:
@@ -5406,19 +5406,19 @@ trunks:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/trunk1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: trunk1
     description:
       description:
         - Description of the Trunk.
       returned: changed
-      type: string
+      type: str
       sample: My trunk
     media_speed:
       description:
@@ -5430,7 +5430,7 @@ trunks:
       description:
         - The operation mode for LACP.
       returned: changed
-      type: string
+      type: str
       sample: passive
     lacp_enabled:
       description:
@@ -5461,7 +5461,7 @@ trunks:
         - The LACP policy that the trunk uses to determine which member link can handle
           new traffic.
       returned: changed
-      type: string
+      type: str
       sample: maximum-bandwidth
     lacp_timeout:
       description:
@@ -5481,7 +5481,7 @@ trunks:
         - The system uses this hash to determine which interface to use for forwarding
           traffic.
       returned: changed
-      type: string
+      type: str
       sample: src-dst-ipport
     configured_member_count:
       description:
@@ -5499,25 +5499,25 @@ udp_profiles:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: udp
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/udp
     parent:
       description:
         - Profile from which this profile inherits settings.
       returned: changed
-      type: string
+      type: str
       sample: udp
     description:
       description:
         - Description of the resource.
       returned: changed
-      type: string
+      type: str
       sample: My profile
     allow_no_payload:
       description:
@@ -5563,7 +5563,7 @@ udp_profiles:
         - When C(set), sets the outgoing UDP packet DF bit.
         - When C(clear), clears the outgoing UDP packet DF bit.
       returned: changed
-      type: string
+      type: str
       sample: pmtu
     ip_tos_to_client:
       description:
@@ -5571,7 +5571,7 @@ udp_profiles:
           system assigns to UDP packets when sending them to clients.
         - May be numeric, or the values C(pass-through) or C(mimic).
       returned: changed
-      type: string
+      type: str
       sample: mimic
     ip_ttl_mode:
       description:
@@ -5584,7 +5584,7 @@ udp_profiles:
         - When C(set), set the IP TTL with the specified values in C(ip_ttl_v4) and
           C(ip_ttl_v6) values in the same profile.
       returned: changed
-      type: string
+      type: str
       sample: proxy
     ip_ttl_v4:
       description:
@@ -5604,7 +5604,7 @@ udp_profiles:
           UDP packets when sending them to clients.
         - May be either numberic, or the value C(pass-through).
       returned: changed
-      type: string
+      type: str
       sample: pass-through
     no_checksum:
       description:
@@ -5631,13 +5631,13 @@ vcmp_guests:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: guest1
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: guest1
     allowed_slots:
       description:
@@ -5667,37 +5667,37 @@ vcmp_guests:
       description:
         - FQDN assigned to the guest.
       returned: changed
-      type: string
+      type: str
       sample: guest1.localdomain
     hotfix_image:
       description:
         - hotfix image to install onto any of this guest's newly created virtual disks.
       returned: changed
-      type: string
+      type: str
       sample: Hotfix-BIGIP-12.1.3.4-0.0.2-hf1.iso
     initial_image:
       description:
         - Software image to install onto any of this guest's newly created virtual disks.
       returned: changed
-      type: string
+      type: str
       sample: BIGIP-12.1.3.4-0.0.2.iso
     mgmt_route:
       description:
         - Management gateway IP address for the guest.
       returned: changed
-      type: string
+      type: str
       sample: 2.2.2.1
     mgmt_address:
       description:
         - Management IP address configuration for the guest.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.2.3
     mgmt_network:
       description:
         - Accessibility of this vCMP guest's management network.
       returned: changed
-      type: string
+      type: str
       sample: bridged
     min_number_of_slots:
       description:
@@ -5716,7 +5716,7 @@ vcmp_guests:
       description:
         - The SSL hardware allocation mode for the guest.
       returned: changed
-      type: string
+      type: str
       sample: shared
     state:
       description:
@@ -5724,13 +5724,13 @@ vcmp_guests:
         - May be one of C(configured), C(provisioned), or C(deployed).
         - Each state implies the actions of all states before it.
       returned: changed
-      type: string
+      type: str
       sample: provisioned
     virtual_disk:
       description:
         - The filename of the virtual disk to use for this guest.
       returned: changed
-      type: string
+      type: str
       sample: guest1.img
   sample: hash/dictionary of values
 virtual_addresses:
@@ -5742,19 +5742,19 @@ virtual_addresses:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/2.3.4.5
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.4.5
     address:
       description:
         - The virtual IP address.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.4.5
     arp_enabled:
       description:
@@ -5780,7 +5780,7 @@ virtual_addresses:
       description:
         - The description of the virtual address.
       returned: changed
-      type: string
+      type: str
       sample: My virtual address
     enabled:
       description:
@@ -5806,7 +5806,7 @@ virtual_addresses:
       description:
         - Netmask of the virtual address.
       returned: changed
-      type: string
+      type: str
       sample: 255.255.255.255
     route_advertisement:
       description:
@@ -5818,7 +5818,7 @@ virtual_addresses:
       description:
         - Traffic group on which the virtual address is active.
       returned: changed
-      type: string
+      type: str
       sample: /Common/traffic-group-1
     spanning:
       description:
@@ -5842,19 +5842,19 @@ virtual_servers:
       description:
         - The availability of the virtual server.
       returned: changed
-      type: string
+      type: str
       sample: offline
     full_path:
       description:
         - Full name of the resource as known to BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: /Common/2.3.4.5
     name:
       description:
         - Relative name of the resource in BIG-IP.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.4.5
     auto_lasthop:
       description:
@@ -5862,14 +5862,14 @@ virtual_servers:
           that transmitted the request, even if the routing table points to a different
           network or interface.
       returned: changed
-      type: string
+      type: str
       sample: default
     bw_controller_policy:
       description:
         - The bandwidth controller for the system to use to enforce a throughput policy
           for incoming network traffic.
       returned: changed
-      type: string
+      type: str
       sample: /Common/bw1
     client_side_bits_in:
       description:
@@ -5935,7 +5935,7 @@ virtual_servers:
       description:
         - The clustered-multiprocessing mode.
       returned: changed
-      type: string
+      type: str
       sample: all-cpus
     connection_limit:
       description:
@@ -5947,7 +5947,7 @@ virtual_servers:
       description:
         - The description of the virtual server.
       returned: changed
-      type: string
+      type: str
       sample: My virtual
     enabled:
       description:
@@ -6103,21 +6103,21 @@ virtual_servers:
       description:
         - SYN Cookies Status
       returned: changed
-      type: string
+      type: str
       sample: not-activated
     fallback_persistence_profile:
       description:
         - Fallback persistence profile for the virtual server to use
           when the default persistence profile is not available.
       returned: changed
-      type: string
+      type: str
       sample: /Common/fallback1
     persistence_profile:
       description:
         - The persistence profile you want the system to use as the default
           for this virtual server.
       returned: changed
-      type: string
+      type: str
       sample: /Common/persist1
     translate_port:
       description:
@@ -6142,14 +6142,14 @@ virtual_servers:
         - Name of the virtual address and service on which the virtual server
           listens for connections.
       returned: changed
-      type: string
+      type: str
       sample: /Common/2.2.3.3%1:76
     last_hop_pool:
       description:
         - Name of the last hop pool that you want the virtual
           server to use to direct reply traffic to the last hop router.
       returned: changed
-      type: string
+      type: str
       sample: /Common/pool1
     nat64_enabled:
       description:
@@ -6161,25 +6161,25 @@ virtual_servers:
       description:
         - Specifies whether the system preserves the source port of the connection.
       returned: changed
-      type: string
+      type: str
       sample: preserve
     ip_intelligence_policy:
       description:
         - IP Intelligence policy assigned to the virtual
       returned: changed
-      type: string
+      type: str
       sample: /Common/ip1
     protocol:
       description:
         - IP protocol for which you want the virtual server to direct traffic.
       returned: changed
-      type: string
+      type: str
       sample: tcp
     default_pool:
       description:
         - Pool name that you want the virtual server to use as the default pool.
       returned: changed
-      type: string
+      type: str
       sample: /Common/pool1
     rate_limit_mode:
       description:
@@ -6187,7 +6187,7 @@ virtual_servers:
           per source address, per destination address, or some combination
           thereof.
       returned: changed
-      type: string
+      type: str
       sample: object
     rate_limit_source_mask:
       description:
@@ -6207,19 +6207,19 @@ virtual_servers:
         - Specifies the type of source address translation associated
           with the specified virtual server.
       returned: changed
-      type: string
+      type: str
       sample: none
     snat_pool:
       description:
         - Specifies the name of a LSN or SNAT pool used by the specified virtual server.
       returned: changed
-      type: string
+      type: str
       sample: /Common/pool1
     status_reason:
       description:
         - If there is a problem with the status of the virtual, that problem is reported here.
       returned: changed
-      type: string
+      type: str
       sample: The children pool member(s) either don't have service checking...
     gtm_score:
       description:
@@ -6233,7 +6233,7 @@ virtual_servers:
           virtual server to use to enforce a throughput policy for incoming
           network traffic.
       returned: changed
-      type: string
+      type: str
     rate_limit_destination_mask:
       description:
         - Specifies a mask, in bits, to be applied to the destination
@@ -6246,7 +6246,7 @@ virtual_servers:
         - Specifies an IP address or network from which the virtual server
           will accept traffic.
       returned: changed
-      type: string
+      type: str
       sample: 0.0.0./0
     authentication_profile:
       description:
@@ -6277,13 +6277,13 @@ virtual_servers:
       description:
         - Virtual server type.
       returned: changed
-      type: string
+      type: str
       sample: standard
     destination_address:
       description:
         - Address portion of the C(destination).
       returned: changed
-      type: string
+      type: str
       sample: 2.3.3.2
     destination_port:
       description:
@@ -6301,19 +6301,19 @@ virtual_servers:
             - Which side of the connection the profile affects; either C(all),
               C(client-side) or C(server-side).
           returned: changed
-          type: string
+          type: str
           sample: client-side
         full_path:
           description:
             - Full name of the resource as known to BIG-IP.
           returned: changed
-          type: string
+          type: str
           sample: /Common/tcp
         name:
           description:
             - Relative name of the resource in BIG-IP.
           returned: changed
-          type: string
+          type: str
           sample: tcp
     total_requests:
       description:
@@ -6332,25 +6332,25 @@ vlans:
         - Allows the system to send return traffic to the MAC address that transmitted the
           request, even if the routing table points to a different network or interface.
       returned: changed
-      type: string
+      type: str
       sample: enabled
     cmp_hash_algorithm:
       description:
         - Specifies how the traffic on the VLAN will be disaggregated.
       returned: changed
-      type: string
+      type: str
       sample: default
     description:
       description:
         - Description of the VLAN.
       returned: changed
-      type: string
+      type: str
       sample: My vlan
     failsafe_action:
       description:
         - Action for the system to take when the fail-safe mechanism is triggered.
       returned: changed
-      type: string
+      type: str
       sample: reboot
     failsafe_enabled:
       description:
@@ -6377,7 +6377,7 @@ vlans:
         - Whether switch ports placed in the VLAN are configured for switch learning,
           forwarding only, or dropped.
       returned: changed
-      type: string
+      type: str
       sample: enable-forward
     interfaces:
       description:
@@ -6389,13 +6389,13 @@ vlans:
           description:
             - Full name of the resource as known to BIG-IP.
           returned: changed
-          type: string
+          type: str
           sample: 1.3
         name:
           description:
             - Relative name of the resource in BIG-IP.
           returned: changed
-          type: string
+          type: str
           sample: 1.3
         tagged:
           description:
@@ -6445,7 +6445,7 @@ vlans:
       description:
         - Media access control (MAC) address for the lowest-numbered interface assigned to this VLAN.
       returned: changed
-      type: string
+      type: str
       sample: "fa:16:3e:10:da:ff"
     tag:
       description:
