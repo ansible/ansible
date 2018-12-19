@@ -28,7 +28,7 @@ short_description: HttpApi Plugin for Checkpoint devices
 description:
   - This HttpApi plugin provides methods to connect to Checkpoint
     devices over a HTTP(S)-based api.
-version_added: "2.7"
+version_added: "2.8"
 """
 
 import json
