@@ -1118,7 +1118,7 @@ def decode_response(response, module):
     return response
 
 
-# TODO(alexstephen): Implement updating metadata on exsiting resources.
+# TODO(alexstephen): Implement updating metadata on existing resources.
 
 # Expose instance 'metadata' as a simple name/value pair hash. However the API
 # defines metadata as a NestedObject with the following layout:
