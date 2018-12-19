@@ -42,7 +42,7 @@
   register: pids
     
 - name: "Reading pid from the file"
-  command: "cat {{ ansible_facts.env['PWD'] }}/obtainpid.txt"
+  command: cat {{ ansible_facts.env['PWD'] }}/obtainpid.txt
   register: newpid
 
 - name: "Verify that the Process IDs (PIDs) returned is not empty and also equal to the PIDs obtained in console"
