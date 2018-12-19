@@ -619,7 +619,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 else:
                     load_balancer_id = "{0}/".format(load_balancer.id) if load_balancer else None
                     backend_address_pool_id = backend_address_pool[0].get('id')
-                    if bool(load_balancer_id) != bool(backend_address_pool_id) and not backend_address_pool_id.startswith(load_balancer_id):
+                    if bool(load_balancer_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(load_balancer_id):
                         differences.append('load_balancer')
                         changed = True
 
@@ -742,12 +742,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             [self.compute_models.SshPublicKey(path=key['path'], key_data=key['key_data']) for key in self.ssh_public_keys]
                         vmss_resource.virtual_machine_profile.os_profile.linux_configuration.ssh = ssh_config
 
-                    if support_lb_change:
-                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
-                         .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
-                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
-                         .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
-
                     if self.data_disks:
                         data_disks = []
 
@@ -782,6 +776,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
                     vmss_resource.overprovision = self.overprovision
+
+                    if support_lb_change:
+                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                         .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
+                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                         .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
 
                     if self.data_disks is not None:
                         data_disks = []
