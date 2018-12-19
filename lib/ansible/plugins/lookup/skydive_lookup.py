@@ -68,3 +68,4 @@ class LookupModule(LookupBase):
         except Exception as exc:
             raise AnsibleError(to_text(exc))
         return [result]
+
