@@ -1,0 +1,2 @@
+bugfixes:
+    - correct behaviour of verify_file for vmware inventory plugin, it was always returning True

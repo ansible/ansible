@@ -229,13 +229,19 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             if path.endswith(('vmware.yaml', 'vmware.yml')):
                 valid = True
 
+        return valid
+
+    def parse(self, inventory, loader, path, cache=True):
+        """
+        Parses the inventory file
+        """
+
         if not HAS_REQUESTS:
             raise AnsibleParserError('Please install "requests" Python module as this is required'
                                      ' for VMware Guest dynamic inventory plugin.')
         elif not HAS_PYVMOMI:
             raise AnsibleParserError('Please install "PyVmomi" Python module as this is required'
                                      ' for VMware Guest dynamic inventory plugin.')
-
         if HAS_REQUESTS:
             # Pyvmomi 5.5 and onwards requires requests 2.3
             # https://github.com/vmware/pyvmomi/blob/master/requirements.txt
@@ -250,14 +256,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 raise AnsibleParserError("'requests' library version should"
                                          " be >= %s, found: %s." % (".".join([str(w) for w in required_version]),
                                                                     requests.__version__))
-            valid = True
 
-        return valid
-
-    def parse(self, inventory, loader, path, cache=True):
-        """
-        Parses the inventory file
-        """
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
         cache_key = self.get_cache_key(path)
