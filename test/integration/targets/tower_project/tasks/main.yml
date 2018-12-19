@@ -47,3 +47,32 @@
     organization: Default
     scm_type: git
     scm_url: https://github.com/ansible/ansible
+
+- name: "Create {{ item }}"
+  tower_organization:
+    name: "{{ item }}"
+  loop:
+    - TestOrg1
+    - TestOrg2
+
+- name: "Create credential"
+  tower_credential:
+    kind: scm
+    name: TestCred1
+    organization: "{{ item }}"
+  loop:
+    - TestOrg2
+    - TestOrg1
+
+- name: Create project TestProject
+  tower_project:
+    name: TestProject
+    organization: TestOrg1
+    scm_type: git
+    scm_url: "https://github.com/ansible/ansible"
+    scm_credential: TestCred1
+  register: multi_org_cred_project
+
+- assert:
+    that:
+      - "multi_org_cred_project is changed"
