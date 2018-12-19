@@ -15,9 +15,16 @@ class VultrCloudProvider(CloudProvider):
     """Checks if a configuration file has been passed or fixtures are going to be used for testing"""
 
     def __init__(self, args):
+        """
+        :type args: TestConfig
+        """
         super(VultrCloudProvider, self).__init__(args, config_extension='.ini')
 
     def filter(self, targets, exclude):
+        """Filter out the cloud tests when the necessary config and resources are not available.
+        :type targets: tuple[TestTarget]
+        :type exclude: list[str]
+        """
         if os.path.isfile(self.config_static_path):
             return
 
@@ -49,7 +56,6 @@ class VultrCloudEnvironment(CloudEnvironment):
         changes = dict(
             VULTR_API_KEY=parser.get('default', 'key'),
         )
-
         env.update(changes)
 
         cmd.append('-e')
