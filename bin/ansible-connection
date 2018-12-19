@@ -90,7 +90,7 @@ class ConnectionProcess(object):
             messages = list()
             result = {}
 
-            messages.append('control socket path is %s' % self.socket_path)
+            messages.append(('vvvv', 'control socket path is %s' % self.socket_path))
 
             # If this is a relative path (~ gets expanded later) then plug the
             # key's path on to the directory we originally came from, so we can
@@ -100,17 +100,18 @@ class ConnectionProcess(object):
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     ansible_playbook_pid=self._ansible_playbook_pid)
             self.connection.set_options(var_options=variables)
+
             self.connection._connect()
 
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
-            messages.extend(sys.stdout.getvalue().splitlines())
-            messages.append('connection to remote device started successfully')
+            messages.extend([('vvvv', msg) for msg in sys.stdout.getvalue().splitlines()])
+            messages.append(('vvvv', 'connection to remote device started successfully'))
 
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.bind(self.socket_path)
             self.sock.listen(1)
-            messages.append('local domain socket listeners started successfully')
+            messages.append(('vvvv', 'local domain socket listeners started successfully'))
         except Exception as exc:
             result['error'] = to_text(exc)
             result['exception'] = traceback.format_exc()
@@ -256,7 +257,7 @@ def main():
 
         with file_lock(lock_path):
             if not os.path.exists(socket_path):
-                messages.append('local domain socket does not exist, starting it')
+                messages.append(('vvvv', 'local domain socket does not exist, starting it'))
                 original_path = os.getcwd()
                 r, w = os.pipe()
                 pid = fork_process()
@@ -268,7 +269,7 @@ def main():
                         process = ConnectionProcess(wfd, play_context, socket_path, original_path, ansible_playbook_pid)
                         process.start(variables)
                     except Exception:
-                        messages.append(traceback.format_exc())
+                        messages.append(('error', traceback.format_exc()))
                         rc = 1
 
                     if rc == 0:
@@ -286,12 +287,12 @@ def main():
                     result.update(data)
 
             else:
-                messages.append('found existing local domain socket, using it!')
+                messages.append(('vvvv', 'found existing local domain socket, using it!'))
                 conn = Connection(socket_path)
                 conn.set_options(var_options=variables)
                 pc_data = to_text(init_data)
                 try:
-                    messages.extend(conn.update_play_context(pc_data))
+                    conn.update_play_context(pc_data)
                 except Exception as exc:
                     # Only network_cli has update_play context, so missing this is
                     # not fatal e.g. netconf
@@ -303,7 +304,8 @@ def main():
                             'exception': traceback.format_exc()
                         })
 
-    messages.append(sys.stdout.getvalue())
+    messages.extend(Connection(socket_path).pop_messages())
+    messages.append(('vvvv', sys.stdout.getvalue()))
     result.update({
         'messages': messages,
         'socket_path': socket_path
