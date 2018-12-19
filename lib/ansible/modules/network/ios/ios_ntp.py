@@ -277,14 +277,14 @@ def map_obj_to_commands(want, have, module):
 
 def main():
 
-    argument_spec = dict()
-        server=dict(type='str'),
-        source_int=dict(type='str'),
-        acl=dict(type='str'),
+    argument_spec = dict(
+        server=dict(),
+        source_int=dict(),
+        acl=dict(),
         logging=dict(type='bool', choices=[True, False], default=False),
         auth=dict(type='bool', choices=[True, False], default=False),
-        auth_key=dict(type='str'),
-        key_id=dict(type='str'),
+        auth_key=dict(),
+        key_id=dict(),
         state=dict(choices=['absent', 'present'], default='present')
     )
 
