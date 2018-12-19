@@ -16,7 +16,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import signal
+import multiprocessing
+import multiprocessing.pool as mp
 
 # timeout function to make sure some fact gathering
 # steps do not exceed a time limit
@@ -30,24 +31,25 @@ class TimeoutError(Exception):
 
 
 def timeout(seconds=None, error_message="Timer expired"):
-
+    """
+    Timeout decorator to expire after a set number of seconds.  This raises an
+    ansible.module_utils.facts.TimeoutError if the timeout is hit before the
+    function completes.
+    """
     def decorator(func):
-        def _handle_timeout(signum, frame):
-            msg = 'Timer expired after %s seconds' % globals().get('GATHER_TIMEOUT')
-            raise TimeoutError(msg)
-
         def wrapper(*args, **kwargs):
-            local_seconds = seconds
-            if local_seconds is None:
-                local_seconds = globals().get('GATHER_TIMEOUT') or DEFAULT_GATHER_TIMEOUT
-            signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.alarm(local_seconds)
+            timeout_value = seconds
+            if timeout_value is None:
+                timeout_value = globals().get('GATHER_TIMEOUT') or DEFAULT_GATHER_TIMEOUT
 
+            pool = mp.ThreadPool(processes=1)
+            res = pool.apply_async(func, args, kwargs)
+            pool.close()
             try:
-                result = func(*args, **kwargs)
-            finally:
-                signal.alarm(0)
-            return result
+                return res.get(timeout_value)
+            except multiprocessing.TimeoutError:
+                # This is an ansible.module_utils.common.facts.timeout.TimeoutError
+                raise TimeoutError('Timer expired after %s seconds' % timeout_value)
 
         return wrapper
 
