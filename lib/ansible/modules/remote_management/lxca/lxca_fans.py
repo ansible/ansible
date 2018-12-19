@@ -77,7 +77,7 @@ EXAMPLES = '''
 RETURN = r'''
 result:
     description: fans detail from lxca
-    returned: always
+    returned: success
     type: dict
     sample:
       fanList:
