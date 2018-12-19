@@ -18,10 +18,24 @@ options:
             - Network address of NTP server.
     source_int:
         description:
-            - Interface for sourcing NTP packets.
+            - Source interface for NTP packets.
     acl:
         description:
             - ACL for peer/server access restricition.
+    logging:
+        description:
+            - Enable NTP logs. Data type boolean.
+        default: False
+        choices: [True,False]
+    auth:
+        description:
+            - Enable NTP authentication. Data type boolean.
+    auth_key:
+        description:
+            - md5 NTP authentication key of tye 7.
+    key_id:
+        description:
+            - auth_key id. Datat type string
     state:
         description:
             - Manage the state of the resource.
@@ -32,10 +46,14 @@ options:
 EXAMPLES = '''
 # Set NTP Server with parameters
 - ios_ntp:
-    server: 8.8.8.8
+    server: 10.0.255.10
     source_int: Loopback0
     acl: NTP_ACL
-    state: absent
+    logging: true
+    key_id: 10
+    auth_key: 15435A030726242723273C21181319000A
+    auth: true
+    state: present
     provider: "{{ staging }}"
 '''
 
@@ -44,8 +62,7 @@ commands:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["ntp server 192.0.2.2 prefer key 48",
-             "no ntp source-interface ethernet2/1", "ntp source 192.0.2.3"]
+    sample: ["no ntp server 10.0.255.10", "no ntp source Loopback0"]
 changed:
     description: check to see if a change was made on the device
     returned: always
@@ -82,12 +99,41 @@ def parse_acl(line, dest):
             acl = match.group(4)
             return acl
 
+def parse_logging(line, dest):
+    if dest == 'logging':
+        logging = dest
+        return logging
+
+
+def parse_auth_key(line, dest):
+    if dest == 'authentication-key':
+        match = re.search(r'(ntp authentication-key \d+ md5 )(\w+)', line, re.M)
+        if match:
+            auth_key = match.group(2)
+            return auth_key
+
+
+def parse_key_id(line, dest):
+    if dest == 'trusted-key':
+        match = re.search(r'(ntp trusted-key )(\d+)', line, re.M)
+        if match:
+            auth_key = match.group(2)
+            return auth_key
+
+
+def parse_auth(dest):
+    if dest == 'authenticate':
+            return dest
+
 
 def map_config_to_obj(module):
+
     obj_dict = {}
     obj = []
     server_list = []
+
     config = get_config(module, flags=['| include ntp'])
+
     for line in config.splitlines():
         match = re.search(r'ntp (\S+)', line, re.M)
         if match:
@@ -96,6 +142,10 @@ def map_config_to_obj(module):
             server = parse_server(line, dest)
             source_int = parse_source_int(line, dest)
             acl = parse_acl(line, dest)
+            logging = parse_logging(line, dest)
+            auth  = parse_auth(dest)
+            auth_key = parse_auth_key(line, dest)
+            key_id = parse_key_id(line, dest)
 
             if server:
                 server_list.append(server)
@@ -103,6 +153,14 @@ def map_config_to_obj(module):
                 obj_dict['source_int'] = source_int
             if acl:
                 obj_dict['acl'] = acl
+            if logging:
+                obj_dict['logging'] = True
+            if auth:
+                obj_dict['auth'] = True
+            if auth_key:
+                obj_dict['auth_key'] = auth_key
+            if key_id:
+                obj_dict['key_id'] = key_id
 
     obj_dict['server'] = server_list
     obj.append(obj_dict)
@@ -116,45 +174,97 @@ def map_params_to_obj(module):
         'state': module.params['state'],
         'server': module.params['server'],
         'source_int': module.params['source_int'],
-        'acl': module.params['acl']
+        'logging': module.params['logging'],
+        'acl': module.params['acl'],
+        'auth': module.params['auth'],
+        'auth_key': module.params['auth_key'],
+        'key_id': module.params['key_id']
     })
 
     return obj
 
 
 def map_obj_to_commands(want, have, module):
+
     commands = list()
-    server_have = have[0]['server']
+
+    try:
+        server_have = have[0]['server']
+    except KeyError:
+        source_int_have = None
+
     try:
         source_int_have = have[0]['source_int']
     except KeyError:
         source_int_have = None
+
     try:
         acl_have = have[0]['acl']
     except KeyError:
         acl_have = None
 
+    try:
+        logging_have = have[0]['logging']
+    except KeyError:
+        logging_have = None
+
+    try:
+        auth_have = have[0]['auth']
+    except KeyError:
+        auth_have = None
+
+    try:
+        auth_key_have = have[0]['auth_key']
+    except KeyError:
+        auth_key_have = None
+
+    try:
+        key_id_have = have[0]['key_id']
+    except KeyError:
+        key_id_have = None
+
     for w in want:
         server = w['server']
         source_int = w['source_int']
         acl = w['acl']
+        logging = w['logging']
         state = w['state']
+        auth = w['auth']
+        auth_key = w['auth_key']
+        key_id = w['key_id']
+
 
         if state == 'absent':
-            if server in server_have:
+            if server_have and server in server_have:
                 commands.append('no ntp server {0}'.format(server))
             if source_int and source_int_have:
                 commands.append('no ntp source {0}'.format(source_int))
             if acl and acl_have:
                 commands.append('no ntp access-group peer {0}'.format(acl))
+            if logging == True and logging_have:
+                commands.append('no ntp logging')
+            if auth == True and auth_have:
+                commands.append('no ntp authenticate'.format(key_id))
+            if key_id and key_id_have:
+                commands.append('no ntp trusted-key {0}'.format(key_id))
+            if auth_key and auth_key_have:
+                commands.append('no ntp authentication-key {0} md5 {1} 7'.format(key_id, auth_key))
 
         elif state == 'present':
-            if server not in server_have:
+            if server is not None and server not in server_have:
                 commands.append('ntp server {0}'.format(server))
-            if source_int != source_int_have:
+            if source_int is not None and source_int!= source_int_have:
                 commands.append('ntp source {0}'.format(source_int))
-            if acl != acl_have:
+            if acl is not None and acl != acl_have:
                 commands.append('ntp access-group peer {0}'.format(acl))
+            if logging != logging_have and logging is not False:
+                commands.append('ntp logging')
+            if auth !=auth_have and auth is not False:
+                commands.append('ntp authenticate'.format(key_id))
+            if key_id != key_id_have:
+                commands.append('ntp trusted-key {0}'.format(key_id))
+            if auth_key != auth_key_have:
+                commands.append('ntp authentication-key {0} md5 {1} 7'.format(key_id, auth_key))
 
     return commands
 
@@ -165,15 +275,19 @@ def main():
         server=dict(type='str'),
         source_int=dict(type='str'),
         acl=dict(type='str'),
+        logging=dict(type='bool', default=False),
+        auth=dict(type='bool', default=False),
+        auth_key=dict(type='str'),
+        key_id=dict(type='str'),
         state=dict(choices=['absent', 'present'], default='present')
-    )
+        )
 
     argument_spec.update(ios_argument_spec)
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True
-    )
+        )
 
     result = {'changed': False}
 
@@ -187,6 +301,10 @@ def main():
 
     commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
+
+    # enable for debug purpose only
+    # result['have'] = have
+    # result['want'] = want
 
     if commands:
         if not module.check_mode:
