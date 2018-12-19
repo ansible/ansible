@@ -280,20 +280,17 @@ def main():
               unsafe_perm=unsafe_perm, state=state)
 
     changed = False
-    if ci is True:
-        npm.ci_install()
-        changed = True
     if state == 'present':
         installed, missing = npm.list()
         if missing:
             changed = True
-            npm.install()
+            npm.install() if not ci else npm.ci_install()
     elif state == 'latest':
         installed, missing = npm.list()
         outdated = npm.list_outdated()
         if missing:
             changed = True
-            npm.install()
+            npm.install() if not ci else npm.ci_install()
         if outdated:
             changed = True
             npm.update()
