@@ -2,6 +2,10 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 DOCUMENTATION = '''
 ---
 module: ios_ntp
@@ -26,10 +30,12 @@ options:
         description:
             - Enable NTP logs. Data type boolean.
         default: False
-        choices: [True,False]
+        choices: [True, False]
     auth:
         description:
             - Enable NTP authentication. Data type boolean.
+        default: False
+        choices: [True, False]
     auth_key:
         description:
             - md5 NTP authentication key of tye 7.
@@ -40,7 +46,7 @@ options:
         description:
             - Manage the state of the resource.
         default: present
-        choices: ['present','absent']
+        choices: ['present', 'absent']
 '''
 
 EXAMPLES = '''
@@ -99,6 +105,7 @@ def parse_acl(line, dest):
             acl = match.group(4)
             return acl
 
+
 def parse_logging(line, dest):
     if dest == 'logging':
         logging = dest
@@ -143,7 +150,7 @@ def map_config_to_obj(module):
             source_int = parse_source_int(line, dest)
             acl = parse_acl(line, dest)
             logging = parse_logging(line, dest)
-            auth  = parse_auth(dest)
+            auth = parse_auth(dest)
             auth_key = parse_auth_key(line, dest)
             key_id = parse_key_id(line, dest)
 
@@ -233,7 +240,6 @@ def map_obj_to_commands(want, have, module):
         auth_key = w['auth_key']
         key_id = w['key_id']
 
-
         if state == 'absent':
             if server_have and server in server_have:
                 commands.append('no ntp server {0}'.format(server))
@@ -241,10 +247,10 @@ def map_obj_to_commands(want, have, module):
                 commands.append('no ntp source {0}'.format(source_int))
             if acl and acl_have:
                 commands.append('no ntp access-group peer {0}'.format(acl))
-            if logging == True and logging_have:
+            if logging is True and logging_have:
                 commands.append('no ntp logging')
-            if auth == True and auth_have:
-                commands.append('no ntp authenticate'.format(key_id))
+            if auth is True and auth_have:
+                commands.append('no ntp authenticate')
             if key_id and key_id_have:
                 commands.append('no ntp trusted-key {0}'.format(key_id))
             if auth_key and auth_key_have:
@@ -253,14 +259,14 @@ def map_obj_to_commands(want, have, module):
         elif state == 'present':
             if server is not None and server not in server_have:
                 commands.append('ntp server {0}'.format(server))
-            if source_int is not None and source_int!= source_int_have:
+            if source_int is not None and source_int != source_int_have:
                 commands.append('ntp source {0}'.format(source_int))
             if acl is not None and acl != acl_have:
                 commands.append('ntp access-group peer {0}'.format(acl))
             if logging != logging_have and logging is not False:
                 commands.append('ntp logging')
-            if auth !=auth_have and auth is not False:
-                commands.append('ntp authenticate'.format(key_id))
+            if auth != auth_have and auth is not False:
+                commands.append('ntp authenticate')
             if key_id != key_id_have:
                 commands.append('ntp trusted-key {0}'.format(key_id))
             if auth_key != auth_key_have:
@@ -271,23 +277,23 @@ def map_obj_to_commands(want, have, module):
 
 def main():
 
-    argument_spec = dict(
+    argument_spec = dict()
         server=dict(type='str'),
         source_int=dict(type='str'),
         acl=dict(type='str'),
-        logging=dict(type='bool', default=False),
-        auth=dict(type='bool', default=False),
+        logging=dict(type='bool', choices=[True, False], default=False),
+        auth=dict(type='bool', choices=[True, False], default=False),
         auth_key=dict(type='str'),
         key_id=dict(type='str'),
         state=dict(choices=['absent', 'present'], default='present')
-        )
+    )
 
     argument_spec.update(ios_argument_spec)
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True
-        )
+    )
 
     result = {'changed': False}
 
