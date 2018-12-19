@@ -74,8 +74,9 @@ options:
         type: bool
     save:
         description:
-            - "If I(true) network configuration will be persistent, otherwise it is temporary. Since Ansible 2.8 I(true) is the default."
+            - "If I(true) network configuration will be persistent, otherwise it is temporary. Default I(true) since Ansible 2.8."
         type: bool
+        default: True
     sync_networks:
         description:
             - "If I(true) all networks will be synchronized before modification"
