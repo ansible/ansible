@@ -131,7 +131,6 @@ options:
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.connection import NetworkConnectionBase
-from ansible.utils.display import Display
 
 try:
     from napalm import get_network_driver
@@ -139,8 +138,6 @@ try:
     HAS_NAPALM = True
 except ImportError:
     HAS_NAPALM = False
-
-display = Display()
 
 
 class Connection(NetworkConnectionBase):
@@ -168,7 +165,7 @@ class Connection(NetworkConnectionBase):
                     'Unable to automatically determine host network os. Please '
                     'manually configure ansible_network_os value for this host'
                 )
-            display.display('network_os is set to %s' % self._network_os, log_only=True)
+            self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
             try:
                 driver = get_network_driver(self._network_os)
@@ -186,7 +183,7 @@ class Connection(NetworkConnectionBase):
             self.napalm.open()
 
             self._sub_plugin = {'type': 'external', 'name': 'napalm', 'obj': self.napalm}
-            display.vvvv('created napalm device for network_os %s' % self._network_os, host=host)
+            self.queue_message('vvvv', 'created napalm device for network_os %s' % self._network_os)
             self._connected = True
 
     def close(self):

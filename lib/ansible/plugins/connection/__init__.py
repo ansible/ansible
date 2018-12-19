@@ -291,6 +291,7 @@ class NetworkConnectionBase(ConnectionBase):
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
+        self._messages = []
 
         self._network_os = self._play_context.network_os
 
@@ -319,6 +320,20 @@ class NetworkConnectionBase(ConnectionBase):
     def exec_command(self, cmd, in_data=None, sudoable=True):
         return self._local.exec_command(cmd, in_data, sudoable)
 
+    def queue_message(self, level, message):
+        """
+        Adds a message to the queue of messages waiting to be pushed back to the controller process.
+
+        :arg level: A string which can either be the name of a method in display, or 'log'. When
+            the messages are returned to task_executor, a value of log will correspond to
+            ``display.display(message, log_only=True)``, while another value will call ``display.[level](message)``
+        """
+        self._messages.append((level, message))
+
+    def pop_messages(self):
+        messages, self._messages = self._messages, []
+        return messages
+
     def put_file(self, in_path, out_path):
         """Transfer a file from local to remote"""
         return self._local.put_file(in_path, out_path)
@@ -332,9 +347,9 @@ class NetworkConnectionBase(ConnectionBase):
         Reset the connection
         '''
         if self._socket_path:
-            display.vvvv('resetting persistent connection for socket_path %s' % self._socket_path, host=self._play_context.remote_addr)
+            self.queue_message('vvvv', 'resetting persistent connection for socket_path %s' % self._socket_path)
             self.close()
-        display.vvvv('reset call on connection instance', host=self._play_context.remote_addr)
+        self.queue_message('vvvv', 'reset call on connection instance')
 
     def close(self):
         if self._connected:
