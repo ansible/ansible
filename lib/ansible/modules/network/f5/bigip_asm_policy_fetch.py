@@ -73,7 +73,7 @@ EXAMPLES = r'''
   bigip_asm_policy_fetch:
     name: foobar
     file: export_foo
-    dst: /root/download
+    dest: /root/download
     binary: yes
     provider:
       password: secret
@@ -96,7 +96,7 @@ EXAMPLES = r'''
   bigip_asm_policy_fetch:
     name: foobar
     file: export_foo
-    dst: /root/download
+    dest: /root/download
     provider:
       password: secret
       server: lb.mydomain.com
@@ -107,7 +107,7 @@ EXAMPLES = r'''
   bigip_asm_policy_fetch:
     name: foobar
     file: export_foo.xml
-    dst: /root/download/
+    dest: /root/download/
     compact: yes
     provider:
       password: secret
@@ -118,7 +118,7 @@ EXAMPLES = r'''
 - name: Export policy in binary format, autogenerate name
   bigip_asm_policy_fetch:
     name: foobar
-    dst: /root/download/
+    dest: /root/download/
     binary: yes
     provider:
       password: secret
@@ -133,7 +133,7 @@ name:
   returned: changed
   type: str
   sample: Asm_APP1_Transparent
-dst:
+dest:
   description: Local path to download exported ASM policy.
   returned: changed
   type: str
@@ -242,7 +242,9 @@ class ModuleParameters(Parameters):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        query = '?$filter=name+eq+{0}+and+partition+eq+{1}&$select=name'.format(self.want.name, self.want.partition)
+        query = "?$filter=contains(name,'{0}')+and+contains(partition,'{1}')&$select=name,partition".format(
+            self.want.name, self.want.partition
+        )
         resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
@@ -532,7 +534,9 @@ class ModuleManager(object):
             self.client.provider['server'],
             self.client.provider['server_port'],
         )
-        query = '?$filter=name+eq+{0}+and+partition+eq+{1}&$select=name'.format(self.want.name, self.want.partition)
+        query = "?$filter=contains(name,'{0}')+and+contains(partition,'{1}')&$select=name,partition".format(
+            self.want.name, self.want.partition
+        )
         resp = self.client.api.get(uri + query)
         try:
             response = resp.json()
