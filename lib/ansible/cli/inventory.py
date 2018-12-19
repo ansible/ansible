@@ -10,11 +10,11 @@ from operator import attrgetter
 
 from ansible import constants as C
 from ansible import context
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.host import Host
 from ansible.plugins.loader import vars_loader
-from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 
@@ -57,13 +57,13 @@ class InventoryCLI(CLI):
 
     def init_parser(self):
 
-        self.parser = super(InventoryCLI, self).init_parser(
+        super(InventoryCLI, self).init_parser(
             usage='usage: %prog [options] [host|group]',
-            epilog='Show Ansible inventory information, by default it uses the inventory script JSON format',
-            inventory_opts=True,
-            vault_opts=True,
-            basedir_opts=True,
-        )
+            epilog='Show Ansible inventory information, by default it uses the inventory script JSON format')
+
+        opt_help.add_inventory_options(self.parser)
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_basedir_options(self.parser)
 
         # remove unused default options
         self.parser.remove_option('--limit')
@@ -91,8 +91,6 @@ class InventoryCLI(CLI):
                                     "not as an accurate representation of how Ansible has processed it")
         # self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
         #                       help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
-
-        return self.parser
 
     def post_process_args(self, options, args):
         display.verbosity = options.verbosity
