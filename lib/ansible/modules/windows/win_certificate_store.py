@@ -91,7 +91,7 @@ options:
   key_storage:
     description:
     - Specifies where Windows will store the private key when it is imported.
-    - When set to C(default), the default option as set by Windows is used.
+    - When set to C(default), the default option as set by Windows is used, typically C(user).
     - When set to C(machine), the key is stored in a path accessible by various
       users.
     - When set to C(user), the key is stored in a path only accessible by the
@@ -118,6 +118,10 @@ notes:
   Kerberos with credential delegation, or use C(become) to bypass these
   restrictions.
 - The certificates must be located on the Windows host to be set with I(path).
+- When importing a certificate for usage in IIS, it is generally required
+  to use the C(machine) key_storage option, as both C(default) and C(user)
+  will make the private key unreadable to IIS APPPOOL identities and prevent
+  binding the certificate to the https endpoint.
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -177,6 +181,15 @@ EXAMPLES = r'''
   become: yes
   become_method: runas
   become_user: SYSTEM
+
+- name: import certificate be used by IIS
+  win_certificate_store:
+    path: C:\Temp\cert.pfx
+    file_type: pkcs12
+    password: StrongPassword!
+    store_location: LocalMachine
+    key_storage: machine
+    state: present
 '''
 
 RETURN = r'''
