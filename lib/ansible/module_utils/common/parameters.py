@@ -40,6 +40,9 @@ DEFAULT_LEGAL_PARAMS = ['_ansible_%s' % k for k in PASS_VARS]
 
 
 def handle_aliases(argument_spec, params, legal_inputs=None):
+    """Return a two items. The first is a dictionary of aliases, the second is
+    a list of legal inputs, or None."""
+
     if legal_inputs is None:
         legal_inputs = DEFAULT_LEGAL_PARAMS[:]
     elif legal_inputs:
@@ -68,9 +71,9 @@ def handle_aliases(argument_spec, params, legal_inputs=None):
 
 
 def _return_datastructure_name(obj):
-    """ Return native stringified values from datastructures.
-
+    """Return native stringified values from datastructures.
     For use with removing sensitive values pre-jsonification."""
+
     if isinstance(obj, (text_type, binary_type)):
         if obj:
             yield to_native(obj, errors='surrogate_or_strict')
@@ -93,7 +96,7 @@ def _return_datastructure_name(obj):
 
 
 def list_no_log_values(argument_spec, params):
-    ''' Return list of no log values and deprecations '''
+    """Return list of no log values and deprecations"""
 
     no_log_values = set()
     for arg_name, arg_opts in argument_spec.items():
@@ -108,8 +111,8 @@ def list_no_log_values(argument_spec, params):
     return no_log_values
 
 
-def list_deprications(argument_spec, params):
-    '''Return a list of deprecations'''
+def list_deprecations(argument_spec, params):
+    """Return a list of deprecations"""
 
     deprecations = list()
     for arg_name, arg_opts in argument_spec.items():
