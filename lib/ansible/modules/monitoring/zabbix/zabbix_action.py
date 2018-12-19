@@ -51,18 +51,18 @@ options:
         default: 'present'
     status:
         description:
-            - Monitoring status of the action.
+            - Status of the action.
         choices: ['enabled', 'disabled']
         default: 'enabled'
     esc_period:
         description:
-            - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro
+            - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
         default: '60'
     conditions:
         type: list
         description:
             - List of dictionaries of conditions to evaluate.
-            - For more information about suboptions of this options please
+            - For more information about suboptions of this option please
               check out Zabbix API documentation U(https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition)
         suboptions:
             type:
@@ -129,7 +129,7 @@ options:
             formulaid:
                 description:
                     - Arbitrary unique ID that is used to reference the condition from a custom expression.
-                    - Can only contain capital-case letters.
+                    - Can only contain upper-case letters.
     formula:
         description:
             - User-defined expression to be used for evaluating conditions of filters with a custom expression.
@@ -235,7 +235,7 @@ options:
                     - proxy
             run_on_groups:
                 description:
-                    - Host groups to run remote commands on
+                    - Host groups to run remote commands on.
                     - Required when I(type=remote_command) if I(run_on_hosts) is not set
             run_on_hosts:
                 description:
@@ -276,17 +276,17 @@ options:
         type: list
         description:
             - List of recovery operations
-            - C(Suboptions) are the same as I(operations)
+            - C(Suboptions) are the same as for I(operations)
             - Works only with >= Zabbix 3.2
     acknowledge_operations:
         type: list
         description:
             - List of acknowledge operations
-            - C(Suboptions) are the same as I(operations)
+            - C(Suboptions) are the same as for I(operations)
             - Works only with >= Zabbix 3.4
 
 notes:
-    - Only Zabbix Server >= 3.0 is supported.
+    - Only Zabbix >= 3.0 is supported.
 
 
 extends_documentation_fragment:
@@ -346,7 +346,7 @@ EXAMPLES = '''
         run_on_hosts:
           - 0
 
-# Trigger action with recovery and aknowledge operations
+# Trigger action with recovery and acknowledge operations
 - name: Deploy trigger action
   zabbix_action:
     server_url: "http://zabbix.example.com/zabbix/"
