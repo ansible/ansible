@@ -20,6 +20,25 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+httpapi: restconf
+short_description: HttpApi Plugin for devices supporting Restconf API
+description:
+  - This HttpApi plugin provides methods to connect to Restconf API
+    endpoints.
+version_added: "2.8"
+options:
+  root_path:
+    type: str
+    description:
+      - Specifies the location of the Restconf root.
+    default: '/restconf'
+    vars:
+      - name: ansible_httpapi_restconf_root
+"""
+
 import json
 
 from ansible.module_utils.network.common.utils import to_list
@@ -27,42 +46,23 @@ from ansible.module_utils.connection import ConnectionError
 from ansible.plugins.httpapi import HttpApiBase
 
 
+CONTENT_TYPE = 'application/yang.data+json'
+
+
 class HttpApi(HttpApiBase):
-    def __init__(self, connection):
-        super(HttpApi, self).__init__(connection)
-
-        self._root = '/restconf'
-        self._content_type = 'application/yang.data+json'
-        self._accept = 'application/yang.data+json'
-
     def send_request(self, data, **message_kwargs):
         if data:
             data = json.dumps(data)
 
-        path = self._root + message_kwargs.get('path', '')
+        path = self.get_option('root_path') + message_kwargs.get('path', '')
 
         headers = {
-            'Content-Type': message_kwargs.get('content_type') or self._content_type,
-            'Accept': message_kwargs.get('accept') or self._accept,
+            'Content-Type': message_kwargs.get('content_type') or CONTENT_TYPE,
+            'Accept': message_kwargs.get('accept') or CONTENT_TYPE,
         }
         response = self.connection.send(path, data, headers=headers, method=message_kwargs.get('method'))
 
         return handle_response(response)
-
-    def handle_httperror(self, exc):
-        try:
-            error_response = json.loads(exc.read())
-        except ValueError:
-            raise ConnectionError(exc.reason, code=exc.code)
-
-        errors = error_response.get('errors')
-        message = []
-        if errors:
-            for item in to_list(errors.get('error')):
-                message.append(item.get('error-message'))
-            raise ConnectionError(json.dumps(message), code=exc.code)
-
-        raise ConnectionError(exc.reason, code=exc.code)
 
 
 def handle_response(response):
