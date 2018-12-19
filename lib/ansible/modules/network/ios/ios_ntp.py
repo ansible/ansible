@@ -29,11 +29,13 @@ options:
     logging:
         description:
             - Enable NTP logs. Data type boolean.
+        type: bool
         default: False
         choices: [True, False]
     auth:
         description:
             - Enable NTP authentication. Data type boolean.
+        type: bool
         default: False
         choices: [True, False]
     auth_key:
