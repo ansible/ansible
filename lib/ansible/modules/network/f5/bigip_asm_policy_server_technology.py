@@ -116,12 +116,12 @@ RETURN = r'''
 policy_name:
   description: The name of the ASM policy
   returned: changed
-  type: string
+  type: str
   sample: FooPolicy
 name:
   description: The name of Server Technology added/removed on ASM policy
   returned: changed
-  type: string
+  type: str
   sample: Joomla
 '''
 
