@@ -561,7 +561,7 @@ if ($bytes_read -gt 0) {
         # Check if PSRP version supports newer read_timeout argument (needs pypsrp 0.3.0+)
         if hasattr(pypsrp, 'FEATURES') and 'wsman_read_timeout' in pypsrp.FEATURES:
             self._psrp_conn_kwargs['read_timeout'] = self._psrp_read_timeout
-        elif self._psrp_read_timeout:
+        elif self._psrp_read_timeout is not None:
             display.warning("ansible_psrp_read_timeout is unsupported by the current psrp version installed, "
                             "using ansible_psrp_connection_timeout value for read_timeout instead.")
 
@@ -570,9 +570,9 @@ if ($bytes_read -gt 0) {
             self._psrp_conn_kwargs['reconnection_retries'] = self._psrp_reconnection_retries
             self._psrp_conn_kwargs['reconnection_backoff'] = self._psrp_reconnection_backoff
         else:
-            if self._psrp_reconnection_retries:
+            if self._psrp_reconnection_retries is not None:
                 display.warning("ansible_psrp_reconnection_retries is unsupported by the current psrp version installed.")
-            if self._psrp_reconnection_backoff:
+            if self._psrp_reconnection_backoff is not None:
                 display.warning("ansible_psrp_reconnection_backoff is unsupported by the current psrp version installed.")
 
         # add in the extra args that were set
