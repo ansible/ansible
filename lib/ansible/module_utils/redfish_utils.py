@@ -37,7 +37,8 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
-            return {'ret': False, 'msg': to_text(e)}
+            return {'ret': False,
+                    'msg': 'Failed GET operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'data': data}
 
     def post_request(self, uri, pyld, hdrs):
@@ -55,7 +56,8 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
-            return {'ret': False, 'msg': to_text(e)}
+            return {'ret': False,
+                    'msg': 'Failed POST operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'resp': resp}
 
     def patch_request(self, uri, pyld, hdrs):
@@ -73,7 +75,8 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
-            return {'ret': False, 'msg': to_text(e)}
+            return {'ret': False,
+                    'msg': 'Failed PATCH operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'resp': resp}
 
     def delete_request(self, uri, pyld, hdrs):
@@ -91,7 +94,8 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
         except Exception as e:
-            return {'ret': False, 'msg': to_text(e)}
+            return {'ret': False,
+                    'msg': 'Failed DELETE operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'resp': resp}
 
     def _init_session(self):
