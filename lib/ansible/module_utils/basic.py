@@ -2605,7 +2605,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, raise_timeouts=False):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2655,9 +2655,6 @@ class AnsibleModule(object):
             after ``Popen`` object will be created
             but before communicating to the process.
             (``Popen`` object will be passed to callback as a first argument)
-        :kw raise_timeouts: This is a boolean, which when True, will allow the
-            caller to deal with timeout exceptions. When false we use the previous
-            behaviour of having run_command directly call fail_json when they occur.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2831,12 +2828,6 @@ class AnsibleModule(object):
             cmd.stderr.close()
 
             rc = cmd.returncode
-        except TimeoutError as e:
-            self.log("Timeout Executing CMD:%s Timeout :%s" % (self._clean_args(args), to_native(e)))
-            if raise_timeouts:
-                raise e
-            else:
-                self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
         except (OSError, IOError) as e:
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
