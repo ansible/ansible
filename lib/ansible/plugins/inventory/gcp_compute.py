@@ -50,7 +50,7 @@ DOCUMENTATION = '''
                   and the user does not wish to use the default email.
         vars_prefix:
             description: prefix to apply to host variables, does not include facts nor params
-            default: 'gcp_'
+            default: ''
 '''
 
 EXAMPLES = '''
