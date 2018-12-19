@@ -1,0 +1,4 @@
+---
+minor_changes:
+- Refactored the CLI code to parse the CLI arguments and then save them into
+  a non-mutatable global singleton.  This should make it easier to modify.
