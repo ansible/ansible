@@ -71,11 +71,6 @@ commands:
     returned: always
     type: list
     sample: ["no ntp server 10.0.255.10", "no ntp source Loopback0"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 import re
 
