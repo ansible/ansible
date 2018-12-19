@@ -194,7 +194,6 @@
         disk_size_gb: 64
         caching: ReadWrite
         managed_disk_type: Standard_LRS
-  check_mode: yes
   register: results
 
 - name: Assert that VMSS was created
