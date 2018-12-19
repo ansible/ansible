@@ -612,7 +612,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     changed = True
                     vmss_dict['zones'] = self.zones
 
-                nicConfigs = vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations']
+                nicConfigs = vmss_dict['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations']
                 if (len(nicConfigs) != 1 or len(nicConfigs[0]['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools']) != 1):
                     support_lb_change = False  # Currenly not support for the vmss contains more than one loadbalancer
                 else:
