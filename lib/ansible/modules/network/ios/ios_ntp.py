@@ -315,7 +315,7 @@ def main():
     if commands:
         if not module.check_mode:
             load_config(module, commands)
-            result['changed'] = True
+        result['changed'] = True
 
     module.exit_json(**result)
 
