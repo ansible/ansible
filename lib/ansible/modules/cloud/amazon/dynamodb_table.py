@@ -123,6 +123,32 @@ options:
       - how long before wait gives up, in seconds. only used when tags is set
     default: 60
     type: int
+  sse_enabled:
+    version_added: "2.8"
+    type: bool
+    description:
+    - boolean for setting server-side encryption
+  stream_enabled:
+    version_added: "2.8"
+    type: bool
+    description:
+    - Indicates whether DynamoDB Streams is enabled (true) or disabled (false) on the table
+  stream_view_type:
+    version_added: "2.8"
+    choices: ['KEYS_ONLY', 'NEW_IMAGE', 'OLD_IMAGE', 'NEW_AND_OLD_IMAGES']
+    description:
+    - when an item in the table is modified, stream_view_type determines what information is written to the stream for this table.
+    - "valid types: : ['KEYS_ONLY', 'NEW_IMAGE', 'OLD_IMAGE', 'NEW_AND_OLD_IMAGES']"
+  sse_type:
+    version_added: "2.8"
+    choices: ['AES256', 'KMS']
+    description:
+    - server-side encryption type
+  sse_kms_master_key_id:
+    version_added: "2.8"
+    description:
+    - The KMS Master Key (CMK) which should be used for the KMS encryption.
+    - To specify a CMK, use its key ID, Amazon Resource Name (ARN), alias name, or alias ARN.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -225,6 +251,15 @@ def create_or_update_dynamo_table(resource, module):
     all_indexes = module.params.get('indexes')
     tags = module.params.get('tags')
     wait_for_active_timeout = module.params.get('wait_for_active_timeout')
+    # stream specification
+    stream_enabled = module.params.get('stream_enabled')
+    stream_view_type = module.params.get('stream_view_type')
+
+    # sse specification
+    sse_enabled = module.params.get('sse_enabled')
+    sse_type = module.params.get('sse_type')
+    sse_kms_master_key_id = module.params.get('sse_kms_master_key_id')
+
     key_type_mapping = {'STRING': 'S', 'BOOLEAN': 'B', 'NUMBER': 'B'}
 
     for index in all_indexes:
@@ -234,8 +269,23 @@ def create_or_update_dynamo_table(resource, module):
         'read': read_capacity,
         'write': write_capacity
     }
+    stream_specification = None
+    sse_specification = None
+    if stream_enabled:
+        stream_specification = {
+            'StreamEnabled': stream_enabled,
+            'StreamViewType': stream_view_type
+        }
+    if sse_enabled:
+        sse_specification = {
+            'Enabled': sse_enabled,
+            'SSEType': sse_type
+        }
+        if sse_kms_master_key_id and sse_kms_master_key_id != "":
+            sse_specification.update({'KMSMasterKeyId': sse_kms_master_key_id})
 
-    indexes, global_indexes, attr_definitions = get_indexes(all_indexes)
+    local_secondary_indexes, global_secondary_indexes, attribute_definitions = serialize_indexes(all_indexes)
+
     result = dict(
         table_name=table_name,
         hash_key_name=hash_key_name,
@@ -250,6 +300,7 @@ def create_or_update_dynamo_table(resource, module):
     try:
         client = module.client('dynamodb')
         table = resource.Table(table_name)
+
         try:
             table_status = table.table_status
         except is_boto3_error_code('ResourceNotFoundException'):
@@ -263,10 +314,11 @@ def create_or_update_dynamo_table(resource, module):
                                                                                     client,
                                                                                     table,
                                                                                     throughput=throughput,
+                                                                                    stream_spec=stream_specification,
+                                                                                    sse_spec=sse_specification,
                                                                                     check_mode=module.check_mode,
-                                                                                    global_indexes=global_indexes,
-                                                                                    global_attr_definitions=attr_definitions)
-            # result['changed'] = 'update the table'
+                                                                                    global_indexes=global_secondary_indexes,
+                                                                                    global_attr_definitions=attribute_definitions)
         else:
             if not module.check_mode:
                 kwargs = {}
@@ -277,19 +329,24 @@ def create_or_update_dynamo_table(resource, module):
                 }
 
                 if range_key_name:
-                    key_schema.append({'AttributeName': hash_key_name, 'KeyType': "HASH"}, {'AttributeName': range_key_name, 'KeyType': "RANGE"})
-                    attr_definitions.append({'AttributeName': hash_key_name, 'AttributeType': key_type_mapping[hash_key_type.upper()]}, {
-                                            'AttributeName': range_key_name, 'AttributeType': key_type_mapping[range_key_type.upper()]})
+                    key_schema.append({'AttributeName': hash_key_name, 'KeyType': "HASH"})
+                    key_schema.append({'AttributeName': range_key_name, 'KeyType': "RANGE"})
+                    attribute_definitions.append({'AttributeName': hash_key_name, 'AttributeType': key_type_mapping[hash_key_type.upper()]})
+                    attribute_definitions.append({'AttributeName': range_key_name, 'AttributeType': key_type_mapping[range_key_type.upper()]})
                 else:
                     key_schema.append({'AttributeName': hash_key_name, 'KeyType': "HASH"})
-                    attr_definitions.append({'AttributeName': hash_key_name, 'AttributeType': key_type_mapping[hash_key_type.upper()]})
+                    attribute_definitions.append({'AttributeName': hash_key_name, 'AttributeType': key_type_mapping[hash_key_type.upper()]})
 
-                kwargs.update({"AttributeDefinitions": remove_duplicates(attr_definitions), "TableName": table_name,
+                kwargs.update({"AttributeDefinitions": remove_duplicates(attribute_definitions), "TableName": table_name,
                                "KeySchema": key_schema, "ProvisionedThroughput": prov_throughput})
-                if indexes:
-                    kwargs.update({"LocalSecondaryIndexes": indexes})
-                if global_indexes:
-                    kwargs.update({"GlobalSecondaryIndexes": global_indexes})
+                if local_secondary_indexes:
+                    kwargs.update({"LocalSecondaryIndexes": local_secondary_indexes})
+                if global_secondary_indexes:
+                    kwargs.update({"GlobalSecondaryIndexes": global_secondary_indexes})
+                if stream_specification:
+                    kwargs.update({'StreamSpecification': stream_specification})
+                if sse_specification:
+                    kwargs.update({'SSESpecification': sse_specification})
                 resource.create_table(**kwargs)
             result['changed'] = True
 
@@ -312,8 +369,8 @@ def create_or_update_dynamo_table(resource, module):
 
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json_aws(e, 'Unable to locate credential' + traceback.format_exc())
-    except is_boto3_error_code('UnrecognizedClientException') as unrecognized_client_exc:
-        module.fail_json_aws(unrecognized_client_exc, 'Authentication failure' + traceback.format_exc())
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(e, 'Client Error: ' + traceback.format_exc())
     except Exception as exc:
         module.fail_json_aws(exc, 'Ansible dynamodb operation failed: ' + traceback.format_exc())
     else:
@@ -350,16 +407,25 @@ def delete_dynamo_table(resource, module):
         module.exit_json(**result)
 
 
-def update_dynamodb_table_args(table_name, prov_throughput=None, throughput_updates=None, global_indexes_updates=None, global_attr_definitions=None):
+def update_dynamodb_table_args(table_name, prov_throughput=None, throughput_updates=None, stream_spec_updates=None, stream_spec=None,
+                               sse_spec_updates=None, sse_spec=None, global_indexes_updates=None, global_attr_definitions=None):
     kwargs = {}
     if throughput_updates:
         kwargs.update({"TableName": table_name, "ProvisionedThroughput": prov_throughput})
     if global_indexes_updates:
         kwargs.update({"TableName": table_name, "AttributeDefinitions": global_attr_definitions, "GlobalSecondaryIndexUpdates": global_indexes_updates})
+    if stream_spec_updates:
+        kwargs.update({"TableName": table_name, "StreamSpecification": stream_spec})
+    if sse_spec_updates:
+        # if kmsmaster key id is empty pop it off.
+        if sse_spec['KMSMasterKeyId'] == "":
+            sse_spec.pop('KMSMasterKeyId', None)
+        kwargs.update({"TableName": table_name, "SSESpecification": sse_spec})
     return kwargs
 
 
-def update_dynamo_table(module, client, table, throughput=None, check_mode=False, global_indexes=None, global_attr_definitions=None):
+def update_dynamo_table(module, client, table, throughput=None, stream_spec=None, sse_spec=None,
+                        check_mode=False, global_indexes=None, global_attr_definitions=None):
     table_updated = False
     table_name = table.table_name
     kwargs = {}
@@ -369,12 +435,36 @@ def update_dynamo_table(module, client, table, throughput=None, check_mode=False
     }
     throughput_updates = has_throughput_changed(table, throughput)
     global_indexes_updates = get_changed_global_indexes(table.global_secondary_indexes, global_indexes)
-    kwargs = update_dynamodb_table_args(table_name, prov_throughput, throughput_updates, global_indexes_updates, global_attr_definitions)
+    stream_spec_updates = None
+    sse_spec_updates = None
+    if stream_spec:
+        stream_spec_updates = has_stream_spec_changed(table, stream_spec)
+    if sse_spec:
+        sse_spec_updates = has_sse_spec_changed(table, sse_spec)
+    kwargs = update_dynamodb_table_args(table_name, prov_throughput, throughput_updates, stream_spec_updates,
+                                        stream_spec,
+                                        sse_spec_updates,
+                                        sse_spec, global_indexes_updates, global_attr_definitions)
     if not check_mode and (global_indexes_updates or throughput_updates):
         client.update_table(**kwargs)
         table_updated = True
 
     return table_updated, global_indexes_updates
+
+
+def has_sse_spec_changed(table, new_sse_spec):
+    if not new_sse_spec:
+        return False
+    return table.sse_description is None or new_sse_spec['Enabled'] != table.sse_description['Enabled'] or \
+        new_sse_spec['SSEType'] != table.sse_description['SSEType'] or \
+        (new_sse_spec['KMSMasterKeyId'] != '' and new_sse_spec['KMSMasterKeyId'] != table.sse_description['KMSMasterKeyId'])
+
+
+def has_stream_spec_changed(table, new_stream_spec):
+    if not new_stream_spec:
+        return False
+    return table.stream_specification is None or new_stream_spec['StreamEnabled'] != table.stream_specification['StreamEnabled'] or \
+        new_stream_spec['StreamViewType'] != table.stream_specification['StreamViewType']
 
 
 def has_throughput_changed(table, new_throughput):
@@ -408,37 +498,61 @@ def get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_typ
     return schema
 
 
+def deserialize_index_names(indexes):
+    index_names = []
+    key = 'IndexName'
+    for index in indexes:
+        if key in index.keys():
+            index_names.append(index[key])
+    return set(index_names)
+
+
+def filter_index_by_name(key, indexes):
+    for index in indexes:
+        if index['IndexName'] == key:
+            return index
+    return None
+
+
 def get_changed_global_indexes(table_gsi_indexes, global_indexes):
+    # check if this is a new index to be created
     global_indexes_updates = []
-    if global_indexes:
-        param_global_indexes = []
-        param_global_indexes_prov_throughput = []
-        for idx in global_indexes:
-            param_global_indexes.append(idx['IndexName'])
-            param_global_indexes_prov_throughput.append((idx['IndexName'], idx['ProvisionedThroughput']))
-        set_table_indexes = []
-        set_table_indexes_prov_throughput = []
 
-        if table_gsi_indexes:
-            set_table_indexes = []
-            set_table_indexes_prov_throughput = []
-            for idx in table_gsi_indexes:
-                set_table_indexes.append(idx['IndexName'])
-                set_table_indexes_prov_throughput.append((idx['IndexName'], idx['ProvisionedThroughput']))
+    input_gsi_index_names_set = deserialize_index_names(global_indexes)
+    from_aws_gsi_index_names_set = deserialize_index_names(table_gsi_indexes)
 
-        for index in set_table_indexes:
-            if index not in param_global_indexes:
-                global_indexes_updates.append({'Delete': {'IndexName': index}})
+    #
+    # Find indexes to be deleted and created
+    # An index is deleted when index name exists in the from_aws_gsi_index_names_set and not in the input_gsi_index_names_set
+    # An index is created when index name exists in input_gsi_index_names_set but not in from_aws_gsi_index_names_set
+    #
+    indexes_to_be_deleted = from_aws_gsi_index_names_set - input_gsi_index_names_set
 
-        for index in global_indexes:
-            if index['IndexName'] not in set_table_indexes or not set_table_indexes:
-                global_indexes_updates.append({'Create': index})
+    for index_name in indexes_to_be_deleted:
+        global_indexes_updates.append({'Delete': {'IndexName': index_name}})
 
-        for set_index in set_table_indexes_prov_throughput:
-            for param_index in param_global_indexes_prov_throughput:
-                if (set_index[0] == param_index[0] and (set_index[1]['ReadCapacityUnits'] != param_index[1]
-                                                        ['ReadCapacityUnits'] or set_index[1]['WriteCapacityUnits'] != param_index[1]['WriteCapacityUnits'])):
-                    global_indexes_updates.append({'Update': {'IndexName': set_index[0], 'ProvisionedThroughput': param_index[1]}})
+    indexes_to_be_created = input_gsi_index_names_set - from_aws_gsi_index_names_set
+    for index_name in indexes_to_be_created:
+        index = filter_index_by_name(index_name, global_indexes)
+        global_indexes_updates.append({'Create': index})
+    #
+    # Find indexes that needs to be updated
+    # only provisioned throughput can be updated on an existing gsi index
+    #
+    indexes_to_be_updated = input_gsi_index_names_set & from_aws_gsi_index_names_set
+
+    input_gsi_indexes_to_be_updated = [index for index in global_indexes if index['IndexName'] in indexes_to_be_updated]
+    from_aws_gsi_indexes_to_be_updated = [index for index in table_gsi_indexes if index['IndexName'] in indexes_to_be_updated]
+
+    for index_name in indexes_to_be_updated:
+        input_gsi_index = filter_index_by_name(index_name, global_indexes)
+        from_aws_gsi_index = filter_index_by_name(index_name, table_gsi_indexes)
+        if input_gsi_index and 'ProvisionedThroughput' in input_gsi_index:
+            input_gsi_index_prov_throughput = input_gsi_index.get('ProvisionedThroughput')
+            from_aws_gsi_index_prov_throughput = from_aws_gsi_index.get('ProvisionedThroughput')
+            if (input_gsi_index_prov_throughput.get('ReadCapacityUnits') != from_aws_gsi_index_prov_throughput.get('ReadCapacityUnits')) or (
+                    input_gsi_index_prov_throughput.get('WriteCapacityUnits') != from_aws_gsi_index_prov_throughput.get('WriteCapacityUnits')):
+                global_indexes_updates.append({'Update': {'IndexName': index_name, 'ProvisionedThroughput': input_gsi_index_prov_throughput}})
 
     return global_indexes_updates
 
@@ -454,46 +568,53 @@ def validate_index(index, module):
         module.fail_json(msg='%s is not a valid index type, must be one of %s' % (index['type'], INDEX_TYPE_OPTIONS))
 
 
-def get_indexes(all_indexes):
-    indexes = []
-    global_indexes = []
-    global_indexes_attr_definitions = []
-    global_indexes_attr_definition = {}
+def serialize_index_to_json(index):
+    serialized_index = dict()
+    serialized_index_attribute_definitions = dict()
+    name = index['name']
+    index_type = index.get('type')
+    hash_key_name = index.get('hash_key_name')
+    hash_key_type = 'S'
+    if 'hash_key_type' in index:
+        hash_key_type = index.get('hash_key_type')
+    range_key_name = None
+    range_key_type = None
+    if 'range_key_name' in index:
+        range_key_name = index.get('range_key_name')
+        range_key_type = 'S'
+        if 'range_key_type' in index:
+            range_key_type = index.get('range_key_type')
+    schema = get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_type)
+    projection_type = index_type.replace('global_', '')
+    projection = {'ProjectionType': projection_type.upper()}
+    index_throughput = {'ReadCapacityUnits': index.get('read_capacity', 1), 'WriteCapacityUnits': index.get('write_capacity', 1)}
+    if projection_type == 'include':
+        projection.update({'NonKeyAttributes': index['includes']})
+    serialized_index.update({'IndexName': name, 'KeySchema': schema, 'Projection': projection})
+
+    if index_type in ['global_all', 'global_include', 'global_keys_only']:
+        serialized_index.update({'ProvisionedThroughput': index_throughput})
+    serialized_index_attribute_definitions.update({'AttributeName': hash_key_name, 'AttributeType': hash_key_type})
+    if range_key_name:
+        serialized_index_attribute_definitions.update({'AttributeName': range_key_name, 'AttributeType': range_key_type})
+    return index_type, serialized_index, serialized_index_attribute_definitions
+
+
+def serialize_indexes(all_indexes):
+    local_secondary_indexes = []
+    global_secondary_indexes = []
+    indexes_attr_definitions = []
     for index in all_indexes:
-        name = index['name']
-        index_type = index.get('type')
-        hash_key_name = index.get('hash_key_name')
-        hash_key_type = 'S'
-        if 'hash_key_type' in index:
-            hash_key_type = index.get('hash_key_type')
-        range_key_name = None
-        range_key_type = None
-        if 'range_key_name' in index:
-            range_key_name = index.get('range_key_name')
-            range_key_type = 'S'
-            if 'range_key_type' in index:
-                range_key_type = index.get('range_key_type')
-
-        schema = get_schema_param(hash_key_name, hash_key_type, range_key_name, range_key_type)
-        projection_type = index_type.replace('global_', '')
-        projection = {'ProjectionType': projection_type.upper()}
-        index_throughput = {'ReadCapacityUnits': index.get('read_capacity', 1), 'WriteCapacityUnits': index.get('write_capacity', 1)}
-        if projection_type == 'include':
-
-            projection.update({'NonKeyAttributes': index['includes']})
-
+        index_type, serialized_index_to_json, serialized_index_attribute_definitions = serialize_index_to_json(index)
+        indexes_attr_definitions.append(serialized_index_attribute_definitions)
         if index_type in ['all', 'include', 'keys_only']:
             # local secondary all_indexes
-            indexes.append({'IndexName': name, 'KeySchema': schema, 'Projection': projection})
+            local_secondary_indexes.append(serialized_index_to_json)
         elif index_type in ['global_all', 'global_include', 'global_keys_only']:
             # global secondary indexes
-            global_indexes.append({'IndexName': name, 'KeySchema': schema, 'Projection': projection, 'ProvisionedThroughput': index_throughput})
-            global_indexes_attr_definitions.append({'AttributeName': hash_key_name, 'AttributeType': hash_key_type})
+            global_secondary_indexes.append(serialized_index_to_json)
 
-            if range_key_name:
-                global_indexes_attr_definitions.append({'AttributeName': range_key_name, 'AttributeType': range_key_type})
-
-    return indexes, global_indexes, remove_duplicates(global_indexes_attr_definitions)
+    return local_secondary_indexes, global_secondary_indexes, remove_duplicates(indexes_attr_definitions)
 
 
 def main():
@@ -510,12 +631,18 @@ def main():
         indexes=dict(default=[], type='list'),
         tags=dict(type='dict'),
         wait_for_active_timeout=dict(default=60, type='int'),
+        stream_enabled=dict(type='bool'),
+        stream_view_type=dict(type='str', choices=['NEW_IMAGE', 'OLD_IMAGE', 'NEW_AND_OLD_IMAGES', 'KEYS_ONLY']),
+        sse_enabled=dict(type='bool'),
+        sse_type=dict(type='str', choices=['AES256', 'KMS']),
+        sse_kms_master_key_id=dict(type='str')
     ))
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=[['state', 'present', ['name', 'hash_key_name']]],
+        required_if=[['state', 'present', ['name', 'hash_key_name']], ['sse_type', 'KMS', ['sse_type']],
+                     ['sse_enabled', 'True', ['sse_type']], ['stream_enabled', 'True', ['stream_view_type']]],
     )
     resource = module.resource('dynamodb')
     state = module.params.get('state')

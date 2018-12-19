@@ -14,7 +14,7 @@ class DynamodbTable_IndexTests(unittest.TestCase):
                 "write_capacity": 10
             }
         ]
-        indexes, global_indexes, attr_definitions = dynamodb_table_module.get_indexes(param_local_index)
+        indexes, global_indexes, attr_definitions = dynamodb_table_module.serialize_indexes(param_local_index)
         self.assertEqual(len(indexes), 1)
         self.assertEqual(indexes[0]['Projection']['ProjectionType'], 'ALL')
 
@@ -29,7 +29,7 @@ class DynamodbTable_IndexTests(unittest.TestCase):
                 "write_capacity": 10
             }
         ]
-        indexes, global_indexes, attr_definitions = dynamodb_table_module.get_indexes(param_gsi_index)
+        indexes, global_indexes, attr_definitions = dynamodb_table_module.serialize_indexes(param_gsi_index)
         actual = dynamodb_table_module.get_changed_global_indexes(table_gsi_indexs, global_indexes)
         expected = {"Create": {
             "IndexName": "NamedIndex",
@@ -118,7 +118,7 @@ class DynamodbTable_IndexTests(unittest.TestCase):
                 "write_capacity": 10
             }
         ]
-        indexes, global_indexes, attr_definitions = dynamodb_table_module.get_indexes(param_gsi_index)
+        indexes, global_indexes, attr_definitions = dynamodb_table_module.serialize_indexes(param_gsi_index)
         actual = dynamodb_table_module.get_changed_global_indexes(table_gsi_indexs, global_indexes)
         expected = [{'Update': {'ProvisionedThroughput': {'WriteCapacityUnits': 100, 'ReadCapacityUnits': 100}, 'IndexName': 'NamedIndexV2'}},
                     {'Update': {'ProvisionedThroughput': {'WriteCapacityUnits': 100, 'ReadCapacityUnits': 100}, 'IndexName': 'NamedIndex'}}]
@@ -190,8 +190,71 @@ class DynamodbTable_IndexTests(unittest.TestCase):
                 "write_capacity": 150
             }
         ]
-        indexes, global_indexes, attr_definitions = dynamodb_table_module.get_indexes(param_gsi_index)
+        index_type, global_indexes, attr_definitions = dynamodb_table_module.serialize_indexes(param_gsi_index)
         actual = dynamodb_table_module.get_changed_global_indexes(table_gsi_indexs, global_indexes)
         expected = [{'Update': {'ProvisionedThroughput': {'WriteCapacityUnits': 100, 'ReadCapacityUnits': 100}, 'IndexName': 'NamedIndexV2'}},
                     {'Update': {'ProvisionedThroughput': {'WriteCapacityUnits': 100, 'ReadCapacityUnits': 100}, 'IndexName': 'NamedIndex'}}]
         self.assertEqual(len(actual), 2)
+
+    def test_gsi_get_changed_indexes_delete(self):
+        table_gsi_indexs = [{
+            "IndexArn": "arn:aws:dynamodb:us-west-2:132601236262:table/ansible-table-/index/NamedIndex",
+            "IndexName": "NamedIndex",
+            "IndexSizeBytes": 0,
+            "IndexStatus": "ACTIVE",
+            "ItemCount": 0,
+            "KeySchema": [
+                {
+                    "AttributeName": "myhashkey",
+                    "KeyType": "HASH"
+                }
+            ],
+            "Projection": {
+                "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+                "NumberOfDecreasesToday": 0,
+                "ReadCapacityUnits": 1,
+                "WriteCapacityUnits": 1
+            }
+        },
+            {
+            "IndexArn": "arn:aws:dynamodb:us-west-2:132601236262:table/ansible-table-/index/NamedIndexV2",
+            "IndexName": "NamedIndexV2",
+            "IndexSizeBytes": 0,
+            "IndexStatus": "ACTIVE",
+            "ItemCount": 0,
+            "KeySchema": [
+                {
+                    "AttributeName": "myhashkey",
+                    "KeyType": "HASH"
+                },
+                {
+                    "AttributeName": "myrangekey",
+                    "KeyType": "RANGE"
+                }
+            ],
+            "Projection": {
+                "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+                "LastIncreaseDateTime": "2018-11-16T12:05:35.779000-05:00",
+                "NumberOfDecreasesToday": 0,
+                "ReadCapacityUnits": 10,
+                "WriteCapacityUnits": 10
+            }
+        }
+        ]
+        param_gsi_index = [
+            {
+                "hash_key_name": "myhashkey",
+                "name": "NamedIndex",
+                "type": "global_all",
+                "read_capacity": 1,
+                "write_capacity": 1
+            }
+        ]
+        index_type, global_indexes, attr_definitions = dynamodb_table_module.serialize_indexes(param_gsi_index)
+        actual = dynamodb_table_module.get_changed_global_indexes(table_gsi_indexs, global_indexes)
+        expected = [{'Delete': {'IndexName': 'NamedIndexV2'}}]
+        self.assertEqual(len(actual), 1)
