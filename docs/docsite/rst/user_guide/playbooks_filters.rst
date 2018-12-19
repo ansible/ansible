@@ -395,7 +395,7 @@ To get a random item from a list::
 
 To get a random number between 0 and a specified number::
 
-    "{{ 59 | random }} * * * * root /script/from/cron"
+    "{{ 60 | random }} * * * * root /script/from/cron"
     # => '21 * * * * root /script/from/cron'
 
 Get a random number from 0 to 100 but in steps of 10::
@@ -412,7 +412,7 @@ Get a random number from 1 to 100 but in steps of 10::
 
 As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
 
-    "{{ 59 | random(seed=inventory_hostname) }} * * * * root /script/from/cron"
+    "{{ 60 | random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 
 Shuffle Filter
