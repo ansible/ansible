@@ -59,4 +59,4 @@ class VultrCloudEnvironment(CloudEnvironment):
         env.update(changes)
 
         cmd.append('-e')
-        cmd.append('resource_prefix=%s' % self.resource_prefix)
+        cmd.append('vultr_resource_prefix=%s' % self.resource_prefix)

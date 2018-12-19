@@ -1,4 +1,5 @@
 ---
-vultr_block_storage_name: ansible-test-vm1
+vultr_resource_prefix: "vultr-test-prefix"
+vultr_block_storage_name: "{{ vultr_resource_prefix }}-volume"
 vultr_block_storage_size: 10
 vultr_block_storage_region: New Jersey
