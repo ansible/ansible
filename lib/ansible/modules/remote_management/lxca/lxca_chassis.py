@@ -81,7 +81,7 @@ EXAMPLES = '''
 RETURN = r'''
 result:
     description: chassis detail from lxca
-    returned: always
+    returned: success
     type: dict
     sample:
       chassisList:
