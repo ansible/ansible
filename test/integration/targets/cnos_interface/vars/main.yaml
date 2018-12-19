@@ -1,0 +1,9 @@
+---
+cli:
+  host: "{{ inventory_hostname }}"
+  port: 22
+  username: admin
+  password: admin
+  timeout: 30
+  authorize: True
+  auth_pass:
