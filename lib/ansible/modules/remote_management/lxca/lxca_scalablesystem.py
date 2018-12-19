@@ -90,7 +90,7 @@ EXAMPLES = '''
 RETURN = r'''
 result:
     description: scalablesystem detail from lxca
-    returned: always
+    returned: success
     type: dict
     sample:
       ComplexList:
