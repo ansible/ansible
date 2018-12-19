@@ -1,0 +1,2 @@
+bugfixes:
+- Fix mandatory statement error for junos modules (https://github.com/ansible/ansible/pull/50138)
