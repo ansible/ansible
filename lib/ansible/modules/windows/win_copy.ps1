@@ -128,13 +128,13 @@ Function Copy-Folder($source, $dest) {
 
 Function Get-FileSize($path) {
     $file = Get-Item -Path $path -Force
-    $size = $null
     if ($file.PSIsContainer) {
         $dir_files_sum = Get-ChildItem $file.FullName -Recurse
-        if ($dir_files_sum -eq $null -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
+        $size = (Get-ChildItem -Path $file.FullName -Recurse -Force | `
+            Where-Object { $_.PSObject.Properties.Name -contains 'Length' } | `
+            Measure-Object -Property Length -Sum).Sum
+        if ($null -eq $size) {
             $size = 0
-        } else {
-            $size = ($dir_files_sum | Measure-Object -property length -sum).Sum
         }
     } else {
         $size = $file.Length
