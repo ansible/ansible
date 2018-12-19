@@ -53,6 +53,8 @@ options:
             - Creates a wrapper script and exports the path as GIT_SSH
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
+              (although this particular option is better set via
+              C(accept_hostkey)).
         version_added: "1.5"
     key_file:
         description:
