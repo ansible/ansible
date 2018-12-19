@@ -56,9 +56,7 @@ display = Display()
 class HttpApi(HttpApiBase):
     def __init__(self, connection):
         super(HttpApi, self).__init__(connection)
-        self.connection = connection
-        self.sid = None
-        self._ignore_http_errors = False
+        self._auth = None
 
     def login(self, username, password):
         if username and password:
@@ -72,7 +70,7 @@ class HttpApi(HttpApiBase):
             raise AnsibleConnectionFailure('Username and password are required for login')
 
         try:
-            self.sid = response['sid']
+            self._auth = response['sid']
         except KeyError:
             raise ConnectionError(
                 'Server returned response without token info during connection authentication: %s' % response)
@@ -94,19 +92,16 @@ class HttpApi(HttpApiBase):
 
     def _send_auth_request(self, path, data, **kwargs):
         try:
-            self._ignore_http_errors = True
             return self.connection.send(path, data, **kwargs)
         except HTTPError as e:
             # HttpApi connection does not read the error response from HTTPError, so we do it here and wrap it up in
             # ConnectionError, so the actual error message is displayed to the user.
             error_msg = self._response_to_json(to_text(e.read()))
             raise ConnectionError('Server returned an error during authentication request: %s' % error_msg)
-        finally:
-            self._ignore_http_errors = False
 
     def send_request(self, path, body_params):
         data = json.dumps(body_params) if body_params else '{}'
-        headers = {'Content-Type': 'application/json', 'X-chkp-sid': self.sid}
+        headers = {'Content-Type': 'application/json', 'X-chkp-sid': self._auth}
 
         try:
             self._display_request()
@@ -119,7 +114,7 @@ class HttpApi(HttpApiBase):
             return error['code'], error['message']
 
     def handle_httperror(self, exc):
-        return None
+        False
 
     def _display_request(self):
         display.vvvv('Web Services: %s %s' % ('POST', self.connection._url))
