@@ -20,13 +20,10 @@ To simplify your workflow even further, the Ansible Network team has written a s
 A sample DNS playbook
 ---------------------
 
-To demonstrate the concept of what a role is, the example below is a single YAML file containing a two-task playbook.  This Ansible Playbook configures the hostname on a Cisco IOS XE device, then it configures the DNS (domain name system) servers.
+To demonstrate the concept of what a role is, the example ``playbook.yml`` below is a single YAML file containing a two-task playbook.  This Ansible Playbook configures the hostname on a Cisco IOS XE device, then it configures the DNS (domain name system) servers.
 
-In the output below you will see three Linux commands commonly used.  The **cat** command allows us to quickly look and view the contents of a YAML file, while the **tree** command allows us to look at the directory structure of the current working directory.  Finally the **cd** command allows us to change directories.
+.. code-block:: yaml
 
-.. code-block:: bash
-
-   [user@ansible system-demo]$ cat playbook.yml
    ---
    - name: configure cisco routers
      hosts: routers
@@ -133,7 +130,7 @@ Move the vars into the ``vars/main.yml`` file.  The file will look as follows:
 
 Finally we'll modify the original Ansible Playbook to remove the keyword ``tasks`` and the keyword ``vars`` and then add the keyword ``roles``  with the name of the role, in this case ``system-demo``.  The playbook will now look like this:
 
-.. code-block:: bash
+.. code-block:: yaml
 
    ---
    - name: configure cisco routers
@@ -207,11 +204,10 @@ The lowest precedence is the ``defaults`` directory within a role.  This means a
    ├── tasks
    │   └── main.yml
 
-Add a new ``vars`` section to the playbook to override the default behavior (where the variable ``dns`` is set to 8.8.8.8 and 8.8.4.4).  For this demonstration, let's set ``dns`` to 1.1.1.1:
+Add a new ``vars`` section to the playbook to override the default behavior (where the variable ``dns`` is set to 8.8.8.8 and 8.8.4.4).  For this demonstration, let's set ``dns`` to 1.1.1.1, so ``playbook.yml`` becomes:
 
-.. code-block:: bash
+.. code-block:: yaml
 
-   [user@ansible ~]$ cat playbook.yml
    ---
    - name: configure cisco routers
      hosts: routers
