@@ -293,6 +293,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         params = self.compute_models.ManagedDiskParameters(id=disk.get('id'), storage_account_type=disk.get('storage_account_type'))
         data_disk = self.compute_models.DataDisk(lun=lun, create_option=self.compute_models.DiskCreateOptionTypes.attach, managed_disk=params)
         vm.storage_profile.data_disks.append(data_disk)
+
+        if self.check_mode:
+            return True
+
         self._update_vm(vm_name, vm)
         return True
 
@@ -307,6 +311,10 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         if len(vm.storage_profile.data_disks) == len(leftovers):
             self.fail("No disk with the name '{0}' was found".format(disk.get('name')))
         vm.storage_profile.data_disks = leftovers
+
+        if self.check_mode:
+            return True
+
         self._update_vm(vm_name, vm)
         return True
 
