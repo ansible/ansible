@@ -98,6 +98,73 @@
     that:
         - "disk_max_ctrl_d1_c1_f0_14disk.results|map(attribute='changed')|unique|list == [true]"
 
+- name: create new VMs with 14 disk
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 128mb  # index0
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index1
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index2
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index3
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index4
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index5
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index6
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index8 because index 7 is scsi controller
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index9
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index10
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index11
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index12
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index13
+          type: thin
+          autoselect_datastore: True
+        - size: 128mb  # index14
+          type: thin
+          autoselect_datastore: True
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: disk_max_ctrl_d1_c1_f0_14disk_idem
+
+- debug: var=disk_max_ctrl_d1_c1_f0_14disk_idem
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "disk_max_ctrl_d1_c1_f0_14disk_idem.results|map(attribute='changed')|unique|list == [false]"
+
+
 - name: delete the new VMs
   vmware_guest:
     validate_certs: False
