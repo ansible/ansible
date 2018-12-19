@@ -112,7 +112,7 @@ EXAMPLES = '''
 RETURN = r'''
 result:
     description: switches detail from lxca
-    returned: always
+    returned: success
     type: dict
     sample:
       switchList:
