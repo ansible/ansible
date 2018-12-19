@@ -109,7 +109,7 @@ class Cliconf(CliconfBase):
             except AnsibleConnectionFailure as exc:
                 if "error: commit failed" in exc.message:
                     self.discard_changes()
-                    raise
+                raise
             requests.append(cmd)
 
         diff = self.compare_configuration()
@@ -117,11 +117,7 @@ class Cliconf(CliconfBase):
             resp['diff'] = diff
 
             if commit:
-                try:
-                    self.commit(comment=comment)
-                except AnsibleConnectionFailure:
-                    self.discard_changes()
-                    raise
+                self.commit(comment=comment)
             else:
                 self.discard_changes()
 

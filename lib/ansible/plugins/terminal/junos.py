@@ -37,7 +37,7 @@ class TerminalModule(TerminalBase):
 
     terminal_stderr_re = [
         re.compile(br"unknown command"),
-        re.compile(br"syntax error,"),
+        re.compile(br"syntax error"),
         re.compile(br"error: commit failed")
     ]
 
