@@ -224,11 +224,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # any of these require a true
         for condition in [
             self._connection.has_pipelining,
-            self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
+            self._play_context.pipelining or self._connection.always_pipeline_modules or not self._play_context.become,  # pipelining enabled for play or connection requires it (eg winrm), disabling become should imply pipelining
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
             not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
-            self._play_context.become_method != 'su',  # su does not work with pipelining,
+            self._play_context.become_method != 'su' or not self._play_context.become,  # su does not work with pipelining, disabling become should imply pipelining
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
             if not condition:
