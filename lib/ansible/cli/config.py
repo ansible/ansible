@@ -10,6 +10,7 @@ import subprocess
 import sys
 import yaml
 
+from ansible import cli
 from ansible import context
 from ansible.cli import CLI
 from ansible.config.manager import ConfigManager, Setting, find_ini_config_file

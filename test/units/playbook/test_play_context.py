@@ -25,11 +25,18 @@ from units.mock.loader import DictDataLoader
 
 @pytest.fixture
 def parser():
-    parser = cli.base_parser(runas_opts=True, meta_opts=True,
-                             runtask_opts=True, vault_opts=True,
-                             async_opts=True, connect_opts=True,
-                             subset_opts=True, check_opts=True,
-                             inventory_opts=True,)
+    parser = cli.base_parser()
+
+    parser = cli.runas_options(parser)
+    parser = cli.meta_options(parser)
+    parser = cli.runtask_options(parser)
+    parser = cli.vault_options(parser)
+    parser = cli.async_options(parser)
+    parser = cli.connect_options(parser)
+    parser = cli.subset_options(parser)
+    parser = cli.check_options(parser)
+    parser = cli.inventory_options(parser)
+
     return parser
 
 

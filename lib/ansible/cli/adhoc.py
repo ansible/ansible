@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible import cli
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
@@ -27,22 +28,23 @@ class AdHocCLI(CLI):
 
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
-        self.parser = super(AdHocCLI, self).init_parser(
-            usage='%prog <host-pattern> [options]',
-            runas_opts=True,
-            inventory_opts=True,
-            async_opts=True,
-            output_opts=True,
-            connect_opts=True,
-            check_opts=True,
-            runtask_opts=True,
-            vault_opts=True,
-            fork_opts=True,
-            module_opts=True,
-            basedir_opts=True,
-            desc="Define and run a single task 'playbook' against a set of hosts",
-            epilog="Some modules do not make sense in Ad-Hoc (include, meta, etc)",
-        )
+        self.parser = super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',
+                                                        desc="Define and run a single task"
+                                                        " 'playbook' against a set of hosts",
+                                                        epilog="Some modules do not make sense in"
+                                                        " Ad-Hoc (include, meta, etc)")
+
+        self.parser = cli.runas_options(self.parser)
+        self.parser = cli.inventory_options(self.parser)
+        self.parser = cli.async_options(self.parser)
+        self.parser = cli.output_options(self.parser)
+        self.parser = cli.connect_options(self.parser)
+        self.parser = cli.check_options(self.parser)
+        self.parser = cli.runtask_options(self.parser)
+        self.parser = cli.vault_options(self.parser)
+        self.parser = cli.fork_options(self.parser)
+        self.parser = cli.module_options(self.parser)
+        self.parser = cli.basedir_options(self.parser)
 
         # options unique to ansible ad-hoc
         self.parser.add_option('-a', '--args', dest='module_args',

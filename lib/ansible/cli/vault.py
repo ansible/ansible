@@ -8,6 +8,7 @@ __metaclass__ = type
 import os
 import sys
 
+from ansible import cli
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
@@ -97,14 +98,13 @@ class VaultCLI(CLI):
                                    help='the vault id used to encrypt (required if more than vault-id is provided)')
 
     def init_parser(self):
-
         self.parser = super(VaultCLI, self).init_parser(
-            vault_opts=True,
-            vault_rekey_opts=True,
             usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(sorted(self.VALID_ACTIONS)),
             desc="encryption/decryption utility for Ansible data files",
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
+        self.parser = cli.vault_options(self.parser)
+        self.parser = cli.vault_rekey_options(self.parser)
 
         self.set_action()
 

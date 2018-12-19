@@ -8,6 +8,7 @@ __metaclass__ = type
 import optparse
 from operator import attrgetter
 
+from ansible import cli
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
@@ -59,11 +60,10 @@ class InventoryCLI(CLI):
 
         self.parser = super(InventoryCLI, self).init_parser(
             usage='usage: %prog [options] [host|group]',
-            epilog='Show Ansible inventory information, by default it uses the inventory script JSON format',
-            inventory_opts=True,
-            vault_opts=True,
-            basedir_opts=True,
-        )
+            epilog='Show Ansible inventory information, by default it uses the inventory script JSON format')
+        self.parser = cli.inventory_options(self.parser)
+        self.parser = cli.vault_options(self.parser)
+        self.parser = cli.basedir_options(self.parser)
 
         # remove unused default options
         self.parser.remove_option('--limit')

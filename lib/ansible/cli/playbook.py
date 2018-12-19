@@ -21,6 +21,7 @@ __metaclass__ = type
 import os
 import stat
 
+from ansible import cli
 from ansible import context
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -41,18 +42,18 @@ class PlaybookCLI(CLI):
         # create parser for CLI options
         super(PlaybookCLI, self).init_parser(
             usage="%prog [options] playbook.yml [playbook2 ...]",
-            connect_opts=True,
-            meta_opts=True,
-            runas_opts=True,
-            subset_opts=True,
-            check_opts=True,
-            inventory_opts=True,
-            runtask_opts=True,
-            vault_opts=True,
-            fork_opts=True,
-            module_opts=True,
-            desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.",
-        )
+            desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.")
+
+        self.parser = cli.connect_options(self.parser)
+        self.parser = cli.meta_options(self.parser)
+        self.parser = cli.runas_options(self.parser)
+        self.parser = cli.subset_options(self.parser)
+        self.parser = cli.check_options(self.parser)
+        self.parser = cli.inventory_options(self.parser)
+        self.parser = cli.runtask_options(self.parser)
+        self.parser = cli.vault_options(self.parser)
+        self.parser = cli.fork_options(self.parser)
+        self.parser = cli.module_options(self.parser)
 
         # ansible playbook specific opts
         self.parser.add_option('--list-tasks', dest='listtasks', action='store_true',

@@ -14,6 +14,7 @@ import socket
 import sys
 import time
 
+from ansible import cli
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
@@ -70,16 +71,16 @@ class PullCLI(CLI):
 
         self.parser = super(PullCLI, self).init_parser(
             usage='%prog -U <repository> [options] [<playbook.yml>]',
-            connect_opts=True,
-            vault_opts=True,
-            runtask_opts=True,
-            subset_opts=True,
-            check_opts=False,  # prevents conflict of --checkout/-C and --check/-C
-            inventory_opts=True,
-            module_opts=True,
-            runas_prompt_opts=True,
-            desc="pulls playbooks from a VCS repo and executes them for the local host",
-        )
+            desc="pulls playbooks from a VCS repo and executes them for the local host")
+
+        # Do not add check_options as there's a conflict with --checkout/-C
+        self.parser = cli.connect_options(self.parser)
+        self.parser = cli.vault_options(self.parser)
+        self.parser = cli.runtask_options(self.parser)
+        self.parser = cli.subset_options(self.parser)
+        self.parser = cli.inventory_options(self.parser)
+        self.parser = cli.module_options(self.parser)
+        self.parser = cli.runas_prompt_options(self.parser)
 
         # options unique to pull
         self.parser.add_option('--purge', default=False, action='store_true', help='purge checkout after playbook run')

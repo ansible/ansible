@@ -24,6 +24,7 @@ import readline
 import os
 import sys
 
+from ansible import cli
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
@@ -80,17 +81,17 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def init_parser(self):
         super(ConsoleCLI, self).init_parser(
             usage='%prog [<host-pattern>] [options]',
-            runas_opts=True,
-            inventory_opts=True,
-            connect_opts=True,
-            check_opts=True,
-            vault_opts=True,
-            fork_opts=True,
-            module_opts=True,
-            basedir_opts=True,
             desc="REPL console for executing Ansible tasks.",
             epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
+        self.parser = cli.runas_options(self.parser)
+        self.parser = cli.inventory_options(self.parser)
+        self.parser = cli.connect_options(self.parser)
+        self.parser = cli.check_options(self.parser)
+        self.parser = cli.vault_options(self.parser)
+        self.parser = cli.fork_options(self.parser)
+        self.parser = cli.module_options(self.parser)
+        self.parser = cli.basedir_options(self.parser)
 
         # options unique to shell
         self.parser.add_option('--step', dest='step', action='store_true',

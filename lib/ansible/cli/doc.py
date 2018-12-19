@@ -14,6 +14,7 @@ import yaml
 
 import ansible.plugins.loader as plugin_loader
 
+from ansible import cli
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
@@ -49,10 +50,10 @@ class DocCLI(CLI):
 
         self.parser = super(DocCLI, self).init_parser(
             usage='usage: %prog [-l|-F|-s] [options] [-t <plugin type> ] [plugin]',
-            module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
+        self.parser = cli.module_options(self.parser)
 
         self.parser.add_option("-F", "--list_files", action="store_true", default=False, dest="list_files",
                                help='Show plugin names and their source files without summaries (implies --list)')
