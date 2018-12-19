@@ -149,9 +149,6 @@ class OnePasswordFacts(object):
         self.token = {}
 
         terms = module.params.get('search_terms')
-<<<<<<< HEAD
-        self.terms = self.parse_search_terms(module.params.get('search_terms'))
-=======
         self.terms = self.parse_search_terms(terms)
 
     def _run(self, args, expected_rc=0, command_input=None, ignore_errors=False):
@@ -199,7 +196,6 @@ class OnePasswordFacts(object):
         # We will get here if the field could not be found in any section and the item wasn't a document to be downloaded.
         optional_section_title = '' if section_title is None else " in the section '%s'" % section_title
         module.fail_json(msg="Unable to find an item in 1Password named '%s' with the field '%s'%s." % (item_id, field_name, optional_section_title))
->>>>>>> aacd22acc6... Fix an issue retrieving some types of 1Password items. (#47213)
 
     def parse_search_terms(self, terms):
         processed_terms = []
