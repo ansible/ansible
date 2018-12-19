@@ -15,24 +15,25 @@ import optparse
 
 import pytest
 
-from ansible import arguments
+from ansible.arguments import context_objects as co
+from ansible.module_utils.common.collections import ImmutableDict
 
 
 MAKE_IMMUTABLE_DATA = ((u'くらとみ', u'くらとみ'),
                        (42, 42),
-                       ({u'café': u'くらとみ'}, arguments.ImmutableDict({u'café': u'くらとみ'})),
+                       ({u'café': u'くらとみ'}, ImmutableDict({u'café': u'くらとみ'})),
                        ([1, u'café', u'くらとみ'], (1, u'café', u'くらとみ')),
                        (set((1, u'café', u'くらとみ')), frozenset((1, u'café', u'くらとみ'))),
                        ({u'café': [1, set(u'ñ')]},
-                        arguments.ImmutableDict({u'café': (1, frozenset(u'ñ'))})),
+                        ImmutableDict({u'café': (1, frozenset(u'ñ'))})),
                        ([set((1, 2)), {u'くらとみ': 3}],
-                        (frozenset((1, 2)), arguments.ImmutableDict({u'くらとみ': 3}))),
+                        (frozenset((1, 2)), ImmutableDict({u'くらとみ': 3}))),
                        )
 
 
 @pytest.mark.parametrize('data, expected', MAKE_IMMUTABLE_DATA)
 def test_make_immutable(data, expected):
-    assert arguments._make_immutable(data) == expected
+    assert co._make_immutable(data) == expected
 
 
 def test_cliargs_from_dict():
@@ -43,7 +44,7 @@ def test_cliargs_from_dict():
                           ('check_mode', True),
                           ('start_at_task', u'Start with くらとみ')))
 
-    assert frozenset(arguments.CLIArgs(old_dict).items()) == expected
+    assert frozenset(co.CLIArgs(old_dict).items()) == expected
 
 
 def test_cliargs():
@@ -58,7 +59,7 @@ def test_cliargs():
                           ('check_mode', True),
                           ('start_at_task', u'Start with くらとみ')))
 
-    assert frozenset(arguments.CLIArgs.from_options(options).items()) == expected
+    assert frozenset(co.CLIArgs.from_options(options).items()) == expected
 
 
 @pytest.mark.skipIf(argparse is None)
@@ -73,7 +74,7 @@ def test_cliargs_argparse():
 
     expected = frozenset((('accumulate', sum), ('integers', (1, 2))))
 
-    assert frozenset(arguments.CLIArgs.from_options(args).items()) == expected
+    assert frozenset(co.CLIArgs.from_options(args).items()) == expected
 
 
 # Can get rid of this test when we port ansible.cli from optparse to argparse
@@ -87,4 +88,4 @@ def test_cliargs_optparse():
 
     expected = frozenset((('accumulate', sum), ('integers', (u'1', u'2'))))
 
-    assert frozenset(arguments.CLIArgs.from_options(opts).items()) == expected
+    assert frozenset(co.CLIArgs.from_options(opts).items()) == expected

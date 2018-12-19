@@ -1,19 +1,6 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -22,6 +9,7 @@ import os
 import stat
 
 from ansible import context
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
@@ -41,18 +29,18 @@ class PlaybookCLI(CLI):
         # create parser for CLI options
         super(PlaybookCLI, self).init_parser(
             usage="%prog [options] playbook.yml [playbook2 ...]",
-            connect_opts=True,
-            meta_opts=True,
-            runas_opts=True,
-            subset_opts=True,
-            check_opts=True,
-            inventory_opts=True,
-            runtask_opts=True,
-            vault_opts=True,
-            fork_opts=True,
-            module_opts=True,
-            desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.",
-        )
+            desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.")
+
+        opt_help.add_connect_options(self.parser)
+        opt_help.add_meta_options(self.parser)
+        opt_help.add_runas_options(self.parser)
+        opt_help.add_subset_options(self.parser)
+        opt_help.add_check_options(self.parser)
+        opt_help.add_inventory_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_fork_options(self.parser)
+        opt_help.add_module_options(self.parser)
 
         # ansible playbook specific opts
         self.parser.add_option('--list-tasks', dest='listtasks', action='store_true',
@@ -63,8 +51,6 @@ class PlaybookCLI(CLI):
                                help="one-step-at-a-time: confirm each task before running")
         self.parser.add_option('--start-at-task', dest='start_at_task',
                                help="start the playbook at the task matching this name")
-
-        return self.parser
 
     def post_process_args(self, options, args):
         options, args = super(PlaybookCLI, self).post_process_args(options, args)
@@ -111,7 +97,7 @@ class PlaybookCLI(CLI):
         # limit if only implicit localhost was in inventory to start with.
         #
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
-        hosts = super(PlaybookCLI, self).get_host_list(inventory, context.CLIARGS['subset'])
+        hosts = self.get_host_list(inventory, context.CLIARGS['subset'])
 
         # flush fact cache if requested
         if context.CLIARGS['flush_cache']:

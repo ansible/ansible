@@ -14,8 +14,9 @@ import yaml
 
 from jinja2 import Environment, FileSystemLoader
 
-from ansible import context
 import ansible.constants as C
+from ansible import context
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
@@ -109,7 +110,7 @@ class GalaxyCLI(CLI):
         if self.action not in ("delete", "import", "init", "login", "setup"):
             # NOTE: while the option type=str, the default is a list, and the
             # callback will set the value to a list.
-            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.unfrack_paths, default=C.DEFAULT_ROLES_PATH,
+            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=opt_help.unfrack_paths, default=C.DEFAULT_ROLES_PATH,
                                    help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg'
                                         ' file (/etc/ansible/roles if not configured)', type='str')
         if self.action in ("init", "install"):
@@ -118,7 +119,7 @@ class GalaxyCLI(CLI):
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
 
-        self.parser = super(GalaxyCLI, self).init_parser(
+        super(GalaxyCLI, self).init_parser(
             usage="usage: %%prog [%s] [--help] [options] ..." % "|".join(sorted(self.VALID_ACTIONS)),
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
             desc="Perform various Role related operations.",
@@ -129,8 +130,6 @@ class GalaxyCLI(CLI):
         self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
                                help='Ignore SSL certificate validation errors.')
         self.set_action()
-
-        return self.parser
 
     def post_process_args(self, options, args):
         options, args = super(GalaxyCLI, self).post_process_args(options, args)
