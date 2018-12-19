@@ -16,6 +16,7 @@ import time
 
 from ansible import constants as C
 from ansible import context
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
@@ -68,18 +69,18 @@ class PullCLI(CLI):
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
 
-        self.parser = super(PullCLI, self).init_parser(
+        super(PullCLI, self).init_parser(
             usage='%prog -U <repository> [options] [<playbook.yml>]',
-            connect_opts=True,
-            vault_opts=True,
-            runtask_opts=True,
-            subset_opts=True,
-            check_opts=False,  # prevents conflict of --checkout/-C and --check/-C
-            inventory_opts=True,
-            module_opts=True,
-            runas_prompt_opts=True,
-            desc="pulls playbooks from a VCS repo and executes them for the local host",
-        )
+            desc="pulls playbooks from a VCS repo and executes them for the local host")
+
+        # Do not add check_options as there's a conflict with --checkout/-C
+        opt_help.add_connect_options(self.parser)
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
+        opt_help.add_subset_options(self.parser)
+        opt_help.add_inventory_options(self.parser)
+        opt_help.add_module_options(self.parser)
+        opt_help.add_runas_prompt_options(self.parser)
 
         # options unique to pull
         self.parser.add_option('--purge', default=False, action='store_true', help='purge checkout after playbook run')
@@ -113,8 +114,6 @@ class PullCLI(CLI):
                                help="don't make any changes; instead, try to predict some of the changes that may occur")
         self.parser.add_option("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
                                help="when changing (small) files and templates, show the differences in those files; works great with --check")
-
-        return self.parser
 
     def post_process_args(self, options, args):
         options, args = super(PullCLI, self).post_process_args(options, args)

@@ -22,7 +22,7 @@ __metaclass__ = type
 from units.compat import unittest
 from units.compat.mock import MagicMock
 
-from ansible import arguments
+from ansible.arguments import context_objects as co
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible.template import Templar
@@ -34,11 +34,11 @@ class TestPlaybookExecutor(unittest.TestCase):
 
     def setUp(self):
         # Reset command line args for every test
-        arguments.CLIArgs._Singleton__instance = None
+        co.GlobalCLIArgs._Singleton__instance = None
 
     def tearDown(self):
         # And cleanup after ourselves too
-        arguments.CLIArgs._Singleton__instance = None
+        co.GlobalCLIArgs._Singleton__instance = None
 
     def test_get_serialized_batches(self):
         fake_loader = DictDataLoader({

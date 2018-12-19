@@ -21,8 +21,8 @@ from __future__ import (absolute_import, division, print_function)
 from units.compat import unittest
 from units.compat.mock import MagicMock
 
-from ansible import arguments
 from ansible import context
+from ansible.arguments import context_objects as co
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.plugins.callback import CallbackBase
@@ -38,7 +38,7 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
         passwords = []
 
         # Reset the stored command line args
-        arguments.GlobalCLIArgs._Singleton__instance = None
+        co.GlobalCLIArgs._Singleton__instance = None
         self._tqm = TaskQueueManager(inventory, variable_manager, loader, passwords)
         self._playbook = Playbook(loader)
 
@@ -51,7 +51,7 @@ class TestTaskQueueManagerCallbacks(unittest.TestCase):
 
     def tearDown(self):
         # Reset the stored command line args
-        arguments.GlobalCLIArgs._Singleton__instance = None
+        co.GlobalCLIArgs._Singleton__instance = None
 
     def test_task_queue_manager_callbacks_v2_playbook_on_start(self):
         """

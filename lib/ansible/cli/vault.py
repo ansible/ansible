@@ -10,6 +10,7 @@ import sys
 
 from ansible import constants as C
 from ansible import context
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_bytes
@@ -62,7 +63,7 @@ class VaultCLI(CLI):
         if self.action in self.can_output:
             self.parser.add_option('--output', default=None, dest='output_file',
                                    help='output file name for encrypt or decrypt; use - for stdout',
-                                   action="callback", callback=self.unfrack_path, type='string')
+                                   action="callback", callback=opt_help.unfrack_path, type='string')
 
         # options specific to self.actions
         if self.action == "create":
@@ -97,18 +98,15 @@ class VaultCLI(CLI):
                                    help='the vault id used to encrypt (required if more than vault-id is provided)')
 
     def init_parser(self):
-
-        self.parser = super(VaultCLI, self).init_parser(
-            vault_opts=True,
-            vault_rekey_opts=True,
+        super(VaultCLI, self).init_parser(
             usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(sorted(self.VALID_ACTIONS)),
             desc="encryption/decryption utility for Ansible data files",
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_vault_rekey_options(self.parser)
 
         self.set_action()
-
-        return self.parser
 
     def post_process_args(self, options, args):
         options, args = super(VaultCLI, self).post_process_args(options, args)

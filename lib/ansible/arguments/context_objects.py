@@ -61,7 +61,16 @@ class _ABCSingleton(Singleton, ABCMeta):
 
 
 class CLIArgs(ImmutableDict):
-    """Hold a parsed copy of cli arguments"""
+    """
+    Hold a parsed copy of cli arguments
+
+    We have both this non-Singleton version and the Singleton, GlobalCLIArgs, version to leave us
+    room to implement a Context object in the future.  Whereas there should only be one set of args
+    in a global context, individual Context objects might want to pretend that they have different
+    command line switches to trigger different behaviour when they run.  So if we support Contexts
+    in the future, they would use CLIArgs instead of GlobalCLIArgs to store their version of command
+    line flags.
+    """
     def __init__(self, mapping):
         toplevel = {}
         for key, value in mapping.items():
