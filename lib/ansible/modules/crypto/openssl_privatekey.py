@@ -288,12 +288,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
                         except ValueError as e:
                             module.fail_json(msg="%s" % to_native(e), exception=traceback.format_exc())
                 privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, self.mode)
+                os.write(privatekey_file, privatekey_data)
                 os.chmod(self.path, self.mode)
-                if self.cipher and self.passphrase:
-                    os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey,
-                                                                     self.cipher, to_bytes(self.passphrase)))
-                else:
-                    os.write(privatekey_file, crypto.dump_privatekey(crypto.FILETYPE_PEM, self.privatekey))
                 os.close(privatekey_file)
                 self.changed = True
             except IOError as exc:
