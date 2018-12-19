@@ -361,7 +361,7 @@ Using multiple inventory sources
 ================================
 
 As an advanced use case you can target multiple inventory sources (directories, dynamic inventory scripts 
-or files supported by inventory plugins) at same time by giving multiple inventory parameters from command 
+or files supported by inventory plugins) at the same time by giving multiple inventory parameters from the command 
 line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally 
 separate environments, like staging and production, at the same time for a specific action.
 
@@ -372,14 +372,14 @@ Target two sources from the command line like this::
 Keep in mind that if there are variable conflicts in the inventories, they are resolved according
 to the rules described in :ref:`how_we_merge` and :ref:`ansible_variable_precedence`.
 The merging order is controlled by the order of the inventory source parameters.
-If `[all:vars]` in staging inventory defines `myvar = 1`, but production inventory defines `myvar = 2`,
-the playbook will be run with `myvar = 2`. The result would be reversed if the playbook was run with
-`-i production -i staging`.
+If ``[all:vars]`` in staging inventory defines ``myvar = 1``, but production inventory defines ``myvar = 2``,
+the playbook will be run with ``myvar = 2``. The result would be reversed if the playbook was run with
+``-i production -i staging``.
 
 **Aggregating inventory sources with a directory**
 
 You can also create an inventory by combining multiple inventory sources and source types under a directory.
-This can be useful for combining static and dynamic hosts and manage them as one inventory.
+This can be useful for combining static and dynamic hosts and managing them as one inventory.
 The following inventory combines an inventory plugin source, a dynamic inventory script,
 and a file with static hosts::
 
@@ -397,7 +397,7 @@ You can target this inventory directory simply like this::
 It can be useful to control the merging order of the inventory sources if there's variable
 conflicts or group of groups dependencies to the other inventory sources. The inventories
 are merged in alphabetical order according to the filenames so the result can
-be controller by adding prefixes to the files::
+be controlled by adding prefixes to the files::
 
     inventory/
       01-openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
@@ -406,8 +406,8 @@ be controller by adding prefixes to the files::
       group_vars/
         all.yml                 # assign variables to all hosts
 
-If the openstack inventory source defines `myvar = 1` for the group `all`, dynamic inventory source defines `myvar = 2`,
-and `03-static-inventory` defines `myvar = 3`, the playbook will be run with `myvar = 3`.
+If ``01-openstack.yml`` defines ``myvar = 1`` for the group ``all``, ``02-dynamic-inventory.py`` defines ``myvar = 2``,
+and ``03-static-inventory`` defines ``myvar = 3``, the playbook will be run with ``myvar = 3``.
 
 For more details on inventory plugins and dynamic inventory scripts see :ref:`inventory_plugins` and :ref:`intro_dynamic_inventory`.
 
