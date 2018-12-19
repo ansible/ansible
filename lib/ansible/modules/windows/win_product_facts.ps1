@@ -71,20 +71,8 @@ $winlicense_status = switch ($license_info.LicenseStatus) {
     default { $null }
 }
 
-if ($license_info.Name) {
-    $winlicense_edition = $license_info.Name
-}
-else {
-    $winlicense_edition = $null
-}
-
-if ($license_info.ProductKeyChannel) {
-    $winlicense_channel = $license_info.ProductKeyChannel
-}
-else {
-    $winlicense_channel = $null
-}
-
+$winlicense_edition = $license_info.Name
+$winlicense_channel = $license_info.ProductKeyChannel
 
 $module.Result.ansible_facts = @{
     ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
