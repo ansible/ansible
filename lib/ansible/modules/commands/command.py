@@ -20,10 +20,13 @@ short_description: Execute commands on targets
 version_added: historical
 description:
      - The C(command) module takes the command name followed by a list of space-delimited arguments.
-     - The given command will be executed on all selected nodes. It will not be
+     - The given command will be executed on all selected nodes.
+     - The command(s) will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
-       module if you need these features).
+       like C("<"), C(">"), C("|"), C(";") and C("&") will not work.
+       Use the M(shell) module if you need these features.
+     - To create C(command) tasks that are easier to read,
+       pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task).
      - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
@@ -34,7 +37,9 @@ options:
     required: yes
   argv:
     description:
-      - Allows the user to provide the command as a list vs. a string.  Only the string or the list form can be
+      - Passes the command as a list rather than a string.
+      - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
+      - Only the string or the list form can be
         provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
@@ -89,24 +94,30 @@ EXAMPLES = r'''
   command: cat /etc/motd
   register: mymotd
 
-- name: Run the command if the specified file does not exist.
-  command: /usr/bin/make_database.sh arg1 arg2
+- name: Run command if /path/to/database does not exist (without 'args').
+  command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
+
+# 'args' is a task keyword, passed at the same level as the module
+- name: Run command if /path/to/database does not exist (with 'args').
+  command: /usr/bin/make_database.sh db_user db_name
   args:
     creates: /path/to/database
 
-# You can also use the 'args' form to provide the options.
-- name: This command will change the working directory to somedir/ and will only run when /path/to/database doesn't exist.
-  command: /usr/bin/make_database.sh arg1 arg2
+- name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist.
+  command: /usr/bin/make_database.sh db_user db_name
+  become: yes
+  become_user: db_owner
   args:
     chdir: somedir/
     creates: /path/to/database
 
-- name: use argv to send the command as a list.  Be sure to leave command empty
+# 'argv' is a parameter, indented one level from the module
+- name: Use 'argv' to send a command as a list - leave 'command' empty
   command:
-  args:
     argv:
-      - echo
-      - testing
+      - /usr/bin/make_database.sh
+      - Username with whitespace
+      - dbname with whitespace
 
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
