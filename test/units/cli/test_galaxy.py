@@ -26,8 +26,9 @@ import tarfile
 import tempfile
 import yaml
 
-from ansible import arguments
 from ansible import context
+from ansible.arguments import context_objects as co
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
 from units.compat import unittest
 from units.compat.mock import call, patch
@@ -98,12 +99,12 @@ class TestGalaxy(unittest.TestCase):
 
     def setUp(self):
         # Reset the stored command line args
-        arguments.GlobalCLIArgs._Singleton__instance = None
+        co.GlobalCLIArgs._Singleton__instance = None
         self.default_args = ['ansible-galaxy']
 
     def tearDown(self):
         # Reset the stored command line args
-        arguments.GlobalCLIArgs._Singleton__instance = None
+        co.GlobalCLIArgs._Singleton__instance = None
 
     def test_init(self):
         galaxy_cli = GalaxyCLI(args=self.default_args)
@@ -147,7 +148,7 @@ class TestGalaxy(unittest.TestCase):
         # removing role
         # Have to reset the arguments in the context object manually since we're doing the
         # equivalent of running the command line program twice
-        arguments.GlobalCLIArgs._Singleton__instance = None
+        co.GlobalCLIArgs._Singleton__instance = None
         gc = GalaxyCLI(args=["ansible-galaxy", "remove", role_file, self.role_name])
         gc.run()
 
@@ -172,11 +173,11 @@ class TestGalaxy(unittest.TestCase):
             self.assertTrue(mocked_display.called_once_with("- downloading role 'fake_role_name', owned by "))
 
     def run_parse_common(self, galaxycli_obj, action):
-        with patch.object(ansible.cli.SortedOptParser, "set_usage") as mocked_usage:
+        with patch.object(opt_help.SortedOptParser, "set_usage") as mocked_usage:
             galaxycli_obj.parse()
 
             # checking that the common results of parse() for all possible actions have been created/called
-            self.assertIsInstance(galaxycli_obj.parser, ansible.cli.SortedOptParser)
+            self.assertIsInstance(galaxycli_obj.parser, opt_help.SortedOptParser)
             formatted_call = {
                 'import': 'usage: %prog import [options] github_user github_repo',
                 'delete': 'usage: %prog delete [options] github_user github_repo',

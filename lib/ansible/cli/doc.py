@@ -16,6 +16,7 @@ import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
 from ansible import context
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native
@@ -47,12 +48,12 @@ class DocCLI(CLI):
 
     def init_parser(self):
 
-        self.parser = super(DocCLI, self).init_parser(
+        super(DocCLI, self).init_parser(
             usage='usage: %prog [-l|-F|-s] [options] [-t <plugin type> ] [plugin]',
-            module_opts=True,
             desc="plugin documentation tool",
             epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
         )
+        opt_help.add_module_options(self.parser)
 
         self.parser.add_option("-F", "--list_files", action="store_true", default=False, dest="list_files",
                                help='Show plugin names and their source files without summaries (implies --list)')
@@ -68,7 +69,6 @@ class DocCLI(CLI):
                                help='Choose which plugin type (defaults to "module"). '
                                     'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS),
                                choices=C.DOCUMENTABLE_PLUGINS)
-        return self.parser
 
     def post_process_args(self, options, args):
         if [options.all_plugins, options.json_dump, options.list_dir, options.list_files, options.show_snippet].count(True) > 1:
