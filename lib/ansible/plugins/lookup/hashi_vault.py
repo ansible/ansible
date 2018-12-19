@@ -56,7 +56,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - debug:
-    msg: "{{ lookup('hashi_vault', secret=secret/hello:value, token=c975b780-d1be-8016-866b-01d0f9b688a5, url=http://myvault:8200) }}"
+    msg: "{{ lookup('hashi_vault', secret='secret/hello:value', token='c975b780-d1be-8016-866b-01d0f9b688a5', url='http://myvault:8200') }}"
 
 - name: Return all secrets from a path
   debug:
