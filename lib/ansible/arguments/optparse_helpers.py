@@ -24,7 +24,7 @@ from ansible.utils.path import unfrackpath
 #
 
 class SortedOptParser(optparse.OptionParser):
-    '''Optparser which sorts the options by opt before outputting --help'''
+    """Optparser which sorts the options by opt before outputting --help"""
 
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
@@ -33,14 +33,14 @@ class SortedOptParser(optparse.OptionParser):
 
 # Note: Inherit from SortedOptParser so that we get our format_help method
 class InvalidOptsParser(SortedOptParser):
-    '''Ignore invalid options.
+    """Ignore invalid options.
 
     Meant for the special case where we need to take care of help and version but may not know the
     full range of options yet.
 
     .. seealso::
         See it in use in ansible.cli.CLI.set_action
-    '''
+    """
     def __init__(self, parser):
         # Since this is special purposed to just handle help and version, we
         # take a pre-existing option parser here and set our options from
@@ -99,7 +99,7 @@ def unfrack_path(option, opt, value, parser):
 
 
 def _git_repo_info(repo_path):
-    ''' returns a string containing git branch, commit id and commit date '''
+    """ returns a string containing git branch, commit id and commit date """
     result = None
     if os.path.exists(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
@@ -162,7 +162,7 @@ def _gitinfo():
 
 
 def version(prog=None):
-    ''' return ansible version '''
+    """ return ansible version """
     if prog:
         result = " ".join((prog, __version__))
     else:
