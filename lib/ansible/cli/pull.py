@@ -16,8 +16,8 @@ import time
 
 from ansible import constants as C
 from ansible import context
-from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.loader import module_loader

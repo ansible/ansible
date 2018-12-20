@@ -18,7 +18,7 @@ from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
 from ansible import context
-from ansible.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
