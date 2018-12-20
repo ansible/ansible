@@ -23,21 +23,25 @@ options:
   label_id:
     description:
     - The ID of the label.
-    required: yes
+    type: str
   label:
     description:
     - The name of the label.
+    - Alternative to the name, you can use C(label_id).
+    type: str
     required: yes
     aliases: [ label_name, name ]
   type:
     description:
     - The type of the label.
+    type: str
     choices: [ site ]
     default: site
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: msc
@@ -49,9 +53,8 @@ EXAMPLES = r'''
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
-    label_id: 101
-    description: North European Datacenter
+    label: Belgium
+    type: site
     state: present
   delegate_to: localhost
 
@@ -60,7 +63,7 @@ EXAMPLES = r'''
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
+    label: Belgium
     state: absent
   delegate_to: localhost
 
@@ -69,7 +72,7 @@ EXAMPLES = r'''
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
+    label: Belgium
     state: query
   delegate_to: localhost
   register: query_result
@@ -151,11 +154,13 @@ def main():
     elif state == 'present':
         msc.previous = msc.existing
 
-        msc.sanitize(dict(
+        payload = dict(
             id=label_id,
             displayName=label,
             type=label_type,
-        ), collate=True)
+        )
+
+        msc.sanitize(payload, collate=True)
 
         if msc.existing:
             if not issubset(msc.sent, msc.existing):
