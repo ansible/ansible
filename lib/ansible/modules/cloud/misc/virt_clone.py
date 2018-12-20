@@ -32,7 +32,7 @@ options:
   auto:
     default: true
     description:
-        - Generates a new guest name, and paths for new storage - default true
+        - Generates a new guest name, and paths for new storage - default true.
     type: bool
   mac:
     description:
