@@ -407,7 +407,7 @@ As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can n
         - name: restart apache
           service:
             name: apache
-            state:restarted
+            state: restarted
           listen: "restart web services"
 
     tasks:
