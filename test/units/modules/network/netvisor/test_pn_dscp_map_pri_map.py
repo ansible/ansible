@@ -7,20 +7,20 @@ __metaclass__ = type
 import json
 
 from units.compat.mock import patch
-from ansible.modules.network.netvisor import pn_dhcp_map_pri_map
+from ansible.modules.network.netvisor import pn_dscp_map_pri_map
 from units.modules.utils import set_module_args
 from .nvos_module import TestNvosModule, load_fixture
 
 
 class TestCpuClassModule(TestNvosModule):
 
-    module = pn_dhcp_map_pri_map
+    module = pn_dscp_map_pri_map
 
     def setUp(self):
-        self.mock_run_nvos_commands = patch('ansible.modules.network.netvisor.pn_dhcp_map_pri_map.run_cli')
+        self.mock_run_nvos_commands = patch('ansible.modules.network.netvisor.pn_dscp_map_pri_map.run_cli')
         self.run_nvos_commands = self.mock_run_nvos_commands.start()
 
-        self.mock_run_check_cli = patch('ansible.modules.network.netvisor.pn_dhcp_map_pri_map.check_cli')
+        self.mock_run_check_cli = patch('ansible.modules.network.netvisor.pn_dscp_map_pri_map.check_cli')
         self.run_check_cli = self.mock_run_check_cli.start()
 
     def tearDown(self):
