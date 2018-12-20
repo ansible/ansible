@@ -15,7 +15,7 @@ import optparse
 
 import pytest
 
-from ansible.arguments import context_objects as co
+from ansible.cli.arguments import context_objects as co
 from ansible.module_utils.common.collections import ImmutableDict
 
 

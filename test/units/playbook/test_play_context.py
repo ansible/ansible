@@ -13,8 +13,8 @@ import pytest
 
 from ansible import constants as C
 from ansible import context
-from ansible.arguments import context_objects as co
-from ansible.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import context_objects as co
+from ansible.cli.arguments import optparse_helpers as opt_help
 from units.compat import unittest
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six.moves import shlex_quote

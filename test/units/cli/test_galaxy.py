@@ -27,8 +27,8 @@ import tempfile
 import yaml
 
 from ansible import context
-from ansible.arguments import context_objects as co
-from ansible.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import context_objects as co
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
 from units.compat import unittest
 from units.compat.mock import call, patch

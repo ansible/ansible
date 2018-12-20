@@ -22,7 +22,7 @@ from units.compat import unittest
 from units.compat.mock import MagicMock
 
 from ansible import context
-from ansible.arguments import context_objects as co
+from ansible.cli.arguments import context_objects as co
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.plugins.callback import CallbackBase

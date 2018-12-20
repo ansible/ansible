@@ -15,7 +15,7 @@ running the ansible command line tools.
 These APIs are still in flux so do not use them unless you are willing to update them with every Ansible release
 """
 
-from ansible.arguments.context_objects import CLIArgs, GlobalCLIArgs
+from ansible.cli.arguments.context_objects import CLIArgs, GlobalCLIArgs
 
 
 # Note: this is not the singleton version.  The Singleton is only created once the program has

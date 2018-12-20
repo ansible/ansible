@@ -22,7 +22,7 @@ __metaclass__ = type
 from units.compat import unittest
 from units.compat.mock import MagicMock
 
-from ansible.arguments import context_objects as co
+from ansible.cli.arguments import context_objects as co
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible.template import Templar
