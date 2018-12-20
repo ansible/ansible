@@ -10,8 +10,8 @@ from operator import attrgetter
 
 from ansible import constants as C
 from ansible import context
-from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.host import Host
 from ansible.plugins.loader import vars_loader
