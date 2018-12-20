@@ -94,7 +94,7 @@ def find_user(module, client, user_name):
             if user['user'] == user_name:
                 user_result = user
                 break
-    except ansible.module_utils.urls.ConnectionError as e:
+    except (ansible.module_utils.urls.ConnectionError, influx.exceptions.InfluxDBClientError) as e:
         module.fail_json(msg=str(e))
     return user_result
 
