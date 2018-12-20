@@ -10,7 +10,7 @@
 
 
 # CLEAN ENVIRONMENT
-- name: Remove site ansible_test2
+- name: Remove site 2
   msc_site: &site_absent
     host: '{{ msc_hostname }}'
     username: '{{ msc_username }}'
@@ -19,13 +19,13 @@
     use_ssl: '{{ msc_use_ssl | default(true) }}'
     use_proxy: '{{ msc_use_proxy | default(true) }}'
     output_level: '{{ msc_output_level | default("info") }}'
-    site: ansible_test2
+    site: '{{ msc_site | default("ansible_test") }}_2'
     state: absent
 
-- name: Remove site ansible_test
+- name: Remove site
   msc_site:
     <<: *site_absent
-    site: ansible_test
+    site: '{{ msc_site | default("ansible_test") }}'
   register: cm_remove_site
 
 
@@ -39,12 +39,19 @@
     use_ssl: '{{ msc_use_ssl | default(true) }}'
     use_proxy: '{{ msc_use_proxy | default(true) }}'
     output_level: '{{ msc_output_level | default("info") }}'
-    site: ansible_test
+    site: '{{ msc_site | default("ansible_test") }}'
     apic_username: admin
     apic_password: '{{ apic_password }}'
     apic_site_id: 101
     urls:
-    - https://{{ apic_hostname }}/
+    - https://{{ apic_hostname }}
+    location:
+      latitude: 50.887318
+      longitude: 4.447084
+    labels:
+    - Diegem
+    - EMEA
+    - POD51
     state: present
   check_mode: yes
   register: cm_add_site
@@ -55,7 +62,7 @@
     - cm_add_site is changed
     - cm_add_site.previous == {}
     - cm_add_site.current.id is not defined
-    - cm_add_site.current.name == 'ansible_test'
+    - cm_add_site.current.name == msc_site|default("ansible_test")
 
 - name: Add site (normal mode)
   msc_site: *site_present
@@ -67,7 +74,7 @@
     - nm_add_site is changed
     - nm_add_site.previous == {}
     - nm_add_site.current.id is defined
-    - nm_add_site.current.name == 'ansible_test'
+    - nm_add_site.current.name == msc_site|default("ansible_test")
 
 - name: Add site again (check_mode)
   msc_site: *site_present
@@ -78,9 +85,9 @@
   assert:
     that:
     - cm_add_site_again is not changed
-    - cm_add_site_again.previous.name == 'ansible_test'
+    - cm_add_site_again.previous.name == msc_site|default("ansible_test")
     - cm_add_site_again.current.id == nm_add_site.current.id
-    - cm_add_site_again.current.name == 'ansible_test'
+    - cm_add_site_again.current.name == msc_site|default("ansible_test")
 
 - name: Add site again (normal mode)
   msc_site: *site_present
@@ -90,9 +97,9 @@
   assert:
     that:
     - nm_add_site_again is not changed
-    - nm_add_site_again.previous.name == 'ansible_test'
+    - nm_add_site_again.previous.name == msc_site|default("ansible_test")
     - nm_add_site_again.current.id == nm_add_site.current.id
-    - nm_add_site_again.current.name == 'ansible_test'
+    - nm_add_site_again.current.name == msc_site|default("ansible_test")
 
 
 # CHANGE SITE
@@ -100,7 +107,7 @@
   msc_site:
     <<: *site_present
     site_id: '{{ nm_add_site.current.id }}'
-    site: ansible_test2
+    site: '{{ msc_site | default("ansible_test") }}_2'
   check_mode: yes
   register: cm_change_site
 
@@ -109,13 +116,13 @@
     that:
     - cm_change_site is changed
     - cm_change_site.current.id == nm_add_site.current.id
-    - cm_change_site.current.name == 'ansible_test2'
+    - cm_change_site.current.name == '{{ msc_site | default("ansible_test") }}_2'
 
 - name: Change site (normal mode)
   msc_site:
     <<: *site_present
     site_id: '{{ nm_add_site.current.id }}'
-    site: ansible_test2
+    site: '{{ msc_site | default("ansible_test") }}_2'
     output_level: debug
   register: nm_change_site
 
@@ -124,13 +131,13 @@
     that:
     - nm_change_site is changed
     - nm_change_site.current.id == nm_add_site.current.id
-    - nm_change_site.current.name == 'ansible_test2'
+    - nm_change_site.current.name == '{{ msc_site | default("ansible_test") }}_2'
 
 - name: Change site again (check_mode)
   msc_site:
     <<: *site_present
     site_id: '{{ nm_add_site.current.id }}'
-    site: ansible_test2
+    site: '{{ msc_site | default("ansible_test") }}_2'
   check_mode: yes
   register: cm_change_site_again
 
@@ -139,13 +146,13 @@
     that:
     - cm_change_site_again is not changed
     - cm_change_site_again.current.id == nm_add_site.current.id
-    - cm_change_site_again.current.name == 'ansible_test2'
+    - cm_change_site_again.current.name == '{{ msc_site | default("ansible_test") }}_2'
 
 - name: Change site again (normal mode)
   msc_site:
     <<: *site_present
     site_id: '{{ nm_add_site.current.id }}'
-    site: ansible_test2
+    site: '{{ msc_site | default("ansible_test") }}_2'
   register: nm_change_site_again
 
 - name: Verify nm_change_site_again
@@ -153,7 +160,7 @@
     that:
     - nm_change_site_again is not changed
     - nm_change_site_again.current.id == nm_add_site.current.id
-    - nm_change_site_again.current.name == 'ansible_test2'
+    - nm_change_site_again.current.name == '{{ msc_site | default("ansible_test") }}_2'
 
 
 # QUERY ALL SITES
@@ -187,14 +194,14 @@
 - name: Query our site
   msc_site:
     <<: *site_query
-    site: ansible_test2
+    site: '{{ msc_site | default("ansible_test") }}_2'
   check_mode: yes
   register: cm_query_site
 
 - name: Query our site
   msc_site:
     <<: *site_query
-    site: ansible_test2
+    site: '{{ msc_site | default("ansible_test") }}_2'
   register: nm_query_site
 
 - name: Verify query_site
@@ -202,10 +209,10 @@
     that:
     - cm_query_site is not changed
     - cm_query_site.current.id == nm_add_site.current.id
-    - cm_query_site.current.name == 'ansible_test2'
+    - cm_query_site.current.name == '{{ msc_site | default("ansible_test") }}_2'
     - nm_query_site is not changed
     - nm_query_site.current.id == nm_add_site.current.id
-    - nm_query_site.current.name == 'ansible_test2'
+    - nm_query_site.current.name == '{{ msc_site | default("ansible_test") }}_2'
     - cm_query_site == nm_query_site
 
 
@@ -257,14 +264,14 @@
 - name: Query non-existing site (check_mode)
   msc_site:
     <<: *site_query
-    site: ansible_test
+    site: '{{ msc_site | default("ansible_test") }}'
   check_mode: yes
   register: cm_query_non_site
 
 - name: Query non-existing site (normal mode)
   msc_site:
     <<: *site_query
-    site: ansible_test
+    site: '{{ msc_site | default("ansible_test") }}'
   register: nm_query_non_site
 
 # TODO: Implement more tests

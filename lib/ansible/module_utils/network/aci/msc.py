@@ -38,19 +38,30 @@ from ansible.module_utils._text import to_native, to_bytes
 
 def issubset(subset, superset):
     ''' Recurse through nested dictionary and compare entries '''
+
+    # Both objects are the same object
     if subset is superset:
         return True
 
+    # Both objects are identical
     if subset == superset:
         return True
 
+    # Both objects have a different type
+    if type(subset) != type(superset):
+        return False
+
     for key, value in subset.items():
+        # Item from subset is missing from superset
         if key not in superset:
             return False
-        elif isinstance(value, str):
-            if value != superset[key]:
-                return False
-        elif isinstance(value, dict):
+
+        # Item has different types in subset and superset
+        if type(superset[key]) != type(value):
+            return False
+
+        # Compare if item values are subset
+        if isinstance(value, dict):
             if not issubset(superset[key], value):
                 return False
         elif isinstance(value, list):
@@ -62,7 +73,14 @@ def issubset(subset, superset):
         else:
             if not value == superset[key]:
                 return False
+
     return True
+
+
+def update_qs(params):
+    ''' Append key-value pairs to self.filter_string '''
+    accepted_params = dict((k, v) for (k, v) in params.items() if v)
+    return '?' + '&'.join(['%s=%s' % (k, v) for (k, v) in accepted_params.items()])
 
 
 def msc_argument_spec():
@@ -146,7 +164,7 @@ class MSCModule(object):
 
         self.headers['Authorization'] = 'Bearer {token}'.format(**payload)
 
-    def request(self, path, method=None, data=None):
+    def request(self, path, method=None, data=None, qs=None):
         ''' Generic HTTP method for MSC requests. '''
         self.path = path
 
@@ -154,6 +172,10 @@ class MSCModule(object):
             self.method = method
 
         self.url = urljoin(self.baseuri, path)
+
+        if qs is not None:
+            self.url = self.url + update_qs(qs)
+
         resp, info = fetch_url(self.module,
                                self.url,
                                headers=self.headers,
@@ -168,8 +190,8 @@ class MSCModule(object):
         # 200: OK, 201: Created, 202: Accepted, 204: No Content
         if self.status in (200, 201, 202, 204):
             output = resp.read()
-            if self.method in ('DELETE', 'PATCH', 'POST', 'PUT') and self.status in (200, 201, 204):
-                self.result['changed'] = True
+#            if self.method in ('DELETE', 'PATCH', 'POST', 'PUT') and self.status in (200, 201, 204):
+#                self.result['changed'] = True
             if output:
                 return json.loads(output)
 
@@ -192,20 +214,26 @@ class MSCModule(object):
 
         return {}
 
-    def query_objs(self, path, **kwargs):
+    def query_objs(self, path, key=None, **kwargs):
+        ''' Query the MSC REST API for objects in a path '''
         found = []
         objs = self.request(path, method='GET')
-        for obj in objs[path]:
-            for key in kwargs.keys():
-                if kwargs[key] is None:
+
+        if key is None:
+            key = path
+
+        for obj in objs[key]:
+            for kw_key, kw_value in kwargs.items():
+                if kw_value is None:
                     continue
-                if obj[key] != kwargs[key]:
+                if obj[kw_key] != kw_value:
                     break
             else:
                 found.append(obj)
         return found
 
     def get_obj(self, path, **kwargs):
+        ''' Get a specific object from a set of MSC REST objects '''
         objs = self.query_objs(path, **kwargs)
         if len(objs) == 0:
             return {}
@@ -213,7 +241,54 @@ class MSCModule(object):
             self.fail_json(msg='More than one object matches unique filter: {0}'.format(kwargs))
         return objs[0]
 
+    def lookup_domain(self, domain):
+        ''' Look up a domain and return its id '''
+        if domain is None:
+            return domain
+
+        d = self.get_obj('auth/domains', key='domains', name=domain)
+        if not d:
+            self.module.fail_json(msg="Domain '%s' is not valid." % domain)
+        if 'id' not in d:
+                self.module.fail_json(msg="Domain lookup failed for '%s': %s" % (domain, d))
+        return d['id']
+
+    def lookup_roles(self, roles):
+        ''' Look up roles and return their ids '''
+        if roles is None:
+            return roles
+
+        ids = []
+        for role in roles:
+            r = self.get_obj('roles', name=role)
+            if not r:
+                self.module.fail_json(msg="Role '%s' is not valid." % role)
+            if 'id' not in r:
+                self.module.fail_json(msg="Role lookup failed for '%s': %s" % (role, r))
+            ids.append(dict(roleId=r['id']))
+        return ids
+
+    def create_label(self, label, label_type):
+        ''' Create a new label '''
+        return self.request('labels', method='POST', data=dict(displayName=label, type=label_type))
+
+    def lookup_labels(self, labels, label_type):
+        ''' Look up labels and return their ids (create if necessary) '''
+        if labels is None:
+            return None
+
+        ids = []
+        for label in labels:
+            l = self.get_obj('labels', displayName=label)
+            if not l:
+                l = self.create_label(label, label_type)
+            if 'id' not in l:
+                self.module.fail_json(msg="Label lookup failed for '%s': %s" % (label, l))
+            ids.append(l['id'])
+        return ids
+
     def sanitize(self, updates, collate=False, required_keys=None):
+        ''' Clean up unset keys from a request payload '''
         if required_keys is None:
             required_keys = []
         self.proposed = deepcopy(self.existing)
