@@ -359,7 +359,7 @@ def main():
                 cloud.delete_security_group_rule(rule['id'])
                 changed = True
 
-            module.exit_json(changed=changed)
+        module.exit_json(changed=changed)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
