@@ -91,7 +91,6 @@ class TestVyosPingModule(TestVyosModule):
         self.assertEqual(result['rtt']['mdev'], 10)
 
     def test_vyos_ping_success_stats_with_options(self):
-        '''Test for asserting stats when ping passes'''
         set_module_args(dict(count=10, ttl=128, size=512, dest="10.10.10.11"))
         result = self.execute_module()
         self.assertEqual(result['packet_loss'], '0%')
