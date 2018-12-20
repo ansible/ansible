@@ -48,7 +48,8 @@
     phone: +32 478 436 299
     account_status: active
     roles:
-    - 0000ffff0000000000000031
+    - powerUser
+    domain: Local
 
     state: present
   check_mode: yes
