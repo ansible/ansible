@@ -58,7 +58,7 @@ options:
   template:
     aliases: [ "src" ]
     description:
-        - The VM to use as the source (template)
+        - The VM to use as the source (template).
     required: true
   uuid:
     description:
