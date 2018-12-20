@@ -151,7 +151,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def get_keystore_type(keystore_type):
     ''' Check that custom keystore is presented in parameters '''
-    if not keystore_type:
+    if keystore_type:
         return (" -storetype '%s'") % (keystore_type)
     return ''
 
