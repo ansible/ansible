@@ -51,7 +51,7 @@ options:
     default: 5
   source:
     description:
-      - The source interface or IP Address to use will sending the ping packet(s).
+      - The source interface or IP Address to use while sending the ping packet(s).
   ttl:
     description:
       - The time-to-live value for the ICMP packet(s).
@@ -103,7 +103,7 @@ EXAMPLES = """
 
 RETURN = """
 commands:
-  description: Show the command sent.
+  description: List of commands sent.
   returned: always
   type: list
   sample: ["ping 10.8.38.44 count 10 interface eth0 ttl 128"]
@@ -123,7 +123,7 @@ packets_tx:
   type: int
   sample: 20
 rtt:
-  description: Show RTT stats.
+  description: The round trip time (RTT) stats.
   returned: when ping succeeds
   type: dict
   sample: {"avg": 2, "max": 8, "min": 1, "mdev": 24}
