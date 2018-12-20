@@ -283,9 +283,12 @@ class Connection(NetworkConnectionBase):
             ssh_config = None
 
         try:
+            port = self._play_context.port or 830
+            self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s" %
+                               (self._play_context.remote_user, port, self._play_context.remote_addr))
             self._manager = manager.connect(
                 host=self._play_context.remote_addr,
-                port=self._play_context.port or 830,
+                port=port,
                 username=self._play_context.remote_user,
                 password=self._play_context.password,
                 key_filename=self.key_filename,
