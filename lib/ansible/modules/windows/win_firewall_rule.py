@@ -44,7 +44,7 @@ options:
     description:
       - What to do with the items this rule is for.
     required: yes
-    choices: [ allow, block, bypass ]
+    choices: [ allow, block ]
   description:
     description:
       - Description for the firewall rule.
