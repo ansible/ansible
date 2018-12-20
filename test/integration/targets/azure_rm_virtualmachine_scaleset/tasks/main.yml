@@ -249,7 +249,7 @@
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
-    vm_size: Standard_B1s
+    vm_size: Standard_D3_v2
     capacity: 1
     virtual_network_name: testVnet
     subnet_name: testSubnet
@@ -273,7 +273,7 @@
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
-    vm_size: Standard_B1s
+    vm_size: Standard_D3_v2
     capacity: 1
     virtual_network_name: testVnet
     subnet_name: testSubnet
@@ -299,7 +299,7 @@
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
-    vm_size: Standard_B1s
+    vm_size: Standard_D3_v2
     capacity: 1
     virtual_network_name: testVnet
     subnet_name: testSubnet
@@ -323,7 +323,7 @@
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
-    vm_size: Standard_B1s
+    vm_size: Standard_D3_v2
     capacity: 1
     virtual_network_name: testVnet
     subnet_name: testSubnet
@@ -349,7 +349,7 @@
     name: testVMSS{{ rpfx }}2
     state: absent
     remove_on_absent: ['all']
-    vm_size: Standard_B1s
+    vm_size: Standard_D3_v2
     capacity: 1
     image:
       offer: CoreOS
