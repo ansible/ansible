@@ -113,6 +113,7 @@ class ConnectionProcess(object):
             self.sock.listen(1)
             messages.append(('vvvv', 'local domain socket listeners started successfully'))
         except Exception as exc:
+            messages.extend(self.connection.pop_messages())
             result['error'] = to_text(exc)
             result['exception'] = traceback.format_exc()
         finally:
@@ -304,7 +305,8 @@ def main():
                             'exception': traceback.format_exc()
                         })
 
-    messages.extend(Connection(socket_path).pop_messages())
+    if os.path.exists(socket_path):
+        messages.extend(Connection(socket_path).pop_messages())
     messages.append(('vvvv', sys.stdout.getvalue()))
     result.update({
         'messages': messages,
