@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Added log message at -vvvv when using netconf connection listing connection details.
