@@ -54,8 +54,8 @@ class PullCLI(CLI):
 
     SKIP_INVENTORY_DEFAULTS = True
 
-    def _get_inv_cli(self):
-
+    @staticmethod
+    def _get_inv_cli():
         inv_opts = ''
         if context.CLIARGS.get('inventory', False):
             for inv in context.CLIARGS['inventory']:
@@ -296,35 +296,37 @@ class PullCLI(CLI):
 
         return rc
 
-    def try_playbook(self, path):
+    @staticmethod
+    def try_playbook(path):
         if not os.path.exists(path):
             return 1
         if not os.access(path, os.R_OK):
             return 2
         return 0
 
-    def select_playbook(self, path):
+    @staticmethod
+    def select_playbook(path):
         playbook = None
         if context.CLIARGS['args'] and context.CLIARGS['args'][0] is not None:
             playbook = os.path.join(path, context.CLIARGS['args'][0])
-            rc = self.try_playbook(playbook)
+            rc = PullCLI.try_playbook(playbook)
             if rc != 0:
-                display.warning("%s: %s" % (playbook, self.PLAYBOOK_ERRORS[rc]))
+                display.warning("%s: %s" % (playbook, PullCLI.PLAYBOOK_ERRORS[rc]))
                 return None
             return playbook
         else:
             fqdn = socket.getfqdn()
             hostpb = os.path.join(path, fqdn + '.yml')
             shorthostpb = os.path.join(path, fqdn.split('.')[0] + '.yml')
-            localpb = os.path.join(path, self.DEFAULT_PLAYBOOK)
+            localpb = os.path.join(path, PullCLI.DEFAULT_PLAYBOOK)
             errors = []
             for pb in [hostpb, shorthostpb, localpb]:
-                rc = self.try_playbook(pb)
+                rc = PullCLI.try_playbook(pb)
                 if rc == 0:
                     playbook = pb
                     break
                 else:
-                    errors.append("%s: %s" % (pb, self.PLAYBOOK_ERRORS[rc]))
+                    errors.append("%s: %s" % (pb, PullCLI.PLAYBOOK_ERRORS[rc]))
             if playbook is None:
                 display.warning("\n".join(errors))
             return playbook
