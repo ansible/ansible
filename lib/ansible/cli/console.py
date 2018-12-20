@@ -24,9 +24,9 @@ import readline
 import os
 import sys
 
-from ansible import cli
 from ansible import constants as C
 from ansible import context
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
@@ -84,20 +84,18 @@ class ConsoleCLI(CLI, cmd.Cmd):
             desc="REPL console for executing Ansible tasks.",
             epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
-        self.parser = cli.runas_options(self.parser)
-        self.parser = cli.inventory_options(self.parser)
-        self.parser = cli.connect_options(self.parser)
-        self.parser = cli.check_options(self.parser)
-        self.parser = cli.vault_options(self.parser)
-        self.parser = cli.fork_options(self.parser)
-        self.parser = cli.module_options(self.parser)
-        self.parser = cli.basedir_options(self.parser)
+        opt_help.add_runas_options(self.parser)
+        opt_help.add_inventory_options(self.parser)
+        opt_help.add_connect_options(self.parser)
+        opt_help.add_check_options(self.parser)
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_fork_options(self.parser)
+        opt_help.add_module_options(self.parser)
+        opt_help.add_basedir_options(self.parser)
 
         # options unique to shell
         self.parser.add_option('--step', dest='step', action='store_true',
                                help="one-step-at-a-time: confirm each task before running")
-
-        return self.parser
 
     def post_process_args(self, options, args):
         options, args = super(ConsoleCLI, self).post_process_args(options, args)

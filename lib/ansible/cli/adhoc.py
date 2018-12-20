@@ -5,9 +5,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible import cli
 from ansible import constants as C
 from ansible import context
+from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -28,23 +28,23 @@ class AdHocCLI(CLI):
 
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
-        self.parser = super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',
-                                                        desc="Define and run a single task"
-                                                        " 'playbook' against a set of hosts",
-                                                        epilog="Some modules do not make sense in"
-                                                        " Ad-Hoc (include, meta, etc)")
+        super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',
+                                          desc="Define and run a single task 'playbook' against"
+                                          " a set of hosts",
+                                          epilog="Some modules do not make sense in Ad-Hoc (include,"
+                                          " meta, etc)")
 
-        self.parser = cli.runas_options(self.parser)
-        self.parser = cli.inventory_options(self.parser)
-        self.parser = cli.async_options(self.parser)
-        self.parser = cli.output_options(self.parser)
-        self.parser = cli.connect_options(self.parser)
-        self.parser = cli.check_options(self.parser)
-        self.parser = cli.runtask_options(self.parser)
-        self.parser = cli.vault_options(self.parser)
-        self.parser = cli.fork_options(self.parser)
-        self.parser = cli.module_options(self.parser)
-        self.parser = cli.basedir_options(self.parser)
+        opt_help.add_runas_options(self.parser)
+        opt_help.add_inventory_options(self.parser)
+        opt_help.add_async_options(self.parser)
+        opt_help.add_output_options(self.parser)
+        opt_help.add_connect_options(self.parser)
+        opt_help.add_check_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
+        opt_help.add_vault_options(self.parser)
+        opt_help.add_fork_options(self.parser)
+        opt_help.add_module_options(self.parser)
+        opt_help.add_basedir_options(self.parser)
 
         # options unique to ansible ad-hoc
         self.parser.add_option('-a', '--args', dest='module_args',
@@ -52,7 +52,6 @@ class AdHocCLI(CLI):
         self.parser.add_option('-m', '--module-name', dest='module_name',
                                help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                default=C.DEFAULT_MODULE_NAME)
-        return self.parser
 
     def post_process_args(self, options, args):
         '''Post process and validate options for bin/ansible '''

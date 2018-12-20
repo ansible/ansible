@@ -11,10 +11,10 @@ import os
 
 import pytest
 
-from ansible import arguments
 from ansible import constants as C
 from ansible import context
-from ansible import cli
+from ansible.arguments import context_objects as co
+from ansible.arguments import optparse_helpers as opt_help
 from units.compat import unittest
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six.moves import shlex_quote
@@ -25,26 +25,26 @@ from units.mock.loader import DictDataLoader
 
 @pytest.fixture
 def parser():
-    parser = cli.base_parser()
+    parser = opt_help.create_base_parser()
 
-    parser = cli.runas_options(parser)
-    parser = cli.meta_options(parser)
-    parser = cli.runtask_options(parser)
-    parser = cli.vault_options(parser)
-    parser = cli.async_options(parser)
-    parser = cli.connect_options(parser)
-    parser = cli.subset_options(parser)
-    parser = cli.check_options(parser)
-    parser = cli.inventory_options(parser)
+    opt_help.add_runas_options(parser)
+    opt_help.add_meta_options(parser)
+    opt_help.add_runtask_options(parser)
+    opt_help.add_vault_options(parser)
+    opt_help.add_async_options(parser)
+    opt_help.add_connect_options(parser)
+    opt_help.add_subset_options(parser)
+    opt_help.add_check_options(parser)
+    opt_help.add_inventory_options(parser)
 
     return parser
 
 
 @pytest.fixture
 def reset_cli_args():
-    arguments.GlobalCLIArgs._Singleton__instance = None
+    co.GlobalCLIArgs._Singleton__instance = None
     yield
-    arguments.GlobalCLIArgs._Singleton__instance = None
+    co.GlobalCLIArgs._Singleton__instance = None
 
 
 def test_play_context(mocker, parser, reset_cli_args):

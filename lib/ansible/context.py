@@ -15,12 +15,12 @@ running the ansible command line tools.
 These APIs are still in flux so do not use them unless you are willing to update them with every Ansible release
 """
 
-from ansible import arguments
+from ansible.arguments.context_objects import CLIArgs, GlobalCLIArgs
 
 
 # Note: this is not the singleton version.  That is only created once the program has actually
 # parsed the args
-CLIARGS = arguments.CLIArgs({})
+CLIARGS = CLIArgs({})
 
 
 class _Context:
@@ -34,7 +34,7 @@ class _Context:
     """
     def __init__(self):
         global CLIARGS
-        self._CLIARGS = arguments.CLIArgs(CLIARGS)
+        self._CLIARGS = CLIArgs(CLIARGS)
 
     @property
     def CLIARGS(self):
@@ -42,7 +42,7 @@ class _Context:
 
     @CLIARGS.setter
     def CLIARGS_set(self, new_cli_args):
-        if not isinstance(new_cli_args, arguments.CLIArgs):
+        if not isinstance(new_cli_args, CLIArgs):
             raise TypeError('CLIARGS must be of type (ansible.arguments.CLIArgs)')
         self._CLIARGS = new_cli_args
 
@@ -50,4 +50,4 @@ class _Context:
 def _init_global_context(cli_args):
     """Initialize the global context objects"""
     global CLIARGS
-    CLIARGS = arguments.GlobalCLIArgs.from_options(cli_args)
+    CLIARGS = GlobalCLIArgs.from_options(cli_args)
