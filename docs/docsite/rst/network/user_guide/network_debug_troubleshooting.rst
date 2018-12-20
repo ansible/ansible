@@ -108,11 +108,14 @@ Enabling Networking device interaction logging
 Ansible 2.8 features added logging of device interaction in log file to help diagnose and troubleshoot
 issues regarding Ansible Networking modules. The messages are logged in file pointed by ``log_path`` configuration
 option in Ansible configuration file or by set :envvar:`ANSIBLE_LOG_PATH` as mentioned in above section.
-The device interaction messages consist of command executed on target device and the returned response, as this
-log data can contain sensitive information including passwords in plain text it is disabled by default. Be sure
-to fully understand the security implications of enabling this option. The device interaction logging can be enabled
-either globally by setting in configuration file or by setting environment or enabled on per task basis by passing
-special variable to task.
+
+.. warning::
+  The device interaction messages consist of command executed on target device and the returned response, as this
+  log data can contain sensitive information including passwords in plain text it is disabled by default.
+  Additionally, in order to prevent accidental leakage of data, a warning will be shown on every task with this
+  setting eneabled specifying which host has it enabled and where the data is being logged.
+
+Be sure to fully understand the security implications of enabling this option. The device interaction logging can be enabled either globally by setting in configuration file or by setting environment or enabled on per task basis by passing special variable to task.
 
 Before running ``ansible-playbook`` run the following commands to enable logging::
 
