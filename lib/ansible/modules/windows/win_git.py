@@ -7,7 +7,7 @@
 # Copyright: (c) 2018, Anatoliy Ivashina <tivrobo@gmail.com>, Pablo Estigarribia <pablodav@gmail.com>, Michael Hay <project.hay@gmail.com>, Ripon Banik <ripon.banik@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_git
 author: 
@@ -77,7 +77,7 @@ notes:
        and id_rsa is correct under user profile; Re-Run the task" 
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Example git clone using https 
 - name: git clone using https 
   win_git:
