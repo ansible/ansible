@@ -63,7 +63,7 @@ options:
     type: str
   uuid:
     description:
-        - Allows a static UUID to be defined for the VM when cloning
+        - Allows a static UUID to be defined for the VM when cloning.
     required: false
 '''
 
