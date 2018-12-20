@@ -16,8 +16,8 @@ import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
 from ansible import context
-from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Sequence

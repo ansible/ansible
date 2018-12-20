@@ -9,8 +9,8 @@ import os
 import stat
 
 from ansible import context
-from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook.block import Block
