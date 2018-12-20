@@ -1018,6 +1018,11 @@ files:
     labels:
       - windows
 ###############################
+# plugins/doc_fragments
+  $plugins/doc_fragments/__init__.py:
+    support: core
+
+###############################
 # plugins/filter
   $plugins/filter/:
     support: community
