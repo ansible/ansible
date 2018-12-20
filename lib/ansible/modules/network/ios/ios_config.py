@@ -456,8 +456,8 @@ def main():
                 if cfg_build_obj and cfg_current_obj:
                     contents = contents.strip(cfg_build_obj.group() + cfg_current_obj.group())
                 result['__backup__'] = contents
-        else:
-            result['__backup__'] = contents
+            else:
+                result['__backup__'] = contents
 
     if any((module.params['lines'], module.params['src'])):
         match = module.params['match']
