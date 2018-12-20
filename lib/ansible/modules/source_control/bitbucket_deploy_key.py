@@ -119,7 +119,7 @@ RETURN = '''
 msg:
     description: the status message describing what occurred
     returned: always
-    type: string
+    type: str
     sample: "Deploy key added successfully"
 
 http_status_code:
