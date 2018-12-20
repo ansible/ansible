@@ -45,7 +45,7 @@ class TerminalModule(TerminalBase):
         # Strings like this regarding VLANs are not errors
         re.compile(br"[^\r\n]+ not found(?! in current VLAN)", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
-        re.compile(br"[^\r\n]\/bin\/(?:ba)?sh"),
+        re.compile(br"[^\r\n](?<! shell )\/bin\/(?:ba)?sh"),
         re.compile(br"% More than \d+ OSPF instance", re.I),
         re.compile(br"% Subnet [0-9a-f.:/]+ overlaps", re.I),
         re.compile(br"Maximum number of pending sessions has been reached"),
