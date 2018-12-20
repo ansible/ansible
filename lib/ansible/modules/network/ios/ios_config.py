@@ -203,6 +203,16 @@ options:
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     version_added: "2.4"
+  remove_extraneous:
+    description:
+      - This argument will remove the intro lines 'Building configuration' and
+        'Current configuration' from current C(running-config) and hence can only
+        be used when backup argument is set to True i.e. yes and backup file is
+        written to the C(backup) folder in the playbook root directory or role
+        root directory, without the running-config intro lines.
+    type: bool
+    default: 'no'
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -287,6 +297,10 @@ EXAMPLES = """
   ios_config:
     backup: yes
     src: ios_template.j2
+- name: save backup config without the intro lines
+  ios_config:
+    backup: yes
+    remove_extraneous: yes
 """
 
 RETURN = """
@@ -317,6 +331,7 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.ios.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
+
 
 def check_args(module, warnings):
     ios_check_args(module, warnings)
