@@ -154,8 +154,8 @@
       signing_key: '{{ output_dir }}/id_key'
       public_key: '{{ output_dir }}/id_key.pub'
       path: '{{ output_dir }}/id_cert'
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
     check_mode: yes
   - name: Generate OpenSSH host Certificate that is valid from 21.1.2001 to 21.1.2019
     openssh_cert:
@@ -163,24 +163,24 @@
       signing_key: '{{ output_dir }}/id_key'
       public_key: '{{ output_dir }}/id_key.pub'
       path: '{{ output_dir }}/id_cert'
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
   - name: Generate OpenSSH host Certificate that is valid from 21.1.2001 to 21.1.2019 (idempotent)
     openssh_cert:
       type: host
       signing_key: '{{ output_dir }}/id_key'
       public_key: '{{ output_dir }}/id_key.pub'
       path: '{{ output_dir }}/id_cert'
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
   - name: Generate OpenSSH host Certificate that is valid from 21.1.2001 to 21.1.2019 (idempotent, check mode)
     openssh_cert:
       type: host
       signing_key: '{{ output_dir }}/id_key'
       public_key: '{{ output_dir }}/id_key.pub'
       path: '{{ output_dir }}/id_cert'
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
     check_mode: yes
   - name: Generate an OpenSSH user Certificate with clear and force-command option (check mode)
     openssh_cert:
@@ -191,8 +191,8 @@
       options:
           - "clear"
           - "force-command=/tmp/bla/foo"
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
     check_mode: yes
   - name: Generate an OpenSSH user Certificate with clear and force-command option
     openssh_cert:
@@ -203,8 +203,8 @@
       options:
           - "clear"
           - "force-command=/tmp/bla/foo"
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
   - name: Generate an OpenSSH user Certificate with clear and force-command option (idempotent)
     openssh_cert:
       type: user
@@ -214,8 +214,8 @@
       options:
           - "clear"
           - "force-command=/tmp/bla/foo"
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
   - name: Generate an OpenSSH user Certificate with clear and force-command option (idempotent, check mode)
     openssh_cert:
       type: user
@@ -225,8 +225,8 @@
       options:
           - "clear"
           - "force-command=/tmp/bla/foo"
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
     check_mode: yes
   - name: Generate an OpenSSH user Certificate with clear and force-command option (idempotent, switch)
     openssh_cert:
@@ -237,8 +237,8 @@
       options:
           - "force-command=/tmp/bla/foo"
           - "clear"
-      valid_from: "2001:01:21"
-      valid_to: "2019:01:21"
+      valid_from: "2001-01-21"
+      valid_to: "2019-01-21"
   - name: Remove certificate (check mode)
     openssh_cert:
       state: absent
@@ -246,8 +246,8 @@
       #type: user
       #signing_key: '{{ output_dir }}/id_key'
       #public_key: '{{ output_dir }}/id_key.pub'
-      #valid_from: "2001:01:21"
-      #valid_to: "2019:01:21"
+      #valid_from: "2001-01-21"
+      #valid_to: "2019-01-21"
     check_mode: yes
   - name: Remove certificate
     openssh_cert:
@@ -256,8 +256,8 @@
       #type: user
       #signing_key: '{{ output_dir }}/id_key'
       #public_key: '{{ output_dir }}/id_key.pub'
-      #valid_from: "2001:01:21"
-      #valid_to: "2019:01:21"
+      #valid_from: "2001-01-21"
+      #valid_to: "2019-01-21"
   - name: Remove certificate (idempotent)
     openssh_cert:
       state: absent
@@ -265,8 +265,8 @@
       #type: user
       #signing_key: '{{ output_dir }}/id_key'
       #public_key: '{{ output_dir }}/id_key.pub'
-      #valid_from: "2001:01:21"
-      #valid_to: "2019:01:21"
+      #valid_from: "2001-01-21"
+      #valid_to: "2019-01-21"
   - name: Remove certificate (idempotent, check mode)
     openssh_cert:
       state: absent
@@ -274,8 +274,8 @@
       #type: user
       #signing_key: '{{ output_dir }}/id_key'
       #public_key: '{{ output_dir }}/id_key.pub'
-      #valid_from: "2001:01:21"
-      #valid_to: "2019:01:21"
+      #valid_from: "2001-01-21"
+      #valid_to: "2019-01-21"
     check_mode: yes
   - name: Remove keypair (check mode)
     openssh_keypair:

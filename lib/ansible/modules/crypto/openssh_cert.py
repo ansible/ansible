@@ -62,7 +62,7 @@ options:
         type: str
         description:
             - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
-               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY:MM:DD | YYYY:MM:DD:HH:MM:SS | YYYY:MM:DD HH:MM:SS | always)
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | always)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
     valid_to:
@@ -70,7 +70,7 @@ options:
         type: str
         description:
             - "The point in time the certificate is valid to. Time can be specified either as relative time or as absolute timestamp.
-               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY:MM:DD | YYYY:MM:DD:HH:MM:SS | YYYY:MM:DD HH:MM:SS | forever)
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | forever)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
     valid_at:
@@ -156,8 +156,8 @@ EXAMPLES = '''
     signing_key: /path/to/private_key
     public_key: /path/to/public_key.pub
     path: /path/to/certificate
-    valid_from: "2001:01:21"
-    valid_to: "2019:01:21"
+    valid_from: "2001-01-21"
+    valid_to: "2019-01-21"
 
 # Generate an OpenSSH user Certificate with clear and force-command option:
 - openssh_cert:
@@ -351,35 +351,9 @@ class Certificate(object):
                     minutes=int('0' + dispatched_time[8]),
                     seconds=int('0' + dispatched_time[10]))
         else:
-            formats = ["%Y:%m:%d",
-                       "%Y.%m.%d",
-                       "%Y/%m/%d",
-                       "%d.%m.%Y",
-                       "%d:%m:%Y",
-                       "%d/%m/%Y",
-                       "%d.%m.%Y %H.%M.%S",
-                       "%d:%m:%Y %H:%M:%S",
-                       "%d/%m/%Y %H/%M/%S",
-                       "%d.%m.%YT%H.%M.%S",
-                       "%d:%m:%YT%H:%M:%S",
-                       "%d/%m/%YT%H/%M/%S",
-                       "%d.%m.%Y-%H.%M.%S",
-                       "%d:%m:%Y-%H:%M:%S",
-                       "%d/%m/%Y-%H/%M/%S",
-                       "%d.%m.%Y:%H.%M.%S",
-                       "%d:%m:%Y:%H:%M:%S",
-                       "%d/%m/%Y:%H/%M/%S",
-                       "%d.%m.%Y/%H.%M.%S",
-                       "%d:%m:%Y/%H:%M:%S",
-                       "%d/%m/%Y/%H/%M/%S",
-                       "%Y:%m:%d %H:%M:%S",
-                       "%Y:%m:%d:%H:%M:%S",
+            formats = ["%Y-%m-%d",
+                       "%Y-%m-%d %H:%M:%S",
                        "%Y-%m-%dT%H:%M:%S",
-                       "%Y-%m-%d-%H-%M-%S",
-                       "%Y.%m.%d %H.%M.%S",
-                       "%Y.%m.%d.%H.%M.%S",
-                       "%Y/%m/%d %H/%M/%S",
-                       "%Y/%m/%d/%H/%M/%S",
                        ]
             for fmt in formats:
                 try:
@@ -423,14 +397,14 @@ class Certificate(object):
             if validity:
                 if validity[0][1]:
                     cert_valid_from = self.convert_to_datetime(module, validity[0][1])
-                    if self.is_same_datetime(cert_valid_from, self.convert_to_datetime(module, "1970:01:01:01:01:01")):
+                    if self.is_same_datetime(cert_valid_from, self.convert_to_datetime(module, "1970-01-01 01:01:01")):
                         cert_valid_from = datetime(MINYEAR, 1, 1)
                 else:
                     cert_valid_from = datetime(MINYEAR, 1, 1)
 
                 if validity[0][3]:
                     cert_valid_to = self.convert_to_datetime(module, validity[0][3])
-                    if self.is_same_datetime(cert_valid_to, self.convert_to_datetime(module, "2038:01:19:03:14:07")):
+                    if self.is_same_datetime(cert_valid_to, self.convert_to_datetime(module, "2038-01-19 03:14:07")):
                         cert_valid_to = datetime(MAXYEAR, 12, 31)
                 else:
                     cert_valid_to = datetime(MAXYEAR, 12, 31)
