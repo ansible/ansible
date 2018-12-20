@@ -175,10 +175,10 @@ def run(module, result):
 
     if module.params['save']:
             total_commands.append('configuration write')
-    if not module.check_mode:
-        if total_commands:
+    if total_commands:
+        result['changed'] = True
+        if not module.check_mode:
             load_config(module, total_commands)
-            result['changed'] = True
 
 
 def main():
