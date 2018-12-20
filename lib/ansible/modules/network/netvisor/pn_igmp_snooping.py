@@ -60,7 +60,7 @@ options:
     description:
       - enable or disable IGMP snooping on vxlans.
     required: False
-    type: str
+    type: bool
   pn_query_max_response_time:
     description:
       - maximum response time, in seconds, advertised in IGMP queries.
