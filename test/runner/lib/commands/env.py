@@ -26,6 +26,10 @@ from lib.ansible_util import (
     ansible_environment,
 )
 
+from lib.git import (
+    Git,
+)
+
 
 class EnvConfig(CommonConfig):
     """Configuration for the tools command."""
@@ -55,6 +59,22 @@ def command_env(args):
     except SubprocessError:
         ansible_version = None
 
+    commit = os.environ.get('COMMIT')
+    commit_range = os.environ.get('SHIPPABLE_COMMIT_RANGE')
+
+    git = Git(args)
+
+    if commit:
+        rev_list = git.get_rev_list(['%s..HEAD' % commit])
+        changes = dict((rev, git.run_git(['show', '--name-only', '--no-renames', '-z', '--raw', rev])) for rev in rev_list),
+
+        git_update = dict(
+            rev_list=rev_list,
+            changes=changes,
+        )
+    else:
+        git_update = None
+
     data = dict(
         datetime=datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
         cwd=os.getcwd(),
@@ -69,6 +89,11 @@ def command_env(args):
         ),
         ansible=dict(
             version=ansible_version,
+        ),
+        git=dict(
+            commit=commit,
+            commit_range=commit_range,
+            update=git_update,
         ),
         environ=os.environ.copy(),
         modules=modules,
