@@ -106,3 +106,31 @@ They are still just variables, data, not keywords nor configuration items. These
 Originally this was just 'connection parameters' but has been expanded to things like selecting the correct temporary directory to use and the correct python/ruby/powershell/etc interpreter to invoke for a module.
 
 In the end they are just variables and follow normal variable precedence, which we already list here: https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable
+
+You also need to keep in mind there are a couple of levels of scoping in playbooks, the first is 'playbook object scope'::
+
+   - hosts: localhost
+     gather_facts: false
+     vars:
+       me: play
+     tasks:
+       - name: the value is the play level one
+         debug: var=me
+       - block:
+           - name: the block controls the value here
+             debug: var=me
+         vars:
+           me: inblock
+       - name: the task overrides the play level value
+         debug: var=me
+         vars:
+           me: debugtask
+
+       - name: we are back to the play scope value
+         debug: var=me
+
+These variables don't survive the playbook object they were defined in and will not be availabel to subsequent objects, including other plays.
+
+And there is also a 'host scope', variables that are directly associated with the host (also available via the `hostvars[]` dictionary), which is availablel across plays, these are variables defined in inventory, vars plugins or from modules (set_fact, include_vars).
+
+All of the above makes knowing where to define a variable and it's overrides a complex subject, but only if you start using many different ways to define a variable, normally you only use a few and just need to know the interactions between those methods.
