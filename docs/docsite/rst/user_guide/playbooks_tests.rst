@@ -199,7 +199,7 @@ The following tests can provide information about a path on the controller::
     - debug:
         msg: "path is {{ (mypath is abs)|ternary('absolute','relative')}}"
 
-    - debug: 
+    - debug:
         msg: "path is the same file as path2"
       when: mypath is same_file(path2)
 
@@ -266,5 +266,3 @@ The following tasks are illustrative of the tests meant to check the status of t
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
