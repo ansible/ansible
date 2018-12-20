@@ -145,7 +145,8 @@ class GalaxyCLI(CLI):
         self.api = GalaxyAPI(self.galaxy)
         self.execute()
 
-    def exit_without_ignore(self, rc=1):
+    @staticmethod
+    def exit_without_ignore(rc=1):
         """
         Exits with the specified return code unless the
         option --ignore-errors was specified
@@ -153,20 +154,21 @@ class GalaxyCLI(CLI):
         if not context.CLIARGS['ignore_errors']:
             raise AnsibleError('- you can use --ignore-errors to skip failed roles and finish processing the list.')
 
-    def _display_role_info(self, role_info):
+    @staticmethod
+    def _display_role_info(role_info):
 
         text = [u"", u"Role: %s" % to_text(role_info['name'])]
         text.append(u"\tdescription: %s" % role_info.get('description', ''))
 
         for k in sorted(role_info.keys()):
 
-            if k in self.SKIP_INFO_KEYS:
+            if k in GalaxyCLI.SKIP_INFO_KEYS:
                 continue
 
             if isinstance(role_info[k], dict):
                 text.append(u"\t%s:" % (k))
                 for key in sorted(role_info[k].keys()):
-                    if key in self.SKIP_INFO_KEYS:
+                    if key in GalaxyCLI.SKIP_INFO_KEYS:
                         continue
                     text.append(u"\t\t%s: %s" % (key, role_info[k][key]))
             else:
