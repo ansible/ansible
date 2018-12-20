@@ -19,6 +19,11 @@ short_description: Manage data groups on a BIG-IP
 description:
   - Allows for managing data groups on a BIG-IP. Data groups provide a way to store collections
     of values on a BIG-IP for later use in things such as LTM rules, iRules, and ASM policies.
+  - Data group members may be specified (in full) in a list, via an external file, or through a
+    content block.
+  - This module does NOT allow the addition, modification, or deletion of individual data group
+    members in a type C(internal) data group. The use of `state: absent` or `state: present`
+    in this module refers to the entire data group, not its members.
 version_added: 2.6
 options:
   name:
