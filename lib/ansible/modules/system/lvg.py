@@ -86,6 +86,7 @@ EXAMPLES = '''
     state: absent
 '''
 
+import itertools
 import os
 
 from ansible.module_utils.basic import AnsibleModule
@@ -167,8 +168,12 @@ def main():
         # get pv list
         pvs_cmd = module.get_bin_path('pvs', True)
         if dev_list:
-            pvs_filter = ' || '. join(['pv_name = {0}'.format(x) for x in dev_list + module.params['pvs']])
-            pvs_filter = "--select '%s'" % pvs_filter
+            pvs_filter_pv_name = ' || '.join(
+                'pv_name = {0}'.format(x)
+                for x in itertools.chain(dev_list, module.params['pvs'])
+            )
+            pvs_filter_vg_name = 'vg_name = {0}'.format(vg)
+            pvs_filter = "--select '{0} || {1}' ".format(pvs_filter_pv_name, pvs_filter_vg_name)
         else:
             pvs_filter = ''
         rc, current_pvs, err = module.run_command("%s --noheadings -o pv_name,vg_name --separator ';' %s" % (pvs_cmd, pvs_filter))
