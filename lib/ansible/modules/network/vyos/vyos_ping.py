@@ -42,7 +42,7 @@ version_added: '2.8'
 options:
   dest:
     description:
-      - The IP Address or hostname (resolvable by switch) of the remote node.
+      - The IP Address or hostname (resolvable by the device) of the remote node.
     required: true
   count:
     description:
