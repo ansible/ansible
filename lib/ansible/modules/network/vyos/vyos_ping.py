@@ -233,6 +233,7 @@ def parse_rtt(rtt_info):
 
     return rtt.groupdict()
 
+
 def validate_results(module, loss, results):
     state = module.params["state"]
     if state == "present" and int(loss) == 100:
