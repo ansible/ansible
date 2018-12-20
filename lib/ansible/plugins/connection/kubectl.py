@@ -143,7 +143,7 @@ DOCUMENTATION = """
           - Path to a CA certificate used to authenticate with the API.
         default: ''
         vars:
-          - name: ansible_kubectl_cert_file
+          - name: ansible_kubectl_ssl_ca_cert
         env:
           - name: K8S_AUTH_SSL_CA_CERT
       kubectl_verify_ssl:
