@@ -17,7 +17,7 @@ version_added: "1.3"
 short_description: Manage user defined extended attributes
 description:
     - Manages filesystem user defined extended attributes.
-    - Rquires that extended attributes are enabled on the target filesystem
+    - Requires that extended attributes are enabled on the target filesystem
       and that the setfattr/getfattr utilities are present.
 options:
   path:

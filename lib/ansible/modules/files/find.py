@@ -92,7 +92,7 @@ options:
         default: no
     follow:
         description:
-            - Set this to C(yes) to follow symlinks in path for systems with python v2.6+.
+            - Set this to C(yes) to follow symlinks in path for systems with python 2.6+.
         type: bool
         default: no
     get_checksum:
