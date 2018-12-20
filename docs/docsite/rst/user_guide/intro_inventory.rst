@@ -15,7 +15,7 @@ You can specify a different inventory file using the ``-i <path>`` option on the
 
 Not only is this inventory configurable, but you can also use multiple inventory files at the same time and
 pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
-Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
+Introduced in version 2.4, Ansible has :ref:`inventory_plugins` to make this flexible and customizable.
 
 .. _inventoryformat:
 
@@ -354,6 +354,63 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
 
+
+.. _using_multiple_inventory_sources:
+
+Using multiple inventory sources
+================================
+
+As an advanced use case you can target multiple inventory sources (directories, dynamic inventory scripts 
+or files supported by inventory plugins) at the same time by giving multiple inventory parameters from the command 
+line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally 
+separate environments, like staging and production, at the same time for a specific action.
+
+Target two sources from the command line like this::
+
+    ansible-playbook get_logs.yml -i staging -i production
+
+Keep in mind that if there are variable conflicts in the inventories, they are resolved according
+to the rules described in :ref:`how_we_merge` and :ref:`ansible_variable_precedence`.
+The merging order is controlled by the order of the inventory source parameters.
+If ``[all:vars]`` in staging inventory defines ``myvar = 1``, but production inventory defines ``myvar = 2``,
+the playbook will be run with ``myvar = 2``. The result would be reversed if the playbook was run with
+``-i production -i staging``.
+
+**Aggregating inventory sources with a directory**
+
+You can also create an inventory by combining multiple inventory sources and source types under a directory.
+This can be useful for combining static and dynamic hosts and managing them as one inventory.
+The following inventory combines an inventory plugin source, a dynamic inventory script,
+and a file with static hosts::
+
+    inventory/
+      openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      dynamic-inventory.py   # add additional hosts with dynamic inventory script
+      static-inventory       # add static hosts and groups
+      group_vars/
+        all.yml              # assign variables to all hosts
+
+You can target this inventory directory simply like this::
+
+    ansible-playbook example.yml -i inventory
+
+It can be useful to control the merging order of the inventory sources if there's variable
+conflicts or group of groups dependencies to the other inventory sources. The inventories
+are merged in alphabetical order according to the filenames so the result can
+be controlled by adding prefixes to the files::
+
+    inventory/
+      01-openstack.yml          # configure inventory plugin to get hosts from Openstack cloud
+      02-dynamic-inventory.py   # add additional hosts with dynamic inventory script
+      03-static-inventory       # add static hosts
+      group_vars/
+        all.yml                 # assign variables to all hosts
+
+If ``01-openstack.yml`` defines ``myvar = 1`` for the group ``all``, ``02-dynamic-inventory.py`` defines ``myvar = 2``,
+and ``03-static-inventory`` defines ``myvar = 3``, the playbook will be run with ``myvar = 3``.
+
+For more details on inventory plugins and dynamic inventory scripts see :ref:`inventory_plugins` and :ref:`intro_dynamic_inventory`.
+
 .. _behavioral_parameters:
 
 Connecting to hosts: behavioral inventory parameters
@@ -507,6 +564,8 @@ Here is an example of how to instantly deploy to created containers::
 
 .. seealso::
 
+   :ref:`inventory_plugins`
+       Pulling inventory from dynamic or static sources
    :ref:`intro_dynamic_inventory`
        Pulling inventory from dynamic sources, such as cloud providers
    :ref:`intro_adhoc`
