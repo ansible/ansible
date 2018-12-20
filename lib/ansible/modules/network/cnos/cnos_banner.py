@@ -169,6 +169,7 @@ from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.cnos.cnos import load_config, run_commands
 from ansible.module_utils.network.cnos.cnos import check_args
 from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
+from ansible.module_utils._text import to_text
 import re
 
 
@@ -213,7 +214,7 @@ def map_config_to_obj(module):
 def map_params_to_obj(module):
     text = module.params['text']
     if text:
-        text = str(text).strip()
+        text = to_text(text).strip()
 
     return {
         'banner': module.params['banner'],
