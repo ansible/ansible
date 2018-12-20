@@ -27,13 +27,13 @@ import tempfile
 import yaml
 
 from ansible import context
-from ansible.arguments import context_objects as co
-from ansible.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.cli.galaxy import GalaxyCLI
-from units.compat import unittest
-from units.compat.mock import call, patch
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import PY3
+from ansible.utils import context_objects as co
+from units.compat import unittest
+from units.compat.mock import call, patch
 
 
 class TestGalaxy(unittest.TestCase):

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.arguments import optparse_helpers as opt_help
+from ansible.cli.arguments import optparse_helpers as opt_help
 
 
 class TestOptparseHelpersVersion:
