@@ -65,7 +65,6 @@ def command_env(args):
         ),
         git=get_git_status(args),
         environ=os.environ.copy(),
-        modules=get_modules(),
     )
 
     if args.show:
@@ -85,20 +84,10 @@ def command_env(args):
         display.info('  commit_range: %s' % data['git']['commit_range'])
         display.info('  merged_updates: %d entries' % len(data['git']['merged_updates']))
         display.info('environ: %d entries' % len(data['environ']))
-        display.info('modules: %d modules' % len(data['modules']))
 
     if args.dump and not args.explain:
         with open('test/results/bot/data-environment.json', 'w') as results_fd:
             results_fd.write(json.dumps(data, sort_keys=True))
-
-
-def get_modules():
-    """
-    :rtype: dict[str, str]
-    """
-    modules = dict((t.module, t.path) for t in walk_module_targets())
-
-    return modules
 
 
 def get_ansible_version(args):
