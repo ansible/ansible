@@ -11,7 +11,7 @@
 {% endfor %}
 
 {% if short_description %}
-{%   set title = module + ' - ' + short_description | rst_ify %}
+{%   set title = module + ' -- ' + short_description | rst_ify %}
 {% else %}
 {%   set title = module %}
 {% endif %}
@@ -25,7 +25,7 @@
 
 .. contents::
    :local:
-   :depth: 2
+   :depth: 1
 
 {# ------------------------------------------
  #
@@ -67,7 +67,7 @@ Aliases: @{ ','.join(aliases) }@
 {% if requirements -%}
 
 Requirements
-~~~~~~~~~~~~
+------------
 {%   if plugin_type == 'module' %}
 The below requirements are needed on the host that executes this @{ plugin_type }@.
 {%   else %}
@@ -118,9 +118,11 @@ Parameters
                 {# parameter name with required and/or introduced label #}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
-                    {% if value.get('type', None) %}<br/><div style="font-size: small; color: red">@{ value.type }@</div>{% endif %}
-                    {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
-                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
+                    <div style="font-size: small">
+                        <span style="color: purple">@{ value.type | documented_type }@</span>
+                        {% if value.get('required', False) %} / <span style="color: red">required</span>{% endif %}
+                    </div>
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 {# default / choices #}
                 <td>
@@ -135,7 +137,7 @@ Parameters
                     {% endif %}
                     {# Show possible choices and highlight details #}
                     {% if value.choices %}
-                        <ul><b>Choices:</b>
+                        <ul style="margin: 0; padding: 0"><b>Choices:</b>
                             {% for choice in value.choices %}
                                 {# Turn boolean values in 'yes' and 'no' values #}
                                 {% if choice is sameas true %}
@@ -293,8 +295,8 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
-                    <br/><div style="font-size: small; color: red">@{ value.type }@</div>
-                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
+                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
@@ -365,8 +367,8 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
-                    <br/><div style="font-size: small; color: red">@{ value.type }@</div>
-                    {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
+                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
+                    {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
@@ -405,53 +407,46 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
 
 Status
 ------
-{% if not deprecated %}
+
+{% if deprecated %}
+
+- This @{ plugin_type }@ will be removed in version @{ deprecated['removed_in'] | default('') | string | rst_ify }@. *[deprecated]*
+- For more information see `DEPRECATED`_.
+
+{% else %}
 
 {%   set support = { 'core': 'the Ansible Core Team', 'network': 'the Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'the Ansible Community', 'curated': 'a Third Party'} %}
-{%   set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
+{%   set module_states = { 'preview': 'not guaranteed to have a backwards compatible interface', 'stableinterface': 'guaranteed to have no backward incompatible interface changes going forward'} %}
 
 {%   if metadata %}
 {%     if metadata.status %}
 
 {%       for cur_state in metadata.status %}
-This @{ plugin_type }@ is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
+- This @{ plugin_type }@ is @{ module_states[cur_state] }@. *[@{ cur_state }@]*
 {%       endfor %}
 
 {%     endif %}
 
 {%     if metadata.supported_by %}
-
-Maintenance
------------
-
 {%       set supported_by = support[metadata.supported_by] %}
-This @{ plugin_type }@ is flagged as **@{metadata.supported_by}@** which means that it is maintained by @{ supported_by }@. See :ref:`Module Maintenance & Support <modules_support>` for more info.
-
-For a list of other modules that are also maintained by @{ supported_by }@, see :ref:`here <@{ metadata.supported_by }@_supported>`.
+- This @{ plugin_type }@ is :ref:`maintained by @{ supported_by }@ <modules_support>`. *[@{ metadata.supported_by }@]*
 
 {%       if metadata.supported_by in ('core', 'network') %}
+Red Hat Support
+~~~~~~~~~~~~~~~
 
-Support
-~~~~~~~
-
-For more information about Red Hat's support of this @{ plugin_type }@,
-please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
+More information about Red Hat's support of this @{ plugin_type }@ is available from this `Red Hat Knowledge Base article <https://access.redhat.com/articles/3166901>`_.
 {%       endif %}
 
 {%     endif %}
 
 {%   endif %}
 
-{% else %}
-
-This @{ plugin_type }@ is flagged as **deprecated** and will be removed in version @{ deprecated['removed_in'] | default('') | string | rst_ify }@. For more information see `DEPRECATED`_.
-
 {% endif %}
 
 {% if author is defined -%}
-
-Author
-~~~~~~
+Authors
+~~~~~~~
 
 {%   for author_name in author %}
 - @{ author_name }@
