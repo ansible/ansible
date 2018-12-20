@@ -221,14 +221,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Determines if we are required and can do pipelining
         '''
 
+        same_user = self._play_context.become_user == self._play_context.remote_user
+        need_become = self._play_context.become and (C.BECOME_ALLOW_SAME_USER or not same_user)
+
         # any of these require a true
         for condition in [
             self._connection.has_pipelining,
-            self._play_context.pipelining or self._connection.always_pipeline_modules or not self._play_context.become,  # pipelining enabled for play or connection requires it (eg winrm), disabling become should imply pipelining
+
+            # pipelining enabled for non-become play or connection requires it (eg winrm)
+            self._play_context.pipelining or not need_become or self._connection.always_pipeline_modules,
+
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
             not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
-            self._play_context.become_method != 'su' or not self._play_context.become,  # su does not work with pipelining, disabling become should imply pipelining
+            self._play_context.become_method != 'su' or not need_become,  # when 'become' is enabled, su does not work with pipelining
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
             if not condition:
