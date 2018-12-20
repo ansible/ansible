@@ -23,28 +23,39 @@ options:
   role_id:
     description:
     - The ID of the role.
-    required: yes
+    type: str
   role:
     description:
     - The name of the role.
+    - Alternative to the name, you can use C(role_id).
+    type: str
     required: yes
     aliases: [ name, role_name ]
   display_name:
     description:
     - The name of the role to be displayed in the web UI.
+    type: str
   description:
     description:
     - The description of the role.
+    type: str
   permissions:
     description:
     - A list of permissions tied to this role.
     type: list
     choices:
+    - backup-db
+    - manage-audit-records
+    - manage-labels
     - manage-roles
     - manage-schemas
     - manage-sites
     - manage-tenants
+    - manage-tenant-schemas
     - manage-users
+    - platform-logs
+    - view-all-audit-records
+    - view-labels
     - view-roles
     - view-schemas
     - view-sites
@@ -55,6 +66,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: msc
@@ -66,9 +78,16 @@ EXAMPLES = r'''
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
-    role_id: 101
-    description: North European Datacenter
+    role: readOnly
+    display_name: Read Only
+    description: Read-only access for troubleshooting
+    permissions:
+    - view-roles
+    - view-schemas
+    - view-sites
+    - view-tenants
+    - view-tenant-schemas
+    - view-users
     state: present
   delegate_to: localhost
 
@@ -77,7 +96,7 @@ EXAMPLES = r'''
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
+    role: readOnly
     state: absent
   delegate_to: localhost
 
@@ -86,7 +105,7 @@ EXAMPLES = r'''
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
+    role: readOnly
     state: query
   delegate_to: localhost
   register: query_result
@@ -116,11 +135,18 @@ def main():
         display_name=dict(type='str'),
         description=dict(type='str'),
         permissions=dict(type='list', choices=[
+            'backup-db',
+            'manage-audit-records',
+            'manage-labels',
             'manage-roles',
             'manage-schemas',
             'manage-sites',
             'manage-tenants',
+            'manage-tenant-schemas',
             'manage-users',
+            'platform-logs',
+            'view-all-audit-records',
+            'view-labels',
             'view-roles',
             'view-schemas',
             'view-sites',
@@ -183,13 +209,15 @@ def main():
     elif state == 'present':
         msc.previous = msc.existing
 
-        msc.sanitize(dict(
+        payload = dict(
             id=role_id,
             name=role,
             displayName=role,
             description=description,
             permissions=permissions,
-        ), collate=True)
+        )
+
+        msc.sanitize(payload, collate=True)
 
         if msc.existing:
             if not issubset(msc.sent, msc.existing):
