@@ -307,6 +307,7 @@ backup_path:
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
 """
 import json
+import re
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
@@ -316,7 +317,6 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.ios.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-
 
 def check_args(module, warnings):
     ios_check_args(module, warnings)
@@ -389,7 +389,7 @@ def main():
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
-
+        remove_extraneous=dict(type='bool', default=False),
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['startup', 'intended', 'running']),
@@ -434,6 +434,14 @@ def main():
         contents = get_config(module, flags=flags)
         config = NetworkConfig(indent=1, contents=contents)
         if module.params['backup']:
+            if module.params['remove_extraneous']:
+                # remove configuration intro lines from running-config
+                cfg_build_obj = re.search(r'Building configuration.*(\n*)', contents)
+                cfg_current_obj = re.search(r'Current configuration.*(\n*)', contents)
+                if cfg_build_obj and cfg_current_obj:
+                    contents = contents.strip(cfg_build_obj.group() + cfg_current_obj.group())
+                result['__backup__'] = contents
+        else:
             result['__backup__'] = contents
 
     if any((module.params['lines'], module.params['src'])):
