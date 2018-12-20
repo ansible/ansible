@@ -274,7 +274,7 @@ def mandatory(a):
             name = "'%s' " % to_text(a._undefined_name)
         else:
             name = ''
-        raise AnsibleFilterError("Mandatory variable %snot defined." % name)
+        raise AnsibleFilterError("Mandatory variable %s not defined." % name)
     return a
 
 
