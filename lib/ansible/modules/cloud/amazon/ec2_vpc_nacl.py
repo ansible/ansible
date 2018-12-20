@@ -44,7 +44,7 @@ options:
   egress:
     description:
       - A list of rules for outgoing traffic. Each rule must be specified as a list.
-        Each rule may contain the rule number (integer 1-32766), protocol (one of ['tcp', 'udp', 'icmp', '-1', 'all']),
+        Each rule may contain the rule number (integer 1-32766), protocol (one of ['tcp', 'udp', 'icmp', 'ipv6-icmp' '-1', 'all']),
         the rule action ('allow' or 'deny'), the CIDR of the IPv4 or IPv6 network range to allow or deny,
         the ICMP type (-1 means all types), the ICMP code (-1 means all codes), the last port in the range for
         TCP or UDP protocols, and the first port in the range for TCP or UDP protocols.
@@ -54,7 +54,7 @@ options:
   ingress:
     description:
       - List of rules for incoming traffic. Each rule must be specified as a list.
-        Each rule may contain the rule number (integer 1-32766), protocol (one of ['tcp', 'udp', 'icmp', '-1', 'all']),
+        Each rule may contain the rule number (integer 1-32766), protocol (one of ['tcp', 'udp', 'icmp', 'ipv6-icmp', '-1', 'all']),
         the rule action ('allow' or 'deny'), the CIDR of the IPv4 or IPv6 network range to allow or deny,
         the ICMP type (-1 means all types), the ICMP code (-1 means all codes), the last port in the range for
         TCP or UDP protocols, and the first port in the range for TCP or UDP protocols.
@@ -100,6 +100,7 @@ EXAMPLES = '''
         - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
         - [205, 'tcp', 'allow', '::/0', null, null, 80, 80]
         - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+        - [305, 'ipv6-icmp', 'allow', '::/0', 0, 8]
     egress:
         - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
         - [105, 'all', 'allow', '::/0', null, null, null, null]
@@ -163,12 +164,12 @@ CIDR_REGEX = re.compile(r'([a-fA-F0-9:.]+)/\d+')
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
-PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
+PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, 'ipv6-icmp': 58,}
 
 
 # Utility methods
 def icmp_present(entry):
-    if len(entry) == 6 and entry[1] == 'icmp' or entry[1] == 1:
+    if len(entry) == 6 and (entry[1] == 'icmp' or entry[1] == 'ipv6-icmp' or entry[1] == 1, entry[1] == 58):
         return True
 
 
@@ -294,7 +295,10 @@ def rules_changed(aws_rules, param_rules, Egress, nacl_id, client, module):
 def process_rule_entry(entry, Egress, module):
     params = dict()
     params['RuleNumber'] = entry[0]
-    params['Protocol'] = str(PROTOCOL_NUMBERS[entry[1]])
+    if PROTOCOL_NUMBERS.get(entry[1]):
+        params['Protocol'] = str(PROTOCOL_NUMBERS[entry[1]])
+    else:
+        params['Protocol'] = str(entry[1])
     params['RuleAction'] = entry[2]
     params['Egress'] = Egress
     match = CIDR_REGEX.match(entry[3])
