@@ -255,6 +255,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
     }
 
     hashtype = passlib_mapping.get(hashtype, hashtype)
+    password = to_text(password, errors='surrogate_or_strict')
     try:
         return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds)
     except AnsibleError as e:
