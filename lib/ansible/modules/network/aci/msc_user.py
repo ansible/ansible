@@ -63,7 +63,7 @@ options:
   domain:
     description:
     - The domain this user belongs to.
-    default: Local
+    - When creating new users, this defaults to C(Local).
     type: str
   roles:
     description:

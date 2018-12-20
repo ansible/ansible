@@ -51,6 +51,7 @@ options:
     - manage-schemas
     - manage-sites
     - manage-tenants
+    - manage-tenant-schemas
     - manage-users
     - platform-logs
     - view-all-audit-records
@@ -80,7 +81,7 @@ EXAMPLES = r'''
     role: readOnly
     display_name: Read Only
     description: Read-only access for troubleshooting
-    permissions
+    permissions:
     - view-roles
     - view-schemas
     - view-sites

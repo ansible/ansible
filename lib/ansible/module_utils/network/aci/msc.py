@@ -76,10 +76,12 @@ def issubset(subset, superset):
 
     return True
 
+
 def update_qs(params):
     ''' Append key-value pairs to self.filter_string '''
     accepted_params = dict((k, v) for (k, v) in params.items() if v)
     return '?' + '&'.join(['%s=%s' % (k, v) for (k, v) in accepted_params.items()])
+
 
 def msc_argument_spec():
     return dict(
