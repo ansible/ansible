@@ -1,0 +1,2 @@
+bugfixes:
+  - "jenkins_plugin - ``version: latest`` should install new plugins with their dependencies"
