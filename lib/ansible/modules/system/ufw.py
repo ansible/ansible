@@ -245,11 +245,16 @@ def main():
         cmd = ' '.join(map(itemgetter(-1), filter(itemgetter(0), cmd)))
 
         cmds.append(cmd)
-        (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "en_EN"})
+        (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "en_US"})
 
         if rc != 0:
             module.fail_json(msg=err or out)
         return (rc, out, err)
+
+    def get_current_rules():
+        return execute([[grep_bin], ["'^### tuple'"], ["/lib/ufw/user.rules"],
+                        ["/lib/ufw/user6.rules"], ["/etc/ufw/user.rules"],
+                        ["/etc/ufw/user6.rules"]])
 
     def ufw_version():
         """
@@ -292,12 +297,16 @@ def main():
 
     # Ensure ufw is available
     ufw_bin = module.get_bin_path('ufw', True)
+    grep_bin = module.get_bin_path('grep', True)
 
     # Save the pre state and rules in order to recognize changes
-    (_, pre_state, _) = module.run_command(ufw_bin + ' status verbose')
-    (_, pre_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
+    (_, pre_state, _) = execute([[ufw_bin], ['status'], ['verbose']])
+    (_, pre_rules, _) = get_current_rules()
 
     changed = False
+
+    debug = ""
+
     # Execute commands
     for (command, value) in commands.items():
         cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
@@ -309,22 +318,41 @@ def main():
                 if value in ['reloaded', 'reset']:
                     changed = True
                 else:
-                    (_, ufw_state, _) = execute([[ufw_bin], ["status"]])
-                    ufw_enabled = ufw_state.find("active") != -1
-                    if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and ufw_enabled):
+                    ufw_enabled = pre_state.find("active") != -1
+                    if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and not ufw_enabled):
                         changed = True
             else:
                 execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
             if module.check_mode:
-                changed = True
+                extract = re.search(r'Logging: ([onf]+) \(([a-z]+)\)', pre_state)
+                if extract:
+                    current_level = extract.group(1)
+                    current_on_off_value = extract.group(2)
+                    if value != "off":
+                        if value != current_level:
+                            changed = True
+                    elif current_on_off_value != "off":
+                        changed = True
+                else:
+                    changed = True
+
             else:
                 execute(cmd + [[command], [value]])
 
         elif command == 'default':
             if module.check_mode:
-                changed = True
+                extract = re.search(r'Default: ([denyalow]+) \(incoming\), ([denyalow]+) \(outgoing\), ([denyallow]+) \(routed\)', pre_state)
+                if extract:
+                    defaults = {}
+                    defaults["incoming"] = extract.group(1)
+                    defaults["outgoing"] = extract.group(2)
+                    defaults["routed"] = extract.group(3)
+                    if defaults[params['direction']] != value:
+                        changed = True
+                else:
+                    changed = True
             else:
                 execute(cmd + [[command], [value], [params['direction']]])
 
@@ -353,17 +381,23 @@ def main():
             if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
                 cmd.append([params['comment'], "comment '%s'" % params['comment']])
 
+            # delete rules with --dry-run doesn't display "Rules updated" messages
+            # we compare ## tupple
+            cmd.append([module.check_mode and module.boolean(params['delete']), "| grep -E '^### tuple'"])
+
             (_, rules_dry, _) = execute(cmd)
             if module.check_mode:
-                if rules_dry.find("Rules updated") != -1:
+                if module.boolean(params['delete'] and (rules_dry != pre_rules)):
+                    changed = True
+                elif rules_dry.find("Rules updated") != -1:
                     changed = True
 
     # Get the new state
     if module.check_mode:
-        return module.exit_json(changed=changed, commands=cmds)
+        return module.exit_json(changed=changed, commands=cmds, debug=debug)
     else:
-        (_, post_state, _) = module.run_command(ufw_bin + ' status verbose')
-        (_, post_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules")
+        (_, post_state, _) = execute([[ufw_bin], ['status'], ['verbose']])
+        (_, post_rules, _) = get_current_rules()
         changed = (pre_state != post_state) or (pre_rules != post_rules)
         return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
 
