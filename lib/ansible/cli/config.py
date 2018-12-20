@@ -1,4 +1,4 @@
-# Copyright: (c) 2017-2018, Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -62,7 +62,7 @@ class ConfigCLI(CLI):
             self.parser.set_usage("usage: %prog update [options] [-c ansible.cfg] <search term>")
 
     def post_process_args(self, options, args):
-        super(ConfigCLI, self).post_process_args(options, args)
+        options, args = super(ConfigCLI, self).post_process_args(options, args)
         display.verbosity = options.verbosity
 
         return options, args
