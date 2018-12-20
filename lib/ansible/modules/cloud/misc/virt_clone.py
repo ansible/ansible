@@ -26,7 +26,7 @@ author: Larry Smith Jr. (@mrlesmithjr)
 module: virt_clone
 short_description: Clones VMs from templates
 description:
-  - "This module creates clones for libvirt."
+  - This module creates clones for libvirt.
 version_added: "2.6"
 options:
   auto:
