@@ -26,7 +26,6 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import json
-import re
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -127,12 +126,6 @@ def get_config(module, flags=None):
                 module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[flag_str] = cfg
-        # remove configuration intro lines from running-config
-        cfg_build_obj = re.search(r'Building configuration.*(\n*)', cfg)
-        cfg_current_obj = re.search(r'Current configuration.*(\n*)', cfg)
-        if cfg_build_obj and cfg_current_obj:
-            cfg = cfg.strip(cfg_build_obj.group() + cfg_current_obj.group())
-
         return cfg
 
 
