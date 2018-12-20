@@ -46,19 +46,19 @@ options:
     required: true
   count:
     description:
-      - Number of packets to send.
+      - Number of packets to send to check reachability.
     type: int
     default: 5
   source:
     description:
-      - The source interface or IP Address to use.
+      - The source interface or IP Address to use will sending the ping packet(s).
   ttl:
     description:
-      - The time-to-live value for the ICMP packet.
+      - The time-to-live value for the ICMP packet(s).
     type: int
   size:
     description:
-      - Determines the size of the ping packet (in bytes).
+      - Determines the size (in bytes) of the ping packet(s).
     type: int
   interval:
     description:
