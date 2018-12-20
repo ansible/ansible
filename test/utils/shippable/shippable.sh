@@ -117,6 +117,6 @@ function cleanup
 
 trap cleanup EXIT
 
-ansible-test env --dump --show
+ansible-test env --dump --show -v
 
 "test/utils/shippable/${script}.sh" "${test}"

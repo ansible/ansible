@@ -17,6 +17,7 @@ from lib.util import (
     display,
     raw_command,
     SubprocessError,
+    ApplicationError,
 )
 
 from lib.ansible_util import (
@@ -49,7 +50,7 @@ def command_env(args):
             version=get_ansible_version(args),
         ),
         environ=os.environ.copy(),
-        git=get_git_status(args),
+        git=get_git_details(args),
         platform=dict(
             datetime=datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             platform=platform.platform(),
@@ -57,7 +58,6 @@ def command_env(args):
         ),
         python=dict(
             executable=sys.executable,
-            path=sys.path,
             version=platform.python_version(),
         ),
     )
@@ -66,7 +66,6 @@ def command_env(args):
         verbose = {
             'environ': 2,
             'platform.uname': 1,
-            'python.path': 2,
         }
 
         show_dict(data, verbose)
@@ -104,7 +103,7 @@ def show_dict(data, verbose, root_verbosity=0, path=None):
 
 def get_ansible_version(args):
     """
-    :type args: EnvConfig
+    :type args: CommonConfig
     :rtype: str | None
     """
     code = 'from __future__ import (print_function); from ansible.release import __version__; print(__version__)'
@@ -120,47 +119,72 @@ def get_ansible_version(args):
     return ansible_version
 
 
-def get_git_status(args):
+def get_git_details(args):
     """
-    :type args: EnvConfig
+    :type args: CommonConfig
     :rtype: dict[str, any]
     """
     commit = os.environ.get('COMMIT')
-    commit_range = os.environ.get('SHIPPABLE_COMMIT_RANGE')
+    base_commit = os.environ.get('BASE_COMMIT')
 
-    git_status = dict(
+    git_details = dict(
+        base_commit=base_commit,
         commit=commit,
-        commit_range=commit_range,
-        merged_commits=get_merged_commits(args, commit),
+        merged_commit=get_merged_commit(args, commit),
         root=os.getcwd(),
     )
 
-    return git_status
+    return git_details
 
 
-def get_merged_commits(args, commit):
+def get_merged_commit(args, commit):
     """
     :type args: CommonConfig
     :type commit: str
-    :rtype: list[str] | None
+    :rtype: str | None
     """
     if not commit:
         return None
 
     git = Git(args)
 
-    rev_list = git.get_rev_list(['%s..HEAD' % commit])
+    try:
+        show_commit = git.run_git(['show', '--no-patch', commit])
+    except SubprocessError as ex:
+        # This should only fail for pull requests where the commit does not exist.
+        # Merge runs would fail much earlier when attempting to checkout the commit.
+        raise ApplicationError('Commit %s was not found:\n\n%s\n\n'
+                               'The commit was likely removed by a force push between job creation and execution.\n'
+                               'Find the latest run for the pull request and restart failed jobs as needed.'
+                               % (commit, ex.stderr.strip()))
 
-    if not rev_list:
-        return []
+    head_commit = git.run_git(['show', '--no-patch', 'HEAD'])
 
-    last_rev = rev_list[0]
-    last_change = git.run_git(['show', '--no-patch', last_rev])
+    if show_commit == head_commit:
+        # Commit is HEAD, so this is not a pull request or the base branch for the pull request is up-to-date.
+        return None
 
-    if len(rev_list) == 1:
-        raise Exception('Found only one commit after %s when at least 2 were expected:\n\n%s' % (commit, last_change))
+    match_merge = re.search(r'^Merge: (?P<parents>[0-9a-f]{40} [0-9a-f]{40})$', head_commit, flags=re.MULTILINE)
 
-    if not re.search(r'^Merge: ', last_change, flags=re.MULTILINE):
-        raise Exception('The last commit after %s does not appear to be a merge commit:\n\n%s' % (commit, last_change))
+    if not match_merge:
+        # The most likely scenarios resulting in a failure here are:
+        # A new run should or does supersede this job, but it wasn't cancelled in time.
+        # A job was superseded and then later restarted.
+        raise ApplicationError('HEAD is not commit %s or a merge commit:\n\n%s\n\n'
+                               'This job has likely been superseded by another run due to additional commits being pushed.\n'
+                               'Find the latest run for the pull request and restart failed jobs as needed.'
+                               % (commit, head_commit.strip()))
 
-    return rev_list[1:]
+    parents = set(match_merge.group('parents').split(' '))
+
+    if len(parents) != 2:
+        raise ApplicationError('HEAD is a %d-way octopus merge.' % len(parents))
+
+    if commit not in parents:
+        raise ApplicationError('Commit %s is not a parent of HEAD.' % commit)
+
+    parents.remove(commit)
+
+    last_commit = parents.pop()
+
+    return last_commit
