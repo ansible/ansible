@@ -1,9 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Larry Smith Jr. <mrlesmithjr@gmail.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 # Requirements:
 # libvirt-python
 # OSX: brew install libvirt, pip install libvirt-python
@@ -27,7 +24,10 @@ module: virt_clone
 short_description: Clones VMs from templates
 description:
   - This module creates clones for libvirt.
-version_added: "2.6"
+notes:
+  - Copyright: (c) 2017, Larry Smith Jr. <mrlesmithjr@gmail.com>
+  - GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+version_added: "2.8"
 options:
   auto:
     default: true
@@ -60,6 +60,12 @@ options:
     description:
         - The VM to use as the source (template).
     required: true
+    type: str
+  uri:
+    default: "qemu:///system"
+    description:
+        - libvirt connection uri
+    required: false
     type: str
   uuid:
     description:
@@ -98,6 +104,13 @@ EXAMPLES = '''
     sysprep:  true
     template: ubuntu1604-packer-template
   become:     true
+- name:       Cloning a VM with uri defined
+  virt_clone:
+    name:     web01
+    state:    started
+    template: ubuntu1604-packer-template
+    uri:      qemu+ssh://hostname/system
+  become:     true
 '''
 
 try:
@@ -121,6 +134,7 @@ def main():
             state=dict(type='str', choices=[
                 'present', 'started'], default='present'),
             template=dict(type='str', aliases=['src'], required=True),
+            uri=dict(type='str', default='qemu:///system'),
             uuid=dict(type='str')
         ),
         supports_check_mode=True,
@@ -136,7 +150,7 @@ def main():
     dest = module.params['name']
     src = module.params['template']
 
-    conn = libvirt.open('qemu:///system')
+    conn = libvirt.open(module.params['uri'])
     domains = conn.listAllDomains(0)
 
     vms = []
