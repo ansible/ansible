@@ -34,7 +34,7 @@ options:
   format:
     description:
       - The type of compression to use.
-      - Support for xz was added in version 2.5.
+      - Support for xz was added in Ansible 2.5.
     type: str
     choices: [ bz2, gz, tar, xz, zip ]
     default: gz
@@ -53,13 +53,14 @@ options:
       - Remove any added source files and trees after adding to archive.
     type: bool
     default: no
-
-author:
-- Ben Doherty (@bendoh)
 notes:
     - Requires tarfile, zipfile, gzip and bzip2 packages on target host.
     - Requires lzma or backports.lzma if using xz format.
     - Can produce I(gzip), I(bzip2), I(lzma) and I(zip) compressed files or archives.
+seealso:
+- module: unarchive
+author:
+- Ben Doherty (@bendoh)
 '''
 
 EXAMPLES = r'''

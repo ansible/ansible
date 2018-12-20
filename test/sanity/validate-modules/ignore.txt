@@ -887,7 +887,6 @@ lib/ansible/modules/system/osx_defaults.py E322
 lib/ansible/modules/system/osx_defaults.py E324
 lib/ansible/modules/system/pamd.py E324
 lib/ansible/modules/system/pamd.py E326
-lib/ansible/modules/system/parted.py E326
 lib/ansible/modules/system/puppet.py E322
 lib/ansible/modules/system/puppet.py E325
 lib/ansible/modules/system/runit.py E322

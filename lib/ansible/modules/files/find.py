@@ -113,8 +113,8 @@ options:
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
-notes:
-    - For Windows targets, use the M(win_find) module instead.
+seealso:
+- module: win_find
 '''
 
 

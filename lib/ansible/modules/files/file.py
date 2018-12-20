@@ -105,8 +105,6 @@ options:
     type: str
     default: "%Y%m%d%H%M.%S"
     version_added: '2.7'
-notes:
-- For Windows targets, use the M(win_file) module instead.
 seealso:
 - module: assemble
 - module: copy

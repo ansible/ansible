@@ -74,8 +74,6 @@ options:
     default: yes
     aliases: [ attr, attributes ]
     version_added: "2.3"
-notes:
-     - For Windows targets, use the M(win_stat) module instead.
 seealso:
 - module: file
 - module: win_stat

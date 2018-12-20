@@ -19,8 +19,6 @@ version_added: historical
 short_description: Copy files to remote locations
 description:
     - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
-    - Use the M(fetch) module to copy files from remote locations to the local box.
-    - If you need variable interpolation in copied files, use the M(template) module.
     - For Windows targets, use the M(win_copy) module instead.
 options:
   src:
@@ -115,12 +113,11 @@ extends_documentation_fragment:
 - validate
 notes:
 - The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
-- For alternative, see M(synchronize) module, which is a wrapper around the C(rsync) command line tool.
-- For Windows targets, use the M(win_copy) module instead.
 seealso:
 - module: assemble
 - module: fetch
 - module: file
+- module: synchronize
 - module: template
 - module: win_copy
 author:

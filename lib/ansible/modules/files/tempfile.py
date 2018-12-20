@@ -44,8 +44,6 @@ options:
       - Suffix of file/directory name created by module.
     type: str
     default: ""
-notes:
-  - For Windows targets, use the M(win_tempfile) module instead.
 seealso:
 - module: file
 - module: win_tempfile
