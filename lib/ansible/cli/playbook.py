@@ -179,7 +179,8 @@ class PlaybookCLI(CLI):
         else:
             return results
 
-    def _flush_cache(self, inventory, variable_manager):
+    @staticmethod
+    def _flush_cache(inventory, variable_manager):
         for host in inventory.list_hosts():
             hostname = host.get_name()
             variable_manager.clear_facts(hostname)

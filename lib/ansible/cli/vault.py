@@ -258,7 +258,8 @@ class VaultCLI(CLI):
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
 
-    def format_ciphertext_yaml(self, b_ciphertext, indent=None, name=None):
+    @staticmethod
+    def format_ciphertext_yaml(b_ciphertext, indent=None, name=None):
         indent = indent or 10
 
         block_format_var_name = ""
