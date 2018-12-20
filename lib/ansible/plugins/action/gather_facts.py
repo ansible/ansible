@@ -7,8 +7,6 @@ __metaclass__ = type
 import os
 import time
 
-from ansible.module_utils.common._collections_compat import MutableMapping
-
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import combine_vars
@@ -17,16 +15,23 @@ from ansible.utils.vars import combine_vars
 class ActionModule(ActionBase):
 
     def _get_module_args(self, fact_module, task_vars):
-        mod_args = task_vars.get('ansible_facts_modules', {}).get(fact_module, {})
-        if isinstance(mod_args, MutableMapping):
-            mod_args.update(self._task.args.copy())
-        else:
-            mod_args = self._task.args.copy()
 
+        mod_args = self._task.args.copy()
+
+        # deal with 'setup specific arguments'
         if fact_module != 'setup':
             subset = mod_args.pop('gather_subset', None)
+
             if subset not in ('all', ['all']):
                 self._display.warning('Ignoring subset(%s) for %s' % (subset, fact_module))
+
+            timeout = mod_args.pop('gather_timeout', None)
+            if timeout is not None:
+                self._display.warning('Ignoring timeout(%s) for %s' % (timeout, fact_module))
+
+            fact_filter = mod_args.pop('filter', None)
+            if fact_filter is not None:
+                self._display.warning('Ignoring filter(%s) for %s' % (fact_filter, fact_module))
 
         return mod_args
 
@@ -37,13 +42,8 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
+        modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
-
-        modules = task_vars.get('ansible_facts_modules', {}).keys()
-        override_vars = {}
-        if modules:
-            override_vars['ansible_facts_modules'] = modules
-        modules = C.config.get_config_value('FACTS_MODULES', variables=override_vars)
 
         failed = {}
         skipped = {}
