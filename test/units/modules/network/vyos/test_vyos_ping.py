@@ -70,5 +70,34 @@ class TestVyosPingModule(TestVyosModule):
         set_module_args(dict(count=4, dest="10.10.10.20"))
         self.execute_module(failed=True)
 
+    def test_vyos_ping_failure_stats(self):
+        '''Test for asserting stats when ping fails'''
+        set_module_args(dict(count=4, dest="10.10.10.20"))
+        result = self.execute_module(failed=True)
+        self.assertEqual(result['packet_loss'], '100%')
+        self.assertEqual(result['packets_rx'], 0)
+        self.assertEqual(result['packets_tx'], 4)
 
+    def test_vyos_ping_success_stats(self):
+        '''Test for asserting stats when ping passes'''
+        set_module_args(dict(count=2, dest="10.10.10.10"))
+        result = self.execute_module()
+        self.assertEqual(result['packet_loss'], '0%')
+        self.assertEqual(result['packets_rx'], 2)
+        self.assertEqual(result['packets_tx'], 2)
+        self.assertEqual(result['rtt']['min'], 12)
+        self.assertEqual(result['rtt']['avg'], 17)
+        self.assertEqual(result['rtt']['max'], 22)
+        self.assertEqual(result['rtt']['mdev'], 10)
 
+    def test_vyos_ping_success_stats_with_options(self):
+        '''Test for asserting stats when ping passes'''
+        set_module_args(dict(count=10, ttl=128, size=512, dest="10.10.10.11"))
+        result = self.execute_module()
+        self.assertEqual(result['packet_loss'], '0%')
+        self.assertEqual(result['packets_rx'], 10)
+        self.assertEqual(result['packets_tx'], 10)
+        self.assertEqual(result['rtt']['min'], 1)
+        self.assertEqual(result['rtt']['avg'], 3)
+        self.assertEqual(result['rtt']['max'], 21)
+        self.assertEqual(result['rtt']['mdev'], 5)

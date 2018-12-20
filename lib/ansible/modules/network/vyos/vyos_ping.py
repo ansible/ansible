@@ -55,6 +55,15 @@ options:
   ttl:
     description:
       - The time-to-live value for the ICMP packet.
+    type: int
+  size:
+    description:
+      - Determines the size of the ping packet (in bytes).
+    type: int
+  interval:
+    description:
+      - Determines the interval (in seconds) between consecutive pings.
+    type: int
   state:
     description:
       - Determines if the expected result is success or fail.
@@ -72,14 +81,16 @@ EXAMPLES = """
   vyos_ping:
     dest: 10.10.10.10
 
-- name: Test reachability to 10.20.20.20 using source
+- name: Test reachability to 10.20.20.20 using source and ttl set
   vyos_ping:
     dest: 10.20.20.20
     source: eth0
+    ttl: 128
 
-- name: Test unreachability to 10.30.30.30 using default vrf
+- name: Test unreachability to 10.30.30.30 using interval
   vyos_ping:
     dest: 10.30.30.30
+    interval: 3
     state: absent
 
 - name: Test reachability to 10.40.40.40 setting count and source
@@ -87,6 +98,7 @@ EXAMPLES = """
     dest: 10.40.40.40
     source: eth1
     count: 20
+    size: 512
 """
 
 RETURN = """
@@ -131,6 +143,8 @@ def main():
         dest=dict(type="str", required=True),
         source=dict(type="str"),
         ttl=dict(type='int'),
+        size=dict(type='int'),
+        interval=dict(type='int'),
         state=dict(type="str", choices=["absent", "present"], default="present"),
     )
 
@@ -141,7 +155,9 @@ def main():
     count = module.params["count"]
     dest = module.params["dest"]
     source = module.params["source"]
+    size = module.params["size"]
     ttl = module.params["ttl"]
+    interval = module.params["interval"]
 
     warnings = list()
 
@@ -149,7 +165,7 @@ def main():
     if warnings:
         results["warnings"] = warnings
 
-    results["commands"] = [build_ping(dest, count, source, ttl)]
+    results["commands"] = [build_ping(dest, count, size, interval, source, ttl)]
 
     ping_results = run_commands(module, commands=results["commands"])
     ping_results_list = ping_results[0].split("\n")
@@ -178,7 +194,7 @@ def main():
     module.exit_json(**results)
 
 
-def build_ping(dest, count, source=None, ttl=None):
+def build_ping(dest, count, size=None, interval=None, source=None, ttl=None):
     cmd = "ping {0} count {1}".format(dest, str(count))
 
     if source:
@@ -187,13 +203,20 @@ def build_ping(dest, count, source=None, ttl=None):
     if ttl:
         cmd += " ttl {0}".format(str(ttl))
 
+    if size:
+        cmd += " size {0}".format(str(size))
+
+    if interval:
+        cmd += " interval {0}".format(str(interval))
+
     return cmd
 
 
 def parse_rate(rate_info):
-    rate_re = re.compile(r"(?P<tx>\d+) (?:\w+) (?:\w+), (?P<rx>\d+) (?:\w+), (?P<pkt_loss>\d+)% (?:\w+) (?:\w+), (?:\w+) (?P<time>\d+)")
-
-    rate_err_re = re.compile(r"(?P<tx>\d+) (?:\w+) (?:\w+), (?P<rx>\d+) (?:\w+), (?:[+-])(?P<err>\d+) (?:\w+), (?P<pkt_loss>\d+)% (?:\w+) (?:\w+), (?:\w+) (?P<time>\d+)")
+    rate_re = re.compile(
+        r"(?P<tx>\d+) (?:\w+) (?:\w+), (?P<rx>\d+) (?:\w+), (?P<pkt_loss>\d+)% (?:\w+) (?:\w+), (?:\w+) (?P<time>\d+)")
+    rate_err_re = re.compile(
+        r"(?P<tx>\d+) (?:\w+) (?:\w+), (?P<rx>\d+) (?:\w+), (?:[+-])(?P<err>\d+) (?:\w+), (?P<pkt_loss>\d+)% (?:\w+) (?:\w+), (?:\w+) (?P<time>\d+)")
 
     if rate_re.match(rate_info):
         rate = rate_re.match(rate_info)
@@ -203,10 +226,9 @@ def parse_rate(rate_info):
     return rate.group("pkt_loss"), rate.group("rx"), rate.group("tx")
 
 
-
 def parse_rtt(rtt_info):
     rtt_re = re.compile(
-        r"rtt (?:.*)=(?:\s*)(?P<min>\d+).(?:\d*)/(?P<avg>\d+).(?:\d*)/(?P<max>\d+).(?:\d*)/(?P<mdev>\d+)")
+        r"rtt (?:.*)=(?:\s*)(?P<min>\d*).(?:\d*)/(?P<avg>\d*).(?:\d*)/(?P<max>\d+).(?:\d*)/(?P<mdev>\d*)")
     rtt = rtt_re.match(rtt_info)
 
     return rtt.groupdict()
