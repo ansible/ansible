@@ -82,7 +82,7 @@ def command_env(args):
         display.info('git:')
         display.info('  commit: %s' % data['git']['commit'])
         display.info('  commit_range: %s' % data['git']['commit_range'])
-        display.info('  merged_updates: %d entries' % len(data['git']['merged_updates']))
+        display.info('  merged_commits: %d entries' % len(data['git']['merged_commits']))
         display.info('environ: %d entries' % len(data['environ']))
 
     if args.dump and not args.explain:
@@ -119,13 +119,13 @@ def get_git_status(args):
     git_status = dict(
         commit=commit,
         commit_range=commit_range,
-        merged_updates=get_merged_updates(args, commit),
+        merged_commits=get_merged_commits(args, commit),
     )
 
     return git_status
 
 
-def get_merged_updates(args, commit):
+def get_merged_commits(args, commit):
     """
     :type args: CommonConfig
     :type commit: str
