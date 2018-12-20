@@ -170,7 +170,7 @@ class ElasticLoadBalancerV2(object):
         for subnet in self.elb['AvailabilityZones']:
             this_mapping = {'SubnetId': subnet['SubnetId']}
             # when elb type is network, AZ may contain subnets with LoadBalancerAddresses as a property
-            if self.elb['Type']=='network':
+            if self.elb['Type'] == 'network':
                 for address in subnet['LoadBalancerAddresses']:
                     if 'AllocationId' in address:
                         this_mapping['AllocationId'] = address['AllocationId']
