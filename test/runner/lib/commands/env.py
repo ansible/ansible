@@ -9,10 +9,6 @@ import platform
 import re
 import sys
 
-from lib.target import (
-    walk_module_targets,
-)
-
 from lib.config import (
     CommonConfig,
 )
@@ -49,45 +45,61 @@ def command_env(args):
     :type args: EnvConfig
     """
     data = dict(
-        datetime=datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        cwd=os.getcwd(),
+        ansible=dict(
+            version=get_ansible_version(args),
+        ),
+        environ=os.environ.copy(),
+        git=get_git_status(args),
         platform=dict(
+            datetime=datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
             platform=platform.platform(),
             uname=platform.uname(),
         ),
         python=dict(
-            version=platform.python_version(),
             executable=sys.executable,
             path=sys.path,
+            version=platform.python_version(),
         ),
-        ansible=dict(
-            version=get_ansible_version(args),
-        ),
-        git=get_git_status(args),
-        environ=os.environ.copy(),
     )
 
     if args.show:
-        display.info('datetime: %s' % data['datetime'])
-        display.info('cwd: %s' % data['cwd'])
-        display.info('platform:')
-        display.info('  platform: %s' % data['platform']['platform'])
-        display.info('  uname: %s' % list(data['platform']['uname']))
-        display.info('python:')
-        display.info('  version: %s' % data['python']['version'])
-        display.info('  executable: %s' % data['python']['executable'])
-        display.info('  path: %d entries' % len(data['python']['path']))
-        display.info('ansible:')
-        display.info('  version: %s' % data['ansible']['version'])
-        display.info('git:')
-        display.info('  commit: %s' % data['git']['commit'])
-        display.info('  commit_range: %s' % data['git']['commit_range'])
-        display.info('  merged_commits: %d entries' % len(data['git']['merged_commits']))
-        display.info('environ: %d entries' % len(data['environ']))
+        verbose = {
+            'environ': 2,
+            'platform.uname': 1,
+            'python.path': 2,
+        }
+
+        show_dict(data, verbose)
 
     if args.dump and not args.explain:
         with open('test/results/bot/data-environment.json', 'w') as results_fd:
             results_fd.write(json.dumps(data, sort_keys=True))
+
+
+def show_dict(data, verbose, root_verbosity=0, path=None):
+    """
+    :type data: dict[str, any]
+    :type verbose: dict[str, int]
+    :type root_verbosity: int
+    :type path: list[str] | None
+    """
+    path = path if path else []
+
+    for key, value in sorted(data.items()):
+        indent = '  ' * len(path)
+        key_path = path + [key]
+        key_name = '.'.join(key_path)
+        verbosity = verbose.get(key_name, root_verbosity)
+
+        if isinstance(value, (tuple, list)):
+            display.info(indent + '%s:' % key, verbosity=verbosity)
+            for item in value:
+                display.info(indent + '  - %s' % item, verbosity=verbosity)
+        elif isinstance(value, dict):
+            display.info(indent + '%s:' % key, verbosity=verbosity)
+            show_dict(value, verbose, verbosity, key_path)
+        else:
+            display.info(indent + '%s: %s' % (key, value), verbosity=verbosity)
 
 
 def get_ansible_version(args):
@@ -120,6 +132,7 @@ def get_git_status(args):
         commit=commit,
         commit_range=commit_range,
         merged_commits=get_merged_commits(args, commit),
+        root=os.getcwd(),
     )
 
     return git_status
@@ -129,10 +142,10 @@ def get_merged_commits(args, commit):
     """
     :type args: CommonConfig
     :type commit: str
-    :rtype: list[str]
+    :rtype: list[str] | None
     """
     if not commit:
-        return []
+        return None
 
     git = Git(args)
 
