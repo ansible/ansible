@@ -30,6 +30,9 @@ RETURN = """
     type: list
 """
 
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
+
 # This module allows us to parse cfn including special tags
 # The module is supported by awslabs
 # see 'load' function here
@@ -39,9 +42,6 @@ try:
     HAS_CFN_FLIP = True
 except ImportError:
     HAS_CFN_FLIP = False
-
-from ansible.plugins.lookup import LookupBase
-
 
 class LookupModule(LookupBase):
 
