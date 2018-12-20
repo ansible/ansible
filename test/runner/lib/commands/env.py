@@ -65,7 +65,7 @@ def command_env(args):
     git = Git(args)
 
     if commit:
-        rev_list = git.get_rev_list(['%s..HEAD' % commit])
+        rev_list = git.get_rev_list(['--no-merges', '%s..HEAD' % commit])
         changes = dict((rev, git.run_git(['show', '--name-only', '--no-renames', '-z', '--raw', rev])) for rev in rev_list),
 
         git_update = dict(
