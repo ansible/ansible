@@ -59,6 +59,7 @@ options:
     description: List of routes in the route table.
         Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
         'instance_id', 'network_interface_id', or 'vpc_peering_connection_id'.
+        The 'dest' value must be a IPv4 address such as '0.0.0.0' or IPv6 address such as '::/0'.
         If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
         Routes are required for present states.
   state:
@@ -67,7 +68,7 @@ options:
     choices: [ 'present', 'absent' ]
   subnets:
     description: An array of subnets to add to this route table. Subnets may be specified
-      by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'.
+      by either subnet ID, Name tag, or by a IPv4 CIDR such as '10.0.0.0/24' or IPv6 CIDR such as 'fd00::/8'.
   tags:
     description: >
       A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are
@@ -98,6 +99,8 @@ EXAMPLES = '''
     routes:
       - dest: 0.0.0.0/0
         gateway_id: "{{ igw.gateway_id }}"
+      - dest: ::/0
+        gateway_id: "{{ igw.gateway_id }}"
   register: public_route_table
 
 - name: Set up NAT-protected route table
@@ -112,6 +115,8 @@ EXAMPLES = '''
       - '10.0.0.0/8'
     routes:
       - dest: 0.0.0.0/0
+        instance_id: "{{ nat.instance_id }}"
+      - dest: ::/0
         instance_id: "{{ nat.instance_id }}"
   register: nat_route_table
 
@@ -176,10 +181,15 @@ route_table:
       type: complex
       contains:
         destination_cidr_block:
-          description: CIDR block of destination
-          returned: always
+          description: IPv4 CIDR block of destination
+          returned: when the route is an IPv4 route
           type: str
           sample: 10.228.228.0/22
+        destination_ipv6_cidr_block:
+          description: IPv6 CIDR block of destination
+          returned: when the route is an IPv6 route
+          type: str
+          sample: fd00::/8
         gateway_id:
           description: ID of the gateway
           returned: when gateway is local or internet gateway
@@ -237,11 +247,14 @@ from ansible.module_utils.ec2 import compare_aws_tags, AWSRetry
 
 try:
     import botocore
+    import boto3
+    HAS_BOTO3 = True
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    HAS_BOTO3 = False
 
 
 CIDR_RE = re.compile(r'^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$')
+CIDR_IPV6_RE = re.compile(r'^([a-fA-F0-9:]+)/\d{1,3}$')
 SUBNET_RE = re.compile(r'^subnet-[A-z0-9]+$')
 ROUTE_TABLE_RE = re.compile(r'^rtb-[A-z0-9]+$')
 
@@ -250,11 +263,14 @@ ROUTE_TABLE_RE = re.compile(r'^rtb-[A-z0-9]+$')
 def describe_subnets_with_backoff(connection, **params):
     return connection.describe_subnets(**params)['Subnets']
 
+# Returns true if the specified cidr argument is a IPv6 CIDR, otherwise returns false to indicate it is a IPv4 CIDR.
+def is_ipv6_cidr(cidr):
+    return re.match(CIDR_IPV6_RE, cidr) != None
 
 def find_subnets(connection, module, vpc_id, identified_subnets):
     """
     Finds a list of subnets, each identified either by a raw ID, a unique
-    'Name' tag, or a CIDR such as 10.0.0.0/8.
+    'Name' tag, or a CIDR such as 10.0.0.0/8 or fd00::/8.
 
     Note that this function is duplicated in other ec2 modules, and should
     potentially be moved into a shared module_utils
@@ -266,6 +282,8 @@ def find_subnets(connection, module, vpc_id, identified_subnets):
         if re.match(SUBNET_RE, subnet):
             subnet_ids.append(subnet)
         elif re.match(CIDR_RE, subnet):
+            subnet_cidrs.append(subnet)
+        elif re.match(CIDR_IPV6_RE, subnet):
             subnet_cidrs.append(subnet)
         else:
             subnet_names.append(subnet)
@@ -618,7 +636,10 @@ def create_route_spec(connection, module, vpc_id):
     routes = module.params.get('routes')
 
     for route_spec in routes:
-        rename_key(route_spec, 'dest', 'destination_cidr_block')
+        if is_ipv6_cidr(route_spec.get('dest')):
+            rename_key(route_spec, 'dest', 'destination_ipv6_cidr_block')
+        else:
+            rename_key(route_spec, 'dest', 'destination_cidr_block')
 
         if route_spec.get('gateway_id') and route_spec['gateway_id'].lower() == 'igw':
             igw = find_igw(connection, module, vpc_id)
@@ -732,10 +753,13 @@ def main():
                                            ['state', 'present', ['vpc_id']]],
                               supports_check_mode=True)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='ec2',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    if not HAS_BOTO3:
+        module.fail_json(msg='json, botocore and boto3 are required.')
+    try:
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    except botocore.exceptions.NoCredentialsError as e:
+        module.fail_json(msg="Can't authorize connection - %s" % str(e))
 
     state = module.params.get('state')
 
