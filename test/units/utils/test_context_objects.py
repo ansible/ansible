@@ -15,8 +15,8 @@ import optparse
 
 import pytest
 
-from ansible.arguments import context_objects as co
 from ansible.module_utils.common.collections import ImmutableDict
+from ansible.utils import context_objects as co
 
 
 MAKE_IMMUTABLE_DATA = ((u'くらとみ', u'くらとみ'),
