@@ -65,6 +65,7 @@ options:
     description:
         - Allows a static UUID to be defined for the VM when cloning.
     required: false
+    type: str
 '''
 
 RETURN = ''' # '''
