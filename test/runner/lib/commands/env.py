@@ -158,7 +158,7 @@ def get_merged_updates(args, commit):
     if len(rev_list) == 1:
         raise Exception('Found only one commit after %s when at least 2 were expected:\n\n%s' % (commit, last_change))
 
-    if not re.search(r'^Merge: ', last_change):
+    if not re.search(r'^Merge: ', last_change, flags=re.MULTILINE):
         raise Exception('The last commit after %s does not appear to be a merge commit:\n\n%s' % (commit, last_change))
 
     return rev_list[1:]
