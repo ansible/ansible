@@ -83,14 +83,22 @@ def main():
 
     # Check if module is present
     try:
-        modules = open('/proc/modules')
         present = False
-        module_name = name.replace('-', '_') + ' '
-        for line in modules:
-            if line.startswith(module_name):
-                present = True
-                break
-        modules.close()
+        with open('/proc/modules') as modules:
+            module_name = name.replace('-', '_') + ' '
+            for line in modules:
+                if line.startswith(module_name):
+                    present = True
+                    break
+        if not present:
+            command = [module.get_bin_path('uname', True), '-r']
+            rc, uname_kernel_release, err = module.run_command(command)
+            module_file = '/' + name + '.ko'
+            with open('/lib/modules/' + uname_kernel_release + '/modules.builtin') as builtins:
+                for line in builtins:
+                    if line.endswith(module_file):
+                        present = True
+                        break
     except IOError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc(), **result)
 
