@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - conn_limit type is set to 'int'.
+  - This will allow module to compare conn_limit with record value without type casting.
