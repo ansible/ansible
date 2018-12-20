@@ -131,6 +131,13 @@ Noteworthy module changes
 * The ``na_ontap_cluster_peer`` module has replaced ``source_intercluster_lif`` and ``dest_intercluster_lif`` string options with
   ``source_intercluster_lifs`` and ``dest_intercluster_lifs`` list options
 
+* The ``modprobe`` module now detects kernel builtins. Previously, attempting to remove (with ``state: absent``)
+  a builtin kernel module succeeded without any error message because ``modprobe`` did not detect the module as
+  ``present``. Now, ``modprobe`` will fail if a kernel module is builtin and ``state: absent`` (with an error message
+  from the modprobe binary like ``modprobe: ERROR: Module nfs is builtin.``), and it will succeed without reporting
+  changed if ``state: present``. Any playbooks that are using ``changed_when: no`` to mask this quirk can safely
+  remove that workaround. To get the previous behavior when applying ``state: absent`` to a builtin kernel module,
+  use ``failed_when: false`` or ``ignore_errors: true`` in your playbook.
 
 Plugins
 =======
