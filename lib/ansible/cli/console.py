@@ -26,8 +26,8 @@ import sys
 
 from ansible import constants as C
 from ansible import context
-from ansible.arguments import optparse_helpers as opt_help
 from ansible.cli import CLI
+from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
