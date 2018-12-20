@@ -28,7 +28,7 @@ version_added: "2.2"
 options:
   apply:
     description:
-      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to all tasks within the included role.
     version_added: '2.7'
   name:
     description:
