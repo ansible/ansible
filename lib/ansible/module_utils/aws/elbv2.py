@@ -169,10 +169,14 @@ class ElasticLoadBalancerV2(object):
         # on the load balancer
         for subnet in self.elb['AvailabilityZones']:
             this_mapping = {'SubnetId': subnet['SubnetId']}
-            for address in subnet['LoadBalancerAddresses']:
-                if 'AllocationId' in address:
-                    this_mapping['AllocationId'] = address['AllocationId']
-                    break
+            # when elb type is network, AZ may contain subnets with LoadBalancerAddresses as a property
+            if self.elb['Type']=='network':
+                for address in subnet['LoadBalancerAddresses']:
+                    if 'AllocationId' in address:
+                        this_mapping['AllocationId'] = address['AllocationId']
+                        break
+            # Application lb 'AvailabiltyZones property is [{u'SubnetId': 'subnet-xxxxxxxx', u'ZoneName': 'us-east-1c'},...]
+            # probably not necessary to check those when checking if an application LB has changed
 
             subnet_mapping_id_list.append(this_mapping)
 
