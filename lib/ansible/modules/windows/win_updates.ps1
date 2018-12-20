@@ -347,7 +347,11 @@ $update_script_block = {
         $result.reboot_required = (New-Object -ComObject Microsoft.Update.SystemInfo).RebootRequired
         $result.installed_update_count = $update_success_count
         $result.failed_update_count = $update_fail_count
-        
+
+        if ($updates_success_count -gt 0) {
+            $result.changed = $true
+        }
+
         if ($update_fail_count -gt 0) {
             $result.failed = $true
             $result.msg = "Failed to install one or more updates"
