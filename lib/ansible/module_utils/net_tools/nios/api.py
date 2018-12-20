@@ -54,7 +54,7 @@ NIOS_MX_RECORD = 'record:mx'
 NIOS_SRV_RECORD = 'record:srv'
 NIOS_NAPTR_RECORD = 'record:naptr'
 NIOS_TXT_RECORD = 'record:txt'
-
+NIOS_NSGROUP = 'nsgroup'
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(),
