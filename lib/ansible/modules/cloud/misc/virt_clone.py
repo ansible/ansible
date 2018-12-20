@@ -60,6 +60,7 @@ options:
     description:
         - The VM to use as the source (template).
     required: true
+    type: str
   uuid:
     description:
         - Allows a static UUID to be defined for the VM when cloning
