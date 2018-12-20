@@ -43,13 +43,14 @@ try:
 except ImportError:
     HAS_CFN_FLIP = False
 
-class LookupModule(LookupBase):
 
+class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
         if not HAS_CFN_FLIP:
             raise AnsibleError(
-                'cfn-flip is required for cloudformation_parse lookup. see https://github.com/awslabs/aws-cfn-template-flip')
+                'cfn-flip is required for cloudformation_parse lookup. see https://github.com/awslabs/aws-cfn-template-flip'
+            )
 
         ret = []
         for term in terms:
