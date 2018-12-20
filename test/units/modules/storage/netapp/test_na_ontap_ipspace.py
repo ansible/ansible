@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # (c) 2018, NTT Europe Ltd.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -59,7 +57,7 @@ class MockONTAPConnection(object):
         self.xml_in = None
         self.xml_out = None
 
-    def invoke_successfully(self, xml, enable_tunneling): # pylint: disable=unused-argument
+    def invoke_successfully(self, xml, enable_tunneling):  # pylint: disable=unused-argument
         ''' mock invoke_successfully returning xml data '''
         self.xml_in = xml
         if self.type == 'ipspace':
