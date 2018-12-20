@@ -23,55 +23,87 @@ options:
   user_id:
     description:
     - The ID of the user.
-    required: yes
+    type: str
   user:
     description:
     - The name of the user.
+    - Alternative to the name, you can use C(user_id).
+    type: str
     required: yes
     aliases: [ name, user_name ]
   user_password:
     description:
     - The password of the user.
+    type: str
   first_name:
     description:
     - The first name of the user.
+    - This parameter is required when creating new users.
+    type: str
   last_name:
     description:
     - The last name of the user.
+    - This parameter is required when creating new users.
+    type: str
   email:
     description:
     - The email address of the user.
+    - This parameter is required when creating new users.
+    type: str
   phone:
     description:
     - The phone number of the user.
+    - This parameter is required when creating new users.
+    type: str
   account_status:
     description:
     - The status of the user account.
+    type: str
     choices: [ active ]
   domain:
     description:
     - The domain this user belongs to.
+    - When creating new users, this defaults to C(Local).
+    type: str
   roles:
     description:
-    - The roles this user has.
+    - The roles for this user.
+    type: list
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
+notes:
+- A default installation of ACI Multi-Site ships with admin password 'we1come!' which requires a password change on first login.
+  See the examples of how to change the 'admin' password using Ansible.
 extends_documentation_fragment: msc
 '''
 
 EXAMPLES = r'''
+- name: Update initial admin password
+  msc_user:
+    host: msc_host
+    username: admin
+    password: we1come!
+    user_name: admin
+    user_password: SomeSecretPassword
+    state: present
+  delegate_to: localhost
+
 - name: Add a new user
   msc_user:
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
-    user_id: 101
-    description: North European Datacenter
+    user_name: dag
+    description: Test user
+    first_name: Dag
+    last_name: Wieers
+    email: dag@wieers.com
+    phone: +32 478 436 299
     state: present
   delegate_to: localhost
 
@@ -80,7 +112,7 @@ EXAMPLES = r'''
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
+    user_name: dag
     state: absent
   delegate_to: localhost
 
@@ -89,7 +121,7 @@ EXAMPLES = r'''
     host: msc_host
     username: admin
     password: SomeSecretPassword
-    name: north_europe
+    user_name: dag
     state: query
   delegate_to: localhost
   register: query_result
@@ -120,7 +152,7 @@ def main():
         last_name=dict(type='str'),
         email=dict(type='str'),
         phone=dict(type='str'),
-        # FIXME: What possible options do we have ?
+        # TODO: What possible options do we have ?
         account_status=dict(type='str', choices=['active']),
         domain=dict(type='str'),
         roles=dict(type='list'),
@@ -132,7 +164,7 @@ def main():
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['user_name']],
-            ['state', 'present', ['user_name', 'password', 'first_name', 'last_name', 'email', 'phone', 'account_status']],
+            ['state', 'present', ['user_name']],
         ],
     )
 
@@ -144,17 +176,12 @@ def main():
     email = module.params['email']
     phone = module.params['phone']
     account_status = module.params['account_status']
-    # FIXME: Look up domain
-    domain = module.params['domain']
-    # FIXME: Look up roles
-    roles = module.params['roles']
-    roles_dict = list()
-    if roles:
-        for role in roles:
-            roles_dict.append(dict(roleId=role))
     state = module.params['state']
 
     msc = MSCModule(module)
+
+    roles = msc.lookup_roles(module.params['roles'])
+    domain = msc.lookup_domain(module.params['domain'])
 
     path = 'users'
 
@@ -191,7 +218,7 @@ def main():
     elif state == 'present':
         msc.previous = msc.existing
 
-        msc.sanitize(dict(
+        payload = dict(
             id=user_id,
             username=user_name,
             password=user_password,
@@ -199,19 +226,23 @@ def main():
             lastName=last_name,
             emailAddress=email,
             phoneNumber=phone,
-            # accountStatus={},
             accountStatus=account_status,
-            needsPasswordUpdate=False,
             domainId=domain,
-            roles=roles_dict,
+            roles=roles,
             # active=True,
             # remote=True,
-        ), collate=True)
+        )
+
+        msc.sanitize(payload, collate=True)
+
+        if msc.sent.get('accountStatus') is None:
+            msc.sent['accountStatus'] = 'active'
 
         if msc.existing:
             if not issubset(msc.sent, msc.existing):
                 # NOTE: Since MSC always returns '******' as password, we need to assume a change
-                if 'password' in msc.sent:
+                if 'password' in msc.proposed:
+                    msc.module.warn("A password change is assumed, as the MSC REST API does not return passwords we do not know.")
                     msc.result['changed'] = True
 
                 if module.check_mode:

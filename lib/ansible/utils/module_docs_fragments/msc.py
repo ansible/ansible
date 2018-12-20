@@ -48,18 +48,18 @@ options:
     description:
       - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
-    default: 'yes'
+    default: yes
   use_ssl:
     description:
     - If C(no), an HTTP connection will be used instead of the default HTTPS connection.
     type: bool
-    default: 'yes'
+    default: yes
   validate_certs:
     description:
     - If C(no), SSL certificates will not be validated.
     - This should only set to C(no) when used on personally controlled sites using self-signed certificates.
     type: bool
-    default: 'yes'
+    default: yes
 notes:
 - Please read the :ref:`aci_guide` for more detailed information on how to manage your ACI infrastructure using Ansible.
 '''

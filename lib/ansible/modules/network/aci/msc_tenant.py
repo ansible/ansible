@@ -24,10 +24,10 @@ options:
     description:
     - The ID of the tenant.
     type: str
-    required: yes
   tenant:
     description:
     - The name of the tenant.
+    - Alternative to the name, you can use C(tenant_id).
     type: str
     required: yes
     aliases: [ name, tenant_name ]
@@ -161,14 +161,20 @@ def main():
     elif state == 'present':
         msc.previous = msc.existing
 
-        msc.sanitize(dict(
+        payload = dict(
             description=description,
             id=tenant_id,
             name=tenant,
             displayName=display_name,
             siteAssociations=[],
             userAssociations=[dict(userId="0000ffff0000000000000020")],
-        ), collate=True)
+        )
+
+        msc.sanitize(payload, collate=True)
+
+        # Ensure displayName is not undefined
+        if msc.sent.get('displayName') is None:
+            msc.sent['displayName'] = tenant
 
         if msc.existing:
             if not issubset(msc.sent, msc.existing):
