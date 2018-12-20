@@ -40,17 +40,30 @@ options:
     description:
     - The ID of the site.
     type: str
-    required: yes
   site:
     description:
     - The name of the site.
+    - Alternative to the name, you can use C(site_id).
     type: str
     required: yes
     aliases: [ name, site_name ]
   labels:
     description:
     - The labels for this site.
+    - Labels that do not already exist will be automatically created.
     type: list
+  location:
+    description:
+    - Location of the site.
+    suboptions:
+      latitude:
+        description:
+        - The latitude of the location of the site.
+        type: float
+      longitude:
+        description:
+        - The longititude of the location of the site.
+        type: float
   urls:
     description:
     - A list of URLs to reference the APICs.
@@ -72,8 +85,21 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     site: north_europe
-    site_id: 101
     description: North European Datacenter
+    apic_username: msc_admin
+    apic_password: AnotherSecretPassword
+    apic_site_id: 12
+    urls:
+    - 10.2.3.4
+    - 10.2.4.5
+    - 10.3.5.6
+    labels:
+    - NEDC
+    - Europe
+    - Diegem
+    location:
+      latitude: 50.887318
+      longitude: 4.447084
     state: present
   delegate_to: localhost
 
@@ -114,12 +140,18 @@ from ansible.module_utils.network.aci.msc import MSCModule, msc_argument_spec, i
 
 
 def main():
+    location_arg_spec = dict(
+        latitude=dict(type='float'),
+        longitude=dict(type='float'),
+    )
+
     argument_spec = msc_argument_spec()
     argument_spec.update(
         apic_password=dict(type='str', no_log=True),
         apic_site_id=dict(type='str'),
         apic_username=dict(type='str', default='admin'),
         labels=dict(type='list'),
+        location=dict(type='dict', options=location_arg_spec),
         site=dict(type='str', required=False, aliases=['name', 'site_name']),
         site_id=dict(type='str', required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -140,12 +172,19 @@ def main():
     apic_site_id = module.params['apic_site_id']
     site = module.params['site']
     site_id = module.params['site_id']
+    location = module.params['location']
+    if location is not None:
+        latitude = module.params['location']['latitude']
+        longitude = module.params['location']['longitude']
     state = module.params['state']
     urls = module.params['urls']
 
     msc = MSCModule(module)
 
     path = 'sites'
+
+    # Convert labels
+    labels = msc.lookup_labels(module.params['labels'], 'site')
 
     # Query for msc.existing object(s)
     if site_id is None and site is None:
@@ -175,31 +214,43 @@ def main():
             if module.check_mode:
                 msc.existing = {}
             else:
-                msc.existing = msc.request(path, method='DELETE')
+                msc.existing = msc.request(path, method='DELETE', qs=dict(force='true'))
 
     elif state == 'present':
         msc.previous = msc.existing
 
-        msc.sanitize(dict(
+        payload = dict(
             apicSiteId=apic_site_id,
             id=site_id,
             name=site,
             urls=urls,
+            labels=labels,
             username=apic_username,
             password=apic_password,
-        ), collate=True)
+        )
+
+        if location is not None:
+            payload['location'] = dict(
+                lat=latitude,
+                long=longitude,
+            )
+
+        msc.sanitize(payload, collate=True)
 
         if msc.existing:
             if not issubset(msc.sent, msc.existing):
                 if module.check_mode:
                     msc.existing = msc.proposed
                 else:
-                    msc.request(path, method='PUT', data=msc.sent)
+                    msc.existing = msc.request(path, method='PUT', data=msc.sent)
         else:
             if module.check_mode:
                 msc.existing = msc.proposed
             else:
-                msc.request(path, method='POST', data=msc.sent)
+                msc.existing = msc.request(path, method='POST', data=msc.sent)
+
+    if 'password' in msc.existing:
+        msc.existing['password'] = '******'
 
     msc.exit_json()
 
