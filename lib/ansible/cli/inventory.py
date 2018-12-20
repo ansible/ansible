@@ -53,10 +53,7 @@ class InventoryCLI(CLI):
         self.loader = None
         self.inventory = None
 
-        self._new_api = True
-
     def init_parser(self):
-
         super(InventoryCLI, self).init_parser(
             usage='usage: %prog [options] [host|group]',
             epilog='Show Ansible inventory information, by default it uses the inventory script JSON format')
@@ -93,6 +90,8 @@ class InventoryCLI(CLI):
         #                       help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
     def post_process_args(self, options, args):
+        options, args = super(InventoryCLI, self).post_process_args(options, args)
+
         display.verbosity = options.verbosity
         self.validate_conflicts(options, vault_opts=True)
 
@@ -152,7 +151,8 @@ class InventoryCLI(CLI):
 
         exit(1)
 
-    def dump(self, stuff):
+    @staticmethod
+    def dump(stuff):
 
         if context.CLIARGS['yaml']:
             import yaml
@@ -223,41 +223,39 @@ class InventoryCLI(CLI):
             for inventory_dir in self.inventory._sources:
                 hostvars = combine_vars(hostvars, self.get_plugin_vars(inventory_dir, host))
         else:
-            if self._new_api:
-                hostvars = self.vm.get_vars(host=host, include_hostvars=False)
-            else:
-                hostvars = self.vm.get_vars(self.loader, host=host, include_hostvars=False)
+            hostvars = self.vm.get_vars(host=host, include_hostvars=False)
 
         return hostvars
 
     def _get_group(self, gname):
-        if self._new_api:
-            group = self.inventory.groups.get(gname)
-        else:
-            group = self.inventory.get_group(gname)
+        group = self.inventory.groups.get(gname)
         return group
 
-    def _remove_internal(self, dump):
+    @staticmethod
+    def _remove_internal(dump):
 
         for internal in INTERNAL_VARS:
             if internal in dump:
                 del dump[internal]
 
-    def _remove_empty(self, dump):
+    @staticmethod
+    def _remove_empty(dump):
         # remove empty keys
         for x in ('hosts', 'vars', 'children'):
             if x in dump and not dump[x]:
                 del dump[x]
 
-    def _show_vars(self, dump, depth):
+    @staticmethod
+    def _show_vars(dump, depth):
         result = []
-        self._remove_internal(dump)
+        InventoryCLI._remove_internal(dump)
         if context.CLIARGS['show_vars']:
             for (name, val) in sorted(dump.items()):
-                result.append(self._graph_name('{%s = %s}' % (name, val), depth))
+                result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
         return result
 
-    def _graph_name(self, name, depth=0):
+    @staticmethod
+    def _graph_name(name, depth=0):
         if depth:
             name = "  |" * (depth) + "--%s" % name
         return name

@@ -247,7 +247,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         return vault_secrets
 
-    def ask_passwords(self):
+    @staticmethod
+    def ask_passwords():
         ''' prompt for connection and become passwords if needed '''
 
         op = context.CLIARGS
@@ -347,7 +348,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         An implementation will look something like this::
 
             def init_parser(self):
-                super(MyCLI, self).init__parser(usage="My Ansible CLI", inventory_opts=True)
+                super(MyCLI, self).init_parser(usage="My Ansible CLI", inventory_opts=True)
                 ansible.arguments.optparse_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
@@ -449,7 +450,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                 'minor': ansible_versions[1],
                 'revision': ansible_versions[2]}
 
-    def pager(self, text):
+    @staticmethod
+    def pager(text):
         ''' find reasonable way to display text '''
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
@@ -458,12 +460,12 @@ class CLI(with_metaclass(ABCMeta, object)):
             if sys.platform == 'win32':
                 display.display(text, screen_only=True)
             else:
-                self.pager_pipe(text, os.environ['PAGER'])
+                CLI.pager_pipe(text, os.environ['PAGER'])
         else:
             p = subprocess.Popen('less --version', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             p.communicate()
             if p.returncode == 0:
-                self.pager_pipe(text, 'less')
+                CLI.pager_pipe(text, 'less')
             else:
                 display.display(text, screen_only=True)
 

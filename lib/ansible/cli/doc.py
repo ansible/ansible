@@ -71,6 +71,8 @@ class DocCLI(CLI):
                                choices=C.DOCUMENTABLE_PLUGINS)
 
     def post_process_args(self, options, args):
+        options, args = super(DocCLI, self).post_process_args(options, args)
+
         if [options.all_plugins, options.json_dump, options.list_dir, options.list_files, options.show_snippet].count(True) > 1:
             raise AnsibleOptionsError("Only one of -l, -F, -s, -j or -a can be used at the same time.")
 
@@ -102,38 +104,38 @@ class DocCLI(CLI):
                     loader.add_directory(path)
 
         # save only top level paths for errors
-        search_paths = self.print_paths(loader)
+        search_paths = DocCLI.print_paths(loader)
         loader._paths = None  # reset so we can use subdirs below
 
         # list plugins names and filepath for type
         if context.CLIARGS['list_files']:
             paths = loader._get_paths()
             for path in paths:
-                self.plugin_list.update(self.find_plugins(path, plugin_type))
+                self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
             list_text = self.get_plugin_list_filenames(loader)
-            self.pager(list_text)
+            DocCLI.pager(list_text)
             return 0
 
         # list plugins for type
         if context.CLIARGS['list_dir']:
             paths = loader._get_paths()
             for path in paths:
-                self.plugin_list.update(self.find_plugins(path, plugin_type))
+                self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
-            self.pager(self.get_plugin_list_text(loader))
+            DocCLI.pager(self.get_plugin_list_text(loader))
             return 0
 
         # dump plugin desc/metadata as JSON
         if context.CLIARGS['json_dump']:
             plugin_data = {}
-            plugin_names = self.get_all_plugins_of_type(plugin_type)
+            plugin_names = DocCLI.get_all_plugins_of_type(plugin_type)
             for plugin_name in plugin_names:
-                plugin_info = self.get_plugin_metadata(plugin_type, plugin_name)
+                plugin_info = DocCLI.get_plugin_metadata(plugin_type, plugin_name)
                 if plugin_info is not None:
                     plugin_data[plugin_name] = plugin_info
 
-            self.pager(json.dumps(plugin_data, sort_keys=True, indent=4))
+            DocCLI.pager(json.dumps(plugin_data, sort_keys=True, indent=4))
 
             return 0
 
@@ -143,26 +145,28 @@ class DocCLI(CLI):
         # process command line list
         text = ''
         for plugin in context.CLIARGS['args']:
-            textret = self.format_plugin_doc(plugin, loader, plugin_type, search_paths)
+            textret = DocCLI.format_plugin_doc(plugin, loader, plugin_type, search_paths)
 
             if textret:
                 text += textret
 
         if text:
-            self.pager(text)
+            DocCLI.pager(text)
 
         return 0
 
-    def get_all_plugins_of_type(self, plugin_type):
+    @staticmethod
+    def get_all_plugins_of_type(plugin_type):
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         plugin_list = set()
         paths = loader._get_paths()
         for path in paths:
-            plugins_to_add = self.find_plugins(path, plugin_type)
+            plugins_to_add = DocCLI.find_plugins(path, plugin_type)
             plugin_list.update(plugins_to_add)
         return sorted(set(plugin_list))
 
-    def get_plugin_metadata(self, plugin_type, plugin_name):
+    @staticmethod
+    def get_plugin_metadata(plugin_type, plugin_name):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         filename = loader.find_plugin(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
@@ -188,12 +192,13 @@ class DocCLI(CLI):
 
         return dict(
             name=plugin_name,
-            namespace=self.namespace_from_plugin_filepath(filename, plugin_name, loader.package_path),
+            namespace=DocCLI.namespace_from_plugin_filepath(filename, plugin_name, loader.package_path),
             description=doc.get('short_description', "UNKNOWN"),
             version_added=doc.get('version_added', "UNKNOWN")
         )
 
-    def namespace_from_plugin_filepath(self, filepath, plugin_name, basedir):
+    @staticmethod
+    def namespace_from_plugin_filepath(filepath, plugin_name, basedir):
         if not basedir.endswith('/'):
             basedir += '/'
         rel_path = filepath.replace(basedir, '')
@@ -205,7 +210,8 @@ class DocCLI(CLI):
 
         return clean_ns
 
-    def format_plugin_doc(self, plugin, loader, plugin_type, search_paths):
+    @staticmethod
+    def format_plugin_doc(plugin, loader, plugin_type, search_paths):
         text = ''
 
         try:
@@ -248,9 +254,9 @@ class DocCLI(CLI):
                     doc['docuri'] = doc[plugin_type].replace('_', '-')
 
                 if context.CLIARGS['show_snippet'] and plugin_type == 'module':
-                    text += self.get_snippet_text(doc)
+                    text += DocCLI.get_snippet_text(doc)
                 else:
-                    text += self.get_man_text(doc)
+                    text += DocCLI.get_man_text(doc)
 
                 return text
             else:
@@ -266,7 +272,8 @@ class DocCLI(CLI):
             raise AnsibleError(
                 "%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e)))
 
-    def find_plugins(self, path, ptype):
+    @staticmethod
+    def find_plugins(path, ptype):
 
         display.vvvv("Searching %s for plugins" % path)
 
@@ -340,7 +347,7 @@ class DocCLI(CLI):
                             continue
                     desc = 'UNDOCUMENTED'
                 else:
-                    desc = self.tty_ify(doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip())
+                    desc = DocCLI.tty_ify(doc.get('short_description', 'INVALID SHORT DESCRIPTION').strip())
 
                 if len(desc) > linelimit:
                     desc = desc[:linelimit] + '...'
@@ -394,10 +401,11 @@ class DocCLI(CLI):
                 ret.append(i)
         return os.pathsep.join(ret)
 
-    def get_snippet_text(self, doc):
+    @staticmethod
+    def get_snippet_text(doc):
 
         text = []
-        desc = CLI.tty_ify(doc['short_description'])
+        desc = DocCLI.tty_ify(doc['short_description'])
         text.append("- name: %s" % (desc))
         text.append("  %s:" % (doc['module']))
         pad = 31
@@ -407,9 +415,9 @@ class DocCLI(CLI):
         for o in sorted(doc['options'].keys()):
             opt = doc['options'][o]
             if isinstance(opt['description'], string_types):
-                desc = CLI.tty_ify(opt['description'])
+                desc = DocCLI.tty_ify(opt['description'])
             else:
-                desc = CLI.tty_ify(" ".join(opt['description']))
+                desc = DocCLI.tty_ify(" ".join(opt['description']))
 
             required = opt.get('required', False)
             if not isinstance(required, bool):
@@ -422,10 +430,14 @@ class DocCLI(CLI):
 
         return "\n".join(text)
 
-    def _dump_yaml(self, struct, indent):
-        return CLI.tty_ify('\n'.join([indent + line for line in yaml.dump(struct, default_flow_style=False, Dumper=AnsibleDumper).split('\n')]))
+    @staticmethod
+    def _dump_yaml(struct, indent):
+        return DocCLI.tty_ify('\n'.join([indent + line for line in
+                                         yaml.dump(struct, default_flow_style=False,
+                                                   Dumper=AnsibleDumper).split('\n')]))
 
-    def add_fields(self, text, fields, limit, opt_indent):
+    @staticmethod
+    def add_fields(text, fields, limit, opt_indent):
 
         for o in sorted(fields):
             opt = fields[o]
@@ -442,9 +454,9 @@ class DocCLI(CLI):
 
             if isinstance(opt['description'], list):
                 for entry in opt['description']:
-                    text.append(textwrap.fill(CLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                    text.append(textwrap.fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             else:
-                text.append(textwrap.fill(CLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
             del opt['description']
 
             aliases = ''
@@ -461,37 +473,41 @@ class DocCLI(CLI):
             if 'default' in opt or not required:
                 default = "[Default: %s" % str(opt.pop('default', '(null)')) + "]"
 
-            text.append(textwrap.fill(CLI.tty_ify(aliases + choices + default), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+            text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
+                                      initial_indent=opt_indent, subsequent_indent=opt_indent))
 
             if 'options' in opt:
                 text.append("%soptions:\n" % opt_indent)
-                self.add_fields(text, opt.pop('options'), limit, opt_indent + opt_indent)
+                DocCLI.add_fields(text, opt.pop('options'), limit, opt_indent + opt_indent)
 
             if 'spec' in opt:
                 text.append("%sspec:\n" % opt_indent)
-                self.add_fields(text, opt.pop('spec'), limit, opt_indent + opt_indent)
+                DocCLI.add_fields(text, opt.pop('spec'), limit, opt_indent + opt_indent)
 
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keywords'):
                 if config in opt and opt[config]:
                     conf[config] = opt.pop(config)
-                    for ignore in self.IGNORE:
+                    for ignore in DocCLI.IGNORE:
                         for item in conf[config]:
                             if ignore in item:
                                 del item[ignore]
 
             if conf:
-                text.append(self._dump_yaml({'set_via': conf}, opt_indent))
+                text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
 
             for k in sorted(opt):
                 if k.startswith('_'):
                     continue
                 if isinstance(opt[k], string_types):
-                    text.append('%s%s: %s' % (opt_indent, k, textwrap.fill(CLI.tty_ify(opt[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                    text.append('%s%s: %s' % (opt_indent, k,
+                                              textwrap.fill(DocCLI.tty_ify(opt[k]),
+                                                            limit - (len(k) + 2),
+                                                            subsequent_indent=opt_indent)))
                 elif isinstance(opt[k], (Sequence)) and all(isinstance(x, string_types) for x in opt[k]):
-                    text.append(CLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
+                    text.append(DocCLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
                 else:
-                    text.append(self._dump_yaml({k: opt[k]}, opt_indent))
+                    text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
             text.append('')
 
     @staticmethod
@@ -519,9 +535,10 @@ class DocCLI(CLI):
                 text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
         return text
 
-    def get_man_text(self, doc):
+    @staticmethod
+    def get_man_text(doc):
 
-        self.IGNORE = self.IGNORE + (context.CLIARGS['type'],)
+        DocCLI.IGNORE = DocCLI.IGNORE + (context.CLIARGS['type'],)
         opt_indent = "        "
         text = []
         pad = display.columns * 0.20
@@ -534,7 +551,8 @@ class DocCLI(CLI):
         else:
             desc = doc.pop('description')
 
-        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+        text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
+                                           subsequent_indent=opt_indent))
 
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n")
@@ -547,7 +565,7 @@ class DocCLI(CLI):
             text.append("\n")
 
         try:
-            support_block = self.get_support_block(doc)
+            support_block = DocCLI.get_support_block(doc)
             if support_block:
                 text.extend(support_block)
         except Exception:
@@ -558,13 +576,14 @@ class DocCLI(CLI):
 
         if 'options' in doc and doc['options']:
             text.append("OPTIONS (= is mandatory):\n")
-            self.add_fields(text, doc.pop('options'), limit, opt_indent)
+            DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
             text.append('')
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             text.append("NOTES:")
             for note in doc['notes']:
-                text.append(textwrap.fill(CLI.tty_ify(note), limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                text.append(textwrap.fill(DocCLI.tty_ify(note), limit - 6,
+                                          initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
             text.append('')
             text.append('')
             del doc['notes']
@@ -573,32 +592,32 @@ class DocCLI(CLI):
             text.append("SEE ALSO:")
             for item in doc['seealso']:
                 if 'module' in item and 'description' in item:
-                    text.append(textwrap.fill(CLI.tty_ify('Module %s' % item['module']),
+                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(CLI.tty_ify(item['description']),
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent, subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
+                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'module' in item:
-                    text.append(textwrap.fill(CLI.tty_ify('Module %s' % item['module']),
+                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(CLI.tty_ify('The official documentation on the %s module.' % item['module']),
+                    text.append(textwrap.fill(DocCLI.tty_ify('The official documentation on the %s module.' % item['module']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
+                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/modules/%s_module.html' % item['module']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
-                    text.append(textwrap.fill(CLI.tty_ify(item['name']),
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['name']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(CLI.tty_ify(item['description']),
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(CLI.tty_ify(item['link']),
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['link']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
                 elif 'ref' in item and 'description' in item:
-                    text.append(textwrap.fill(CLI.tty_ify('Ansible documentation [%s]' % item['ref']),
+                    text.append(textwrap.fill(DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
                                 limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(CLI.tty_ify(item['description']),
+                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(CLI.tty_ify('https://docs.ansible.com/ansible/latest/#stq=%s&stp=1' % item['ref']),
+                    text.append(textwrap.fill(DocCLI.tty_ify('https://docs.ansible.com/ansible/latest/#stq=%s&stp=1' % item['ref']),
                                 limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
 
             text.append('')
@@ -607,18 +626,18 @@ class DocCLI(CLI):
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc.pop('requirements'))
-            text.append("REQUIREMENTS:%s\n" % textwrap.fill(CLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
+            text.append("REQUIREMENTS:%s\n" % textwrap.fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
         # Generic handler
         for k in sorted(doc):
-            if k in self.IGNORE or not doc[k]:
+            if k in DocCLI.IGNORE or not doc[k]:
                 continue
             if isinstance(doc[k], string_types):
-                text.append('%s: %s' % (k.upper(), textwrap.fill(CLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
             elif isinstance(doc[k], (list, tuple)):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
-                text.append(self._dump_yaml({k.upper(): doc[k]}, opt_indent))
+                text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, opt_indent))
             del doc[k]
         text.append('')
 
@@ -641,7 +660,7 @@ class DocCLI(CLI):
         text.append('')
 
         try:
-            metadata_block = self.get_metadata_block(doc)
+            metadata_block = DocCLI.get_metadata_block(doc)
             if metadata_block:
                 text.extend(metadata_block)
                 text.append('')
