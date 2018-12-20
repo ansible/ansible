@@ -1,0 +1,4 @@
+bugfixes:
+  - os_security_group_rule - os_security_group_rule doesn't exit properly when
+    secgroup doesn't exist and state=absent
+    (https://github.com/ansible/ansible/issues/50057)
