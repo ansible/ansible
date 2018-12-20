@@ -18,7 +18,7 @@
     - emptypids.pids == [] 
 
 - name: "Picking a random process name"
-  command: echo "sample-name"
+  command: echo "some-long-random-process-name-{{ 99999999 | random }}"
   register: random_name
 
 - name: "finding the 'sleep' binary"
@@ -32,7 +32,7 @@
     mode: "u+rwx"
 
 - name: "Running the copy of 'sleep' binary"
-  command: "sh {{ ansible_facts.env['PWD'] }}/targets/pids/tasks/obtainpid.sh {{ output_dir }}/{{ random_name.stdout }} {{ ansible_facts.env['PWD'] }}/targets/pids/tasks/"
+  command: "{{ role_path }}/files/obtainpid.sh '{{ random_name.stdout }}' '{{ output_dir }}/obtainpid.txt'"
   async: 100
   poll: 0
 
@@ -42,11 +42,12 @@
   register: pids
     
 - name: "Reading pid from the file"
-  command: cat {{ ansible_facts.env['PWD'] }}/targets/pids/tasks/obtainpid.txt
+  slurp:
+    src:  "{{ output_dir }}/obtainpid.txt"
   register: newpid
 
 - name: "Verify that the Process IDs (PIDs) returned is not empty and also equal to the PIDs obtained in console"
   assert:
     that:
-    - "pids.pids | join(' ')  == newpid.stdout | trim"
+    - "pids.pids | join(' ')  == newpid.content | b64decode | trim"
     - "pids.pids | length > 0"
