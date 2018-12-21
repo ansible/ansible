@@ -43,7 +43,7 @@ from lib.config import (
     ShellConfig,
 )
 
-from lib.commands.env import (
+from lib.env import (
     EnvConfig,
     command_env,
 )
