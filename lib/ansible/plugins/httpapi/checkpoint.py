@@ -68,19 +68,9 @@ class HttpApi(HttpApiBase):
                 'Server returned response without token info during connection authentication: %s' % response)
 
     def logout(self):
-        auth_payload = {
-            'grant_type': 'revoke_token',
-            'access_token': self.access_token,
-            'token_to_revoke': self.refresh_token
-        }
+        url = '/web_api/logout'
 
-        url = self._get_api_token_path()
-
-        response, dummy = self._send_auth_request(url, json.dumps(auth_payload), method='post',
-                                                  headers=BASE_HEADERS)
-
-        self.refresh_token = None
-        self.access_token = None
+        response, dummy = self.send_request(url, None)
 
     def _send_auth_request(self, path, data, **kwargs):
         try:
