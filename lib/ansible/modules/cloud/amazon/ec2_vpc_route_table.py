@@ -263,9 +263,11 @@ ROUTE_TABLE_RE = re.compile(r'^rtb-[A-z0-9]+$')
 def describe_subnets_with_backoff(connection, **params):
     return connection.describe_subnets(**params)['Subnets']
 
+
 # Returns true if the specified cidr argument is a IPv6 CIDR, otherwise returns false to indicate it is a IPv4 CIDR.
 def is_ipv6_cidr(cidr):
-    return re.match(CIDR_IPV6_RE, cidr) != None
+    return re.match(CIDR_IPV6_RE, cidr) is not None
+
 
 def find_subnets(connection, module, vpc_id, identified_subnets):
     """
