@@ -117,5 +117,5 @@ class HttpApi(HttpApiBase):
         try:
             return json.loads(response_text) if response_text else {}
         # JSONDecodeError only available on Python 3.5+
-        except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        except ValueError:
             raise ConnectionError('Invalid JSON response: %s' % response_text)
