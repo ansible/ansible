@@ -210,10 +210,10 @@ class VmwareVcenterStatistics(PyVmomi):
         for historical_interval in perf_manager.historicalInterval:
             # Statistics for past day
             if historical_interval.name == 'Past day' and (
-                    historical_interval.samplingPeriod != past_day_seconds or
-                    historical_interval.length != past_day_save_for_seconds or
-                    historical_interval.level != past_day_level or
-                    historical_interval.enabled != past_day_enabled
+                    historical_interval.samplingPeriod != past_day_seconds
+                    or historical_interval.length != past_day_save_for_seconds
+                    or historical_interval.level != past_day_level
+                    or historical_interval.enabled != past_day_enabled
             ):
                 changed = True
                 changed_list.append("Past day interval")
@@ -241,10 +241,10 @@ class VmwareVcenterStatistics(PyVmomi):
                 )
             # Statistics for past week
             if historical_interval.name == 'Past week' and (
-                    historical_interval.samplingPeriod != past_week_seconds or
-                    historical_interval.length != past_week_save_for_seconds or
-                    historical_interval.level != past_week_level or
-                    historical_interval.enabled != past_week_enabled
+                    historical_interval.samplingPeriod != past_week_seconds
+                    or historical_interval.length != past_week_save_for_seconds
+                    or historical_interval.level != past_week_level
+                    or historical_interval.enabled != past_week_enabled
             ):
                 changed = True
                 changed_list.append("Past week interval")
@@ -272,10 +272,10 @@ class VmwareVcenterStatistics(PyVmomi):
                 )
             # Statistics for past month
             if historical_interval.name == 'Past month' and (
-                    historical_interval.samplingPeriod != past_month_seconds or
-                    historical_interval.length != past_month_save_for_seconds or
-                    historical_interval.level != past_month_level or
-                    historical_interval.enabled != past_month_enabled
+                    historical_interval.samplingPeriod != past_month_seconds
+                    or historical_interval.length != past_month_save_for_seconds
+                    or historical_interval.level != past_month_level
+                    or historical_interval.enabled != past_month_enabled
             ):
                 changed = True
                 changed_list.append("Past month interval")
@@ -303,10 +303,10 @@ class VmwareVcenterStatistics(PyVmomi):
                 )
             # Statistics for past year
             if historical_interval.name == 'Past year' and (
-                    historical_interval.samplingPeriod != past_year_seconds or
-                    historical_interval.length != past_year_save_for_seconds or
-                    historical_interval.level != past_year_level or
-                    historical_interval.enabled != past_year_enabled
+                    historical_interval.samplingPeriod != past_year_seconds
+                    or historical_interval.length != past_year_save_for_seconds
+                    or historical_interval.level != past_year_level
+                    or historical_interval.enabled != past_year_enabled
             ):
                 changed = True
                 changed_list.append("Past year interval")
@@ -332,7 +332,7 @@ class VmwareVcenterStatistics(PyVmomi):
                         enabled=past_year_enabled
                     )
                 )
-        message = "vCenter statistics already configured properly"
+
         if changed:
             if self.module.check_mode:
                 changed_suffix = ' would be changed'
@@ -354,7 +354,8 @@ class VmwareVcenterStatistics(PyVmomi):
                     # Loop in reverse order (start with past year interval)
                     for statistic in change_statistics_list[::-1]:
                         self.update_perf_interval(perf_manager, statistic)
-
+        else:
+            message = "vCenter statistics already configured properly"
         result['changed'] = changed
         result['msg'] = message
 
