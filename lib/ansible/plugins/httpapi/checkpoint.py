@@ -109,7 +109,7 @@ class HttpApi(HttpApiBase):
             return error['code'], error['message']
 
     def _display_request(self):
-        display.vvvv('Web Services: %s %s' % ('POST', self.connection._url))
+        self.connection.queue_message('vvvv', 'Web Services: %s %s' % ('POST', self.connection._url))
 
     @staticmethod
     def _get_response_value(response_data):
