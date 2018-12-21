@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: memset_lb_service
-author: "Simon Weald (@analbeard)"
+author: "Simon Weald (@glitchcrab)"
 version_added: "2.8"
 short_description: Manage Memset loadbalancer services.
 notes:
@@ -203,7 +203,7 @@ def create_lb_service(args=None, service=None):
                 # empty msg as we don't want to return a boatlad of json to the user.
                 msg = None
     else:
-        # perform various horrible contortions in order to compare the existing service
+        # perform various contortions in order to compare the existing service
         # to the payload we intend to POST.
         _service = service.copy()
         _service['service_name'] = service['name']
@@ -214,13 +214,15 @@ def create_lb_service(args=None, service=None):
             pass
 
         if _service == payload:
-            memset_api = payload
+            # the payload and the service are the same, so we just exit unchanged
+            retvals['memset_api'] = payload
         else:
-            # add load_balancer to the payload late so we can compare dicts beforehand
+            # add load_balancer to the payload after we've compared the dicts
             payload['load_balancer'] = args['load_balancer']
             # update service
             if args['check_mode']:
                 retvals['changed'] = True
+                # TODO: return a diff instead of the the whole payload
                 retvals['memset_api'] = payload
             else:
                 api_method = 'loadbalancer.service.update'
@@ -246,7 +248,6 @@ def delete_lb_service(args=None, service=None):
             payload[arg] = args[arg]
         if args['check_mode']:
             retvals['changed'] = True
-            retvals['memset_api'] = payload
         else:
             api_method = 'loadbalancer.service.remove'
             retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
@@ -262,9 +263,6 @@ def create_or_delete(args=None):
     Performs initial auth validation and gets a list of
     existing services to provide to create/delete functions.
     '''
-    # has_failed, has_changed = False, False
-    # msg, memset_api, current_service = None, None, None
-    # retvals, payload = dict(), dict()
     retvals, payload = dict(), dict()
     retvals['changed'], retvals['failed'] = False, False
 
