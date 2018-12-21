@@ -153,7 +153,7 @@ DOCUMENTATION = """
         vars:
           - name: ansible_kubectl_verify_ssl
         env:
-          - name: K8s_AUTH_VERIFY_SSL
+          - name: K8S_AUTH_VERIFY_SSL
 """
 
 import distutils.spawn

@@ -137,7 +137,7 @@ DOCUMENTATION = """
         vars:
           - name: ansible_oc_verify_ssl
         env:
-          - name: K8s_AUTH_VERIFY_SSL
+          - name: K8S_AUTH_VERIFY_SSL
 """
 
 from ansible.plugins.connection.kubectl import Connection as KubectlConnection
