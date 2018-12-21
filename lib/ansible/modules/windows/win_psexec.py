@@ -90,7 +90,7 @@ options:
   priority:
     description:
     - Used to run the command at a different priority.
-    choices: [ background, low, belownormal, abovenormal, high, realtime ]
+    choices: [ abovenormal, background, belownormal, high, low, realtime ]
   timeout:
     description:
     - The connection timeout in seconds
