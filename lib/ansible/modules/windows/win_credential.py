@@ -115,7 +115,7 @@ options:
       providers can access the secret.
     type: str
     required: true
-    choices: [ domain_password, domain_certificate, generic_password, generic_certificate ]
+    choices: [ domain_certificate, domain_password, generic_certificate, generic_password ]
   update_secret:
     description:
     - When C(always), the secret will always be updated if they differ.
