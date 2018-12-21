@@ -24,10 +24,9 @@ class EnvironmentConfig(CommonConfig):
     def __init__(self, args, command):
         """
         :type args: any
+        :type command: str
         """
-        super(EnvironmentConfig, self).__init__(args)
-
-        self.command = command
+        super(EnvironmentConfig, self).__init__(args, command)
 
         self.local = args.local is True
 
