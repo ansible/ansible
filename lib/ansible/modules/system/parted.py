@@ -91,7 +91,7 @@ options:
     type: list
   state:
     description:
-    - If to create or delete a partition.
+    - Whether to create or delete a partition.
     - If set to C(info) the module will only return the device information.
     type: str
     choices: [ absent, present, info ]
