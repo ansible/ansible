@@ -108,11 +108,9 @@ class HttpApi(HttpApiBase):
     def _display_request(self):
         self.connection.queue_message('vvvv', 'Web Services: %s %s' % ('POST', self.connection._url))
 
-    @staticmethod
     def _get_response_value(response_data):
         return to_text(response_data.getvalue())
 
-    @staticmethod
     def _response_to_json(response_text):
         try:
             return json.loads(response_text) if response_text else {}
