@@ -54,10 +54,6 @@ display = Display()
 
 
 class HttpApi(HttpApiBase):
-    def __init__(self, connection):
-        super(HttpApi, self).__init__(connection)
-        self._auth = None
-
     def login(self, username, password):
         if username and password:
             payload = {'user': username, 'password': password}
