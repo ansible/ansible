@@ -68,7 +68,7 @@ options:
   password:
     description:
       - Optionally set the user's password to this (plain text) value.
-      - In order to enable an account - I(enabled) - a password must already be
+      - To enable an account - I(enabled) - a password must already be
         configured on the account, or you must provide a password here.
     type: str
   update_password:
