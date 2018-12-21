@@ -59,7 +59,7 @@ To match strings against a substring or a regular expression, use the "match", "
             msg: "matched pattern 4"
           when: url is regex("example.com/\w+/foo")
 
-'match' requires a complete match in the string, while 'search' only requires matching a subset of the string.
+'match' requires zero or more characters at the beginning of the string, while 'search' only requires matching a subset of the string.
 
 
 .. _testing_versions:
