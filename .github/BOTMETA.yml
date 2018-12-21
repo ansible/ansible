@@ -116,7 +116,7 @@ files:
   $modules/cloud/google/gc_storage.py: supertom
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
-  $modules/cloud/memset/: analbeard
+  $modules/cloud/memset/: glitchcrab
   $modules/cloud/misc/ovirt.py:
     ignored: vincentvdk skvidal
     maintainers: joshainglis karmab machacekondra mwperina
@@ -653,7 +653,7 @@ files:
   $module_utils/vmware:
     maintainers: $team_vmware
   $module_utils/memset.py:
-    maintainers: analbeard
+    maintainers: glitchcrab
     labels: cloud
   $module_utils/scaleway.py: &scaleway
     maintainers: $team_scaleway
