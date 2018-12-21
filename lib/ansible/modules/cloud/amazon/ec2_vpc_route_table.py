@@ -437,12 +437,14 @@ def route_spec_matches_route(route_spec, route):
     if route_spec.get('GatewayId') and 'vpce-' in route_spec['GatewayId']:
         if route_spec.get('DestinationCidrBlock', '').startswith('pl-'):
             route_spec['DestinationPrefixListId'] = route_spec.pop('DestinationCidrBlock')
+        elif route_spec.get('DestinationIpv6CidrBlock', '').startswith('pl-'):
+            route_spec['DestinationPrefixListId'] = route_spec.pop('DestinationIpv6CidrBlock')
 
     return set(route_spec.items()).issubset(route.items())
 
 
 def route_spec_matches_route_cidr(route_spec, route):
-    return route_spec['DestinationCidrBlock'] == route.get('DestinationCidrBlock')
+    return route_spec['DestinationCidrBlock'] == route.get('DestinationCidrBlock') or route_spec['DestinationIpv6CidrBlock'] == route.get('DestinationIpv6CidrBlock')
 
 
 def rename_key(d, old_key, new_key):
@@ -466,14 +468,14 @@ def ensure_routes(connection=None, module=None, route_table=None, route_specs=No
     for route_spec in route_specs:
         match = index_of_matching_route(route_spec, routes_to_match)
         if match is None:
-            if route_spec.get('DestinationCidrBlock'):
+            if route_spec.get('DestinationCidrBlock') or route_spec.get('DestinationIpv6CidrBlock'):
                 route_specs_to_create.append(route_spec)
             else:
                 module.warn("Skipping creating {0} because it has no destination cidr block. "
                             "To add VPC endpoints to route tables use the ec2_vpc_endpoint module.".format(route_spec))
         else:
             if match[0] == "replace":
-                if route_spec.get('DestinationCidrBlock'):
+                if route_spec.get('DestinationCidrBlock') or route_spec.get('DestinationIpv6CidrBlock'):
                     route_specs_to_recreate.append(route_spec)
                 else:
                     module.warn("Skipping recreating route {0} because it has no destination cidr block.".format(route_spec))
@@ -482,7 +484,7 @@ def ensure_routes(connection=None, module=None, route_table=None, route_specs=No
     routes_to_delete = []
     if purge_routes:
         for r in routes_to_match:
-            if not r.get('DestinationCidrBlock'):
+            if not (r.get('DestinationCidrBlock') or r.get('DestinationIpv6CidrBlock')):
                 module.warn("Skipping purging route {0} because it has no destination cidr block. "
                             "To remove VPC endpoints from route tables use the ec2_vpc_endpoint module.".format(r))
                 continue
@@ -493,7 +495,12 @@ def ensure_routes(connection=None, module=None, route_table=None, route_specs=No
     if changed and not check_mode:
         for route in routes_to_delete:
             try:
-                connection.delete_route(RouteTableId=route_table['RouteTableId'], DestinationCidrBlock=route['DestinationCidrBlock'])
+                if route.get('DestinationCidrBlock'):
+                    connection.delete_route(RouteTableId=route_table['RouteTableId'], DestinationCidrBlock=route['DestinationCidrBlock'])
+                elif route.get('DestinationIpv6CidrBlock'):
+                    connection.delete_route(RouteTableId=route_table['RouteTableId'], DestinationIpv6CidrBlock=route['DestinationIpv6CidrBlock'])
+                else:
+                    module.warn("Cannot delete route {0} because it has no destination cidr block.".format(route))
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Couldn't delete route")
 
