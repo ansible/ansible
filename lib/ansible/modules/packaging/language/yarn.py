@@ -214,9 +214,6 @@ class Yarn(object):
                     self.module.fail_json(msg="Path provided %s is not a directory" % self.path)
                 cwd = self.path
 
-                if not os.path.isfile(os.path.join(self.path, 'package.json')):
-                    self.module.fail_json(msg="Package.json does not exist in provided path.")
-
             rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)
             return out, err
 
