@@ -245,7 +245,11 @@ class Yarn(object):
             return installed, missing
 
         for dep in dependencies:
-            name, version = dep['name'].split('@')
+            if dep['name'].startswith('@'):
+                name, version = dep['name'][1:].split('@')
+                name = '@' + name
+            else:
+                name, version = dep['name'].split('@')
             installed.append(name)
 
         if self.name not in installed:
