@@ -11,7 +11,7 @@ DOCUMENTATION = """
 module: spotinst_aws_elastigroup
 version_added: 2.5
 short_description: Create, update or delete Spotinst AWS Elastigroups
-author: Spotinst
+author: Spotinst (@talzur)
 description:
   - Can create, update, or delete Spotinst AWS Elastigroups
     Launch configuration is part of the elastigroup configuration,
@@ -23,6 +23,7 @@ description:
 requirements:
   - spotinst >= 1.0.21
   - python >= 2.7
+  - spotinst_sdk >= 1.0.38
 options:
 
   credentials_path:
@@ -88,6 +89,7 @@ options:
     description:
       - (Boolean) Enable EBS optimization for supported instances which are not enabled by default.;
         Note - additional charges will be applied.
+    type: bool
 
   ebs_volume_pool:
     description:
@@ -106,12 +108,12 @@ options:
 
   elastic_ips:
     description:
-      - (List of Strings) List of ElasticIps Allocation Ids to associate to the group instances
+      - (List of Strings) List of ElasticIps Allocation Ids (Example C(eipalloc-9d4e16f8)) to associate to the group instances
 
   fallback_to_od:
     description:
       - (Boolean) In case of no spots available, Elastigroup will launch an On-demand instance instead
-
+    type: bool
   health_check_grace_period:
     description:
       - (Integer) The amount of time, in seconds, after the instance has launched to start and check its health.
@@ -264,6 +266,7 @@ options:
     description:
       - (Object) The Rancher integration configuration.;
         Expects the following keys -
+        version (String),
         access_key (String),
         secret_key (String),
         master_host (String)
@@ -362,7 +365,7 @@ options:
   terminate_at_end_of_billing_hour:
     description:
       - (Boolean) terminate at the end of billing hour
-
+    type: bool
   unit:
     choices:
       - instance
@@ -450,12 +453,12 @@ options:
     description:
       - (Boolean) In case of any available Reserved Instances,
          Elastigroup will utilize your reservations before purchasing Spot instances.
-
+    type: bool
 
   wait_for_instances:
     description:
       - (Boolean) Whether or not the elastigroup creation / update actions should wait for the instances to spin
-
+    type: bool
 
   wait_timeout:
     description:
@@ -739,7 +742,7 @@ instances:
 group_id:
     description: Created / Updated group's ID.
     returned: success
-    type: string
+    type: str
     sample: "sig-12345"
 
 '''
@@ -882,7 +885,8 @@ right_scale_fields = ('account_id',
 
 rancher_fields = ('access_key',
                   'secret_key',
-                  'master_host')
+                  'master_host',
+                  'version')
 
 chef_fields = ('chef_server',
                'organization',

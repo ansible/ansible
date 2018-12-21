@@ -19,9 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from collections import Sequence
-import traceback
+import re
 import sys
+import traceback
 
 from ansible.errors.yaml_strings import (
     YAML_COMMON_DICT_ERROR,
@@ -31,8 +31,10 @@ from ansible.errors.yaml_strings import (
     YAML_COMMON_UNQUOTED_COLON_ERROR,
     YAML_COMMON_UNQUOTED_VARIABLE_ERROR,
     YAML_POSITION_DETAILS,
+    YAML_AND_SHORTHAND_ERROR,
 )
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import Sequence
 
 
 class AnsibleError(Exception):
@@ -120,9 +122,18 @@ class AnsibleError(Exception):
                 prev_line = to_text(prev_line)
                 if target_line:
                     stripped_line = target_line.replace(" ", "")
-                    arrow_line = (" " * (col_number - 1)) + "^ here"
-                    # header_line = ("=" * 73)
-                    error_message += "\nThe offending line appears to be:\n\n%s\n%s\n%s\n" % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
+
+                    # Check for k=v syntax in addition to YAML syntax and set the appropriate error position,
+                    # arrow index
+                    if re.search(r'\w+(\s+)?=(\s+)?[\w/-]+', prev_line):
+                        error_position = prev_line.rstrip().find('=')
+                        arrow_line = (" " * error_position) + "^ here"
+                        error_message = YAML_POSITION_DETAILS % (src_file, line_number - 1, error_position + 1)
+                        error_message += "\nThe offending line appears to be:\n\n%s\n%s\n\n" % (prev_line.rstrip(), arrow_line)
+                        error_message += YAML_AND_SHORTHAND_ERROR
+                    else:
+                        arrow_line = (" " * (col_number - 1)) + "^ here"
+                        error_message += "\nThe offending line appears to be:\n\n%s\n%s\n%s\n" % (prev_line.rstrip(), target_line.rstrip(), arrow_line)
 
                     # TODO: There may be cases where there is a valid tab in a line that has other errors.
                     if '\t' in target_line:
@@ -143,6 +154,9 @@ class AnsibleError(Exception):
                         error_message += YAML_COMMON_UNQUOTED_COLON_ERROR
                     # otherwise, check for some common quoting mistakes
                     else:
+                        # FIXME: This needs to split on the first ':' to account for modules like lineinfile
+                        # that may have lines that contain legitimate colons, e.g., line: 'i ALL= (ALL) NOPASSWD: ALL'
+                        # and throw off the quote matching logic.
                         parts = target_line.split(":")
                         if len(parts) > 1:
                             middle = parts[1].strip()

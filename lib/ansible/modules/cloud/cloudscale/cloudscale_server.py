@@ -68,14 +68,17 @@ options:
     description:
       - Attach a public network interface to the server.
     default: True
+    type: bool
   use_private_network:
     description:
       - Attach a private network interface to the server.
     default: False
+    type: bool
   use_ipv6:
     description:
       - Enable IPv6 on the public network interface.
     default: True
+    type: bool
   anti_affinity_with:
     description:
       - UUID of another server to create an anti-affinity group with.
@@ -95,6 +98,7 @@ options:
 
 EXAMPLES = '''
 # Start a server (if it does not exist) and register the server details
+
 - name: Start cloudscale.ch server
   cloudscale_server:
     name: my-shiny-cloudscale-server
@@ -148,32 +152,32 @@ RETURN = '''
 href:
   description: API URL to get details about this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: https://api.cloudscale.ch/v1/servers/cfde831a-4e87-4a75-960f-89b0148aa2cc
 uuid:
   description: The unique identifier for this server
   returned: success
-  type: string
+  type: str
   sample: cfde831a-4e87-4a75-960f-89b0148aa2cc
 name:
   description: The display name of the server
   returned: success
-  type: string
+  type: str
   sample: its-a-me-mario.cloudscale.ch
 state:
   description: The current status of the server
   returned: success
-  type: string
+  type: str
   sample: running
 flavor:
   description: The flavor that has been used for this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: flex-8
 image:
   description: The image used for booting this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: debian-8
 volumes:
   description: List of volumes attached to the server
@@ -198,7 +202,7 @@ ssh_host_keys:
 anti_affinity_with:
   description: List of servers in the same anti-affinity group
   returned: success when not state == absent
-  type: string
+  type: str
   sample: []
 '''
 
@@ -359,10 +363,10 @@ def main():
 
     target_state = module.params['state']
     server = AnsibleCloudscaleServer(module)
-    # The server could be in a changeing or error state.
+    # The server could be in a changing or error state.
     # Wait for one of the allowed states before doing anything.
     # If an allowed state can't be reached, this module fails.
-    if not server.info['state'] in ALLOWED_STATES:
+    if server.info['state'] not in ALLOWED_STATES:
         server.wait_for_state(ALLOWED_STATES)
     current_state = server.info['state']
 

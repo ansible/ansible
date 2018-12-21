@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.compat.tests.mock import patch, Mock, MagicMock, call
+from units.compat.mock import patch, Mock, MagicMock, call
 from units.modules.utils import set_module_args
 from .netscaler_module import TestModule, nitro_base_patcher
 
@@ -54,7 +54,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -79,7 +79,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -102,7 +102,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
         from ansible.modules.network.netscaler import netscaler_save_config
 
@@ -128,7 +128,7 @@ class TestNetscalerSaveConfigModule(TestModule):
         set_module_args(dict(
             nitro_user='user',
             nitro_pass='pass',
-            nsip='1.1.1.1',
+            nsip='192.0.2.1',
         ))
 
         class MockException(Exception):

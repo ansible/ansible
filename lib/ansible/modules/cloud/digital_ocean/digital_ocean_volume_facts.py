@@ -21,7 +21,7 @@ module: digital_ocean_volume_facts
 short_description: Gather facts about DigitalOcean volumes
 description:
     - This module can be used to gather facts about DigitalOcean provided volumes.
-author: "Abhijeet Kasurde (@akasurde)"
+author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   region_name:
@@ -52,7 +52,7 @@ EXAMPLES = '''
   register: resp_out
 - set_fact:
     volume_id: "{{ item.id }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?name=='nyc3-test-volume']"
 - debug: var=volume_id

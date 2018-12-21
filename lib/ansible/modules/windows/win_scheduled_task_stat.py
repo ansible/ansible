@@ -19,14 +19,17 @@ short_description: Get information about Windows Scheduled Tasks
 description:
 - Will return whether the folder and task exists.
 - Returns the names of tasks in the folder specified.
-- If C(name) is set and exists, will return information on the task itself.
 - Use M(win_scheduled_task) to configure a scheduled task.
 options:
   path:
     description: The folder path where the task lives.
     default: \
   name:
-    description: The name of the scheduled task to get information for.
+    description:
+    - The name of the scheduled task to get information for.
+    - If C(name) is set and exists, will return information on the task itself.
+seealso:
+- module: win_scheduled_task
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -66,7 +69,7 @@ actions:
 folder_exists:
   description: Whether the folder set at path exists.
   returned: always
-  type: boolean
+  type: bool
   sample: True
 folder_task_count:
   description: The number of tasks that exist in the folder.
@@ -216,7 +219,7 @@ settings:
     idle_settings:
       description: The idle settings of the task.
       returned: ''
-      type: dictionary
+      type: dict
       sample: {
           "idle_duration": "PT10M",
           "restart_on_idle": false,
@@ -237,7 +240,7 @@ settings:
     network_settings:
       description: The network settings of the task.
       returned: ''
-      type: dictionary
+      type: dict
       sample: {
           "id": null,
           "name": null
@@ -332,7 +335,7 @@ state:
 task_exists:
   description: Whether the task at the folder exists.
   returned: name is specified
-  type: boolean
+  type: bool
   sample: True
 triggers:
   description: A list of triggers.

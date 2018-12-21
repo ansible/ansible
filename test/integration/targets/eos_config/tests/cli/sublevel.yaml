@@ -5,14 +5,12 @@
   eos_config:
     lines: no vlan 10
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 - name: configure sub level command
   eos_config:
     lines: name test
     parents: vlan 10
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -26,7 +24,6 @@
   eos_config:
     lines: name test
     parents: vlan 10
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -38,8 +35,6 @@
   eos_config:
     lines: no vlan 10
     match: none
-    provider: "{{ cli }}"
   become: yes
-
 
 - debug: msg="END cli/sublevel.yaml on connection={{ ansible_connection }}"

@@ -35,7 +35,7 @@ from ansible.template import Templar
 class PlaybookInclude(Base, Conditional, Taggable):
 
     _import_playbook = FieldAttribute(isa='string')
-    _vars = FieldAttribute(isa='dict', default=dict())
+    _vars = FieldAttribute(isa='dict', default=dict)
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
@@ -69,7 +69,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if not os.path.isabs(file_name):
             file_name = os.path.join(basedir, file_name)
 
-        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
+        pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager, vars=self.vars.copy())
 
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set

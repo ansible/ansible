@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Thierry Sallé (@tsalle)
+# Copyright: (c) 2017, Thierry Sallé (@seuf)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -61,7 +61,7 @@ RETURN = '''
 ---
 version:
   description: version of the installed / removed plugin.
-  type: string
+  type: str
   returned: allways
 '''
 
@@ -178,7 +178,11 @@ def grafana_plugin(module, params):
         stdout_lines = stdout.split("\n")
         for line in stdout_lines:
             if line.find(params['name']):
-                plugin_name, plugin_version = line.split(' @ ')
+                if line.find(' @ ') != -1:
+                    line = line.rstrip()
+                    plugin_name, plugin_version = line.split(' @ ')
+                else:
+                    plugin_version = None
                 return {'msg': 'Grafana plugin {} installed : {}'.format(params['name'], cmd),
                         'changed': True,
                         'version': plugin_version}
@@ -221,6 +225,7 @@ def main():
         **result
     )
     return
+
 
 if __name__ == '__main__':
     main()

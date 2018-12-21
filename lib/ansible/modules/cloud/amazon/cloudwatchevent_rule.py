@@ -90,7 +90,7 @@ EXAMPLES = '''
 
 - cloudwatchevent_rule:
     name: MyDisabledCronTask
-    schedule_expression: "cron(5 minutes)"
+    schedule_expression: "rate(5 minutes)"
     description: Run my disabled scheduled task
     state: disabled
     targets:

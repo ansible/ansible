@@ -29,7 +29,7 @@ from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
@@ -38,15 +38,12 @@ from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 
 __all__ = ['TaskQueueManager']
+
+display = Display()
 
 
 class TaskQueueManager:
@@ -93,15 +90,14 @@ class TaskQueueManager:
         # a special flag to help us exit cleanly
         self._terminated = False
 
-        # this dictionary is used to keep track of notified handlers
-        self._notified_handlers = dict()
-        self._listening_handlers = dict()
-
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
 
-        self._final_q = multiprocessing.Queue()
+        try:
+            self._final_q = multiprocessing.Queue()
+        except OSError as e:
+            raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
@@ -111,8 +107,7 @@ class TaskQueueManager:
         self._workers = []
 
         for i in range(num):
-            rslt_q = multiprocessing.Queue()
-            self._workers.append([None, rslt_q])
+            self._workers.append(None)
 
     def _initialize_notified_handlers(self, play):
         '''
@@ -120,11 +115,6 @@ class TaskQueueManager:
         for each handler in the play, which is an empty array that will contain
         inventory hostnames for those hosts triggering the handler.
         '''
-
-        # Zero the dictionary first by removing any entries there.
-        # Proxied dicts don't support iteritems, so we have to use keys()
-        self._notified_handlers.clear()
-        self._listening_handlers.clear()
 
         def _process_block(b):
             temp_list = []
@@ -138,23 +128,6 @@ class TaskQueueManager:
         handler_list = []
         for handler_block in play.handlers:
             handler_list.extend(_process_block(handler_block))
-        # then initialize it with the given handler list
-        self.update_handler_list(handler_list)
-
-    def update_handler_list(self, handler_list):
-        for handler in handler_list:
-            if handler._uuid not in self._notified_handlers:
-                display.debug("Adding handler %s to notified list" % handler.name)
-                self._notified_handlers[handler._uuid] = []
-            if handler.listen:
-                listeners = handler.listen
-                if not isinstance(listeners, list):
-                    listeners = [listeners]
-                for listener in listeners:
-                    if listener not in self._listening_handlers:
-                        self._listening_handlers[listener] = []
-                    display.debug("Adding handler %s to listening list" % handler.name)
-                    self._listening_handlers[listener].append(handler._uuid)
 
     def load_callbacks(self):
         '''
@@ -210,7 +183,7 @@ class TaskQueueManager:
             except AttributeError:
                     display.deprecated("%s callback, does not support setting 'options', it will work for now, "
                                        " but this will be required in the future and should be updated, "
-                                       " see the 2.4 porting guide for details." % self.callback_obj._load_name, version="2.9")
+                                       " see the 2.4 porting guide for details." % callback_obj._load_name, version="2.9")
             self._callback_plugins.append(callback_obj)
 
         self._callbacks_loaded = True
@@ -242,6 +215,10 @@ class TaskQueueManager:
         )
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
+        if (self._stdout_callback and
+                hasattr(self._stdout_callback, 'set_play_context')):
+            self._stdout_callback.set_play_context(play_context)
+
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)
@@ -304,8 +281,7 @@ class TaskQueueManager:
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
-            for (worker_prc, rslt_q) in self._workers:
-                rslt_q.close()
+            for worker_prc in self._workers:
                 if worker_prc and worker_prc.is_alive():
                     try:
                         worker_prc.terminate()
@@ -337,8 +313,8 @@ class TaskQueueManager:
 
         defunct = False
         for (idx, x) in enumerate(self._workers):
-            if hasattr(x[0], 'exitcode'):
-                if x[0].exitcode in [-9, -11, -15]:
+            if hasattr(x, 'exitcode'):
+                if x.exitcode in [-9, -11, -15]:
                     defunct = True
         return defunct
 

@@ -1,0 +1,103 @@
+---
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+# ============================================================
+- name: test state=present for ipv6 (expected changed=true) (CHECK MODE)
+  ec2_group:
+    name: '{{ec2_group_name}}'
+    description: '{{ec2_group_description}}'
+    <<: *aws_connection_info
+    state: present
+    rules:
+    - proto: "tcp"
+      from_port: 8182
+      to_port: 8182
+      cidr_ipv6: "64:ff9b::/96"
+  check_mode: true
+  register: result
+
+- name: assert state=present (expected changed=true)
+  assert:
+    that:
+       - 'result.changed'
+
+# ============================================================
+- name: test state=present for ipv6 (expected changed=true)
+  ec2_group:
+    name: '{{ec2_group_name}}'
+    description: '{{ec2_group_description}}'
+    <<: *aws_connection_info
+    state: present
+    rules:
+    - proto: "tcp"
+      from_port: 8182
+      to_port: 8182
+      cidr_ipv6: "64:ff9b::/96"
+  register: result
+
+- name: assert state=present (expected changed=true)
+  assert:
+    that:
+       - 'result.changed'
+       - 'result.group_id.startswith("sg-")'
+
+# ============================================================
+- name: test rules_egress state=present for ipv6 (expected changed=true) (CHECK MODE)
+  ec2_group:
+    name: '{{ec2_group_name}}'
+    description: '{{ec2_group_description}}'
+    <<: *aws_connection_info
+    state: present
+    rules:
+    - proto: "tcp"
+      from_port: 8182
+      to_port: 8182
+      cidr_ipv6: "64:ff9b::/96"
+    rules_egress:
+    - proto: "tcp"
+      from_port: 8181
+      to_port: 8181
+      cidr_ipv6: "64:ff9b::/96"
+  check_mode: true
+  register: result
+
+- name: assert state=present (expected changed=true)
+  assert:
+    that:
+       - 'result.changed'
+
+# ============================================================
+- name: test rules_egress state=present for ipv6 (expected changed=true)
+  ec2_group:
+    name: '{{ec2_group_name}}'
+    description: '{{ec2_group_description}}'
+    <<: *aws_connection_info
+    state: present
+    rules:
+    - proto: "tcp"
+      from_port: 8182
+      to_port: 8182
+      cidr_ipv6: "64:ff9b::/96"
+    rules_egress:
+    - proto: "tcp"
+      from_port: 8181
+      to_port: 8181
+      cidr_ipv6: "64:ff9b::/96"
+  register: result
+
+- name: assert state=present (expected changed=true)
+  assert:
+    that:
+       - 'result.changed'
+       - 'result.group_id.startswith("sg-")'
+- name: delete it
+  ec2_group:
+    name: '{{ec2_group_name}}'
+    <<: *aws_connection_info
+    state: absent

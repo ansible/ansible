@@ -29,7 +29,7 @@ description:
     - Configure Sampled Flow (sFlow) to monitor traffic on an interface in real time,
       detect abnormal traffic, and locate the source of attack traffic,
       ensuring stable running of the network.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     agent_ip:
         description:
@@ -198,7 +198,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

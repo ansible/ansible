@@ -42,6 +42,7 @@ options:
     - If C(src) and C(dest) are files and if the parent directory of C(dest)
       doesn't exist, then the task will fail.
     required: yes
+    type: path
   force:
     description:
     - If set to C(yes), the file will only be transferred if the content
@@ -79,6 +80,7 @@ options:
     - If path is a file and dest ends with "\", the file is copied to the
       folder with the same filename.
     required: yes
+    type: path
 notes:
 - For non-Windows targets, use the M(copy) module instead.
 - Currently win_copy does not support copying symbolic links from both local to
@@ -88,6 +90,11 @@ notes:
 - Because win_copy runs over WinRM, it is not a very efficient transfer
   mechanism. If sending large files consider hosting them on a web service and
   using M(win_get_url) instead.
+seealso:
+- module: assemble
+- module: copy
+- module: win_get_url
+- module: win_robocopy
 author:
 - Jon Hawkesworth (@jhawkesworth)
 - Jordan Borean (@jborean93)
@@ -136,17 +143,17 @@ RETURN = r'''
 dest:
     description: destination file/path
     returned: changed
-    type: string
+    type: str
     sample: C:\Temp\
 src:
     description: source file used for the copy on the target machine
     returned: changed
-    type: string
+    type: str
     sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
 checksum:
     description: sha1 checksum of the file after running copy
     returned: success, src is a file
-    type: string
+    type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 size:
     description: size of the target, after execution
@@ -156,11 +163,11 @@ size:
 operation:
     description: whether a single file copy took place or a folder copy
     returned: success
-    type: string
+    type: str
     sample: file_copy
 original_basename:
     description: basename of the copied file
     returned: changed, src is a file
-    type: string
+    type: str
     sample: foo.txt
 '''

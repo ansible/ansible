@@ -30,17 +30,22 @@ options:
     - Destination file for the shortcuting file.
     - File name should have a C(.lnk) or C(.url) extension.
     required: yes
-  args:
+    type: path
+  arguments:
     description:
     - Additional arguments for the executable defined in C(src).
+    - Was originally just C(args) but renamed in Ansible 2.8.
+    aliases: [ args ]
   directory:
     description:
     - Working directory for executable defined in C(src).
+    type: path
   icon:
     description:
     - Icon used for the shortcut.
     - File name should have a C(.ico) extension.
     - The file name is followed by a comma and the number in the library file (.dll) or use 0 for an image file.
+    type: path
   hotkey:
     description:
     - Key combination for the shortcut.
@@ -57,11 +62,19 @@ options:
     - When C(present), creates or updates the shortcut.
     choices: [ absent, present ]
     default: present
-author:
-- Dag Wieers (@dagwieers)
+  run_as_admin:
+    description:
+    - When C(src) is an executable, this can control whether the shortcut will be opened as an administrator or not.
+    type: bool
+    default: no
+    version_added: '2.8'
 notes:
 - 'The following options can include Windows environment variables: C(dest), C(args), C(description), C(dest), C(directory), C(icon) C(src)'
 - 'Windows has two types of shortcuts: Application and URL shortcuts. URL shortcuts only consists of C(dest) and C(src)'
+seealso:
+- module: win_file
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -89,7 +102,7 @@ EXAMPLES = r'''
   win_shortcut:
     src: '%ProgramFiles%\Google\Chrome\Application\chrome.exe'
     dest: '%UserProfile%\Desktop\Ansible website.lnk'
-    args: --new-window https://ansible.com/
+    arguments: --new-window https://ansible.com/
     directory: '%ProgramFiles%\Google\Chrome\Application'
     icon: '%ProgramFiles%\Google\Chrome\Application\chrome.exe,0'
     hotkey: Ctrl+Alt+A

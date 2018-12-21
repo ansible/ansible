@@ -150,7 +150,7 @@ def aos_device(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False
@@ -216,6 +216,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     aos_device(module)
+
 
 if __name__ == "__main__":
     main()

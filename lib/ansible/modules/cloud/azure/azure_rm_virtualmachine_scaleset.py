@@ -47,6 +47,9 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
+    short_hostname:
+        description:
+            - Short host name
     vm_size:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
@@ -56,6 +59,7 @@ options:
         description:
             - Capacity of VMSS.
         required: true
+        default: 1
     tier:
         description:
             - SKU Tier.
@@ -79,6 +83,7 @@ options:
         description:
             - When the os_type is Linux, setting ssh_password_enabled to false will disable SSH password authentication
               and require use of SSH keys.
+        type: bool
         default: true
     ssh_public_keys:
         description:
@@ -117,8 +122,7 @@ options:
         choices:
             - Windows
             - Linux
-        default:
-            - Linux
+        default: Linux
     managed_disk_type:
         description:
             - Managed disk type.
@@ -179,6 +183,26 @@ options:
             - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']."
             - Any other input will be ignored.
         default: ['all']
+    enable_accelerated_networking:
+        description:
+            - Indicates whether user wants to allow accelerated networking for virtual machines in scaleset being created.
+        version_added: "2.7"
+        type: bool
+    security_group:
+        description:
+            - Existing security group with which to associate the subnet.
+            - It can be the security group name which is in the same resource group.
+            - It can be the resource Id.
+            - It can be a dict which contains C(name) and C(resource_group) of the security group.
+        version_added: "2.7"
+        aliases:
+            - security_group_name
+    overprovision:
+        description:
+            - Specifies whether the Virtual Machine Scale Set should be overprovisioned.
+        type: bool
+        default: True
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -347,7 +371,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, format_resource_id
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachineScaleSet'
@@ -384,6 +408,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
+            enable_accelerated_networking=dict(type='bool'),
+            security_group=dict(type='raw', aliases=['security_group_name']),
+            overprovision=dict(type='bool', default=True)
         )
 
         self.resource_group = None
@@ -410,6 +437,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.tags = None
         self.differences = None
         self.load_balancer = None
+        self.enable_accelerated_networking = None
+        self.security_group = None
+        self.overprovision = None
 
         self.results = dict(
             changed=False,
@@ -423,6 +453,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         )
 
     def exec_module(self, **kwargs):
+
+        nsg = None
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -522,14 +554,32 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_dict['sku']['capacity'] = self.capacity
 
                 if self.data_disks and \
-                   len(self.data_disks) != len(vmss_dict['properties']['virtualMachineProfile']['storageProfile']['dataDisks']):
+                   len(self.data_disks) != len(vmss_dict['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])):
                     self.log('CHANGED: virtual machine scale set {0} - Data Disks'.format(self.name))
                     differences.append('Data Disks')
                     changed = True
 
+                if self.upgrade_policy and \
+                   self.upgrade_policy != vmss_dict['properties']['upgradePolicy']['mode']:
+                    self.log('CHANGED: virtual machine scale set {0} - Upgrade Policy'.format(self.name))
+                    differences.append('Upgrade Policy')
+                    changed = True
+                    vmss_dict['properties']['upgradePolicy']['mode'] = self.upgrade_policy
+
+                if image_reference and \
+                   image_reference.as_dict() != vmss_dict['properties']['virtualMachineProfile']['storageProfile']['imageReference']:
+                    self.log('CHANGED: virtual machine scale set {0} - Image'.format(self.name))
+                    differences.append('Image')
+                    changed = True
+                    vmss_dict['properties']['virtualMachineProfile']['storageProfile']['imageReference'] = image_reference.as_dict()
+
                 update_tags, vmss_dict['tags'] = self.update_tags(vmss_dict.get('tags', dict()))
                 if update_tags:
                     differences.append('Tags')
+                    changed = True
+
+                if bool(self.overprovision) != bool(vmss_dict['properties']['overprovision']):
+                    differences.append('overprovision')
                     changed = True
 
                 self.differences = differences
@@ -578,10 +628,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     load_balancer_inbound_nat_pools = None
                     if self.load_balancer:
                         load_balancer = self.get_load_balancer(self.load_balancer)
-                        load_balancer_backend_address_pools = ([self.compute_models.SubResource(resource.id)
+                        load_balancer_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
                                                                 for resource in load_balancer.backend_address_pools]
                                                                if load_balancer.backend_address_pools else None)
-                        load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(resource.id)
+                        load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(id=resource.id)
                                                             for resource in load_balancer.inbound_nat_pools]
                                                            if load_balancer.inbound_nat_pools else None)
 
@@ -593,8 +643,14 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                     managed_disk = self.compute_models.VirtualMachineScaleSetManagedDiskParameters(storage_account_type=self.managed_disk_type)
 
+                    if self.security_group:
+                        nsg = self.parse_nsg()
+                        if nsg:
+                            self.security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
+
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
-                        self.location,
+                        location=self.location,
+                        overprovision=self.overprovision,
                         tags=self.tags,
                         upgrade_policy=self.compute_models.UpgradePolicy(
                             mode=self.upgrade_policy
@@ -632,7 +688,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                 load_balancer_backend_address_pools=load_balancer_backend_address_pools,
                                                 load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools
                                             )
-                                        ]
+                                        ],
+                                        enable_accelerated_networking=self.enable_accelerated_networking,
+                                        network_security_group=self.security_group
                                     )
                                 ]
                             )
@@ -658,7 +716,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                         for data_disk in self.data_disks:
                             data_disk_managed_disk = self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
-                                storage_account_type=data_disk['managed_disk_type']
+                                storage_account_type=data_disk.get('managed_disk_type', None)
                             )
 
                             data_disk['caching'] = data_disk.get(
@@ -667,10 +725,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             )
 
                             data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
-                                lun=data_disk['lun'],
-                                caching=data_disk['caching'],
+                                lun=data_disk.get('lun', None),
+                                caching=data_disk.get('caching', None),
                                 create_option=self.compute_models.DiskCreateOptionTypes.empty,
-                                disk_size_gb=data_disk['disk_size_gb'],
+                                disk_size_gb=data_disk.get('disk_size_gb', None),
                                 managed_disk=data_disk_managed_disk,
                             ))
 
@@ -686,20 +744,24 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource = self.get_vmss()
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
+                    vmss_resource.overprovision = self.overprovision
 
-                    data_disks = []
-                    for data_disk in self.data_disks:
-                        data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
-                            lun=data_disk['lun'],
-                            caching=data_disk['caching'],
-                            create_option=self.compute_models.DiskCreateOptionTypes.empty,
-                            disk_size_gb=data_disk['disk_size_gb'],
-                            managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
-                                storage_account_type=data_disk['managed_disk_type']
-                            ),
-                        ))
-                    vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
+                    if self.data_disks is not None:
+                        data_disks = []
+                        for data_disk in self.data_disks:
+                            data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
+                                lun=data_disk['lun'],
+                                caching=data_disk['caching'],
+                                create_option=self.compute_models.DiskCreateOptionTypes.empty,
+                                disk_size_gb=data_disk['disk_size_gb'],
+                                managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
+                                    storage_account_type=data_disk['managed_disk_type']
+                                ),
+                            ))
+                        vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
 
+                    if image_reference is not None:
+                        vmss_resource.virtual_machine_profile.storage_profile.image_reference = image_reference
                     self.log("Update virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
 
@@ -843,9 +905,24 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 return True
         return False
 
+    def parse_nsg(self):
+        nsg = self.security_group
+        resource_group = self.resource_group
+        if isinstance(self.security_group, dict):
+            nsg = self.security_group.get('name')
+            resource_group = self.security_group.get('resource_group', self.resource_group)
+        id = format_resource_id(val=nsg,
+                                subscription_id=self.subscription_id,
+                                namespace='Microsoft.Network',
+                                types='networkSecurityGroups',
+                                resource_group=resource_group)
+        name = azure_id_to_dict(id).get('name')
+        return dict(id=id, name=name)
+
 
 def main():
     AzureRMVirtualMachineScaleSet()
+
 
 if __name__ == '__main__':
     main()

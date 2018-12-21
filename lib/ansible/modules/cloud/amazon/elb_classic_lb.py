@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -18,7 +18,7 @@ description:
   - Returns information about the load balancer.
   - Will be marked changed when called only if state is changed.
 short_description: Creates or destroys Amazon ELB.
-version_added: "1.5"
+version_added: "2.4"
 author:
   - "Jim Dalton (@jsdalton)"
 options:
@@ -512,7 +512,7 @@ class ElbManager(object):
     def get_info(self):
         try:
             check_elb = self.elb_conn.get_all_load_balancers(self.name)[0]
-        except:
+        except Exception:
             check_elb = None
 
         if not check_elb:
@@ -524,11 +524,11 @@ class ElbManager(object):
         else:
             try:
                 lb_cookie_policy = check_elb.policies.lb_cookie_stickiness_policies[0].__dict__['policy_name']
-            except:
+            except Exception:
                 lb_cookie_policy = None
             try:
                 app_cookie_policy = check_elb.policies.app_cookie_stickiness_policies[0].__dict__['policy_name']
-            except:
+            except Exception:
                 app_cookie_policy = None
 
             info = {
@@ -977,7 +977,7 @@ class ElbManager(object):
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectingSettings', attributes.connecting_settings)
 
     def _policy_name(self, policy_type):
-        return __file__.split('/')[-1].split('.')[0].replace('_', '-') + '-' + policy_type
+        return 'elb-classic-lb-{0}'.format(to_native(policy_type, errors='surrogate_or_strict'))
 
     def _create_policy(self, policy_param, policy_meth, policy):
         getattr(self.elb_conn, policy_meth)(policy_param, self.elb.name, policy)

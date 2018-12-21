@@ -13,7 +13,6 @@
     tx_rate: ge(0)
     rx_rate: ge(0)
     authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -27,8 +26,6 @@
     state: down
     tx_rate: gt(0)
     rx_rate: lt(0)
-    authorize: yes
-    provider: "{{ cli }}"
   ignore_errors: yes
   become: yes
   register: result
@@ -45,8 +42,6 @@
     name: "{{ test_interface_1 }}"
     enabled: False
     state: down
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -58,9 +53,7 @@
   eos_interface:
     name: "{{ test_interface_1 }}"
     enabled: False
-    authorize: yes
     state: up
-    provider: "{{ cli }}"
   ignore_errors: yes
   become: yes
   register: result
@@ -74,8 +67,6 @@
   eos_command:
     commands:
       - show lldp neighbors management1
-    authorize: yes
-    provider: "{{ cli }}"
   become: yes
   register: show_lldp_neighbors_result
 
@@ -86,8 +77,6 @@
         neighbors:
           - port: eth0
             host: an-vyos-02
-        authorize: yes
-        provider: "{{ cli }}"
       become: yes
       register: result
 
@@ -101,8 +90,6 @@
         neighbors:
           - port: dummy_port
             host: dummy_host
-        authorize: yes
-        provider: "{{ cli }}"
       ignore_errors: yes
       become: yes
       register: result
@@ -120,8 +107,6 @@
       - name: "{{ test_interface_1 }}"
         enabled: True
         state: up
-    authorize: yes
-    provider: "{{ cli }}"
   ignore_errors: yes
   become: yes
   register: result
@@ -138,8 +123,6 @@
             neighbors:
               - port: eth0
                 host: an-vyos-02
-        authorize: yes
-        provider: "{{ cli }}"
       ignore_errors: yes
       become: yes
       register: result
@@ -157,8 +140,6 @@
             host: an-vyos-02
           - port: dummy_port
             host: dummy_host
-        authorize: yes
-        provider: "{{ cli }}"
       ignore_errors: yes
       become: yes
       register: result

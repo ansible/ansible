@@ -1,0 +1,12 @@
+=======================================================================================================
+                                  Address Information - GlobalRouter
+=======================================================================================================
+IPV6 ADDRESS/PREFIX LENGTH                   VID/BID/TID  TYPE    ORIGIN    STATUS    VALID    PREF     
+                                                                                      LIFETIME LIFETIME 
+-------------------------------------------------------------------------------------------------------
+2011:0:0:0:0:0:0:1/128                       C-1          UNICAST MANUAL    PREFERRED INF      INF      
+2001:0:0:0:0:0:0:1/64                        V-1          UNICAST MANUAL    INACCESSIBLE INF      INF      
+2002:0:0:0:0:0:0:1/64                        V-1          UNICAST MANUAL    INACCESSIBLE INF      INF      
+fe80:0:0:0:251:ff:fe16:4100/64               V-1          UNICAST LINKLAYER INACCESSIBLE INF      INF      
+
+4 out of 4 Total Num of Address Entries displayed.

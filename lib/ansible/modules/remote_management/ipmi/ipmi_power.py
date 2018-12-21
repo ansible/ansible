@@ -54,14 +54,14 @@ options:
 requirements:
   - "python >= 2.6"
   - pyghmi
-author: "Bulat Gaifullin (gaifullinbf@gmail.com)"
+author: "Bulat Gaifullin (@bgaifullin) <gaifullinbf@gmail.com>"
 '''
 
 RETURN = '''
 powerstate:
     description: The current power state of the machine.
     returned: success
-    type: string
+    type: str
     sample: on
 '''
 
@@ -126,6 +126,7 @@ def main():
         module.exit_json(changed=changed, **response)
     except Exception as e:
         module.fail_json(msg=str(e))
+
 
 if __name__ == '__main__':
     main()

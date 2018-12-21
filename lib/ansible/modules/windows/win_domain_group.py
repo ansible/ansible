@@ -97,6 +97,14 @@ options:
 notes:
 - This must be run on a host that has the ActiveDirectory powershell module
   installed.
+seealso:
+- module: win_domain
+- module: win_domain_controller
+- module: win_domain_computer
+- module: win_domain_membership
+- module: win_domain_user
+- module: win_group
+- module: win_group_membership
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -163,48 +171,48 @@ attributes:
 canonical_name:
   description: The canonical name of the group.
   returned: group exists
-  type: string
+  type: str
   sample: ansible.local/groups/Cow
 category:
   description: The Group type value of the group, i.e. Security or Distribution.
   returned: group exists
-  type: string
+  type: str
   sample: Security
 description:
   description: The Description of the group.
   returned: group exists
-  type: string
+  type: str
   sample: Group Description
 display_name:
   description: The Display name of the group.
   returned: group exists
-  type: string
+  type: str
   sample: Users who connect through RDP
 distinguished_name:
   description: The full Distinguished Name of the group.
   returned: group exists
-  type: string
+  type: str
   sample: CN=Cow,OU=groups,DC=ansible,DC=local
 group_scope:
   description: The Group scope value of the group.
   returned: group exists
-  type: string
+  type: str
   sample: Universal
 guid:
   description: The guid of the group.
   returned: group exists
-  type: string
+  type: str
   sample: 512a9adb-3fc0-4a26-9df0-e6ea1740cf45
 managed_by:
   description: The full Distinguished Name of the AD object that is set on the
     managedBy attribute.
   returned: group exists
-  type: string
+  type: str
   sample: CN=Domain Admins,CN=Users,DC=ansible,DC=local
 name:
   description: The name of the group.
   returned: group exists
-  type: string
+  type: str
   sample: Cow
 protected_from_accidental_deletion:
   description: Whether the group is protected from accidental deletion.
@@ -214,6 +222,6 @@ protected_from_accidental_deletion:
 sid:
   description: The Security ID of the group.
   returned: group exists
-  type: string
+  type: str
   sample: S-1-5-21-2171456218-3732823212-122182344-1189
 '''

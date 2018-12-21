@@ -7,9 +7,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
@@ -19,7 +21,7 @@ description:
     - Find the folder path(s) for a virtual machine by name or UUID
 version_added: 2.4
 author:
-    - Abhijeet Kasurde <akasurde@redhat.com>
+    - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
     - Tested on vSphere 6.5
 requirements:
@@ -44,20 +46,21 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = r'''
 - name: Find Guest's Folder using name
   vmware_guest_find:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: no
     name: testvm
+  delegate_to: localhost
   register: vm_folder
 
 - name: Find Guest's Folder using UUID
   vmware_guest_find:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     uuid: 38c4c89c-b3d7-4ae6-ae4e-43c5118eae49
+  delegate_to: localhost
   register: vm_folder
 '''
 
@@ -74,7 +77,7 @@ folders:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import PyVmomi, get_all_objs, vmware_argument_spec
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_vm_by_id
 
 try:
     from pyVmomi import vim
@@ -90,17 +93,24 @@ class PyVmomiHelper(PyVmomi):
 
     def getvm_folder_paths(self):
         results = []
+        vms = []
 
-        # compare the folder path of each VM against the search path
-        vmList = get_all_objs(self.content, [vim.VirtualMachine])
-        for item in vmList.items():
-            vobj = item[0]
-            if not isinstance(vobj.parent, vim.Folder):
-                continue
-            # Match by name or uuid
-            if vobj.config.name == self.name or vobj.config.uuid == self.uuid:
-                folderpath = self.get_vm_path(self.content, vobj)
-                results.append(folderpath)
+        if self.uuid:
+            vm_obj = find_vm_by_id(self.content, vm_id=self.uuid, vm_id_type="uuid")
+            if vm_obj is None:
+                self.module.fail_json(msg="Failed to find the virtual machine with UUID : %s" % self.uuid)
+            vms = [vm_obj]
+
+        elif self.name:
+            objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
+            for temp_vm_object in objects:
+                if temp_vm_object.obj.name == self.name:
+                    vms.append(temp_vm_object.obj)
+
+        for vm in vms:
+            folder_path = self.get_vm_path(self.content, vm)
+            results.append(folder_path)
+
         return results
 
 

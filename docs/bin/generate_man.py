@@ -2,12 +2,12 @@
 
 import optparse
 import os
-import pprint
 import sys
 
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.module_utils._text import to_bytes
+from ansible.utils._build_helpers import update_file_if_different
 
 
 def generate_parser():
@@ -107,7 +107,7 @@ def opts_docs(cli_class_name, cli_module_name):
     # parse the common options
     try:
         cli.parse()
-    except:
+    except Exception:
         pass
 
     # base/common cli info
@@ -154,7 +154,7 @@ def opts_docs(cli_class_name, cli_module_name):
 
         try:
             cli.parse()
-        except:
+        except Exception:
             pass
 
         # FIXME/TODO: needed?
@@ -274,7 +274,4 @@ if __name__ == '__main__':
 
         manpage = template.render(tvars)
         filename = os.path.join(output_dir, doc_name_formats[output_format] % tvars['cli_name'])
-
-        with open(filename, 'wb') as f:
-            f.write(to_bytes(manpage))
-            print("Wrote doc to %s" % filename)
+        update_file_if_different(filename, to_bytes(manpage))

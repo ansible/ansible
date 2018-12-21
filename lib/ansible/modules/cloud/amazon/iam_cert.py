@@ -65,10 +65,10 @@ options:
       - By default the module will not upload a certificate that is already uploaded into AWS.
         If set to True, it will upload the certificate as long as the name is unique.
     default: False
-
+    type: bool
 
 requirements: [ "boto" ]
-author: Jonathan I. Davila
+author: Jonathan I. Davila (@defionscode)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -155,7 +155,7 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                     elif slug_cert.startswith(slug_orig_cert_bodies):
                         update = True
                         break
-                    elif slug_orig_cert_bodies != slug_cert:
+                    else:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
                                          ' has a different certificate body associated'
                                          ' with it. Certificates cannot have the same name' % orig_cert_names[c_index])

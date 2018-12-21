@@ -1,0 +1,2 @@
+bugfixes:
+- Handle exception when there is no snapshot available in virtual machine or template while cloning using vmware_guest.

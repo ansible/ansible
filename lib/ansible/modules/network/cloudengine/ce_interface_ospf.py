@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages configuration of an OSPF interface instanceon HUAWEI CloudEngine switches.
 description:
     - Manages configuration of an OSPF interface instanceon HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     interface:
         description:
@@ -162,7 +162,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

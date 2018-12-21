@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -23,7 +23,7 @@ options:
   description:
     description:
       - Specifies descriptive text that identifies the pool.
-    version_added: "2.3"
+    version_added: 2.3
   name:
     description:
       - Pool name
@@ -34,7 +34,7 @@ options:
     description:
       - Load balancing method. When creating a new pool, if this value is not
         specified, the default of C(round-robin) will be used.
-    version_added: "1.3"
+    version_added: 1.3
     choices:
       - dynamic-ratio-member
       - dynamic-ratio-node
@@ -54,7 +54,7 @@ options:
       - ratio-session
       - round-robin
       - weighted-least-connections-member
-      - weighted-least-connections-nod
+      - weighted-least-connections-node
   monitor_type:
     description:
       - Monitor rule type when C(monitors) is specified.
@@ -69,32 +69,32 @@ options:
         or already existing on the device.
       - Both C(single) and C(and_list) are functionally identical since BIG-IP
         considers all monitors as "a list".
-    version_added: "1.3"
+    version_added: 1.3
     choices: ['and_list', 'm_of_n', 'single']
   quorum:
     description:
       - Monitor quorum value when C(monitor_type) is C(m_of_n).
       - Quorum must be a value of 1 or greater when C(monitor_type) is C(m_of_n).
-    version_added: "1.3"
+    version_added: 1.3
   monitors:
     description:
       - Monitor template name list. If the partition is not provided as part of
         the monitor name, then the C(partition) option will be used instead.
-    version_added: "1.3"
+    version_added: 1.3
   slow_ramp_time:
     description:
       - Sets the ramp-up time (in seconds) to gradually ramp up the load on
         newly added or freshly detected up pool members.
-    version_added: "1.3"
+    version_added: 1.3
   reselect_tries:
     description:
       - Sets the number of times the system tries to contact a pool member
         after a passive failure.
-    version_added: "2.2"
+    version_added: 2.2
   service_down_action:
     description:
       - Sets the action to take when node goes down in pool.
-    version_added: "1.3"
+    version_added: 1.3
     choices:
       - none
       - reset
@@ -124,8 +124,26 @@ options:
         that are numbers.
       - Data will be persisted, not ephemeral.
     version_added: 2.5
+  priority_group_activation:
+    description:
+      - Specifies whether the system load balances traffic according to the priority
+        number assigned to the pool member.
+      - When creating a new pool, if this parameter is not specified, the default of
+        C(0) will be used.
+      - To disable this setting, provide the value C(0).
+      - Once you enable this setting, you can specify pool member priority when you
+        create a new pool or on a pool member's properties screen.
+      - The system treats same-priority pool members as a group.
+      - To enable priority group activation, provide a number from C(0) to C(65535)
+        that represents the minimum number of members that must be available in one
+        priority group before the system directs traffic to members in a lower
+        priority group.
+      - When a sufficient number of members become available in the higher priority
+        group, the system again directs traffic to the higher priority group.
+    aliases:
+      - minimum_active_members
+    version_added: 2.6
 notes:
-  - Requires BIG-IP software version >= 12.
   - To add members do a pool, use the C(bigip_pool_member) module. Previously, the
     C(bigip_pool) module allowed the management of users, but this has been removed
     in version 2.5 of Ansible.
@@ -138,69 +156,71 @@ author:
 EXAMPLES = r'''
 - name: Create pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
-    lb_method: least-connection-member
+    lb_method: least-connections-member
     slow_ramp_time: 120
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Modify load balancer method
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     lb_method: round-robin
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add pool member
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set a single monitor (with enforcement)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     monitor_type: single
     monitors:
       - http
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set a single monitor (without enforcement)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
     monitors:
       - http
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set multiple monitors (all must succeed)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
@@ -208,13 +228,14 @@ EXAMPLES = r'''
     monitors:
       - http
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Set multiple monitors (at least 1 must succeed)
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     name: my-pool
     partition: Common
@@ -223,41 +244,48 @@ EXAMPLES = r'''
     monitors:
       - http
       - tcp
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove pool member from pool
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add metadata to pool
   bigip_pool:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     name: my-pool
     partition: Common
     metadata:
       ansible: 2.4
       updated_at: 2017-12-20T17:50:46Z
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -265,7 +293,7 @@ RETURN = r'''
 monitor_type:
   description: The contact that was set on the datacenter.
   returned: changed
-  type: string
+  type: str
   sample: admin@root.local
 quorum:
   description: The quorum that was set on the pool.
@@ -280,17 +308,17 @@ monitors:
 service_down_action:
   description: Service down action that is set on the pool.
   returned: changed
-  type: string
+  type: str
   sample: reset
 description:
   description: Description set on the pool.
   returned: changed
-  type: string
+  type: str
   sample: Pool of web servers
 lb_method:
   description: The LB method set for the pool.
   returned: changed
-  type: string
+  type: str
   sample: round-robin
 slow_ramp_time:
   description: The new value that is set for the slow ramp-up time.
@@ -307,6 +335,11 @@ metadata:
   returned: changed
   type: dict
   sample: {'key1': 'foo', 'key2': 'bar'}
+priority_group_activation:
+  description: The new minimum number of members to activate the priorty group.
+  returned: changed
+  type: int
+  sample: 10
 '''
 
 import re
@@ -315,41 +348,28 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
-    # Upstream Ansible
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    from netaddr import IPAddress, AddrFormatError
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -358,24 +378,26 @@ class Parameters(AnsibleF5Parameters):
         'slowRampTime': 'slow_ramp_time',
         'reselectTries': 'reselect_tries',
         'serviceDownAction': 'service_down_action',
-        'monitor': 'monitors'
+        'monitor': 'monitors',
+        'minActiveMembers': 'priority_group_activation',
     }
 
     api_attributes = [
         'description', 'name', 'loadBalancingMode', 'monitor', 'slowRampTime',
-        'reselectTries', 'serviceDownAction', 'metadata'
+        'reselectTries', 'serviceDownAction', 'metadata', 'minActiveMembers',
     ]
 
     returnables = [
         'monitor_type', 'quorum', 'monitors', 'service_down_action',
         'description', 'lb_method', 'slow_ramp_time',
-        'reselect_tries', 'monitor', 'name', 'partition', 'metadata'
+        'reselect_tries', 'monitor', 'name', 'partition', 'metadata',
+        'priority_group_activation',
     ]
 
     updatables = [
         'monitor_type', 'quorum', 'monitors', 'service_down_action',
         'description', 'lb_method', 'slow_ramp_time', 'reselect_tries',
-        'metadata'
+        'metadata', 'priority_group_activation',
     ]
 
     @property
@@ -389,23 +411,6 @@ class Parameters(AnsibleF5Parameters):
             raise F5ModuleError('Provided lb_method is unknown')
         return lb_method
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
-
-    @property
-    def monitors(self):
-        if self._values['monitors'] is None:
-            return None
-        monitors = [self._fqdn_name(x) for x in self.monitors_list]
-        if self.monitor_type == 'm_of_n':
-            monitors = ' '.join(monitors)
-            result = 'min %s of { %s }' % (self.quorum, monitors)
-        else:
-            result = ' and '.join(monitors).strip()
-        return result
-
     def _verify_quorum_type(self, quorum):
         try:
             if quorum is None:
@@ -416,8 +421,32 @@ class Parameters(AnsibleF5Parameters):
                 "The specified 'quorum' must be an integer."
             )
 
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
+            return None
+        monitors = [fq_name(self.partition, x) for x in self.monitors_list]
+        if self.monitor_type == 'm_of_n':
+            monitors = ' '.join(monitors)
+            result = 'min %s of { %s }' % (self.quorum, monitors)
+        else:
+            result = ' and '.join(monitors).strip()
+        return result
+
+    @property
+    def priority_group_activation(self):
+        if self._values['priority_group_activation'] is None:
+            return None
+        return int(self._values['priority_group_activation'])
+
 
 class ApiParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
     @property
     def quorum(self):
         if self._values['monitors'] is None:
@@ -447,7 +476,7 @@ class ApiParameters(Parameters):
         if self._values['monitors'] is None:
             return []
         try:
-            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+            result = re.findall(r'/[\w-]+/[^\s}]+', self._values['monitors'])
             return result
         except Exception:
             return self._values['monitors']
@@ -468,6 +497,14 @@ class ApiParameters(Parameters):
 
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def monitors_list(self):
         if self._values['monitors'] is None:
@@ -528,13 +565,24 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-    pass
+    @property
+    def monitors(self):
+        monitor_string = self._values['monitors']
+        if monitor_string is None:
+            return None
+
+        if '{' in monitor_string and '}':
+            tmp = monitor_string.strip('}').split('{')
+            monitor = ''.join(tmp).rstrip()
+            return monitor
+
+        return monitor_string
 
 
 class ReportableChanges(Changes):
     @property
     def monitors(self):
-        result = sorted(re.findall(r'/\w+/[^\s}]+', self._values['monitors']))
+        result = sorted(re.findall(r'/[\w-]+/[^\s}]+', self._values['monitors']))
         return result
 
     @property
@@ -593,6 +641,10 @@ class Difference(object):
             return None
         else:
             return want
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
     def _monitors_and_quorum(self):
         if self.want.monitor_type is None:
@@ -689,13 +741,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -794,6 +843,8 @@ class ModuleManager(object):
             raise F5ModuleError(
                 "When using a 'monitor_type' of 'single', only one monitor may be provided"
             )
+        if self.want.priority_group_activation is None:
+            self.want.update({'priority_group_activation': 0})
 
         self._set_changed_options()
         if self.module.check_mode:
@@ -802,41 +853,89 @@ class ModuleManager(object):
         return True
 
     def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.ltm.pools.pool.create(
-            partition=self.want.partition, **params
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def update_on_device(self):
-        params = self.want.api_params()
-        result = self.client.api.tm.ltm.pools.pool.load(
-            name=self.want.name,
-            partition=self.want.partition
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def exists(self):
-        return self.client.api.tm.ltm.pools.pool.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def remove_from_device(self):
-        result = self.client.api.tm.ltm.pools.pool.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.pools.pool.load(
-            name=self.want.name,
-            partition=self.want.partition,
-            requests_params=dict(
-                params='expandSubcollections=true'
-            )
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return ApiParameters(params=resource.attrs)
+        query = '?expandSubcollections=true'
+        resp = self.client.api.get(uri + query)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -903,6 +1002,10 @@ class ArgumentSpec(object):
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
+            ),
+            priority_group_activation=dict(
+                type='int',
+                aliases=['minimum_active_members']
             )
         )
         self.argument_spec = {}
@@ -915,22 +1018,19 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

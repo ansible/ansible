@@ -9,16 +9,16 @@
       - { name: ansibletest1 }
       - { name: ansibletest2 }
       - { name: ansibletest3 }
-    state: absent
     provider: "{{ connection }}"
+    state: absent
 
 # Start tests
 - name: Create user
   nxos_user:
     name: ansibletest1
     roles: network-operator
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
@@ -32,9 +32,9 @@
     aggregate:
       - { name: ansibletest2 }
       - { name: ansibletest3 }
+    provider: "{{ connection }}"
     state: present
     roles: network-admin
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -47,8 +47,8 @@
       - { name: ansibletest1 }
       - { name: ansibletest2 }
       - { name: ansibletest3 }
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:

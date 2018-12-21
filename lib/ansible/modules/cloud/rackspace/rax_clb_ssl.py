@@ -35,6 +35,7 @@ options:
     - If set to "false", temporarily disable SSL termination without discarding
     - existing credentials.
     default: true
+    type: bool
   private_key:
     description:
     - The private SSL key as a string in PEM format.
@@ -53,20 +54,23 @@ options:
     description:
     - If "true", the load balancer will *only* accept secure traffic.
     default: false
+    type: bool
   https_redirect:
     description:
     - If "true", the load balancer will redirect HTTP traffic to HTTPS.
     - Requires "secure_traffic_only" to be true. Incurs an implicit wait if SSL
     - termination is also applied or removed.
+    type: bool
   wait:
     description:
     - Wait for the balancer to be in state "running" before turning.
     default: false
+    type: bool
   wait_timeout:
     description:
     - How long before "wait" gives up, in seconds.
     default: 300
-author: Ash Wilson
+author: Ash Wilson (@smashwilson)
 extends_documentation_fragment:
   - rackspace
   - rackspace.openstack

@@ -17,9 +17,9 @@ DOCUMENTATION = """
 module: ironware_config
 version_added: "2.5"
 author: "Paul Baker (@paulquack)"
-short_description: Manage configuration sections on Brocade Ironware devices
+short_description: Manage configuration sections on Extreme Ironware devices
 description:
-  - Brocade Ironware configurations use a simple block indent file syntax
+  - Extreme Ironware configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
     an implementation for working with Ironware configuration sections in
     a deterministic way.
@@ -152,7 +152,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/ironware_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule

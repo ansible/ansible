@@ -188,7 +188,7 @@ def ext_router_absent(module, aos, my_ext_router):
             # Add Sleep before delete to workaround a bug in AOS
             time.sleep(2)
             my_ext_router.delete()
-        except:
+        except Exception:
             module.fail_json(msg="An error occurred, while trying to delete the External Router")
 
     module.exit_json(changed=True,
@@ -219,7 +219,7 @@ def ext_router_present(module, aos, my_ext_router):
                                                           margs['loopback'],
                                                           margs['asn'])
                 my_ext_router = my_new_ext_router
-            except:
+            except Exception:
                 module.fail_json(msg="An error occurred while trying to create a new External Router")
 
         module.exit_json(changed=True,
@@ -271,7 +271,7 @@ def ext_router(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False
@@ -299,7 +299,7 @@ def ext_router(module):
         my_ext_router = find_collection_item(aos.ExternalRouters,
                                              item_name=item_name,
                                              item_id=item_id)
-    except:
+    except Exception:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
     # ----------------------------------------------------
@@ -336,6 +336,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     ext_router(module)
+
 
 if __name__ == "__main__":
     main()

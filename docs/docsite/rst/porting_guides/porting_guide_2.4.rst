@@ -9,7 +9,7 @@ This section discusses the behavioral changes between Ansible 2.3 and Ansible 2.
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
 
-We suggest you read this page along with `Ansible Changelog <https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md#2.4>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.4 <https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -54,7 +54,7 @@ Specifying Inventory sources
 -----------------------------
 
 Use of ``--inventory-file`` on the command line is now deprecated. Use ``--inventory`` or ``-i``.
-The associated ini configuration key, ``hostfile``, and environment variable, :envvar:`ANSIBLE_HOSTS`,
+The associated ini configuration key, ``hostfile``, and environment variable, ``ANSIBLE_HOSTS``,
 are also deprecated.  Replace them with the configuration key ``inventory`` and environment variable :envvar:`ANSIBLE_INVENTORY`.
 
 Use of multiple tags
@@ -91,8 +91,8 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.8. Please update your playbooks accordingly.
 
-* :ref:`azure <azure_module>`, use :ref:`azure_rm_virtualmachine <azure_rm_virtualmachine_module>`, which uses the new Resource Manager SDK.
-* :ref:`win_msi <win_msi_module>`, use :ref:`win_package <win_package_module>` instead
+* azure, use :ref:`azure_rm_virtualmachine <azure_rm_virtualmachine_module>`, which uses the new Resource Manager SDK.
+* win_msi, use :ref:`win_package <win_package_module>` instead
 
 Noteworthy module changes
 -------------------------

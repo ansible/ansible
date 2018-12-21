@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -61,7 +61,7 @@ options:
     type: bool
     default: true
 
-author: tedder
+author: Ted Timmons (@tedder)
 extends_documentation_fragment:
 - aws
 - ec2
@@ -69,14 +69,14 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: grant user-style access to production secrets
-  kms:
+  aws_kms:
   args:
     mode: grant
     key_alias: "alias/my_production_secrets"
     role_name: "prod-appServerRole-1R5AQG2BSEL6L"
     grant_types: "role,role grant"
 - name: remove access to production secrets from role
-  kms:
+  aws_kms:
   args:
     mode: deny
     key_alias: "alias/my_production_secrets"
@@ -91,7 +91,7 @@ changes_needed:
   sample: { "role": "add", "role grant": "add" }
 had_invalid_entries:
   description: there are invalid (non-ARN) entries in the KMS entry. These don't count as a change, but will be removed if any changes are being made.
-  type: boolean
+  type: bool
   returned: always
 '''
 
@@ -201,7 +201,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
             kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
             # returns nothing, so we have to just assume it didn't throw
             ret['changed'] = True
-    except:
+    except Exception:
         raise
 
     ret['changes_needed'] = changes_needed
@@ -209,7 +209,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
     ret['new_policy'] = policy
     if dry_run:
         # true if changes > 0
-        ret['changed'] = (not len(changes_needed) == 0)
+        ret['changed'] = len(changes_needed) > 0
 
     return ret
 

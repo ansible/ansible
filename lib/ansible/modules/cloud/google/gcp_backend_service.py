@@ -46,6 +46,7 @@ options:
   enable_cdn:
     description:
        - If true, enable Cloud CDN for this Backend Service.
+    type: bool
   port_name:
     description:
       - Name of the port on the managed instance group (MIG) that backend
@@ -86,7 +87,7 @@ EXAMPLES = '''
     backends:
     - instance_group: managed_instance_group_1
     healthchecks:
-    - name: healthcheck_name_for_backend_service
+    - healthcheck_name_for_backend_service
     port_name: myhttpport
     state: present
 
@@ -104,7 +105,7 @@ EXAMPLES = '''
       max_utilization: 0.5
       max_rate: 4
     healthchecks:
-    - name: healthcheck_name_for_backend_service
+    - healthcheck_name_for_backend_service
     port_name: myhttpport
     state: present
     timeout: 60
@@ -114,17 +115,17 @@ RETURN = '''
 backend_service_created:
     description: Indicator Backend Service was created.
     returned: When a Backend Service is created.
-    type: boolean
+    type: bool
     sample: "True"
 backend_service_deleted:
     description: Indicator Backend Service was deleted.
     returned: When a Backend Service is deleted.
-    type: boolean
+    type: bool
     sample: "True"
 backend_service_name:
     description: Name of the Backend Service.
     returned: Always.
-    type: string
+    type: str
     sample: "my-backend-service"
 backends:
     description: List of backends (comprised of instance_group) that
@@ -135,7 +136,7 @@ backends:
 enable_cdn:
     description: If Cloud CDN is enabled. null if not set.
     returned: When a backend service exists.
-    type: boolean
+    type: bool
     sample: "True"
 healthchecks:
     description: List of healthchecks applied to the Backend Service.
@@ -145,12 +146,12 @@ healthchecks:
 protocol:
     description: Protocol used to communicate with the Backends.
     returned: When a Backend Service exists.
-    type: string
+    type: str
     sample: "HTTP"
 port_name:
     description: Name of Backend Port.
     returned: When a Backend Service exists.
-    type: string
+    type: str
     sample: "myhttpport"
 timeout:
     description: In seconds, how long before a request sent to a backend is
@@ -202,7 +203,7 @@ def _validate_params(params):
     try:
         check_params(params, fields)
         _validate_backend_params(params['backends'])
-    except:
+    except Exception:
         raise
 
     return (True, '')
@@ -232,7 +233,7 @@ def _validate_backend_params(backends):
     for backend in backends:
         try:
             check_params(backend, fields)
-        except:
+        except Exception:
             raise
 
         if 'max_rate' in backend and 'max_rate_per_instance' in backend:

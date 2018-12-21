@@ -34,6 +34,9 @@ options:
       - Data to return for the C(ping) return value.
       - If this parameter is set to C(crash), the module will cause an exception.
     default: pong
+seealso:
+- module: net_ping
+- module: win_ping
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -55,7 +58,7 @@ RETURN = '''
 ping:
     description: value provided with the data parameter
     returned: success
-    type: string
+    type: str
     sample: pong
 '''
 

@@ -100,7 +100,7 @@ options:
 
 EXAMPLES = '''
 - name: Add host to icinga
-  icinga_host:
+  icinga2_host:
     url: "https://icinga2.example.com"
     url_username: "ansible"
     url_password: "a_secret"
@@ -113,7 +113,7 @@ EXAMPLES = '''
 RETURN = '''
 name:
     description: The name used to create, modify or delete the host
-    type: string
+    type: str
     returned: always
 data:
     description: The data structure used for create, modify or delete of the host

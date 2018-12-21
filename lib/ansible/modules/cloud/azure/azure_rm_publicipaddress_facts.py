@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -46,12 +46,12 @@ author:
 
 EXAMPLES = '''
     - name: Get facts for one Public IP
-      azure_rm_publicip_facts:
+      azure_rm_publicipaddress_facts:
         resource_group: Testing
         name: publicip001
 
     - name: Get facts for all Public IPs within a resource groups
-      azure_rm_publicip_facts:
+      azure_rm_publicipaddress_facts:
         resource_group: Testing
 '''
 
@@ -77,7 +77,7 @@ azure_publicipaddresses:
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 

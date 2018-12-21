@@ -1,1 +1,8 @@
-test.py
+#!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
+"""Legacy entry point for ansible-test. The preferred version is in the bin directory."""
+
+import lib.cli
+
+if __name__ == '__main__':
+    lib.cli.main()

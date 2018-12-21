@@ -20,7 +20,7 @@ options:
     required: true
   description:
     description:
-      - parameter key desciption.
+      - parameter key description.
     required: false
   value:
     description:
@@ -42,7 +42,7 @@ options:
   decryption:
     description:
       - Work with SecureString type to get plain text secrets
-      - Boolean
+    type: bool
     required: false
     default: True
   key_id:
@@ -64,7 +64,7 @@ options:
     required: false
 author:
   - Nathan Webster (@nathanwebsterdotme)
-  - Bill Wang (ozbillwang@gmail.com)
+  - Bill Wang (@ozbillwang) <ozbillwang@gmail.com>
   - Michael De La Rue (@mikedlr)
 extends_documentation_fragment: aws
 requirements: [ botocore, boto3 ]
@@ -111,13 +111,13 @@ EXAMPLES = '''
 
 RETURN = '''
 put_parameter:
-    description: Add one or more paramaters to the system.
+    description: Add one or more parameters to the system.
     returned: success
-    type: dictionary
+    type: dict
 delete_parameter:
     description: Delete a parameter from the system.
     returned: success
-    type: dictionary
+    type: dict
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -153,7 +153,7 @@ def create_update_parameter(client, module):
         Type=module.params.get('string_type')
     )
 
-    if (module.params.get('overwrite_value') == "always" or "changed"):
+    if (module.params.get('overwrite_value') in ("always", "changed")):
         args.update(Overwrite=True)
     else:
         args.update(Overwrite=False)
@@ -166,7 +166,7 @@ def create_update_parameter(client, module):
 
     try:
         existing_parameter = client.get_parameter(Name=args['Name'], WithDecryption=True)
-    except:
+    except Exception:
         pass
 
     if existing_parameter:
@@ -181,11 +181,14 @@ def create_update_parameter(client, module):
             if existing_parameter['Parameter']['Value'] != args['Value']:
                 (changed, response) = update_parameter(client, module, args)
 
-            if args['Description']:
+            if args.get('Description'):
                 # Description field not available from get_parameter function so get it from describe_parameters
                 describe_existing_parameter = None
                 try:
-                    describe_existing_parameter = client.describe_parameters(Filters=[{"Key": "Name", "Values": [args['Name']]}])
+                    describe_existing_parameter_paginator = client.get_paginator('describe_parameters')
+                    describe_existing_parameter = describe_existing_parameter_paginator.paginate(
+                        Filters=[{"Key": "Name", "Values": [args['Name']]}]).build_full_result()
+
                 except ClientError as e:
                     module.fail_json_aws(e, msg="getting description value")
 

@@ -1,20 +1,19 @@
 ---
-- debug: msg="START nxapi/contains.yaml"
+- debug: msg="START common/contains.yaml on connection={{ ansible_connection }}"
 
 - name: test contains operator
   nxos_command:
     commands:
-      - show version
-      - show interface mgmt0
+      - { command: 'show version', output: 'text' }
+      - { command: 'show interface mgmt0', output: 'json' }
     wait_for:
-      - "result[0].header_str contains NX-OS"
+      - "result[0] contains NX-OS"
       - "result[1].TABLE_interface.ROW_interface.interface contains mgmt"
-    provider: "{{ nxapi }}"
+    provider: "{{ connection }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
-      - "result.stdout is defined"
 
-- debug: msg="END nxapi/contains.yaml"
+- debug: msg="END common/contains.yaml on connection={{ ansible_connection }}"

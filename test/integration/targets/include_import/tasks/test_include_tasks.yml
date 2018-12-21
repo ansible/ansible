@@ -39,3 +39,6 @@
           assert:
             that:
               - set_in_tasks4
+
+    - name: include_tasks + action
+      action: include_tasks tasks1.yml

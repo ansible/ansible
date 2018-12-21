@@ -103,7 +103,8 @@ EXAMPLES = '''
     mode: 0600
     backup: yes
 
-- ini_file:
+- name: Ensure "temperature=cold is in section "[drinks]" in specified file
+  ini_file:
     path: /etc/anotherconf
     section: drinks
     option: temperature
@@ -170,8 +171,21 @@ def do_ini(module, filename, section=None, option=None, value=None,
         ini_lines[-1] += '\n'
         changed = True
 
-    # append a fake section line to simplify the logic
+    # append fake section lines to simplify the logic
+    # At top:
+    # Fake random section to do not match any other in the file
+    # Using commit hash as fake section name
+    fake_section_name = "ad01e11446efb704fcdbdb21f2c43757423d91c5"
+
+    # Insert it at the beginning
+    ini_lines.insert(0, '[%s]' % fake_section_name)
+
+    # At botton:
     ini_lines.append('[')
+
+    # If no section is defined, fake section is used
+    if not section:
+        section = fake_section_name
 
     within_section = not section
     section_start = 0
@@ -240,6 +254,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
                         break
 
     # remove the fake section line
+    del ini_lines[0]
     del ini_lines[-1:]
 
     if not within_section and option and state == 'present':
@@ -321,6 +336,7 @@ def main():
 
     # Mission complete
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

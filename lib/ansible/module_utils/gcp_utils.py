@@ -70,9 +70,10 @@ class GcpSession(object):
         self.product = product
         self._validate()
 
-    def get(self, url, body=None):
+    def get(self, url, body=None, **kwargs):
+        kwargs.update({'json': body, 'headers': self._headers()})
         try:
-            return self.session().get(url, json=body, headers=self._headers())
+            return self.session().get(url, **kwargs)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
@@ -94,9 +95,15 @@ class GcpSession(object):
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
+    def patch(self, url, body=None, **kwargs):
+        kwargs.update({'json': body, 'headers': self._headers()})
+        try:
+            return self.session().patch(url, **kwargs)
+        except getattr(requests.exceptions, 'RequestException') as inst:
+            self.module.fail_json(msg=inst.message)
+
     def session(self):
-        return AuthorizedSession(
-            self._credentials().with_scopes(self.module.params['scopes']))
+        return AuthorizedSession(self._credentials())
 
     def _validate(self):
         if not HAS_REQUESTS:
@@ -105,12 +112,12 @@ class GcpSession(object):
         if not HAS_GOOGLE_LIBRARIES:
             self.module.fail_json(msg="Please install the google-auth library")
 
-        if self.module.params['service_account_email'] is not None and self.module.params['auth_kind'] != 'machineaccount':
+        if self.module.params.get('service_account_email') is not None and self.module.params['auth_kind'] != 'machineaccount':
             self.module.fail_json(
                 msg="Service Acccount Email only works with Machine Account-based authentication"
             )
 
-        if self.module.params['service_account_file'] is not None and self.module.params['auth_kind'] != 'serviceaccount':
+        if self.module.params.get('service_account_file') is not None and self.module.params['auth_kind'] != 'serviceaccount':
             self.module.fail_json(
                 msg="Service Acccount File only works with Service Account-based authentication"
             )
@@ -118,11 +125,11 @@ class GcpSession(object):
     def _credentials(self):
         cred_type = self.module.params['auth_kind']
         if cred_type == 'application':
-            credentials, project_id = google.auth.default()
+            credentials, project_id = google.auth.default(scopes=self.module.params['scopes'])
             return credentials
         elif cred_type == 'serviceaccount':
-            return service_account.Credentials.from_service_account_file(
-                self.module.params['service_account_file'])
+            path = os.path.realpath(os.path.expanduser(self.module.params['service_account_file']))
+            return service_account.Credentials.from_service_account_file(path).with_scopes(self.module.params['scopes'])
         elif cred_type == 'machineaccount':
             return google.auth.compute_engine.Credentials(
                 self.module.params['service_account_email'])
@@ -144,7 +151,10 @@ class GcpModule(AnsibleModule):
         kwargs['argument_spec'] = self._merge_dictionaries(
             arg_spec,
             dict(
-                project=dict(required=True, type='str'),
+                project=dict(
+                    required=False,
+                    type='str',
+                    fallback=(env_fallback, ['GCP_PROJECT'])),
                 auth_kind=dict(
                     required=False,
                     fallback=(env_fallback, ['GCP_AUTH_KIND']),

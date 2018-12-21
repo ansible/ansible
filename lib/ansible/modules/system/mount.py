@@ -21,7 +21,7 @@ description:
   - This module controls active and configured mount points in C(/etc/fstab).
 author:
   - Ansible Core Team
-  - Seth Vidal
+  - Seth Vidal (@skvidal)
 version_added: "0.6"
 options:
   path:
@@ -121,6 +121,19 @@ EXAMPLES = '''
     fstype: xfs
     opts: noatime
     state: present
+
+- name: Unmount a mounted volume
+  mount:
+    path: /tmp/mnt-pnt
+    state: unmounted
+
+- name: Mount and bind a volume
+  mount:
+    path: /system/new_volume/boot
+    src: /boot
+    opts: bind
+    state: mounted
+    fstype: none
 '''
 
 
@@ -218,7 +231,13 @@ def set_mount(module, args):
             ) = line.split()
 
         # Check if we found the correct line
-        if ld['name'] != escaped_args['name']:
+        if (
+                ld['name'] != escaped_args['name'] or (
+                    # In the case of swap, check the src instead
+                    'src' in args and
+                    ld['name'] == 'none' and
+                    ld['fstype'] == 'swap' and
+                    ld['src'] != args['src'])):
             to_write.append(line)
 
             continue
@@ -299,7 +318,13 @@ def unset_mount(module, args):
                 ld['passno']
             ) = line.split()
 
-        if ld['name'] != escaped_name:
+        if (
+                ld['name'] != escaped_name or (
+                    # In the case of swap, check the src instead
+                    'src' in args and
+                    ld['name'] == 'none' and
+                    ld['fstype'] == 'swap' and
+                    ld['src'] != args['src'])):
             to_write.append(line)
 
             continue
@@ -407,7 +432,7 @@ def remount(module, args):
             rc = 1
         else:
             rc, out, err = module.run_command(cmd)
-    except:
+    except Exception:
         rc = 1
 
     msg = ''

@@ -15,9 +15,10 @@ from lib.util import (
     run_command,
     import_plugins,
     load_plugins,
-    parse_to_dict,
+    parse_to_list_of_dict,
     ABC,
     is_binary_file,
+    read_lines_without_comments,
 )
 
 from lib.ansible_util import (
@@ -57,14 +58,14 @@ def command_sanity(args):
     :type args: SanityConfig
     """
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
+    require = args.require + changes
     targets = SanityTargets(args.include, args.exclude, require)
 
     if not targets.include:
         raise AllTargetsSkipped()
 
     if args.delegate:
-        raise Delegate(require=changes)
+        raise Delegate(require=changes, exclude=args.exclude)
 
     install_command_requirements(args)
 
@@ -72,6 +73,12 @@ def command_sanity(args):
 
     if args.test:
         tests = [t for t in tests if t.name in args.test]
+    else:
+        disabled = [t.name for t in tests if not t.enabled and not args.allow_disabled]
+        tests = [t for t in tests if t.enabled or args.allow_disabled]
+
+        if disabled:
+            display.warning('Skipping tests disabled by default without --allow-disabled: %s' % ', '.join(sorted(disabled)))
 
     if args.skip_test:
         tests = [t for t in tests if t.name not in args.skip_test]
@@ -128,8 +135,8 @@ def collect_code_smell_tests():
     """
     :rtype: tuple[SanityCodeSmellTest]
     """
-    with open('test/sanity/code-smell/skip.txt', 'r') as skip_fd:
-        skip_tests = skip_fd.read().splitlines()
+    skip_file = 'test/sanity/code-smell/skip.txt'
+    skip_tests = read_lines_without_comments(skip_file, remove_blank_lines=True)
 
     paths = glob.glob('test/sanity/code-smell/*')
     paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
@@ -203,18 +210,27 @@ class SanityTest(ABC):
 
     def __init__(self, name):
         self.name = name
+        self.enabled = True
 
 
 class SanityCodeSmellTest(SanityTest):
     """Sanity test script."""
     def __init__(self, path):
         name = os.path.splitext(os.path.basename(path))[0]
-        config = os.path.splitext(path)[0] + '.json'
-
-        self.path = path
-        self.config = config if os.path.exists(config) else None
+        config_path = os.path.splitext(path)[0] + '.json'
 
         super(SanityCodeSmellTest, self).__init__(name)
+
+        self.path = path
+        self.config_path = config_path if os.path.exists(config_path) else None
+        self.config = None
+
+        if self.config_path:
+            with open(self.config_path, 'r') as config_fd:
+                self.config = json.load(config_fd)
+
+        if self.config:
+            self.enabled = not self.config.get('disabled')
 
     def test(self, args, targets):
         """
@@ -233,15 +249,12 @@ class SanityCodeSmellTest(SanityTest):
         data = None
 
         if self.config:
-            with open(self.config, 'r') as config_fd:
-                config = json.load(config_fd)
-
-            output = config.get('output')
-            extensions = config.get('extensions')
-            prefixes = config.get('prefixes')
-            files = config.get('files')
-            always = config.get('always')
-            text = config.get('text')
+            output = self.config.get('output')
+            extensions = self.config.get('extensions')
+            prefixes = self.config.get('prefixes')
+            files = self.config.get('files')
+            always = self.config.get('always')
+            text = self.config.get('text')
 
             if output == 'path-line-column-message':
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
@@ -292,7 +305,7 @@ class SanityCodeSmellTest(SanityTest):
 
         if stdout and not stderr:
             if pattern:
-                matches = [parse_to_dict(pattern, line) for line in stdout.splitlines()]
+                matches = parse_to_list_of_dict(pattern, stdout)
 
                 messages = [SanityMessage(
                     message=m['message'],

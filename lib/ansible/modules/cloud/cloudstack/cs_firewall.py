@@ -141,22 +141,22 @@ RETURN = '''
 id:
   description: UUID of the rule.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 ip_address:
   description: IP address of the rule if C(type=ingress)
   returned: success
-  type: string
+  type: str
   sample: 10.100.212.10
 type:
   description: Type of the rule.
   returned: success
-  type: string
+  type: str
   sample: ingress
 cidr:
   description: CIDR string of the rule.
   returned: success
-  type: string
+  type: str
   sample: 0.0.0.0/0
 cidrs:
   description: CIDR list of the rule.
@@ -167,7 +167,7 @@ cidrs:
 protocol:
   description: Protocol of the rule.
   returned: success
-  type: string
+  type: str
   sample: tcp
 start_port:
   description: Start port of the rule.
@@ -192,7 +192,7 @@ icmp_type:
 network:
   description: Name of the network if C(type=egress)
   returned: success
-  type: string
+  type: str
   sample: my_network
 '''
 
@@ -242,22 +242,31 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             args = {
                 'account': self.get_account('name'),
                 'domainid': self.get_domain('id'),
-                'projectid': self.get_project('id')
+                'projectid': self.get_project('id'),
+                'fetch_list': True,
             }
             if fw_type == 'egress':
                 args['networkid'] = self.get_network(key='id')
                 if not args['networkid']:
                     self.module.fail_json(msg="missing required argument for type egress: network")
+
+                # CloudStack 4.11 use the network cidr for 0.0.0.0/0 in egress
+                # That is why we need to replace it.
+                network_cidr = self.get_network(key='cidr')
+                egress_cidrs = [network_cidr if cidr == '0.0.0.0/0' else cidr for cidr in cidrs]
+
                 firewall_rules = self.query_api('listEgressFirewallRules', **args)
             else:
                 args['ipaddressid'] = self.get_ip_address('id')
                 if not args['ipaddressid']:
                     self.module.fail_json(msg="missing required argument for type ingress: ip_address")
+                egress_cidrs = None
+
                 firewall_rules = self.query_api('listFirewallRules', **args)
 
-            if firewall_rules and 'firewallrule' in firewall_rules:
-                for rule in firewall_rules['firewallrule']:
-                    type_match = self._type_cidrs_match(rule, cidrs)
+            if firewall_rules:
+                for rule in firewall_rules:
+                    type_match = self._type_cidrs_match(rule, cidrs, egress_cidrs)
 
                     protocol_match = (
                         self._tcp_udp_match(rule, protocol, start_port, end_port) or
@@ -293,8 +302,11 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             icmp_type == rule['icmptype']
         )
 
-    def _type_cidrs_match(self, rule, cidrs):
-        return ",".join(cidrs) == rule['cidrlist']
+    def _type_cidrs_match(self, rule, cidrs, egress_cidrs):
+        if egress_cidrs is not None:
+            return ",".join(egress_cidrs) == rule['cidrlist'] or ",".join(cidrs) == rule['cidrlist']
+        else:
+            return ",".join(cidrs) == rule['cidrlist']
 
     def create_firewall_rule(self):
         firewall_rule = self.get_firewall_rule()

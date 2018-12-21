@@ -6,16 +6,20 @@ asa
 bigip
 ce
 cl
+cnos
 dellos10
 dellos6
 dellos9
 edgeos
 enos
 eos
+exos
 ios
 iosxr
 ironware
 junos
+meraki
+msc
 net
 netconf
 nxos
@@ -23,5 +27,6 @@ onyx
 openvswitch
 ops
 pn
+slxos
 sros
 vyos

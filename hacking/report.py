@@ -5,8 +5,8 @@
 from __future__ import (absolute_import, print_function)
 
 import argparse
+import json
 import os
-import requests
 import sqlite3
 import sys
 
@@ -21,7 +21,9 @@ if ANSIBLE_PATH not in sys.path:
 if ANSIBLE_TEST_PATH not in sys.path:
     sys.path.insert(0, ANSIBLE_TEST_PATH)
 
+from ansible.module_utils.urls import open_url
 from ansible.parsing.metadata import extract_metadata
+
 from lib.target import walk_integration_targets
 
 
@@ -139,8 +141,8 @@ def populate_modules():
 
 
 def populate_coverage():
-    response = requests.get('https://codecov.io/api/gh/ansible/ansible/tree/devel/?src=extension')
-    data = response.json()
+    response = open_url('https://codecov.io/api/gh/ansible/ansible/tree/devel/?src=extension')
+    data = json.load(response)
     files = data['commit']['report']['files']
     coverage_rows = []
 

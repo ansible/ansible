@@ -1,0 +1,41 @@
+- name: Install flatpak on Fedora
+  dnf:
+    name: flatpak
+    state: present
+  become: true
+  when: ansible_distribution == 'Fedora'
+
+- block:
+  - name: Activate flatpak ppa on Ubuntu
+    apt_repository:
+      repo: "ppa:alexlarsson/flatpak"
+      state: present
+      mode: 0644
+
+  - name: Install flatpak package on Ubuntu
+    apt:
+      name: flatpak
+      state: present
+
+  become: true
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Enable flathub for user
+  flatpak_remote:
+     name: flathub
+     state: present
+     flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+     method: user
+
+- name: Enable flathub for system
+  flatpak_remote:
+     name: flathub
+     state: present
+     flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+     method: system
+
+- name: Add flatpak for testing check mode on present flatpak
+  flatpak:
+    name: org.gnome.Calculator
+    remote: flathub
+    state: present

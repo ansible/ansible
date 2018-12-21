@@ -13,7 +13,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     domain: fc_dom
     domain_type: fc
     state: absent
@@ -28,7 +28,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     domain: fc_dom
     domain_type: fc
     state: present
@@ -42,7 +42,8 @@
 - name: Verify add_domain
   assert:
     that:
-    - cm_add_domain.changed == nm_add_domain.changed == true
+    - cm_add_domain is changed
+    - nm_add_domain is changed
     - 'cm_add_domain.sent == nm_add_domain.sent == {"fcDomP": {"attributes": {"name": "fc_dom"}}}'
     - 'cm_add_domain.proposed == nm_add_domain.proposed == {"fcDomP": {"attributes": {"name": "fc_dom"}}}'
     - cm_add_domain.current == cm_add_domain.previous == nm_add_domain.previous == []
@@ -60,7 +61,8 @@
 - name: Verify add_domain_again
   assert:
     that:
-    - cm_add_domain_again.changed == nm_add_domain_again.changed == false
+    - cm_add_domain_again is not changed
+    - nm_add_domain_again is not changed
 
 
 # QUERY ALL DOMAINS
@@ -72,7 +74,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     domain_type: fc
     state: query
   check_mode: yes
@@ -85,7 +87,8 @@
 - name: Verify query_all_domains
   assert:
     that:
-    - cm_query_all_domains.changed == nm_query_all_domains.changed == false
+    - cm_query_all_domains is not changed
+    - nm_query_all_domains is not changed
     - cm_query_all_domains == nm_query_all_domains
     - nm_query_all_domains.current|length >= 1
 
@@ -107,7 +110,8 @@
 - name: Verify query_domain
   assert:
     that:
-    - cm_query_domain.changed == nm_query_domain.changed == false
+    - cm_query_domain is not changed
+    - nm_query_domain is not changed
     - cm_query_domain == nm_query_domain
     - nm_query_domain.current.0.fcDomP.attributes.dn == 'uni/fc-fc_dom'
     - nm_query_domain.current.0.fcDomP.attributes.name == 'fc_dom'
@@ -126,7 +130,8 @@
 - name: Verify remove_domain
   assert:
     that:
-    - cm_remove_domain.changed == nm_remove_domain.changed == true
+    - cm_remove_domain is changed
+    - nm_remove_domain is changed
     - 'cm_remove_domain.current == cm_remove_domain.previous == nm_remove_domain.previous == [{"fcDomP": {"attributes": {"dn": "uni/fc-fc_dom", "name": "fc_dom", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
     - nm_remove_domain.current == []
 
@@ -142,7 +147,8 @@
 - name: Verify remove_domain_again
   assert:
     that:
-    - cm_remove_domain_again.changed == nm_remove_domain_again.changed == false
+    - cm_remove_domain_again is not changed
+    - nm_remove_domain_again is not changed
 
 
 # QUERY NON-EXISTING DOMAIN
@@ -162,6 +168,7 @@
 - name: Verify query_non_domain
   assert:
     that:
-    - cm_query_non_domain.changed == nm_query_non_domain.changed == false
+    - cm_query_non_domain is not changed
+    - nm_query_non_domain is not changed
     - cm_query_non_domain == nm_query_non_domain
     - nm_query_non_domain.current == []

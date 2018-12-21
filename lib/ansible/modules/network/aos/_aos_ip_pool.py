@@ -218,7 +218,7 @@ def ip_pool_absent(module, aos, my_pool):
     if not module.check_mode:
         try:
             my_pool.delete()
-        except:
+        except Exception:
             module.fail_json(msg="An error occurred, while trying to delete the IP Pool")
 
     module.exit_json(changed=True,
@@ -240,7 +240,7 @@ def ip_pool_present(module, aos, my_pool):
             else:
                 module.fail_json(msg="Unable to find display_name in 'content', Mandatory")
 
-    except:
+    except Exception:
         module.fail_json(msg="Unable to load resource from content, something went wrong")
 
     # if ip_pool doesn't exist already, create a new one
@@ -254,7 +254,7 @@ def ip_pool_present(module, aos, my_pool):
             try:
                 my_new_pool = create_new_ip_pool(my_pool, margs['name'], margs['subnets'])
                 my_pool = my_new_pool
-            except:
+            except Exception:
                 module.fail_json(msg="An error occurred while trying to create a new IP Pool ")
 
         module.exit_json(changed=True,
@@ -283,7 +283,7 @@ def ip_pool(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False
@@ -311,7 +311,7 @@ def ip_pool(module):
         my_pool = find_collection_item(aos.IpPools,
                                        item_name=item_name,
                                        item_id=item_id)
-    except:
+    except Exception:
         module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
     # ----------------------------------------------------
@@ -347,6 +347,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     ip_pool(module)
+
 
 if __name__ == "__main__":
     main()

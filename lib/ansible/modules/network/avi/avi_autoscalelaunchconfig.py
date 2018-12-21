@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_autoscalelaunchconfig
-author: Chaitanya Deshpande (chaitanya.deshpande@avinetworks.com)
+author: Chaitanya Deshpande (@chaitanyaavi) <chaitanya.deshpande@avinetworks.com>
 
 short_description: Module for setup of AutoScaleLaunchConfig Avi RESTful Object
 description:
@@ -127,6 +127,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'autoscalelaunchconfig',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

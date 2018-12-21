@@ -119,9 +119,6 @@ def main():
     )
     module = AnsibleModule(argument_spec)
 
-    if module._name == 'ovirt_external_providers_facts':
-        module.deprecate("The 'ovirt_external_providers_facts' module is being renamed 'ovirt_external_provider_facts'", version=2.8)
-
     check_sdk(module)
 
     try:

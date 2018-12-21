@@ -100,7 +100,7 @@ RETURN = """
 status_code:
   description:
     - The Response Code returned by the Spark API.
-    - Full Responsde Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
+    - Full Response Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
   returned: always
   type: int
   sample: 200
@@ -108,9 +108,9 @@ status_code:
 message:
     description:
       - The Response Message returned by the Spark API.
-      - Full Responsde Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html.
+      - Full Response Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
     returned: always
-    type: string
+    type: str
     sample: OK (585 bytes)
 """
 from ansible.module_utils.basic import AnsibleModule

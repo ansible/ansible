@@ -50,6 +50,7 @@ options:
     description:
       - Purge links not defined in the I(aggregate) parameter.
     default: no
+    type: bool
 extends_documentation_fragment: eos
 """
 
@@ -343,6 +344,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

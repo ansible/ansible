@@ -35,7 +35,6 @@ options:
    domain_id:
      description:
         - Domain id to create the project in if the cloud supports domains.
-          The domain_id parameter requires shade >= 1.8.0
      aliases: ['domain']
    enabled:
      description:
@@ -51,14 +50,15 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
 # Create a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: present
     name: demoproject
     description: demodescription
@@ -68,6 +68,7 @@ EXAMPLES = '''
 # Delete a project
 - os_project:
     cloud: mycloud
+    endpoint_type: admin
     state: absent
     name: demoproject
 '''
@@ -81,15 +82,15 @@ project:
     contains:
         id:
             description: Project ID
-            type: string
+            type: str
             sample: "f59382db809c43139982ca4189404650"
         name:
             description: Project name
-            type: string
+            type: str
             sample: "demoproject"
         description:
             description: Project description
-            type: string
+            type: str
             sample: "demodescription"
         enabled:
             description: Boolean to indicate if project is enabled
@@ -152,26 +153,20 @@ def main():
     enabled = module.params['enabled']
     state = module.params['state']
 
-    if domain:
-        min_version = '1.8.0'
-    else:
-        min_version = None
-
-    shade, cloud = openstack_cloud_from_module(
-        module, min_version=min_version)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if domain:
             try:
                 # We assume admin is passing domain id
                 dom = cloud.get_domain(domain)['id']
                 domain = dom
-            except:
+            except Exception:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 try:
                     dom = cloud.search_domains(filters={'name': domain})[0]['id']
                     domain = dom
-                except:
+                except Exception:
                     # Ok, let's hope the user is non-admin and passing a sane id
                     pass
 
@@ -208,7 +203,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
 

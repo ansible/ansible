@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -83,7 +83,7 @@ post_tasks:
       ec2_elbs: "{{ item }}"
       state: present
     delegate_to: localhost
-    with_items: "{{ ec2_elbs }}"
+    loop: "{{ ec2_elbs }}"
 """
 
 import time
@@ -328,6 +328,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True
     )
 
     if not HAS_BOTO:
@@ -355,10 +356,11 @@ def main():
                 msg = "ELB %s does not exist" % elb
                 module.fail_json(msg=msg)
 
-    if module.params['state'] == 'present':
-        elb_man.register(wait, enable_availability_zone, timeout)
-    elif module.params['state'] == 'absent':
-        elb_man.deregister(wait, timeout)
+    if not module.check_mode:
+        if module.params['state'] == 'present':
+            elb_man.register(wait, enable_availability_zone, timeout)
+        elif module.params['state'] == 'absent':
+            elb_man.deregister(wait, timeout)
 
     ansible_facts = {'ec2_elbs': [lb.name for lb in elb_man.lbs]}
     ec2_facts_result = dict(changed=elb_man.changed, ansible_facts=ansible_facts)

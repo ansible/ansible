@@ -21,7 +21,7 @@ module: digital_ocean_domain_facts
 short_description: Gather facts about DigitalOcean Domains
 description:
     - This module can be used to gather facts about DigitalOcean provided Domains.
-author: "Abhijeet Kasurde (@akasurde)"
+author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   domain_name:
@@ -49,7 +49,7 @@ EXAMPLES = '''
   register: resp_out
 - set_fact:
     domain_ttl: "{{ item.ttl }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?name=='example.com']"
 - debug: var=domain_ttl

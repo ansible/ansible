@@ -4867,50 +4867,17 @@ table {
     }
 }
 
-.outer-elbow-container {
-    display: flex;
-    height: 100%;
-    flex-direction: row;
-}
-
-.elbow-placeholder {
+.documentation-table td.elbow-placeholder {
     border-left: 1px solid #000;
-    height: 100%;
+    border-top: 0px;
     width: 30px;
+    min-width: 30px;
 }
 
-.elbow-key {
-    height: 100%;
-    padding: 4px;
-    border-top: 1px solid #000;
-    flex-grow: 1;
-    border-left: 1px solid #000;
-}
-
-.elbow-blocker {
-    height: 0;
-    overflow: hidden;
-}
-
-.return-value-column {
-    height: 1px
-}
-
-.return-value-column td {
-    height: inherit
-}
-
-@-moz-document url-prefix() {
-    .return-value-column td {
-        height: 100%
-    }
-}
-
-.cell-border {
+.documentation-table th, .documentation-table td {
     padding: 4px;
     border-left: 1px solid #000;
     border-top: 1px solid #000;
-    height: 100%;
 }
 
 .documentation-table {

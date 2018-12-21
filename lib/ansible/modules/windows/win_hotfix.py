@@ -46,6 +46,7 @@ options:
     description:
     - The path to the downloaded hotfix .msu file.
     - This MUST be set if C(state=present) and MUST be a .msu hotfix file.
+    type: path
 notes:
 - This must be run on a host that has the DISM powershell module installed and
   a Powershell version >= 4.
@@ -55,6 +56,9 @@ notes:
   U(https://developer.microsoft.com/en-us/windows/hardware/windows-assessment-deployment-kit),
   see examples to see how to do it with chocolatey.
 - You can download hotfixes from U(https://www.catalog.update.microsoft.com/Home.aspx).
+seealso:
+- module: win_package
+- module: win_updates
 author:
 - Jordan Borean (@jborean93)
 '''

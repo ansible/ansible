@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# (c) 2014, Paul Durivage <paul.durivage@rackspace.com>, Trond Hindenes <trond@hindenes.com> and others
+# Copyright: (c) 2014, Paul Durivage <paul.durivage@rackspace.com>
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -26,19 +25,14 @@ options:
   name:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features.
+      - To list all available features use the PowerShell command C(Get-WindowsFeature).
     required: yes
+    type: list
   state:
     description:
       - State of the features or roles on the system.
     choices: [ absent, present ]
     default: present
-  restart:
-    description:
-      - Restarts the computer automatically when installation is complete, if restarting is required by the roles or features installed.
-      - DEPRECATED in Ansible 2.4, as unmanaged reboots cause numerous issues under Ansible. Check the C(reboot_required) return value
-        from this module to determine if a reboot is necessary, and if so, use the M(win_reboot) action to perform it.
-    type: bool
-    default: 'no'
   include_sub_features:
     description:
       - Adds all subfeatures of the specified feature.
@@ -56,6 +50,9 @@ options:
       - Not supported in Windows 2008 R2 and will be ignored.
       - Can either be C({driveletter}:\sources\sxs) or C(\\{IP}\share\sources\sxs).
     version_added: "2.1"
+seealso:
+- module: win_chocolatey
+- module: win_package
 author:
     - Paul Durivage (@angstwad)
     - Trond Hindenes (@trondhindenes)
@@ -97,7 +94,7 @@ RETURN = r'''
 exitcode:
     description: The stringified exit code from the feature installation/removal command
     returned: always
-    type: string
+    type: str
     sample: Success
 feature_result:
     description: List of features that were installed or removed
@@ -108,7 +105,7 @@ feature_result:
         display_name:
             description: Feature display name
             returned: always
-            type: string
+            type: str
             sample: "Telnet Client"
         id:
             description: A list of KB article IDs that apply to the update
@@ -123,33 +120,27 @@ feature_result:
         reboot_required:
             description: True when the target server requires a reboot as a result of installing or removing this feature
             returned: always
-            type: boolean
+            type: bool
             sample: True
         restart_needed:
             description: DEPRECATED in Ansible 2.4 (refer to C(reboot_required) instead). True when the target server requires a reboot as a
                          result of installing or removing this feature
             returned: always
-            type: boolean
+            type: bool
             sample: True
         skip_reason:
             description: The reason a feature installation or removal was skipped
             returned: always
-            type: string
+            type: str
             sample: NotSkipped
         success:
             description: If the feature installation or removal was successful
             returned: always
-            type: boolean
+            type: bool
             sample: True
 reboot_required:
     description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
     returned: success
-    type: boolean
-    sample: True
-restart_needed:
-    description: DEPRECATED in Ansible 2.4 (refer to C(reboot_required) instead). True when the target server requires a reboot to complete updates
-                 (no further updates can be installed until after a reboot)
-    returned: success
-    type: boolean
+    type: bool
     sample: True
 '''

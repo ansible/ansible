@@ -59,8 +59,8 @@ options:
        - Scheduler hints passed to volume API in form of dict
      version_added: "2.4"
 requirements:
-     - "python >= 2.6"
-     - "shade"
+     - "python >= 2.7"
+     - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -77,6 +77,20 @@ EXAMPLES = '''
       display_name: test_volume
       scheduler_hints:
         same_host: 243e8d3c-8f47-4a61-93d6-7215c344b0c0
+'''
+
+RETURNS = '''
+id:
+  description: Cinder's unique ID for this volume
+  returned: always
+  type: str
+  sample: fcc4ac1c-e249-4fe7-b458-2138bfb44c06
+
+volume:
+  description: Cinder's representation of the volume object
+  returned: always
+  type: dict
+  sample: {'...'}
 '''
 from distutils.version import StrictVersion
 
@@ -117,14 +131,14 @@ def _present_volume(module, cloud):
     module.exit_json(changed=True, id=volume['id'], volume=volume)
 
 
-def _absent_volume(module, cloud, shade):
+def _absent_volume(module, cloud, sdk):
     changed = False
     if cloud.volume_exists(module.params['display_name']):
         try:
             changed = cloud.delete_volume(name_or_id=module.params['display_name'],
                                           wait=module.params['wait'],
                                           timeout=module.params['timeout'])
-        except shade.OpenStackCloudTimeout:
+        except sdk.exceptions.ResourceTimeout:
             module.exit_json(changed=changed)
 
     module.exit_json(changed=changed)
@@ -149,23 +163,18 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, **module_kwargs)
 
-    if (module.params['scheduler_hints'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.22')):
-        module.fail_json(msg="To utilize scheduler_hints, the installed version of"
-                             "the shade library MUST be >= 1.22")
-
     state = module.params['state']
 
     if state == 'present' and not module.params['size']:
         module.fail_json(msg="Size is required when state is 'present'")
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if state == 'present':
             _present_volume(module, cloud)
         if state == 'absent':
-            _absent_volume(module, cloud, shade)
-    except shade.OpenStackCloudException as e:
+            _absent_volume(module, cloud, sdk)
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

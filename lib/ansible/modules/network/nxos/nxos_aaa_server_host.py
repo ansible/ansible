@@ -138,7 +138,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 import re
@@ -309,6 +309,8 @@ def main():
             delta = proposed
         else:
             for key, value in proposed.items():
+                if key == 'encrypt_type':
+                    delta[key] = value
                 if value != existing.get(key):
                     if value != 'default' or existing.get(key):
                         delta[key] = value

@@ -61,7 +61,7 @@ notes:
     C(AWS_SECURITY_TOKEN) or C(EC2_SECURITY_TOKEN),
     C(AWS_REGION) or C(EC2_REGION)
   - Ansible uses the boto configuration file (typically ~/.boto) if no
-    credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
+    credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
   - C(AWS_REGION) or C(EC2_REGION) can be typically be used to specify the
     AWS region, when required, but this can also be configured in the boto config file
 """

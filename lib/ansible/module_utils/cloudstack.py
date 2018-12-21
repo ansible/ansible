@@ -413,10 +413,11 @@ class AnsibleCloudStack:
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id') if filter_zone else None,
+            'fetch_list': True,
         }
         vms = self.query_api('listVirtualMachines', **args)
         if vms:
-            for v in vms['virtualmachine']:
+            for v in vms:
                 if vm.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
@@ -545,7 +546,7 @@ class AnsibleCloudStack:
 
     def query_tags(self, resource, resource_type):
         args = {
-            'resourceids': resource['id'],
+            'resourceid': resource['id'],
             'resourcetype': resource_type,
         }
         tags = self.query_api('listTags', **args)

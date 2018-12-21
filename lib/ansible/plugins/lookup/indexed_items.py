@@ -29,7 +29,7 @@ EXAMPLES = """
 RETURN = """
   _raw:
     description:
-      - list with each item.0 giving you the postiion and item.1 the value
+      - list with each item.0 giving you the position and item.1 the value
     type: list
 """
 

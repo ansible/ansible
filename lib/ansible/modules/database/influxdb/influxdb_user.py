@@ -35,6 +35,7 @@ options:
   admin:
     description:
       - Whether the user should be in the admin role or not.
+      - Since version 2.8, the role will also be updated.
     default: no
     type: bool
   state:
@@ -85,17 +86,17 @@ import ansible.module_utils.influxdb as influx
 
 
 def find_user(module, client, user_name):
-    name = None
+    user_result = None
 
     try:
-        names = client.get_list_users()
-        for u_name in names:
-            if u_name['user'] == user_name:
-                name = u_name
+        users = client.get_list_users()
+        for user in users:
+            if user['user'] == user_name:
+                user_result = user
                 break
-    except ansible.module_utils.urls.ConnectionError as e:
+    except (ansible.module_utils.urls.ConnectionError, influx.exceptions.InfluxDBClientError) as e:
         module.fail_json(msg=str(e))
-    return name
+    return user_result
 
 
 def check_user_password(module, client, user_name, user_password):
@@ -119,8 +120,6 @@ def set_user_password(module, client, user_name, user_password):
             client.set_user_password(user_name, user_password)
         except ansible.module_utils.urls.ConnectionError as e:
             module.fail_json(msg=str(e))
-
-    module.exit_json(changed=True)
 
 
 def create_user(module, client, user_name, user_password, admin):
@@ -166,11 +165,25 @@ def main():
 
     if state == 'present':
         if user:
-            if check_user_password(module, client, user_name, user_password):
-                module.exit_json(changed=False)
-            else:
+            changed = False
+
+            if not check_user_password(module, client, user_name, user_password) and user_password is not None:
                 set_user_password(module, client, user_name, user_password)
+                changed = True
+
+            try:
+                if admin and not user['admin']:
+                    client.grant_admin_privileges(user_name)
+                    changed = True
+                elif not admin and user['admin']:
+                    client.revoke_admin_privileges(user_name)
+                    changed = True
+            except influx.exceptions.InfluxDBClientError as e:
+                module.fail_json(msg=str(e))
+
+            module.exit_json(changed=changed)
         else:
+            user_password = user_password or ''
             create_user(module, client, user_name, user_password, admin)
 
     if state == 'absent':

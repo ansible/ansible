@@ -22,7 +22,9 @@
 - set_fact: set_name='version'
 
 - name: read mysql variables (expect changed=false)
-  mysql_variables: variable={{set_name}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - include: assert_var_output.yml changed=false output={{result}} var_name={{set_name}}
@@ -35,10 +37,16 @@
      set_value: 'ON'
 
 - name: set mysql variable
-  mysql_variables: variable={{set_name}} value={{set_value}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: update mysql variable to same value (expect changed=false)
-  mysql_variables: variable={{set_name}} value={{set_value}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - include: assert_var.yml changed=false output={{result}} var_name={{set_name}} var_value={{set_value}}
@@ -51,10 +59,16 @@
      set_value: '300'
 
 - name: set mysql variable to a temp value
-  mysql_variables: variable={{set_name}} value='200'
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '200'
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: update mysql variable value (expect changed=true)
-  mysql_variables: variable={{set_name}} value={{set_value}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - include: assert_var.yml changed=true output={{result}} var_name={{set_name}} var_value='{{set_value}}'
@@ -67,10 +81,16 @@
      set_value: "400"
 
 - name: set mysql variable to a temp value
-  mysql_variables: variable={{set_name}} value="200"
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: "200"
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: update mysql variable value (expect changed=true)
-  mysql_variables: variable={{set_name}} value={{set_value}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - include: assert_var.yml changed=true output={{result}} var_name={{set_name}} var_value='{{set_value}}'
@@ -83,10 +103,16 @@
      set_value: 500
 
 - name: set mysql variable to a temp value
-  mysql_variables: variable={{set_name}} value=200
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: 200
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: update mysql variable value (expect changed=true)
-  mysql_variables: variable={{set_name}} value={{set_value}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - include: assert_var.yml changed=true output={{result}} var_name={{set_name}} var_value='{{set_value}}'
@@ -95,7 +121,10 @@
 # Verify mysql_variable successfully updates a variable using an expression (e.g. 1024*4)
 #
 - name: set mysql variable value to an expression
-  mysql_variables: variable=max_tmp_tables value="1024*4"
+  mysql_variables:
+    variable: max_tmp_tables
+    value: "1024*4"
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
   ignore_errors: true
 
@@ -105,7 +134,10 @@
 # Verify mysql_variable fails when setting an incorrect value (out of range)
 #
 - name: set mysql variable value to a number out of range
-  mysql_variables: variable=max_tmp_tables value=-1
+  mysql_variables:
+    variable: max_tmp_tables
+    value: -1
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
   ignore_errors: true
 
@@ -115,7 +147,10 @@
 # Verify mysql_variable fails when setting an incorrect value (incorrect type)
 #
 - name: set mysql variable value to a non-valid value number
-  mysql_variables: variable=max_tmp_tables value=TEST
+  mysql_variables:
+    variable: max_tmp_tables
+    value: TEST
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
   ignore_errors: true
 
@@ -125,7 +160,10 @@
 # Verify mysql_variable fails when setting an unknown variable
 #
 - name: set a non mysql variable
-  mysql_variables: variable=my_sql_variable value=ON
+  mysql_variables:
+    variable: my_sql_variable
+    value: ON
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
   ignore_errors: true
 
@@ -135,7 +173,10 @@
 # Verify mysql_variable fails when setting a read-only variable
 #
 - name: set value of a read only mysql variable
-  mysql_variables: variable=character_set_system value=utf16
+  mysql_variables:
+    variable: character_set_system
+    value: utf16
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
   ignore_errors: true
 
@@ -145,24 +186,40 @@
 # Verify mysql_variable works with the login_user and login_password parameters
 #
 - name: create mysql user
-  mysql_user: name={{user}} password={{password}} state=present priv=*.*:ALL
+  mysql_user:
+    name: '{{user}}'
+    password: '{{password}}'
+    state: present
+    priv: '*.*:ALL'
+    login_unix_socket: '{{ mysql_socket }}'
 
 - set_fact:
      set_name: wait_timeout
      set_value: 77
 
 - name: query mysql_variable using login_user and password_password
-  mysql_variables: variable={{set_name}} login_user={{user}} login_password={{password}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    login_user: '{{user}}'
+    login_password: '{{password}}'
   register: result
 
 - include: assert_var_output.yml changed=false output={{result}} var_name={{set_name}}
 
 - name: set mysql variable to temp value using user login and password (expect changed=true)
-  mysql_variables: variable={{set_name}} value=20 login_user={{user}} login_password={{password}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: 20
+    login_user: '{{user}}'
+    login_password: '{{password}}'
   register: result
 
 - name: update mysql variable value using user login and password (expect changed=true)
-  mysql_variables: variable={{set_name}} value={{set_value}} login_user={{user}} login_password={{password}}
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_user: '{{user}}'
+    login_password: '{{password}}'
   register: result
 
 - include: assert_var.yml changed=true output={{result}} var_name={{set_name}} var_value='{{set_value}}'
@@ -175,28 +232,43 @@
      set_value: 10
 
 - name: query mysql_variable using incorrect login_password
-  mysql_variables: variable={{set_name}} login_user={{user}} login_password=wrongpassword
+  mysql_variables:
+    variable: '{{set_name}}'
+    login_user: '{{user}}'
+    login_password: 'wrongpassword'
   register: result
   ignore_errors: true
 
 - include: assert_fail_msg.yml output={{result}}  msg='unable to connect to database'
 
 - name: update mysql variable value using incorrect login_password (expect failed=true)
-  mysql_variables: variable={{set_name}} value={{set_value}} login_user={{user}} login_password='this is an incorrect password'
+  mysql_variables:
+    variable: '{{set_name}}'
+    value: '{{set_value}}'
+    login_user: '{{user}}'
+    login_password: 'this is an incorrect password'
+  register: result
+  ignore_errors: true
+
+- include: assert_fail_msg.yml output={{result}}  msg='unable to connect to database'
+
+#============================================================
+# Verify mysql_variable fails with an incorrect login_host parameter
+#
+- name: query mysql_variable using incorrect login_host
+  mysql_variables:
+    variable: wait_timeout
+    login_host: '12.0.0.9'
+    login_user: '{{user}}'
+    login_password: '{{password}}'
+    connect_timeout: 5
   register: result
   ignore_errors: true
 
 - include: assert_fail_msg.yml output={{result}}  msg='unable to connect to database'
 
 - name: remove mysql_user {{user}}
-  mysql_user: name={{user}} state=absent
-
-#============================================================
-# Verify mysql_variable fails with an incorrect login_host parameter
-#
-- name: query mysql_variable using incorrect login_host
-  mysql_variables: variable=wait_timeout login_host=12.0.0.9 connect_timeout=5
-  register: result
-  ignore_errors: true
-
-- include: assert_fail_msg.yml output={{result}}  msg='unable to connect to database'
+  mysql_user:
+    name: '{{user}}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'

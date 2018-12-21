@@ -1,0 +1,20 @@
+---
+- debug: msg="START common/bad_operator.yaml on connection={{ ansible_connection }}"
+
+- name: test bad operator
+  nxos_command:
+    commands:
+      - show version
+      - show interface mgmt0 | json
+    wait_for:
+      - "result[1].TABLE_interface.ROW_interface.state foo up"
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "result.msg is defined"
+
+- debug: msg="END common/bad_operator.yaml on connection={{ ansible_connection }}"

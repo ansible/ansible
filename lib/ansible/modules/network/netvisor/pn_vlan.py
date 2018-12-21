@@ -70,6 +70,7 @@ options:
     description:
       - Specify if you want to collect statistics for a VLAN. Statistic
         collection is enabled by default.
+    type: bool
   pn_ports:
     description:
       - Specifies the switch network data port number, list of ports, or range
@@ -114,6 +115,9 @@ changed:
 """
 
 import shlex
+
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
 
 VLAN_EXISTS = None
 MAX_VLAN_ID = 4092
@@ -305,8 +309,6 @@ def main():
 
     run_cli(module, cli)
 
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

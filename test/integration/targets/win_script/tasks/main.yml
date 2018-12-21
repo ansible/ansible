@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- name: run setup to allow skipping OS-specific tests
+  setup:
+    gather_subset: min
+
 - name: get tempdir path
   raw: $env:TEMP
   register: tempdir
@@ -178,46 +182,60 @@
       - "test_script_removes_file_again_result is not changed"
       - "test_script_removes_file_again_result is skipped"
 
-# TODO: these tests fail on 2008 (not even R2) with no output. It's related to the default codepage being UTF8- if we force it back to 437, it works fine.
-# Need to figure out a sane place to do that under the new exec wrapper.
-#- name: run simple batch file
-#  script: test_script.bat
-#  register: test_batch_result
-#
-#- name: check that batch file ran
-#  assert:
-#    that:
-#      - "test_batch_result.rc == 0"
-#      - "test_batch_result.stdout"
-#      - "'batch' in test_batch_result.stdout"
-#      - "not test_batch_result.stderr"
-#      - "test_batch_result is not failed"
-#      - "test_batch_result is changed"
+- name: skip batch tests on 6.0 (UTF8 codepage prevents it from working, see https://github.com/ansible/ansible/issues/21915)
+  block:
+  - name: run simple batch file
+    script: test_script.bat
+    register: test_batch_result
 
+  - name: check that batch file ran
+    assert:
+      that:
+        - "test_batch_result.rc == 0"
+        - "test_batch_result.stdout"
+        - "'batch' in test_batch_result.stdout"
+        - "not test_batch_result.stderr"
+        - "test_batch_result is not failed"
+        - "test_batch_result is changed"
 
-#- name: run simple batch file with .cmd extension
-#  script: test_script.cmd
-#  register: test_cmd_result
-#
-#- name: check that batch file with .cmd extension ran
-#  assert:
-#    that:
-#      - "test_cmd_result.rc == 0"
-#      - "test_cmd_result.stdout"
-#      - "'cmd extension' in test_cmd_result.stdout"
-#      - "not test_cmd_result.stderr"
-#      - "test_cmd_result is not failed"
-#      - "test_cmd_result is changed"
+  - name: run simple batch file with .cmd extension
+    script: test_script.cmd
+    register: test_cmd_result
+
+  - name: check that batch file with .cmd extension ran
+    assert:
+      that:
+        - "test_cmd_result.rc == 0"
+        - "test_cmd_result.stdout"
+        - "'cmd extension' in test_cmd_result.stdout"
+        - "not test_cmd_result.stderr"
+        - "test_cmd_result is not failed"
+        - "test_cmd_result is changed"
+
+  - name: run simple batch file with .bat extension that fails
+    script: fail.bat
+    ignore_errors: true
+    register: test_batch_result
+
+  - name: check that batch file with .bat extension reported failure
+    assert:
+      that:
+        - test_batch_result.rc == 1
+        - test_batch_result.stdout
+        - test_batch_result.stderr
+        - test_batch_result is failed
+        - test_batch_result is changed
+  when: not ansible_distribution_version.startswith('6.0')
 
 - name: run test script that takes a boolean parameter
-  script: test_script_bool.ps1 $true
+  script: test_script_bool.ps1 $false  # use false as that can pick up more errors
   register: test_script_bool_result
 
 - name: check that the script ran and the parameter was treated as a boolean
   assert:
     that:
-      - "test_script_bool_result.stdout_lines[0] == 'System.Boolean'"
-      - "test_script_bool_result.stdout_lines[1] == 'True'"
+      - test_script_bool_result.stdout_lines[0] == 'System.Boolean'
+      - test_script_bool_result.stdout_lines[1] == 'False'
 
 - name: run test script that uses envvars
   script: test_script_with_env.ps1
@@ -272,3 +290,16 @@
     that:
       - test_script_removes_file_check_mode is changed
       - remove_file_stat.stat.exists
+
+- name: run test script with become that outputs 2 lines
+  script: test_script_whoami.ps1
+  register: test_script_result_become
+  become: yes
+  become_user: SYSTEM
+  become_method: runas
+
+- name: check that the script ran and we get both outputs on new lines
+  assert:
+    that:
+    - test_script_result_become.stdout_lines[0]|lower == 'nt authority\\system'
+    - test_script_result_become.stdout_lines[1] == 'finished'

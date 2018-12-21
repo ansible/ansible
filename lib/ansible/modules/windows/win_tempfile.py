@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8 -*-
 
-# Copyright: (c) 2017 Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -12,8 +12,6 @@ DOCUMENTATION = r'''
 ---
 module: win_tempfile
 version_added: "2.3"
-author:
-- Dag Wieers (@dagwieers)
 short_description: Creates temporary files and directories
 description:
   - Creates temporary files and directories.
@@ -28,6 +26,7 @@ options:
     description:
       - Location where temporary file or directory should be created.
       - If path is not specified default system temporary directory (%TEMP%) will be used.
+    type: path
     default: '%TEMP%'
   prefix:
     description:
@@ -39,6 +38,10 @@ options:
     default: ''
 notes:
   - For non-Windows targets, please use the M(tempfile) module instead.
+seealso:
+- module: tempfile
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r"""
@@ -57,6 +60,6 @@ RETURN = r'''
 path:
   description: Path to created file or directory
   returned: success
-  type: string
+  type: str
   sample: C:\Users\Administrator\AppData\Local\Temp\ansible.bMlvdk
 '''

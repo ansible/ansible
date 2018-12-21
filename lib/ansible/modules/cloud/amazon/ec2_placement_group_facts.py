@@ -55,15 +55,15 @@ placement_groups:
   contains:
     name:
       description: PG name
-      type: string
+      type: str
       sample: my-cluster
     state:
       description: PG state
-      type: string
+      type: str
       sample: "available"
     strategy:
       description: PG strategy
-      type: string
+      type: str
       sample: "cluster"
 
 '''

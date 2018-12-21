@@ -1,0 +1,24 @@
+---
+
+- block:
+
+  - set_fact:
+      tls:
+        - [ yes, no, no ]
+        - [ no, yes, no ]
+        - [ no, no, yes ]
+  - set_fact:
+      ciphers:
+        - yes
+        - no
+
+  - name: NXAPI various transport tests with different TLS and ciphers 
+    vars:
+      tlsv1_2: "{{ item[0][0] }}"
+      tlsv1_1: "{{ item[0][1] }}"
+      tlsv1_0: "{{ item[0][2] }}"
+      ssl_strong_ciphers: "{{ item[1] }}"
+    include: targets/nxos_nxapi_transports/tests/nxapi/assert_test.yaml
+    loop: "{{ tls | product(ciphers) | list }}"
+
+  when: (platform is match("N9K") or platform is match("N3K") or platform is match("N9K-F") or platform is match("N35") or platform is match("N3L")) and major_version is version('9.2', '>=')

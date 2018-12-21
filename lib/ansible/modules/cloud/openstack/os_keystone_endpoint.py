@@ -45,13 +45,14 @@ options:
      description:
         - Is the service enabled.
      default: True
+     type: bool
    state:
      description:
        - Should the resource be C(present) or C(absent).
      choices: [present, absent]
      default: present
 requirements:
-    - shade >= 1.11.0
+    - openstacksdk >= 0.13.0
 '''
 
 EXAMPLES = '''
@@ -81,31 +82,29 @@ endpoint:
     contains:
         id:
             description: Endpoint ID.
-            type: string
+            type: str
             sample: 3292f020780b4d5baf27ff7e1d224c44
         region:
             description: Region Name.
-            type: string
+            type: str
             sample: RegionOne
         service_id:
             description: Service ID.
-            type: string
+            type: str
             sample: b91f1318f735494a825a55388ee118f3
         interface:
             description: Endpoint Interface.
-            type: string
+            type: str
             sample: public
         url:
             description: Service URL.
-            type: string
+            type: str
             sample: http://controller:9292
         enabled:
             description: Service status.
-            type: boolean
+            type: bool
             sample: True
 '''
-
-from distutils.version import StrictVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
@@ -147,8 +146,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.11.0')
-
     service_name_or_id = module.params['service']
     interface = module.params['endpoint_interface']
     url = module.params['url']
@@ -156,8 +153,8 @@ def main():
     enabled = module.params['enabled']
     state = module.params['state']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
 
         service = cloud.get_service(service_name_or_id)
         if service is None:
@@ -204,7 +201,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

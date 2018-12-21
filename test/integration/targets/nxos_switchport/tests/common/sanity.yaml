@@ -13,33 +13,29 @@
   nxos_config: &default
     lines:
       - "default interface {{ intname }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Setup vlans"
   nxos_vlan:
     vlan_range: "5-10,20"
-    provider: "{{ connection }}"
 
 - block:
   - name: Ensure interface is in L2 state
     nxos_interface:
       interface: "{{ intname }}"
       mode: 'layer2'
-      provider: "{{ connection }}"
 
   - name: Ensure interface is in its default switchport state
     nxos_switchport: &def_swi
       interface: "{{ intname }}"
-      state: unconfigured
       provider: "{{ connection }}"
+      state: unconfigured
 
   - name: Ensure interface is configured for access vlan 20
     nxos_switchport: &acc_vl
       interface: "{{ intname }}"
       mode: access
       access_vlan: 20
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -60,7 +56,6 @@
       mode: trunk
       native_vlan: 10
       trunk_allowed_vlans: 5-10
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -77,7 +72,6 @@
       mode: trunk
       native_vlan: 10
       trunk_vlans: 2-50
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -93,8 +87,8 @@
       interface: "{{ intname }}"
       mode: trunk
       trunk_vlans: 2-50
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -122,8 +116,8 @@
       interface: "{{ intname }}"
       mode: trunk
       trunk_vlans: 30-4094
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -150,8 +144,8 @@
   - name: "remove vlans"
     nxos_vlan:
       vlan_range: "5-10,20"
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     ignore_errors: yes
 
   - name: "default interface"

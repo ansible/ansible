@@ -31,12 +31,9 @@ from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlpa
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.utils.color import stringc
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class GalaxyLogin(object):
@@ -63,12 +60,12 @@ class GalaxyLogin(object):
 
         try:
             self.github_username = input("Github Username: ")
-        except:
+        except Exception:
             pass
 
         try:
             self.github_password = getpass.getpass("Password for %s: " % self.github_username)
-        except:
+        except Exception:
             pass
 
         if not self.github_username or not self.github_password:

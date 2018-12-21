@@ -10,8 +10,8 @@
   nxos_acl: &remove
     name: TEST_ACL
     seq: 10
-    state: delete_acl
     provider: "{{ connection }}"
+    state: delete_acl
   ignore_errors: yes
 
 - name: "Configure ACE10"
@@ -20,7 +20,7 @@
     seq: 10
     action: permit
     proto: tcp
-    src: 1.1.1.1/24
+    src: 192.0.2.1/24
     src_port_op: range
     src_port1: 1900
     src_port2: 1910
@@ -37,8 +37,8 @@
     rst: 'enable'
     syn: 'enable'
     time_range: "{{time_range|default(omit)}}"
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert: &true
@@ -59,7 +59,7 @@
     seq: 10
     action: deny
     proto: tcp
-    src: 1.1.1.1/24
+    src: 192.0.2.1/24
     src_port_op: range
     src_port1: 1900
     src_port2: 1910
@@ -76,8 +76,8 @@
     rst: 'enable'
     syn: 'enable'
     time_range: "{{time_range|default(omit)}}"
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert: *true
@@ -94,8 +94,8 @@
     seq: 20
     action: remark
     remark: test_remark
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert: *true
@@ -112,8 +112,8 @@
     seq: 20
     action: remark
     remark: changed_remark
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert: *true
@@ -134,8 +134,8 @@
     dest: any
     fragments: enable
     precedence: network
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert: *true
@@ -155,8 +155,8 @@
     src: any
     dest: any
     precedence: network
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert: *true
@@ -178,8 +178,8 @@
     src_port1: 1200
     dest: any
     precedence: network
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert: *true
@@ -199,8 +199,8 @@
     src: any
     dest: any
     precedence: network
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert: *true
@@ -215,8 +215,8 @@
   nxos_acl: &remace30
     name: TEST_ACL
     seq: 30
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert: *true

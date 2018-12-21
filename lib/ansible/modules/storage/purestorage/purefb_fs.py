@@ -78,6 +78,15 @@ options:
     required: false
     type: bool
     default: false
+  hard_limit:
+    description:
+      - Define whether the capacity for a filesystem is a hard limit.
+      - CAUTION This will cause the filesystem to go Read-Only if the
+        capacity has already exceeded the logical size of the filesystem.
+    required: false
+    type: bool
+    default: false
+    version_added: 2.8
 extends_documentation_fragment:
     - purestorage.fb
 '''
@@ -122,6 +131,7 @@ EXAMPLES = '''
     nfs_rules: '*(ro)'
     snapshot: true
     fastremove: true
+    hard_limit: true
     smb: true
     state: present
     fb_url: 10.10.10.2
@@ -140,6 +150,9 @@ from ansible.module_utils.basic import AnsibleModule, human_to_bytes
 from ansible.module_utils.pure import get_blade, purefb_argument_spec
 
 
+HARD_LIMIT_API_VERSION = '1.4'
+
+
 def get_fs(module, blade):
     """Return Filesystem or None"""
     fs = []
@@ -147,7 +160,7 @@ def get_fs(module, blade):
     try:
         res = blade.file_systems.list_file_systems(names=fs)
         return res.items[0]
-    except:
+    except Exception:
         return None
 
 
@@ -161,17 +174,29 @@ def create_fs(module, blade):
 
     if not module.check_mode:
         try:
-            fs_obj = FileSystem(name=module.params['name'],
-                                provisioned=size,
-                                fast_remove_directory_enabled=module.params['fastremove'],
-                                snapshot_directory_enabled=module.params['snapshot'],
-                                nfs=NfsRule(enabled=module.params['nfs'], rules=module.params['nfs_rules']),
-                                smb=ProtocolRule(enabled=module.params['smb']),
-                                http=ProtocolRule(enabled=module.params['http'])
-                                )
+            api_version = blade.api_version.list_versions().versions
+            if HARD_LIMIT_API_VERSION in api_version:
+                fs_obj = FileSystem(name=module.params['name'],
+                                    provisioned=size,
+                                    fast_remove_directory_enabled=module.params['fastremove'],
+                                    hard_limit_enabled=module.params['hard_limit'],
+                                    snapshot_directory_enabled=module.params['snapshot'],
+                                    nfs=NfsRule(enabled=module.params['nfs'], rules=module.params['nfs_rules']),
+                                    smb=ProtocolRule(enabled=module.params['smb']),
+                                    http=ProtocolRule(enabled=module.params['http'])
+                                    )
+            else:
+                fs_obj = FileSystem(name=module.params['name'],
+                                    provisioned=size,
+                                    fast_remove_directory_enabled=module.params['fastremove'],
+                                    snapshot_directory_enabled=module.params['snapshot'],
+                                    nfs=NfsRule(enabled=module.params['nfs'], rules=module.params['nfs_rules']),
+                                    smb=ProtocolRule(enabled=module.params['smb']),
+                                    http=ProtocolRule(enabled=module.params['http'])
+                                    )
             blade.file_systems.create_file_systems(fs_obj)
             changed = True
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -223,11 +248,16 @@ def modify_fs(module, blade):
         if not module.params['fastremove'] and fs.fast_remove_directory_enabled:
             attr['fast_remove_directory_enabled'] = module.params['fastremove']
             changed = True
+        api_version = blade.api_version.list_versions().versions
+        if HARD_LIMIT_API_VERSION in api_version:
+            if not module.params['hard_limit'] and fs.hard_limit_enabled:
+                attr['hard_limit_enabled'] = module.params['hard_limit']
+                changed = True
         if changed:
             n_attr = FileSystem(**attr)
             try:
                 blade.file_systems.update_file_systems(name=module.params['name'], attributes=n_attr)
-            except:
+            except Exception:
                 changed = False
     module.exit_json(changed=changed)
 
@@ -247,9 +277,9 @@ def delete_fs(module, blade):
                 try:
                     blade.file_systems.delete_file_systems(module.params['name'])
                     changed = True
-                except:
+                except Exception:
                     changed = False
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -260,7 +290,7 @@ def eradicate_fs(module, blade):
         try:
             blade.file_systems.delete_file_systems(module.params['name'])
             changed = True
-        except:
+        except Exception:
             changed = False
     module.exit_json(changed=changed)
 
@@ -277,6 +307,7 @@ def main():
             http=dict(default='false', type='bool'),
             snapshot=dict(default='false', type='bool'),
             fastremove=dict(default='false', type='bool'),
+            hard_limit=dict(default='false', type='bool'),
             state=dict(default='present', choices=['present', 'absent']),
             size=dict()
         )
@@ -298,7 +329,7 @@ def main():
         modify_fs(module, blade)
     elif state == 'absent' and fs and not fs.destroyed:
         delete_fs(module, blade)
-    elif state == 'absent' and fs and fs.destroyed:
+    elif state == 'absent' and fs and fs.destroyed and module.params['eradicate']:
         eradicate_fs(module, blade)
     elif state == 'absent' and not fs:
         module.exit_json(changed=False)

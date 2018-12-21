@@ -272,6 +272,12 @@
     that:
     - wait_for_port_already_started.wait_attempts == 1
 
+# add a manual wait to make sure the port is truly offline for next test
+- name: wait for port to be offline
+  win_wait_for:
+    port: '{{test_win_wait_for_port}}'
+    state: stopped
+
 - name: wait for port that is already offline
   win_wait_for:
     port: '{{test_win_wait_for_port}}'

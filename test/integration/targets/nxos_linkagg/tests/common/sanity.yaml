@@ -9,8 +9,8 @@
 - name: "Enable feature LACP"
   nxos_feature:
     feature: lacp
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - name: setup - remove config used in test(part1)
@@ -24,7 +24,6 @@
   nxos_config:
     lines:
       - no channel-group 20
-    provider: "{{ connection }}"
     parents: "{{ item }}"
   ignore_errors: yes
   loop:
@@ -37,13 +36,14 @@
     - { name: "{{testint1}}" }
     - { name: "{{testint2}}" }
     mode: layer2
+    provider: "{{ connection }}"
   when: platform is match("N35")
 
 - name: create linkagg
   nxos_linkagg: &create
     group: 20
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
@@ -113,8 +113,8 @@
 - name: remove linkagg
   nxos_linkagg: &remove
     group: 20
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:
@@ -188,8 +188,8 @@
   nxos_config:
     lines:
       - no channel-group 20
-    provider: "{{ connection }}"
     parents: "{{ item }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
   loop:
     - "interface {{ testint1 }}"
@@ -198,8 +198,8 @@
 - name: "Disable feature LACP"
   nxos_feature:
     feature: lacp
+    provider: "{{ connection }}"
     state: disabled
     timeout: 60
-    provider: "{{ connection }}"
 
 - debug: msg="END connection={{ ansible_connection }} nxos_linkagg sanity test"

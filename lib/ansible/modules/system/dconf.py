@@ -71,7 +71,7 @@ RETURN = """
 value:
     description: value associated with the requested key
     returned: success, state was "read"
-    type: string
+    type: str
     sample: "'Default'"
 """
 
@@ -369,6 +369,7 @@ def main():
     elif module.params['state'] == 'absent':
         changed = dconf.reset(module.params['key'])
         module.exit_json(changed=changed)
+
 
 if __name__ == '__main__':
     main()

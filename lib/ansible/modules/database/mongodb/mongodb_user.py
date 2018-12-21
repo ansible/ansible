@@ -61,6 +61,7 @@ options:
         version_added: "1.8"
         description:
             - Whether to use an SSL connection when connecting to the database
+        type: bool
     ssl_cert_reqs:
         version_added: "2.2"
         description:
@@ -95,7 +96,7 @@ notes:
 requirements: [ "pymongo" ]
 author:
     - "Elliott Foster (@elliotttf)"
-    - "Julien Thebault (@lujeni)"
+    - "Julien Thebault (@Lujeni)"
 '''
 
 EXAMPLES = '''
@@ -171,7 +172,7 @@ RETURN = '''
 user:
     description: The name of the user to add or remove.
     returned: success
-    type: string
+    type: str
 '''
 
 import os
@@ -383,8 +384,9 @@ def main():
         client = MongoClient(**connection_params)
 
         # NOTE: this check must be done ASAP.
-        # We doesn't need to be authenticated.
-        check_compatibility(module, client)
+        # We doesn't need to be authenticated (this ability has lost in PyMongo 3.6)
+        if LooseVersion(PyMongoVersion) <= LooseVersion('3.5'):
+            check_compatibility(module, client)
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()

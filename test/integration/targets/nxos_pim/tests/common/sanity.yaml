@@ -6,14 +6,14 @@
 - name: "Setup: Disable feature PIM"
   nxos_feature: &disable_feature
     feature: pim
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
 
 - name: "Setup: Enable feature PIM"
   nxos_feature:
     feature: pim
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
 
 - name: "Setup: Configure ssm_range none"
   nxos_pim: &none

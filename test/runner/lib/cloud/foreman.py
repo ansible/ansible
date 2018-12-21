@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Foreman plugin for integration tests."""
 
 from __future__ import absolute_import, print_function
@@ -32,7 +31,7 @@ class ForemanProvider(CloudProvider):
 
     DOCKER_SIMULATOR_NAME = 'foreman-stub'
 
-    DOCKER_IMAGE = 'quay.io/ansible/foreman-test-container:1.3.1'
+    DOCKER_IMAGE = 'quay.io/ansible/foreman-test-container:1.4.0'
     """Default image to run Foreman stub from.
 
     The simulator must be pinned to a specific version

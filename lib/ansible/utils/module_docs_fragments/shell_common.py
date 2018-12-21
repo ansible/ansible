@@ -32,7 +32,7 @@ options:
       - name: ansible_system_tmpdirs
   async_dir:
     description:
-       - Directory in which ansible will keep async job inforamtion
+       - Directory in which ansible will keep async job information
     default: '~/.ansible_async'
     env: [{name: ANSIBLE_ASYNC_DIR}]
     ini:
@@ -47,9 +47,10 @@ options:
       - dictionary of environment variables and their values to use when executing commands.
   admin_users:
     type: list
-    default: ['root', 'toor', 'admin']
+    default: ['root', 'toor']
     description:
-      - list of users to be expected to have admin privileges, for BSD you might want to add 'toor' for windows 'Administrator'.
+      - list of users to be expected to have admin privileges. This is used by the controller to
+        determine how to share temporary files between the remote user and the become user.
     env:
       - name: ANSIBLE_ADMIN_USERS
     ini:

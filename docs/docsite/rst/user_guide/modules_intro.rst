@@ -3,7 +3,7 @@
 Introduction
 ============
 
-Modules (also referred to as "task plugins" or "library plugins") are discrete unites of code that can be used from the command line or in a playbook task.
+Modules (also referred to as "task plugins" or "library plugins") are discrete units of code that can be used from the command line or in a playbook task.
 
 Let's review how we execute three different modules from the command line::
 
@@ -59,7 +59,7 @@ For a list of all available modules, see :doc:`../modules/modules_by_category`, 
        How to write your own modules
    :ref:`developing_api`
        Examples of using modules with the Python API
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

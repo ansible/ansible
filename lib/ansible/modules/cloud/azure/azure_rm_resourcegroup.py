@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -96,7 +96,7 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, normalize_location_name
 
 
 def resource_group_to_dict(rg):
@@ -162,7 +162,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                 if update_tags:
                     changed = True
 
-                if self.location and self.location != results['location']:
+                if self.location and normalize_location_name(self.location) != results['location']:
                     self.fail("Resource group '{0}' already exists in location '{1}' and cannot be "
                               "moved.".format(self.name, results['location']))
         except CloudError:
@@ -250,6 +250,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
 
 def main():
     AzureRMResourceGroup()
+
 
 if __name__ == '__main__':
     main()

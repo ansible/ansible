@@ -27,16 +27,20 @@ options:
   creates:
     description:
       - A path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
+    type: path
   removes:
     description:
       - A path or path filter pattern; when the referenced path B(does not) exist on the target host, the task will be skipped.
+    type: path
   chdir:
     description:
       - Set the specified path as the current working directory before executing a command
+    type: path
   executable:
     description:
       - Change the shell used to execute the command (eg, C(cmd)).
       - The target shell must accept a C(/c) parameter followed by the raw command line to be executed.
+    type: path
   stdin:
     description:
     - Set the stdin of the command directly to the specified value.
@@ -50,7 +54,13 @@ notes:
       Thus, it is not possible to use C(win_shell) to spawn long-running child or background processes.
       Consider creating a Windows service for managing background processes.
    - For non-Windows targets, use the M(shell) module instead.
-   - See also M(win_command), M(raw)
+seealso:
+- module: psexec
+- module: raw
+- module: script
+- module: shell
+- module: win_command
+- module: win_psexec
 author:
     - Matt Davis (@nitzmahone)
 '''
@@ -95,37 +105,37 @@ RETURN = r'''
 msg:
     description: changed
     returned: always
-    type: boolean
+    type: bool
     sample: True
 start:
     description: The command execution start time
     returned: always
-    type: string
+    type: str
     sample: '2016-02-25 09:18:26.429568'
 end:
     description: The command execution end time
     returned: always
-    type: string
+    type: str
     sample: '2016-02-25 09:18:26.755339'
 delta:
     description: The command execution delta time
     returned: always
-    type: string
+    type: str
     sample: '0:00:00.325771'
 stdout:
     description: The command standard output
     returned: always
-    type: string
+    type: str
     sample: 'Clustering node rabbit@slave1 with rabbit@master ...'
 stderr:
     description: The command standard error
     returned: always
-    type: string
+    type: str
     sample: 'ls: cannot access foo: No such file or directory'
 cmd:
     description: The command executed by the task
     returned: always
-    type: string
+    type: str
     sample: 'rabbitmqctl join_cluster rabbit@master'
 rc:
     description: The command return code (0 means success)

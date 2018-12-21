@@ -23,6 +23,7 @@ options:
     description:
       - Path to be used for changing inheritance
     required: yes
+    type: path
   state:
     description:
       - Specify whether to enable I(present) or disable I(absent) ACL inheritance
@@ -36,6 +37,8 @@ options:
         of the ACL structure.
     type: bool
     default: 'no'
+seealso:
+- module: win_acl
 author:
 - Hans-Joachim Kliemeck (@h0nIg)
 '''

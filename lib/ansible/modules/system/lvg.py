@@ -32,7 +32,9 @@ options:
     - The module will take care of running pvcreate if needed.
   pesize:
     description:
-    - The size of the physical extent in megabytes. Must be a power of 2.
+    - The size of the physical extent. pesize must be a power of 2, or
+      multiple of 128KiB. Since version 2.6, pesize can be optionally suffixed
+      by a UNIT (k/K/m/M/g/G), default unit is megabyte.
     default: 4
   pv_options:
     description:
@@ -63,6 +65,12 @@ EXAMPLES = '''
     pvs: /dev/sda1
     pesize: 32
 
+- name: Create a volume group on top of /dev/sdb with physical extent size = 128KiB
+  lvg:
+    vg: vg.services
+    pvs: /dev/sdb
+    pesize: 128K
+
 # If, for example, we already have VG vg.services on top of /dev/sdb1,
 # this VG will be extended by /dev/sdc5.  Or if vg.services was created on
 # top of /dev/sda5, we first extend it with /dev/sdb1 and /dev/sdc5,
@@ -78,6 +86,7 @@ EXAMPLES = '''
     state: absent
 '''
 
+import itertools
 import os
 
 from ansible.module_utils.basic import AnsibleModule
@@ -124,7 +133,7 @@ def main():
         argument_spec=dict(
             vg=dict(type='str', required=True),
             pvs=dict(type='list'),
-            pesize=dict(type='int', default=4),
+            pesize=dict(type='str', default=4),
             pv_options=dict(type='str', default=''),
             vg_options=dict(type='str', default=''),
             state=dict(type='str', default='present', choices=['absent', 'present']),
@@ -142,7 +151,7 @@ def main():
 
     dev_list = []
     if module.params['pvs']:
-        dev_list = module.params['pvs']
+        dev_list = list(module.params['pvs'])
     elif state == 'present':
         module.fail_json(msg="No physical volumes given.")
 
@@ -159,8 +168,12 @@ def main():
         # get pv list
         pvs_cmd = module.get_bin_path('pvs', True)
         if dev_list:
-            pvs_filter = ' || '. join(['pv_name = {0}'.format(x) for x in dev_list])
-            pvs_filter = "--select '%s'" % pvs_filter
+            pvs_filter_pv_name = ' || '.join(
+                'pv_name = {0}'.format(x)
+                for x in itertools.chain(dev_list, module.params['pvs'])
+            )
+            pvs_filter_vg_name = 'vg_name = {0}'.format(vg)
+            pvs_filter = "--select '{0} || {1}' ".format(pvs_filter_pv_name, pvs_filter_vg_name)
         else:
             pvs_filter = ''
         rc, current_pvs, err = module.run_command("%s --noheadings -o pv_name,vg_name --separator ';' %s" % (pvs_cmd, pvs_filter))
@@ -205,7 +218,7 @@ def main():
                     else:
                         module.fail_json(msg="Creating physical volume '%s' failed" % current_dev, rc=rc, err=err)
                 vgcreate_cmd = module.get_bin_path('vgcreate')
-                rc, _, err = module.run_command([vgcreate_cmd] + vgoptions + ['-s', str(pesize), vg] + dev_list)
+                rc, _, err = module.run_command([vgcreate_cmd] + vgoptions + ['-s', pesize, vg] + dev_list)
                 if rc == 0:
                     changed = True
                 else:

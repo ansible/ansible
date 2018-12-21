@@ -36,6 +36,7 @@ options:
   pending_deletion:
     description: Whether to get full details (tags, grants etc.) of keys pending deletion
     default: False
+    type: bool
 extends_documentation_fragment:
     - aws
     - ec2

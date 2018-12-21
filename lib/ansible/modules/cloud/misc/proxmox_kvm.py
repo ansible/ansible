@@ -190,7 +190,7 @@ options:
     description:
       - A hash/dictionary of network interfaces for the VM. C(net='{"key":"value", "key":"value"}').
       - Keys allowed are - C(net[n]) where 0 ≤ n ≤ N.
-      - Values allowed are - C("model="XX:XX:XX:XX:XX:XX",brigde="value",rate="value",tag="value",firewall="1|0",trunks="vlanid"").
+      - Values allowed are - C("model="XX:XX:XX:XX:XX:XX",bridge="value",rate="value",tag="value",firewall="1|0",trunks="vlanid"").
       - Model is one of C(e1000 e1000-82540em e1000-82544gc e1000-82545em i82551 i82557b i82559er ne2k_isa ne2k_pci pcnet rtl8139 virtio vmxnet3).
       - C(XX:XX:XX:XX:XX:XX) should be an unique MAC address. This is automatically generated if not specified.
       - The C(bridge) parameter can be used to automatically add the interface to a bridge device. The Proxmox VE standard bridge is called 'vmbr0'.
@@ -513,7 +513,7 @@ EXAMPLES = '''
     api_host    : helldorado
     name        : spynal
     node        : sabrewulf
-    cpu         : 8
+    cores       : 8
     memory      : 16384
     update      : yes
 
@@ -629,7 +629,7 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
     kwargs = dict((k, v) for k, v in kwargs.items() if v is not None)
 
     # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
-    for k in kwargs.keys():
+    for k in list(kwargs.keys()):
         if isinstance(kwargs[k], dict):
             kwargs.update(kwargs[k])
             del kwargs[k]
@@ -703,7 +703,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
             del kwargs['net']
 
     # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
-    for k in kwargs.keys():
+    for k in list(kwargs.keys()):
         if isinstance(kwargs[k], dict):
             kwargs.update(kwargs[k])
             del kwargs[k]
@@ -909,7 +909,7 @@ def main():
             try:
                 vmid = get_nextvmid(module, proxmox)
             except Exception as e:
-                module.fail_json(msg="Can't get the next vimd for VM {} automatically. Ensure your cluster state is good".format(name))
+                module.fail_json(msg="Can't get the next vmid for VM {} automatically. Ensure your cluster state is good".format(name))
         else:
             try:
                 if not clone:
@@ -933,7 +933,7 @@ def main():
             try:
                 newid = get_nextvmid(module, proxmox)
             except Exception as e:
-                module.fail_json(msg="Can't get the next vimd for VM {} automatically. Ensure your cluster state is good".format(name))
+                module.fail_json(msg="Can't get the next vmid for VM {} automatically. Ensure your cluster state is good".format(name))
         else:
             vm = get_vm(proxmox, newid)
             if vm:
@@ -944,13 +944,13 @@ def main():
             settings(module, proxmox, vmid, node, name, timeout, delete=delete)
             module.exit_json(changed=True, msg="Settings has deleted on VM {} with vmid {}".format(name, vmid))
         except Exception as e:
-            module.fail_json(msg='Unable to delete settings on VM {} with vimd {}: '.format(name, vmid) + str(e))
+            module.fail_json(msg='Unable to delete settings on VM {} with vmid {}: '.format(name, vmid) + str(e))
     elif revert is not None:
         try:
             settings(module, proxmox, vmid, node, name, timeout, revert=revert)
             module.exit_json(changed=True, msg="Settings has reverted on VM {} with vmid {}".format(name, vmid))
         except Exception as e:
-            module.fail_json(msg='Unable to revert settings on VM {} with vimd {}: Maybe is not a pending task...   '.format(name, vmid) + str(e))
+            module.fail_json(msg='Unable to revert settings on VM {} with vmid {}: Maybe is not a pending task...   '.format(name, vmid) + str(e))
 
     if state == 'present':
         try:
@@ -1031,9 +1031,9 @@ def main():
                 module.exit_json(changed=True, msg="VM %s with vmid %s deployed" % (name, vmid), **results)
         except Exception as e:
             if update:
-                module.fail_json(msg="Unable to update vm {} with vimd {}=".format(name, vmid) + str(e))
+                module.fail_json(msg="Unable to update vm {} with vmid {}=".format(name, vmid) + str(e))
             elif clone is not None:
-                module.fail_json(msg="Unable to clone vm {} from vimd {}=".format(name, vmid) + str(e))
+                module.fail_json(msg="Unable to clone vm {} from vmid {}=".format(name, vmid) + str(e))
             else:
                 module.fail_json(msg="creation of %s VM %s with vmid %s failed with exception=%s" % (VZ_TYPE, name, vmid, e))
 

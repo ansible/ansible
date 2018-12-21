@@ -167,7 +167,7 @@ saved:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/dellos10_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
@@ -263,7 +263,7 @@ def main():
             commands = dumps(configobjs, 'commands')
             if ((isinstance((module.params['lines']), list)) and
                     (isinstance((module.params['lines'][0]), dict)) and
-                    (['prompt', 'answer'].issubset(module.params['lines'][0]))):
+                    (set(['prompt', 'answer']).issubset(module.params['lines'][0]))):
 
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],

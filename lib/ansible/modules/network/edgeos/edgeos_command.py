@@ -14,7 +14,7 @@ DOCUMENTATION = """
 module: edgeos_command
 version_added: "2.5"
 author:
-  - Chad Norgan (@BeardyMcBeards)
+  - Chad Norgan (@beardymcbeards)
   - Sam Doran (@samdoran)
 short_description: Run one or more commands on EdgeOS devices
 description:
@@ -25,6 +25,9 @@ description:
     use a custom pager that can cause this module to hang.  If the
     value of the environment variable C(ANSIBLE_EDGEOS_TERMINAL_LENGTH)
     is not set, the default number of 10000 is used.
+  - "This is a network module and requires C(connection: network_cli)
+    in order to work properly."
+  - For more information please see the L(Network Guide,../network/getting_started/index.html).
 options:
   commands:
     description:
@@ -92,39 +95,25 @@ stdout_lines:
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 """
-
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import transform_commands, to_lines
 from ansible.module_utils.network.edgeos.edgeos import run_commands
-from ansible.module_utils.six import string_types
-
-
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        yield item
 
 
 def parse_commands(module, warnings):
-    spec = dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict(),
-    )
-
-    transform = ComplexList(spec, module)
-    commands = transform(module.params['commands'])
+    commands = transform_commands(module)
 
     if module.check_mode:
         for item in list(commands):
             if not item['command'].startswith('show'):
                 warnings.append(
-                    'Only show commands are supported when using check_mode, '
-                    'not executing %s' % item['command'])
+                    'Only show commands are supported when using check mode, not '
+                    'executing %s' % item['command']
+                )
                 commands.remove(item)
 
     return commands
@@ -142,14 +131,14 @@ def main():
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
 
     warnings = list()
-    result = {'changed': False}
+    result = {'changed': False, 'warnings': warnings}
     commands = parse_commands(module, warnings)
     wait_for = module.params['wait_for'] or list()
 
     try:
         conditionals = [Conditional(c) for c in wait_for]
-    except AttributeError as e:
-        module.fail_json(msg=str(e))
+    except AttributeError as exc:
+        module.fail_json(msg=to_text(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
@@ -174,14 +163,12 @@ def main():
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not been satisfied'
-        module.fail_json(msg=msg, falied_conditions=failed_conditions)
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-    result = {
-        'changed': False,
+    result.update({
         'stdout': responses,
-        'warnings': warnings,
-        'stdout_lines': list(to_lines(responses))
-    }
+        'stdout_lines': list(to_lines(responses)),
+    })
 
     module.exit_json(**result)
 

@@ -21,8 +21,8 @@ description:
     - Describes a task definition in ecs.
 version_added: "2.5"
 author:
-    - Gustavo Maia(@gurumaia)
-    - Mark Chance(@Java1Guy)
+    - Gustavo Maia (@gurumaia)
+    - Mark Chance (@Java1Guy)
     - Darek Kaczynski (@kaczynskid)
 requirements: [ json, botocore, boto3 ]
 options:
@@ -51,11 +51,11 @@ container_definitions:
         name:
             description: The name of a container.
             returned: always
-            type: string
+            type: str
         image:
             description: The image used to start a container.
             returned: always
-            type: string
+            type: str
         cpu:
             description: The number of cpu units reserved for the container.
             returned: always
@@ -67,7 +67,7 @@ container_definitions:
         links:
             description: Links to other containers.
             returned: when present
-            type: string
+            type: str
         portMappings:
             description: The list of port mappings for the container.
             returned: always
@@ -84,7 +84,7 @@ container_definitions:
                 protocol:
                     description: The protocol used for the port mapping.
                     returned: when present
-                    type: string
+                    type: str
         essential:
             description: Whether this is an essential container or not.
             returned: always
@@ -92,11 +92,11 @@ container_definitions:
         entryPoint:
             description: The entry point that is passed to the container.
             returned: when present
-            type: string
+            type: str
         command:
             description: The command that is passed to the container.
             returned: when present
-            type: string
+            type: str
         environment:
             description: The environment variables to pass to a container.
             returned: always
@@ -105,11 +105,11 @@ container_definitions:
                 name:
                     description: The name of the environment variable.
                     returned: when present
-                    type: string
+                    type: str
                 value:
                     description: The value of the environment variable.
                     returned: when present
-                    type: string
+                    type: str
         mountPoints:
             description: The mount points for data volumes in your container.
             returned: always
@@ -118,11 +118,11 @@ container_definitions:
                 sourceVolume:
                     description: The name of the volume to mount.
                     returned: when present
-                    type: string
+                    type: str
                 containerPath:
                     description: The path on the container to mount the host volume at.
                     returned: when present
-                    type: string
+                    type: str
                 readOnly:
                     description: If this value is true , the container has read-only access to the volume.
                       If this value is false , then the container can write to the volume.
@@ -136,7 +136,7 @@ container_definitions:
                 sourceContainer:
                     description: The name of another container within the same task definition to mount volumes from.
                     returned: when present
-                    type: string
+                    type: str
                 readOnly:
                     description: If this value is true , the container has read-only access to the volume.
                       If this value is false , then the container can write to the volume.
@@ -145,15 +145,15 @@ container_definitions:
         hostname:
             description: The hostname to use for your container.
             returned: when present
-            type: string
+            type: str
         user:
             description: The user name to use inside the container.
             returned: when present
-            type: string
+            type: str
         workingDirectory:
             description: The working directory in which to run commands inside the container.
             returned: when present
-            type: string
+            type: str
         disableNetworking:
             description: When this parameter is true, networking is disabled within the container.
             returned: when present
@@ -170,11 +170,11 @@ container_definitions:
         dnsServers:
             description: A list of DNS servers that are presented to the container.
             returned: when present
-            type: string
+            type: str
         dnsSearchDomains:
             description: A list of DNS search domains that are presented to the container.
             returned: when present
-            type: string
+            type: str
         extraHosts:
             description: A list of hostnames and IP address mappings to append to the /etc/hosts file on the container.
             returned: when present
@@ -183,19 +183,19 @@ container_definitions:
                 hostname:
                     description: The hostname to use in the /etc/hosts entry.
                     returned: when present
-                    type: string
+                    type: str
                 ipAddress:
                     description: The IP address to use in the /etc/hosts entry.
                     returned: when present
-                    type: string
+                    type: str
         dockerSecurityOptions:
             description: A list of strings to provide custom labels for SELinux and AppArmor multi-level security systems.
             returned: when present
-            type: string
+            type: str
         dockerLabels:
             description: A key/value map of labels to add to the container.
             returned: when present
-            type: string
+            type: str
         ulimits:
             description: A list of ulimits to set in the container.
             returned: when present
@@ -204,7 +204,7 @@ container_definitions:
                 name:
                     description: The type of the ulimit .
                     returned: when present
-                    type: string
+                    type: str
                 softLimit:
                     description: The soft limit for the ulimit type.
                     returned: when present
@@ -216,28 +216,28 @@ container_definitions:
         logConfiguration:
             description: The log configuration specification for the container.
             returned: when present
-            type: string
+            type: str
         options:
             description: The configuration options to send to the log driver.
             returned: when present
-            type: string
+            type: str
 
 family:
     description: The family of your task definition, used as the definition name
     returned: always
-    type: string
+    type: str
 task_definition_arn:
     description: ARN of the task definition
     returned: always
-    type: string
+    type: str
 task_role_arn:
     description: The ARN of the IAM role that containers in this task can assume
     returned: when role is set
-    type: string
+    type: str
 network_mode:
     description: Network mode for the containers
     returned: always
-    type: string
+    type: str
 revision:
     description: Revision number that was queried
     returned: always
@@ -250,7 +250,7 @@ volumes:
         name:
             description: The name of the volume.
             returned: when present
-            type: string
+            type: str
         host:
             description: The contents of the host parameter determine whether your data volume
               persists on the host container instance and where it is stored.
@@ -259,11 +259,11 @@ volumes:
         source_path:
             description: The path on the host container instance that is presented to the container.
             returned: when present
-            type: string
+            type: str
 status:
     description: The status of the task definition
     returned: always
-    type: string
+    type: str
 requires_attributes:
     description: The container instance attributes required by your task
     returned: when present
@@ -272,19 +272,19 @@ requires_attributes:
         name:
             description: The name of the attribute.
             returned: when present
-            type: string
+            type: str
         value:
             description: The value of the attribute.
             returned: when present
-            type: string
+            type: str
         targetType:
             description: The type of the target with which to attach the attribute.
             returned: when present
-            type: string
+            type: str
         targetId:
             description: The ID of the target.
             returned: when present
-            type: string
+            type: str
 placement_constraints:
     description: A list of placement constraint objects to use for tasks
     returned: always
@@ -293,11 +293,11 @@ placement_constraints:
         type:
             description: The type of constraint.
             returned: when present
-            type: string
+            type: str
         expression:
             description: A cluster query language expression to apply to the constraint.
             returned: when present
-            type: string
+            type: str
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule

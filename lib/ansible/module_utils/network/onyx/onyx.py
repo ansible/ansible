@@ -119,7 +119,6 @@ def show_cmd(module, cmd, json_fmt=True, fail_on_error=True):
         if fail_on_error:
             raise
         return None
-
     if json_fmt:
         out = _parse_json_output(out)
         try:
@@ -140,13 +139,25 @@ def get_interfaces_config(module, interface_type, flags=None, json_fmt=True):
     return show_cmd(module, cmd, json_fmt)
 
 
-def show_version(module):
-    return show_cmd(module, "show version")
-
-
 def get_bgp_summary(module):
     cmd = "show running-config protocol bgp"
     return show_cmd(module, cmd, json_fmt=False, fail_on_error=False)
+
+
+def get_capabilities(module):
+    """Returns platform info of the remove device
+    """
+    if hasattr(module, '_capabilities'):
+        return module._capabilities
+
+    connection = get_connection(module)
+    try:
+        capabilities = connection.get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+    module._capabilities = json.loads(capabilities)
+    return module._capabilities
 
 
 class BaseOnyxModule(object):
@@ -169,13 +180,18 @@ class BaseOnyxModule(object):
         pass
 
     def _get_os_version(self):
-        version_data = show_version(self._module)
-        return self.get_config_attr(
-            version_data, "Product release")
+        capabilities = get_capabilities(self._module)
+        device_info = capabilities['device_info']
+        return device_info['network_os_version']
 
     # pylint: disable=unused-argument
     def check_declarative_intent_params(self, result):
         return None
+
+    def _validate_key(self, param, key):
+        validator = getattr(self, 'validate_%s' % key)
+        if callable(validator):
+            validator(param.get(key))
 
     def validate_param_values(self, obj, param=None):
         if param is None:
@@ -183,9 +199,7 @@ class BaseOnyxModule(object):
         for key in obj:
             # validate the param value (if validator func exists)
             try:
-                validator = getattr(self, 'validate_%s' % key)
-                if callable(validator):
-                    validator(param.get(key))
+                self._validate_key(param, key)
             except AttributeError:
                 pass
 
@@ -202,9 +216,16 @@ class BaseOnyxModule(object):
         except ValueError:
             return None
 
+    def _validate_range(self, attr_name, min_val, max_val, value):
+        if value is None:
+            return True
+        if not min_val <= int(value) <= max_val:
+            msg = '%s must be between %s and %s' % (
+                attr_name, min_val, max_val)
+            self._module.fail_json(msg=msg)
+
     def validate_mtu(self, value):
-        if value and not 1500 <= int(value) <= 9612:
-            self._module.fail_json(msg='mtu must be between 1500 and 9612')
+        self._validate_range('mtu', 1500, 9612, value)
 
     def generate_commands(self):
         pass

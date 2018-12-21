@@ -9,7 +9,6 @@
     parents:
       - interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - name: collect any backup files
   find:
@@ -28,7 +27,6 @@
   ios_config:
     src: basic/config.j2
     backup: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:

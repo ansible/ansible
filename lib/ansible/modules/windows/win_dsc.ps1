@@ -1,8 +1,7 @@
 #!powershell
-# This file is part of Ansible
 
-# (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -15,29 +14,9 @@ $result = @{
     changed = $false
 }
 
-Function ConvertTo-HashtableFromPsCustomObject($psObject)
-{
-    $hashtable = @{}
-    $psObject | Get-Member -MemberType *Property | ForEach-Object {
-        $value = $psObject.($_.Name)
-        if ($value -is [PSObject])
-        {
-            $value = ConvertTo-HashtableFromPsCustomObject -myPsObject $value
-        }
-        $hashtable.($_.Name) = $value
-    }
-
-    return ,$hashtable
-}
-
 Function Cast-ToCimInstance($name, $value, $className)
 {
     # this converts a hashtable to a CimInstance
-    if ($value -is [PSObject])
-    {
-        # convert to hashtable
-        $value = ConvertTo-HashtableFromPsCustomObject -psObject $value
-    }
 
     $valueType = $value.GetType()
     if ($valueType -ne [hashtable])

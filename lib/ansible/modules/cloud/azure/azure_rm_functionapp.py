@@ -25,15 +25,29 @@ options:
         description:
             - Name of resource group
         required: true
+        aliases:
+            - resource_group_name
     name:
         description:
             - Name of the Azure Function App
         required: true
+    location:
+        description:
+            - Valid Azure location. Defaults to location of the resource group.
+    storage_account:
+        description:
+            - Name of the storage account to use.
+        required: true
+        aliases:
+            - storage
+            - storage_account_name
+    app_settings:
+        description:
+            - Dictionary containing application settings
     state:
         description:
             - Assert the state of the Function App. Use 'present' to create or update a Function App and
               'absent' to delete.
-        required: false
         default: present
         choices:
             - absent
@@ -41,6 +55,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Thomas Stringer (@tstringer)"
@@ -127,10 +142,9 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             resource_group=dict(type='str', required=True, aliases=['resource_group_name']),
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            location=dict(type='str', required=False),
+            location=dict(type='str'),
             storage_account=dict(
                 type='str',
-                required=False,
                 aliases=['storage', 'storage_account_name']
             ),
             app_settings=dict(type='dict')
@@ -255,7 +269,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             function_app_settings.append(NameValuePair(name=key, value=self.storage_connection_string))
         function_app_settings.append(NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~1'))
         function_app_settings.append(NameValuePair(name='WEBSITE_NODE_DEFAULT_VERSION', value='6.5.0'))
-        function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.storage_account))
+        function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.name))
         return function_app_settings
 
     def aggregated_app_settings(self):
@@ -292,6 +306,7 @@ def main():
     """Main function execution"""
 
     AzureRMFunctionApp()
+
 
 if __name__ == '__main__':
     main()

@@ -28,14 +28,15 @@ options:
     description:
       - config in XML format.
       - Required if job does not yet exist.
-      - Mututally exclusive with C(enabled).
+      - Mutually exclusive with C(enabled).
       - Considered if C(state=present).
     required: false
   enabled:
     description:
       - Whether the job should be enabled or disabled.
-      - Mututally exclusive with C(config).
+      - Mutually exclusive with C(config).
       - Considered if C(state=present).
+    type: bool
     required: false
   name:
     description:
@@ -57,7 +58,7 @@ options:
     required: false
   url:
     description:
-      - Url where the Jenkins server is accessible.
+      - URL where the Jenkins server is accessible.
     required: false
     default: http://localhost:8080
   user:
@@ -121,12 +122,12 @@ RETURN = '''
 name:
   description: Name of the jenkins job.
   returned: success
-  type: string
+  type: str
   sample: test-job
 state:
   description: State of the jenkins job.
   returned: success
-  type: string
+  type: str
   sample: present
 enabled:
   description: Whether the jenkins job is enabled or not.
@@ -136,12 +137,12 @@ enabled:
 user:
   description: User used for authentication.
   returned: success
-  type: string
+  type: str
   sample: admin
 url:
   description: Url to connect to the Jenkins server.
   returned: success
-  type: string
+  type: str
   sample: https://jenkins.mydomain.com
 '''
 

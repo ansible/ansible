@@ -11,7 +11,14 @@ Ansible 2.5
 
 **Target: March 2018**
 
+**Service Release schedule: every 2-3 weeks**
+
 .. contents:: Topics
+
+Release Manager
+---------------
+Matt Davis (IRC/GitHub: @nitzmahone)
+
 
 Engine improvements
 -------------------

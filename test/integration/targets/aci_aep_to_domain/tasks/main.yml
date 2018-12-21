@@ -13,7 +13,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     aep: test_aep
     domain: phys_dom
     domain_type: phys
@@ -27,6 +27,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aep: test_aep
     description: Test AEP
     state: present
@@ -39,6 +40,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     domain: phys_dom
     domain_type: phys
     state: present
@@ -53,7 +55,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     aep: test_aep
     domain: phys_dom
     domain_type: phys
@@ -68,7 +70,8 @@
 - name: Verify add_binding
   assert:
     that:
-    - cm_add_binding.changed == nm_add_binding.changed == true
+    - cm_add_binding is changed
+    - nm_add_binding is changed
     - 'cm_add_binding.sent == nm_add_binding.sent == {"infraRsDomP": {"attributes": {"tDn": "uni/phys-phys_dom"}}}'
     - 'cm_add_binding.proposed == nm_add_binding.proposed == {"infraRsDomP": {"attributes": {"tDn": "uni/phys-phys_dom"}}}'
     - cm_add_binding.current == cm_add_binding.previous == nm_add_binding.previous == []
@@ -86,7 +89,8 @@
 - name: Verify add_binding_again
   assert:
     that:
-    - cm_add_binding_again.changed == nm_add_binding_again.changed == false
+    - cm_add_binding_again is not changed
+    - nm_add_binding_again is not changed
 
 
 # QUERY ALL BINDINGS
@@ -98,6 +102,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_bindings
@@ -109,7 +114,8 @@
 - name: Verify query_all_bindings
   assert:
     that:
-    - cm_query_all_bindings.changed == nm_query_all_bindings.changed == false
+    - cm_query_all_bindings is not changed
+    - nm_query_all_bindings is not changed
     - cm_query_all_bindings == nm_query_all_bindings
     - nm_query_all_bindings.current|length >= 1
 
@@ -135,7 +141,8 @@
 - name: Verify query_binding
   assert:
     that:
-    - cm_query_binding.changed == nm_query_binding.changed == false
+    - cm_query_binding is not changed
+    - nm_query_binding is not changed
     - cm_query_binding == nm_query_binding
     - nm_query_binding.current.0.infraRsDomP.attributes.dn == 'uni/infra/attentp-test_aep/rsdomP-[uni/phys-phys_dom]'
     - nm_query_binding.current.0.infraRsDomP.attributes.tCl == 'physDomP'
@@ -155,7 +162,8 @@
 - name: Verify remove_binding
   assert:
     that:
-    - cm_remove_binding.changed == nm_remove_binding.changed == true
+    - cm_remove_binding is changed
+    - nm_remove_binding is changed
     - 'cm_remove_binding.current == cm_remove_binding.previous == nm_remove_binding.previous == [{"infraRsDomP": {"attributes": {"dn": "uni/infra/attentp-test_aep/rsdomP-[uni/phys-phys_dom]", "tDn": "uni/phys-phys_dom"}}}]'
     - nm_remove_binding.current == []
 
@@ -171,7 +179,8 @@
 - name: Verify remove_binding_again
   assert:
     that:
-    - cm_remove_binding_again.changed == nm_remove_binding_again.changed == false
+    - cm_remove_binding_again is not changed
+    - nm_remove_binding_again is not changed
 
 
 # QUERY NON-EXISTING BINDING
@@ -195,6 +204,7 @@
 - name: Verify query_non_binding
   assert:
     that:
-    - cm_query_non_binding.changed == nm_query_non_binding.changed == false
+    - cm_query_non_binding is not changed
+    - nm_query_non_binding is not changed
     - cm_query_non_binding == nm_query_non_binding
     - nm_query_non_binding.current == []

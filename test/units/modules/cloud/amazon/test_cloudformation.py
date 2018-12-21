@@ -44,6 +44,8 @@ bad_json_tpl = """{
   }
 }"""
 
+default_events_limit = 10
+
 
 class FakeModule(object):
     def __init__(self, **kwargs):
@@ -68,7 +70,7 @@ def test_invalid_template_json(placeboify):
     }
     m = FakeModule(disable_rollback=False)
     with pytest.raises(Exception, message='Malformed JSON should cause the test to fail') as exc_info:
-        cfn_module.create_stack(m, params, connection)
+        cfn_module.create_stack(m, params, connection, default_events_limit)
     assert exc_info.match('FAIL')
     assert "ValidationError" in m.exit_kwargs['msg']
 
@@ -81,7 +83,7 @@ def test_client_request_token_s3_stack(maybe_sleep, placeboify):
         'ClientRequestToken': '3faf3fb5-b289-41fc-b940-44151828f6cf',
     }
     m = FakeModule(disable_rollback=False)
-    result = cfn_module.create_stack(m, params, connection)
+    result = cfn_module.create_stack(m, params, connection, default_events_limit)
     assert result['changed']
     assert len(result['events']) > 1
     # require that the final recorded stack state was CREATE_COMPLETE
@@ -97,7 +99,7 @@ def test_basic_s3_stack(maybe_sleep, placeboify):
         'TemplateBody': basic_yaml_tpl
     }
     m = FakeModule(disable_rollback=False)
-    result = cfn_module.create_stack(m, params, connection)
+    result = cfn_module.create_stack(m, params, connection, default_events_limit)
     assert result['changed']
     assert len(result['events']) > 1
     # require that the final recorded stack state was CREATE_COMPLETE
@@ -108,7 +110,7 @@ def test_basic_s3_stack(maybe_sleep, placeboify):
 
 def test_delete_nonexistent_stack(maybe_sleep, placeboify):
     connection = placeboify.client('cloudformation')
-    result = cfn_module.stack_operation(connection, 'ansible-test-nonexist', 'DELETE')
+    result = cfn_module.stack_operation(connection, 'ansible-test-nonexist', 'DELETE', default_events_limit)
     assert result['changed']
     assert 'Stack does not exist.' in result['log']
 
@@ -118,13 +120,14 @@ def test_get_nonexistent_stack(placeboify):
     assert cfn_module.get_stack_facts(connection, 'ansible-test-nonexist') is None
 
 
-def test_missing_template_body(placeboify):
+def test_missing_template_body():
     m = FakeModule()
     with pytest.raises(Exception, message='Expected module to fail with no template') as exc_info:
         cfn_module.create_stack(
             module=m,
             stack_params={},
-            cfn=None
+            cfn=None,
+            events_limit=default_events_limit
         )
     assert exc_info.match('FAIL')
     assert not m.exit_args

@@ -29,13 +29,18 @@ DOCUMENTATION = '''
         type: bool
 '''
 
+import datetime
 import json
 
 from functools import partial
 
 from ansible.inventory.host import Host
-
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
+
+
+def current_time():
+    return '%sZ' % datetime.datetime.utcnow().isoformat()
 
 
 class CallbackModule(CallbackBase):
@@ -51,7 +56,10 @@ class CallbackModule(CallbackBase):
         return {
             'play': {
                 'name': play.get_name(),
-                'id': str(play._uuid)
+                'id': str(play._uuid),
+                'duration': {
+                    'start': current_time()
+                }
             },
             'tasks': []
         }
@@ -60,7 +68,10 @@ class CallbackModule(CallbackBase):
         return {
             'task': {
                 'name': task.get_name(),
-                'id': str(task._uuid)
+                'id': str(task._uuid),
+                'duration': {
+                    'start': current_time()
+                }
             },
             'hosts': {}
         }
@@ -90,17 +101,20 @@ class CallbackModule(CallbackBase):
             summary[h] = s
 
         custom_stats = {}
+        global_custom_stats = {}
+
         if self.get_option('show_custom_stats') and stats.custom:
             custom_stats.update(dict((self._convert_host_to_name(k), v) for k, v in stats.custom.items()))
-            custom_stats.pop('_run', None)
+            global_custom_stats.update(custom_stats.pop('_run', {}))
 
         output = {
             'plays': self.results,
             'stats': summary,
             'custom_stats': custom_stats,
+            'global_custom_stats': global_custom_stats,
         }
 
-        self._display.display(json.dumps(output, indent=4, sort_keys=True))
+        self._display.display(json.dumps(output, cls=AnsibleJSONEncoder, indent=4, sort_keys=True))
 
     def _record_task_result(self, on_info, result, **kwargs):
         """This function is used as a partial to add failed/skipped info in a single method"""
@@ -110,6 +124,9 @@ class CallbackModule(CallbackBase):
         task_result.update(on_info)
         task_result['action'] = task.action
         self.results[-1]['tasks'][-1]['hosts'][host.name] = task_result
+        end_time = current_time()
+        self.results[-1]['tasks'][-1]['task']['duration']['end'] = end_time
+        self.results[-1]['play']['duration']['end'] = end_time
 
     def __getattribute__(self, name):
         """Return ``_record_task_result`` partial with a dict containing skipped/failed if necessary"""

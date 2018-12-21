@@ -22,7 +22,7 @@ description:
     - All values and VMware object names are case sensitive.
 version_added: '2.6'
 author:
-    - Abhijeet Kasurde (@akasurde)
+    - Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 6.5
 requirements:
@@ -46,21 +46,20 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Gather cluster facts from given datacenter
   vmware_cluster_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     datacenter: ha-datacenter
-    validate_certs: False
+    validate_certs: no
   delegate_to: localhost
   register: cluster_facts
 
 - name: Gather facts from datacenter about specific cluster
   vmware_cluster_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     cluster_name: DC0_C0
-    validate_certs: False
   delegate_to: localhost
   register: cluster_facts
 '''

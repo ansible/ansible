@@ -102,5 +102,6 @@ def main():
 
     module.exit_json(ansible_facts=data)
 
+
 if __name__ == '__main__':
     main()

@@ -55,6 +55,7 @@ options:
           - Whether or not the container is ephemeral (e.g. true or false).
             See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)
         required: false
+        type: bool
     source:
         description:
           - 'The source for the container
@@ -62,8 +63,9 @@ options:
                     "mode": "pull",
                     "server": "https://images.linuxcontainers.org",
                     "protocol": "lxd",
-                    "alias": "ubuntu/xenial/amd64" }).
-            See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1)'
+                    "alias": "ubuntu/xenial/amd64" }).'
+          - 'See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1) for complete API documentation.'
+          - 'Note that C(protocol) accepts two choices: C(lxd) or C(simplestreams)'
         required: false
     state:
         choices:
@@ -91,12 +93,14 @@ options:
             starting or restarting.
         required: false
         default: false
+        type: bool
     force_stop:
         description:
           - If this is true, the C(lxd_container) forces to stop the container
             when it stops or restarts the container.
         required: false
         default: false
+        type: bool
     url:
         description:
           - The unix domain socket path or the https URL for the LXD server.
@@ -151,7 +155,7 @@ EXAMPLES = '''
           type: image
           mode: pull
           server: https://images.linuxcontainers.org
-          protocol: lxd
+          protocol: lxd # if you get a 404, try setting protocol: simplestreams
           alias: ubuntu/xenial/amd64
         profiles: ["default"]
         wait_for_ipv4_addresses: true
@@ -225,7 +229,7 @@ addresses:
 old_state:
   description: The old state of the container
   returned: when state is started or restarted
-  type: string
+  type: str
   sample: "stopped"
 logs:
   description: The logs of requests and responses.
@@ -457,9 +461,13 @@ class LXDContainerManagement(object):
             return False
         if key == 'config':
             old_configs = dict((k, v) for k, v in self.old_container_json['metadata'][key].items() if not k.startswith('volatile.'))
+            for k, v in self.config['config'].items():
+                if old_configs[k] != v:
+                    return True
+            return False
         else:
             old_configs = self.old_container_json['metadata'][key]
-        return self.config[key] != old_configs
+            return self.config[key] != old_configs
 
     def _needs_to_apply_container_configs(self):
         return (
@@ -542,9 +550,6 @@ def main():
             ),
             config=dict(
                 type='dict',
-            ),
-            description=dict(
-                type='str',
             ),
             devices=dict(
                 type='dict',

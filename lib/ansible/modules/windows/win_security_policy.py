@@ -18,16 +18,6 @@ short_description: Change local security policy settings
 description:
 - Allows you to set the local security policies that are configured by
   SecEdit.exe.
-notes:
-- This module uses the SecEdit.exe tool to configure the values, more details
-  of the areas and keys that can be configured can be found here
-  U(https://msdn.microsoft.com/en-us/library/bb742512.aspx).
-- If you are in a domain environment these policies may be set by a GPO policy,
-  this module can temporarily change these values but the GPO will override
-  it if the value differs.
-- You can also run C(SecEdit.exe /export /cfg C:\temp\output.ini) to view the
-  current policies set on your system.
-- When assigning user rights, use the M(win_user_right) module instead.
 options:
   section:
     description:
@@ -36,6 +26,8 @@ options:
     - Example sections to use are 'Account Policies', 'Local Policies',
       'Event Log', 'Restricted Groups', 'System Services', 'Registry' and
       'File System'
+    - If wanting to edit the C(Privilege Rights) section, use the
+      M(win_user_right) module instead.
     required: yes
   key:
     description:
@@ -47,6 +39,18 @@ options:
     - The value for the ini key or policy name.
     - If the key takes in a boolean value then 0 = False and 1 = True.
     required: yes
+notes:
+- This module uses the SecEdit.exe tool to configure the values, more details
+  of the areas and keys that can be configured can be found here
+  U(https://msdn.microsoft.com/en-us/library/bb742512.aspx).
+- If you are in a domain environment these policies may be set by a GPO policy,
+  this module can temporarily change these values but the GPO will override
+  it if the value differs.
+- You can also run C(SecEdit.exe /export /cfg C:\temp\output.ini) to view the
+  current policies set on your system.
+- When assigning user rights, use the M(win_user_right) module instead.
+seealso:
+- module: win_user_right
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -87,33 +91,33 @@ stdout:
   description: The output of the STDOUT buffer after a failure when running
     SecEdit.exe.
   returned: failure with secedit calls
-  type: string
+  type: str
   sample: check log for error details
 stderr:
   description: The output of the STDERR buffer after a failure when running
     SecEdit.exe.
   returned: failure with secedit calls
-  type: string
+  type: str
   sample: failed to import security policy
 import_log:
   description: The log of the SecEdit.exe /configure job that configured the
     local policies. This is used for debugging purposes on failures.
   returned: secedit.exe /import run and change occurred
-  type: string
+  type: str
   sample: Completed 6 percent (0/15) \tProcess Privilege Rights area.
 key:
   description: The key in the section passed to the module to modify.
   returned: success
-  type: string
+  type: str
   sample: NewGuestName
 section:
   description: The section passed to the module to modify.
   returned: success
-  type: string
+  type: str
   sample: System Access
 value:
   description: The value passed to the module to modify to.
   returned: success
-  type: string
+  type: str
   sample: Guest Account
 '''

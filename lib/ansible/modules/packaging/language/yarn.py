@@ -23,7 +23,7 @@ description:
 version_added: "2.6"
 author:
   - "David Gunter (@verkaufer)"
-  - "Chris Hoffman (@chrishoffman, creator of NPM Ansible module)"
+  - "Chris Hoffman (@chrishoffman), creator of NPM Ansible module)"
 options:
   name:
     description:
@@ -83,27 +83,33 @@ EXAMPLES = '''
   yarn:
     name: imagemin
     path: /app/location
+
 - name: Install "imagemin" node.js package on version 5.3.1
   yarn:
     name: imagemin
     version: '5.3.1'
     path: /app/location
+
 - name: Install "imagemin" node.js package globally.
   yarn:
     name: imagemin
     global: yes
+
 - name: Remove the globally-installed package "imagemin".
   yarn:
     name: imagemin
     global: yes
     state: absent
+
 - name: Install "imagemin" node.js package from custom registry.
   yarn:
     name: imagemin
     registry: 'http://registry.mysite.com'
+
 - name: Install packages based on package.json.
   yarn:
     path: /app/location
+
 - name: Update all packages in package.json to their latest version.
   yarn:
     path: /app/location
@@ -114,17 +120,17 @@ RETURN = '''
 changed:
     description: Whether Yarn changed any package data
     returned: always
-    type: boolean
+    type: bool
     sample: true
 msg:
     description: Provides an error message if Yarn syntax was incorrect
     returned: failure
-    type: string
+    type: str
     sample: "Package must be explicitly named when uninstalling."
 invocation:
     description: Parameters and values used during execution
     returned: success
-    type: dictionary
+    type: dict
     sample: {
             "module_args": {
                 "executable": null,
@@ -141,7 +147,7 @@ invocation:
 out:
     description: Output generated from Yarn with emojis removed.
     returned: always
-    type: string
+    type: str
     sample: "yarn add v0.16.1[1/4] Resolving packages...[2/4] Fetching packages...[3/4] Linking dependencies...[4/4]
     Building fresh packages...success Saved lockfile.success Saved 1 new dependency..left-pad@1.1.3 Done in 0.59s."
 '''

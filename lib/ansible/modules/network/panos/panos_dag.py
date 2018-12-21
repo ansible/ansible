@@ -30,18 +30,6 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        default: "admin"
     dag_name:
         description:
             - name of the dynamic address group
@@ -55,6 +43,7 @@ options:
             - commit if changed
         type: bool
         default: 'yes'
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -145,6 +134,7 @@ def main():
         xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
 
     module.exit_json(changed=changed, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright: Ansible Project
+
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -70,6 +71,7 @@ options:
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
+    type: bool
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many
@@ -128,8 +130,8 @@ options:
     default: 300
     version_added: "2.1"
 author:
-  - "Bruce Pennypacker (@bpennypacker)"
-  - "Mike Buzzetti <mike.buzzetti@gmail.com>"
+- Bruce Pennypacker (@bpennypacker)
+- Mike Buzzetti (@jimbydamonk)
 extends_documentation_fragment: aws
 '''
 
@@ -171,7 +173,7 @@ set:
     record:
       description: domain name for the record set
       returned: always
-      type: string
+      type: str
       sample: new.foo.com.
     region:
       description: ""
@@ -181,17 +183,17 @@ set:
     ttl:
       description: resource record cache TTL
       returned: always
-      type: string
+      type: str
       sample: '3600'
     type:
       description: record set type
       returned: always
-      type: string
+      type: str
       sample: A
     value:
       description: value
       returned: always
-      type: string
+      type: str
       sample: 52.43.18.27
     values:
       description: values
@@ -202,12 +204,12 @@ set:
     weight:
       description: weight of the record
       returned: always
-      type: string
+      type: str
       sample: '3'
     zone:
       description: zone this record set belongs to
       returned: always
-      type: string
+      type: str
       sample: foo.bar.com.
 '''
 
@@ -364,7 +366,6 @@ import distutils.version
 try:
     import boto
     import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import Record, ResourceRecordSets
     from boto.route53.status import Status
@@ -436,6 +437,7 @@ def commit(changes, retry_interval, wait, wait_timeout):
             raise TimeoutError()
         return result
 
+
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
 MAX_RETRIES = 5
@@ -491,7 +493,7 @@ def main():
     mutually_exclusive = [('failover', 'region', 'weight')]
 
     module = AnsibleModule(argument_spec=argument_spec, required_together=required_together, required_if=required_if,
-                           mutually_exclusive=mutually_exclusive)
+                           mutually_exclusive=mutually_exclusive, supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -574,6 +576,13 @@ def main():
         else:
             wanted_rset.add_value(v)
 
+    need_to_sort_records = (type_in == 'CAA')
+
+    # Sort records for wanted_rset if necessary (keep original list)
+    unsorted_records = wanted_rset.resource_records
+    if need_to_sort_records:
+        wanted_rset.resource_records = sorted(unsorted_records)
+
     sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
                                           type=type_in, identifier=identifier_in)
     sets_iter = iter(sets)
@@ -593,13 +602,14 @@ def main():
             identifier_in = str(identifier_in)
 
         if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == identifier_in:
+            if need_to_sort_records:
+                # Sort records
+                rset.resource_records = sorted(rset.resource_records)
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
             record['record'] = decoded_name
             record['ttl'] = rset.ttl
-            record['value'] = ','.join(sorted(rset.resource_records))
-            record['values'] = sorted(rset.resource_records)
             if hosted_zone_id_in:
                 record['hosted_zone_id'] = hosted_zone_id_in
             record['identifier'] = rset.identifier
@@ -652,19 +662,22 @@ def main():
             command = 'UPSERT'
         else:
             command = command_in.upper()
+        # Restore original order of records
+        wanted_rset.resource_records = unsorted_records
         changes.add_change_record(command, wanted_rset)
 
-    try:
-        result = invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
-    except boto.route53.exception.DNSServerError as e:
-        txt = e.body.split("<Message>")[1]
-        txt = txt.split("</Message>")[0]
-        if "but it already exists" in txt:
-            module.exit_json(changed=False)
-        else:
-            module.fail_json(msg=txt)
-    except TimeoutError:
-        module.fail_json(msg='Timeout waiting for changes to replicate')
+    if not module.check_mode:
+        try:
+            invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
+        except boto.route53.exception.DNSServerError as e:
+            txt = e.body.split("<Message>")[1]
+            txt = txt.split("</Message>")[0]
+            if "but it already exists" in txt:
+                module.exit_json(changed=False)
+            else:
+                module.fail_json(msg=txt)
+        except TimeoutError:
+            module.fail_json(msg='Timeout waiting for changes to replicate')
 
     module.exit_json(changed=True)
 

@@ -1,0 +1,20 @@
+{
+    "Version":"2012-10-17",
+    "Id":"SomePolicyId",
+    "Statement" :[
+        {
+            "Sid":"ANewSid",
+            "Effect":"Allow",
+            "Principal" :{
+                "AWS":"{{ sns_arn.split(':')[4] }}"
+              },
+            "Action":["sns:Subscribe"],
+            "Resource": "{{ sns_arn }}",
+            "Condition" :{
+                "StringEquals" :{
+                    "sns:Protocol":"email"
+                 }
+            }
+        }
+    ]
+}

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ipa_service
-author: Cédric Parent
+author: Cédric Parent (@cprh)
 short_description: Manage FreeIPA service
 description:
 - Add and delete an IPA service using IPA API
@@ -33,6 +33,7 @@ options:
     description:
     - Force principal name even if host is not in DNS.
     required: false
+    type: bool
   state:
     description: State to ensure
     required: false
@@ -201,6 +202,7 @@ def main():
         module.exit_json(changed=changed, host=host)
     except Exception as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()
