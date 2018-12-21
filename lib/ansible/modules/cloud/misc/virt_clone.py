@@ -23,10 +23,10 @@ requirements:
   - python-virtinst
   - libguestfs-tools
 notes:
-  - Tested on macOS, Debian, and Ubuntu.
-  - macOS: brew install libvirt
-  - macOS: pip install libvirt-python
-  - Debian: apt-get install libvirt-python python-virtinst libguestfs-tools
+  - "Tested on macOS, Debian, and Ubuntu."
+  - "macOS: brew install libvirt"
+  - "macOS: pip install libvirt-python"
+  - "Debian: apt-get install libvirt-python python-virtinst libguestfs-tools"
 version_added: "2.8"
 options:
   auto:
