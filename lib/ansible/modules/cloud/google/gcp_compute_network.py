@@ -216,10 +216,11 @@ def main():
             ipv4_range=dict(type='str'),
             name=dict(required=True, type='str'),
             auto_create_subnetworks=dict(type='bool'),
-            routing_config=dict(type='list', elements='dict', options=dict(
+            routing_config=dict(type='dict', options=dict(
                 routing_mode=dict(required=True, type='str', choices=['REGIONAL', 'GLOBAL'])
             ))
-        )
+        ),
+        mutually_exclusive=[['auto_create_subnetworks', 'ipv4_range']]
     )
 
     if not module.params['scopes']:
@@ -234,7 +235,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
@@ -258,29 +259,9 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.patch(link, resource_to_request(module)))
-
-
-def update_fields(module, request, response):
-    if response.get('routingConfig') != request.get('routingConfig'):
-        routing_config_update(module, request, response)
-
-
-def routing_config_update(module, request, response):
-    auth = GcpSession(module, 'compute')
-    auth.patch(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/subnetworks/{name}"
-        ]).format(**module.params),
-        {
-            u'routingConfig': NetworkRoutingconfigArray(module.params.get('routing_config', []), module).to_request()
-        }
-    )
 
 
 def delete(module, link, kind):
@@ -295,11 +276,11 @@ def resource_to_request(module):
         u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
-        u'routingConfig': NetworkRoutingconfigArray(module.params.get('routing_config', []), module).to_request()
+        u'routingConfig': NetworkRoutingconfig(module.params.get('routing_config', {}), module).to_request()
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -369,7 +350,7 @@ def response_to_hash(module, response):
         u'subnetworks': response.get(u'subnetworks'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'routingConfig': NetworkRoutingconfigArray(response.get(u'routingConfig', []), module).from_response()
+        u'routingConfig': NetworkRoutingconfig(response.get(u'routingConfig', {}), module).from_response()
     }
 
 
@@ -408,34 +389,22 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class NetworkRoutingconfigArray(object):
+class NetworkRoutingconfig(object):
     def __init__(self, request, module):
         self.module = module
         if request:
             self.request = request
         else:
-            self.request = []
+            self.request = {}
 
     def to_request(self):
-        items = []
-        for item in self.request:
-            items.append(self._request_for_item(item))
-        return items
-
-    def from_response(self):
-        items = []
-        for item in self.request:
-            items.append(self._response_from_item(item))
-        return items
-
-    def _request_for_item(self, item):
         return remove_nones_from_dict({
-            u'routingMode': item.get('routing_mode')
+            u'routingMode': self.request.get('routing_mode')
         })
 
-    def _response_from_item(self, item):
+    def from_response(self):
         return remove_nones_from_dict({
-            u'routingMode': item.get(u'routingMode')
+            u'routingMode': self.request.get(u'routingMode')
         })
 
 

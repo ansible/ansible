@@ -375,6 +375,22 @@ options:
         description:
         - The list of scopes to be made available for this service account.
         required: false
+  status:
+    description:
+    - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
+      RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
+    - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
+      off .
+    required: false
+    version_added: 2.8
+    choices:
+    - PROVISIONING
+    - STAGING
+    - RUNNING
+    - STOPPING
+    - SUSPENDING
+    - SUSPENDED
+    - TERMINATED
   tags:
     description:
     - A list of tags to apply to this instance. Tags are used to identify valid sources
@@ -817,6 +833,8 @@ status:
   description:
   - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
     RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
+  - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
+    off .
   returned: success
   type: str
 statusMessage:
@@ -933,6 +951,7 @@ def main():
                 email=dict(type='str'),
                 scopes=dict(type='list', elements='str')
             )),
+            status=dict(type='str', choices=['PROVISIONING', 'STAGING', 'RUNNING', 'STOPPING', 'SUSPENDING', 'SUSPENDED', 'TERMINATED']),
             tags=dict(type='dict', options=dict(
                 fingerprint=dict(type='str'),
                 items=dict(type='list', elements='str')
@@ -967,6 +986,11 @@ def main():
         else:
             fetch = {}
 
+    if fetch:
+        instance = InstancePower(module, fetch.get('status'))
+        instance.run()
+        if module.params.get('status'):
+            fetch.update({'status': module.params['status']})
     fetch.update({'changed': changed})
 
     module.exit_json(**fetch)
@@ -993,7 +1017,7 @@ def machine_type_update(module, request, response):
     auth.post(
         ''.join([
             "https://www.googleapis.com/compute/v1/",
-            "projdcts/{project}/zones/{zone}/instances/{name}/setMachineType"
+            "projects/{project}/zones/{zone}/instances/{name}/setMachineType"
         ]).format(**module.params),
         {
             u'machineType': machine_type_selflink(module.params.get('machine_type'), module.params)
@@ -1020,12 +1044,13 @@ def resource_to_request(module):
         u'networkInterfaces': InstanceNetworkinterfacesArray(module.params.get('network_interfaces', []), module).to_request(),
         u'scheduling': InstanceScheduling(module.params.get('scheduling', {}), module).to_request(),
         u'serviceAccounts': InstanceServiceaccountsArray(module.params.get('service_accounts', []), module).to_request(),
+        u'status': module.params.get('status'),
         u'tags': InstanceTags(module.params.get('tags', {}), module).to_request()
     }
     request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -1212,6 +1237,38 @@ def metadata_decoder(metadata):
         for item in metadata_items:
             items[item['key']] = item['value']
     return items
+
+
+class InstancePower(object):
+    def __init__(self, module, current_status):
+        self.module = module
+        self.current_status = current_status
+        self.desired_status = self.module.params.get('status')
+
+    def run(self):
+        # GcpRequest handles unicode text handling
+        if GcpRequest({'status': self.current_status}) == GcpRequest({'status': self.desired_status}):
+            return
+        elif self.desired_status == 'RUNNING':
+            self.start()
+        elif self.desired_status == 'TERMINATED':
+            self.stop()
+        elif self.desired_status == 'SUSPENDED':
+            self.module.fail_json(msg="Instances cannot be suspended using Ansible")
+
+    def start(self):
+        auth = GcpSession(self.module, 'compute')
+        wait_for_operation(self.module, auth.post(self._start_url()))
+
+    def stop(self):
+        auth = GcpSession(self.module, 'compute')
+        wait_for_operation(self.module, auth.post(self._stop_url()))
+
+    def _start_url(self):
+        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{name}/start".format(**self.module.params)
+
+    def _stop_url(self):
+        return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances/{name}/stop".format(**self.module.params)
 
 
 class InstanceDisksArray(object):
