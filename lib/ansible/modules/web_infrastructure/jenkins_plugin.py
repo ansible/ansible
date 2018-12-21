@@ -429,10 +429,10 @@ class JenkinsPlugin(object):
 
             try:
                 sha1_old = hashlib.sha1(open(plugin_file, 'rb').read())
-            except Exception as e:
+            except Exception as err:
                 self.module.fail_json(
                     msg="Cannot calculate SHA1 of the old plugin.",
-                    details=e.message)
+                    details="SHA1 calculation failed with: {0}".format(err)
                 )
 
 
@@ -468,16 +468,16 @@ class JenkinsPlugin(object):
 
                     changed = True
                 else:
-                    # Get data for the MD5
+                    # Get data for the SHA1
                     data = r.read()
 
                     # Make new checksum
                     try:
                         sha1_new = hashlib.sha1(data)
-                    except Exception as e:
+                    except Exception as err:
                         self.module.fail_json(
                             msg="Cannot calculate SHA1 of the downloaded plugin.",
-                            details=e.message)
+                            details="SHA1 calculation failed with: {0}".format(err)
                         )
                     sha1sum_new = base64.b64encode(sha1_new.digest())
                     
