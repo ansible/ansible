@@ -1,0 +1,4 @@
+---
+bugfixes:
+- Use custom JSON encoder in conneciton.py so that ansible objects (AnsibleVaultEncryptedUnicode, for example)
+  can be sent to the persistent connection process
