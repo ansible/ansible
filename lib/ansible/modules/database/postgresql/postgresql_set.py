@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: postgresql_set
-short_description: Change a PostgreSQL server configuration parameter
+short_description: Change a PostgreSQL server configuration parameter.
 description:
    - Allows to change PostgreSQL (9.4+) server configuration parameters
      using ALTER SYSTEM command and apply them by reload server configuration.
