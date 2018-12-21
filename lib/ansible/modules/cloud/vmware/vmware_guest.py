@@ -149,6 +149,8 @@ options:
           version then no action is taken. version_added: 2.6'
     - ' - C(boot_firmware) (string): Choose which firmware should be used to boot the virtual machine.
           Allowed values are "bios" and "efi". version_added: 2.7'
+    - ' - C(virt_based_security) (bool): Enable Virtualization Based Security feature for Windows 10.
+          (Support from Virtual machine hardware version 14, Guest OS Windows 10 64 bit, Windows Server 2016)'
 
   guest_id:
     description:
@@ -1141,6 +1143,33 @@ class PyVmomiHelper(PyVmomi):
                     except vim.fault.AlreadyUpgraded:
                         # Don't fail if VM is already upgraded.
                         pass
+
+            if 'virt_based_security' in self.params['hardware']:
+                host_version = self.select_host().summary.config.product.version
+                if int(host_version.split('.')[0]) < 6 or (int(host_version.split('.')[0]) == 6 and int(host_version.split('.')[1]) < 7):
+                    self.module.fail_json(msg="ESXi version %s not support VBS." % host_version)
+                guest_ids = ['windows9_64Guest', 'windows9Server64Guest']
+                if vm_obj is None:
+                    guestid = self.configspec.guestId
+                else:
+                    guestid = vm_obj.summary.config.guestId
+                if guestid not in guest_ids:
+                    self.module.fail_json(msg="Guest '%s' not support VBS." % guestid)
+                if (vm_obj is None and int(self.configspec.version.split('-')[1]) >= 14) or \
+                        (vm_obj and int(vm_obj.config.version.split('-')[1]) >= 14 and (vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOff)):
+                    self.configspec.flags = vim.vm.FlagInfo()
+                    self.configspec.flags.vbsEnabled = bool(self.params['hardware']['virt_based_security'])
+                    if bool(self.params['hardware']['virt_based_security']):
+                        self.configspec.flags.vvtdEnabled = True
+                        self.configspec.nestedHVEnabled = True
+                        if (vm_obj is None and self.configspec.firmware == 'efi') or \
+                                (vm_obj and vm_obj.config.firmware == 'efi'):
+                            self.configspec.bootOptions = vim.vm.BootOptions()
+                            self.configspec.bootOptions.efiSecureBootEnabled = True
+                        else:
+                            self.module.fail_json(msg="Not support VBS when firmware is BIOS.")
+                    if vm_obj is None or self.configspec.flags.vbsEnabled != vm_obj.config.flags.vbsEnabled:
+                        self.change_detected = True
 
     def get_device_by_type(self, vm=None, type=None):
         if vm is None or type is None:
