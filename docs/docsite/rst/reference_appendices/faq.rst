@@ -227,8 +227,8 @@ Running on z/OS
 
 There are a few common errors that one might run into when trying to execute Ansible on z/OS as a target.
 
-* Version 2.7.6 of the open source python port for z/OS will not work with Ansible due to the fact that it represents strings internally as EBCDIC.
-  The later versions (2.7.13 or 3.6.1) should work since they represent strings internally as ascii.  Version 2.7.13 is verified to work.
+* Version 2.7.6 of python for z/OS will not work with Ansible because it represents strings internally as EBCDIC.
+To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ascii.  Version 2.7.13 is verified to work.
 
 .. error::
   /usr/bin/python: EDC5129I No such file or directory
@@ -240,7 +240,7 @@ To fix this set the path to the python installation in your inventory like so::
 .. error::
     EE3501S The module libpython2.7.so was not found.
 
-The open source port of python must be executed from the open source port of gnu bash.  Provided gnu bash was install at /usr/lpp/bash then you could fix this in your inventory like so::
+On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
 
     zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
 
