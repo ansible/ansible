@@ -444,7 +444,8 @@ def route_spec_matches_route(route_spec, route):
 
 
 def route_spec_matches_route_cidr(route_spec, route):
-    return route_spec['DestinationCidrBlock'] == route.get('DestinationCidrBlock') or route_spec['DestinationIpv6CidrBlock'] == route.get('DestinationIpv6CidrBlock')
+    return route_spec['DestinationCidrBlock'] == route.get('DestinationCidrBlock') \
+        or route_spec['DestinationIpv6CidrBlock'] == route.get('DestinationIpv6CidrBlock')
 
 
 def rename_key(d, old_key, new_key):
