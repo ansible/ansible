@@ -131,17 +131,18 @@ class ConnectionProcess(object):
                 self.exception = None
                 (s, addr) = self.sock.accept()
                 signal.alarm(0)
-
                 signal.signal(signal.SIGALRM, self.command_timeout)
                 while True:
                     data = recv_data(s)
                     if not data:
                         break
+                    self.connection._log_messages("jsonrpc request: %s" % data)
 
                     signal.alarm(self.connection.get_option('persistent_command_timeout'))
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
+                    self.connection._log_messages("jsonrpc response: %s" % resp)
                     send_data(s, to_bytes(resp))
 
                 s.close()
