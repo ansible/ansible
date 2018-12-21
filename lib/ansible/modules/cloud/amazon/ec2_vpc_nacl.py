@@ -160,7 +160,7 @@ from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_conn
 
 
 # CIDR regex
-CIDR_REGEX = re.compile(r'([a-fA-F0-9:.]+)/\d+')
+CIDR_REGEX = re.compile(r'^([a-fA-F0-9:.]+)/\d{1,3}$')
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
@@ -172,6 +172,19 @@ def icmp_present(entry):
     if len(entry) == 6 and (entry[1] == 'icmp' or entry[1] == 'ipv6-icmp' or entry[1] == 1, entry[1] == 58):
         return True
 
+def ip_network_version(cidr):
+    match = CIDR_REGEX.match(cidr)
+    if not match:
+        return None
+    try:
+        socket.inet_pton(socket.AF_INET6, match.group(1))
+        return 6
+    except socket.error:
+        try:
+            socket.inet_pton(socket.AF_INET, match.group(1))
+            return 4
+        except socket.error:
+            return None
 
 def load_tags(module):
     tags = []
@@ -301,13 +314,12 @@ def process_rule_entry(entry, Egress, module):
         params['Protocol'] = str(entry[1])
     params['RuleAction'] = entry[2]
     params['Egress'] = Egress
-    match = CIDR_REGEX.match(entry[3])
-    if not match:
+    version = ip_network_version(entry[3])
+    if version == None:
         module.fail_json(msg="Invalid CIDR value: %s" % entry[3])
-    try:
-        socket.inet_pton(socket.AF_INET6, match.group(1))
+    elif version == 6:
         params['Ipv6CidrBlock'] = entry[3]
-    except socket.error:
+    else:
         params['CidrBlock'] = entry[3]
     if icmp_present(entry):
         params['IcmpTypeCode'] = {"Type": int(entry[4]), "Code": int(entry[5])}
