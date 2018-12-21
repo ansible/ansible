@@ -110,7 +110,8 @@ files:
     maintainers: $team_docker
   $modules/cloud/docker/docker_network.py: olsaki
   $modules/cloud/google/:
-    maintainers: rambleraptor erjohnso
+    supershipit: $team_google
+    maintainers: $team_google
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
   $modules/cloud/linode/: $team_linode
@@ -500,6 +501,9 @@ files:
       - cloud
   $module_utils/facts:
     support: core
+  $module_utils/gcp_utils.py:
+    maintainers: $team_google
+    supershipit: $team_google
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -947,6 +951,9 @@ files:
 # plugins/inventory
   $plugins/inventory/__init__.py:
     support: core
+  $plugins/inventory/gcp_compute.py:
+    maintainers: $team_google
+    supershipit: $team_google
   $plugins/inventory/ini.py:
     support: core
   $plugins/inventory/k8s.py:
@@ -1140,6 +1147,9 @@ files:
     notified: mattclay
   test/integration/targets/aci: *aci
   test/integration/targets/docker: $team_docker
+  test/integration/targets/gcp:
+    maintainers: $team_google
+    supershipit: $team_google
   test/integration/targets/meraki: *meraki
   test/integration/targets/msc: *aci
   test/integration/targets/nxos:
@@ -1188,6 +1198,7 @@ macros:
   team_cyberark_conjur: jvanderhoof ryanprior
   team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet
   team_extreme: bigmstone LindsayHill
+  team_google: rambleraptor erjohnso
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
