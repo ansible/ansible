@@ -85,7 +85,7 @@ options:
       "application/json", then the JSON is additionally loaded into a key
       called C(json) in the dictionary results.
     type: bool
-    default: n'
+    default: no
     version_added: '2.4'
   status_code:
     description:
