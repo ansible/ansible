@@ -172,6 +172,22 @@ options:
       - name: ANSIBLE_PERSISTENT_BUFFER_READ_TIMEOUT
     vars:
       - name: ansible_buffer_read_timeout
+  persistent_log_messages:
+    type: boolean
+    description:
+      - This flag will enable logging the command executed and response received from
+        target device in the ansible log file. For this option to work 'log_path' ansible
+        configuration option is required to be set to a file path with write access.
+      - Be sure to fully understand the security implications of enabling this
+        option as it could create a security vulnerability by logging sensitive information in log file.
+    default: False
+    ini:
+      - section: persistent_connection
+        key: log_messages
+    env:
+      - name: ANSIBLE_PERSISTENT_LOG_MESSAGES
+    vars:
+      - name: ansible_persistent_log_messages
 """
 
 import getpass
@@ -374,6 +390,7 @@ class Connection(NetworkConnectionBase):
         buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
 
+        self._log_messages("command: %s" % command)
         while True:
             if command_prompt_matched:
                 try:
@@ -381,6 +398,7 @@ class Connection(NetworkConnectionBase):
                     signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
                     data = self._ssh_shell.recv(256)
                     signal.alarm(0)
+                    self._log_messages("response-%s: %s" % (window_count + 1, data))
                     # if data is still received on channel it indicates the prompt string
                     # is wrongly matched in between response chunks, continue to read
                     # remaining response.
@@ -396,7 +414,7 @@ class Connection(NetworkConnectionBase):
                     return self._command_response
             else:
                 data = self._ssh_shell.recv(256)
-
+                self._log_messages("response-%s: %s" % (window_count + 1, data))
             # when a channel stream is closed, received data will be empty
             if not data:
                 break
@@ -493,6 +511,9 @@ class Connection(NetworkConnectionBase):
         for index, regex in enumerate(prompts_regex):
             match = regex.search(resp)
             if match:
+                self._matched_cmd_prompt = match.group()
+                self._log_messages("matched command prompt: %s" % self._matched_cmd_prompt)
+
                 # if prompt_retry_check is enabled to check if same prompt is
                 # repeated don't send answer again.
                 if not prompt_retry_check:
@@ -500,7 +521,8 @@ class Connection(NetworkConnectionBase):
                     self._ssh_shell.sendall(b'%s' % prompt_answer)
                     if newline:
                         self._ssh_shell.sendall(b'\r')
-                self._matched_cmd_prompt = match.group()
+                        prompt_answer += '\r'
+                    self._log_messages("matched command prompt answer: %s" % self.prompt_answer)
                 if check_all and prompts and not single_prompt:
                     prompts.pop(0)
                     answer.pop(0)
@@ -536,6 +558,7 @@ class Connection(NetworkConnectionBase):
                         errored_response = response
                         self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
+                        self._log_messages("matched error regex '%s' from response '%s'" % (self._matched_pattern, errored_response))
                         break
 
         if not is_error_message:
@@ -544,6 +567,7 @@ class Connection(NetworkConnectionBase):
                 if match:
                     self._matched_pattern = regex.pattern
                     self._matched_prompt = match.group()
+                    self._log_messages("matched cli prompt '%s' with regex '%s' from response '%s'" % (self._matched_prompt, self._matched_pattern, response))
                     if not errored_response:
                         return True
 
