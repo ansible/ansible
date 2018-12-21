@@ -333,6 +333,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
+REMOVE_EXTRANEOUS_DEFAULT = 'Building configuration.*(\n*).*\nCurrent configuration.*\n*'
+
+
 def check_args(module, warnings):
     ios_check_args(module, warnings)
     if module.params['multiline_delimiter']:
@@ -450,11 +453,7 @@ def main():
         config = NetworkConfig(indent=1, contents=contents)
         if module.params['backup']:
             if module.params['remove_extraneous']:
-                # remove configuration intro lines from running-config
-                cfg_build_obj = re.search(r'Building configuration.*(\n*)', contents)
-                cfg_current_obj = re.search(r'Current configuration.*(\n*)', contents)
-                if cfg_build_obj and cfg_current_obj:
-                    contents = contents.strip(cfg_build_obj.group() + cfg_current_obj.group())
+                contents = re.sub(REMOVE_EXTRANEOUS_DEFAULT, '', contents)
                 result['__backup__'] = contents
             else:
                 result['__backup__'] = contents
