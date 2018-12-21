@@ -179,7 +179,7 @@ def get_merged_commit(args, commit):
     git = Git(args)
 
     try:
-        show_commit = git.run_git(['show', '--no-patch', commit])
+        show_commit = git.run_git(['show', '--no-patch', '--no-abbrev', commit])
     except SubprocessError as ex:
         # This should only fail for pull requests where the commit does not exist.
         # Merge runs would fail much earlier when attempting to checkout the commit.
@@ -188,7 +188,7 @@ def get_merged_commit(args, commit):
                                'Find the latest run for the pull request and restart failed jobs as needed.'
                                % (commit, ex.stderr.strip()))
 
-    head_commit = git.run_git(['show', '--no-patch', 'HEAD'])
+    head_commit = git.run_git(['show', '--no-patch', '--no-abbrev', 'HEAD'])
 
     if show_commit == head_commit:
         # Commit is HEAD, so this is not a pull request or the base branch for the pull request is up-to-date.
