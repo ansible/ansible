@@ -643,6 +643,12 @@ def main():
 
         cmd = [pip] + state_map[state]
 
+        if state == 'downloaded':
+            dlcheck_rc, dlcheck_out, dl_check_err = module.run_command(cmd + ['--help'])
+
+            if any([not dlcheck_rc, "unknown command" in dlcheck_out]):
+                module.fail_json(msg="'download' command not supported in this version of pip. ")
+
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
         # install cython and then gevent -- gevent needs to use the cython binary,
