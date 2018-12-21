@@ -357,6 +357,12 @@ class NetworkConnectionBase(ConnectionBase):
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(NetworkConnectionBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+        if self.get_option('persistent_log_messages'):
+            warning = "Persistent connection logging is enabled for %s. This will log ALL interactions" % self._play_context.remote_addr
+            logpath = getattr(C, 'DEFAULT_LOG_PATH')
+            if logpath is not None:
+                warning += " to %s" % logpath
+            self.queue_message('warning', "%s and WILL NOT redact sensitive configuration like passwords. USE WITH CAUTION!" % warning)
 
         if self._sub_plugin.get('obj') and self._sub_plugin.get('type') != 'external':
             try:
@@ -386,3 +392,7 @@ class NetworkConnectionBase(ConnectionBase):
         if os.path.exists(socket_path):
             self._connected = True
             self._socket_path = socket_path
+
+    def _log_messages(self, message):
+        if self.get_option('persistent_log_messages'):
+            self.queue_message('log', message)
