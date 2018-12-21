@@ -1,0 +1,122 @@
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim with no folders
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Clusters from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
+  register: clusterlist
+
+- debug: var=vcsim_instance
+- debug: var=clusterlist
+
+- name: Create Windows 10 VM with VBS enabled
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: vbs-Test
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    guest_id: windows9_64Guest
+    hardware:
+      memory_mb: 1024
+      num_cpus: 1
+      virt_based_security: True
+      version: 14
+      boot_firmware: efi
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    cdrom:
+      type: client
+  register: vbs_vm
+
+- debug: var=vbs_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "vbs_vm.failed == false"
+      - "vbs_vm.changed == true"
+
+- name: Create Windows Server 2016 VM without VBS enabled
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: vbs-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    guest_id: windows9Server64Guest
+    hardware:
+      memory_mb: 1024
+      num_cpus: 1
+      version: 14
+      boot_firmware: efi
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    cdrom:
+      type: client
+  register: vbs_vm
+
+- debug: var=vbs_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "vbs_vm.failed == false"
+      - "vbs_vm.changed == true"
+
+- name: Enable VBS for Windows Server 2016 VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: vbs-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    disk:
+    - size_mb: 256
+      type: thin
+      datastore: LocalDS_0
+    hardware:
+      virt_based_security: True
+    state: present
+  register: vbs_vm
+
+- debug: var=vbs_vm
+
+- name: assert the VM was changed
+  assert:
+    that:
+      - "vbs_vm.failed == false"
+      - "vbs_vm.changed == true"
