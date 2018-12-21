@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: postgresql_idx
-short_description: Creates or drops indexes from a PostgreSQL database
+short_description: Creates or drops indexes from a PostgreSQL database.
 description:
    - Create or drop indexes from a remote PostgreSQL database.
 version_added: "2.8"
