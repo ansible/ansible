@@ -31,6 +31,7 @@
 #                     https://github.com/ansible/ansible/labels?q=support for full list
 #           labels - list of GitHub labels to apply. Path components of 'file' parent key
 #                    which are valid GitHub labels are automatically added.
+#           supershipit - supershipiteers can turn a shipit into a supershipit
 #
 
 automerge: True
