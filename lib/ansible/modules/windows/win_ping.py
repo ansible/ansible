@@ -46,7 +46,7 @@ EXAMPLES = r'''
     data: crash
 '''
 
-RETURN = '''
+RETURN = r'''
 ping:
     description: Value provided with the data parameter.
     returned: success

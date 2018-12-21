@@ -55,6 +55,6 @@ EXAMPLES = r'''
     ipv4_addresses: []
 '''
 
-RETURN = '''
+RETURN = r'''
 
 '''

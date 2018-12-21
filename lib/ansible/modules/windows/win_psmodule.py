@@ -52,7 +52,7 @@ author:
 - Daniele Lazzari (@dlazz)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ---
 - name: Add a powershell module
   win_psmodule:
@@ -84,7 +84,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 output:
   description: A message describing the task result.

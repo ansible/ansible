@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: win_disk_image
 short_description: Manage ISO/VHD/VHDX mounts on Windows hosts
 version_added: '2.3'

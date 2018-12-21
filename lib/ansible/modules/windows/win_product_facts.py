@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_product_facts
 short_description: Provides Windows product information (product id, product key)
@@ -25,7 +25,7 @@ EXAMPLES = r'''
   win_product_facts:
 '''
 
-RETURN = '''
+RETURN = r'''
 ansible_facts:
   description: returned facts by this module
   returned: always

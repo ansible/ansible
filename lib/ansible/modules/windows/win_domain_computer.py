@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_domain_computer
 short_description: Manage computers in Active Directory
@@ -80,7 +80,7 @@ author:
 - Daniel Sánchez Fábregas (@Daniel-Sanchez-Fabregas)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
   - name: Add linux computer to Active Directory OU using a windows machine
     win_domain_computer:
       name: one_linux_server.my_org.local
@@ -99,5 +99,5 @@ EXAMPLES = '''
     delegate_to: my_windows_bridge.my_org.local
 '''
 
-RETURN = '''
+RETURN = r'''
 '''

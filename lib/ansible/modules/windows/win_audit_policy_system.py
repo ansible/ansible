@@ -9,7 +9,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_audit_policy_system
 short_description: Used to make changes to the system wide Audit Policy
@@ -61,7 +61,7 @@ EXAMPLES = r'''
     audit_type: none
 '''
 
-RETURN = '''
+RETURN = r'''
 current_audit_policy:
   description: details on the policy being targetted
   returned: always
