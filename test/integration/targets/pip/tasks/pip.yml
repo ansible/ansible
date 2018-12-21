@@ -97,6 +97,34 @@
       - squash_param.results|length == 1
       - squash_param.results[0].name|sort == pip_test_packages|sort
 
+# Tests of pip downloaded state
+- name: create libcache test directory
+  file:
+    state: directory
+    name: "{{ output_dir }}/pylibs"
+
+- name: test first download of package directly
+  pip:
+    chdir: "{{ output_dir }}/pylibs"
+    name: Bottle
+    state: downloaded
+  register: first_pip_download
+
+- name: assert that the first download task is changed
+  assert:
+    that: first_pip_download is changed
+
+- name: download a second time and confirm not changed
+  pip:
+    chdir: "{{ output_dir }}/pylibs"
+    name: Bottle
+    state: downloaded
+  register: second_pip_download
+
+- name: assert that the second download is not changed
+  assert:
+    that: second_pip_download is not changed
+
 # Test virtualenv installations
 
 - name: "make sure the test env doesn't exist"
