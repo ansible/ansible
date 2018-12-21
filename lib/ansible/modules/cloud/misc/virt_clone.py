@@ -1,14 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Requirements:
-# libvirt-python
-# OSX: brew install libvirt, pip install libvirt-python
-# Debian: apt-get install libvirt-python
-# python-virtinst
-# Debian: apt-get install python-virtinst
-# libguestfs-tools
-# Debian: apt-get install libguestfs-tools
+# Larry Smith Jr. <mrlesmithjr@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -24,9 +18,15 @@ module: virt_clone
 short_description: Clones VMs from templates
 description:
   - This module creates clones for libvirt.
+requirements:
+  - libvirt-python
+  - python-virtinst
+  - libguestfs-tools
 notes:
-  - Copyright: (c) 2017, Larry Smith Jr. <mrlesmithjr@gmail.com>
-  - GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+  - Tested on macOS, Debian, and Ubuntu.
+  - macOS: brew install libvirt
+  - macOS: pip install libvirt-python
+  - Debian: apt-get install libvirt-python python-virtinst libguestfs-tools
 version_added: "2.8"
 options:
   auto:
