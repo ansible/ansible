@@ -41,7 +41,7 @@ options:
         description:
         - If the service is being C(restarted) then sleep this many seconds
           between the stop and start command.
-        - This helps to workaround badly behaving init scripts that exit immediately
+        - This helps to work around badly-behaving init scripts that exit immediately
           after signaling a process to stop.
         type: int
         version_added: "1.3"
