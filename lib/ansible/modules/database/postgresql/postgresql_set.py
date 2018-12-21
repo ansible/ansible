@@ -138,22 +138,22 @@ RETURN = '''
 name:
     description: Name of PostgreSQL server parameter.
     returned: always
-    type: string
+    type: str
     sample: 'shared_buffers'
 info:
     description: Information about parameter current state.
     returned: always
-    type: string
+    type: str
     sample: 'name: log_min_duration_statement, setting: 1s, context: superuser, boot_val: -1, unit: ms'
 restart_required:
     description: Information about parameter current state.
     returned: always
-    type: boolean
+    type: bool
     sample: True
 result:
     description: Information what has been changed.
     returned: always
-    type: string
+    type: str
     sample: '128MB => 254MB'
 '''
 
