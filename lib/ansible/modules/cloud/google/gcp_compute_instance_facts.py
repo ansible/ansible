@@ -432,6 +432,8 @@ items:
       description:
       - 'The status of the instance. One of the following values: PROVISIONING, STAGING,
         RUNNING, STOPPING, SUSPENDING, SUSPENDED, and TERMINATED.'
+      - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
+        off .
       returned: success
       type: str
     statusMessage:

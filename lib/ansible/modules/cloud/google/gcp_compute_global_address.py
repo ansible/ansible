@@ -232,7 +232,7 @@ def resource_to_request(module):
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals

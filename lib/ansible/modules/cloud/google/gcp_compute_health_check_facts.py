@@ -142,6 +142,13 @@ items:
           - The default value is /.
           returned: success
           type: str
+        response:
+          description:
+          - The bytes to match against the beginning of the response data. If left
+            empty (the default value), any response will indicate health. The response
+            data can only be ASCII.
+          returned: success
+          type: str
         port:
           description:
           - The TCP port number for the HTTP health check request.
@@ -177,6 +184,13 @@ items:
           description:
           - The request path of the HTTPS health check request.
           - The default value is /.
+          returned: success
+          type: str
+        response:
+          description:
+          - The bytes to match against the beginning of the response data. If left
+            empty (the default value), any response will indicate health. The response
+            data can only be ASCII.
           returned: success
           type: str
         port:
