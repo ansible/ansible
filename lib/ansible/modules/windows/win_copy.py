@@ -23,7 +23,7 @@ options:
     - When used instead of C(src), sets the contents of a file directly to the
       specified value.
     - This is for simple values, for anything complex or with formatting please
-      switch to the template module.
+      switch to the M(template) module.
     type: str
     version_added: '2.3'
   decrypt:
