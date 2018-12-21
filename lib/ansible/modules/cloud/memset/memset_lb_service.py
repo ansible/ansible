@@ -217,13 +217,13 @@ def create_lb_service(args=None, service=None):
             # the payload and the service are the same, so we just exit unchanged
             retvals['memset_api'] = payload
         else:
+            _diff = dict(payload.items() ^ _service.items())
             # add load_balancer to the payload after we've compared the dicts
             payload['load_balancer'] = args['load_balancer']
             # update service
             if args['check_mode']:
                 retvals['changed'] = True
-                # TODO: return a diff instead of the the whole payload
-                retvals['memset_api'] = payload
+                retvals['diff'] = _diff
             else:
                 api_method = 'loadbalancer.service.update'
                 retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
@@ -251,9 +251,8 @@ def delete_lb_service(args=None, service=None):
         else:
             api_method = 'loadbalancer.service.remove'
             retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
-            if not retvals['_failed']:
+            if not retvals['failed']:
                 retvals['changed'] = True
-                retvals['memset_api'] = payload
 
     return(retvals)
 
@@ -269,9 +268,9 @@ def create_or_delete(args=None):
     # get the current services and check if the relevant service exists.
     payload['load_balancer'] = args['load_balancer']
     api_method = 'loadbalancer.service.list'
-    _has_failed, msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
+    has_failed, msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
 
-    if _has_failed:
+    if has_failed:
         # this is the first time the API is called; incorrect credentials will
         # manifest themselves at this point so we need to ensure the user is
         # informed of the reason.
@@ -280,6 +279,7 @@ def create_or_delete(args=None):
         retvals['stderr'] = "API returned an error: {0}" . format(response.status_code)
         return(retvals)
 
+    current_service = None
     for service in response.json():
         if service['name'] == args['service_name']:
             current_service = service
