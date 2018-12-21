@@ -494,13 +494,12 @@ def main():
                         (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+            # check for chroot
+            elif is_chroot():
+                module.warn("Target is a chroot. This can lead to false positives or prevent the init system tools from working.")
             else:
-                # check for chroot
-                if is_chroot():
-                    module.warn("Target is a chroot. This can lead to false positives or prevent the init system tools from working." % unit)
-                else:
-                    # this should not happen?
-                    module.fail_json(msg="Service is in unknown state", status=result['status'])
+                # this should not happen?
+                module.fail_json(msg="Service is in unknown state", status=result['status'])
 
     module.exit_json(**result)
 
