@@ -19,6 +19,20 @@ Playbook
 
 No notable changes.
 
+Distribution Facts
+------------------
+
+The information returned for the ``ansible_distribution_*`` group of facts may have changed
+slightly.  This is due to a switch away from code which will not run on Python-3.8 to a new backend
+library.  The new code fixes many bugs that the old backend was never going to address but in the
+process, may change some output.
+
+In general, ``ansible_distribution`` and ``ansible_distribution_major_version``, the two facts which are
+most relied upon by playbooks should not change (or else a bug should be filed for us to address the
+difference).  However, the other fields like ``ansible_distribution_release`` and
+``ansible_distribution_version`` may change if the old information was determined to have been
+erroneous.
+
 
 Command Line
 ============
