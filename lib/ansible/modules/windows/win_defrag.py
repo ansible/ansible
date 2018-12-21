@@ -31,16 +31,19 @@ options:
   freespace_consolidation:
     description:
     - Perform free space consolidation on the specified volumes.
+    type: bool
+    default: no
   priority:
     description:
     - Run the operation at low or normal priority.
+    type: str
     choices: [ low, normal ]
     default: low
   parallel:
     description:
     - Run the operation on each volume in parallel in the background.
     type: bool
-    default: 'no'
+    default: no
 author:
 - Dag Wieers (@dagwieers)
 '''
@@ -66,27 +69,27 @@ EXAMPLES = r'''
 
 RETURN = r'''
 cmd:
-    description: The complete command line used by the module
+    description: The complete command line used by the module.
     returned: always
     type: str
     sample: defrag.exe /C /V
 rc:
-    description: The return code for the command
+    description: The return code for the command.
     returned: always
     type: int
     sample: 0
 stdout:
-    description: The standard output from the command
+    description: The standard output from the command.
     returned: always
     type: str
     sample: Success.
 stderr:
-    description: The error output from the command
+    description: The error output from the command.
     returned: always
     type: str
     sample:
 msg:
-    description: Possible error message on failure
+    description: Possible error message on failure.
     returned: failed
     type: str
     sample: Command 'defrag.exe' not found in $env:PATH.
@@ -94,5 +97,5 @@ changed:
     description: Whether or not any changes were made.
     returned: always
     type: bool
-    sample: True
+    sample: true
 '''
