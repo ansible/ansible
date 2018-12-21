@@ -435,7 +435,6 @@ class JenkinsPlugin(object):
                     details="SHA1 calculation failed with: {0}".format(err)
                 )
 
-
             if self.params['version'] in [None, 'latest']:
                 # Take latest version
                 plugin_url = (
@@ -480,7 +479,7 @@ class JenkinsPlugin(object):
                             details="SHA1 calculation failed with: {0}".format(err)
                         )
                     sha1sum_new = base64.b64encode(sha1_new.digest())
-                    
+
                     # If the checksum is different from the currently installed
                     # plugin, store the new plugin
                     if sha1sum_old != sha1sum_new:
