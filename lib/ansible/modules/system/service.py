@@ -61,7 +61,7 @@ options:
     runlevel:
         description:
         - For OpenRC init scripts (e.g. Gentoo) only.
-        - The runlevel that this service belongs to."
+        - The runlevel that this service belongs to.
         type: str
         default: default
     arguments:
