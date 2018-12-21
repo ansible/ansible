@@ -65,7 +65,7 @@ class HttpApi(HttpApiBase):
             raise AnsibleConnectionFailure('Username and password are required for login')
 
         try:
-            self._auth = response['sid']
+            self.connection._auth = {'X-chkp-sid': response['sid']}
         except KeyError:
             raise ConnectionError(
                 'Server returned response without token info during connection authentication: %s' % response)
@@ -96,7 +96,7 @@ class HttpApi(HttpApiBase):
 
     def send_request(self, path, body_params):
         data = json.dumps(body_params) if body_params else '{}'
-        headers = {'Content-Type': 'application/json', 'X-chkp-sid': self._auth}
+        headers = {'Content-Type': 'application/json'}
 
         try:
             self._display_request()
@@ -107,9 +107,6 @@ class HttpApi(HttpApiBase):
         except HTTPError as e:
             error = json.loads(e.read())
             return error['code'], error['message']
-
-    def handle_httperror(self, exc):
-        False
 
     def _display_request(self):
         display.vvvv('Web Services: %s %s' % ('POST', self.connection._url))
