@@ -175,13 +175,13 @@ EXAMPLES = '''
 - pip:
     name: bottle
     extra_args: --user
-    
+
 # Download the requirements for a project to a directory
 - pip:
     chdir: /myapp/pylibs
     requirements: /myapp/requirements.txt
     state: downloaded
-    
+
 # Download (Bottle) into to a directory
 - pip:
     chdir: /myapp/pylibs
