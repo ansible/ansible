@@ -126,7 +126,7 @@ EXAMPLES = r'''
     path: C:\temp\log.txt
     search_regex: process complete
 
-- name: Wait until file if removed
+- name: Wait until file is removed
   win_wait_for:
     path: C:\temp\log.txt
     state: absent
