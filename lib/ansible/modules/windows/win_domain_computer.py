@@ -33,7 +33,7 @@ options:
         operating systems compatibility.
       - The LDAP display name (ldapDisplayName) for this property is sAMAccountName.
       - If ommitted the value is the same as C(name).
-      - Note that all computer SAMAccountNames needs to end with a $.
+      - Note that all computer SAMAccountNames need to end with a $.
     type: str
   enabled:
     description:
