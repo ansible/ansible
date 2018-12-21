@@ -103,6 +103,11 @@ items:
       - This is in RFC3339 text format.
       returned: success
       type: str
+    labels:
+      description:
+      - A set of key/value label pairs to assign to this ManagedZone.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
