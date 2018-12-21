@@ -83,6 +83,10 @@ def docker_pull(args, image):
     :type args: EnvironmentConfig
     :type image: str
     """
+    if ('@' in image or ':' in image) and docker_images(args, image):
+        display.info('Skipping docker pull of existing image with tag or digest: %s' % image, verbosity=2)
+        return
+
     if not args.docker_pull:
         display.warning('Skipping docker pull for "%s". Image may be out-of-date.' % image)
         return
@@ -147,6 +151,17 @@ def docker_run(args, image, options, cmd=None):
             time.sleep(3)
 
     raise ApplicationError('Failed to run docker image "%s".' % image)
+
+
+def docker_images(args, image):
+    """
+    :param args: CommonConfig
+    :param image: str
+    :rtype: list[dict[str, any]]
+    """
+    stdout, _dummy = docker_command(args, ['images', image, '--format', '{{json .}}'], capture=True, always=True)
+    results = [json.loads(line) for line in stdout.splitlines()]
+    return results
 
 
 def docker_rm(args, container_id):
