@@ -7,44 +7,135 @@
 - name: Setup - put NXAPI in stopped state
   nxos_nxapi:
     state: absent
-    provider: "{{ cli }}"
 
-- name: Configure NXAPI
-  nxos_nxapi:
-    enable_http: no
-    enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
-    enable_https: yes
-    https_port: 9443
-    provider: "{{ cli }}"
-  register: result
+- block:
+  - name: Configure NXAPI HTTPS
+    nxos_nxapi: &configure_https
+      enable_http: no
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      enable_https: yes
+      https_port: 9443
+    register: result
 
-- nxos_command:
-    commands:
-      - show nxapi | json
-    provider: "{{ cli }}"
-  register: result
+  - nxos_command:
+      commands:
+        - show nxapi | json
+    register: result
 
-- include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes.yaml
-  when: platform is match('N7K')
+  - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https.yaml
+    when: platform is match('N7K')
 
-- include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes.yaml
-  when: platform is match('N5K')
+  - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https.yaml
+    when: platform is match('N5K')
 
-- include: targets/nxos_nxapi/tasks/platform/default/assert_changes.yaml
-  when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
+  - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https.yaml
+    when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
 
-- name: Configure NXAPI again
-  nxos_nxapi:
-    enable_http: no
-    enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
-    enable_https: yes
-    https_port: 9443
-    provider: "{{ cli }}"
-  register: result
+  - name: Configure NXAPI HTTPS again
+    nxos_nxapi: *configure_https
+    register: result
 
-- name: Assert configuration is idempotent
-  assert:
-    that:
-      - result.changed == false
+  - name: Assert configuration is idempotent
+    assert: &assert_false
+      that:
+        - result.changed == false
 
-- debug: msg="END cli/configure.yaml"
+  - name: Configure NXAPI HTTPS & HTTP
+    nxos_nxapi: &configure_https_http
+      enable_http: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      enable_https: yes
+      https_port: 9443
+    register: result
+
+  - nxos_command:
+      commands:
+        - show nxapi | json
+    register: result
+
+  - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https_http.yaml
+    when: platform is match('N7K')
+
+  - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https_http.yaml
+    when: platform is match('N5K')
+
+  - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https_http.yaml
+    when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
+
+  - name: Configure NXAPI HTTPS & HTTP again
+    nxos_nxapi: *configure_https_http
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure different NXAPI HTTPS & HTTP ports
+    nxos_nxapi: &configure_https_http_ports
+      enable_http: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      enable_https: yes
+      http_port: 99
+      https_port: 500
+    register: result
+
+  - nxos_command:
+      commands:
+        - show nxapi | json
+    register: result
+
+  - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https_http_ports.yaml
+    when: platform is match('N7K')
+
+  - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https_http_ports.yaml
+    when: platform is match('N5K')
+
+  - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https_http_ports.yaml
+    when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
+
+  - name: Configure different NXAPI HTTPS & HTTP ports again
+    nxos_nxapi: *configure_https_http_ports
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure NXAPI HTTP
+    nxos_nxapi: &configure_http
+      enable_http: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      enable_https: no
+    register: result
+
+  - nxos_command:
+      commands:
+        - show nxapi | json
+    register: result
+
+  - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes_http.yaml
+    when: platform is match('N7K')
+
+  - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_http.yaml
+    when: platform is match('N5K')
+
+  - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_http.yaml
+    when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
+
+  - name: Configure NXAPI HTTP again
+    nxos_nxapi: *configure_http
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  always:
+  - name: Cleanup - Disable NXAPI
+    nxos_nxapi:
+      state: absent
+    register: result
+
+  - name: Cleanup - Re-enable NXAPI
+    nxos_nxapi:
+      state: present
+    register: result
+
+  - debug: msg="END cli/configure.yaml"

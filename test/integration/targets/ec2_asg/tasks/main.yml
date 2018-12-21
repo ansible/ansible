@@ -435,7 +435,7 @@
     - name: Ensure ec2_asg task completes
       async_status: jid="{{ asg_job.ansible_job_id }}"
       register: status
-      until: status.finished
+      until: status is finished
       retries: 200
       delay: 15
 
@@ -497,7 +497,7 @@
     - name: Ensure ec2_asg task completes
       async_status: jid="{{ asg_job.ansible_job_id }}"
       register: status
-      until: status.finished
+      until: status is finished
       retries: 200
       delay: 15
 

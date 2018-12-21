@@ -52,6 +52,15 @@ options:
       - When set for PUT mode, asks for server-side encryption.
     default: True
     version_added: "2.0"
+    type: bool
+  encryption_mode:
+    description:
+      - What encryption mode to use if C(encrypt) is set
+    default: AES256
+    choices:
+      - AES256
+      - aws:kms
+    version_added: "2.7"
   expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
@@ -106,7 +115,7 @@ options:
         Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0.
         When this is set to 'different', the md5 sum of the local file is compared with the 'ETag' of the object/key in S3.
         The ETag may or may not be an MD5 digest of the object data. See the ETag response header here
-        U(http://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html)
+        U(https://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html)
     default: 'always'
     aliases: ['force']
     version_added: "1.2"
@@ -123,13 +132,21 @@ options:
     version_added: "2.0"
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc.  Otherwise assumes AWS
+      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
     aliases: [ S3_URL ]
+  dualstack:
+    description:
+      - Enables Amazon S3 Dual-Stack Endpoints, allowing S3 communications using both IPv4 and IPv6.
+      - Requires at least botocore version 1.4.45.
+    type: bool
+    default: "no"
+    version_added: "2.7"
   rgw:
     description:
       - Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
     default: false
     version_added: "2.2"
+    type: bool
   src:
     description:
       - The source file path when performing a PUT operation.
@@ -140,6 +157,11 @@ options:
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
         ignore_nonexistent_bucket: True."
     version_added: "2.3"
+    type: bool
+  encryption_kms_key_id:
+    description:
+      - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
+    version_added: "2.7"
 
 requirements: [ "boto3", "botocore" ]
 author:
@@ -248,12 +270,12 @@ RETURN = '''
 msg:
   description: msg indicating the status of the operation
   returned: always
-  type: string
+  type: str
   sample: PUT operation complete
 url:
   description: url of the object
   returned: (for put and geturl operations)
-  type: string
+  type: str
   sample: https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
 expiry:
   description: number of seconds the presigned url is valid for
@@ -263,7 +285,7 @@ expiry:
 contents:
   description: contents of the object as string
   returned: (for getstr operation)
-  type: string
+  type: str
   sample: "Hello, world!"
 s3_keys:
   description: list of object keys
@@ -278,16 +300,22 @@ s3_keys:
 import hashlib
 import mimetypes
 import os
-import traceback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
-from ansible.module_utils.basic import AnsibleModule, to_text, to_native
-from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict, get_aws_connection_info, boto3_conn, HAS_BOTO3
+from ansible.module_utils.basic import to_text, to_native
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 
 try:
     import botocore
 except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+    pass  # will be detected by imported AnsibleAWSModule
+
+IGNORE_S3_DROP_IN_EXCEPTIONS = ['XNotImplemented', 'NotImplemented']
+
+
+class Sigv4Required(Exception):
+    pass
 
 
 def key_check(module, s3, bucket, obj, version=None, validate=True):
@@ -306,8 +334,9 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
         elif error_code == 403 and validate is False:
             pass
         else:
-            module.fail_json(msg="Failed while looking up object (during key check) %s." % obj,
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Failed while looking up object (during key check) %s." % obj)
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while looking up object (during key check) %s." % obj)
     return exists
 
 
@@ -362,16 +391,17 @@ def bucket_check(module, s3, bucket, validate=True):
         elif error_code == 403 and validate is False:
             pass
         else:
-            module.fail_json(msg="Failed while looking up bucket (during bucket_check) %s." % bucket,
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Failed while looking up bucket (during bucket_check) %s." % bucket)
     except botocore.exceptions.EndpointConnectionError as e:
-        module.fail_json(msg="Invalid endpoint provided: %s" % to_text(e), exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, msg="Invalid endpoint provided")
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while looking up bucket (during bucket_check) %s." % bucket)
     return exists
 
 
 def create_bucket(module, s3, bucket, location=None):
     if module.check_mode:
-        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
+        module.exit_json(msg="CREATE operation skipped - running in check mode", changed=True)
     configuration = {}
     if location not in ('us-east-1', None):
         configuration['LocationConstraint'] = location
@@ -383,8 +413,12 @@ def create_bucket(module, s3, bucket, location=None):
         for acl in module.params.get('permission'):
             s3.put_bucket_acl(ACL=acl, Bucket=bucket)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission).",
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutBucketAcl is not implemented by your storage provider. Set the permission parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission).")
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while creating bucket or setting acl (check that you have CreateBucket and PutBucketAcl permission).")
 
     if bucket:
         return True
@@ -403,10 +437,8 @@ def list_keys(module, s3, bucket, prefix, marker, max_keys):
     try:
         keys = sum(paginated_list(s3, **pagination_params), [])
         module.exit_json(msg="LIST operation complete", s3_keys=keys)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while listing the keys in the bucket {0}".format(bucket),
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed while listing the keys in the bucket {0}".format(bucket))
 
 
 def delete_bucket(module, s3, bucket):
@@ -423,8 +455,8 @@ def delete_bucket(module, s3, bucket):
                 s3.delete_objects(Bucket=bucket, Delete={'Objects': formatted_keys})
         s3.delete_bucket(Bucket=bucket)
         return True
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while deleting bucket %s.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed while deleting bucket %s." % bucket)
 
 
 def delete_key(module, s3, bucket, obj):
@@ -433,8 +465,8 @@ def delete_key(module, s3, bucket, obj):
     try:
         s3.delete_object(Bucket=bucket, Key=obj)
         module.exit_json(msg="Object deleted from bucket %s." % (bucket), changed=True)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while trying to delete %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed while trying to delete %s." % obj)
 
 
 def create_dirkey(module, s3, bucket, obj, encrypt):
@@ -443,14 +475,21 @@ def create_dirkey(module, s3, bucket, obj, encrypt):
     try:
         params = {'Bucket': bucket, 'Key': obj, 'Body': b''}
         if encrypt:
-            params['ServerSideEncryption'] = 'AES256'
+            params['ServerSideEncryption'] = module.params['encryption_mode']
+        if module.params['encryption_kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
+            params['SSEKMSKeyId'] = module.params['encryption_kms_key_id']
 
         s3.put_object(**params)
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
-        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while creating object %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutObjectAcl is not implemented by your storage provider. Set the permissions parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Failed while creating object %s." % obj)
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while creating object %s." % obj)
+    module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket), changed=True)
 
 
 def path_check(path):
@@ -481,7 +520,9 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
     try:
         extra = {}
         if encrypt:
-            extra['ServerSideEncryption'] = 'AES256'
+            extra['ServerSideEncryption'] = module.params['encryption_mode']
+        if module.params['encryption_kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
+            extra['SSEKMSKeyId'] = module.params['encryption_kms_key_id']
         if metadata:
             extra['Metadata'] = {}
 
@@ -501,14 +542,25 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
             extra['ContentType'] = content_type
 
         s3.upload_file(Filename=src, Bucket=bucket, Key=obj, ExtraArgs=extra)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to complete PUT operation.")
+    try:
         for acl in module.params.get('permission'):
             s3.put_object_acl(ACL=acl, Bucket=bucket, Key=obj)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] in IGNORE_S3_DROP_IN_EXCEPTIONS:
+            module.warn("PutObjectAcl is not implemented by your storage provider. Set the permission parameters to the empty list to avoid this warning")
+        else:
+            module.fail_json_aws(e, msg="Unable to set object ACL")
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Unable to set object ACL")
+    try:
         url = s3.generate_presigned_url(ClientMethod='put_object',
                                         Params={'Bucket': bucket, 'Key': obj},
                                         ExpiresIn=expiry)
-        module.exit_json(msg="PUT operation complete", url=url, changed=True)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable to complete PUT operation.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to generate presigned URL")
+    module.exit_json(msg="PUT operation complete", url=url, changed=True)
 
 
 def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
@@ -522,22 +574,29 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
         else:
             key = s3.get_object(Bucket=bucket, Key=obj)
     except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != "404":
-            module.fail_json(msg="Could not find the key %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] == 'InvalidArgument' and 'require AWS Signature Version 4' in to_text(e):
+            raise Sigv4Required()
+        elif e.response['Error']['Code'] not in ("403", "404"):
+            # AccessDenied errors may be triggered if 1) file does not exist or 2) file exists but
+            # user does not have the s3:GetObject permission. 404 errors are handled by download_file().
+            module.fail_json_aws(e, msg="Could not find the key %s." % obj)
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Could not find the key %s." % obj)
 
+    optional_kwargs = {'ExtraArgs': {'VersionId': version}} if version else {}
     for x in range(0, retries + 1):
         try:
-            s3.download_file(bucket, obj, dest)
+            s3.download_file(bucket, obj, dest, **optional_kwargs)
             module.exit_json(msg="GET operation complete", changed=True)
-        except botocore.exceptions.ClientError as e:
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             # actually fail on last pass through the loop.
             if x >= retries:
-                module.fail_json(msg="Failed while downloading %s." % obj, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                module.fail_json_aws(e, msg="Failed while downloading %s." % obj)
             # otherwise, try again, this may be a transient timeout.
         except SSLError as e:  # will ClientError catch SSLError?
             # actually fail on last pass through the loop.
             if x >= retries:
-                module.fail_json(msg="s3 download failed: %s." % e, exception=traceback.format_exc())
+                module.fail_json_aws(e, msg="s3 download failed")
             # otherwise, try again, this may be a transient timeout.
 
 
@@ -551,8 +610,12 @@ def download_s3str(module, s3, bucket, obj, version=None, validate=True):
             contents = to_native(s3.get_object(Bucket=bucket, Key=obj)["Body"].read())
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while getting contents of object %s as a string." % obj,
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] == 'InvalidArgument' and 'require AWS Signature Version 4' in to_text(e):
+            raise Sigv4Required()
+        else:
+            module.fail_json_aws(e, msg="Failed while getting contents of object %s as a string." % obj)
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed while getting contents of object %s as a string." % obj)
 
 
 def get_download_url(module, s3, bucket, obj, expiry, changed=True):
@@ -561,8 +624,8 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True):
                                         Params={'Bucket': bucket, 'Key': obj},
                                         ExpiresIn=expiry)
         module.exit_json(msg="Download url:", url=url, expiry=expiry, changed=changed)
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed while getting download url.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed while getting download url.")
 
 
 def is_fakes3(s3_url):
@@ -573,18 +636,7 @@ def is_fakes3(s3_url):
         return False
 
 
-def is_walrus(s3_url):
-    """ Return True if it's Walrus endpoint, not S3
-
-    We assume anything other than *.amazonaws.com is Walrus"""
-    if s3_url is not None:
-        o = urlparse(s3_url)
-        return not o.netloc.endswith('amazonaws.com')
-    else:
-        return False
-
-
-def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url):
+def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=False):
     if s3_url and rgw:  # TODO - test this
         rgw = urlparse(s3_url)
         params = dict(module=module, conn_type='client', resource='s3', use_ssl=rgw.scheme == 'https', region=location, endpoint=s3_url, **aws_connect_kwargs)
@@ -602,11 +654,18 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url):
         params = dict(module=module, conn_type='client', resource='s3', region=location,
                       endpoint="%s://%s:%s" % (protocol, fakes3.hostname, to_text(port)),
                       use_ssl=fakes3.scheme == 'fakes3s', **aws_connect_kwargs)
-    elif is_walrus(s3_url):
-        walrus = urlparse(s3_url).hostname
-        params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=walrus, **aws_connect_kwargs)
     else:
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=s3_url, **aws_connect_kwargs)
+        if module.params['mode'] == 'put' and module.params['encryption_mode'] == 'aws:kms':
+            params['config'] = botocore.client.Config(signature_version='s3v4')
+        elif module.params['mode'] in ('get', 'getstr') and sig_4:
+            params['config'] = botocore.client.Config(signature_version='s3v4')
+        if module.params['dualstack']:
+            dualconf = botocore.client.Config(s3={'use_dualstack_endpoint': True})
+            if 'config' in params:
+                params['config'] = params['config'].merge(dualconf)
+            else:
+                params['config'] = dualconf
     return boto3_conn(**params)
 
 
@@ -617,6 +676,7 @@ def main():
             bucket=dict(required=True),
             dest=dict(default=None, type='path'),
             encrypt=dict(default=True, type='bool'),
+            encryption_mode=dict(choices=['AES256', 'aws:kms'], default='AES256'),
             expiry=dict(default=600, type='int', aliases=['expiration']),
             headers=dict(type='dict'),
             marker=dict(default=""),
@@ -630,12 +690,14 @@ def main():
             prefix=dict(default=""),
             retries=dict(aliases=['retry'], type='int', default=0),
             s3_url=dict(aliases=['S3_URL']),
+            dualstack=dict(default='no', type='bool'),
             rgw=dict(default='no', type='bool'),
             src=dict(),
-            ignore_nonexistent_bucket=dict(default=False, type='bool')
+            ignore_nonexistent_bucket=dict(default=False, type='bool'),
+            encryption_kms_key_id=dict()
         ),
     )
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[['mode', 'put', ['src', 'object']],
@@ -643,12 +705,6 @@ def main():
                      ['mode', 'getstr', ['object']],
                      ['mode', 'geturl', ['object']]],
     )
-
-    if module._name == 's3':
-        module.deprecate("The 's3' module is being renamed 'aws_s3'", version=2.7)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 and botocore required for this module')
 
     bucket = module.params.get('bucket')
     encrypt = module.params.get('encrypt')
@@ -665,6 +721,7 @@ def main():
     prefix = module.params.get('prefix')
     retries = module.params.get('retries')
     s3_url = module.params.get('s3_url')
+    dualstack = module.params.get('dualstack')
     rgw = module.params.get('rgw')
     src = module.params.get('src')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
@@ -702,6 +759,12 @@ def main():
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not s3_url and 'S3_URL' in os.environ:
         s3_url = os.environ['S3_URL']
+
+    if dualstack and s3_url is not None and 'amazonaws.com' not in s3_url:
+        module.fail_json(msg='dualstack only applies to AWS S3')
+
+    if dualstack and not module.botocore_at_least('1.4.45'):
+        module.fail_json(msg='dualstack requires botocore >= 1.4.45')
 
     # rgw requires an explicit url
     if rgw and not s3_url:
@@ -746,18 +809,30 @@ def main():
             if keysum_compare(module, dest, s3, bucket, obj, version=version):
                 sum_matches = True
                 if overwrite == 'always':
-                    download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+                    try:
+                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+                    except Sigv4Required:
+                        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
                 else:
                     module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
             else:
                 sum_matches = False
 
                 if overwrite in ('always', 'different'):
-                    download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+                    try:
+                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+                    except Sigv4Required:
+                        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
                 else:
                     module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
         else:
-            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+            try:
+                download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+            except Sigv4Required:
+                s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+                download_s3file(module, s3, bucket, obj, dest, retries, version=version)
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
@@ -887,7 +962,11 @@ def main():
         if bucket and obj:
             keyrtn = key_check(module, s3, bucket, obj, version=version, validate=validate)
             if keyrtn:
-                download_s3str(module, s3, bucket, obj, version=version)
+                try:
+                    download_s3str(module, s3, bucket, obj, version=version)
+                except Sigv4Required:
+                    s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+                    download_s3str(module, s3, bucket, obj, version=version)
             elif version is not None:
                 module.fail_json(msg="Key %s with version id %s does not exist." % (obj, version))
             else:

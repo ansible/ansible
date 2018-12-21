@@ -15,6 +15,7 @@ from lib.util import (
     run_command,
     common_environment,
     display,
+    find_executable,
 )
 
 from lib.config import (
@@ -22,6 +23,13 @@ from lib.config import (
 )
 
 BUFFER_SIZE = 256 * 256
+
+
+def docker_available():
+    """
+    :rtype: bool
+    """
+    return find_executable('docker', required=False)
 
 
 def get_docker_container_id():
@@ -46,6 +54,28 @@ def get_docker_container_id():
         return container_ids.pop()
 
     raise ApplicationError('Found multiple container_id candidates: %s\n%s' % (sorted(container_ids), contents))
+
+
+def get_docker_container_ip(args, container_id):
+    """
+    :type args: EnvironmentConfig
+    :type container_id: str
+    :rtype: str
+    """
+    results = docker_inspect(args, container_id)
+    ipaddress = results[0]['NetworkSettings']['IPAddress']
+    return ipaddress
+
+
+def get_docker_networks(args, container_id):
+    """
+    :param args: EnvironmentConfig
+    :param container_id: str
+    :rtype: list[str]
+    """
+    results = docker_inspect(args, container_id)
+    networks = sorted(results[0]['NetworkSettings']['Networks'])
+    return networks
 
 
 def docker_pull(args, image):
@@ -142,8 +172,17 @@ def docker_inspect(args, container_id):
     except SubprocessError as ex:
         try:
             return json.loads(ex.stdout)
-        except:
-            raise ex  # pylint: disable=locally-disabled, raising-bad-type
+        except Exception:
+            raise ex
+
+
+def docker_network_disconnect(args, container_id, network):
+    """
+    :param args: EnvironmentConfig
+    :param container_id: str
+    :param network: str
+    """
+    docker_command(args, ['network', 'disconnect', network, container_id], capture=True)
 
 
 def docker_network_inspect(args, network):
@@ -161,8 +200,8 @@ def docker_network_inspect(args, network):
     except SubprocessError as ex:
         try:
             return json.loads(ex.stdout)
-        except:
-            raise ex  # pylint: disable=locally-disabled, raising-bad-type
+        except Exception:
+            raise ex
 
 
 def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None):

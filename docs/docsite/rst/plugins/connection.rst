@@ -1,7 +1,11 @@
-.. contents:: Topics
+.. _connection_plugins:
 
 Connection Plugins
-------------------
+==================
+
+.. contents::
+   :local:
+   :depth: 2
 
 Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time.
 
@@ -11,28 +15,28 @@ The basics of these connection types are covered in the :ref:`getting started<in
 
 .. _ssh_plugins:
 
-ssh Plugins
-+++++++++++
+``ssh`` plugins
+---------------
 
 Because ssh is the default protocol used in system administration and the protocol most used in Ansible, ssh options are included in the command line tools. See :ref:`ansible-playbook` for more details.
 
 .. _enabling_connection:
 
-Enabling Connection Plugins
-+++++++++++++++++++++++++++
+Adding connection plugins
+-------------------------
 
 You can extend Ansible to support other transports (such as SNMP or message bus) by dropping a custom plugin
 into the ``connection_plugins`` directory.
 
 .. _using_connection:
 
-Using Connection Plugins
-++++++++++++++++++++++++
+Using connection plugins
+------------------------
 
-The transport can be changed via :ref:`configuration<ansible_configuration_settings>`, at the command line (``-c``, ``--connection``), as a :ref:`keyword <playbook_keywords>` in your play, or by setting a :ref:`variable<behavioral_parameters>`, most often in your inventory.
-For example, for Windows machines you might want to use the :doc:`winrm<connection/winrm>` plugin.
+You can set the connection plugin globally via :ref:`configuration<ansible_configuration_settings>`, at the command line (``-c``, ``--connection``), as a :ref:`keyword <playbook_keywords>` in your play, or by setting a :ref:`variable<behavioral_parameters>`, most often in your inventory.
+For example, for Windows machines you might want to set the :ref:`winrm <winrm_connection>` plugin as an inventory variable.
 
-Most connection plugins can operate with a minimum configuration. By default they use the :ref:`inventory hostname<inventory_hostnames_lookup>` and defaults to find the target host.
+Most connection plugins can operate with minimal configuration. By default they use the :ref:`inventory hostname<inventory_hostnames_lookup>` and defaults to find the target host.
 
 Plugins are self-documenting. Each plugin should document its configuration options. The following are connection variables common to most connection plugins:
 
@@ -48,7 +52,7 @@ Each plugin might also have a specific version of a variable that overrides the 
 .. _connection_plugin_list:
 
 Plugin List
-+++++++++++
+-----------
 
 You can use ``ansible-doc -t connection -l`` to see the list of available plugins.
 Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation and examples.
@@ -64,7 +68,7 @@ Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation an
 
    :ref:`Working with Playbooks<working_with_playbooks>`
        An introduction to playbooks
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
    :ref:`Filters<playbooks_filters>`
        Jinja2 filter plugins
@@ -72,9 +76,9 @@ Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation an
        Jinja2 test plugins
    :ref:`Lookups<playbooks_lookups>`
        Jinja2 lookup plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible vars plugins
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

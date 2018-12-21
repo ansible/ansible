@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: dellos6_facts
 version_added: "2.2"
-author: "Abirami N(@abirami-n)"
+author: "Abirami N (@abirami-n)"
 short_description: Collect facts from remote devices running Dell EMC Networking OS6
 description:
   - Collects a base set of device facts from a remote device that
@@ -76,11 +76,11 @@ ansible_net_version:
 ansible_net_hostname:
   description: The configured hostname of the device.
   returned: always.
-  type: string
+  type: str
 ansible_net_image:
   description: The image file that the device is running.
   returned: always
-  type: string
+  type: str
 
 # hardware
 ansible_net_memfree_mb:

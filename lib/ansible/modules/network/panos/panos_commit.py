@@ -31,18 +31,6 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        default: "admin"
     interval:
         description:
             - interval for checking commit job
@@ -55,6 +43,7 @@ options:
             - if commit should be synchronous
         type: bool
         default: 'yes'
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -69,7 +58,7 @@ RETURN = '''
 status:
     description: success status
     returned: success
-    type: string
+    type: str
     sample: "okey dokey"
 '''
 
@@ -127,6 +116,7 @@ def main():
     )
 
     module.exit_json(changed=True, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

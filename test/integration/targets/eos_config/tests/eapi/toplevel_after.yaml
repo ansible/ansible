@@ -4,16 +4,16 @@
 - name: setup
   eos_config:
     lines:
-      - "snmp-server contact ansible"
+      - snmp-server contact ansible
       - "hostname {{ inventory_hostname_short }}"
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure top level command with before
   eos_config:
     lines: hostname foo
     after: snmp-server contact bar
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -26,7 +26,7 @@
   eos_config:
     lines: hostname foo
     after: snmp-server contact foo
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -39,6 +39,6 @@
       - no snmp-server contact
       - hostname {{ inventory_hostname_short }}
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END eapi/toplevel_after.yaml"

@@ -87,6 +87,7 @@ EXAMPLES = '''
     name: "my-rack-type"
     state: present
   register: rack_type
+
 - name: "Save Rack Type into a JSON file 2/3"
   copy:
     content: "{{ rack_type.value | to_nice_json }}"
@@ -154,7 +155,7 @@ def rack_type_absent(module, aos, my_rack_type):
     if not module.check_mode:
         try:
             my_rack_type.delete()
-        except:
+        except Exception:
             module.fail_json(msg="An error occurred, while trying to delete the Rack Type")
 
     module.exit_json(changed=True,
@@ -194,7 +195,7 @@ def rack_type(module):
 
     try:
         aos = get_aos_session(module, margs['session'])
-    except:
+    except Exception:
         module.fail_json(msg="Unable to login to the AOS server")
 
     item_name = False
@@ -254,6 +255,7 @@ def main():
     check_aos_version(module, '0.6.0')
 
     rack_type(module)
+
 
 if __name__ == "__main__":
     main()

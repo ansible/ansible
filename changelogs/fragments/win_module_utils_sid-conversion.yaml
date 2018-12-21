@@ -1,6 +1,0 @@
-minor_changes:
-- PowerShell modules that use Convert-ToSID in Ansible.ModuleUtils.SID.psm1
-  like win_user_right now accept an actual SID as an input string. This means
-  any local or domain accounts that are named like a SID need to be prefixed
-  with the domain, hostname, or . to ensure it converts to that accounts SID
-  https://github.com/ansible/ansible/issues/38502

@@ -69,6 +69,7 @@ def parse_args():
     gce_credentials.check_required(opts, parser)
     return (opts, args)
 
+
 if __name__ == '__main__':
 
     (opts, args) = parse_args()

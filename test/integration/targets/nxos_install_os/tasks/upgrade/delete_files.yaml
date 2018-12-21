@@ -1,0 +1,11 @@
+---
+- name: "Delete Files To Make Room On Bootflash"
+  nxos_config: &remove_file
+    lines:
+      - terminal dont-ask
+      - allow delete boot-image
+      - "delete {{ item }}"
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+  with_items: "{{ delete_image_list }}"

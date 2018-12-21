@@ -1,0 +1,3 @@
+---
+bugfixes:
+- 'Fixed an issue with ansible-doc -l failing when parsing some plugin documentation.'

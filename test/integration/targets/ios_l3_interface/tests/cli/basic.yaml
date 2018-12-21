@@ -22,7 +22,7 @@
 - name: Configure interface ipv4 address
   ios_l3_interface:
     name: "{{ test_interface }}"
-    ipv4: 192.168.0.1/24
+    ipv4: 192.168.20.1/24
     state: present
     provider: "{{ cli }}"
   register: result
@@ -31,24 +31,24 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
-      - '"ip address 192.168.0.1 255.255.255.0" in result.commands'
+      - '"ip address 192.168.20.1 255.255.255.0" in result.commands'
 
 - name: Configure interface ipv4 address (idempotent)
   ios_l3_interface:
     name: "{{ test_interface }}"
-    ipv4: 192.168.0.1/24
+    ipv4: 192.168.20.1/24
     state: present
     provider: "{{ cli }}"
   register: result
 
-- assert:
+- assert: &unchanged
     that:
       - 'result.changed == false'
 
 - name: Assign same ipv4 address to other interface (fail)
   ios_l3_interface:
     name: "{{ test_interface2 }}"
-    ipv4: 192.168.0.1/24
+    ipv4: 192.168.20.1/24
     state: present
     provider: "{{ cli }}"
   ignore_errors: yes
@@ -74,7 +74,7 @@
       - '"ip address dhcp" in result.commands'
 
 - name: Configure interface ipv6 address
-  ios_l3_interface:
+  ios_l3_interface: &ipv6-1
     name: "{{ test_interface }}"
     ipv6: fd5d:12c9:2201:1::1/64
     state: present
@@ -88,16 +88,36 @@
       - '"ipv6 address fd5d:12c9:2201:1::1/64" in result.commands'
 
 - name: Configure interface ipv6 address (idempotent)
-  ios_l3_interface:
+  ios_l3_interface: *ipv6-1
+  register: result
+
+- assert: *unchanged
+
+- name: Configure second ipv6 address on interface
+  ios_l3_interface: &ipv6-2
     name: "{{ test_interface }}"
-    ipv6: fd5d:12c9:2201:1::1/64
+    ipv6: fd5d:12c9:2291:1::1/64
     state: present
     provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
-      - 'result.changed == false'
+      - 'result.changed == true'
+      - '"interface {{ test_interface }}" in result.commands'
+      - '"ipv6 address fd5d:12c9:2291:1::1/64" in result.commands'
+
+- name: Ensure first ipv6 address still associated with interface
+  ios_l3_interface: *ipv6-1
+  register: result
+
+- assert: *unchanged
+
+- name: Ensure second ipv6 address still associated with interface
+  ios_l3_interface: *ipv6-2
+  register: result
+
+- assert: *unchanged
 
 - name: Assign same ipv6 address to other interface (fail)
   ios_l3_interface:
@@ -148,6 +168,8 @@
     provider: "{{ cli }}"
   register: result
 
+- assert: *unchanged
+
 - name: Delete second interface ipv4 and ipv6 address (setup)
   ios_l3_interface:
     name: "{{ test_interface2 }}"
@@ -181,9 +203,7 @@
     provider: "{{ cli }}"
   register: result
 
-- assert:
-    that:
-      - 'result.changed == false'
+- assert: *unchanged
 
 - name:  Change ipv4 and ipv6 address using aggregate
   ios_l3_interface:
@@ -232,8 +252,6 @@
     provider: "{{ cli }}"
   register: result
 
-- assert:
-    that:
-      - 'result.changed == false'
+- assert: *unchanged
 
 - debug: msg="END ios_l3_interface cli/basic.yaml on connection={{ ansible_connection }}"

@@ -1,15 +1,21 @@
 ---
 # ============================================================
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
 - name: test register email identity
   block:
     - name: register email identity
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
     - name: assert changed is True
       assert:
@@ -23,10 +29,7 @@
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
 # ============================================================
 - name: test register domain identity
   block:
@@ -34,10 +37,7 @@
       aws_ses_identity:
         identity: "{{ domain_identity }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
     - name: assert changed is True
       assert:
@@ -55,10 +55,7 @@
       aws_ses_identity:
         identity: "{{ domain_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
 # ============================================================
 - name: test email_identity unchanged when already existing
   block:
@@ -66,18 +63,12 @@
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
     - name: duplicate register identity
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
     - name: assert changed is False
       assert:
@@ -91,10 +82,7 @@
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
 # ============================================================
 - name: test domain_identity unchanged when already existing
   block:
@@ -102,18 +90,12 @@
       aws_ses_identity:
         identity: "{{ domain_identity }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
     - name: duplicate register identity
       aws_ses_identity:
         identity: "{{ domain_identity }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
     - name: assert changed is False
       assert:
@@ -127,19 +109,77 @@
       aws_ses_identity:
         identity: "{{ domain_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
+# ============================================================
+- name: test register email identity check mode
+  block:
+    - name: register email identity check mode
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - import_tasks: assert_defaults.yaml
+      vars:
+        identity: "{{ email_identity }}"
+
+  always:
+    - name: cleanup email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert nothing to clean up since check mode
+      assert:
+        that:
+          - result.changed == False
+# ============================================================
+- name: test register domain identity check mode
+  block:
+    - name: register domain identity check mode
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - import_tasks: assert_defaults.yaml
+      vars:
+        identity: "{{ domain_identity }}"
+
+  always:
+    - name: cleanup domain identity
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert nothing to clean up since check mode
+      assert:
+        that:
+          - result.changed == False
 # ============================================================
 - name: remove non-existent email identity
   aws_ses_identity:
     identity: "{{ email_identity }}"
     state: absent
-    region: "{{ ec2_region }}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
+    <<: *aws_connection_info
   register: result
 - name: assert changed is False
   assert:
@@ -150,15 +190,80 @@
   aws_ses_identity:
     identity: "{{ domain_identity }}"
     state: absent
-    region: "{{ ec2_region }}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
+    <<: *aws_connection_info
   register: result
 - name: assert changed is False
   assert:
     that:
       - result.changed == False
+# ============================================================
+- name: test remove email identity check mode
+  block:
+    - name: register email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: remove email identity check mode
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+  always:
+    - name: cleanup email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert something to clean up since remove was check mode
+      assert:
+        that:
+          - result.changed == True
+# ============================================================
+- name: test remove domain identity check mode
+  block:
+    - name: register domain identity
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: remove domain identity check mode
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+  always:
+    - name: cleanup domain identity
+      aws_ses_identity:
+        identity: "{{ domain_identity }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert something to clean up since remove was check mode
+      assert:
+        that:
+          - result.changed == True
 # ============================================================
 - name: test set notification queues
   block:
@@ -166,10 +271,7 @@
       sns_topic:
         name: "{{ notification_queue_name }}-{{ item }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: topic_info
       with_items:
         - bounce
@@ -185,10 +287,7 @@
           topic: "{{ topic_info.results[1].sns_arn }}"
         delivery_notifications:
           topic: "{{ topic_info.results[2].sns_arn }}"
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
     - name: assert notification settings
       assert:
@@ -207,10 +306,7 @@
       sns_topic:
         name: "{{ notification_queue_name }}-{{ item }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       with_items:
         - bounce
         - complaint
@@ -219,10 +315,7 @@
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
 # ============================================================
 - name: test change notification queues after create
   block:
@@ -230,10 +323,7 @@
       sns_topic:
         name: "{{ notification_queue_name }}-{{ item }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: topic_info
       with_items:
         - bounce
@@ -243,10 +333,7 @@
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
     - name: set notification topics
       aws_ses_identity:
         identity: "{{ email_identity }}"
@@ -257,10 +344,7 @@
           topic: "{{ topic_info.results[1].sns_arn }}"
         delivery_notifications:
           topic: "{{ topic_info.results[2].sns_arn }}"
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
     - name: assert changed is True
       assert:
@@ -277,10 +361,7 @@
       sns_topic:
         name: "{{ notification_queue_name }}-{{ item }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       with_items:
         - bounce
         - complaint
@@ -289,10 +370,96 @@
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
+# ============================================================
+- name: test change notification settings check mode
+  block:
+    - name: test topic
+      sns_topic:
+        name: "{{ notification_queue_name }}-{{ item }}"
+        state: present
+        <<: *aws_connection_info
+      register: topic_info
+      with_items:
+        - bounce
+        - complaint
+        - delivery
+
+    - name: register email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+
+    - name: set notification settings check mode
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        bounce_notifications:
+          topic: "{{ topic_info.results[0].sns_arn }}"
+          include_headers: Yes
+        complaint_notifications:
+          topic: "{{ topic_info.results[1].sns_arn }}"
+          include_headers: Yes
+        delivery_notifications:
+          topic: "{{ topic_info.results[2].sns_arn }}"
+          include_headers: Yes
+        feedback_forwarding: No
+        <<: *aws_connection_info
+      register: result
+      check_mode: True
+
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: assert notification settings
+      assert:
+        that:
+          - result.notification_attributes.bounce_topic == topic_info.results[0].sns_arn
+          - result.notification_attributes.headers_in_bounce_notifications_enabled == True
+          - result.notification_attributes.delivery_topic == topic_info.results[2].sns_arn
+          - result.notification_attributes.headers_in_delivery_notifications_enabled == True
+          - result.notification_attributes.complaint_topic == topic_info.results[1].sns_arn
+          - result.notification_attributes.headers_in_complaint_notifications_enabled == True
+          - result.notification_attributes.forwarding_enabled == False
+
+    - name: re-register base email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert no change since notifications were check mode
+      assert:
+        that:
+          - result.changed == False
+          - "'bounce_topic' not in result.notification_attributes"
+          - result.notification_attributes.headers_in_bounce_notifications_enabled == False
+          - "'delivery_topic' not in result.notification_attributes"
+          - result.notification_attributes.headers_in_delivery_notifications_enabled == False
+          - "'complaint_topic' not in result.notification_attributes"
+          - result.notification_attributes.headers_in_complaint_notifications_enabled == False
+          - result.notification_attributes.forwarding_enabled == True
+
+  always:
+    - name: cleanup topics
+      sns_topic:
+        name: "{{ notification_queue_name }}-{{ item }}"
+        state: absent
+        <<: *aws_connection_info
+      with_items:
+        - bounce
+        - complaint
+        - delivery
+
+    - name: cleanup email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
 # ============================================================
 - name: test include headers on notification queues
   block:
@@ -306,10 +473,7 @@
           include_headers: Yes
         delivery_notifications:
           include_headers: Yes
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
     - name: assert notification headers enabled
       assert:
@@ -322,10 +486,7 @@
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
 # ============================================================
 - name: test disable feedback forwarding
   block:
@@ -333,10 +494,7 @@
       sns_topic:
         name: "{{ notification_queue_name }}-{{ item }}"
         state: present
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: topic_info
       with_items:
         - bounce
@@ -350,10 +508,7 @@
         complaint_notifications:
           topic: "{{ topic_info.results[1].sns_arn }}"
         feedback_forwarding: No
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
     - name: assert feedback_forwarding == False
       assert:
@@ -364,10 +519,7 @@
       sns_topic:
         name: "{{ notification_queue_name }}-{{ item }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       with_items:
         - bounce
         - complaint
@@ -375,10 +527,7 @@
       aws_ses_identity:
         identity: "{{ email_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
 # ============================================================
 - name: test disable feedback forwarding fails if no topics
   block:
@@ -387,22 +536,84 @@
         identity: "{{ domain_identity }}"
         state: present
         feedback_forwarding: No
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
       register: result
       failed_when: result.failed == False
-    - name: assert error.code == InvalidParameterValue
+    - name: assert error message starts with "Invalid Parameter Value"
       assert:
         that:
-          - result.error.code == 'InvalidParameterValue'
+          - '"Invalid Parameter Value" in result.msg'
   always:
     - name: cleanup identity
       aws_ses_identity:
         identity: "{{ domain_identity }}"
         state: absent
-        region: "{{ ec2_region }}"
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{security_token}}"
+        <<: *aws_connection_info
+# ============================================================
+- name: test disable feedback forwarding fails if no complaint topic
+  block:
+    - name: test topic
+      sns_topic:
+        name: "{{ notification_queue_name }}-bounce"
+        state: present
+        <<: *aws_connection_info
+      register: topic_info
+    - name: register email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        bounce_notifications:
+          topic: "{{ topic_info.sns_arn }}"
+        feedback_forwarding: No
+        <<: *aws_connection_info
+      register: result
+      failed_when: result.failed == False
+    - name: assert error message starts with "Invalid Parameter Value"
+      assert:
+        that:
+          - '"Invalid Parameter Value" in result.msg'
+  always:
+    - name: cleanup topics
+      sns_topic:
+        name: "{{ notification_queue_name }}-bounce"
+        state: absent
+        <<: *aws_connection_info
+    - name: cleanup identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+# ============================================================
+- name: test disable feedback forwarding fails if no bounce topic
+  block:
+    - name: test topic
+      sns_topic:
+        name: "{{ notification_queue_name }}-complaint"
+        state: present
+        <<: *aws_connection_info
+      register: topic_info
+    - name: register email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        complaint_notifications:
+          topic: "{{ topic_info.sns_arn }}"
+        feedback_forwarding: No
+        <<: *aws_connection_info
+      register: result
+      failed_when: result.failed == False
+    - name: assert error message starts with "Invalid Parameter Value"
+      assert:
+        that:
+          - '"Invalid Parameter Value" in result.msg'
+  always:
+    - name: cleanup topics
+      sns_topic:
+        name: "{{ notification_queue_name }}-complaint"
+        state: absent
+        <<: *aws_connection_info
+    - name: cleanup identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info

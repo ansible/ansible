@@ -24,11 +24,57 @@
 - name: create our testing sub-directory
   file: path="{{ output_dir_test }}" state=directory
 
+# Verify correct default package manager for Fedora
+# Validates: https://github.com/ansible/ansible/issues/34014
+- block:
+    - name: install apt
+      dnf:
+        name: apt
+        state: present
+    - name: gather facts again
+      setup:
+    - name: validate output
+      assert:
+        that:
+          - 'ansible_pkg_mgr == "dnf"'
+  always:
+    - name: remove apt
+      dnf:
+        name: apt
+        state: absent
+    - name: gather facts again
+      setup:
+  when: ansible_distribution == "Fedora"
+
+# Verify correct default package manager for Debian/Ubuntu when Zypper installed
+- block:
+    # Just make an executable file called "zypper" - installing zypper itself
+    # consistently is hard - and we're not going to use it
+    - name: install fake zypper
+      file:
+        state: touch
+        mode: 0755
+        path: /usr/bin/zypper
+    - name: gather facts again
+      setup:
+    - name: validate output
+      assert:
+        that:
+          - 'ansible_pkg_mgr == "apt"'
+  always:
+    - name: remove fake zypper
+      file:
+        path: /usr/bin/zypper
+        state: absent
+    - name: gather facts again
+      setup:
+  when: ansible_os_family == "Debian"
+
 ##
 ## package
 ##
 
-- name: define distros to attempt installing at on 
+- name: define distros to attempt installing at on
   set_fact:
     package_distros:
         - RedHat

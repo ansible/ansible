@@ -475,7 +475,7 @@ class ConsulCheck(object):
         if duration:
             duration_units = ['ns', 'us', 'ms', 's', 'm', 'h']
             if not any((duration.endswith(suffix) for suffix in duration_units)):
-                duration = "{}s".format(duration)
+                duration = "{0}s".format(duration)
         return duration
 
     def register(self, consul_api):
@@ -514,13 +514,13 @@ class ConsulCheck(object):
             if attr is None:
                 attr = key
             data[key] = getattr(self, attr)
-        except:
+        except Exception:
             pass
 
 
 def test_dependencies(module):
     if not python_consul_installed:
-        module.fail_json(msg="python-consul required for this module. see http://python-consul.readthedocs.org/en/latest/#installation")
+        module.fail_json(msg="python-consul required for this module. see https://python-consul.readthedocs.io/en/latest/#installation")
 
 
 def main():

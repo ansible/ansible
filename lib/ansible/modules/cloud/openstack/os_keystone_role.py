@@ -17,7 +17,9 @@ module: os_keystone_role
 short_description: Manage OpenStack Identity Roles
 extends_documentation_fragment: openstack
 version_added: "2.1"
-author: "Monty Taylor (@emonty), David Shrewsbury (@Shrews)"
+author:
+  - Monty Taylor (@emonty)
+  - David Shrewsbury (@Shrews)
 description:
     - Manage OpenStack Identity Roles.
 options:
@@ -35,8 +37,8 @@ options:
        - Ignored. Present for backwards compatibility
      required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -61,11 +63,11 @@ role:
     contains:
         id:
             description: Unique role ID.
-            type: string
+            type: str
             sample: "677bfab34c844a01b88a217aa12ec4c2"
         name:
             description: Role name.
-            type: string
+            type: str
             sample: "demo"
 '''
 
@@ -95,9 +97,8 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-
         role = cloud.get_role(name)
 
         if module.check_mode:
@@ -118,7 +119,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -1,0 +1,21 @@
+# Test code for the vmware guest dynamic plugin module
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+---
+- name: Test VMware Guest Dynamic Inventroy Plugin
+  hosts: localhost
+  tasks:
+    - name: store the vcenter container ip
+      set_fact:
+        vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+    - debug:
+        var: vcsim
+
+    - name: Check that there are 'all' and 'otherGuest' groups present in inventory
+      assert:
+        that: "'{{ item }}' in {{ groups.keys() | list }}"
+      with_items:
+      - all
+      - otherGuest

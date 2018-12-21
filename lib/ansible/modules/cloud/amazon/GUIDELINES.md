@@ -3,7 +3,7 @@
 The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
 further information see
 [the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).
-If you are planning to contribute AWS modules to Ansible then getting in touch with the the working
+If you are planning to contribute AWS modules to Ansible then getting in touch with the working
 group will be a good way to start, especially because a similar module may already be under
 development.
 
@@ -45,7 +45,7 @@ are included. If you do find an issue, please raise a bug report.
 
 When porting, keep in mind that AnsibleAWSModule also will add the default ec2
 argument spec by default. In pre-port modules, you should see common arguments
-specfied with:
+specified with:
 
 ```
 def main():
@@ -207,14 +207,30 @@ extends_documentation_fragment:
 You should wrap any boto3 or botocore call in a try block. If an exception is thrown, then there
 are a number of possibilities for handling it.
 
-* use aws_module.fail_json_aws() to report the module failure in a standard way
-* retry using AWSRetry
-* use fail_json() to report the failure without using `ansible.module_utils.aws.core`
-* do something custom in the case where you know how to handle the exception
+* Catch the general `ClientError` or look for a specific error code with
+    `is_boto3_error_code`.
+* Use aws_module.fail_json_aws() to report the module failure in a standard way
+* Retry using AWSRetry
+* Use fail_json() to report the failure without using `ansible.module_utils.aws.core`
+* Do something custom in the case where you know how to handle the exception
 
-For more information on botocore exception handling see [the botocore error documentation](http://botocore.readthedocs.org/en/latest/client_upgrades.html#error-handling).
+For more information on botocore exception handling see [the botocore error documentation](https://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling).
 
-#### using fail_json_aws()
+### Using is_boto3_error_code
+
+To use `ansible.module_utils.aws.core.is_boto3_error_code` to catch a single
+AWS error code, call it in place of `ClientError` in your except clauses. In
+this case, *only* the `InvalidGroup.NotFound` error code will be caught here,
+and any other error will be raised for handling elsewhere in the program.
+
+```python
+try:
+    return connection.describe_security_groups(**kwargs)
+except is_boto3_error_code('InvalidGroup.NotFound'):
+    return {'SecurityGroups': []}
+```
+
+#### Using fail_json_aws()
 
 In the AnsibleAWSModule there is a special method, `module.fail_json_aws()` for nice reporting of
 exceptions.  Call this on your exception and it will report the error together with a traceback for
@@ -399,6 +415,13 @@ describe_instances(module.client('ec2'), InstanceIds=['i-123456789'])
 
 The call will be retried the specified number of times, so the calling functions
 don't need to be wrapped in the backoff decorator.
+
+You can also use customization for `retries`, `delay` and `max_delay` parameters used by
+`AWSRetry.jittered_backoff` API using module params. You can take a look into
+[cloudformation](/lib/ansible/modules/cloud/amazon/cloudformation.py) module for example.
+
+To make all Amazon modules uniform, prefix the module param with `backoff_`, so `retries` becomes `backoff_retries`
+ and likewise with `backoff_delay` and `backoff_max_delay`.
 
 ### Returning Values
 

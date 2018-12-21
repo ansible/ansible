@@ -1,3 +1,7 @@
 cloud/azure
 destructive
-posix/ci/cloud/group2/azure
+shippable/azure/group8
+azure_rm_mysqlserver_facts
+azure_rm_mysqldatabase
+azure_rm_mysqldatabase_facts
+azure_rm_mysqlfirewallrule

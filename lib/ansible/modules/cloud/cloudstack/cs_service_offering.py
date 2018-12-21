@@ -210,7 +210,7 @@ RETURN = '''
 id:
   description: UUID of the service offering
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 cpu_number:
   description: Number of CPUs in the service offering
@@ -255,17 +255,17 @@ disk_iops_write_rate:
 created:
   description: Date the offering was created
   returned: success
-  type: string
+  type: str
   sample: 2017-11-19T10:48:59+0000
 display_text:
   description: Display text of the offering
   returned: success
-  type: string
+  type: str
   sample: Micro 512mb 1cpu
 domain:
   description: Domain the offering is into
   returned: success
-  type: string
+  type: str
   sample: ROOT
 host_tags:
   description: List of host tags
@@ -305,7 +305,7 @@ memory:
 name:
   description: Name of the system offering
   returned: success
-  type: string
+  type: str
   sample: Micro
 offer_ha:
   description: Whether HA support is enabled in the offering or not
@@ -315,17 +315,17 @@ offer_ha:
 provisioning_type:
   description: Provisioning type used to create volumes
   returned: success
-  type: string
+  type: str
   sample: thin
 storage_type:
   description: Storage type used to create volumes
   returned: success
-  type: string
+  type: str
   sample: shared
 system_vm_type:
   description: System VM type of this offering
   returned: success
-  type: string
+  type: str
   sample: consoleproxy
 service_offering_details:
   description: Additioanl service offering details

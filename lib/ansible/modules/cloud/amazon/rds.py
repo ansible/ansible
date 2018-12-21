@@ -92,7 +92,8 @@ options:
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   upgrade:
     description:
-      - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate.
+      - Indicates that minor version upgrades should be applied automatically.
+      - Used only when command=create or command=modify or command=restore or command=replicate.
     type: bool
     default: 'no'
   option_group:
@@ -261,63 +262,73 @@ RETURN = '''
 engine:
     description: the name of the database engine
     returned: when RDS instance exists
-    type: string
+    type: str
     sample: "oracle-se"
 engine_version:
     description: the version of the database engine
     returned: when RDS instance exists
-    type: string
+    type: str
     sample: "11.2.0.4.v6"
 license_model:
     description: the license model information
     returned: when RDS instance exists
-    type: string
+    type: str
     sample: "bring-your-own-license"
 character_set_name:
     description: the name of the character set that this instance is associated with
     returned: when RDS instance exists
-    type: string
+    type: str
     sample: "AL32UTF8"
 allocated_storage:
     description: the allocated storage size in gigabytes (GB)
     returned: when RDS instance exists
-    type: string
+    type: str
     sample: "100"
 publicly_accessible:
     description: the accessibility options for the DB instance
     returned: when RDS instance exists
-    type: boolean
+    type: bool
     sample: "true"
 latest_restorable_time:
     description: the latest time to which a database can be restored with point-in-time restore
     returned: when RDS instance exists
-    type: string
+    type: str
     sample: "1489707802.0"
-secondary_avaialbility_zone:
+secondary_availability_zone:
     description: the name of the secondary AZ for a DB instance with multi-AZ support
     returned: when RDS instance exists and is multy-AZ
-    type: string
+    type: str
     sample: "eu-west-1b"
 backup_window:
     description: the daily time range during which automated backups are created if automated backups are enabled
     returned: when RDS instance exists and automated backups are enabled
-    type: string
+    type: str
     sample: "03:00-03:30"
 auto_minor_version_upgrade:
     description: indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window
     returned: when RDS instance exists
-    type: boolean
+    type: bool
     sample: "true"
 read_replica_source_dbinstance_identifier:
     description: the identifier of the source DB instance if this RDS instance is a read replica
     returned: when read replica RDS instance exists
-    type: string
+    type: str
     sample: "null"
 db_name:
     description: the name of the database to create when the DB instance is created
     returned: when RDS instance exists
-    type: string
+    type: str
     sample: "ASERTG"
+endpoint:
+    description: the endpoint uri of the database instance
+    returned: when RDS instance exists
+    type: str
+    sample: "my-ansible-database.asdfaosdgih.us-east-1.rds.amazonaws.com"
+port:
+    description: the listening port of the database instance
+    returned: when RDS instance exists
+    type: int
+    sample: 3306
 parameter_groups:
     description: the list of DB parameter groups applied to this RDS instance
     returned: when RDS instance exists and parameter groups are defined
@@ -326,12 +337,12 @@ parameter_groups:
         parameter_apply_status:
             description: the status of parameter updates
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "in-sync"
         parameter_group_name:
             description: the name of the DP parameter group
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "testawsrpprodb01spfile-1ujg7nrs7sgyz"
 option_groups:
     description: the list of option group memberships for this RDS instance
@@ -341,12 +352,12 @@ option_groups:
         option_group_name:
             description: the option group name for this RDS instance
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "default:oracle-se-11-2"
         status:
             description: the status of the RDS instance's option group membership
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "in-sync"
 pending_modified_values:
     description: a dictionary of changes to the RDS instance that are pending
@@ -356,47 +367,47 @@ pending_modified_values:
         db_instance_class:
             description: the new DB instance class for this RDS instance that will be applied or is in progress
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
         db_instance_identifier:
             description: the new DB instance identifier this RDS instance that will be applied or is in progress
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
         allocated_storage:
             description: the new allocated storage size for this RDS instance that will be applied or is in progress
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
         backup_retention_period:
             description: the pending number of days for which automated backups are retained
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
         engine_version:
             description: indicates the database engine version
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
         iops:
             description: the new provisioned IOPS value for this RDS instance that will be applied or is being applied
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
         master_user_password:
             description: the pending or in-progress change of the master credentials for this RDS instance
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
         multi_az:
             description: indicates that the single-AZ RDS instance is to change to a multi-AZ deployment
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
         port:
             description: specifies the pending port for this RDS instance
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "null"
 db_subnet_groups:
     description: information on the subnet group associated with this RDS instance
@@ -406,17 +417,17 @@ db_subnet_groups:
         description:
             description: the subnet group associated with the DB instance
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "Subnets for the UAT RDS SQL DB Instance"
         name:
             description: the name of the DB subnet group
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "samplesubnetgrouprds-j6paiqkxqp4z"
         status:
             description: the status of the DB subnet group
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "complete"
         subnets:
             description: the description of the DB subnet group
@@ -431,22 +442,22 @@ db_subnet_groups:
                         name:
                             description: avaialbility zone
                             returned: when RDS instance exists
-                            type: string
+                            type: str
                             sample: "eu-west-1b"
                         provisioned_iops_capable:
                             description: whether provisioned iops are available in AZ subnet
                             returned: when RDS instance exists
-                            type: boolean
+                            type: bool
                             sample: "false"
                 identifier:
                     description: the identifier of the subnet
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "subnet-3fdba63e"
                 status:
                     description: the status of the subnet
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "active"
 '''
 
@@ -716,8 +727,7 @@ class RDSDBInstance:
             d["endpoint"] = None
             d["port"] = None
             d["vpc_security_groups"] = None
-        if self.instance.DBName:
-            d['DBName'] = self.instance.DBName
+        d['DBName'] = self.instance.DBName if hasattr(self.instance, 'DBName') else None
         # ReadReplicaSourceDBInstanceIdentifier may or may not exist
         try:
             d["replication_source"] = self.instance.ReadReplicaSourceDBInstanceIdentifier
@@ -748,7 +758,7 @@ class RDS2DBInstance:
             'latest_restorable_time': self.instance['LatestRestorableTime'],
             'status': self.status,
             'availability_zone': self.instance['AvailabilityZone'],
-            'secondary_avaialbility_zone': self.instance['SecondaryAvailabilityZone'],
+            'secondary_availability_zone': self.instance['SecondaryAvailabilityZone'],
             'backup_retention': self.instance['BackupRetentionPeriod'],
             'backup_window': self.instance['PreferredBackupWindow'],
             'maintenance_window': self.instance['PreferredMaintenanceWindow'],
@@ -810,8 +820,7 @@ class RDS2DBInstance:
         else:
             d['endpoint'] = None
             d['port'] = None
-        if self.instance["DBName"]:
-            d['DBName'] = self.instance['DBName']
+        d['DBName'] = self.instance['DBName'] if hasattr(self.instance, 'DBName') else None
         return d
 
 

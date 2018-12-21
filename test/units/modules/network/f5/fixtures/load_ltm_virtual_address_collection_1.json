@@ -1,0 +1,31 @@
+{
+    "kind": "tm:ltm:virtual-address:virtual-addresscollectionstate",
+    "selfLink": "https://localhost/mgmt/tm/ltm/virtual-address?ver=13.1.0.4",
+    "items": [
+        {
+            "kind": "tm:ltm:virtual-address:virtual-addressstate",
+            "name": "2.3.4.5",
+            "partition": "Common",
+            "fullPath": "/Common/2.3.4.5",
+            "generation": 1074,
+            "selfLink": "https://localhost/mgmt/tm/ltm/virtual-address/~Common~2.3.4.5?ver=13.1.0.4",
+            "address": "2.3.4.5",
+            "arp": "enabled",
+            "autoDelete": "true",
+            "connectionLimit": 0,
+            "enabled": "yes",
+            "floating": "enabled",
+            "icmpEcho": "enabled",
+            "inheritedTrafficGroup": "false",
+            "mask": "255.255.255.255",
+            "routeAdvertisement": "disabled",
+            "serverScope": "any",
+            "spanning": "disabled",
+            "trafficGroup": "/Common/traffic-group-1",
+            "trafficGroupReference": {
+                "link": "https://localhost/mgmt/tm/cm/traffic-group/~Common~traffic-group-1?ver=13.1.0.4"
+            },
+            "unit": 1
+        }
+    ]
+}

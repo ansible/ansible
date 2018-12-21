@@ -67,6 +67,18 @@
 #    - whoami_as_elevated.rc == 0
 #    - whoami_as_elevated.stdout|lower == '{{ ansible_hostname|lower }}\{{ ansible_user_id|lower }}'
 
+- name: Run command with multiple arguments
+  win_psexec:
+    command: powershell.exe -NonInteractive "exit 1"
+  ignore_errors: yes
+  register: whoami_multiple_args
+
+- name: Test command with multiple argumetns
+  assert:
+    that:
+    - whoami_multiple_args.rc == 1
+    - whoami_multiple_args.psexec_command == "psexec.exe -accepteula powershell.exe -NonInteractive \"exit 1\""
+
 - name: Remove sysinternals from PATH
   win_path:
     name: PATH

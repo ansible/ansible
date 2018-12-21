@@ -5,8 +5,8 @@
 
 - name: "Apply default ntp config" 
   nxos_ntp_options: &default
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   ignore_errors: yes
 
 - block:
@@ -15,8 +15,8 @@
     nxos_ntp_options: &configure_master_default_stratum
       master: true
       logging: true
+      provider: "{{ connection }}"
       state: present
-      provider: "{{ connection }}"      
     register: result
 
   - assert: &true
@@ -35,8 +35,8 @@
     nxos_ntp_options: &configure_master_non_default_stratum
       master: true
       stratum: 10
+      provider: "{{ connection }}"
       state: present
-      provider: "{{ connection }}"      
     register: result
 
   - assert: *true
@@ -52,8 +52,8 @@
       master: true
       stratum: 10
       logging: false
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -68,8 +68,8 @@
     nxos_ntp_options: &configure_no_master
       master: false
       logging: true
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true

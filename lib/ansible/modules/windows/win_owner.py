@@ -20,6 +20,7 @@ options:
     description:
       - Path to be used for changing owner
     required: yes
+    type: path
   user:
     description:
       - Name to be used for changing owner
@@ -29,6 +30,8 @@ options:
       - Indicates if the owner should be changed recursively
     type: bool
     default: 'no'
+seealso:
+- module: win_file
 author:
 - Hans-Joachim Kliemeck (@h0nIg)
 '''

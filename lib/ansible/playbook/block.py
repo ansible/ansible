@@ -32,13 +32,13 @@ from ansible.playbook.taggable import Taggable
 class Block(Base, Become, Conditional, Taggable):
 
     # main block fields containing the task lists
-    _block = FieldAttribute(isa='list', default=[], inherit=False)
-    _rescue = FieldAttribute(isa='list', default=[], inherit=False)
-    _always = FieldAttribute(isa='list', default=[], inherit=False)
+    _block = FieldAttribute(isa='list', default=list, inherit=False)
+    _rescue = FieldAttribute(isa='list', default=list, inherit=False)
+    _always = FieldAttribute(isa='list', default=list, inherit=False)
 
     # other fields
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _delegate_facts = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -160,6 +160,12 @@ class Block(Base, Become, Conditional, Taggable):
             )
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading always", obj=self._ds, orig_exc=e)
+
+    def _validate_always(self, attr, name, value):
+        if value and not self.block:
+            raise AnsibleParserError("'%s' keyword cannot be used without 'block'" % name, obj=self._ds)
+
+    _validate_rescue = _validate_always
 
     def get_dep_chain(self):
         if self._dep_chain is None:

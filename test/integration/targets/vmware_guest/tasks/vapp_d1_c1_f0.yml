@@ -35,7 +35,7 @@
     folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
     name: vApp-Test
     datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusterlist['json'][0] }}"
+    cluster: "{{ clusterlist['json'][0]|basename }}"
     resource_pool: Resources
     guest_id: centos64Guest
     hardware:

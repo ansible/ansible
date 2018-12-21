@@ -18,7 +18,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-########################################################
 import datetime
 import os
 import platform
@@ -29,19 +28,15 @@ import sys
 import time
 
 from ansible.cli import CLI
+from ansible import constants as C
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
-
-########################################################
 
 class PullCLI(CLI):
     ''' is used to up a remote copy of ansible on each managed node,
@@ -91,6 +86,7 @@ class PullCLI(CLI):
             vault_opts=True,
             runtask_opts=True,
             subset_opts=True,
+            check_opts=False,  # prevents conflict of --checkout/-C and --check/-C
             inventory_opts=True,
             module_opts=True,
             runas_prompt_opts=True,
@@ -123,8 +119,12 @@ class PullCLI(CLI):
                                help='modified files in the working repository will be discarded')
         self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
                                help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
+        # add a subset of the check_opts flag group manually, as the full set's
+        # shortcodes conflict with above --checkout/-C
         self.parser.add_option("--check", default=False, dest='check', action='store_true',
                                help="don't make any changes; instead, try to predict some of the changes that may occur")
+        self.parser.add_option("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
+                               help="when changing (small) files and templates, show the differences in those files; works great with --check")
 
         super(PullCLI, self).parse()
 
@@ -276,6 +276,8 @@ class PullCLI(CLI):
             cmd += ' -l "%s"' % limit_opts
         if self.options.check:
             cmd += ' -C'
+        if self.options.diff:
+            cmd += ' -D'
 
         os.chdir(self.options.dest)
 

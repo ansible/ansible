@@ -1,0 +1,158 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_rpm sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: smu_run="false"
+- set_fact: smu_run="true"
+  when: ((platform is search('N9K')) and (imagetag and (imagetag is version_compare('I2', 'ge'))))
+
+- set_fact: sdk_run="false"
+- set_fact: sdk_run="true"
+  when: ((platform is search('N9K')) and (imagetag and (imagetag is version_compare('I6', 'ge'))))
+
+# The smu and nxsdk packages MUST be present on the device before the tests are run.
+# The smu patch must be built to match the image version under test
+# Only run this test after replacing the pkg with proper rpm files
+
+- debug: msg="***WARNING*** Remove meta end_play to verify this module ***WARNING***"
+
+- meta: end_play
+
+- block:
+  - name: Install smu RPM
+    nxos_rpm: &tsmurpm
+      pkg: "nxos.sample-n9k_ALL-1.0.0-7.0.3.I6.1.lib32_n9000.rpm"
+    register: result
+
+  - assert: &true1
+      that:
+        - "result.changed == true"
+
+  - name: Check Idempotence
+    nxos_rpm: *tsmurpm
+    register: result
+
+  - assert: &false1
+      that:
+        - "result.changed == false"
+
+  - name: Remove smu RPM
+    nxos_rpm: &rsmurpm
+      pkg: "nxos.sample-n9k_ALL-1.0.0-7.0.3.I6.1.lib32_n9000.rpm"
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true1
+
+  - name: Check Idempotence
+    nxos_rpm: *rsmurpm
+    register: result
+
+  - assert: *false1
+
+  when: smu_run
+
+# healthMonitor-1.0-1.5.0.x86_64.rpm is avaibale at https://github.com/CiscoDevNet/NX-SDK/tree/master/rpm/RPMS
+- block:
+  - name: Install nxsdk RPM(aggregate)
+    nxos_rpm: &tsdkrpm
+      aggregate:
+          - { pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm", file_system: "bootflash" }
+          - { pkg: "customCliApp-1.0-1.0.0.x86_64.rpm" }
+    register: result
+
+  - assert: &true2
+      that:
+        - "result.changed == true"
+
+  - name: Check Idempotence
+    nxos_rpm: *tsdkrpm
+    register: result
+
+  - assert: &false2
+      that:
+        - "result.changed == false"
+
+  - name: Remove nxsdk RPM(aggregate)
+    nxos_rpm: &rsdkrpm
+      aggregate:
+          - { pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm" }
+          - { pkg: "customCliApp-1.0-1.0.0.x86_64.rpm" }
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true2
+
+  - name: Check Idempotence
+    nxos_rpm: *rsdkrpm
+    register: result
+
+  - assert: *false2
+
+  when: sdk_run
+
+- block:
+  - name: Install reload smu RPM
+    nxos_rpm: &trsmurpm
+      pkg: "nxos.CSCve91311-n9k_ALL-1.0.0-7.0.3.I6.1.lib32_n9000.rpm"
+    register: result
+
+  - assert: *true1
+
+  - name: Wait for device to come back up
+    wait_for:
+      port: 22
+      provider: "{{ connection }}"
+      state: started
+      timeout: 600
+      delay: 60
+      host: "{{ inventory_hostname_short }}"
+
+  - name: Continue with install reload smu RPM
+    nxos_rpm: *trsmurpm
+    register: result
+
+  - assert: *true1
+
+  - name: Check Idempotence
+    nxos_rpm: *trsmurpm
+    register: result
+
+  - assert: *false1
+
+  - name: Remove reload smu RPM
+    nxos_rpm: &rrsmurpm
+      pkg: "nxos.CSCve91311-n9k_ALL-1.0.0-7.0.3.I6.1.lib32_n9000.rpm"
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true1
+
+  - name: Wait for device to come back up
+    wait_for:
+      port: 22
+      provider: "{{ connection }}"
+      state: started
+      timeout: 600
+      delay: 60
+      host: "{{ inventory_hostname_short }}"
+
+  - name: Continue with remove reload smu RPM
+    nxos_rpm: *rrsmurpm
+    register: result
+
+  - assert: *true1
+
+  - name: Check Idempotence
+    nxos_rpm: *rrsmurpm
+    register: result
+
+  - assert: *false1
+
+  when: smu_run
+
+- debug: msg="END connection={{ ansible_connection }} nxos_rpm sanity test"

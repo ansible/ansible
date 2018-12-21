@@ -1,0 +1,123 @@
+# Test code for the UCS Org module
+# Copyright 2018, John McDonough (@movinalot)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+  vars:
+    login_info: &login_info
+      <<: *login_info
+
+# Setup (clean environment)
+- name: org absent
+  ucs_org: &org_absent
+    <<: *login_info
+    org_name: testorg
+    state: absent
+
+
+# Test present (check_mode)
+- name: org present (check_mode)
+  ucs_org: &org_present
+    <<: *login_info
+    org_name: testorg
+  check_mode: yes
+  register: cm_org_present
+
+
+# Present (normal mode)
+- name: org present (normal mode)
+  ucs_org: *org_present
+  register: nm_org_present
+
+
+# Test present again (idempotent)
+- name: org present again (check_mode)
+  ucs_org: *org_present
+  check_mode: yes
+  register: cm_org_present_again
+
+
+# Present again (normal mode)
+- name: org present again (normal mode)
+  ucs_org: *org_present
+  register: nm_org_present_again
+
+
+# Verfiy present
+- name: Verify org present results
+  assert:
+    that:
+    - cm_org_present.changed == nm_org_present.changed == true
+    - cm_org_present_again.changed == nm_org_present_again.changed == false
+
+
+# Test change (check_mode)
+- name: org description change (check_mode)
+  ucs_org: &org_change
+    <<: *org_present
+    description: 'testorg'
+  check_mode: yes
+  register: cm_org_description_change
+
+
+# Change (normal mode)
+- name: org description change (normal mode)
+  ucs_org: *org_change
+  register: nm_org_description_change
+
+
+# Test change again (idempotent)
+- name: org description change again (check_mode)
+  ucs_org: *org_change
+  check_mode: yes
+  register: cm_org_description_change_again
+
+
+# Change again (normal mode)
+- name: org description change again (normal mode)
+  ucs_org: *org_change
+  register: nm_org_description_change_again
+
+
+# Verfiy change
+- name: Verify org change results
+  assert:
+    that:
+    - cm_org_description_change.changed == nm_org_description_change.changed == true
+    - cm_org_description_change_again.changed == nm_org_description_change_again.changed == false
+
+
+# Teardown (clean environment)
+- name: org absent (check_mode)
+  ucs_org: *org_absent
+  check_mode: yes
+  register: cm_org_absent
+
+
+# Absent (normal mode)
+- name: org absent (normal mode)
+  ucs_org: *org_absent
+  register: nm_org_absent
+
+
+# Test absent again (idempotent)
+- name: org absent again (check_mode)
+  ucs_org: *org_absent
+  check_mode: yes
+  register: cm_org_absent_again
+
+
+# Absent again (normal mode)
+- name: org absent again (normal mode)
+  ucs_org: *org_absent
+  register: nm_org_absent_again
+
+
+# Verfiy absent
+- name: Verify org absent results
+  assert:
+    that:
+    - cm_org_absent.changed == nm_org_absent.changed == true
+    - cm_org_absent_again.changed == nm_org_absent_again.changed == false

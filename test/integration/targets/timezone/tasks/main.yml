@@ -1,20 +1,50 @@
-- name: Set timezone to Etc/UTC
+# Because hwclock usually isn't available inside Docker containers in Shippable
+# these tasks will detect if hwclock works and only run hwclock tests if it is
+# supported. That is why it is recommended to run these tests locally with
+# `--docker-privileged` on centos6, centos7 and ubuntu1404 images. Example
+# command to run on centos6:
+#
+#   ansible-test integration --docker centos6 --docker-privileged -v timezone
+
+##
+## set path to timezone config files
+##
+
+- name: set config file path on Debian
+  set_fact:
+    timezone_config_file: '/etc/timezone'
+  when: ansible_os_family == 'Debian'
+
+- name: set config file path on RedHat
+  set_fact:
+    timezone_config_file: '/etc/sysconfig/clock'
+  when: ansible_os_family == 'RedHat'
+
+##
+## set path to hwclock config files
+##
+
+- name: set config file path on Debian
+  set_fact:
+    hwclock_config_file: '/etc/default/rcS'
+  when: ansible_os_family == 'Debian'
+
+- name: set config file path on RedHat
+  set_fact:
+    hwclock_config_file: '/etc/sysconfig/clock'
+  when: ansible_os_family == 'RedHat'
+
+####
+#### timezone tests
+####
+
+- name: set timezone to Etc/UTC
   timezone:
     name: Etc/UTC
   register: original_timezone
 
 - block:
-    - name: Set timezone to Australia/Brisbane
-      timezone:
-        name: Australia/Brisbane
-      register: timezone_set
-
-    - name: Ensure timezone changed
-      assert:
-        that:
-          - timezone_set is changed
-          - timezone_set.diff.after.name == 'Australia/Brisbane'
-          - timezone_set.diff.before.name == 'Etc/UTC'
+    - include: test.yml
   always:
     - name: Restore original system timezone - {{ original_timezone.diff.before.name }}
       timezone:

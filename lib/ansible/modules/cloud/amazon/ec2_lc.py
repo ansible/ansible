@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -44,7 +44,7 @@ options:
   state:
     description:
       - Register or deregister the instance
-    required: true
+    default: present
     choices: ['present', 'absent']
   name:
     description:
@@ -188,7 +188,7 @@ RETURN = '''
 arn:
   description: The Amazon Resource Name of the launch configuration.
   returned: when I(state=present)
-  type: string
+  type: str
   sample: arn:aws:autoscaling:us-east-1:148830907657:launchConfiguration:888d9b58-d93a-40c4-90cf-759197a2621a:launchConfigurationName/launch_config_name
 changed:
   description: Whether the state of the launch configuration has changed.
@@ -198,22 +198,22 @@ changed:
 created_time:
   description: The creation date and time for the launch configuration.
   returned: when I(state=present)
-  type: string
+  type: str
   sample: '2017-11-03 23:46:44.841000'
 image_id:
   description: The ID of the Amazon Machine Image used by the launch configuration.
   returned: when I(state=present)
-  type: string
+  type: str
   sample: ami-9be6f38c
 instance_type:
   description: The instance type for the instances.
   returned: when I(state=present)
-  type: string
+  type: str
   sample: t1.micro
 name:
   description: The name of the launch configuration.
   returned: when I(state=present)
-  type: string
+  type: str
   sample: launch_config_name
 result:
   description: The specification details for the launch configuration.
@@ -223,7 +223,7 @@ result:
     PlacementTenancy:
       description: The tenancy of the instances, either default or dedicated.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: default
     associate_public_ip_address:
       description: (EC2-VPC) Indicates whether to assign a public IP address to each instance.
@@ -238,7 +238,7 @@ result:
         device_name:
           description: The device name exposed to the EC2 instance (for example, /dev/sdh or xvdh).
           returned: when I(state=present)
-          type: string
+          type: str
           sample: /dev/sda1
         ebs:
           description: The information about the Amazon EBS volume.
@@ -253,7 +253,7 @@ result:
             volume_size:
               description: The volume size, in GiB.
               returned: when I(state=present)
-              type: string
+              type: str
               sample: '100'
         virtual_name:
           description: The name of the virtual device (for example, ephemeral0).
@@ -273,7 +273,7 @@ result:
     created_time:
       description: The creation date and time for the launch configuration.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: '2017-11-03 23:46:44.841000'
     delete_on_termination:
       description: Indicates whether the volume is deleted on instance termination.
@@ -288,7 +288,7 @@ result:
     image_id:
       description: The ID of the Amazon Machine Image used by the launch configuration.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: ami-9be6f38c
     instance_monitoring:
       description: Indicates whether instances in this group are launched with detailed (true) or basic (false) monitoring.
@@ -298,12 +298,12 @@ result:
     instance_profile_name:
       description: The name or Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instance.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: null
     instance_type:
       description: The instance type for the instances.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: t1.micro
     iops:
       description: The number of I/O operations per second (IOPS) to provision for the volume.
@@ -313,32 +313,32 @@ result:
     kernel_id:
       description: The ID of the kernel associated with the AMI.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: ''
     key_name:
       description: The name of the key pair.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: testkey
     launch_configuration_arn:
       description: The Amazon Resource Name (ARN) of the launch configuration.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: arn:aws:autoscaling:us-east-1:148830907657:launchConfiguration:888d9b58-d93a-40c4-90cf-759197a2621a:launchConfigurationName/launch_config_name
     member:
       description: ""
       returned: when I(state=present)
-      type: string
+      type: str
       sample: "\n      "
     name:
       description: The name of the launch configuration.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: launch_config_name
     ramdisk_id:
       description: The ID of the RAM disk associated with the AMI.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: ''
     security_groups:
       description: The security groups to associate with the instances.
@@ -359,7 +359,7 @@ result:
     user_data:
       description: The user data available to the instances.
       returned: when I(state=present)
-      type: string
+      type: str
       sample: ''
     volume_type:
       description: The volume type (one of standard, io1, gp2).
@@ -389,8 +389,6 @@ except ImportError:
 
 
 def create_block_device_meta(module, volume):
-    MAX_IOPS_TO_SIZE_RATIO = 30
-
     # device_type has been used historically to represent volume_type,
     # however ec2_vol uses volume_type, as does the BlockDeviceType, so
     # we add handling for either/or but not both
@@ -489,7 +487,7 @@ def create_launch_config(connection, module):
         for volume in volumes:
             if 'device_name' not in volume:
                 module.fail_json(msg='Device name must be set for volume')
-            # Minimum volume size is 1GB. We'll use volume size explicitly set to 0 to be a signal not to create this volume
+            # Minimum volume size is 1GiB. We'll use volume size explicitly set to 0 to be a signal not to create this volume
             if 'volume_size' not in volume or int(volume['volume_size']) > 0:
                 block_device_mapping.append(create_block_device_meta(module, volume))
 

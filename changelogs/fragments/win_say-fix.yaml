@@ -1,0 +1,2 @@
+bugfixes:
+- win_say - fix syntax error in module and get tests working

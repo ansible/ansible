@@ -28,7 +28,7 @@ short_description: Manages information center log configuration on HUAWEI CloudE
 description:
     - Setting the Timestamp Format of Logs.
       Configuring the Device to Output Logs to the Log Buffer.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     log_time_stamp:
         description:
@@ -135,7 +135,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

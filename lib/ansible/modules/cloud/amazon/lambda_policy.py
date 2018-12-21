@@ -123,7 +123,7 @@ RETURN = '''
 lambda_policy_action:
     description: describes what action was taken
     returned: success
-    type: string
+    type: str
 '''
 
 import json
@@ -134,7 +134,7 @@ from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
 try:
     from botocore.exceptions import ClientError
-except:
+except Exception:
     pass  # will be protected by AnsibleAWSModule
 
 
@@ -236,7 +236,14 @@ def extract_statement(policy, sid):
     for statement in policy['Statement']:
         if statement['Sid'] == sid:
             policy_statement['action'] = statement['Action']
-            policy_statement['principal'] = statement['Principal']['Service']
+            try:
+                policy_statement['principal'] = statement['Principal']['Service']
+            except KeyError:
+                pass
+            try:
+                policy_statement['principal'] = statement['Principal']['AWS']
+            except KeyError:
+                pass
             try:
                 policy_statement['source_arn'] = statement['Condition']['ArnLike']['AWS:SourceArn']
             except KeyError:
@@ -261,8 +268,6 @@ def get_policy_statement(module, client):
     :param client:
     :return:
     """
-
-    policy = dict()
     sid = module.params['statement_id']
 
     # set API parameters

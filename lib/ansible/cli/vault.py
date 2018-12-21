@@ -28,12 +28,9 @@ from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class VaultCLI(CLI):
@@ -49,7 +46,7 @@ class VaultCLI(CLI):
     The password used with vault currently must be the same for all files you wish to use together at the same time.
     '''
 
-    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view")
+    VALID_ACTIONS = frozenset(("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view"))
 
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
@@ -117,7 +114,7 @@ class VaultCLI(CLI):
         self.parser = CLI.base_parser(
             vault_opts=True,
             vault_rekey_opts=True,
-            usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
+            usage="usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(sorted(self.VALID_ACTIONS)),
             desc="encryption/decryption utility for Ansible data files",
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
@@ -432,7 +429,7 @@ class VaultCLI(CLI):
             display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
-        ''' create and open a file in an editor that will be encryped with the provided vault secret when closed'''
+        ''' create and open a file in an editor that will be encrypted with the provided vault secret when closed'''
 
         if len(self.args) > 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
@@ -441,7 +438,7 @@ class VaultCLI(CLI):
                                 vault_id=self.encrypt_vault_id)
 
     def execute_edit(self):
-        ''' open and decrypt an existing vaulted file in an editor, that will be encryped again when closed'''
+        ''' open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed'''
         for f in self.args:
             self.editor.edit_file(f)
 

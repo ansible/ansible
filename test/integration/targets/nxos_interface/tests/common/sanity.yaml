@@ -8,8 +8,8 @@
 - name: "Setup: Enable feature interface-vlan"
   nxos_feature:
     feature: interface-vlan
-    state: enabled
     provider: "{{ connection }}"
+    state: enabled
   ignore_errors: yes
 
 - name: "Setup: Put interface {{ testint }} into a default state"
@@ -36,8 +36,8 @@
       mode: layer3
       description: 'Configured by Ansible - Layer3'
       admin_state: up
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: &true
@@ -58,8 +58,8 @@
       mode: layer2
       description: 'Configured by Ansible - Layer2'
       admin_state: down
-      state: present
       provider: "{{ connection }}"
+      state: present
     register: result
 
   - assert: *true
@@ -125,8 +125,8 @@
   - name: "Setup: Disable feature interface-vlan"
     nxos_feature:
       feature: interface-vlan
-      state: disabled
       provider: "{{ connection }}"
+      state: disabled
     ignore_errors: yes
 
   always:

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: Ansible Project
+
+# Copyright: (c) 2016, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -53,13 +54,37 @@ options:
       - The schema state.
     default: present
     choices: [ "present", "absent" ]
+  cascade_drop:
+    description:
+      - Drop schema with CASCADE to remove child objects
+    type: bool
+    default: false
+    version_added: '2.8'
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection
+        will be negotiated with the server.
+      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
+        more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    default: prefer
+    choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+    version_added: '2.8'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA)
+        certificate(s). If the file exists, the server's certificate will be
+        verified to be signed by one of these authorities.
+    version_added: '2.8'
 notes:
    - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
      the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed
      on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before
      using this module.
 requirements: [ psycopg2 ]
-author: "Flavien Chantelot <contact@flavien.io>"
+author:
+    - Flavien Chantelot (@Dorn-) <contact@flavien.io>
+    - Thomas O'Donnell (@andytom)
 '''
 
 EXAMPLES = '''
@@ -72,13 +97,18 @@ EXAMPLES = '''
     name: acme
     owner: bob
 
+# Drop schema "acme" with cascade
+- postgresql_schema:
+    name: acme
+    ensure: absent
+    cascade_drop: yes
 '''
 
 RETURN = '''
 schema:
     description: Name of the schema
     returned: success, changed
-    type: string
+    type: str
     sample: "acme"
 '''
 
@@ -94,6 +124,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 
@@ -129,9 +160,11 @@ def schema_exists(cursor, schema):
     return cursor.rowcount == 1
 
 
-def schema_delete(cursor, schema):
+def schema_delete(cursor, schema, cascade):
     if schema_exists(cursor, schema):
         query = "DROP SCHEMA %s" % pg_quote_identifier(schema, 'schema')
+        if cascade:
+            query += " CASCADE"
         cursor.execute(query)
         return True
     else:
@@ -180,7 +213,11 @@ def main():
             schema=dict(required=True, aliases=['name']),
             owner=dict(default=""),
             database=dict(default="postgres"),
+            cascade_drop=dict(type="bool", default=False),
             state=dict(default="present", choices=["absent", "present"]),
+            ssl_mode=dict(default='prefer', choices=[
+                          'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_rootcert=dict(default=None),
         ),
         supports_check_mode=True
     )
@@ -191,7 +228,8 @@ def main():
     schema = module.params["schema"]
     owner = module.params["owner"]
     state = module.params["state"]
-    database = module.params["database"]
+    sslrootcert = module.params["ssl_rootcert"]
+    cascade_drop = module.params["cascade_drop"]
     changed = False
 
     # To use defaults values, keyword arguments must be absent, so
@@ -201,18 +239,25 @@ def main():
         "login_host": "host",
         "login_user": "user",
         "login_password": "password",
-        "port": "port"
+        "port": "port",
+        "database": "database",
+        "ssl_mode": "sslmode",
+        "ssl_rootcert": "sslrootcert"
     }
-    kw = dict((params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != '')
+    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
+              if k in params_map and v != "" and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
+    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
+        module.fail_json(
+            msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+
     try:
-        db_connection = psycopg2.connect(database=database, **kw)
+        db_connection = psycopg2.connect(**kw)
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
             db_connection.autocommit = True
@@ -222,6 +267,13 @@ def main():
                                               .ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
+
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(
+                msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
@@ -235,7 +287,7 @@ def main():
 
         if state == "absent":
             try:
-                changed = schema_delete(cursor, schema)
+                changed = schema_delete(cursor, schema, cascade_drop)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 

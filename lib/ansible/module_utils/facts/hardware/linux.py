@@ -31,7 +31,7 @@ from ansible.module_utils.basic import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
 
-# import this as a module to ensure we get the same module isntance
+# import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
 
 
@@ -78,6 +78,7 @@ class LinuxHardware(Hardware):
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
+        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
@@ -266,7 +267,7 @@ class LinuxHardware(Hardware):
         if os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
             # Use kernel DMI info, if available
 
-            # DMI SPEC -- http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_2.7.0.pdf
+            # DMI SPEC -- https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.2.0.pdf
             FORM_FACTOR = ["Unknown", "Other", "Unknown", "Desktop",
                            "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
                            "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
@@ -274,7 +275,9 @@ class LinuxHardware(Hardware):
                            "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
                            "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
                            "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
-                           "CompactPCI", "AdvancedTCA", "Blade"]
+                           "CompactPCI", "AdvancedTCA", "Blade", "Blade Enclosure",
+                           "Tablet", "Convertible", "Detachable", "IoT Gateway",
+                           "Embedded PC", "Mini PC", "Stick PC"]
 
             DMI_DICT = {
                 'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
@@ -602,9 +605,6 @@ class LinuxHardware(Hardware):
                     if serial:
                         d['serial'] = serial.group(1)
 
-            for key in ['vendor', 'model']:
-                d[key] = get_file_content(sysdir + "/device/" + key)
-
             for key, test in [('removable', '/removable'),
                               ('support_discard', '/queue/discard_granularity'),
                               ]:
@@ -615,7 +615,7 @@ class LinuxHardware(Hardware):
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
-                m = re.search("(" + diskname + r"\d+)", folder)
+                m = re.search("(" + diskname + r"[p]?\d+)", folder)
                 if m:
                     part = {}
                     partname = m.group(1)

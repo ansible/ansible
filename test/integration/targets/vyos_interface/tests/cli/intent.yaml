@@ -1,11 +1,31 @@
 ---
-- debug: msg="START cli/intent.yaml on connection={{ ansible_connection }}"
+- debug: msg="START cli/intent.yaml on connection={{ ansible_connection }}" #"
 
-- name: Run vyos lsmod command
+# To be able to run the lldp test we need to have a neighbor configured to talk to
+# In DCI & Zuul we (currently) only spin up a single network VM, so we can't configure a neighbor
+# In the future when we have multi-network-nodes running we can run these tests again
+# https://github.com/ansible/ansible/issues/39667
+
+- name: Detect if we have existing lldp neighbors configured
   vyos_command:
     commands:
-      - lsmod
-  register: lsmod_out
+      - show lldp neighbors detail
+  register: neighbors_out
+
+- name: Should we run lldp tests?
+  set_fact:
+    run_lldp_tests: "'PortDescr:    eth0' in neighbors_out.stdout[0]"
+
+- name: Enable LLDP service
+  vyos_lldp:
+    state: present
+  when: run_lldp_tests
+
+- name: Create LLDP configuration
+  vyos_lldp_interface:
+    name: eth1
+    state: present
+  when: run_lldp_tests
 
 - name: Setup (interface is up)
   vyos_interface:
@@ -29,13 +49,13 @@
     name: eth0
     neighbors:
     - port: eth0
-  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  when: run_lldp_tests
   register: result
 
 - assert:
     that:
       - "result.failed == false"
-  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  when: run_lldp_tests
 
 - name: Check intent arguments (failed condition)
   vyos_interface:
@@ -56,7 +76,7 @@
     - port: dummy_port
       host: dummy_host
   ignore_errors: yes
-  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  when: run_lldp_tests
   register: result
 
 - assert:
@@ -64,7 +84,7 @@
       - "result.failed == true"
       - "'host dummy_host' in result.failed_conditions"
       - "'port dummy_port' in result.failed_conditions"
-  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  when: run_lldp_tests
 
 - name: Config + intent
   vyos_interface:
@@ -109,13 +129,13 @@
     - name: eth0
       neighbors:
       - port: eth0
-  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  when: run_lldp_tests
   register: result
 
 - assert:
     that:
       - "result.failed == false"
-  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  when: run_lldp_tests
 
 - name: Check lldp neighbors intent aggregate arguments (failed)
   vyos_interface:
@@ -126,7 +146,7 @@
       - port: dummy_port
         host: dummy_host
   ignore_errors: yes
-  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  when: run_lldp_tests
   register: result
 
 - assert:
@@ -134,4 +154,4 @@
       - "result.failed == true"
       - "'host dummy_host' in result.failed_conditions"
       - "'port dummy_port' in result.failed_conditions"
-  when: "'virtio_net' not in lsmod_out.stdout[0]"
+  when: run_lldp_tests

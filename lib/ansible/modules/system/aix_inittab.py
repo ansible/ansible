@@ -103,22 +103,27 @@ RETURN = '''
 name:
     description: name of the adjusted inittab entry
     returned: always
-    type: string
+    type: str
     sample: startmyservice
 msg:
     description: action done with the inittab entry
     returned: changed
-    type: string
+    type: str
     sample: changed inittab entry startmyservice
 changed:
     description: whether the inittab changed or not
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 
 # Import necessary libraries
-import itertools
+try:
+    # python 2
+    from itertools import izip
+except ImportError:
+    izip = zip
+
 from ansible.module_utils.basic import AnsibleModule
 
 # end import modules
@@ -136,7 +141,7 @@ def check_current_entry(module):
         values = out.split(":")
         # strip non readable characters as \n
         values = map(lambda s: s.strip(), values)
-        existsdict = dict(itertools.izip(keys, values))
+        existsdict = dict(izip(keys, values))
         existsdict.update({'exist': True})
     return existsdict
 
@@ -236,6 +241,7 @@ def main():
             result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

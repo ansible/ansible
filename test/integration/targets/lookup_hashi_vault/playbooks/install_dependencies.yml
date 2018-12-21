@@ -1,0 +1,20 @@
+- hosts: testhost
+  tasks:
+    - name: Install openssl
+      import_role:
+        name: setup_openssl
+
+    - name: "RedHat <= 7, select last version compatible with request 2.6.0 (this version doesn't support approle auth)"
+      set_fact:
+        hvac_package: 'hvac==0.2.5'
+      when: ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('7', '<=')
+
+    - name: 'CentOS < 7, select last version compatible with Python 2.6'
+      set_fact:
+        hvac_package: 'hvac==0.5.0'
+      when: ansible_distribution == 'CentOS' and ansible_distribution_major_version is version('7', '<')
+
+    - name: 'Install hvac Python package'
+      pip:
+        name: "{{ hvac_package|default('hvac') }}"
+        extra_args: "-c {{ playbook_dir }}/../../../../runner/requirements/constraints.txt"

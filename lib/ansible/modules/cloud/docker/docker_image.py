@@ -30,6 +30,12 @@ options:
       - Use with state C(present) to archive an image to a .tar file.
     required: false
     version_added: "2.1"
+  cache_from:
+    description:
+      - List of image names to consider as cache source.
+    required: false
+    type: list
+    version_added: "2.8"
   load_path:
     description:
       - Use with state C(present) to load an image from a .tar file.
@@ -58,6 +64,7 @@ options:
     description:
       - "Image name. Name format will be one of: name, repository/name, registry_server:port/name.
         When pushing or pulling an image the name can optionally include the tag by appending ':tag_name'."
+      - Note that image IDs (hashes) are not supported.
     required: true
   path:
     description:
@@ -128,7 +135,7 @@ options:
     description:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
-      - Requires Docker API >= 1.21 and docker-py >= 1.7.0.
+      - Requires Docker API >= 1.21.
     required: false
     version_added: "2.2"
   container_limits:
@@ -167,7 +174,15 @@ extends_documentation_fragment:
 
 requirements:
   - "python >= 2.6"
-  - "docker-py >= 1.7.0"
+  - "docker-py >= 1.8.0"
+  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+     module has been superseded by L(docker,https://pypi.org/project/docker/)
+     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+     For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+     install the C(docker) Python module. Note that both modules should I(not)
+     be installed at the same time. Also note that when both modules are installed
+     and one of them is uninstalled, the other might no longer function and a
+     reinstall of it is required."
   - "Docker API >= 1.20"
 
 author:
@@ -229,6 +244,15 @@ EXAMPLES = '''
      buildargs:
        log_volume: /var/log/myapp
        listen_port: 8080
+
+- name: Build image using cache source
+  docker_image:
+    name: myimage:latest
+    path: /path/to/build/dir
+    # Use as cache source for building myimage
+    cache_from:
+      - nginx:latest
+      - alpine:3.8
 '''
 
 RETURN = '''
@@ -241,7 +265,9 @@ image:
 import os
 import re
 
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import (
+    HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
+)
 from ansible.module_utils._text import to_native
 
 try:
@@ -267,6 +293,7 @@ class ImageManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
 
         self.archive_path = parameters.get('archive_path')
+        self.cache_from = parameters.get('cache_from')
         self.container_limits = parameters.get('container_limits')
         self.dockerfile = parameters.get('dockerfile')
         self.force = parameters.get('force')
@@ -284,10 +311,11 @@ class ImageManager(DockerBaseClass):
         self.buildargs = parameters.get('buildargs')
 
         # If name contains a tag, it takes precedence over tag parameter.
-        repo, repo_tag = parse_repository_tag(self.name)
-        if repo_tag:
-            self.name = repo
-            self.tag = repo_tag
+        if not is_image_name_id(self.name):
+            repo, repo_tag = parse_repository_tag(self.name)
+            if repo_tag:
+                self.name = repo
+                self.tag = repo_tag
 
         if self.state in ['present', 'build']:
             self.present()
@@ -336,9 +364,9 @@ class ImageManager(DockerBaseClass):
                 self.results['actions'].append('Pulled image %s:%s' % (self.name, self.tag))
                 self.results['changed'] = True
                 if not self.check_mode:
-                    self.results['image'], already_latest = self.client.pull_image(self.name, tag=self.tag)
-                    if already_latest:
-                        self.results['changed'] = False
+                    self.results['image'], dummy = self.client.pull_image(self.name, tag=self.tag)
+            if not self.check_mode and image and image['Id'] == self.results['image']['Id']:
+                self.results['changed'] = False
 
         if self.archive_path:
             self.archive_image(self.name, self.tag)
@@ -354,11 +382,14 @@ class ImageManager(DockerBaseClass):
 
         :return None
         '''
-        image = self.client.find_image(self.name, self.tag)
-        if image:
-            name = self.name
+        name = self.name
+        if is_image_name_id(name):
+            image = self.client.find_image_by_id(name)
+        else:
+            image = self.client.find_image(name, self.tag)
             if self.tag:
                 name = "%s:%s" % (self.name, self.tag)
+        if image:
             if not self.check_mode:
                 try:
                     self.client.remove_image(name, force=self.force)
@@ -396,7 +427,7 @@ class ImageManager(DockerBaseClass):
                 self.fail("Error getting image %s - %s" % (image_name, str(exc)))
 
             try:
-                with open(self.archive_path, 'w') as fd:
+                with open(self.archive_path, 'wb') as fd:
                     if HAS_DOCKER_PY_3:
                         for chunk in image:
                             fd.write(chunk)
@@ -506,7 +537,7 @@ class ImageManager(DockerBaseClass):
             pull=self.pull,
             forcerm=self.rm,
             dockerfile=self.dockerfile,
-            decode=True
+            decode=True,
         )
         if not HAS_DOCKER_PY_3:
             params['stream'] = True
@@ -519,6 +550,8 @@ class ImageManager(DockerBaseClass):
             for key, value in self.buildargs.items():
                 self.buildargs[key] = to_native(value)
             params['buildargs'] = self.buildargs
+        if self.cache_from:
+            params['cache_from'] = self.cache_from
 
         for line in self.client.build(**params):
             # line = json.loads(line)
@@ -547,7 +580,7 @@ class ImageManager(DockerBaseClass):
         '''
         try:
             self.log("Opening image %s" % self.load_path)
-            image_tar = open(self.load_path, 'r')
+            image_tar = open(self.load_path, 'rb')
         except Exception as exc:
             self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
 
@@ -568,7 +601,13 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         archive_path=dict(type='path'),
-        container_limits=dict(type='dict'),
+        cache_from=dict(type='list', elements='str'),
+        container_limits=dict(type='dict', options=dict(
+            memory=dict(type='int'),
+            memswap=dict(type='int'),
+            cpushares=dict(type='int'),
+            cpusetcpus=dict(type='str'),
+        )),
         dockerfile=dict(type='str'),
         force=dict(type='bool', default=False),
         http_timeout=dict(type='int'),
@@ -586,9 +625,16 @@ def main():
         buildargs=dict(type='dict', default=None),
     )
 
+    option_minimal_versions = dict(
+        cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        min_docker_version='1.8.0',
+        min_docker_api_version='1.20',
+        option_minimal_versions=option_minimal_versions,
     )
 
     results = dict(

@@ -30,23 +30,22 @@ DOCUMENTATION = '''
         env:
            - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_STDERR
     description:
-        - The source provided must an executable that returns Ansible inventory JSON
+        - The source provided must be an executable that returns Ansible inventory JSON
         - The source must accept C(--list) and C(--host <hostname>) as arguments.
           C(--host) will only be used if no C(_meta) key is present.
           This is a performance optimization as the script would be called per host otherwise.
     notes:
-        - It takes the place of the previously hardcoded script inventory.
-        - To function it requires being whitelisted in configuration, which is true by default.
+        - Whitelisted in configuration by default.
 '''
 
 import os
 import subprocess
-from collections import Mapping
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 
@@ -85,6 +84,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
     def parse(self, inventory, loader, path, cache=None):
 
         super(InventoryModule, self).parse(inventory, loader, path)
+        self.set_options()
 
         if cache is None:
             cache = self.get_option('cache')
@@ -119,7 +119,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
 
                 try:
-                    self._cache[cache_key] = self.loader.load(data, file_name=path)
+                    self._cache[cache_key] = self.loader.load(data)
                 except Exception as e:
                     raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 

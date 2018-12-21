@@ -5,12 +5,12 @@
   eos_config:
     lines: hostname {{ inventory_hostname_short }}
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - name: configure top level command
   eos_config:
     lines: hostname foo
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -21,7 +21,7 @@
 - name: configure top level command idempotent check
   eos_config:
     lines: hostname foo
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -32,6 +32,6 @@
   eos_config:
     lines: hostname {{ inventory_hostname_short }}
     match: none
-    provider: "{{ eapi }}"
+  become: yes
 
 - debug: msg="END eapi/toplevel.yaml"

@@ -37,6 +37,7 @@ options:
    admin_state_up:
      description:
         - Sets admin state.
+     type: bool
    mac_address:
      description:
         - MAC address of this port.
@@ -47,6 +48,7 @@ options:
    no_security_groups:
      description:
         - Do not associate a security group with this port.
+     type: bool
      default: 'no'
    allowed_address_pairs:
      description:
@@ -146,15 +148,15 @@ RETURN = '''
 id:
     description: Unique UUID.
     returned: success
-    type: string
+    type: str
 name:
     description: Name given to the port.
     returned: success
-    type: string
+    type: str
 network_id:
     description: Network ID this port belongs in.
     returned: success
-    type: string
+    type: str
 security_groups:
     description: Security group(s) associated with this port.
     returned: success
@@ -162,7 +164,7 @@ security_groups:
 status:
     description: Port's status.
     returned: success
-    type: string
+    type: str
 fixed_ips:
     description: Fixed ip(s) associated with this port.
     returned: success
@@ -170,7 +172,7 @@ fixed_ips:
 tenant_id:
     description: Tenant id associated with this port.
     returned: success
-    type: string
+    type: str
 allowed_address_pairs:
     description: Allowed address pairs with this port.
     returned: success
@@ -306,7 +308,7 @@ def main():
     name = module.params['name']
     state = module.params['state']
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if module.params['security_groups']:
             # translate security_groups to UUID's if names where provided
@@ -356,7 +358,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -21,13 +21,15 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about one or more subnets from OpenStack.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
-   subnet:
+   name:
      description:
-        - Name or ID of the subnet
+        - Name or ID of the subnet.
+        - Alias 'subnet' added in version 2.8.
      required: false
+     aliases: ['subnet']
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
@@ -91,23 +93,23 @@ openstack_subnets:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the subnet.
             returned: success
-            type: string
+            type: str
         network_id:
             description: Network ID this subnet belongs in.
             returned: success
-            type: string
+            type: str
         cidr:
             description: Subnet's CIDR.
             returned: success
-            type: string
+            type: str
         gateway_ip:
             description: Subnet's gateway ip.
             returned: success
-            type: string
+            type: str
         enable_dhcp:
             description: DHCP enable flag for this subnet.
             returned: success
@@ -119,7 +121,7 @@ openstack_subnets:
         tenant_id:
             description: Tenant id associated with this subnet.
             returned: success
-            type: string
+            type: str
         dns_nameservers:
             description: DNS name servers for this subnet.
             returned: success
@@ -131,25 +133,25 @@ openstack_subnets:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_cloud_from_module
 
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        name=dict(required=False, default=None),
+        name=dict(required=False, default=None, aliases=['subnet']),
         filters=dict(required=False, type='dict', default=None)
     )
     module = AnsibleModule(argument_spec)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         subnets = cloud.search_subnets(module.params['name'],
                                        module.params['filters'])
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_subnets=subnets))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

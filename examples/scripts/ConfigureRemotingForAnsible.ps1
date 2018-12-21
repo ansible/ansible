@@ -50,6 +50,7 @@
 # Version 1.6 - 2017-04-18
 # Version 1.7 - 2017-11-23
 # Version 1.8 - 2018-02-23
+# Version 1.9 - 2018-09-21
 
 # Support -Verbose option
 [CmdletBinding()]
@@ -291,6 +292,20 @@ If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem WSMan:\lo
 Else
 {
     Write-Verbose "PS Remoting is already enabled."
+}
+
+# Ensure LocalAccountTokenFilterPolicy is set to 1
+# https://github.com/ansible/ansible/issues/42978
+$token_path = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$token_prop_name = "LocalAccountTokenFilterPolicy"
+$token_key = Get-Item -Path $token_path
+$token_value = $token_key.GetValue($token_prop_name, $null)
+if ($token_value -ne 1) {
+    Write-Verbose "Setting LocalAccountTOkenFilterPolicy to 1"
+    if ($null -ne $token_value) {
+        Remove-ItemProperty -Path $token_path -Name $token_prop_name
+    }
+    New-ItemProperty -Path $token_path -Name $token_prop_name -Value 1 -PropertyType DWORD > $null
 }
 
 # Make sure there is a SSL listener.

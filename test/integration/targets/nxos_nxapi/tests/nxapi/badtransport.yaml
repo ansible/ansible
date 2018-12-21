@@ -1,0 +1,17 @@
+---
+- debug: msg="START nxapi/badtransport.yaml"
+
+- name: Sending transport other than cli should fail
+  nxos_nxapi:
+    enable_http: no
+    enable_sandbox: no
+    https_port: 9443
+    provider: "{{ nxapi }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+     that:
+        - result.failed and result.msg is search('Transport')
+
+- debug: msg="END nxapi/badtransport.yaml"

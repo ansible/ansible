@@ -3,14 +3,23 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import atexit
 import os
 import ssl
 import time
+from random import randint
 
 try:
     # requests is required for exception handling of the ConnectionError
     import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
@@ -18,52 +27,79 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import integer_types, iteritems, string_types
+from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
 from ansible.module_utils.basic import env_fallback
 
 
 class TaskError(Exception):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(TaskError, self).__init__(*args, **kwargs)
 
 
-def wait_for_task(task):
+def wait_for_task(task, max_backoff=64, timeout=3600):
+    """Wait for given task using exponential back-off algorithm.
+
+    Args:
+        task: VMware task object
+        max_backoff: Maximum amount of sleep time in seconds
+        timeout: Timeout for the given task in seconds
+
+    Returns: Tuple with True and result for successful task
+    Raises: TaskError on failure
+    """
+    failure_counter = 0
+    start_time = time.time()
 
     while True:
+        if time.time() - start_time >= timeout:
+            raise TaskError("Timeout")
         if task.info.state == vim.TaskInfo.State.success:
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
+            error_msg = task.info.error
+            host_thumbprint = None
             try:
-                raise TaskError(task.info.error)
+                error_msg = error_msg.msg
+                if hasattr(task.info.error, 'thumbprint'):
+                    host_thumbprint = task.info.error.thumbprint
             except AttributeError:
-                raise TaskError("An unknown error has occurred")
-        if task.info.state == vim.TaskInfo.State.running:
-            time.sleep(15)
-        if task.info.state == vim.TaskInfo.State.queued:
-            time.sleep(15)
+                pass
+            finally:
+                raise_from(TaskError(error_msg, host_thumbprint), task.info.error)
+        if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
+            sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
+            time.sleep(sleep_time)
+            failure_counter += 1
 
 
-def find_obj(content, vimtype, name, first=True):
-    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
-    obj_list = container.view
+def wait_for_vm_ip(content, vm, timeout=300):
+    facts = dict()
+    interval = 15
+    while timeout > 0:
+        _facts = gather_vm_facts(content, vm)
+        if _facts['ipv4'] or _facts['ipv6']:
+            facts = _facts
+            break
+        time.sleep(interval)
+        timeout -= interval
+
+    return facts
+
+
+def find_obj(content, vimtype, name, first=True, folder=None):
+    container = content.viewManager.CreateContainerView(folder or content.rootFolder, recursive=True, type=vimtype)
+    # Get all objects matching type (and name if given)
+    obj_list = [obj for obj in container.view if not name or to_text(obj.name) == to_text(name)]
     container.Destroy()
 
-    # Backward compatible with former get_obj() function
-    if name is None:
+    # Return first match or None
+    if first:
         if obj_list:
             return obj_list[0]
         return None
 
-    # Select the first match
-    if first is True:
-        for obj in obj_list:
-            if obj.name == name:
-                return obj
-
-        # If no object found, return None
-        return None
-
-    # Return all matching objects if needed
-    return [obj for obj in obj_list if obj.name == name]
+    # Return all matching objects or empty list
+    return obj_list
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
@@ -77,14 +113,15 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
     return None
 
 
-# Maintain for legacy, or remove with 2.1 ?
-# Should be replaced with find_cluster_by_name
-def find_cluster_by_name_datacenter(datacenter, cluster_name):
+def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
+    if not isinstance(obj_type, list):
+        obj_type = [obj_type]
 
-    host_folder = datacenter.hostFolder
-    for folder in host_folder.childEntity:
-        if folder.name == cluster_name:
-            return folder
+    objects = get_all_objs(content, obj_type, folder=folder, recurse=recurse)
+    for obj in objects:
+        if obj.name == name:
+            return obj
+
     return None
 
 
@@ -95,22 +132,11 @@ def find_cluster_by_name(content, cluster_name, datacenter=None):
     else:
         folder = content.rootFolder
 
-    clusters = get_all_objs(content, [vim.ClusterComputeResource], folder)
-    for cluster in clusters:
-        if cluster.name == cluster_name:
-            return cluster
-
-    return None
+    return find_object_by_name(content, cluster_name, [vim.ClusterComputeResource], folder=folder)
 
 
 def find_datacenter_by_name(content, datacenter_name):
-
-    datacenters = get_all_objs(content, [vim.Datacenter])
-    for dc in datacenters:
-        if dc.name == datacenter_name:
-            return dc
-
-    return None
+    return find_object_by_name(content, datacenter_name, [vim.Datacenter])
 
 
 def get_parent_datacenter(obj):
@@ -129,37 +155,23 @@ def get_parent_datacenter(obj):
 
 
 def find_datastore_by_name(content, datastore_name):
-
-    datastores = get_all_objs(content, [vim.Datastore])
-    for ds in datastores:
-        if ds.name == datastore_name:
-            return ds
-
-    return None
+    return find_object_by_name(content, datastore_name, [vim.Datastore])
 
 
 def find_dvs_by_name(content, switch_name):
-
-    # https://github.com/vmware/govmomi/issues/879
-    # https://github.com/ansible/ansible/pull/31798#issuecomment-336936222
-    try:
-        vmware_distributed_switches = get_all_objs(content, [vim.dvs.VmwareDistributedVirtualSwitch])
-    except IndexError:
-        vmware_distributed_switches = get_all_objs(content, [vim.DistributedVirtualSwitch])
-
-    for dvs in vmware_distributed_switches:
-        if dvs.name == switch_name:
-            return dvs
-    return None
+    return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch])
 
 
 def find_hostsystem_by_name(content, hostname):
+    return find_object_by_name(content, hostname, [vim.HostSystem])
 
-    host_system = get_all_objs(content, [vim.HostSystem])
-    for host in host_system:
-        if host.name == hostname:
-            return host
-    return None
+
+def find_resource_pool_by_name(content, resource_pool_name):
+    return find_object_by_name(content, resource_pool_name, [vim.ResourcePool])
+
+
+def find_network_by_name(content, network_name):
+    return find_object_by_name(content, network_name, [vim.Network])
 
 
 def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster=None, folder=None, match_first=False):
@@ -199,11 +211,14 @@ def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None, cluster
 
 
 def find_vm_by_name(content, vm_name, folder=None, recurse=True):
+    return find_object_by_name(content, vm_name, [vim.VirtualMachine], folder=folder, recurse=recurse)
 
-    vms = get_all_objs(content, [vim.VirtualMachine], folder, recurse=recurse)
-    for vm in vms:
-        if vm.name == vm_name:
-            return vm
+
+def find_host_portgroup_by_name(host, portgroup_name):
+
+    for portgroup in host.config.network.portgroup:
+        if portgroup.spec.name == portgroup_name:
+            return portgroup
     return None
 
 
@@ -271,6 +286,7 @@ def gather_vm_facts(content, vm):
         'customvalues': {},
         'snapshots': [],
         'current_snapshot': None,
+        'vnc': {},
     }
 
     # facts that may or may not exist
@@ -305,7 +321,7 @@ def gather_vm_facts(content, vm):
             for item in vm.layout.disk:
                 for disk in item.diskFile:
                     facts['hw_files'].append(disk)
-    except BaseException:
+    except Exception:
         pass
 
     facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
@@ -329,13 +345,11 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
-    for dummy, v in iteritems(net_dict):
-        for ipaddress in v:
-            if ipaddress:
-                if '::' in ipaddress:
-                    facts['ipv6'] = ipaddress
-                else:
-                    facts['ipv4'] = ipaddress
+    if vm.guest.ipAddress:
+        if ':' in vm.guest.ipAddress:
+            facts['ipv6'] = vm.guest.ipAddress
+        else:
+            facts['ipv4'] = vm.guest.ipAddress
 
     ethernet_idx = 0
     for entry in vm.config.hardware.device:
@@ -374,6 +388,8 @@ def gather_vm_facts(content, vm):
     if 'snapshots' in snapshot_facts:
         facts['snapshots'] = snapshot_facts['snapshots']
         facts['current_snapshot'] = snapshot_facts['current_snapshot']
+
+    facts['vnc'] = get_vnc_extraconfig(vm)
     return facts
 
 
@@ -413,8 +429,19 @@ def list_snapshots(vm):
     result['snapshots'] = list_snapshots_recursively(vm.snapshot.rootSnapshotList)
     current_snapref = vm.snapshot.currentSnapshot
     current_snap_obj = get_current_snap_obj(vm.snapshot.rootSnapshotList, current_snapref)
-    result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
+    if current_snap_obj:
+        result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
+    else:
+        result['current_snapshot'] = dict()
+    return result
 
+
+def get_vnc_extraconfig(vm):
+    result = {}
+    for opts in vm.config.extraConfig:
+        for optkeyname in ['enabled', 'ip', 'port', 'password']:
+            if opts.key.lower() == "remotedisplay.vnc." + optkeyname:
+                result[optkeyname] = opts.value
     return result
 
 
@@ -476,7 +503,15 @@ def connect_to_api(module, disconnect_atexit=True):
 
     service_instance = None
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=ssl_context, port=port)
+        connect_args = dict(
+            host=hostname,
+            user=username,
+            pwd=password,
+            port=port,
+        )
+        if ssl_context:
+            connect_args.update(sslContext=ssl_context)
+        service_instance = connect.SmartConnect(**connect_args)
     except vim.fault.InvalidLogin as invalid_login:
         module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
     except vim.fault.NoPermission as no_permission:
@@ -738,6 +773,10 @@ class PyVmomi(object):
         """
         Constructor
         """
+        if not HAS_REQUESTS:
+            module.fail_json(msg="Unable to find 'requests' Python library which is required."
+                                 " Please install using 'pip install requests'")
+
         if not HAS_PYVMOMI:
             module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
 
@@ -929,14 +968,14 @@ class PyVmomi(object):
                 folder_name = fp.name + '/' + folder_name
                 try:
                     fp = fp.parent
-                except BaseException:
+                except Exception:
                     break
             folder_name = '/' + folder_name
         return folder_name
 
     def get_vm_or_template(self, template_name=None):
         """
-        Function to find the virtual machine or virtual machine template using name
+        Find the virtual machine or virtual machine template using name
         used for cloning purpose.
         Args:
             template_name: Name of virtual machine or virtual machine template
@@ -945,8 +984,20 @@ class PyVmomi(object):
 
         """
         template_obj = None
+        if not template_name:
+            return template_obj
 
-        if template_name:
+        if "/" in template_name:
+            vm_obj_path = os.path.dirname(template_name)
+            vm_obj_name = os.path.basename(template_name)
+            template_obj = find_vm_by_id(self.content, vm_obj_name, vm_id_type="inventory_path", folder=vm_obj_path)
+            if template_obj:
+                return template_obj
+        else:
+            template_obj = find_vm_by_id(self.content, vm_id=template_name, vm_id_type="uuid")
+            if template_obj:
+                return template_obj
+
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
             templates = []
 
@@ -963,6 +1014,7 @@ class PyVmomi(object):
                 self.module.fail_json(msg="Multiple virtual machines or templates with same name [%s] found." % template_name)
             elif templates:
                 template_obj = templates[0]
+
         return template_obj
 
     # Cluster related functions
@@ -1020,7 +1072,7 @@ class PyVmomi(object):
         if not self.is_vcenter():
             hosts = get_all_objs(self.content, [vim.HostSystem]).keys()
             if hosts:
-                host_obj_list.append(hosts[0])
+                host_obj_list.append(list(hosts)[0])
         else:
             if cluster_name:
                 cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)

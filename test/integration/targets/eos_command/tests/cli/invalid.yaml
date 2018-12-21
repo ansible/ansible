@@ -4,7 +4,6 @@
 - name: run invalid command
   eos_command:
     commands: ['show foo']
-    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 
@@ -18,7 +17,6 @@
     commands:
       - show version
       - show foo
-    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 

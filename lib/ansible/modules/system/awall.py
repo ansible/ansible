@@ -148,6 +148,6 @@ def main():
 
     module.fail_json(msg="no action defined")
 
-# import module snippets
+
 if __name__ == '__main__':
     main()

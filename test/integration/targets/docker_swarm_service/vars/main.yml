@@ -1,0 +1,38 @@
+service_expected_output:
+  args: [sleep, '1800']
+  configs: null
+  constraints: []
+  container_labels: {}
+  dns: []
+  dns_options: []
+  dns_search: []
+  endpoint_mode: vip
+  env: []
+  force_update: null
+  hostname: ''
+  image: busybox
+  labels: {}
+  limit_cpu: 0.0
+  limit_memory: 0
+  log_driver: json-file
+  log_driver_options: {}
+  mode: global
+  mounts: []
+  networks: []
+  publish:
+  - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
+  - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
+  replicas: null
+  reserve_cpu: 0.0
+  reserve_memory: 0
+  restart_policy: none
+  restart_policy_attempts: 0
+  restart_policy_delay: 0
+  restart_policy_window: 0
+  tty: false
+  update_delay: 10
+  update_failure_action: continue
+  update_max_failure_ratio: 0.0
+  update_monitor: 5000000000
+  update_order: null
+  update_parallelism: 1

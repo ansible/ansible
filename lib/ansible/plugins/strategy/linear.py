@@ -41,13 +41,9 @@ from ansible.playbook.task import Task
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class StrategyModule(StrategyBase):
@@ -113,7 +109,7 @@ class StrategyModule(StrategyBase):
         if host_tasks_to_run:
             try:
                 lowest_cur_block = min(
-                    (s.cur_block for h, (s, t) in host_tasks_to_run
+                    (iterator.get_active_state(s).cur_block for h, (s, t) in host_tasks_to_run
                      if s.run_state != PlayIterator.ITERATING_COMPLETE))
             except ValueError:
                 lowest_cur_block = None
@@ -125,6 +121,7 @@ class StrategyModule(StrategyBase):
         for (k, v) in host_tasks_to_run:
             (s, t) = v
 
+            s = iterator.get_active_state(s)
             if s.cur_block > lowest_cur_block:
                 # Not the current block, ignore it
                 continue
@@ -158,6 +155,7 @@ class StrategyModule(StrategyBase):
                 if host_state_task is None:
                     continue
                 (s, t) = host_state_task
+                s = iterator.get_active_state(s)
                 if t is None:
                     continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
@@ -204,7 +202,7 @@ class StrategyModule(StrategyBase):
         moving on to the next task
         '''
 
-        # iteratate over each task, while there is one left to run
+        # iterate over each task, while there is one left to run
         result = self._tqm.RUN_OK
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
@@ -263,8 +261,10 @@ class StrategyModule(StrategyBase):
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) != 'noop':
+                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host'):
                             run_once = True
+                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                            any_errors_fatal = True
                     else:
                         # handle step if needed, skip meta actions as they are used internally
                         if self._step and choose_step:
@@ -292,7 +292,7 @@ class StrategyModule(StrategyBase):
                             try:
                                 task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
                                 display.debug("done templating")
-                            except:
+                            except Exception:
                                 # just ignore any errors during task name templating,
                                 # we don't care if it just shows the raw name
                                 display.debug("templating failed for some reason")
@@ -355,7 +355,6 @@ class StrategyModule(StrategyBase):
                                     variable_manager=self._variable_manager,
                                     loader=self._loader,
                                 )
-                                self._tqm.update_handler_list([handler for handler_block in handler_blocks for handler in handler_block.block])
                             else:
                                 new_blocks = self._load_included_file(included_file, iterator=iterator)
 
@@ -363,7 +362,7 @@ class StrategyModule(StrategyBase):
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
                                     play=iterator._play,
-                                    task=included_file._task,
+                                    task=new_block._parent
                                 )
                                 display.debug("filtering new block on tags")
                                 final_block = new_block.filter_tagged_tasks(play_context, task_vars)
@@ -402,7 +401,9 @@ class StrategyModule(StrategyBase):
                 failed_hosts = []
                 unreachable_hosts = []
                 for res in results:
-                    if res.is_failed() and iterator.is_failed(res._host):
+                    # execute_meta() does not set 'failed' in the TaskResult
+                    # so we skip checking it with the meta tasks and look just at the iterator
+                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)

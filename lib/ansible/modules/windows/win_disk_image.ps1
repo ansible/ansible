@@ -1,24 +1,9 @@
 #!powershell
 
-# (c) 2017, Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# POWERSHELL_COMMON
-# WANT_JSON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2
@@ -64,19 +49,21 @@ If($state -eq "present") {
 
   If($di.Attached) { # only try to get the mount_path if the disk is attached (
     If($di.StorageType -eq 1) { # ISO, we can get the mountpoint directly from Get-Volume
-      $drive_letter = ($di | Get-Volume).DriveLetter
+      $drive_letters = ($di | Get-Volume).DriveLetter
     }
     ElseIf($di.StorageType -in @(2,3)) { # VHD/VHDX, need Get-Disk + Get-Partition to discover mountpoint
-      # FUTURE: support multi-partition VHDs
-      $drive_letter = ($di | Get-Disk | Get-Partition)[0].DriveLetter
+      $drive_letters = ($di | Get-Disk | Get-Partition).DriveLetter
     }
+    # remove any null entries (no drive letter)
+    $drive_letters = $drive_letters | Where-Object { $_ }
 
-
-    If(-not $drive_letter) {
+    If(-not $drive_letters) {
       Fail-Json -message "Unable to retrieve drive letter from mounted image"
     }
 
-    $result.mount_path = $drive_letter + ":\"
+    # mount_path is deprecated and will be removed in 2.11, use mount_paths which contains all the partitions instead
+    $result.mount_path = $drive_letters[0] + ":\"
+    $result.mount_paths = @($drive_letters | ForEach-Object { "$($_):\" })
   }
 }
 ElseIf($state -eq "absent") {

@@ -1,8 +1,4 @@
 - block:
-  - name: make sure resource prefix is lowercase
-    set_fact:
-      test_identifier: "{{ resource_prefix | lower }}"
-
   - name: set yaml anchor
     set_fact:
       aws_connection_info: &aws_connection_info
@@ -36,6 +32,19 @@
     assert:
       that:
         - not cf_dist_no_update.changed
+
+  - name: re-run cloudfront distribution using distribution id
+    cloudfront_distribution:
+      distribution_id: "{{ cf_dist_no_update.id }}"
+      purge_origins: no
+      state: present
+      <<: *aws_connection_info
+    register: cf_dist_with_id
+
+  - name: ensure distribution was not updated
+    assert:
+      that:
+        - not cf_dist_with_id.changed
 
   - name: update origin http port
     cloudfront_distribution:
@@ -92,8 +101,9 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
-        id: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
+        id: "{{ resource_prefix }}2.example.com"
+      default_root_object: index.html
       state: present
       wait: yes
       <<: *aws_connection_info
@@ -104,6 +114,7 @@
       that:
         - cf_add_origin.origins.quantity == 2
         - cf_add_origin.changed
+        - "cf_add_origin.default_root_object == 'index.html'"
 
   - name: re-run second origin
     cloudfront_distribution:
@@ -112,7 +123,8 @@
       - domain_name: "{{ cloudfront_hostname }}-origin.example.com"
         custom_origin_config:
           http_port: 8080
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
+      default_root_object: index.html
       wait: yes
       state: present
       <<: *aws_connection_info
@@ -128,7 +140,7 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
       - domain_name: "{{ cloudfront_hostname }}-origin.example.com"
         custom_origin_config:
           http_port: 8080
@@ -147,9 +159,9 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
       default_cache_behavior:
-        target_origin_id: "{{ test_identifier }}2.example.com"
+        target_origin_id: "{{ resource_prefix }}2.example.com"
       purge_origins: yes
       state: present
       <<: *aws_connection_info
@@ -161,14 +173,31 @@
         - cf_purge_origin.origins.quantity == 1
         - cf_purge_origin.changed
 
+  - name: update default_root_object of existing distribution
+    cloudfront_distribution:
+      alias: "{{ cloudfront_alias }}"
+      origins:
+      - domain_name: "{{ resource_prefix }}2.example.com"
+      default_root_object: index.php
+      state: present
+      <<: *aws_connection_info
+    register: cf_update_default_root_object
+
+  - name: ensure origin was updated
+    assert:
+      that:
+        - "cf_update_default_root_object.default_root_object == 'index.php'"
+        - cf_update_default_root_object.changed
+
   - name: add tags to existing distribution
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
       tags:
         Name: "{{ cloudfront_alias }}"
         Another: tag
+      default_root_object: index.php
       state: present
       <<: *aws_connection_info
     register: cf_add_tags
@@ -191,8 +220,8 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
-        id: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
+        id: "{{ resource_prefix }}2.example.com"
       tags:
         Name: "{{ cloudfront_alias }}"
         Another: tag
@@ -211,8 +240,8 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
-        id: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
+        id: "{{ resource_prefix }}2.example.com"
       tags:
         Name: "{{ cloudfront_alias }}"
         Another: tag
@@ -230,7 +259,7 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
       tags:
         Third: thing
       purge_tags: no
@@ -249,7 +278,7 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
       cache_behaviors: "{{ cloudfront_test_cache_behaviors }}"
       state: present
       <<: *aws_connection_info
@@ -259,7 +288,7 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
       cache_behaviors: "{{ cloudfront_test_cache_behaviors|reverse|list }}"
       state: present
       <<: *aws_connection_info
@@ -275,7 +304,7 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}2.example.com"
+      - domain_name: "{{ resource_prefix }}2.example.com"
       cache_behaviors: "{{ cloudfront_test_cache_behaviors|reverse|list }}"
       purge_cache_behaviors: yes
       state: present
@@ -292,8 +321,8 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}3.example.com"
-        id: "{{ test_identifier }}3.example.com"
+      - domain_name: "{{ resource_prefix }}3.example.com"
+        id: "{{ resource_prefix }}3.example.com"
       purge_origins: yes
       state: present
       <<: *aws_connection_info
@@ -311,13 +340,13 @@
   #  cloudfront_distribution:
   #    alias: "{{ cloudfront_alias }}"
   #    origins:
-  #    - domain_name: "{{ test_identifier }}3.example.com"
-  #      id: "{{ test_identifier }}3.example.com"
+  #    - domain_name: "{{ resource_prefix }}3.example.com"
+  #      id: "{{ resource_prefix }}3.example.com"
   #    cache_behaviors:
   #      - path_pattern: /test/path
-  #        target_origin_id: "{{ test_identifier }}3.example.com"
+  #        target_origin_id: "{{ resource_prefix }}3.example.com"
   #      - path_pattern: /another/path
-  #        target_origin_id: "{{ test_identifier }}3.example.com"
+  #        target_origin_id: "{{ resource_prefix }}3.example.com"
   #    state: present
   #    aws_access_key: "{{ aws_access_key|default(omit) }}"
   #    aws_secret_key: "{{ aws_secret_key|default(omit) }}"
@@ -326,8 +355,10 @@
   #  register: update_cache_behaviors in use
 
   - name: create an s3 bucket for next test
+    # note that although public-read allows reads that we want to stop with origin_access_identity,
+    # we also need to test without origin_access_identity and it's hard to change bucket perms later
     aws_s3:
-      bucket: "{{ test_identifier }}-bucket"
+      bucket: "{{ resource_prefix }}-bucket"
       mode: create
       <<: *aws_connection_info
 
@@ -335,8 +366,8 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}-bucket.{{ aws_region }}.s3.amazonaws.com"
-        id: "{{ test_identifier }}3.example.com"
+      - domain_name: "{{ resource_prefix }}-bucket.s3.amazonaws.com"
+        id: "{{ resource_prefix }}3.example.com"
         s3_origin_access_identity_enabled: yes
       state: present
       <<: *aws_connection_info
@@ -353,8 +384,8 @@
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}-bucket.{{ aws_region }}.s3.amazonaws.com"
-        id: "{{ test_identifier }}3.example.com"
+      - domain_name: "{{ resource_prefix }}-bucket.s3.amazonaws.com"
+        id: "{{ resource_prefix }}3.example.com"
         s3_origin_access_identity_enabled: no
       state: present
       <<: *aws_connection_info
@@ -369,16 +400,16 @@
 
   - name: delete the s3 bucket
     aws_s3:
-      bucket: "{{ test_identifier }}-bucket"
+      bucket: "{{ resource_prefix }}-bucket"
       mode: delete
       <<: *aws_connection_info
 
-  - name: update origin to remove s3 origin access identity
+  - name: check that custom_origin_config can't be used with origin_access_identity enabled
     cloudfront_distribution:
       alias: "{{ cloudfront_alias }}"
       origins:
-      - domain_name: "{{ test_identifier }}-bucket.{{ aws_region }}.s3.amazonaws.com"
-        id: "{{ test_identifier }}3.example.com"
+      - domain_name: "{{ resource_prefix }}-bucket.s3.amazonaws.com"
+        id: "{{ resource_prefix }}3.example.com"
         s3_origin_access_identity_enabled: yes
         custom_origin_config:
           origin_protocol_policy: 'http-only'

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: netapp_e_storage_system
 version_added: "2.2"
-short_description: Add/remove arrays from the Web Services Proxy
+short_description: NetApp E-Series Web Services Proxy manage storage arrays
 description:
 - Manage the arrays accessible via a NetApp Web Services Proxy for NetApp E-series storage arrays.
 options:
@@ -87,7 +87,7 @@ EXAMPLES = '''
 RETURN = '''
 msg:
     description: State of request
-    type: string
+    type: str
     returned: always
     sample: 'Storage system removed.'
 '''
@@ -119,7 +119,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

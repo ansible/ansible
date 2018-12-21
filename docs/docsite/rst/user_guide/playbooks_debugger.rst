@@ -1,3 +1,5 @@
+.. _playbook_debugger:
+
 Playbook Debugger
 =================
 
@@ -233,12 +235,24 @@ Let's use the same playbook above, but fix ``task_vars`` instead of args::
     [192.0.2.10] TASK: install package (debug)> task_vars['pkg_name'] = 'bash'
     [192.0.2.10] TASK: install package (debug)> p task_vars['pkg_name']
     'bash'
+    [192.0.2.10] TASK: install package (debug)> update_task
     [192.0.2.10] TASK: install package (debug)> redo
 
 Then the task runs again with new ``task_vars``.
 
 .. note::
     In 2.5 this was updated from ``vars`` to ``task_vars`` to not conflict with the ``vars()`` python function.
+
+.. _update_task_command:
+
+u(pdate_task)
+`````````````
+
+.. versionadded:: 2.8
+
+This command re-creates the task from the original task data structure, and templates with updated ``task_vars``
+
+See the above documentation for :ref:`update_vars_command` for an example of use.
 
 .. _redo_command:
 
@@ -273,7 +287,7 @@ may cause the rescheduled task to execute after subsequent tasks listed in your 
 
    :doc:`playbooks`
        An introduction to playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

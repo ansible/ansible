@@ -28,10 +28,12 @@ options:
     description:
       - File to be unzipped (provide absolute path).
     required: yes
+    type: path
   dest:
     description:
       - Destination of zip file (provide absolute path of directory). If it does not exist, the directory will be created.
     required: yes
+    type: path
   delete_archive:
     description:
       - Remove the zip file, after unzipping.
@@ -47,12 +49,15 @@ options:
   creates:
     description:
       - If this file or directory exists the specified src will not be extracted.
+    type: path
 notes:
 - This module is not really idempotent, it will extract the archive every time, and report a change.
 - For extracting any compression types other than .zip, the PowerShellCommunityExtensions (PSCX) Module is required.  This module (in conjunction with PSCX)
   has the ability to recursively unzip files within the src zip file provided and also functionality for many other compression types. If the destination
   directory does not exist, it will be created before unzipping the file.  Specifying rm parameter will force removal of the src file after extraction.
 - For non-Windows targets, use the M(unarchive) module instead.
+seealso:
+- module: unarchive
 author:
 - Phil Schwartz (@schwartzmx)
 '''
@@ -94,16 +99,16 @@ RETURN = r'''
 dest:
     description: The provided destination path
     returned: always
-    type: string
+    type: str
     sample: C:\ExtractedLogs\application-error-logs
 removed:
     description: Whether the module did remove any files during task run
     returned: always
-    type: boolean
+    type: bool
     sample: True
 src:
     description: The provided source path
     returned: always
-    type: string
+    type: str
     sample: C:\Logs\application-error-logs.gz
 '''

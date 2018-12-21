@@ -106,23 +106,6 @@ if [ -x "$(command -v setsid)" ]; then
     cat log
 fi
 
-# old format
-ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_0_AES.yml
-
-ansible-vault view "$@" --vault-password-file vault-password-ansible format_1_1_AES.yml
-
-# old format, wrong password
-echo "The wrong password tests are expected to return 1"
-ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_0_AES.yml && :
-WRONG_RC=$?
-echo "rc was $WRONG_RC (1 is expected)"
-[ $WRONG_RC -eq 1 ]
-
-ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES.yml && :
-WRONG_RC=$?
-echo "rc was $WRONG_RC (1 is expected)"
-[ $WRONG_RC -eq 1 ]
-
 ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES256.yml && :
 WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
@@ -386,7 +369,7 @@ echo "rc was $WRONG_RC (5 is expected)"
 
 # encrypt with a password from a vault encrypted password file and multiple vault-ids
 # but this time specify with --encrypt-vault-id, but specifying vault-id names (instead of default)
-# ansible-vault encrypt "$@" --vault-id from_vault_password@vault-password --vault-id from_encrypted_vault_password@encrypted-vault-password --encrypt-vault-id from_encrypted_vault_password "${TEST_FILE_ENC_PASSWORD}"
+# ansible-vault encrypt "$@" --vault-id from_vault_password@vault-password --vault-id from_encrypted_vault_password@encrypted-vault-password --encrypt-vault-id from_encrypted_vault_password "${TEST_FILE(_ENC_PASSWORD}"
 
 # try to view the file encrypted with the vault-password we didnt specify
 # to verify we didnt choose the wrong vault-id
@@ -417,6 +400,9 @@ ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-pass
 ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file vault-password
 ansible-playbook test_vaulted_inventory.yml -i vaulted.inventory -v "$@" --vault-password-file vault-password
 ansible-playbook test_vaulted_template.yml -i ../../inventory -v "$@" --vault-password-file vault-password
+
+# test a playbook with a host_var whose value is non-ascii utf8 (see https://github.com/ansible/ansible/issues/37258)
+ansible-playbook -i ../../inventory -v "$@" --vault-id vault-password test_vaulted_utf8_value.yml
 
 # test with password from password script
 ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-password-file password-script.py

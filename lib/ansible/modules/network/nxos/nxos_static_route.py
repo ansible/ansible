@@ -64,6 +64,10 @@ options:
   aggregate:
     description: List of static route definitions
     version_added: 2.5
+  track:
+    description:
+      - Track value (range 1 - 512). Track must already be configured on the device before adding the route.
+    version_added: "2.8"
   state:
     description:
       - Manage the state of the resource.
@@ -74,7 +78,7 @@ options:
 EXAMPLES = '''
 - nxos_static_route:
     prefix: "192.168.20.64/24"
-    next_hop: "3.3.3.3"
+    next_hop: "192.0.2.3"
     route_name: testing
     pref: 100
 '''
@@ -84,12 +88,12 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["ip route 192.168.20.0/24 3.3.3.3 name testing 100"]
+    sample: ["ip route 192.168.20.0/24 192.0.2.3 name testing 100"]
 '''
 import re
 from copy import deepcopy
 
-from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
@@ -100,7 +104,7 @@ def reconcile_candidate(module, candidate, prefix, w):
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
     state = w['state']
 
-    set_command = set_route_command(prefix, w)
+    set_command = set_route_command(prefix, w, module)
     remove_command = remove_route_command(prefix, w)
 
     parents = []
@@ -144,9 +148,31 @@ def remove_route_command(prefix, w):
     return 'no ip route {0} {1}'.format(prefix, w['next_hop'])
 
 
-def set_route_command(prefix, w):
+def get_configured_track(module, ctrack):
+    check_track = '{0}'.format(ctrack)
+    track_exists = False
+    command = 'show track'
+    try:
+        body = run_commands(module, {'command': command, 'output': 'text'})
+        match = re.findall(r'Track\s+(\d+)', body[0])
+    except IndexError:
+        return None
+    if check_track in match:
+        track_exists = True
+    return track_exists
+
+
+def set_route_command(prefix, w, module):
     route_cmd = 'ip route {0} {1}'.format(prefix, w['next_hop'])
 
+    if w['track']:
+        if w['track'] in range(1, 512):
+            if get_configured_track(module, w['track']):
+                route_cmd += ' track {0}'.format(w['track'])
+            else:
+                module.fail_json(msg='Track {0} not configured on device'.format(w['track']))
+        else:
+            module.fail_json(msg='Invalid track number, valid range is 1-512.')
     if w['route_name'] and w['route_name'] != 'default':
         route_cmd += ' name {0}'.format(w['route_name'])
     if w['tag']:
@@ -233,7 +259,8 @@ def map_params_to_obj(module):
             'tag': module.params['tag'],
             'route_name': module.params['route_name'],
             'pref': module.params['pref'],
-            'state': module.params['state']
+            'state': module.params['state'],
+            'track': module.params['track']
         })
 
     return obj
@@ -248,6 +275,7 @@ def main():
         route_name=dict(type='str'),
         pref=dict(type='str', aliases=['admin_distance']),
         state=dict(choices=['absent', 'present'], default='present'),
+        track=dict(type='int'),
     )
 
     aggregate_spec = deepcopy(element_spec)
@@ -280,15 +308,14 @@ def main():
         candidate = CustomNetworkConfig(indent=3)
         reconcile_candidate(module, candidate, prefix, w)
 
-        if candidate:
+        if not module.check_mode and candidate:
             candidate = candidate.items_text()
             load_config(module, candidate)
             result['commands'].extend(candidate)
             result['changed'] = True
-        else:
-            result['commands'] = []
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

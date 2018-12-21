@@ -29,7 +29,7 @@ description:
   - Uses the Infoblox WAPI API to return the next available IP addresses
     for a given network CIDR
 requirements:
-  - infoblox_client
+  - infoblox-client
 extends_documentation_fragment: nios
 options:
     _terms:
@@ -39,6 +39,10 @@ options:
       description: The number of IP addresses to return
       required: false
       default: 1
+    exclude:
+      version_added: "2.7"
+      description: List of IP's that need to be excluded from returned IP addresses
+      required: false
 """
 
 EXAMPLES = """
@@ -49,6 +53,11 @@ EXAMPLES = """
 - name: return the next 3 available IP addresses for network 192.168.10.0/24
   set_fact:
     ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', num=3, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+
+- name: return the next 3 available IP addresses for network 192.168.10.0/24 excluding ip addresses - ['192.168.10.1', '192.168.10.2']
+  set_fact:
+    ipaddr: "{{ lookup('nios_next_ip', '192.168.10.0/24', num=3, exclude=['192.168.10.1', '192.168.10.2'],
+                provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 """
 
 RETURN = """
@@ -81,10 +90,11 @@ class LookupModule(LookupBase):
             raise AnsibleError('unable to find network object %s' % network)
 
         num = kwargs.get('num', 1)
+        exclude_ip = kwargs.get('exclude', [])
 
         try:
             ref = network_obj[0]['_ref']
-            avail_ips = wapi.call_func('next_available_ip', ref, {'num': num})
+            avail_ips = wapi.call_func('next_available_ip', ref, {'num': num, 'exclude': exclude_ip})
             return [avail_ips['ips']]
         except Exception as exc:
             raise AnsibleError(to_text(exc))

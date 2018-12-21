@@ -35,6 +35,7 @@ options:
   enabled:
     description:
       - Interface link status.
+    type: bool
   speed:
     description:
       - Interface link speed.
@@ -485,6 +486,7 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

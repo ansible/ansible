@@ -53,13 +53,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping, MutableSequence, Set
 
 
-__all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'AnsibleJSONUnsafeEncoder', 'AnsibleJSONUnsafeDecoder', 'wrap_var']
+__all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'wrap_var']
 
 
 class AnsibleUnsafe(object):
@@ -82,24 +81,6 @@ class UnsafeProxy(object):
         return obj
 
 
-class AnsibleJSONUnsafeEncoder(json.JSONEncoder):
-    def encode(self, obj):
-        if isinstance(obj, AnsibleUnsafe):
-            return super(AnsibleJSONUnsafeEncoder, self).encode(dict(__ansible_unsafe=True,
-                                                                     value=to_text(obj, errors='surrogate_or_strict', nonstring='strict')))
-        else:
-            return super(AnsibleJSONUnsafeEncoder, self).encode(obj)
-
-
-class AnsibleJSONUnsafeDecoder(json.JSONDecoder):
-    def decode(self, obj):
-        value = super(AnsibleJSONUnsafeDecoder, self).decode(obj)
-        if isinstance(value, dict) and '__ansible_unsafe' in value:
-            return UnsafeProxy(value.get('value', ''))
-        else:
-            return value
-
-
 def _wrap_dict(v):
     for k in v.keys():
         if v[k] is not None:
@@ -114,12 +95,17 @@ def _wrap_list(v):
     return v
 
 
+def _wrap_set(v):
+    return set(item if item is None else wrap_var(item) for item in v)
+
+
 def wrap_var(v):
-    if isinstance(v, dict):
+    if isinstance(v, Mapping):
         v = _wrap_dict(v)
-    elif isinstance(v, list):
+    elif isinstance(v, MutableSequence):
         v = _wrap_list(v)
-    else:
-        if v is not None and not isinstance(v, AnsibleUnsafe):
-            v = UnsafeProxy(v)
+    elif isinstance(v, Set):
+        v = _wrap_set(v)
+    elif v is not None and not isinstance(v, AnsibleUnsafe):
+        v = UnsafeProxy(v)
     return v

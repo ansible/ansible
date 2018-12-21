@@ -1,0 +1,5 @@
+---
+iam_user_name: '{{resource_prefix}}'
+iam_role_name: '{{resource_prefix}}'
+iam_group_name: '{{resource_prefix}}'
+iam_policy_name: '{{resource_prefix}}'

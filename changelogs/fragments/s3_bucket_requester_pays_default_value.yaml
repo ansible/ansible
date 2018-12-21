@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - s3_bucket - avoid failure when ``policy``, ``requestPayment``, ``tags`` or
+    ``versioning`` operations aren't supported by the endpoint and related
+    parameters aren't set

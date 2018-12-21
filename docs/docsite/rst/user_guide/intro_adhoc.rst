@@ -75,7 +75,7 @@ It is also possible to become a user other than root using
 .. note::
 
     Rarely, some users have security rules where they constrain their sudo/pbrun/doas environment to running specific command paths only.
-    This does not work with ansible's no-bootstrapping philosophy and hundreds of different modules.
+    This does not work with Ansible's no-bootstrapping philosophy and hundreds of different modules.
     If doing this, use Ansible from a special account that does not have this constraint.
     One way of doing this without sharing access to unauthorized users would be gating Ansible with :ref:`ansible_tower`, which
     can hold on to an SSH credential and let members of certain organizations use it on their behalf without having direct access.
@@ -275,7 +275,7 @@ Read more about facts at :doc:`playbooks_variables` once you're ready to read up
        A list of available modules
    :ref:`working_with_playbooks`
        Using Ansible for configuration management & deployment
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -18,7 +18,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     aep: ansible_test
     state: absent
 
@@ -32,7 +32,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     aep: ansible_test
     state: present
   check_mode: yes
@@ -45,7 +45,8 @@
 - name: Verify add_aep
   assert:
     that:
-    - cm_add_aep.changed == nm_add_aep.changed == true
+    - cm_add_aep is changed
+    - nm_add_aep is changed
     - nm_add_aep.previous == nm_add_aep.previous == cm_add_aep.current == []
     - 'nm_add_aep.current == [{"infraAttEntityP": {"attributes": {"descr": "", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
     - 'cm_add_aep.proposed == nm_add_aep.proposed == cm_add_aep.sent == nm_add_aep.sent == {"infraAttEntityP": {"attributes": {"name": "ansible_test"}}}'
@@ -62,7 +63,8 @@
 - name: Verify add_aep_again
   assert:
     that:
-    - cm_add_aep_again.changed == nm_add_aep_again.changed == false
+    - cm_add_aep_again is not changed
+    - nm_add_aep_again is not changed
     - 'nm_add_aep_again.previous == nm_add_aep_again.previous == cm_add_aep_again.current == nm_add_aep_again.current == [{"infraAttEntityP": {"attributes": {"descr": "", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
     - 'cm_add_aep_again.proposed == nm_add_aep_again.proposed == {"infraAttEntityP": {"attributes": {"name": "ansible_test"}}}'
     - cm_add_aep_again.sent == nm_add_aep_again.sent == {}
@@ -85,7 +87,8 @@
 - name: Verify add_aep_descr
   assert:
     that:
-    - cm_add_aep_descr.changed == nm_add_aep_descr.changed == true
+    - cm_add_aep_descr is changed
+    - nm_add_aep_descr is changed
     - 'cm_add_aep_descr.proposed == nm_add_aep_descr.proposed == {"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "name": "ansible_test"}}}'
     - 'cm_add_aep_descr.sent == nm_add_aep_descr.sent == {"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP"}}}'
     - 'cm_add_aep_descr.previous == nm_add_aep_descr.previous == cm_add_aep_descr.current == [{"infraAttEntityP": {"attributes": {"descr": "", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
@@ -107,7 +110,8 @@
 - name: Verify add_aep_descr_again
   assert:
     that:
-    - cm_add_aep_descr_again.changed == nm_add_aep_descr_again.changed == false
+    - cm_add_aep_descr_again is not changed
+    - nm_add_aep_descr_again is not changed
     - 'cm_add_aep_descr_again.proposed == nm_add_aep_descr_again.proposed == {"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "name": "ansible_test"}}}'
     - 'cm_add_aep_descr_again.sent == nm_add_aep_descr_again.sent == {}'
     - 'cm_add_aep_descr_again.previous == nm_add_aep_descr_again.previous == cm_add_aep_descr_again.current == nm_add_aep_descr_again.current == [{"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
@@ -126,7 +130,8 @@
 - name: Verify add_aep_again_no_descr
   assert:
     that:
-    - cm_add_aep_again_no_descr.changed == nm_add_aep_again_no_descr.changed == false
+    - cm_add_aep_again_no_descr is not changed
+    - nm_add_aep_again_no_descr is not changed
     - 'cm_add_aep_again_no_descr.proposed == nm_add_aep_again_no_descr.proposed == {"infraAttEntityP": {"attributes": {"name": "ansible_test"}}}'
     - cm_add_aep_again_no_descr.sent == nm_add_aep_again_no_descr.sent == {}
     - 'cm_add_aep_again_no_descr.previous == nm_add_aep_again_no_descr.previous == cm_add_aep_again_no_descr.current == nm_add_aep_again_no_descr.current == [{"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
@@ -141,6 +146,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_aeps
@@ -152,7 +158,8 @@
 - name: Verify query_all_aeps
   assert:
     that:
-    - cm_query_all_aeps.changed == nm_query_all_aeps.changed == false
+    - cm_query_all_aeps is not changed
+    - nm_query_all_aeps is not changed
     - cm_query_all_aeps == nm_query_all_aeps
     - nm_query_all_aeps.current|length >= 1
 
@@ -174,7 +181,8 @@
 - name: Verify query_aep
   assert:
     that:
-    - cm_query_aep.changed == nm_query_aep.changed == false
+    - cm_query_aep is not changed
+    - nm_query_aep is not changed
     - cm_query_aep == nm_query_aep
     - nm_query_aep.current.0.infraAttEntityP.attributes.descr == "Ansible test AEP"
     - nm_query_aep.current.0.infraAttEntityP.attributes.dn == "uni/infra/attentp-ansible_test"
@@ -194,7 +202,8 @@
 - name: Verify remove_aep
   assert:
     that:
-    - cm_remove_aep.changed == nm_remove_aep.changed == true
+    - cm_remove_aep is changed
+    - nm_remove_aep is changed
     - cm_remove_aep.proposed == nm_remove_aep.proposed == {}
     - cm_remove_aep.sent == nm_remove_aep.sent == {}
     - 'cm_remove_aep.previous == nm_remove_aep.previous == cm_remove_aep.current == [{"infraAttEntityP": {"attributes": {"descr": "Ansible test AEP", "dn": "uni/infra/attentp-ansible_test", "name": "ansible_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
@@ -212,7 +221,8 @@
 - name: Verify remove_aep_again
   assert:
     that:
-    - cm_remove_aep_again.changed == nm_remove_aep_again.changed == false
+    - cm_remove_aep_again is not changed
+    - nm_remove_aep_again is not changed
     - cm_remove_aep_again.proposed == nm_remove_aep_again.proposed == {}
     - cm_remove_aep_again.sent == nm_remove_aep_again.sent == {}
     - cm_remove_aep_again.previous == nm_remove_aep_again.previous == cm_remove_aep_again.current == nm_remove_aep_again.current == []
@@ -235,7 +245,8 @@
 - name: Verify query_non_aep
   assert:
     that:
-    - cm_query_non_aep.changed == nm_query_non_aep.changed == false
+    - cm_query_non_aep is not changed
+    - nm_query_non_aep is not changed
     - cm_query_non_aep == nm_query_non_aep
     - cm_query_non_aep.current == nm_query_non_aep.current == []
 
@@ -249,7 +260,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     state: present
   ignore_errors: yes
   register: error_on_missing_required_param
@@ -257,5 +268,5 @@
 - name: Verify error_on_missing_required_param
   assert:
     that:
-    - error_on_missing_required_param.failed == true
+    - error_on_missing_required_param is failed
     - 'error_on_missing_required_param.msg == "state is present but all of the following are missing: aep"'

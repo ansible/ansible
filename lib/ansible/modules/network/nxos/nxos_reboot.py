@@ -42,6 +42,7 @@ options:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
         required: false
         default: false
+        type: bool
 '''
 
 EXAMPLES = '''
@@ -53,21 +54,19 @@ RETURN = '''
 rebooted:
     description: Whether the device was instructed to reboot.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 '''
 
-from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
 def reboot(module):
-    cmds = [
-        {'command': 'terminal dont-ask', 'output': 'text'},
-        {'command': 'reload', 'output': 'text'}
-    ]
-    run_commands(module, cmds)
+    cmds = 'terminal dont-ask ; reload'
+    opts = {'ignore_timeout': True}
+    load_config(module, cmds, False, opts)
 
 
 def main():
@@ -88,6 +87,7 @@ def main():
         results['changed'] = True
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

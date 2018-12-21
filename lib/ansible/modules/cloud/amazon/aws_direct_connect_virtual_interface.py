@@ -72,12 +72,12 @@ RETURN = '''
 address_family:
   description: The address family for the BGP peer.
   returned: always
-  type: string
+  type: str
   sample: ipv4
 amazon_address:
   description: IP address assigned to the Amazon interface.
   returned: always
-  type: string
+  type: str
   sample: 169.254.255.1/30
 asn:
   description: The autonomous system (AS) number for Border Gateway Protocol (BGP) configuration.
@@ -87,7 +87,7 @@ asn:
 auth_key:
   description: The authentication key for BGP configuration.
   returned: always
-  type: string
+  type: str
   sample: 0xZ59Y1JZ2oDOSh6YriIlyRE
 bgp_peers:
   description: A list of the BGP peers configured on this virtual interface.
@@ -97,12 +97,12 @@ bgp_peers:
     address_family:
       description: The address family for the BGP peer.
       returned: always
-      type: string
+      type: str
       sample: ipv4
     amazon_address:
       description: IP address assigned to the Amazon interface.
       returned: always
-      type: string
+      type: str
       sample: 169.254.255.1/30
     asn:
       description: The autonomous system (AS) number for Border Gateway Protocol (BGP) configuration.
@@ -112,22 +112,22 @@ bgp_peers:
     auth_key:
       description: The authentication key for BGP configuration.
       returned: always
-      type: string
+      type: str
       sample: 0xZ59Y1JZ2oDOSh6YriIlyRE
     bgp_peer_state:
       description: The state of the BGP peer (verifying, pending, available)
       returned: always
-      type: string
+      type: str
       sample: available
     bgp_status:
       description: The up/down state of the BGP peer.
       returned: always
-      type: string
+      type: str
       sample: up
     customer_address:
       description: IP address assigned to the customer interface.
       returned: always
-      type: string
+      type: str
       sample: 169.254.255.2/30
 changed:
   description: Indicated if the virtual interface has been created/modified/deleted
@@ -139,26 +139,26 @@ connection_id:
     - The ID of the connection. This field is also used as the ID type for operations that
       use multiple connection types (LAG, interconnect, and/or connection).
   returned: always
-  type: string
+  type: str
   sample: dxcon-fgb175av
 customer_address:
   description: IP address assigned to the customer interface.
   returned: always
-  type: string
+  type: str
   sample: 169.254.255.2/30
 customer_router_config:
   description: Information for generating the customer router configuration.
   returned: always
-  type: string
+  type: str
 location:
   description: Where the connection is located.
   returned: always
-  type: string
+  type: str
   sample: EqDC2
 owner_account:
   description: The AWS account that will own the new virtual interface.
   returned: always
-  type: string
+  type: str
   sample: '123456789012'
 route_filter_prefixes:
   description: A list of routes to be advertised to the AWS network in this region (public virtual interface).
@@ -168,32 +168,32 @@ route_filter_prefixes:
     cidr:
       description: A routes to be advertised to the AWS network in this region.
       returned: always
-      type: string
+      type: str
       sample: 54.227.92.216/30
 virtual_gateway_id:
   description: The ID of the virtual private gateway to a VPC. This only applies to private virtual interfaces.
   returned: when I(public=False)
-  type: string
+  type: str
   sample: vgw-f3ce259a
 virtual_interface_id:
   description: The ID of the virtual interface.
   returned: always
-  type: string
+  type: str
   sample: dxvif-fh0w7cex
 virtual_interface_name:
   description: The name of the virtual interface assigned by the customer.
   returned: always
-  type: string
+  type: str
   sample: test_virtual_interface
 virtual_interface_state:
   description: State of the virtual interface (confirming, verifying, pending, available, down, rejected).
   returned: always
-  type: string
+  type: str
   sample: available
 virtual_interface_type:
   description: The type of virtual interface (private, public).
   returned: always
-  type: string
+  type: str
   sample: private
 vlan:
   description: The VLAN ID.

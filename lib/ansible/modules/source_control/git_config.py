@@ -19,8 +19,8 @@ DOCUMENTATION = '''
 ---
 module: git_config
 author:
-  - "Matthew Gamble"
-  - "Marius Gedminas"
+  - Matthew Gamble (@djmattyg007)
+  - Marius Gedminas (@mgedmin)
 version_added: 2.1
 requirements: ['git']
 short_description: Read and write git configuration
@@ -125,13 +125,13 @@ RETURN = '''
 config_value:
   description: When list_all=no and value is not set, a string containing the value of the setting in name
   returned: success
-  type: string
+  type: str
   sample: "vim"
 
 config_values:
   description: When list_all=yes, a dict containing key/value pairs of multiple configuration settings
   returned: success
-  type: dictionary
+  type: dict
   sample:
     core.editor: "vim"
     color.ui: "auto"

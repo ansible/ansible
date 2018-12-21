@@ -33,11 +33,11 @@ modules and internal components.
 
 Can Ansible run on Windows?
 ```````````````````````````
-No, Ansible cannot run on a Windows host and can only manage Windows hosts, but
-Ansible can be run under the Windows Subsystem for Linux (WSL).
+No, Ansible cannot run on a Windows host natively and can only manage Windows hosts,
+but Ansible can be run under the Windows Subsystem for Linux (WSL).
 
-.. note:: The Windows Subsystem for Linux is not supported by Microsoft or
-    Ansible and should not be used for production systems. 
+.. note:: The Windows Subsystem for Linux is not supported by Ansible and
+    should not be used for production systems.
 
 To install Ansible on WSL, the following commands
 can be run in the bash terminal:
@@ -57,7 +57,7 @@ installed version and then clone the git repo.
     git clone https://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
-    # to enable Ansible on login, run the following
+    # To enable Ansible on login, run the following
     echo ". ~/ansible/hacking/env-setup -q' >> ~/.bashrc
 
 Can I use SSH keys to authenticate?
@@ -144,7 +144,7 @@ In addition, the following Ansible Core modules/action-plugins work with Windows
 * set_stats
 * setup
 * slurp
-* template (also: win_tempate)
+* template (also: win_template)
 * wait_for_connection
 
 Can I run Python modules?
@@ -175,8 +175,8 @@ properly or the host is not inheriting them correctly.
 Make sure ``ansible_connection: winrm`` is set in the inventory for the Windows
 host.
 
-Why are my credentials are being rejected?
-``````````````````````````````````````````
+Why are my credentials being rejected?
+``````````````````````````````````````
 This can be due to a myriad of reasons unrelated to incorrect credentials.
 
 See HTTP 401/Credentials Rejected at :doc:`windows_setup` for a more detailed
@@ -204,7 +204,7 @@ host.
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

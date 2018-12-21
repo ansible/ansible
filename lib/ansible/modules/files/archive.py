@@ -107,7 +107,7 @@ state:
         If 'compress', then the file source file is in the compressed state.
         If 'archive', then the source file or paths are currently archived.
         If 'incomplete', then an archive was created, but not all source paths were found.
-    type: string
+    type: str
     returned: always
 missing:
     description: Any files that were missing from the source.
@@ -119,7 +119,7 @@ archived:
     returned: success
 arcroot:
     description: The archive root.
-    type: string
+    type: str
     returned: always
 expanded_paths:
     description: The list of matching paths from paths argument.
@@ -426,7 +426,10 @@ def main():
                         arcfile.write(path, path[len(arcroot):])
                         arcfile.close()
                         state = 'archive'  # because all zip files are archives
-
+                    elif format == 'tar':
+                        arcfile = tarfile.open(dest, 'w')
+                        arcfile.add(path)
+                        arcfile.close()
                     else:
                         f_in = open(path, 'rb')
 

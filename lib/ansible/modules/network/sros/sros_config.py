@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
@@ -65,14 +65,12 @@ options:
     description:
       - Instructs the module on the way to perform the matching of
         the set of commands against the current device config.  If
-        match is set to I(line), commands are matched line by line.  If
-        match is set to I(strict), command lines are matched with respect
-        to position.  If match is set to I(exact), command lines
-        must be an equal match.  Finally, if match is set to I(none), the
+        match is set to I(line), commands are matched line by line.
+        If match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
     default: line
-    choices: ['line', 'strict', 'exact', 'none']
+    choices: ['line', 'none']
   replace:
     description:
       - Instructs the module on the way to perform the configuration
@@ -202,7 +200,7 @@ commands:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/sros_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule

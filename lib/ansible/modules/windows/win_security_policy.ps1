@@ -1,23 +1,9 @@
 #!powershell
-# This file is part of Ansible
-#
-# Copyright 2017, Jordan Borean <jborean93@gmail.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2017, Jordan Borean <jborean93@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = 'Stop'
 
@@ -148,6 +134,10 @@ Function ConvertFrom-Ini($file_path) {
     return $ini
 }
 
+if ($section -eq "Privilege Rights") {
+    Add-Warning -obj $result -message "Using this module to edit rights and privileges is error-prone, use the win_user_right module instead"
+}
+
 $will_change = $false
 $secedit_ini = Export-SecEdit
 if (-not ($secedit_ini.ContainsKey($section))) {
@@ -169,6 +159,8 @@ if ($secedit_ini.$section.ContainsKey($key)) {
         $secedit_ini.$section.$key = $value
         $will_change = $true
     }
+} elseif ([string]$value -eq "") {
+      # Value is requested to be removed, and has already been removed, do nothing
 } else {
     if ($diff_mode) {
         $result.diff.prepared = @"
@@ -194,6 +186,8 @@ if ($will_change -eq $true) {
             if ($new_value -cne $value) {
                 Fail-Json $result "Failed to change the value for key '$key' in section '$section', the value is still $new_value"
             }
+        } elseif ([string]$value -eq "") {
+            # Value was empty, so OK if no longer in the result
         } else {
             Fail-Json $result "The key '$key' in section '$section' is not a valid key, cannot set this value"
         }

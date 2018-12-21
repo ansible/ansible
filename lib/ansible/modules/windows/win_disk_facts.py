@@ -18,11 +18,11 @@ description:
      its volumes and partitions if existent.
 requirements:
     - Windows 8.1 / Windows 2012 (NT 6.2)
-author:
-    - Marc Tschapek (@marqelme)
 notes:
   - In order to understand all the returned properties and values please visit the following site and open the respective MSFT class
     U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830612.aspx)
+author:
+    - Marc Tschapek (@marqelme)
 '''
 
 EXAMPLES = r'''
@@ -77,17 +77,17 @@ ansible_facts:
                 bus_type:
                     description: Bus type of the particular disk.
                     returned: always
-                    type: string
+                    type: str
                     sample: "SCSI"
                 friendly_name:
                     description: Friendly name of the particular disk.
                     returned: always
-                    type: string
+                    type: str
                     sample: "Red Hat VirtIO SCSI Disk Device"
                 partition_style:
                     description: Partition style of the particular disk.
                     returned: always
-                    type: string
+                    type: str
                     sample: "MBR"
                 partition_count:
                     description: Number of partitions on the particular disk.
@@ -97,7 +97,7 @@ ansible_facts:
                 operational_status:
                     description: Operational status of the particular disk.
                     returned: always
-                    type: string
+                    type: str
                     sample: "Online"
                 sector_size:
                     description: Sector size in bytes of the particular disk.
@@ -127,42 +127,42 @@ ansible_facts:
                 manufacturer:
                     description: Manufacturer of the particular disk.
                     returned: always
-                    type: string
+                    type: str
                     sample: "Red Hat"
                 model:
                     description: Model specification of the particular disk.
                     returned: always
-                    type: string
+                    type: str
                     sample: "VirtIO"
                 firmware_version:
                     description: Firmware version of the particular disk.
                     returned: always
-                    type: string
+                    type: str
                     sample: "0001"
                 location:
                     description: Location of the particular disk on the target.
                     returned: always
-                    type: string
+                    type: str
                     sample: "PCIROOT(0)#PCI(0400)#SCSI(P00T00L00)"
                 serial_number:
                     description: Serial number of the particular disk on the target.
                     returned: always
-                    type: string
+                    type: str
                     sample: "b62beac80c3645e5877f"
                 unique_id:
                     description: Unique ID of the particular disk on the target.
                     returned: always
-                    type: string
+                    type: str
                     sample: "3141463431303031"
                 guid:
                     description: GUID of the particular disk on the target.
                     returned: if existent
-                    type: string
+                    type: str
                     sample: "{efa5f928-57b9-47fc-ae3e-902e85fbe77f}"
                 path:
                     description: Path of the particular disk on the target.
                     returned: always
-                    type: string
+                    type: str
                     sample: "\\\\?\\scsi#disk&ven_red_hat&prod_virtio#4&23208fd0&1&000000#{<id>}"
                 partitions:
                     description: Detailed information about one particular partition on the specified disk.
@@ -183,12 +183,12 @@ ansible_facts:
                         type:
                             description: Type of the particular partition.
                             returned: always
-                            type: string
+                            type: str
                             sample: "IFS"
                         gpt_type:
                             description: gpt type of the particular partition.
                             returned: if partition_style property of the particular disk has value "GPT"
-                            type: string
+                            type: str
                             sample: "{e3c9e316-0b5c-4db8-817d-f92df00215ae}"
                         no_default_driveletter:
                             description: Information whether the particular partition has a default drive letter or not.
@@ -208,7 +208,7 @@ ansible_facts:
                         drive_letter:
                             description: Drive letter of the particular partition.
                             returned: if existent
-                            type: string
+                            type: str
                             sample: "C"
                         transition_state:
                             description: Transition state of the particular partition.
@@ -233,12 +233,12 @@ ansible_facts:
                         guid:
                             description: GUID of the particular partition.
                             returned: if existent
-                            type: string
+                            type: str
                             sample: "{302e475c-6e64-4674-a8e2-2f1c7018bf97}"
                         access_paths:
                             description: Access paths of the particular partition.
                             returned: if existent
-                            type: string
+                            type: str
                             sample: "\\\\?\\Volume{85bdc4a8-f8eb-11e6-80fa-806e6f6e6963}\\"
                         volumes:
                             description: Detailed information about one particular volume on the specified partition.
@@ -260,22 +260,22 @@ ansible_facts:
                                 type:
                                     description: File system type of the particular volume.
                                     returned: always
-                                    type: string
+                                    type: str
                                     sample: "NTFS"
                                 label:
                                     description: File system label of the particular volume.
                                     returned: always
-                                    type: string
+                                    type: str
                                     sample: "System Reserved"
                                 health_status:
                                     description: Health status of the particular volume.
                                     returned: always
-                                    type: string
+                                    type: str
                                     sample: "Healthy"
                                 drive_type:
                                     description: Drive type of the particular volume.
                                     returned: always
-                                    type: string
+                                    type: str
                                     sample: "Fixed"
                                 allocation_unit_size:
                                     description: Allocation unit size in bytes of the particular volume.
@@ -285,12 +285,12 @@ ansible_facts:
                                 object_id:
                                     description: Object ID of the particular volume.
                                     returned: always
-                                    type: string
+                                    type: str
                                     sample: "\\\\?\\Volume{85bdc4a9-f8eb-11e6-80fa-806e6f6e6963}\\"
                                 path:
                                     description: Path of the particular volume.
                                     returned: always
-                                    type: string
+                                    type: str
                                     sample: "\\\\?\\Volume{85bdc4a9-f8eb-11e6-80fa-806e6f6e6963}\\"
                 physical_disk:
                     description: Detailed information about physical disk properties of the particular disk.
@@ -300,7 +300,7 @@ ansible_facts:
                         media_type:
                             description: Media type of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "UnSpecified"
                         size:
                             description:
@@ -317,32 +317,32 @@ ansible_facts:
                         device_id:
                             description: Device ID of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "0"
                         friendly_name:
                             description: Friendly name of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "PhysicalDisk0"
                         operational_status:
                             description: Operational status of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "OK"
                         health_status:
                             description: Health status of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Healthy"
                         bus_type:
                             description: Bus type of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "SCSI"
                         usage_type:
                             description: Usage type of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Auto-Select"
                         supported_usages:
                             description: Supported usage types of the particular physical disk.
@@ -357,7 +357,7 @@ ansible_facts:
                                 value:
                                     description: List of supported usage types.
                                     returned: always
-                                    type: string
+                                    type: str
                                     sample: "Auto-Select, Hot Spare"
                         spindle_speed:
                             description: Spindle speed in rpm of the particular physical disk.
@@ -367,17 +367,17 @@ ansible_facts:
                         physical_location:
                             description: Physical location of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Integrated : Adapter 3 : Port 0 : Target 0 : LUN 0"
                         manufacturer:
                             description: Manufacturer of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "SUSE"
                         model:
                             description: Model of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Xen Block"
                         can_pool:
                             description: Information whether the particular physical disk can be added to a storage pool.
@@ -387,7 +387,7 @@ ansible_facts:
                         cannot_pool_reason:
                             description: Information why the particular physical disk can not be added to a storage pool.
                             returned: if can_pool property has value false
-                            type: string
+                            type: str
                             sample: "Insufficient Capacity"
                         indication_enabled:
                             description: Information whether indication is enabled for the particular physical disk.
@@ -402,17 +402,17 @@ ansible_facts:
                         serial_number:
                             description: Serial number of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "b62beac80c3645e5877f"
                         object_id:
                             description: Object ID of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: '{1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_PhysicalDisk.ObjectId=\"{<object_id>}:PD:{<pd>}\"'
                         unique_id:
                             description: Unique ID of the particular physical disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "3141463431303031"
                 virtual_disk:
                     description: Detailed information about virtual disk properties of the particular disk.
@@ -440,27 +440,27 @@ ansible_facts:
                         name:
                             description: Name of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "vDisk1"
                         friendly_name:
                             description: Friendly name of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Prod2 Virtual Disk"
                         operational_status:
                             description: Operational status of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "OK"
                         health_status:
                             description: Health status of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Healthy"
                         provisioning_type:
                             description: Provisioning type of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Thin"
                         allocation_unit_size:
                             description: Allocation unit size in bytes of the particular virtual disk.
@@ -470,7 +470,7 @@ ansible_facts:
                         media_type:
                             description: Media type of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Unspecified"
                         parity_layout:
                             description: Parity layout of the particular virtual disk.
@@ -480,12 +480,12 @@ ansible_facts:
                         access:
                             description: Access of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Read/Write"
                         detached_reason:
                             description: Detached reason of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "None"
                         write_cache_size:
                             description: Write cache size in byte of the particular virtual disk.
@@ -495,7 +495,7 @@ ansible_facts:
                         fault_domain_awareness:
                             description: Fault domain awareness of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "PhysicalDisk"
                         inter_leave:
                             description:
@@ -576,16 +576,16 @@ ansible_facts:
                         object_id:
                             description: Object ID of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: '{1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_VirtualDisk.ObjectId=\"{<object_id>}:VD:{<vd>}\"'
                         unique_id:
                             description: Unique ID of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "260542E4C6B01D47A8FA7630FD90FFDE"
                         unique_id_format:
                             description: Unique ID format of the particular virtual disk.
                             returned: always
-                            type: string
+                            type: str
                             sample: "Vendor Specific"
 '''

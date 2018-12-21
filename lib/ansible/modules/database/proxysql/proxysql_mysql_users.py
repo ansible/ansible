@@ -28,11 +28,13 @@ options:
       - A user with I(active) set to C(False) will be tracked in the database,
         but will be never loaded in the in-memory data structures. If omitted
         the proxysql database default for I(active) is C(True).
+    type: bool
   use_ssl:
     description:
       - If I(use_ssl) is set to C(True), connections by this user will be made
         using SSL connections. If omitted the proxysql database default for
         I(use_ssl) is C(False).
+    type: bool
   default_hostgroup:
     description:
       - If there is no matching rule for the queries sent by this user, the
@@ -49,22 +51,26 @@ options:
          rules.
          If omitted the proxysql database default for I(transaction_persistent)
          is C(False).
+    type: bool
   fast_forward:
     description:
       - If I(fast_forward) is set to C(True), I(fast_forward) will bypass the
         query processing layer (rewriting, caching) and pass through the query
         directly as is to the backend server. If omitted the proxysql database
         default for I(fast_forward) is C(False).
+    type: bool
   backend:
     description:
       -  If I(backend) is set to C(True), this (username, password) pair is
          used for authenticating to the ProxySQL instance.
     default: True
+    type: bool
   frontend:
     description:
       - If I(frontend) is set to C(True), this (username, password) pair is
         used for authenticating to the mysqld servers against any hostgroup.
     default: True
+    type: bool
   max_connections:
     description:
       - The maximum number of connections ProxySQL will open to the backend for
@@ -137,17 +143,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.mysql import mysql_connect
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
-
-try:
-    import MySQLdb
-    import MySQLdb.cursors
-except ImportError:
-    MYSQLDB_FOUND = False
-else:
-    MYSQLDB_FOUND = True
 
 # ===========================================
 # proxysql module specific support methods.
@@ -161,10 +159,8 @@ def perform_checks(module):
             msg="login_port must be a valid unix port number (0-65535)"
         )
 
-    if not MYSQLDB_FOUND:
-        module.fail_json(
-            msg="the python mysqldb module is required"
-        )
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
 
 
 def save_config_to_disk(cursor):
@@ -424,8 +420,8 @@ def main():
                                login_user,
                                login_password,
                                config_file,
-                               cursor_class=MySQLdb.cursors.DictCursor)
-    except MySQLdb.Error as e:
+                               cursor_class=mysql_driver.cursors.DictCursor)
+    except mysql_driver.Error as e:
         module.fail_json(
             msg="unable to connect to ProxySQL Admin Module.. %s" % to_native(e)
         )
@@ -454,7 +450,7 @@ def main():
                                  " and doesn't need to be updated.")
                 result['user'] = \
                     proxysql_user.get_user_config(cursor)
-        except MySQLdb.Error as e:
+        except mysql_driver.Error as e:
             module.fail_json(
                 msg="unable to modify user.. %s" % to_native(e)
             )
@@ -469,12 +465,13 @@ def main():
                 result['changed'] = False
                 result['msg'] = ("The user is already absent from the" +
                                  " mysql_users memory configuration")
-        except MySQLdb.Error as e:
+        except mysql_driver.Error as e:
             module.fail_json(
                 msg="unable to remove user.. %s" % to_native(e)
             )
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

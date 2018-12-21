@@ -29,14 +29,14 @@ options:
     description:
       - Minimum version of the pester module that has to be available on the remote host.
 author:
-    - Erwan Quelin (@erwanquelin)
+    - Erwan Quelin (@equelin)
 '''
 
 RETURN = r'''
 pester_version:
     description: Version of the pester module found on the remote host.
     returned: always
-    type: string
+    type: str
     sample: 4.3.1
 output:
     description: Results of the Pester tests.

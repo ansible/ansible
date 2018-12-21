@@ -178,3 +178,153 @@
     that:
       - cloudflare_dns is successful
       - cloudflare_dns is not changed
+
+- name: "Test: proxiable AAAA record creation"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: 2001:db8::47
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: proxiable AAAA record creation"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == '2001:db8::47'
+      - cloudflare_dns.result.record.proxiable == true
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'AAAA'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: proxiable AAAA record creation succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: 2001:db8::47
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: proxiable AAAA record creation succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: Enable AAAA record proxied status"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: 2001:db8::47
+    proxied: yes
+  register: cloudflare_dns
+
+- name: "Validate: Enable AAAA record proxied status"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == '2001:db8::47'
+      - cloudflare_dns.result.record.proxied == true
+      - cloudflare_dns.result.record.type == 'AAAA'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: Enable AAAA record proxied status succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: 2001:db8::47
+    proxied: yes
+  register: cloudflare_dns
+
+- name: "Validate: Enable AAAA record proxied status succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: Disable AAAA record proxied status"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: 2001:db8::47
+    proxied: no
+  register: cloudflare_dns
+
+- name: "Validate: Enable AAAA record proxied status"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == '2001:db8::47'
+      - cloudflare_dns.result.record.proxied == false
+      - cloudflare_dns.result.record.type == 'AAAA'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: Disable AAAA record proxied status succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: 2001:db8::47
+    proxied: no
+  register: cloudflare_dns
+
+- name: "Validate: Enable AAAA record proxied status succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: Full AAAA record deletion"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: Full AAAA record deletion"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+
+- name: "Test: Full AAAA record deletion succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: Full AAAA record deletion succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

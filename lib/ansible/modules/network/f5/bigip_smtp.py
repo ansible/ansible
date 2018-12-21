@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -74,7 +74,6 @@ options:
     description:
       - When C(present), ensures that the SMTP configuration exists.
       - When C(absent), ensures that the SMTP configuration does not exist.
-    required: False
     default: present
     choices:
       - present
@@ -93,11 +92,6 @@ options:
       - always
       - on_create
 extends_documentation_fragment: f5
-notes:
-  - Requires the netaddr Python package on the host. This is as easy as
-    C(pip install netaddr).
-requirements:
-  - netaddr
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -111,10 +105,11 @@ EXAMPLES = r'''
     smtp_server_password: mail-secret
     local_host_name: smtp.mydomain.com
     from_address: no-reply@mydomain.com
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -122,7 +117,7 @@ RETURN = r'''
 smtp_server:
   description: The new C(smtp_server) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: mail.mydomain.com
 smtp_server_port:
   description: The new C(smtp_server_port) value of the SMTP configuration.
@@ -132,17 +127,17 @@ smtp_server_port:
 local_host_name:
   description: The new C(local_host_name) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: smtp.mydomain.com
 from_address:
   description: The new C(from_address) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: no-reply@mydomain.com
 encryption:
   description: The new C(encryption) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: tls
 authentication:
   description: Whether the authentication parameters are active or not.
@@ -155,35 +150,27 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import is_valid_hostname
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import is_valid_hostname
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import is_valid_hostname
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import is_valid_hostname
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
@@ -196,25 +183,41 @@ class Parameters(AnsibleF5Parameters):
         'encryptedConnection': 'encryption',
         'authenticationEnabled': 'authentication_enabled',
         'authenticationDisabled': 'authentication_disabled',
-        'fromAddress': 'from_address'
+        'fromAddress': 'from_address',
     }
 
     api_attributes = [
-        'username', 'passwordEncrypted', 'localHostName', 'smtpServerHostName',
-        'smtpServerPort', 'encryptedConnection', 'authenticationEnabled',
-        'authenticationDisabled', 'fromAddress'
+        'username',
+        'passwordEncrypted',
+        'localHostName',
+        'smtpServerHostName',
+        'smtpServerPort',
+        'encryptedConnection',
+        'authenticationEnabled',
+        'authenticationDisabled',
+        'fromAddress',
     ]
 
     returnables = [
-        'smtp_server_username', 'smtp_server_password', 'local_host_name',
-        'smtp_server', 'smtp_server_port', 'encryption', 'authentication',
-        'from_address'
+        'smtp_server_username',
+        'smtp_server_password',
+        'local_host_name',
+        'smtp_server',
+        'smtp_server_port',
+        'encryption',
+        'authentication',
+        'from_address',
     ]
 
     updatables = [
-        'smtp_server_username', 'smtp_server_password', 'local_host_name',
-        'smtp_server', 'smtp_server_port', 'encryption', 'authentication',
-        'from_address'
+        'smtp_server_username',
+        'smtp_server_password',
+        'local_host_name',
+        'smtp_server',
+        'smtp_server_port',
+        'encryption',
+        'authentication',
+        'from_address',
     ]
 
 
@@ -227,19 +230,16 @@ class ModuleParameters(Parameters):
     def local_host_name(self):
         if self._values['local_host_name'] is None:
             return None
-        try:
-            # Check for valid IPv4 or IPv6 entries
-            netaddr.IPNetwork(self._values['local_host_name'])
+        if is_valid_ip(self._values['local_host_name']):
             return self._values['local_host_name']
-        except netaddr.core.AddrFormatError:
+        elif is_valid_hostname(self._values['local_host_name']):
             # else fallback to checking reasonably well formatted hostnames
-            if is_valid_hostname(self._values['local_host_name']):
-                return str(self._values['local_host_name'])
-            raise F5ModuleError(
-                "The provided 'local_host_name' value {0} is not a valid IP or hostname".format(
-                    str(self._values['local_host_name'])
-                )
+            return str(self._values['local_host_name'])
+        raise F5ModuleError(
+            "The provided 'local_host_name' value {0} is not a valid IP or hostname".format(
+                str(self._values['local_host_name'])
             )
+        )
 
     @property
     def authentication_enabled(self):
@@ -374,13 +374,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -403,12 +400,10 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def exists(self):
-        result = self.client.api.tm.sys.smtp_servers.smtp_server.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -434,42 +429,88 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/smtp-server/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
     def create_on_device(self):
         params = self.want.api_params()
-        self.client.api.tm.sys.smtp_servers.smtp_server.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/smtp-server/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def update_on_device(self):
         params = self.want.api_params()
-        resource = self.client.api.tm.sys.smtp_servers.smtp_server.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/smtp-server/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.sys.smtp_servers.smtp_server.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/smtp-server/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.smtp_servers.smtp_server.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/smtp-server/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -510,20 +551,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

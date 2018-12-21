@@ -1,0 +1,2 @@
+bugfixes:
+- vault - Improve error messages encountered when reading vault files (https://github.com/ansible/ansible/issues/49252)

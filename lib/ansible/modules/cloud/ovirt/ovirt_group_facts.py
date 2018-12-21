@@ -56,7 +56,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_groups:
-    description: "List of dictionaries describing the groups. Group attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the groups. Group attributes are mapped to dictionary keys,
                   all groups attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/group."
     returned: On success.
     type: list
@@ -78,9 +78,6 @@ def main():
         pattern=dict(default='', required=False),
     )
     module = AnsibleModule(argument_spec)
-
-    if module._name == 'ovirt_groups_facts':
-        module.deprecate("The 'ovirt_groups_facts' module is being renamed 'ovirt_group_facts'", version=2.8)
 
     check_sdk(module)
 

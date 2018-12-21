@@ -62,12 +62,12 @@ RETURN = '''
 changed:
   description: check to see if a change was made to the rules
   returned: always
-  type: boolean
+  type: bool
   sample: true
 name:
   description: name of bucket
   returned: always
-  type: string
+  type: str
   sample: 'bucket-name'
 rules:
   description: list of current rules
@@ -91,7 +91,7 @@ rules:
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
-except:
+except Exception:
     # handled by HAS_BOTO3 check in main
     pass
 
@@ -186,6 +186,7 @@ def main():
         create_or_update_bucket_cors(client, module)
     elif state == 'absent':
         destroy_bucket_cors(client, module)
+
 
 if __name__ == '__main__':
     main()

@@ -6,10 +6,10 @@
 
 - name: test getting all facts
   nxos_facts:
-    provider: "{{ connection }}"
     gather_subset:
       - all
     timeout: 60
+    provider: "{{ connection }}"
   register: result
 
 

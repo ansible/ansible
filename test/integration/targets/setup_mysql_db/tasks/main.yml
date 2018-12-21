@@ -31,6 +31,7 @@
   with_first_found:
     - files:
         - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
         - '{{ ansible_os_family }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
         - '{{ ansible_distribution }}{{ python_suffix }}.yml'
         - '{{ ansible_os_family }}{{ python_suffix }}.yml'
@@ -71,5 +72,20 @@
     line: 'mysql_server_enable="YES"'
   when: ansible_os_family == "FreeBSD"
 
-- name: start mysql_db service if not running
-  service: name={{ mysql_service }} state=started
+- name: apply work-around for OverlayFS issue
+  # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
+  command: find /var/lib/mysql -type f -exec touch {} ;
+  # find will fail if mysql has never been started, as the directory won't exist
+  ignore_errors: yes
+
+- name: restart mysql_db service
+  service: name={{ mysql_service }} state=restarted
+
+- name: Detect socket path
+  shell: >
+          echo "show variables like 'socket'\G" | mysql | grep 'Value: ' | sed 's/[ ]\+Value: //'
+  register: _socket_path
+
+- name: Set socket path
+  set_fact:
+    mysql_socket: '{{ _socket_path["stdout"] }}'

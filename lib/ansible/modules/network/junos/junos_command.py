@@ -158,22 +158,24 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-import time
 import re
 import shlex
+import time
 
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.netconf import exec_rpc
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities, tostring
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
+from ansible.module_utils.network.common.utils import to_lines
 from ansible.module_utils.six import string_types, iteritems
 
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement
 except ImportError:
-    from xml.etree.ElementTree import Element, SubElement, tostring
+    from xml.etree.ElementTree import Element, SubElement
 
 try:
     import jxmlease
@@ -182,15 +184,6 @@ except ImportError:
     HAS_JXMLEASE = False
 
 USE_PERSISTENT_CONNECTION = True
-
-
-def to_lines(stdout):
-    lines = list()
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        lines.append(item)
-    return lines
 
 
 def rpc(module, items):
@@ -233,7 +226,7 @@ def rpc(module, items):
         if fetch_config:
             reply = get_configuration(module, format=xattrs['format'])
         else:
-            reply = exec_rpc(module, to_text(tostring(element), errors='surrogate_then_replace'), ignore_warning=False)
+            reply = exec_rpc(module, tostring(element), ignore_warning=False)
 
         if xattrs['format'] == 'text':
             if fetch_config:
@@ -273,7 +266,7 @@ def parse_rpcs(module):
     items = list()
 
     for rpc in (module.params['rpcs'] or list()):
-        parts = split(rpc)
+        parts = shlex.split(rpc)
 
         name = parts.pop(0)
         args = dict()
@@ -373,7 +366,10 @@ def main():
             if ('display json' not in cmd) and ('display xml' not in cmd):
                 if display and display != 'text':
                     cmd += ' | display {0}'.format(display)
-            output.append(conn.get(command=cmd))
+            try:
+                output.append(conn.get(command=cmd))
+            except ConnectionError as exc:
+                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
         lines = [out.split('\n') for out in output]
         result = {'changed': False, 'stdout': output, 'stdout_lines': lines}
@@ -404,7 +400,7 @@ def main():
                     json_resp = jxmlease.parse(resp)
                     transformed.append(json_resp)
                     output.append(json_resp)
-                except:
+                except Exception:
                     raise ValueError(resp)
             else:
                 transformed.append(resp)
@@ -434,13 +430,14 @@ def main():
         'changed': False,
         'warnings': warnings,
         'stdout': responses,
-        'stdout_lines': to_lines(responses)
+        'stdout_lines': list(to_lines(responses)),
     }
 
     if output:
         result['output'] = output
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

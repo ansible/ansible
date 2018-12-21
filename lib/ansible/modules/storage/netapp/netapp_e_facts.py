@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: netapp_e_facts
 version_added: '2.2'
-short_description: Get facts about NetApp E-Series arrays
+short_description: NetApp E-Series retrieve facts about NetApp E-Series storage arrays
 options:
   api_username:
     required: true
@@ -34,6 +34,7 @@ options:
     default: true
     description:
     - Should https certificates be validated?
+    type: bool
   ssid:
     required: true
     description:
@@ -60,7 +61,7 @@ RETURN = """
 msg:
     description: Gathered facts for <StorageArrayId>.
     returned: always
-    type: string
+    type: str
 """
 import json
 
@@ -88,7 +89,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

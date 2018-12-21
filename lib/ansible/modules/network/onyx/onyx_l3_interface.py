@@ -197,34 +197,44 @@ class OnyxL3InterfaceModule(BaseOnyxModule):
         return get_interfaces_config(self._module, interface_type)
 
     def _parse_interfaces_config(self, if_type, if_config):
+        if self._os_version < self.ONYX_API_VERSION:
+            for if_data in if_config:
+                if_name = self.get_config_attr(if_data, 'header')
+                self._get_if_attributes(if_type, if_name, if_data)
+        else:
+            for if_config_item in if_config:
+                for if_name, if_data in iteritems(if_config_item):
+                    if_data = if_data[0]
+                    self._get_if_attributes(if_type, if_name, if_data)
+
+    def _get_if_attributes(self, if_type, if_name, if_data):
         ipaddr_attr = self.IP_ADDR_ATTR_MAP[if_type]
-        for if_data in if_config:
-            if_name = self.get_config_attr(if_data, 'header')
-            regex = self.IF_TYPE_MAP[if_type]
-            match = regex.match(if_name)
-            if not match:
-                continue
-            ipv4 = self.get_config_attr(if_data, ipaddr_attr)
-            if ipv4:
-                ipv4 = ipv4.replace(' ', '')
-            ipv6 = self.get_config_attr(if_data, 'IPv6 address(es)')
-            if ipv6:
-                ipv6 = ipv6.replace('[primary]', '')
-                ipv6 = ipv6.strip()
-            if_id = match.group(1)
-            switchport = self.get_config_attr(if_data, 'Switchport mode')
-            if_obj = {
-                'name': if_name,
-                'if_id': if_id,
-                'if_type': if_type,
-                'ipv4': ipv4,
-                'ipv6': ipv6,
-                'switchport': switchport,
-            }
-            self._current_config[if_name] = if_obj
+        regex = self.IF_TYPE_MAP[if_type]
+        match = regex.match(if_name)
+        if not match:
+            return
+        ipv4 = self.get_config_attr(if_data, ipaddr_attr)
+        if ipv4:
+            ipv4 = ipv4.replace(' ', '')
+        ipv6 = self.get_config_attr(if_data, 'IPv6 address(es)')
+        if ipv6:
+            ipv6 = ipv6.replace('[primary]', '')
+            ipv6 = ipv6.strip()
+        if_id = match.group(1)
+        switchport = self.get_config_attr(if_data, 'Switchport mode')
+        if_obj = {
+            'name': if_name,
+            'if_id': if_id,
+            'if_type': if_type,
+            'ipv4': ipv4,
+            'ipv6': ipv6,
+            'switchport': switchport,
+        }
+        self._current_config[if_name] = if_obj
 
     def load_current_config(self):
         # called in base class in run function
+        self._os_version = self._get_os_version()
         self._current_config = dict()
         if_types = set([if_obj['if_type'] for if_obj in self._required_config])
         for if_type in if_types:

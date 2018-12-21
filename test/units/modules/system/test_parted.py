@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 __metaclass__ = type
-from ansible.compat.tests.mock import patch, call
+from units.compat.mock import patch, call
 from ansible.modules.system import parted as parted_module
 from ansible.modules.system.parted import parse_partition_info
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
@@ -237,4 +237,4 @@ class TestParted(ModuleTestCase):
             '_ansible_check_mode': True,
         })
         with patch('ansible.modules.system.parted.get_device_info', return_value=parted_dict2):
-            self.execute_module(changed=True, script='unit KiB mklabel gpt mkpart primary 0% 100% unit KiB name 1 lvmpartition set 1 lvm on')
+            self.execute_module(changed=True, script='unit KiB mklabel gpt mkpart primary 0% 100% unit KiB name 1 \'"lvmpartition"\' set 1 lvm on')

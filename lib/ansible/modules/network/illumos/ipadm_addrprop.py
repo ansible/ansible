@@ -42,6 +42,7 @@ options:
               Temporary values do not persist across reboots.
         required: false
         default: false
+        type: bool
     state:
         description:
             - Set or reset the property value.
@@ -62,27 +63,27 @@ RETURN = '''
 property:
     description: property name
     returned: always
-    type: string
+    type: str
     sample: deprecated
 addrobj:
     description: address object name
     returned: always
-    type: string
+    type: str
     sample: bge0/v4
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 temporary:
     description: specifies if operation will persist across reboots
     returned: always
-    type: boolean
+    type: bool
     sample: True
 value:
     description: property value
     returned: when value is provided
-    type: string
+    type: str
     sample: 26
 '''
 

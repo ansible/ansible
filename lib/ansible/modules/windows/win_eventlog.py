@@ -38,15 +38,19 @@ options:
       - A list of one or more sources to ensure are present/absent in the log.
       - When C(category_file), C(message_file) and/or C(parameter_file) are specified,
         these values are applied across all sources.
+    type: list
   category_file:
     description:
       - For one or more sources specified, the path to a custom category resource file.
+    type: path
   message_file:
     description:
       - For one or more sources specified, the path to a custom event message resource file.
+    type: path
   parameter_file:
     description:
       - For one or more sources specified, the path to a custom parameter resource file.
+    type: path
   maximum_size:
     description:
       - The maximum size of the event log.
@@ -66,6 +70,9 @@ options:
     description:
       - The minimum number of days event entries must remain in the log.
       - This option is only used when C(overflow_action) is C(OverwriteOlder).
+    type: int
+seealso:
+- module: win_eventlog_entry
 author:
     - Andrew Saraceni (@andrewsaraceni)
 '''
@@ -117,12 +124,12 @@ RETURN = r'''
 name:
     description: The name of the event log.
     returned: always
-    type: string
+    type: str
     sample: MyNewLog
 exists:
     description: Whether the event log exists or not.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 entries:
     description: The count of entries present in the event log.
@@ -137,7 +144,7 @@ maximum_size_kb:
 overflow_action:
     description: The action the log takes once it reaches its maximum size.
     returned: success
-    type: string
+    type: str
     sample: OverwriteOlder
 retention_days:
     description: The minimum number of days entries are retained in the log.

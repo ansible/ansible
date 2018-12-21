@@ -76,7 +76,7 @@ size:
 filename:
     description: Path to the generated Diffie-Hellman parameters
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/dhparams.pem
 '''
 

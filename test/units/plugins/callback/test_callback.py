@@ -19,13 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import re
 import textwrap
 import types
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, mock_open, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, mock_open, MagicMock
 
+import pytest
 
 from ansible.plugins.callback import CallbackBase
 
@@ -51,6 +53,7 @@ class TestCallback(unittest.TestCase):
 
 
 class TestCallbackResults(unittest.TestCase):
+
     def test_get_item(self):
         cb = CallbackBase()
         results = {'item': 'some_item'}
@@ -65,6 +68,22 @@ class TestCallbackResults(unittest.TestCase):
 
         results = {'item': 'some_item', '_ansible_no_log': False}
         res = cb._get_item(results)
+        self.assertEquals(res, "some_item")
+
+    def test_get_item_label(self):
+        cb = CallbackBase()
+        results = {'item': 'some_item'}
+        res = cb._get_item_label(results)
+        self.assertEquals(res, 'some_item')
+
+    def test_get_item_label_no_log(self):
+        cb = CallbackBase()
+        results = {'item': 'some_item', '_ansible_no_log': True}
+        res = cb._get_item_label(results)
+        self.assertEquals(res, "(censored due to no_log)")
+
+        results = {'item': 'some_item', '_ansible_no_log': False}
+        res = cb._get_item_label(results)
         self.assertEquals(res, "some_item")
 
     def test_clean_results_debug_task(self):
@@ -116,7 +135,7 @@ class TestCallbackResults(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
 
-class TestCallbackDumpResults(unittest.TestCase):
+class TestCallbackDumpResults(object):
     def test_internal_keys(self):
         cb = CallbackBase()
         result = {'item': 'some_item',
@@ -127,26 +146,26 @@ class TestCallbackDumpResults(unittest.TestCase):
                   'bad_dict_key': {'_ansible_internal_blah': 'SENTINEL'},
                   'changed': True}
         json_out = cb._dump_results(result)
-        self.assertFalse('"_ansible_' in json_out)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertTrue('LEFTIN' in json_out)
+        assert '"_ansible_' not in json_out
+        assert 'SENTINEL' not in json_out
+        assert 'LEFTIN' in json_out
 
     def test_exception(self):
         cb = CallbackBase()
         result = {'item': 'some_item LEFTIN',
                   'exception': ['frame1', 'SENTINEL']}
         json_out = cb._dump_results(result)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertFalse('exception' in json_out)
-        self.assertTrue('LEFTIN' in json_out)
+        assert 'SENTINEL' not in json_out
+        assert 'exception' not in json_out
+        assert 'LEFTIN' in json_out
 
     def test_verbose(self):
         cb = CallbackBase()
         result = {'item': 'some_item LEFTIN',
                   '_ansible_verbose_always': 'chicane'}
         json_out = cb._dump_results(result)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertTrue('LEFTIN' in json_out)
+        assert 'SENTINEL' not in json_out
+        assert 'LEFTIN' in json_out
 
     def test_diff(self):
         cb = CallbackBase()
@@ -154,13 +173,22 @@ class TestCallbackDumpResults(unittest.TestCase):
                   'diff': ['remove stuff', 'added LEFTIN'],
                   '_ansible_verbose_always': 'chicane'}
         json_out = cb._dump_results(result)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertTrue('LEFTIN' in json_out)
+        assert 'SENTINEL' not in json_out
+        assert 'LEFTIN' in json_out
+
+    def test_mixed_keys(self):
+        cb = CallbackBase()
+        result = {3: 'pi',
+                  'tau': 6}
+        json_out = cb._dump_results(result)
+        round_trip_result = json.loads(json_out)
+        assert len(round_trip_result) == 2
+        assert '3' in round_trip_result
+        assert 'tau' in round_trip_result
+        assert round_trip_result['3'] == 'pi'
+        assert round_trip_result['tau'] == 6
 
 
-# TODO: triggr the 'except UnicodeError' around _get_diff
-#       that try except orig appeared in 61d01f549f2143fd9adfa4ffae42f09d24649c26
-#       in 2013 so maybe a < py2.6 issue
 class TestCallbackDiff(unittest.TestCase):
 
     def setUp(self):
@@ -171,28 +199,28 @@ class TestCallbackDiff(unittest.TestCase):
 
     def test_difflist(self):
         # TODO: split into smaller tests?
-        difflist = [{'before': ['preface\nThe Before String\npostscript'],
-                     'after': ['preface\nThe After String\npostscript'],
-                     'before_header': 'just before',
-                     'after_header': 'just after'
+        difflist = [{'before': u'preface\nThe Before String\npostscript',
+                     'after': u'preface\nThe After String\npostscript',
+                     'before_header': u'just before',
+                     'after_header': u'just after'
                      },
-                    {'before': ['preface\nThe Before String\npostscript'],
-                     'after': ['preface\nThe After String\npostscript'],
+                    {'before': u'preface\nThe Before String\npostscript',
+                     'after': u'preface\nThe After String\npostscript',
                      },
                     {'src_binary': 'chicane'},
                     {'dst_binary': 'chicanery'},
                     {'dst_larger': 1},
                     {'src_larger': 2},
-                    {'prepared': 'what does prepared do?'},
-                    {'before_header': 'just before'},
-                    {'after_header': 'just after'}]
+                    {'prepared': u'what does prepared do?'},
+                    {'before_header': u'just before'},
+                    {'after_header': u'just after'}]
 
         res = self.cb._get_diff(difflist)
 
-        self.assertIn('Before String', res)
-        self.assertIn('After String', res)
-        self.assertIn('just before', res)
-        self.assertIn('just after', res)
+        self.assertIn(u'Before String', res)
+        self.assertIn(u'After String', res)
+        self.assertIn(u'just before', res)
+        self.assertIn(u'just after', res)
 
     def test_simple_diff(self):
         self.assertMultiLineEqual(

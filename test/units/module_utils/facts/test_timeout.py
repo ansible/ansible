@@ -20,12 +20,10 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
+import sys
 import time
 
 import pytest
-
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.module_utils.facts import timeout
 
@@ -66,6 +64,10 @@ def sleep_amount_explicit_lower(amount):
     time.sleep(amount)
     return 'Succeeded after {0} sec'.format(amount)
 
+
+#
+# Tests for how the timeout decorator is specified
+#
 
 def test_defaults_still_within_bounds():
     # If the default changes outside of these bounds, some of the tests will
@@ -110,3 +112,58 @@ def test_explicit_timeout():
     sleep_time = 3
     with pytest.raises(timeout.TimeoutError):
         assert sleep_amount_explicit_lower(sleep_time) == '(Not expected to succeed)'
+
+
+#
+# Test that exception handling works
+#
+
+@timeout.timeout(1)
+def function_times_out():
+    time.sleep(2)
+
+
+# This is just about the same test as function_times_out but uses a separate process which is where
+# we normally have our timeouts.  It's more of an integration test than a unit test.
+@timeout.timeout(1)
+def function_times_out_in_run_command(am):
+    am.run_command([sys.executable, '-c', 'import time ; time.sleep(2)'])
+
+
+@timeout.timeout(1)
+def function_other_timeout():
+    raise TimeoutError('Vanilla Timeout')
+
+
+@timeout.timeout(1)
+def function_raises():
+    1 / 0
+
+
+@timeout.timeout(1)
+def function_catches_all_exceptions():
+    try:
+        time.sleep(10)
+    except BaseException:
+        raise RuntimeError('We should not have gotten here')
+
+
+def test_timeout_raises_timeout():
+    with pytest.raises(timeout.TimeoutError):
+        assert function_times_out() == '(Not expected to succeed)'
+
+
+@pytest.mark.parametrize('stdin', ({},), indirect=['stdin'])
+def test_timeout_raises_timeout_integration_test(am):
+    with pytest.raises(timeout.TimeoutError):
+        assert function_times_out_in_run_command(am) == '(Not expected to succeed)'
+
+
+def test_timeout_raises_other_exception():
+    with pytest.raises(ZeroDivisionError):
+        assert function_raises() == '(Not expected to succeed)'
+
+
+def test_exception_not_caught_by_called_code():
+    with pytest.raises(timeout.TimeoutError):
+        assert function_catches_all_exceptions() == '(Not expected to succeed)'

@@ -71,7 +71,7 @@
 #       state: absent
 #       <<: *aws_connection_info
 #     register: result
-#     ignore_error: true
+#     ignore_errors: true
 #
 #   - name: assert deleteing app with running environments fail
 #     assert:
@@ -124,7 +124,7 @@
       state: absent
       <<: *aws_connection_info
     register: result
-    ignore_error: true
+    ignore_errors: true
 
   - name: assert deleteing non existant app fails
     assert:

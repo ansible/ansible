@@ -21,7 +21,7 @@ notes:
 description:
     - Creates or terminates ecs clusters.
 version_added: "2.0"
-author: Mark Chance(@Java1Guy)
+author: Mark Chance (@Java1Guy)
 requirements: [ boto3 ]
 options:
     state:
@@ -75,12 +75,12 @@ activeServicesCount:
     type: int
 clusterArn:
     description: the ARN of the cluster just created
-    type: string
+    type: str
     returned: 0 if a new cluster
     sample: arn:aws:ecs:us-west-2:172139249013:cluster/test-cluster-mfshcdok
 clusterName:
     description: name of the cluster just created (should match the input argument)
-    type: string
+    type: str
     returned: always
     sample: test-cluster-mfshcdok
 pendingTasksCount:
@@ -98,7 +98,7 @@ runningTasksCount:
 status:
     description: the status of the new cluster
     returned: always
-    type: string
+    type: str
     sample: ACTIVE
 '''
 import time
@@ -162,7 +162,7 @@ def main():
         delay=dict(required=False, type='int', default=10),
         repeat=dict(required=False, type='int', default=10)
     ))
-    required_together = (['state', 'name'])
+    required_together = [['state', 'name']]
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
 

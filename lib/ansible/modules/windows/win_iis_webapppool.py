@@ -51,6 +51,11 @@ options:
         is never idempotent.
       - If C(started) will ensure the app pool exists and is started.
       - If C(stopped) will ensure the app pool exists and is stopped.
+seealso:
+- module: win_iis_virtualdirectory
+- module: win_iis_webapplication
+- module: win_iis_webbinding
+- module: win_iis_website
 author:
 - Henrik Wallström (@henrikwallstrom)
 - Jordan Borean (@jborean93)
@@ -122,7 +127,7 @@ attributes:
   description: Application Pool attributes that were set and processed by this
     module invocation.
   returned: success
-  type: dictionary
+  type: dict
   sample:
     enable32BitAppOnWin64: "true"
     managedRuntimeVersion: "v4.0"
@@ -138,7 +143,7 @@ info:
     attributes:
       description: Key value pairs showing the current Application Pool attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         autoStart: true
         managedRuntimeLoader: "webengine4.dll"
@@ -156,7 +161,7 @@ info:
     cpu:
       description: Key value pairs showing the current Application Pool cpu attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         action: "NoAction"
         limit: 0
@@ -166,7 +171,7 @@ info:
     failure:
       description: Key value pairs showing the current Application Pool failure attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         autoShutdownExe: ""
         orphanActionExe: ""
@@ -176,12 +181,12 @@ info:
     name:
       description: Name of Application Pool that was processed by this module invocation.
       returned: success
-      type: string
+      type: str
       sample: "DefaultAppPool"
     processModel:
       description: Key value pairs showing the current Application Pool processModel attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         identityType: "ApplicationPoolIdentity"
         logonType: "LogonBatch"
@@ -191,7 +196,7 @@ info:
     recycling:
       description: Key value pairs showing the current Application Pool recycling attributes.
       returned: success
-      type: dictionary
+      type: dict
       sample:
         disallowOverlappingRotation: false
         disallowRotationOnConfigChange: false
@@ -199,6 +204,6 @@ info:
     state:
       description: Current runtime state of the pool as the module completed.
       returned: success
-      type: string
+      type: str
       sample: "Started"
 '''

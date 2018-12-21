@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -24,37 +24,39 @@ description:
     configuration to disk. Since the F5 module only manipulate running
     configuration, it is important that you utilize this module to save
     that running config.
-version_added: "2.4"
+version_added: 2.4
 options:
   save:
     description:
       - The C(save) argument instructs the module to save the
-        running-config to startup-config. This operation is performed
-        after any changes are made to the current running config. If
-        no changes are made, the configuration is still saved to the
-        startup config. This option will always cause the module to
-        return changed.
+        running-config to startup-config.
+      - This operation is performed after any changes are made to the
+        current running config. If no changes are made, the configuration
+        is still saved to the startup config.
+      - This option will always cause the module to return changed.
     type: bool
-    default: no
+    default: yes
   reset:
     description:
-      - Loads the default configuration on the device. If this option
-        is specified, the default configuration will be loaded before
-        any commands or other provided configuration is run.
+      - Loads the default configuration on the device.
+      - If this option is specified, the default configuration will be
+        loaded before any commands or other provided configuration is run.
     type: bool
     default: no
   merge_content:
     description:
       - Loads the specified configuration that you want to merge into
         the running configuration. This is equivalent to using the
-        C(tmsh) command C(load sys config from-terminal merge). If
-        you need to read configuration from a file or template, use
+        C(tmsh) command C(load sys config from-terminal merge).
+      - If you need to read configuration from a file or template, use
         Ansible's C(file) or C(template) lookup plugins respectively.
   verify:
     description:
       - Validates the specified configuration to see whether they are
-        valid to replace the running configuration. The running
-        configuration will not be changed.
+        valid to replace the running configuration.
+      - The running configuration will not be changed.
+      - When this parameter is set to C(yes), no change will be reported
+        by the module.
     type: bool
     default: no
 extends_documentation_fragment: f5
@@ -66,29 +68,29 @@ EXAMPLES = r'''
 - name: Save the running configuration of the BIG-IP
   bigip_config:
     save: yes
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: Reset the BIG-IP configuration, for example, to RMA the device
   bigip_config:
     reset: yes
     save: yes
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: Load an SCF configuration
   bigip_config:
     merge_content: "{{ lookup('file', '/path/to/config.scf') }}"
-    server: lb.mydomain.com
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 '''
 
@@ -98,7 +100,6 @@ stdout:
   returned: always
   type: list
   sample: ['...', '...']
-
 stdout_lines:
   description: The value of stdout split into a list
   returned: always
@@ -106,45 +107,36 @@ stdout_lines:
   sample: [['...', '...'], ['...'], ['...']]
 '''
 
-import os
-import tempfile
-
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
 
+import os
+import tempfile
+
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
-    # Upstream Ansible
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.icontrol import upload_file
 
 
 class Parameters(AnsibleF5Parameters):
@@ -182,15 +174,12 @@ class ModuleManager(object):
         return lines
 
     def exec_module(self):
-        result = dict()
+        result = {}
 
-        try:
-            self.execute()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.execute()
 
         result.update(**self.changes.to_return())
-        result.update(dict(changed=True))
+        result.update(dict(changed=changed))
         return result
 
     def execute(self):
@@ -217,6 +206,9 @@ class ModuleManager(object):
             'stdout_lines': self._to_lines(responses)
         }
         self.changes = Parameters(params=changes)
+        if self.want.verify:
+            return False
+        return True
 
     def _detect_errors(self, stdout):
         errors = [
@@ -235,13 +227,29 @@ class ModuleManager(object):
 
     def reset_device(self):
         command = 'tmsh load sys config default'
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='-c "{0}"'.format(command)
         )
-        if hasattr(output, 'commandResult'):
-            return str(output.commandResult)
-        return None
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
+            return str(response['commandResult'])
 
     def merge(self, verify=True):
         temp_name = next(tempfile._get_candidate_names())
@@ -260,40 +268,94 @@ class ModuleManager(object):
         return response
 
     def merge_on_device(self, remote_path, verify=True):
-        result = None
-
         command = 'tmsh load sys config file {0} merge'.format(
             remote_path
         )
         if verify:
             command += ' verify'
 
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='-c "{0}"'.format(command)
         )
-        if hasattr(output, 'commandResult'):
-            result = str(output.commandResult)
-        return result
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
+            return str(response['commandResult'])
 
     def remove_temporary_file(self, remote_path):
-        self.client.api.tm.util.unix_rm.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-rm".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs=remote_path
         )
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def move_on_device(self, remote_path):
-        self.client.api.tm.util.unix_mv.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-mv".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='{0} /tmp/{1}'.format(
                 remote_path, os.path.basename(remote_path)
             )
         )
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def upload_to_device(self, temp_name):
         template = StringIO(self.want.merge_content)
-        upload = self.client.api.shared.file_transfer.uploads
-        upload.upload_stringio(template, temp_name)
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, template, temp_name)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
 
     def save(self):
         if self.module.check_mode:
@@ -301,15 +363,30 @@ class ModuleManager(object):
         return self.save_on_device()
 
     def save_on_device(self):
-        result = None
         command = 'tmsh save sys config'
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='-c "{0}"'.format(command)
         )
-        if hasattr(output, 'commandResult'):
-            result = str(output.commandResult)
-        return result
+        resp = self.client.api.post(uri, json=args)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
+            return str(response['commandResult'])
 
 
 class ArgumentSpec(object):
@@ -327,7 +404,7 @@ class ArgumentSpec(object):
             ),
             save=dict(
                 type='bool',
-                default=True
+                default='yes'
             )
         )
         self.argument_spec = {}
@@ -342,11 +419,10 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

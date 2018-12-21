@@ -1,0 +1,147 @@
+# Test code for the UCS modules
+# Copyright 2018, David Soper (@dsoper2)
+
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+  vars:
+    login_info: &login_info
+      hostname: "{{ ucs_hostname }}"
+      username: "{{ ucs_username }}"
+      password: "{{ ucs_password }}"
+
+# Setup (clean environment)
+- name: Service Profile Template absent
+  ucs_service_profile_template: &service_profile_template_absent
+    <<: *login_info
+    name: DEE-Ctrl
+    state: absent
+
+
+# Test present (check_mode)
+- name: Service Profile Template present (check_mode)
+  ucs_service_profile_template: &service_profile_template_present
+    <<: *login_info
+    name: DEE-Ctrl
+    template_type: updating-template
+    uuid_pool: UUID-Pool
+    storage_profile: DEE-StgProf
+    lan_connectivity_policy: Cntr-FC-Boot
+    iqn_pool: iSCSI-Boot-A
+    san_connectivity_policy: Cntr-FC-Boot
+    boot_policy: DEE-vMedia
+    maintenance_policy: default
+    server_pool: Container-Pool
+    host_firmware_package: 3.1.2b
+    bios_policy: Docker
+  check_mode: yes
+  register: cm_service_profile_template_present
+
+
+# Present (normal mode)
+- name: Service Profile Template present (normal mode)
+  ucs_service_profile_template: *service_profile_template_present
+  register: nm_service_profile_template_present
+
+
+# Test present again (idempotent)
+- name: Service Profile Template present again (check_mode)
+  ucs_service_profile_template: *service_profile_template_present
+  check_mode: yes
+  register: cm_service_profile_template_present_again
+
+
+# Present again (normal mode)
+- name: Service Profile Template present again (normal mode)
+  ucs_service_profile_template: *service_profile_template_present
+  register: nm_service_profile_template_present_again
+
+
+# Verfiy present
+- name: Verify Service Profile Template present results
+  assert:
+    that:
+    - cm_service_profile_template_present.changed == nm_service_profile_template_present.changed == true
+    - cm_service_profile_template_present_again.changed == nm_service_profile_template_present_again.changed == false
+
+
+# Test change (check_mode)
+- name: Service Profile Template change (check_mode)
+  ucs_service_profile_template: &service_profile_template_change
+    <<: *login_info
+    name: DEE-Ctrl
+    template_type: updating-template
+    uuid_pool: UUID-Pool
+    storage_profile: DEE-StgProf
+    lan_connectivity_policy: Cntr-FC-Boot
+    iqn_pool: iSCSI-Boot-B
+    san_connectivity_policy: Cntr-FC-Boot
+    boot_policy: DEE-vMedia
+    maintenance_policy: default
+    server_pool: Container-Pool
+    host_firmware_package: 3.1.2b
+    bios_policy: Docker
+  check_mode: yes
+  register: cm_service_profile_template_change
+
+
+# Change (normal mode)
+- name: Service Profile Template change (normal mode)
+  ucs_service_profile_template: *service_profile_template_change
+  register: nm_service_profile_template_change
+
+
+# Test change again (idempotent)
+- name: Service Profile Template again (check_mode)
+  ucs_service_profile_template: *service_profile_template_change
+  check_mode: yes
+  register: cm_service_profile_template_change_again
+
+
+# Change again (normal mode)
+- name: Service Profile Template change again (normal mode)
+  ucs_service_profile_template: *service_profile_template_change
+  register: nm_service_profile_template_change_again
+
+
+# Verfiy change
+- name: Verify Service Profile Template change results
+  assert:
+    that:
+    - cm_service_profile_template_change.changed == nm_service_profile_template_change.changed == true
+    - cm_service_profile_template_change_again.changed == nm_service_profile_template_change_again.changed == false
+
+
+# Teardown (clean environment)
+- name: Service Profile Template absent (check_mode)
+  ucs_service_profile_template: *service_profile_template_absent
+  check_mode: yes
+  register: cm_service_profile_template_absent
+
+
+# Absent (normal mode)
+- name: Service Profile Template absent (normal mode)
+  ucs_service_profile_template: *service_profile_template_absent
+  register: nm_service_profile_template_absent
+
+
+# Test absent again (idempotent)
+- name: Service Profile Template absent again (check_mode)
+  ucs_service_profile_template: *service_profile_template_absent
+  check_mode: yes
+  register: cm_service_profile_template_absent_again
+
+
+# Absent again (normal mode)
+- name: Service Profile Template absent again (normal mode)
+  ucs_service_profile_template: *service_profile_template_absent
+  register: nm_service_profile_template_absent_again
+
+
+# Verfiy absent
+- name: Verify Service Profile Template absent results
+  assert:
+    that:
+    - cm_service_profile_template_absent.changed == nm_service_profile_template_absent.changed == true
+    - cm_service_profile_template_absent_again.changed == nm_service_profile_template_absent_again.changed == false

@@ -26,13 +26,10 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.utils.display import Display
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayIterator']
@@ -169,13 +166,20 @@ class PlayIterator:
             fact_path = self._play.fact_path
 
         setup_block = Block(play=self._play)
+        # Gathering facts with run_once would copy the facts from one host to
+        # the others.
+        setup_block.run_once = False
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
-        setup_task.tags = ['always']
         setup_task.args = {
             'gather_subset': gather_subset,
         }
+
+        # Unless play is specifically tagged, gathering should 'always' run
+        if not self._play.tags:
+            setup_task.tags = ['always']
+
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout
         if fact_path:
@@ -510,6 +514,18 @@ class PlayIterator:
     def is_failed(self, host):
         s = self.get_host_state(host)
         return self._check_failed_state(s)
+
+    def get_active_state(self, state):
+        '''
+        Finds the active state, recursively if necessary when there are child states.
+        '''
+        if state.run_state == self.ITERATING_TASKS and state.tasks_child_state is not None:
+            return self.get_active_state(state.tasks_child_state)
+        elif state.run_state == self.ITERATING_RESCUE and state.rescue_child_state is not None:
+            return self.get_active_state(state.rescue_child_state)
+        elif state.run_state == self.ITERATING_ALWAYS and state.always_child_state is not None:
+            return self.get_active_state(state.always_child_state)
+        return state
 
     def get_original_task(self, host, task):
         # now a noop because we've changed the way we do caching

@@ -4,8 +4,8 @@
 - name: setup - remove motd
   nxos_banner: &remove
     banner: motd
+    provider: "{{ connection }}"
     state: absent
-    provider: "{{ nxapi }}"
 
 - name: Set motd
   nxos_banner: &motd
@@ -14,8 +14,8 @@
       this is my motd banner
       that has a multiline
       string
+    provider: "{{ connection }}"
     state: present
-    provider: "{{ nxapi }}"
   register: result
 
 - assert:

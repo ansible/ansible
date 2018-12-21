@@ -28,7 +28,7 @@ short_description: Manages SNMP contact configuration on HUAWEI CloudEngine swit
 description:
     - Manages SNMP contact configurations on HUAWEI CloudEngine switches.
 author:
-    - wangdezhuang (@CloudEngine-Ansible)
+    - wangdezhuang (@QijunPan)
 options:
     contact:
         description:
@@ -74,7 +74,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module

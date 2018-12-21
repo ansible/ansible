@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_snapshot_images
-short_description: Create and delete snapshot images
+short_description: NetApp E-Series create and delete snapshot images
 description:
     - Create and delete snapshots images on snapshot groups for NetApp E-series storage arrays.
     - Only the oldest snapshot image can be deleted so consistency is preserved.
@@ -65,12 +65,12 @@ RETURN = """
 ---
     msg:
         description: State of operation
-        type: string
+        type: str
         returned: always
         sample: "Created snapshot image"
     image_id:
         description: ID of snaphot image
-        type: string
+        type: str
         returned: state == created
         sample: "3400000060080E5000299B640063074057BC5C5E "
 """
@@ -106,7 +106,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

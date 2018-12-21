@@ -28,7 +28,7 @@ short_description: Manages VRRP interfaces on HUAWEI CloudEngine devices.
 description:
     - Manages VRRP interface attributes on HUAWEI CloudEngine devices.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@numone213)
 options:
     interface:
         description:
@@ -209,7 +209,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module

@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: dellos6_config
 version_added: "2.2"
-author: "Abirami N(@abirami-n)"
+author: "Abirami N (@abirami-n)"
 short_description: Manage Dell EMC Networking OS6 configuration sections
 description:
   - OS6 configurations use a simple block indent file syntax
@@ -169,7 +169,7 @@ saved:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/dellos6_config.2017-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
@@ -262,7 +262,7 @@ def main():
             commands = dumps(configobjs, 'commands')
             if ((isinstance(module.params['lines'], list)) and
                     (isinstance(module.params['lines'][0], dict)) and
-                    ['prompt', 'answer'].issubset(module.params['lines'][0])):
+                    set(['prompt', 'answer']).issubset(module.params['lines'][0])):
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],
                        'answer': module.params['lines'][0]['answer']}
@@ -287,7 +287,7 @@ def main():
         result['changed'] = True
         if not module.check_mode:
                 cmd = {'command': 'copy running-config startup-config',
-                       'prompt': r'\(y/n\)$', 'answer': 'yes'}
+                       'prompt': r'\(y/n\)\s?$', 'answer': 'yes'}
                 run_commands(module, [cmd])
                 result['saved'] = True
         else:

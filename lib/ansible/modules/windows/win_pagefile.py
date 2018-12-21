@@ -27,9 +27,11 @@ options:
   initial_size:
     description:
       - The initial size of the pagefile in megabytes.
+    type: int
   maximum_size:
     description:
       - The maximum size of the pagefile in megabytes.
+    type: int
   override:
     description:
       - Override the current pagefile on the drive.
@@ -122,7 +124,7 @@ RETURN = r'''
 automatic_managed_pagefiles:
     description: Whether the pagefiles is automatically managed.
     returned: When state is query.
-    type: boolean
+    type: bool
     sample: true
 pagefiles:
     description: Contains caption, description, initial_size, maximum_size and name for each pagefile in the system.

@@ -9,30 +9,24 @@
     parents:
       - interface Ethernet2
     match: none
-    provider: "{{ cli }}"
   become: yes
 
 
 - name: save config always
-  eos_config:
+  eos_config: &always
     save_when: always
-    provider: "{{ cli }}"
   become: yes
   register: result
 
-- assert:
+- assert: &changed
     that:
       - "result.changed == true"
 
-- name: save always again (not idempotent)
-  eos_config:
-    save_when: always
-    provider: "{{ cli }}"
+- name: save should always run
+  eos_config: *always
   become: yes
   register: result
 
-- assert:
-    that:
-      - "result.changed == true"
+- assert: *changed
 
 - debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

@@ -4,70 +4,64 @@
 
 # TODO: vcsim does not support snapshot related functionalities
 
-# - name: make sure pyvmomi is installed
-#   pip:
-#     name: pyvmomi
-#     state: latest
-#   when: ansible_user_id == 'root'
-# 
-# - name: store the vcenter container ip
-#   set_fact:
-#     vcsim: "{{ lookup('env', 'vcenter_host') }}"
-# - debug: var=vcsim
-# 
-# - name: Wait for Flask controller to come up online
-#   wait_for:
-#     host: "{{ vcsim }}"
-#     port: 5000
-#     state: started
-# 
-# - name: kill vcsim
-#   uri:
-#     url: "{{ 'http://' + vcsim + ':5000/killall' }}"
-# - name: start vcsim with no folders
-#   uri:
-#     url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
-#   register: vcsim_instance
-# 
-# - name: Wait for Flask controller to come up online
-#   wait_for:
-#     host: "{{ vcsim }}"
-#     port: 443
-#     state: started
-# 
-# - name: get a list of VMS from vcsim   
-#   uri:
-#     url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
-#   register: vmlist
-# 
-# - set_fact:
-#     vm1: "{{ vmlist['json'][0] }}"
-# 
-# - name: get a list of datacenters from vcsim
-#   uri:
-#     url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
-#   register: datacenters
-# 
-# - set_fact:
-#     dc1: "{{ datacenters['json'][0] }}"
-# 
-# - debug: var=vcsim_instance
-# - debug: var=vmlist
-# - debug: var=vm1
-# - debug: var=dc1
-#
-# - name: Gather snapshot facts about given virtual machine
-#   vmware_guest_snapshot_facts:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#   register: vm_snapshot_facts
+ - name: store the vcenter container ip
+   set_fact:
+     vcsim: "{{ lookup('env', 'vcenter_host') }}"
+ - debug: var=vcsim
 
-# - debug: vm_snapshot_facts
+ - name: Wait for Flask controller to come up online
+   wait_for:
+     host: "{{ vcsim }}"
+     port: 5000
+     state: started
 
-# - assert:
-#     that:
-#       - "not vm_snapshot_facts.changed"
+ - name: kill vcsim
+   uri:
+     url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+ - name: start vcsim with no folders
+   uri:
+     url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
+   register: vcsim_instance
+
+ - name: Wait for Flask controller to come up online
+   wait_for:
+     host: "{{ vcsim }}"
+     port: 443
+     state: started
+
+ - name: get a list of VMS from vcsim
+   uri:
+     url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+   register: vmlist
+
+ - set_fact:
+     vm1: "{{ vmlist['json'][0] }}"
+
+ - name: get a list of datacenters from vcsim
+   uri:
+     url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+   register: datacenters
+
+ - set_fact:
+     dc1: "{{ datacenters['json'][0] }}"
+
+ - debug: var=vcsim_instance
+ - debug: var=vmlist
+ - debug: var=vm1
+ - debug: var=dc1
+
+ - name: Gather snapshot facts about given virtual machine
+   vmware_guest_snapshot_facts:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+   register: vm_snapshot_facts
+
+ - debug: vm_snapshot_facts
+
+ - assert:
+     that:
+       - "not vm_snapshot_facts.changed"

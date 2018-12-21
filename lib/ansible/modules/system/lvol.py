@@ -80,7 +80,7 @@ options:
     description:
     - Resize the underlying filesystem together with the logical volume.
     type: bool
-    default: 'yes'
+    default: 'no'
     version_added: "2.5"
 notes:
   - You must specify lv (when managing the state of logical volumes) or thinpool (when managing a thin provisioned volume).
@@ -138,7 +138,7 @@ EXAMPLES = '''
     lv: test
     size: +100%FREE
 
-- name: Extend the logical volume to take all remaining space of the PVs
+- name: Extend the logical volume to take all remaining space of the PVs and resize the underlying filesystem
   lvol:
     vg: firefly
     lv: test

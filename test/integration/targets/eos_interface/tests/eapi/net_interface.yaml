@@ -14,8 +14,7 @@
     description: test-interface-1
     mtu: 1800
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - name: Configure interface description using platform agnostic module
@@ -23,8 +22,7 @@
     name: "{{ test_interface_1 }}"
     description: test-interface-initial
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -39,8 +37,7 @@
     description: test-interface
     mtu: 2000
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:

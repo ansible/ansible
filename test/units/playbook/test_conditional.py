@@ -1,6 +1,7 @@
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from units.mock.loader import DictDataLoader
+from units.compat.mock import MagicMock
 
 from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
@@ -32,6 +33,20 @@ class TestConditional(unittest.TestCase):
         when = [u"True"]
         ret = self._eval_con(when, {})
         self.assertTrue(ret)
+
+    def test_true_boolean(self):
+        self.cond.when = [True]
+        m = MagicMock()
+        ret = self.cond.evaluate_conditional(m, {})
+        self.assertTrue(ret)
+        self.assertFalse(m.is_template.called)
+
+    def test_false_boolean(self):
+        self.cond.when = [False]
+        m = MagicMock()
+        ret = self.cond.evaluate_conditional(m, {})
+        self.assertFalse(ret)
+        self.assertFalse(m.is_template.called)
 
     def test_undefined(self):
         when = [u"{{ some_undefined_thing }}"]

@@ -14,9 +14,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: service
-author:
-    - Ansible Core Team
-    - Michael DeHaan
 version_added: "0.1"
 short_description:  Manage services
 description:
@@ -36,7 +33,7 @@ options:
             and enabled are required.) Note that reloaded will start the
             service if it is not already started, even if your chosen init
             system wouldn't normally.
-        choices: [ reloaded, restarted, running, started, stopped ]
+        choices: [ reloaded, restarted, started, stopped ]
     sleep:
         description:
         - If the service is being C(restarted) then sleep this many seconds
@@ -49,7 +46,7 @@ options:
         - If the service does not respond to the status command, name a
           substring to look for as would be found in the output of the I(ps)
           command as a stand-in for a status result.  If the string is found,
-          the service will be assumed to be running.
+          the service will be assumed to be started.
         version_added: "0.7"
     enabled:
         description:
@@ -72,15 +69,20 @@ options:
         version_added: 2.2
 notes:
     - For Windows targets, use the M(win_service) module instead.
+seealso:
+- module: win_service
+author:
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''
-- name: Start service httpd, if not running
+- name: Start service httpd, if not started
   service:
     name: httpd
     state: started
 
-- name: Stop service httpd, if running
+- name: Stop service httpd, if started
   service:
     name: httpd
     state: stopped
@@ -95,7 +97,7 @@ EXAMPLES = '''
     name: httpd
     state: reloaded
 
-- name: Enable service httpd, and not touch the running state
+- name: Enable service httpd, and not touch the state
   service:
     name: httpd
     enabled: yes
@@ -114,6 +116,7 @@ EXAMPLES = '''
 '''
 
 import glob
+import json
 import os
 import platform
 import re
@@ -123,11 +126,6 @@ import string
 import subprocess
 import tempfile
 import time
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files
@@ -206,7 +204,10 @@ class Service(object):
 
         # Most things don't need to be daemonized
         if not daemonize:
-            return self.module.run_command(cmd)
+            # chkconfig localizes messages and we're screen scraping so make
+            # sure we use the C locale
+            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+            return self.module.run_command(cmd, environ_update=lang_env)
 
         # This is complex because daemonization is hard for people.
         # What we do is daemonize a part of this module, the daemon runs the
@@ -317,7 +318,7 @@ class Service(object):
         if self.state and self.running is None:
             self.module.fail_json(msg="failed determining service state, possible typo of service name?")
         # Find out if state has changed
-        if not self.running and self.state in ["reloaded", "running", "started"]:
+        if not self.running and self.state in ["reloaded", "started"]:
             self.svc_change = True
         elif self.running and self.state in ["reloaded", "stopped"]:
             self.svc_change = True
@@ -331,7 +332,7 @@ class Service(object):
         # Only do something if state will change
         if self.svc_change:
             # Control service
-            if self.state in ['running', 'started']:
+            if self.state in ['started']:
                 self.action = "start"
             elif not self.running and self.state == 'reloaded':
                 self.action = "start"
@@ -480,7 +481,7 @@ class LinuxService(Service):
                     res = version_re.search(stdout)
                     if res:
                         self.upstart_version = LooseVersion(res.groups()[0])
-            except:
+            except Exception:
                 pass  # we'll use the default of 0.0.0
 
             self.svc_cmd = location['initctl']
@@ -719,7 +720,7 @@ class LinuxService(Service):
             if self.changed:
                 try:
                     write_to_override_file(override_file_name, override_state)
-                except:
+                except Exception:
                     self.module.fail_json(msg='Could not modify override file')
 
             return
@@ -1006,7 +1007,7 @@ class FreeBsdService(Service):
         rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
         try:
             rcvars = shlex.split(stdout, comments=True)
-        except:
+        except Exception:
             # TODO: add a warning to the output with the failure
             pass
 
@@ -1085,6 +1086,21 @@ class DragonFlyBsdService(FreeBsdService):
 
     platform = 'DragonFly'
     distribution = None
+
+    def service_enable(self):
+        if self.enable:
+            self.rcconf_value = "YES"
+        else:
+            self.rcconf_value = "NO"
+
+        rcfiles = ['/etc/rc.conf']  # Overkill?
+        for rcfile in rcfiles:
+            if os.path.isfile(rcfile):
+                self.rcconf_file = rcfile
+
+        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+
+        return self.service_enable_rcconf()
 
 
 class OpenBsdService(Service):
@@ -1504,7 +1520,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            state=dict(type='str', choices=['running', 'started', 'stopped', 'reloaded', 'restarted']),
+            state=dict(type='str', choices=['started', 'stopped', 'reloaded', 'restarted']),
             sleep=dict(type='int'),
             pattern=dict(type='str'),
             enabled=dict(type='bool'),
@@ -1583,7 +1599,7 @@ def main():
     else:
         # as we may have just bounced the service the service command may not
         # report accurate state at this moment so just show what we ran
-        if service.module.params['state'] in ['reloaded', 'restarted', 'running', 'started']:
+        if service.module.params['state'] in ['reloaded', 'restarted', 'started']:
             result['state'] = 'started'
         else:
             result['state'] = 'stopped'

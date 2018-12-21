@@ -41,6 +41,15 @@ options:
   workgroup_name:
     description:
       - When C(state) is C(workgroup), the name of the workgroup that the Windows host should be in.
+seealso:
+- module: win_domain
+- module: win_domain_controller
+- module: win_domain_computer
+- module: win_domain_group
+- module: win_domain_user
+- module: win_group
+- module: win_group_membership
+- module: win_user
 author:
     - Matt Davis (@nitzmahone)
 '''
@@ -49,7 +58,7 @@ RETURN = '''
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_dns_record
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage dns entries on a univention corporate server
 description:
     - "This module allows to manage dns records on a univention corporate server (UCS).
@@ -159,7 +160,7 @@ def main():
                     obj.create()
                 else:
                     obj.modify()
-        except BaseException as e:
+        except Exception as e:
             module.fail_json(
                 msg='Creating/editing dns entry {} in {} failed: {}'.format(name, container, e)
             )
@@ -170,7 +171,7 @@ def main():
             if not module.check_mode:
                 obj.remove()
             changed = True
-        except BaseException as e:
+        except Exception as e:
             module.fail_json(
                 msg='Removing dns entry {} in {} failed: {}'.format(name, container, e)
             )

@@ -46,7 +46,7 @@ options:
       description:
         - Ignored. Present for backwards compatibility
 
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 RETURN = '''
@@ -57,19 +57,19 @@ ansible_facts:
     contains:
         memory_mb:
             description: Amount of node memory as updated in the node properties
-            type: string
+            type: str
             sample: "1024"
         cpu_arch:
             description: Detected CPU architecture type
-            type: string
+            type: str
             sample: "x86_64"
         local_gb:
             description: Total size of local disk storage as updaed in node properties.
-            type: string
+            type: str
             sample: "10"
         cpus:
             description: Count of cpu cores defined in the updated node properties.
-            type: string
+            type: str
             sample: "1"
 '''
 
@@ -114,10 +114,8 @@ def main():
             endpoint=module.params['ironic_url']
         )
 
-    shade, cloud = openstack_cloud_from_module(
-        module, min_version='1.0.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-
         if module.params['name'] or module.params['uuid']:
             server = cloud.get_machine(_choose_id_value(module))
         elif module.params['mac']:
@@ -138,7 +136,7 @@ def main():
         else:
             module.fail_json(msg="node not found.")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

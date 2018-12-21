@@ -96,5 +96,13 @@ Assert-Equals -actual $actual.FullName -expected C:\Windows
 Assert-Equals -actual $actual.Attributes.HasFlag([System.IO.FileAttributes]::Directory) -expected $true
 Assert-Equals -actual $actual.Exists -expected $true
 
+# ensure Get-AnsibleItem doesn't fail in a try/catch and -ErrorAction SilentlyContinue - stop's a trap from trapping it
+try {
+    $actual = Get-AnsibleItem -Path C:\fakepath -ErrorAction SilentlyContinue
+} catch {
+    Fail-Json -obj $result -message "this should not fire"
+}
+Assert-Equals -actual $actual -expected $null
+
 $result.data = "success"
 Exit-Json -obj $result

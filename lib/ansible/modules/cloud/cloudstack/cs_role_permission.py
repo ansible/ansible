@@ -81,27 +81,27 @@ RETURN = '''
 id:
   description: The ID of the role permission.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: The API name of the permission.
   returned: success
-  type: string
+  type: str
   sample: createVPC
 permission:
   description: The permission type of the api name.
   returned: success
-  type: string
+  type: str
   sample: allow
 role_id:
   description: The ID of the role to which the role permission belongs.
   returned: success
-  type: string
+  type: str
   sample: c6f7a5fc-43f8-11e5-a151-feff819cdc7f
 description:
   description: The description of the role permission
   returned: success
-  type: string
+  type: str
   sample: Deny createVPC for users
 '''
 

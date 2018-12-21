@@ -42,8 +42,8 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -78,19 +78,19 @@ group:
     contains:
         id:
             description: Unique group ID
-            type: string
+            type: str
             sample: "ee6156ff04c645f481a6738311aea0b0"
         name:
             description: Group name
-            type: string
+            type: str
             sample: "demo"
         description:
             description: Group description
-            type: string
+            type: str
             sample: "Demo Group"
         domain_id:
             description: Domain for the group
-            type: string
+            type: str
             sample: "default"
 '''
 
@@ -127,7 +127,7 @@ def main():
 
     domain_id = module.params.pop('domain_id')
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if domain_id:
             group = cloud.get_group(name, filters={'domain_id': domain_id})
@@ -159,7 +159,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -30,14 +30,11 @@ from ansible.galaxy.token import GalaxyToken
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def g_connect(method):
@@ -152,7 +149,7 @@ class GalaxyAPI(object):
             args['alternate_role_name'] = role_name
         elif github_repo.startswith('ansible-role'):
             args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
-        data = self.__call_galaxy(url, args=urlencode(args))
+        data = self.__call_galaxy(url, args=urlencode(args), method="POST")
         if data.get('results', None):
             return data['results']
         return data
@@ -178,7 +175,7 @@ class GalaxyAPI(object):
         """
         Find a role by name.
         """
-        role_name = urlquote(role_name)
+        role_name = to_text(urlquote(to_bytes(role_name)))
 
         try:
             parts = role_name.split(".")
@@ -186,7 +183,7 @@ class GalaxyAPI(object):
             role_name = parts[-1]
             if notify:
                 display.display("- downloading role '%s', owned by %s" % (role_name, user_name))
-        except:
+        except Exception:
             raise AnsibleError("Invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
@@ -213,7 +210,7 @@ class GalaxyAPI(object):
                 results += data['results']
                 done = (data.get('next_link', None) is None)
             return results
-        except:
+        except Exception:
             return None
 
     @g_connect
@@ -238,7 +235,7 @@ class GalaxyAPI(object):
                 done = (data.get('next_link', None) is None)
             return results
         except Exception as error:
-            raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
+            raise AnsibleError("Failed to download the %s list: %s" % (what, to_native(error)))
 
     @g_connect
     def search_roles(self, search, **kwargs):
@@ -246,7 +243,7 @@ class GalaxyAPI(object):
         search_url = self.baseurl + '/search/roles/?'
 
         if search:
-            search_url += '&autocomplete=' + urlquote(search)
+            search_url += '&autocomplete=' + to_text(urlquote(to_bytes(search)))
 
         tags = kwargs.get('tags', None)
         platforms = kwargs.get('platforms', None)
@@ -279,7 +276,7 @@ class GalaxyAPI(object):
             "github_repo": github_repo,
             "secret": secret
         })
-        data = self.__call_galaxy(url, args=args)
+        data = self.__call_galaxy(url, args=args, method="POST")
         return data
 
     @g_connect

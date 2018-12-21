@@ -1,11 +1,12 @@
 ---
+- debug: msg="START eapi/basic.yaml on connection={{ ansible_connection }}"
+
 - name: Set up host logging
   eos_logging:
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -18,8 +19,7 @@
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -31,8 +31,7 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -45,8 +44,7 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -58,8 +56,7 @@
     dest: console
     level: warnings
     state: present
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -71,8 +68,7 @@
   eos_logging:
     dest: buffered
     size: 480000
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:
@@ -85,8 +81,7 @@
     aggregate:
       - { dest: console, level: warnings, state: absent }
       - { dest: buffered, size: 480000, state: absent }
-    authorize: yes
-    provider: "{{ eapi }}"
+  become: yes
   register: result
 
 - assert:

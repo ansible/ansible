@@ -17,7 +17,7 @@ module: iosxr_system
 version_added: "2.3"
 author:
   - "Peter Sprygada (@privateip)"
-  - "Kedar Kekan @kedarX"
+  - "Kedar Kekan (@kedarX)"
 short_description: Manage the system attributes on Cisco IOS XR devices
 description:
   - This module provides declarative management of node system attributes
@@ -252,7 +252,8 @@ class CliConfiguration(ConfigBase):
 
     def parse_hostname(self, config):
         match = re.search(r'^hostname (\S+)', config, re.M)
-        return match.group(1)
+        if match:
+            return match.group(1)
 
     def parse_domain_name(self, config):
         match = re.search(r'^domain name (\S+)', config, re.M)
@@ -573,7 +574,7 @@ def main():
     config_object = None
     if is_cliconf(module):
         module.deprecate(msg="cli support for 'iosxr_system' is deprecated. Use transport netconf instead",
-                         version="4 releases from v2.5")
+                         version="2.9")
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         config_object = NCConfiguration(module)

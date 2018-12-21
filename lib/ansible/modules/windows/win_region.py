@@ -47,6 +47,8 @@ options:
               change.
         type: bool
         default: 'no'
+seealso:
+- module: win_timezone
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -88,6 +90,6 @@ RETURN = r'''
 restart_required:
     description: Whether a reboot is required for the change to take effect
     returned: success
-    type: boolean
+    type: bool
     sample: True
 '''

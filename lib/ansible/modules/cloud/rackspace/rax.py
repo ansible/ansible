@@ -163,7 +163,7 @@ options:
       - how long before wait gives up, in seconds
     default: 300
 author:
-    - "Jesse Keating (@j2sol)"
+    - "Jesse Keating (@omgjlk)"
     - "Matt Martz (@sivel)"
 notes:
   - I(exact_count) can be "destructive" if the number of running servers in
@@ -332,7 +332,7 @@ def create(module, names=None, flavor=None, image=None, meta=None, key_name=None
             for server in servers:
                 try:
                     server.get()
-                except:
+                except Exception:
                     server.status = 'ERROR'
 
             if not filter(lambda s: s.status not in FINAL_STATUSES,
@@ -346,7 +346,7 @@ def create(module, names=None, flavor=None, image=None, meta=None, key_name=None
     for server in servers:
         try:
             server.get()
-        except:
+        except Exception:
             server.status = 'ERROR'
         instance = rax_to_dict(server, 'server')
         if server.status == 'ACTIVE' or not wait:
@@ -418,7 +418,7 @@ def delete(module, instance_ids=None, wait=True, wait_timeout=300, kept=None):
                 instance_id = server.id
                 try:
                     server.get()
-                except:
+                except Exception:
                     instances[instance_id]['status'] = 'DELETED'
                     instances[instance_id]['rax_status'] = 'DELETED'
 

@@ -7,12 +7,20 @@
 - set_fact: testint2="{{ nxos_int2 }}"
 
 - block:
+  - name: Install and Enable FabricPath feature set
+    nxos_config:
+      lines:
+        - install feature-set fabricpath
+        - feature-set fabricpath
+      provider: "{{ connection }}"
+    when: platform is search('N5K|N7K')
+
   - name: "Enable feature vn segment"
     nxos_config: 
       commands:
         - feature vn-segment-vlan-based
-      provider: "{{ connection }}"
       match: none
+      provider: "{{ connection }}"
     when: platform is search('N9K')
 
   - name: Ensure a range of VLANs are present on the switch
@@ -120,49 +128,49 @@
     when: platform is search('N3K|N7K')
 
 # Uncomment this once the get_capabilities() work on nxapi as well
-#  - name: Change mode
-#    nxos_vlan: &mode1
-#      vlan_id: 50
-#      mode: fabricpath
-#      provider: "{{ connection }}"
-#    register: result
-#    when: platform is search('N5k|N7K')
-#
-#  - assert: *true
-#    when: platform is search('N5k|N7K')
-#
-#  - name: "mode1 Idempotence"
-#    nxos_vlan: *mode1
-#    register: result
-#    when: platform is search('N5k|N7K')
-#
-#  - assert: *false
-#    when: platform is search('N5k|N7K')
-#
-#  - name: Change mode again
-#    nxos_vlan: &mode2
-#      vlan_id: 50
-#      mode: ce
-#      provider: "{{ connection }}"
-#    register: result
-#    when: platform is search('N5k|N7K')
-#
-#  - assert: *true
-#    when: platform is search('N5k|N7K')
-#
-#  - name: "mode2 Idempotence"
-#    nxos_vlan: *mode2
-#    register: result
-#    when: platform is search('N5k|N7K')
-#
-#  - assert: *false
-#    when: platform is search('N5k|N7K')
+  - name: Change mode
+    nxos_vlan: &mode1
+      vlan_id: 50
+      mode: fabricpath
+      provider: "{{ connection }}"
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *true
+    when: platform is search('N5K|N7K')
+
+  - name: "mode1 Idempotence"
+    nxos_vlan: *mode1
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *false
+    when: platform is search('N5K|N7K')
+
+  - name: Change mode again
+    nxos_vlan: &mode2
+      vlan_id: 50
+      mode: ce
+      provider: "{{ connection }}"
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *true
+    when: platform is search('N5K|N7K')
+
+  - name: "mode2 Idempotence"
+    nxos_vlan: *mode2
+    register: result
+    when: platform is search('N5K|N7K')
+
+  - assert: *false
+    when: platform is search('N5K|N7K')
 
   - name: Ensure VLAN is NOT on the device
     nxos_vlan: &no_vlan
       vlan_id: 50
-      state: absent
       provider: "{{ connection }}"
+      state: absent
     register: result
 
   - assert: *true
@@ -214,15 +222,15 @@
     - name: remove vlans
       nxos_vlan:
         vlan_range: "2-10,20,50,55-60,100-150"
-        state: absent
         provider: "{{ connection }}"
+        state: absent
       ignore_errors: yes
 
     - name: "Disable feature vn segement"
       nxos_feature: 
         feature: vn-segment-vlan-based
-        state: disabled
         provider: "{{ connection }}"
+        state: disabled
       ignore_errors: yes
       when: platform is search('N9K')
 

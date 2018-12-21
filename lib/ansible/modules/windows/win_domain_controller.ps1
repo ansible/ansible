@@ -1,5 +1,4 @@
 #!powershell
-# This file is part of Ansible
 
 # Copyright: (c) 2017, Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -95,21 +94,21 @@ $result = @{
     reboot_required = $false
 }
 
-$param = Parse-Args -arguments $args -supports_check_mode $true
+$params = Parse-Args -arguments $args -supports_check_mode $true
 
-$dns_domain_name = Get-AnsibleParam $param "dns_domain_name"
-$safe_mode_password= Get-AnsibleParam $param "safe_mode_password"
-$domain_admin_user = Get-AnsibleParam $param "domain_admin_user" -failifempty $result
-$domain_admin_password= Get-AnsibleParam $param "domain_admin_password" -failifempty $result
-$local_admin_password= Get-AnsibleParam $param "local_admin_password"
-$database_path = Get-AnsibleParam $param "database_path" -type "path"
-$sysvol_path = Get-AnsibleParam $param "sysvol_path" -type "path"
-$read_only = Get-AnsibleParam $param "read_only" -type "bool" -default $false
-$site_name = Get-AnsibleParam $param "site_name" -type "str" -failifempty $read_only
+$dns_domain_name = Get-AnsibleParam -obj $params -name "dns_domain_name"
+$safe_mode_password= Get-AnsibleParam -obj $params -name "safe_mode_password"
+$domain_admin_user = Get-AnsibleParam -obj $params -name "domain_admin_user" -failifempty $result
+$domain_admin_password= Get-AnsibleParam -obj $params -name "domain_admin_password" -failifempty $result
+$local_admin_password= Get-AnsibleParam -obj $params -name "local_admin_password"
+$database_path = Get-AnsibleParam -obj $params -name "database_path" -type "path"
+$sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
+$read_only = Get-AnsibleParam -obj $params -name "read_only" -type "bool" -default $false
+$site_name = Get-AnsibleParam -obj $params -name "site_name" -type "str" -failifempty $read_only
 
-$state = Get-AnsibleParam $param "state" -validateset ("domain_controller", "member_server") -failifempty $result
-$log_path = Get-AnsibleParam $param "log_path"
-$_ansible_check_mode = Get-AnsibleParam $param "_ansible_check_mode" -default $false
+$state = Get-AnsibleParam -obj $params -name "state" -validateset ("domain_controller", "member_server") -failifempty $result
+$log_path = Get-AnsibleParam -obj $params -name "log_path"
+$_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
 $global:log_path = $log_path
 
@@ -214,7 +213,20 @@ Try {
                 }
                 $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
 
-                Write-DebugLog "Installation completed, needs reboot..."
+                Write-DebugLog "Installation complete, trying to start the Netlogon service"
+                # The Netlogon service is set to auto start but is not started. This is
+                # required for Ansible to connect back to the host and reboot in a
+                # later task. Even if this fails Ansible can still connect but only
+                # with ansible_winrm_transport=basic so we just display a warning if
+                # this fails.
+                try {
+                    Start-Service -Name Netlogon
+                } catch {
+                    Write-DebugLog "Failed to start the Netlogon service: $($_.Exception.Message)"
+                    Add-Warning -obj $result -message "Failed to start the Netlogon service after promoting the host, Ansible may be unable to connect until the host is manually rebooting: $($_.Exception.Message)"
+                }
+
+                Write-DebugLog "Domain Controller setup completed, needs reboot..."
             }
         }
         member_server {

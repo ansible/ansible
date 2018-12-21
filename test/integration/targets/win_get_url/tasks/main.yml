@@ -1,143 +1,59 @@
-# test code for the win_get_url module
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-- setup:
-
-- name: Remove test file if it exists
+---
+- name: ensure testing folder is present
   win_file:
-    path: '{{ test_win_get_url_path }}'
-    state: absent
+    path: '{{test_win_get_url_path}}'
+    state: directory
 
-- name: Test win_get_url module
+- name: copy across testing files
+  win_copy:
+    src: files/
+    dest: '{{test_win_get_url_path}}\'
+
+- name: download SlimFTPd binary
   win_get_url:
-    url: '{{ test_win_get_url_link }}'
-    dest: '{{ test_win_get_url_path }}'
-  register: win_get_url_result
+    url: https://s3.amazonaws.com/ansible-ci-files/test/integration/roles/test_win_get_url/SlimFTPd.exe
+    dest: '{{test_win_get_url_path}}\SlimFTPd.exe'
 
-- name: Check that url was downloaded
-  assert:
-    that:
-      - win_get_url_result is not failed
-      - win_get_url_result is changed
-      - win_get_url_result.url
-      - win_get_url_result.dest
+- name: template SlimFTPd configuration file
+  win_template:
+    src: slimftpd.conf.tmpl
+    dest: '{{test_win_get_url_path}}\slimftpd.conf'
 
-- name: Test win_get_url module again (force should be yes by default)
-  win_get_url:
-    url: '{{ test_win_get_url_link }}'
-    dest: '{{ test_win_get_url_path }}'
-  register: win_get_url_result_again
+- name: create SlimFTPd service
+  win_service:
+    name: SlimFTPd
+    path: '"{{test_win_get_url_path}}\SlimFTPd.exe" -service'
+    state: started
+    dependencies:
+    - tcpip
 
-- name: Check that url was downloaded again
-  assert:
-    that:
-      - win_get_url_result_again is not failed
-      - win_get_url_result_again is changed
+- name: create env var for win_get_url tests
+  win_environment:
+    name: '{{test_win_get_url_env_var}}'
+    level: machine
+    value: '{{test_win_get_url_path}}'
+    state: present
 
-- name: Test win_get_url module again with force=no
-  win_get_url:
-    url: '{{ test_win_get_url_link }}'
-    dest: '{{ test_win_get_url_path }}'
-    force: no
-  register: win_get_url_result_noforce
+- block:
+  - name: run URL tests
+    include_tasks: tests_url.yml
 
-- name: Check that url was not downloaded again
-  assert:
-    that:
-      - win_get_url_result_noforce is not failed
-      - win_get_url_result_noforce is not changed
+  - name: run FTP tests
+    include_tasks: tests_ftp.yml
 
-- name: Test win_get_url module with url that returns a 404
-  win_get_url:
-    url: '{{ test_win_get_url_invalid_link }}'
-    dest: '{{ test_win_get_url_path }}'
-  register: win_get_url_result_invalid_link
-  ignore_errors: true
+  always:
+  - name: remove SlimFTPd service
+    win_service:
+      name: SlimFTPd
+      state: absent
 
-- name: Check that the download failed for an invalid url
-  assert:
-    that:
-      - win_get_url_result_invalid_link is failed
-      - win_get_url_result_invalid_link.status_code == 404
+  - name: remove test env var for tests
+    win_environment:
+      name: '{{test_win_get_url_env_var}}'
+      level: machine
+      state: absent
 
-- name: Test win_get_url module with an invalid path
-  win_get_url:
-    url: '{{ test_win_get_url_link }}'
-    dest: '{{ test_win_get_url_invalid_path }}'
-  register: win_get_url_result_invalid_path
-  ignore_errors: true
-
-- name: Check that the download failed for an invalid path
-  assert:
-    that:
-      - win_get_url_result_invalid_path is failed
-
-- name: Test win_get_url module with a valid path that is a directory
-  win_get_url:
-    url: '{{ test_win_get_url_link }}'
-    dest: '%TEMP%'
-  register: win_get_url_result_dir_path
-  ignore_errors: true
-
-- name: Check that the download did NOT fail, even though dest was directory
-  assert:
-    that:
-      - win_get_url_result_dir_path is changed
-
-- name: Test win_get_url with a valid url path and a dest that is a directory (from 2.4 should use url path as filename)
-  win_get_url:
-    url: '{{ test_win_get_url_link }}'
-    dest: '%TEMP%'
-  register: win_get_url_result_dir_path_urlpath
-  ignore_errors: true
-
-- name: Set expected destination path fact
-  set_fact:
-    expected_dest_path: '{{ ansible_env.TEMP }}\{{ test_win_get_url_host }}'
-
-- name: Check that the download succeeded (changed) and dest is as expected
-  assert:
-    that:
-      - win_get_url_result_dir_path_urlpath is changed
-      - win_get_url_result_dir_path_urlpath.dest == expected_dest_path
-
-- name: Check you get a helpful message if the parent folder of the dest doesn't exist
-  win_get_url:
-    url: '{{ test_win_get_url_link }}'
-    dest: 'Q:\Filez\'
-  register: win_get_url_result_invalid_dest
-  ignore_errors: true
-
-- name: Check if dest parent dir does not exist, module fails and you get a specific error message
-  assert:
-    that:
-      - win_get_url_result_invalid_dest is failed
-      - win_get_url_result_invalid_dest.msg is search('does not exist, or is not visible to the current user')
-
-- name: Check you get a helpful message if the parent folder of the dest doesn't exist
-  win_get_url:
-    url: '{{ test_win_get_url_link }}'
-    dest: 'C:\Filez\'
-  register: win_get_url_result_invalid_dest2
-  ignore_errors: true
-
-- name: Check if dest parent dir does not exist, module fails and you get a specific error message
-  assert:
-    that:
-      - win_get_url_result_invalid_dest2 is failed
-      - win_get_url_result_invalid_dest2.msg is search('does not exist')
+  - name: remove testing folder
+    win_file:
+      path: '{{test_win_get_url_path}}'
+      state: absent

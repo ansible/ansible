@@ -8,34 +8,37 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.bigip_device_httpd import Parameters
-    from library.bigip_device_httpd import ModuleManager
-    from library.bigip_device_httpd import ArgumentSpec
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+    from library.modules.bigip_device_httpd import Parameters
+    from library.modules.bigip_device_httpd import ModuleManager
+    from library.modules.bigip_device_httpd import ArgumentSpec
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_device_httpd import Parameters
-        from ansible.modules.network.f5.bigip_device_httpd import ModuleManager
-        from ansible.modules.network.f5.bigip_device_httpd import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_device_httpd import Parameters
+    from ansible.modules.network.f5.bigip_device_httpd import ModuleManager
+    from ansible.modules.network.f5.bigip_device_httpd import ArgumentSpec
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -122,3 +125,165 @@ class TestModuleManager(unittest.TestCase):
 
         results = mm.exec_module()
         assert results['changed'] is True
+
+    def test_update_issue_00522(self, *args):
+        set_module_args(
+            dict(
+                ssl_cipher_suite='ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384',
+                server='localhost',
+                user='admin',
+                password='password'
+            )
+        )
+
+        current = Parameters(params=load_fixture('load_sys_httpd.json'))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+        assert results['changed'] is True
+        assert results['ssl_cipher_suite'] == 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384'
+
+    def test_update_issue_00522_as_list(self, *args):
+        set_module_args(
+            dict(
+                ssl_cipher_suite=[
+                    'ECDHE-RSA-AES128-GCM-SHA256',
+                    'ECDHE-RSA-AES256-GCM-SHA384'
+                ],
+                server='localhost',
+                user='admin',
+                password='password'
+            )
+        )
+
+        current = Parameters(params=load_fixture('load_sys_httpd.json'))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+        assert results['changed'] is True
+        assert results['ssl_cipher_suite'] == 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384'
+
+    def test_update_issue_00522_default(self, *args):
+        set_module_args(
+            dict(
+                ssl_cipher_suite='default',
+                server='localhost',
+                user='admin',
+                password='password'
+            )
+        )
+
+        current = Parameters(params=load_fixture('load_sys_httpd_non_default.json'))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+        assert results['changed'] is True
+        assert results['ssl_cipher_suite'] == 'default'
+
+    def test_update_issue_00587(self, *args):
+        set_module_args(
+            dict(
+                ssl_protocols='all -SSLv2',
+                server='localhost',
+                user='admin',
+                password='password'
+            )
+        )
+
+        current = Parameters(params=load_fixture('load_sys_httpd.json'))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+        assert results['changed'] is True
+        assert results['ssl_protocols'] == '-SSLv2 all'
+
+    def test_update_issue_00587_as_list(self, *args):
+        set_module_args(
+            dict(
+                ssl_protocols=[
+                    'all',
+                    '-SSLv2'
+                ],
+                server='localhost',
+                user='admin',
+                password='password'
+            )
+        )
+
+        current = Parameters(params=load_fixture('load_sys_httpd.json'))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+        assert results['changed'] is True
+        assert results['ssl_protocols'] == '-SSLv2 all'
+
+    def test_update_issue_00587_default(self, *args):
+        set_module_args(
+            dict(
+                ssl_protocols='default',
+                server='localhost',
+                user='admin',
+                password='password'
+            )
+        )
+
+        current = Parameters(params=load_fixture('load_sys_httpd_non_default.json'))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+
+        # Override methods to force specific logic in the module to happen
+        mm.update_on_device = Mock(return_value=True)
+        mm.read_current_from_device = Mock(return_value=current)
+
+        results = mm.exec_module()
+        assert results['changed'] is True
+        assert results['ssl_protocols'] == 'default'

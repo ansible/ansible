@@ -135,17 +135,17 @@ RETURN = r'''
 module_version:
     description: The version of the dsc resource/module used.
     returned: success
-    type: string
+    type: str
     sample: "1.0.1"
 reboot_required:
     description: Flag returned from the DSC engine indicating whether or not
       the machine requires a reboot for the invoked changes to take effect.
     returned: always
-    type: boolean
+    type: bool
     sample: True
 message:
     description: any error message from invoking the DSC resource
     returned: error
-    type: string
+    type: str
     sample: Multiple DSC modules found with resource name xyz
 '''

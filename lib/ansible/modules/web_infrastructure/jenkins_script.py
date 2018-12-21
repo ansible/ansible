@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: James Hogarth
+author: James Hogarth (@hogarthj)
 module: jenkins_script
 short_description: Executes a groovy script in the jenkins instance
 version_added: '2.3'
@@ -72,7 +72,7 @@ EXAMPLES = '''
     password: admin
 
 - name: Setting master using a variable to hold a more complicate script
-  vars:
+  set_fact:
     setmaster_mode: |
         import jenkins.model.*
         instance = Jenkins.getInstance()
@@ -98,7 +98,7 @@ RETURN = '''
 output:
     description: Result of script
     returned: success
-    type: string
+    type: str
     sample: 'Result: true'
 '''
 

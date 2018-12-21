@@ -30,6 +30,7 @@ options:
   metric:
     description:
         - Metric used by the static route.
+    type: int
     default: 1
   state:
     description:
@@ -40,7 +41,7 @@ options:
 notes:
   - Works only with Windows 2012 R2 and newer.
 author:
-- Daniele Lazzari
+- Daniele Lazzari (@dlazz)
 '''
 
 EXAMPLES = r'''
@@ -61,6 +62,6 @@ RETURN = r'''
 output:
     description: A message describing the task result.
     returned: always
-    type: string
+    type: str
     sample: "Route added"
 '''

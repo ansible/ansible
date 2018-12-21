@@ -1,0 +1,66 @@
+---
+- debug: msg="START cli/sublevel_strict_mul_parents.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  ios_config:
+    lines:
+      - class-map c1
+      - match precedence 7
+      - policy-map p1
+      - class c1
+    before: ['no policy-map p1', 'no class-map c1']
+    match: none
+
+- name: configure sub level command using strict match
+  ios_config:
+    lines:
+      - set ip precedence 5
+      - police cir percent 10
+    parents: ['policy-map p1', 'class c1']
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set ip precedence 5' in result.updates"
+      - "'police cir percent 10' in result.updates"
+
+- name: change sub level command order and config with strict match
+  ios_config:
+    lines:
+      - police cir percent 10
+      - set ip precedence 5
+    parents: ['policy-map p1', 'class c1']
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set ip precedence 5' in result.updates"
+      - "'police cir percent 10' in result.updates"
+
+- name: Config sub level command with strict match (Idempotency)
+  ios_config:
+    lines:
+#IOS does not change orded of class action if reconfigured
+#so we have to use old order for Idempoteny
+      - set ip precedence 5
+      - police cir percent 10
+    parents: ['policy-map p1', 'class c1']
+    match: strict
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  ios_config:
+    lines:
+      - no policy-map p1
+      - no class-map c1
+    match: none
+
+- debug: msg="END cli/sublevel_strict_mul_parents.yaml on connection={{ ansible_connection }}"
