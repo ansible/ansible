@@ -172,6 +172,7 @@ def icmp_present(entry):
     if len(entry) == 6 and (entry[1] == 'icmp' or entry[1] == 'ipv6-icmp' or entry[1] == 1, entry[1] == 58):
         return True
 
+
 def ip_network_version(cidr):
     match = CIDR_REGEX.match(cidr)
     if not match:
@@ -185,6 +186,7 @@ def ip_network_version(cidr):
             return 4
         except socket.error:
             return None
+
 
 def load_tags(module):
     tags = []
@@ -315,7 +317,7 @@ def process_rule_entry(entry, Egress, module):
     params['RuleAction'] = entry[2]
     params['Egress'] = Egress
     version = ip_network_version(entry[3])
-    if version == None:
+    if version is None:
         module.fail_json(msg="Invalid CIDR value: %s" % entry[3])
     elif version == 6:
         params['Ipv6CidrBlock'] = entry[3]
