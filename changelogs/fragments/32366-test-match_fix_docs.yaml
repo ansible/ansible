@@ -1,0 +1,2 @@
+minor_changes:
+    - Fix documentation of match test. Match requires zero or more characters at beginning of the string.
