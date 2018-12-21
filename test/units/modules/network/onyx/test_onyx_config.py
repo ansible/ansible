@@ -71,12 +71,12 @@ class TestOnyxConfigModule(TestOnyxModule):
         self.assertIn('__backup__', result)
 
     def test_onyx_config_save(self):
-        set_module_args(dict(save='yes'))
+        set_module_args(dict(lines=['hostname foo'], save='yes'))
         self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
+        self.assertEqual(self.run_commands.call_count, 0)
         self.assertEqual(self.get_config.call_count, 1)
-        self.assertEqual(self.load_config.call_count, 0)
-        args = self.run_commands.call_args[0][1]
+        self.assertEqual(self.load_config.call_count, 1)
+        args = self.load_config.call_args[0][1]
         self.assertIn('configuration write', args)
 
     def test_onyx_config_lines_wo_parents(self):
