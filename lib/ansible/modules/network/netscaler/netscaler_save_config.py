@@ -56,7 +56,7 @@ options:
         description:
             - The authentication token provided by a login operation.
         aliases: [ 'mas_auth_token' ]
-        version_added: "2.8.0"
+        version_added: "2.8"
 
     validate_certs:
         description:
@@ -76,13 +76,13 @@ options:
             - "When (mas_proxy_call=true) you must also define the following options: I(nitro_auth_token), I(instance_ip)."
         type: bool
         default: false
-        version_added: "2.8.0"
+        version_added: "2.8"
 
     instance_ip:
         description:
             - The target Netscaler instance ip address to which all underlying NITRO API calls will be proxied to.
             - It is meaningful only when having set C(mas_proxy_call) to C(true)
-        version_added: "2.8.0"
+        version_added: "2.8"
 
 requirements:
     - nitro python sdk
@@ -158,6 +158,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=False,
+        required_one_of=[['nitro_pass', 'nitro_auth_token']],
+        mutually_exclusive=(['nitro_pass', 'nitro_auth_token'],),
+        required_together=(['nitro_user', 'nitro_pass'],),
     )
 
     module_result = dict(

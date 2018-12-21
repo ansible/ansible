@@ -68,19 +68,20 @@ options:
             - "When (mas_proxy_call=true) you must also define the following options: I(nitro_auth_token), I(instance_ip)."
         type: bool
         default: false
-        version_added: "2.8.0"
+        version_added: "2.8"
 
     nitro_auth_token:
         description:
             - The authentication token provided by a login operation.
         aliases: [ 'mas_auth_token' ]
-        version_added: "2.8.0"
+        version_added: "2.8"
+
 
     instance_ip:
         description:
             - The target Netscaler instance ip address to which all underlying NITRO API calls will be proxied to.
             - It is meaningful only when having set C(mas_proxy_call) to C(true)
-        version_added: "2.8.0"
+        version_added: "2.8"
 notes:
   - For more information on using Ansible to manage Citrix NetScaler Network devices see U(https://www.ansible.com/ansible-netscaler).
 '''
