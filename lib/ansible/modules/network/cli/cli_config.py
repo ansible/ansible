@@ -151,6 +151,11 @@ commands:
   returned: always
   type: list
   sample: ['interface Loopback999', 'no shutdown']
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: str
+  sample: /playbooks/ansible/backup/hostname_config.2016-07-16@22:28:34
 """
 
 import json
@@ -309,7 +314,7 @@ def main():
     )
 
     mutually_exclusive = [('config', 'rollback')]
-    required_one_of = [['config', 'rollback']]
+    required_one_of = [['backup', 'config', 'rollback']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
