@@ -1261,6 +1261,23 @@ Combinations always require a set size::
 
 Also see the :ref:`zip_filter`
 
+Product Filters
+```````````````
+
+The product filter returns cartesian product of the input iterables.
+
+This is roughly equivalent to nested for-loops in a generator expression.
+
+For example::
+
+  - name: generate multiple hostnames
+    debug:
+      msg: "{{ ['foo', 'bar'] | product(['com']) | map('join', '.') | join(',') }}"
+
+This would result in::
+
+    { "msg": "foo.com,bar.com" }
+
 Debugging Filters
 `````````````````
 
