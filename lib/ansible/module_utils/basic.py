@@ -85,6 +85,7 @@ import errno
 import datetime
 from collections import deque
 from itertools import chain, repeat
+from datetime import datetime
 
 try:
     import syslog
@@ -2883,3 +2884,7 @@ class AnsibleModule(object):
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
+
+
+def get_timestamp():
+    return datetime.now().replace(microsecond=0).isoformat()
