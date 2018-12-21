@@ -159,7 +159,6 @@ result:
 
 
 import traceback
-from hashlib import md5
 
 try:
     import psycopg2
@@ -240,7 +239,6 @@ def main():
     )
 
     name = module.params["name"]
-    db = module.params["db"]
     value = module.params["value"]
     show = module.params["show"]
     reset = module.params["reset"]
