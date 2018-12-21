@@ -127,7 +127,7 @@ EXAMPLES = '''
     idxname: test_gist_idx
 
 # Create gin index gin0_idx not concurrently on column comment of table test
-# (Note: pg_trgm extention must be installed for gin_trgm_ops)
+# (Note: pg_trgm extension must be installed for gin_trgm_ops)
 - postgresql_idx:
     idxname: gin0_idx
     table: test
@@ -154,7 +154,6 @@ RETURN = ''' # '''
 
 
 import traceback
-from hashlib import md5
 
 try:
     import psycopg2
@@ -217,9 +216,6 @@ def index_create(cursor, module, idxname, tblname, idxtype,
     else:
         condition = 'WHERE %s' % cond
 
-    if cond is not None:
-        cond = " WHERE %s" % cond
-
     for column in columns.split(','):
         column.strip()
 
@@ -240,7 +236,6 @@ def index_create(cursor, module, idxname, tblname, idxtype,
             # ERROR:  cannot execute ALTER ROLE in a read-only transaction
             changed = False
             module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
-            return changed
         else:
             raise psycopg2.InternalError(e)
     return changed
@@ -266,7 +261,6 @@ def index_drop(cursor, module, idxname, concurrent=True):
             # ERROR:  cannot execute ALTER ROLE in a read-only transaction
             changed = False
             module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
-            return changed
         else:
             raise psycopg2.InternalError(e)
     return changed
@@ -298,7 +292,6 @@ def main():
     )
 
     idxname = module.params["idxname"]
-    db = module.params["db"]
     state = module.params["state"]
     concurrent = module.params["concurrent"]
     table = module.params["table"]
@@ -377,6 +370,7 @@ def main():
 
     if state == 'present' and index_exists(cursor, idxname):
         kw['changed'] = False
+        del kw['login_password']
         module.exit_json(**kw)
 
     changed = False
@@ -419,6 +413,7 @@ def main():
             module.fail_json(msg="Index %s is invalid!" % idxname)
 
     kw['changed'] = changed
+    del kw['login_password']
     module.exit_json(**kw)
 
 
