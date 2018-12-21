@@ -144,7 +144,7 @@ info:
     description: Information about parameter current state.
     returned: always
     type: string
-    sample: 'shared_buffers'
+    sample: 'name: log_min_duration_statement, setting: 1s, context: superuser, boot_val: -1, unit: ms'
 restart_required:
     description: Information about parameter current state.
     returned: always
@@ -154,7 +154,7 @@ result:
     description: Information what has been changed.
     returned: always
     type: string
-    sample: 128MB => 254MB
+    sample: '128MB => 254MB'
 '''
 
 
