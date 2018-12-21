@@ -43,7 +43,7 @@ options:
     - Use C(process) to set for the current process.  Probably not that useful.
     type: str
     required: yes
-    choices: [ machine, user, process ]
+    choices: [ machine, process, user ]
 notes:
 - This module is best-suited for setting the entire value of an
   environment variable. For safe element-based management of
