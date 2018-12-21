@@ -28,6 +28,11 @@ from lib.git import (
     Git,
 )
 
+from lib.docker_util import (
+    docker_info,
+    docker_version
+)
+
 
 class EnvConfig(CommonConfig):
     """Configuration for the tools command."""
@@ -49,6 +54,7 @@ def command_env(args):
         ansible=dict(
             version=get_ansible_version(args),
         ),
+        docker=get_docker_details(args),
         environ=os.environ.copy(),
         git=get_git_details(args),
         platform=dict(
@@ -64,6 +70,7 @@ def command_env(args):
 
     if args.show:
         verbose = {
+            'docker': 3,
             'environ': 2,
             'platform.uname': 1,
         }
@@ -117,6 +124,29 @@ def get_ansible_version(args):
         ansible_version = None
 
     return ansible_version
+
+
+def get_docker_details(args):
+    """
+    :type args: CommonConfig
+    :rtype: dict[str, any]
+    """
+    try:
+        info = docker_info(args)
+    except ApplicationError:
+        info = None
+
+    try:
+        version = docker_version(args)
+    except ApplicationError:
+        version = None
+
+    docker_details = dict(
+        info=info,
+        version=version,
+    )
+
+    return docker_details
 
 
 def get_git_details(args):

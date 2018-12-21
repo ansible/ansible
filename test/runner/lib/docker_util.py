@@ -221,17 +221,36 @@ def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None
     return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout)
 
 
-def docker_command(args, cmd, capture=False, stdin=None, stdout=None):
+def docker_info(args):
     """
-    :type args: EnvironmentConfig
+    :param args: CommonConfig
+    :rtype: dict[str, any]
+    """
+    stdout, _dummy = docker_command(args, ['info', '--format', '{{json .}}'], capture=True, always=True)
+    return json.loads(stdout)
+
+
+def docker_version(args):
+    """
+    :param args: CommonConfig
+    :rtype: dict[str, any]
+    """
+    stdout, _dummy = docker_command(args, ['version', '--format', '{{json .}}'], capture=True, always=True)
+    return json.loads(stdout)
+
+
+def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=False):
+    """
+    :type args: CommonConfig
     :type cmd: list[str]
     :type capture: bool
     :type stdin: file | None
     :type stdout: file | None
+    :type always: bool
     :rtype: str | None, str | None
     """
     env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout)
+    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always)
 
 
 def docker_environment():
