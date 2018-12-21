@@ -139,10 +139,10 @@ memset_api:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.memset import (memset_api_call, get_product_ips, get_primary_ip)
+from ansible.module_utils.memset import (memset_api_call, get_product_ips, get_primary_ip, MemsetServer)
 
 
-def api_validation(args=None):
+def api_validation(args=None, loadbalancer=None):
     '''
     Perform some validation which will be enforced by Memset's API (see:
     https://www.memset.com/apidocs/methods_loadbalancer.service.html)
@@ -150,22 +150,20 @@ def api_validation(args=None):
     re_match = r'^[a-z0-9-\_]{1,64}$'
     errors = dict()
 
-    ips, msg = get_product_ips(api_key=args['api_key'], product=args['load_balancer'])
-
     if not re.match(re_match, args['service_name'].lower()):
         errors['service_name'] = "Service name can only be contain alphanumeric chars, hyphens and underscores, and must be 64 chars or less."
     if not 1 <= args['port'] <= 65535:
         errors['port'] = "Port must be in the range 1 > 65535 (inclusive)."
-    if len(ips) == 0:
-        errors['misc'] = msg
-    if args['virtual_ip'] and args['virtual_ip'] not in ips:
+    if len(loadbalancer.all_ips()) == 0:
+        errors['misc'] = 'No IPs attached to loadbalancer'
+    if args['virtual_ip'] and args['virtual_ip'] not in loadbalancer.all_ips():
             errors['virtual_ip'] = "{0} is not assigned to {1}" . format(args['virtual_ip'], args['load_balancer'])
 
     if len(errors) > 0:
         module.fail_json(failed=True, msg=errors)
 
 
-def create_lb_service(args=None, service=None):
+def create_lb_service(args=None, service=None, loadbalancer=None):
     '''
     Creates or updates a service. Unique key is the service name
     so if this isn't matched a new service will be created.
@@ -175,13 +173,7 @@ def create_lb_service(args=None, service=None):
 
     # if the user hasn't provided an IP, we use the primary IP of the loadbalancer
     if not args['virtual_ip']:
-        primary_ip, _msg = get_primary_ip(api_key=args['api_key'], product=args['load_balancer'])
-        if not _msg:
-            args['virtual_ip'] = primary_ip
-        else:
-            retvals['failed'] = True
-            retvals['msg'] = _msg
-            return(retvals)
+        args['virtual_ip'] = loadbalancer.primary_ip()
 
     for arg in ['enabled', 'port', 'protocol', 'service_name', 'virtual_ip']:
         payload[arg] = args[arg]
@@ -200,8 +192,6 @@ def create_lb_service(args=None, service=None):
             if not retvals['failed']:
                 retvals['changed'] = True
                 retvals['memset_api'] = payload
-                # empty msg as we don't want to return a boatlad of json to the user.
-                msg = None
     else:
         # perform various contortions in order to compare the existing service
         # to the payload we intend to POST.
@@ -209,6 +199,7 @@ def create_lb_service(args=None, service=None):
         _service['service_name'] = service['name']
         del _service['name']
         try:
+            # there may be servers attached to the service - remove those too.
             del _service['servers']
         except Exception:
             pass
@@ -257,7 +248,7 @@ def delete_lb_service(args=None, service=None):
     return(retvals)
 
 
-def create_or_delete(args=None):
+def create_or_delete(args=None, loadbalancer=None):
     '''
     Performs initial auth validation and gets a list of
     existing services to provide to create/delete functions.
@@ -285,7 +276,7 @@ def create_or_delete(args=None):
             current_service = service
 
     if args['state'] == 'present':
-        retvals = create_lb_service(args=args, service=current_service)
+        retvals = create_lb_service(args=args, service=current_service, loadbalancer=loadbalancer)
 
     if args['state'] == 'absent':
         retvals = delete_lb_service(args=args, service=current_service)
@@ -315,10 +306,29 @@ def main():
         args[key] = arg
     args['check_mode'] = module.check_mode
 
-    # validate some API-specific limitations.
-    api_validation(args=args)
+    # make an initial API call to get the loadbalancer's info.
+    payload = dict()
+    payload['name'] = args['load_balancer']
+    api_method = 'server.info'
+    has_failed, _msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
 
-    retvals = create_or_delete(args)
+    retvals = dict()
+    if has_failed:
+        # this is the first time the API is called; incorrect credentials will
+        # manifest themselves at this point so we need to ensure the user is
+        # informed of the reason.
+        retvals['failed'] = has_failed
+        retvals['msg'] = _msg
+        retvals['stderr'] = "API returned an error: {0}" . format(response.status_code)
+        module.fail_json(**retvals)
+
+    # create an object to represent this loadbalancer.
+    loadbalancer = MemsetServer(response.json())
+
+    # validate some API-specific limitations.
+    api_validation(args, loadbalancer)
+
+    retvals = create_or_delete(args, loadbalancer)
 
     if retvals['failed']:
         module.fail_json(**retvals)
