@@ -235,7 +235,10 @@ class Yarn(object):
         result, error = self._exec(cmd, True, False)
 
         if error:
-            self.module.fail_json(msg=error)
+            error_data = [json.loads(line) for line in error.splitlines()]
+            errors_above_warn = [err for err in error_data if err['type'] != 'warning']
+            if errors_above_warn:
+                self.module.fail_json(msg=error)
 
         data = json.loads(result)
         try:
