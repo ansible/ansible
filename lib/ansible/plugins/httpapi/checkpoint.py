@@ -43,13 +43,10 @@ from ansible.plugins.httpapi import HttpApiBase
 from urllib3 import encode_multipart_formdata
 from urllib3.fields import RequestField
 from ansible.module_utils.connection import ConnectionError
-from ansible.utils.display import Display
 
 BASE_HEADERS = {
     'Content-Type': 'application/json',
 }
-
-display = Display()
 
 
 class HttpApi(HttpApiBase):
