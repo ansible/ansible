@@ -47,7 +47,6 @@ from ansible.utils.display import Display
 
 BASE_HEADERS = {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
 }
 
 display = Display()
