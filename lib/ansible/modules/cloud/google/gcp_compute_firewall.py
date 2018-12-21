@@ -151,7 +151,9 @@ options:
       task and then set this network field to "{{ name-of-resource }}" Alternatively,
       you can set this network to a dictionary with the selfLink key where the value
       is the selfLink of your Network'
-    required: true
+    required: false
+    default:
+      selfLink: global/networks/default
   priority:
     description:
     - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
@@ -412,6 +414,7 @@ targetTags:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
+import re
 import time
 
 ################################################################################
@@ -438,14 +441,21 @@ def main():
             direction=dict(type='str', choices=['INGRESS', 'EGRESS']),
             disabled=dict(type='bool'),
             name=dict(required=True, type='str'),
-            network=dict(required=True, type='dict'),
+            network=dict(default={'selfLink': 'global/networks/default'}, type='dict'),
             priority=dict(default=1000, type='int'),
             source_ranges=dict(type='list', elements='str'),
             source_service_accounts=dict(type='list', elements='str'),
             source_tags=dict(type='list', elements='str'),
             target_service_accounts=dict(type='list', elements='str'),
             target_tags=dict(type='list', elements='str')
-        )
+        ),
+        mutually_exclusive=[['allowed', 'denied'],
+                            ['destination_ranges', 'source_ranges', 'source_tags'],
+                            ['destination_ranges', 'source_ranges'],
+                            ['source_service_accounts', 'source_tags', 'target_tags'],
+                            ['destination_ranges', 'source_service_accounts', 'source_tags', 'target_service_accounts'],
+                            ['source_tags', 'target_service_accounts', 'target_tags'],
+                            ['source_service_accounts', 'target_service_accounts', 'target_tags']]
     )
 
     if not module.params['scopes']:
@@ -512,9 +522,10 @@ def resource_to_request(module):
         u'targetServiceAccounts': module.params.get('target_service_accounts'),
         u'targetTags': module.params.get('target_tags')
     }
+    request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -628,6 +639,15 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+def encode_request(request, module):
+    if 'network' in request and request['network'] is not None:
+        if not re.match(r'https://www.googleapis.com/compute/v1/projects/.*', request['network']):
+            request['network'] = 'https://www.googleapis.com/compute/v1/projects/{project}/{network}'.format(project=module.params['project'],
+                                                                                                             network=request['network'])
+
+    return request
 
 
 class FirewallAllowedArray(object):
