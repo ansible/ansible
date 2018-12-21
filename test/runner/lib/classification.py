@@ -525,6 +525,9 @@ class PathMapper(object):
         if path.startswith('test/legacy/'):
             return minimal
 
+        if path.startswith('test/env/'):
+            return minimal
+
         if path.startswith('test/integration/roles/'):
             return minimal
 
