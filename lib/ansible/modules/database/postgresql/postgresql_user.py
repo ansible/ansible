@@ -135,6 +135,7 @@ options:
     description:
       - Specifies the user connection limit.
     version_added: '2.4'
+    type: int
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -742,7 +743,7 @@ def main():
         ssl_mode=dict(default='prefer', choices=[
             'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(default=None),
-        conn_limit=dict(default=None)
+        conn_limit=dict(type='int', default=None)
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
