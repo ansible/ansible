@@ -450,7 +450,7 @@ class LocalNxapi:
         commands = to_list(commands)
 
         msg, msg_timestamps = self.send_request(commands, output='config', check_status=True,
-                                return_error=return_error, opts=opts)
+                                                return_error=return_error, opts=opts)
         if return_error:
             return msg
         else:
