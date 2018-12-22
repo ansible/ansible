@@ -644,9 +644,9 @@ def main():
         cmd = [pip] + state_map[state]
 
         if state == 'downloaded':
-            dlcheck_rc, dlcheck_out, dl_check_err = module.run_command(cmd + ['--help'])
 
-            if any([not dlcheck_rc, "unknown command" in dlcheck_out]):
+            dlcheck_rc, dlcheck_out, dl_check_err = module.run_command(cmd + ["--help"])
+            if any(["unknown command" in dlcheck_out, not dlcheck_rc]):
                 module.fail_json(msg="'download' command not supported in this version of pip. ")
 
         # If there's a virtualenv we want things we install to be able to use other
