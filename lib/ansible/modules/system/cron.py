@@ -189,12 +189,6 @@ EXAMPLES = r'''
     job: "YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
     cron_file: ansible_yum-autoupdate
 
-- name: Removes a cron file from under /etc/cron.d
-  cron:
-    name: "yum autoupdate"
-    cron_file: ansible_yum-autoupdate
-    state: absent
-
 - name: Removes "APP_HOME" environment variable from crontab
   cron:
     name: APP_HOME
@@ -376,16 +370,6 @@ class CronTab(object):
 
     def do_remove_env(self, lines, decl):
         return None
-
-    def remove_job_file(self):
-        try:
-            os.unlink(self.cron_file)
-            return True
-        except OSError:
-            # cron file does not exist
-            return False
-        except Exception:
-            raise CronTabError("Unexpected error:", sys.exc_info()[0])
 
     def find_job(self, name, job=None):
         # attempt to find job by 'Ansible:' header comment
@@ -665,18 +649,6 @@ def main():
     if backup and not module.check_mode:
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
-
-    if crontab.cron_file and not name and not do_install:
-        if module._diff:
-            diff['after'] = ''
-            diff['after_header'] = '/dev/null'
-        else:
-            diff = dict()
-        if module.check_mode:
-            changed = os.path.isfile(crontab.cron_file)
-        else:
-            changed = crontab.remove_job_file()
-        module.exit_json(changed=changed, cron_file=cron_file, state=state, diff=diff)
 
     if env:
         if ' ' in name:
