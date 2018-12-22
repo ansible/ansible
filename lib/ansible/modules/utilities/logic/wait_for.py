@@ -106,10 +106,6 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: sleep for 300 seconds and continue with play
-  wait_for: timeout=300
-  delegate_to: localhost
-
 - name: Wait for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000
@@ -180,6 +176,10 @@ EXAMPLES = r'''
     delay: 10
   vars:
     ansible_connection: local
+
+- name: sleep for 300 seconds and continue with play
+  wait_for:
+          timeout: 300
 '''
 
 RETURN = r'''
