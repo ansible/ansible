@@ -20,7 +20,8 @@
     that:
       - cert_modulus.stdout == privatekey_modulus.stdout
       - cert_version.stdout == '3'
-      - cert_issuer.stdout == 'CN=www.example.com'
+      # openssl 1.1.x adds a space in it's output
+      - cert_issuer.stdout in ['CN=www.example.com', 'CN = www.example.com']
 
 - name: Validate certificate idempotence
   assert:
