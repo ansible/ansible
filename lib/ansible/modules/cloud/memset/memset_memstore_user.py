@@ -136,6 +136,7 @@ def create_user(args=None, user=None):
         if retvals['failed']:
             retvals['msg'] = msg
         else:
+            retvals['changed'] = True
             retvals['memset_api'] = response.json()
     else:
         # User exists, update it. The only change possible is to enable/disable the user.
