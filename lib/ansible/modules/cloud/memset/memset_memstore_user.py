@@ -30,6 +30,7 @@ description:
 options:
     state:
         required: true
+        default: present
         description:
             - Indicates desired state of resource.
         choices: [ absent, present ]
@@ -48,8 +49,13 @@ options:
     enabled:
         required: false
         default: false
+        type: bool
         description:
             - Whether the user is enabled or disabled. Defaults to false for security.
+    password:
+        required: true
+        description:
+            - A password for the user.
 '''
 
 EXAMPLES = '''
@@ -88,6 +94,7 @@ memset_api:
       sample: 'test'
 '''
 
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.memset import memset_api_call
 
@@ -101,7 +108,7 @@ def api_validation(args=None):
     errors = dict()
 
     if not re.match(username_re, args['username'].lower()):
-        errors['username'] = "Username can only contain numbers, letters, dots, dashes and underscores, and can’t start with a dot. Must be 50 chars or less."
+        errors['username'] = "Username can only contain numbers, letters, dots, dashes and underscores, and can't start with a dot. Must be 50 chars or less."
 
     if len(errors) > 0:
         module.fail_json(failed=True, msg=errors)
@@ -177,7 +184,7 @@ def delete_user(args=None, user=None):
             retvals['msg'] = msg
         else:
             retvals['changed'] = True
-p
+
     return(retvals)
 
 
@@ -207,9 +214,9 @@ def create_or_delete_user(args=None):
             currentuser = user
             break
 
-    if args['state'] == 'present'
+    if args['state'] == 'present':
         retvals = create_user(args=args, user=currentuser)
-    if args['state'] == 'absent'
+    if args['state'] == 'absent':
         retvals = delete_user(args=args, user=currentuser)
 
     return(retvals)
@@ -237,9 +244,9 @@ def main():
 
     api_validation(args)
 
-    retvals = create_or_delete(args)
+    retvals = create_or_delete_user(args)
 
-    if failed:
+    if retvals['failed']:
         module.fail_json(**retvals)
     else:
         module.exit_json(**retvals)
