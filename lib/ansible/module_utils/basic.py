@@ -85,7 +85,6 @@ import errno
 import datetime
 from collections import deque
 from itertools import chain, repeat
-from datetime import datetime
 
 try:
     import syslog
@@ -2887,4 +2886,4 @@ def get_module_path():
 
 
 def get_timestamp():
-    return datetime.now().replace(microsecond=0).isoformat()
+    return datetime.datetime.now().replace(microsecond=0).isoformat()
