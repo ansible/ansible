@@ -83,7 +83,7 @@ EXAMPLES = '''
 - name: add a comment to an existing AAAA record
   nios_aaaa_record:
     name: aaaa.ansible.com
-    ipv4: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+    ipv6: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
     comment: this is a test comment
     state: present
     provider:
@@ -95,7 +95,7 @@ EXAMPLES = '''
 - name: remove an AAAA record from the system
   nios_aaaa_record:
     name: aaaa.ansible.com
-    ipv4: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
+    ipv6: 2001:0db8:85a3:0000:0000:8a2e:0370:7334
     state: absent
     provider:
       host: "{{ inventory_hostname_short }}"
