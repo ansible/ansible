@@ -107,33 +107,110 @@ def api_validation(args=None):
         module.fail_json(failed=True, msg=errors)
 
 
-def create(args=None, payload=None):
+def create_user(args=None, user=None):
     '''
     Creates or updates a user.
     '''
     retvals, payload = dict(), dict()
     retvals['changed'], retvals['failed'] = False, False
 
+    if not user:
+        # user doesn't exist, create it.
+        payload['name'], payload['username'], payload['password'], payload['enabled'] = \
+            args['memstore'], args['username'], args['password'], args['enabled']
+        if args['check_mode']:
+            retvals['changed'] = True
+            retvals['memset_api'] = payload
+            return(retvals)
+        # create the user
+        api_method = 'memstore.user.create'
+        retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
+
+        if retvals['failed']:
+            retvals['msg'] = msg
+        else:
+            retvals['memset_api'] = response.json()
+    else:
+        # User exists, update it. The only change possible is to enable/disable the user.
+        if user['enabled'] != args['enabled']:
+            if args['check_mode']:
+                retvals['changed'] = True
+                retvals['diff'] = "enabled: {0}" . format(args['enabled'])
+                return(retvals)
+
+            payload['name'], payload['username'] = args['memstore'], args['username']
+
+            if args['enabled']:
+                api_method = 'memstore.user.enable'
+            else:
+                api_method = 'memstore.user.disable'
+
+            retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
+
+            if retvals['failed']:
+                retvals['msg'] = msg
+            else:
+                retvals['changed'] = True
+                payload['enabled'] = args['enabled']
+                retvals['memset_api'] = payload
+
     return(retvals)
 
 
-def delete(args=None, payload=None):
+def delete_user(args=None, user=None):
     '''
     Deletes a user.
     '''
     retvals, payload = dict(), dict()
     retvals['changed'], retvals['failed'] = False, False
 
+    if user:
+        if args['check_mode']:
+            retvals['changed'] = True
+            return(retvals)
+        payload['name'] = args['memstore']
+        payload['username'] = args['username']
+        api_method = 'memstore.user.delete'
+        retvals['failed'], msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
+
+        if retvals['failed']:
+            retvals['msg'] = msg
+        else:
+            retvals['changed'] = True
+p
     return(retvals)
 
 
-def create_or_delete(args=None):
+def create_or_delete_user(args=None):
     '''
     Performs initial auth validation and gets a list of
     existing services to provide to create/delete functions.
     '''
     retvals, payload = dict(), dict()
     retvals['changed'], retvals['failed'] = False, False
+
+    payload['name'] = args['memstore']
+    api_method = 'memstore.user.list'
+    has_failed, msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
+
+    if has_failed:
+        # this is the first time the API is called; incorrect credentials will
+        # manifest themselves at this point so we need to ensure the user is
+        # informed of the reason.
+        retvals['failed'] = has_failed
+        retvals['msg'] = msg
+        return(retvals)
+
+    currentuser = None
+    for user in response.json():
+        if user['username'] == args['username']:
+            currentuser = user
+            break
+
+    if args['state'] == 'present'
+        retvals = create_user(args=args, user=currentuser)
+    if args['state'] == 'absent'
+        retvals = delete_user(args=args, user=currentuser)
 
     return(retvals)
 
@@ -144,7 +221,8 @@ def main():
         argument_spec=dict(
             state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             api_key=dict(required=True, type='str', no_log=True),
-            username=dict(required=True, aliases=['name'], type='str'),
+            username=dict(required=True, aliases=['username'], type='str'),
+            password=dict(required=True, type='str', no_log=True),
             memstore=dict(required=True, type='str'),
             enabled=dict(required=False, default=False, type='bool')
         ),
@@ -157,7 +235,9 @@ def main():
         args[key] = arg
     args['check_mode'] = module.check_mode
 
-    create_or_delete()
+    api_validation(args)
+
+    retvals = create_or_delete(args)
 
     if failed:
         module.fail_json(**retvals)
