@@ -1,0 +1,68 @@
+# (c) 2018, Dane Summers <dsummers@pinedesk.biz>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Create ansible user
+  user:
+    name: "{{ test_user }}"
+
+- name: Install crontab dependency for test
+  package:
+    name: cron
+    state: present
+
+##############################################################################
+- name: Create a crontab
+  cron:
+    name: "Test run a job"
+    job: /bin/date
+    state: present
+    user: "{{ test_user }}"
+    minute: 0
+  register: output
+
+- name: get crontab output
+  shell: "crontab -u {{ test_user }} -l"
+  register: crontab_output
+
+- name: verify output
+  assert:
+    that:
+      - output is changed
+      - output is not failed
+      - "'Test run a job' in output.jobs"
+      - "'#Ansible: Test run a job' in crontab_output.stdout_lines"
+      - "'0 * * * * /bin/date' in crontab_output.stdout_lines"
+##############################################################################
+- name: Remove a crontab
+  cron:
+    name: "Test run a job"
+    state: absent
+    user: "{{ test_user }}"
+  register: output
+
+- name: get crontab output
+  shell: "crontab -u {{ test_user }} -l"
+  register: crontab_output
+
+- name: verify output
+  assert:
+    that:
+      - output is changed
+      - output is not failed
+      - "[] == output.jobs"
+      - "'' == crontab_output.stdout"
+##############################################################################
