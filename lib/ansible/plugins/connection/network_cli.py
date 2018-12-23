@@ -522,7 +522,7 @@ class Connection(NetworkConnectionBase):
                     if newline:
                         self._ssh_shell.sendall(b'\r')
                         prompt_answer += '\r'
-                    self._log_messages("matched command prompt answer: %s" % self.prompt_answer)
+                    self._log_messages("matched command prompt answer: %s" % prompt_answer)
                 if check_all and prompts and not single_prompt:
                     prompts.pop(0)
                     answer.pop(0)
