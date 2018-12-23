@@ -68,7 +68,7 @@ options:
     description:
       - The state of module
       - The 'forcereinstall' option is only available in Ansible 2.1 and above.
-    choices: [ absent, forcereinstall, latest, present ]
+    choices: [ absent, forcereinstall, latest, present, downloaded]
     default: present
   extra_args:
     description:
@@ -176,6 +176,18 @@ EXAMPLES = '''
     name: bottle
     extra_args: --user
 
+# Download the requirements for a project to a directory
+- pip:
+    chdir: /myapp/pylibs
+    requirements: /myapp/requirements.txt
+    state: downloaded
+
+# Download (Bottle) into to a directory
+- pip:
+    chdir: /myapp/pylibs
+    name: bottle
+    state: downloaded
+
 # Install specified python requirements.
 - pip:
     requirements: /my_app/requirements.txt
@@ -205,6 +217,18 @@ EXAMPLES = '''
     name: bottle
     umask: "0022"
   become: True
+
+# Download (Bottle) package to /my_app/pylibs
+- pip:
+    name: bottle
+    state: downloaded
+    extra_args: "-d /my_app/pylibs"
+
+# Download packages from reqs file to a directory
+- pip:
+    requirements: /my_app/requirements.txt
+    state: downloaded
+    extra_args: "-d /my_app/pylibs"
 '''
 
 RETURN = '''
@@ -559,6 +583,7 @@ def main():
         absent=['uninstall', '-y'],
         latest=['install', '-U'],
         forcereinstall=['install', '-U', '--force-reinstall'],
+        downloaded=['download'],
     )
 
     module = AnsibleModule(
@@ -629,6 +654,15 @@ def main():
         pip = _get_pip(module, env, module.params['executable'])
 
         cmd = [pip] + state_map[state]
+
+        if state == 'downloaded':
+
+            dlcheck_rc, dlcheck_out, dlcheck_err = module.run_command(cmd + ["--help"])
+            if any(["unknown command" in dlcheck_out, dlcheck_rc]):
+                # if older version of pip is present that does not support the download
+                # command directly, revert to the old method of downloading
+                cmd[-1] = 'install'
+                cmd = cmd + ["--download"]
 
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
@@ -734,6 +768,8 @@ def main():
 
         if state == 'absent':
             changed = 'Successfully uninstalled' in out_pip
+        elif state == 'downloaded':
+            changed = 'Saved' in out_pip
         else:
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip

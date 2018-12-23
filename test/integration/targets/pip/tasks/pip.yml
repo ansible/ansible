@@ -97,6 +97,52 @@
       - squash_param.results|length == 1
       - squash_param.results[0].name|sort == pip_test_packages|sort
 
+# Tests of pip downloaded state
+- name: create pylibs test directory
+  file:
+    state: directory
+    name: "{{ output_dir }}/pylibs"
+
+- name: ensure pylibs directory is empty
+  command: rm -rf {{ output_dir }}/pylibs/*
+
+- name: test first download of package directly
+  pip:
+    chdir: "{{ output_dir }}/pylibs"
+    name: Bottle
+    state: downloaded
+  register: first_pip_download
+
+- name: assert that task result is changed with the first call to pip download
+  assert:
+    that: first_pip_download is changed
+
+- name: download a second time and confirm not changed
+  pip:
+    chdir: "{{ output_dir }}/pylibs"
+    name: Bottle
+    state: downloaded
+  register: second_pip_download
+
+- name: assert that task result is not changed with the second call to pip download
+  assert:
+    that: second_pip_download is not changed
+
+- name: find downloaded python packages
+  find:
+    paths: "{{ output_dir }}/pylibs"
+    patterns: "*.tar.gz,*.whl"
+    recurse: no
+    file_type: file
+  register: pip_dl_files_found
+
+- name: ensure that files were downloaded
+  assert:
+    that: pip_dl_files_found.files | length > 0
+
+- name: clear out the pylibs directory
+  command: rm -rf {{ output_dir }}/pylibs/*
+
 # Test virtualenv installations
 
 - name: "make sure the test env doesn't exist"
