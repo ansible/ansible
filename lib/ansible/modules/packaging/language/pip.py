@@ -571,6 +571,7 @@ def main():
         absent=['uninstall', '-y'],
         latest=['install', '-U'],
         forcereinstall=['install', '-U', '--force-reinstall'],
+        downloaded=['download']
     )
 
     module = AnsibleModule(
