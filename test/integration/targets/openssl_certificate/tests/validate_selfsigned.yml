@@ -1,3 +1,4 @@
+---
 - name: Validate certificate (test - privatekey modulus)
   shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
@@ -68,3 +69,16 @@
   assert:
     that:
       - cert3_notAfter.stdout == 'Oct 23 13:37:42 2019'
+
+- name: Validate ECC certificate (test - privatekey's pubkey)
+  shell: 'openssl ec -pubout -in {{ output_dir }}/privatekey_ecc.pem'
+  register: privatekey_ecc_pubkey
+
+- name: Validate ECC certificate (test - certificate pubkey)
+  shell: 'openssl x509 -noout -pubkey -in {{ output_dir }}/cert_ecc.pem'
+  register: cert_ecc_pubkey
+
+- name: Validate ECC certificate (assert)
+  assert:
+    that:
+      - cert_ecc_pubkey.stdout == privatekey_ecc_pubkey.stdout

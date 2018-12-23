@@ -1,3 +1,4 @@
+---
 - name: Generate privatekey
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey.pem'
@@ -133,5 +134,27 @@
     path: "{{ output_dir }}/cert3.pem"
     csr_path: "{{ output_dir }}/csr3.pem"
     privatekey_path: "{{ output_dir }}/privatekey3.pem"
-        
+
+- name: Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_ecc.pem'
+    type: ECC
+    curve: secp256k1
+
+- name: Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    subject:
+      commonName: www.example.com
+
+- name: Generate selfsigned certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_ecc.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+  register: selfsigned_certificate_ecc
+
 - import_tasks: ../tests/validate_selfsigned.yml

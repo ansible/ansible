@@ -1,3 +1,4 @@
+---
 - name: Validate CSR (test - privatekey modulus)
   shell: 'openssl rsa -noout -modulus -in {{ output_dir }}/privatekey.pem'
   register: privatekey_modulus
@@ -49,3 +50,21 @@
   assert:
     that:
       - csr_ocsp_idempotency is not changed
+
+- name: Validate ECC CSR (test - privatekey's public key)
+  shell: 'openssl ec -pubout -in {{ output_dir }}/privatekey2.pem'
+  register: privatekey_ecc_key
+
+- name: Validate ECC CSR (test - Common Name)
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr2.csr -nameopt oneline,-space_eq"
+  register: csr_ecc_cn
+
+- name: Validate ECC CSR (test - CSR pubkey)
+  shell: 'openssl req -noout -pubkey -in {{ output_dir }}/csr2.csr'
+  register: csr_ecc_pubkey
+
+- name: Validate ECC CSR (assert)
+  assert:
+    that:
+      - csr_ecc_cn.stdout.split('=')[-1] == 'www.ansible.com'
+      - csr_ecc_pubkey.stdout == privatekey_ecc_key.stdout
