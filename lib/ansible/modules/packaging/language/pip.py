@@ -68,7 +68,7 @@ options:
     description:
       - The state of module
       - The 'forcereinstall' option is only available in Ansible 2.1 and above.
-    choices: [ absent, forcereinstall, latest, present ]
+    choices: [ absent, forcereinstall, latest, present, downloaded]
     default: present
   extra_args:
     description:
@@ -175,6 +175,18 @@ EXAMPLES = '''
 - pip:
     name: bottle
     extra_args: --user
+
+# Download the requirements for a project to a directory
+- pip:
+    chdir: /myapp/pylibs
+    requirements: /myapp/requirements.txt
+    state: downloaded
+
+# Download (Bottle) into to a directory
+- pip:
+    chdir: /myapp/pylibs
+    name: bottle
+    state: downloaded
 
 # Install specified python requirements.
 - pip:
@@ -571,7 +583,7 @@ def main():
         absent=['uninstall', '-y'],
         latest=['install', '-U'],
         forcereinstall=['install', '-U', '--force-reinstall'],
-        downloaded=['download']
+        downloaded=['download'],
     )
 
     module = AnsibleModule(
@@ -757,7 +769,7 @@ def main():
         if state == 'absent':
             changed = 'Successfully uninstalled' in out_pip
         elif state == 'downloaded':
-            changed = "Saved" in out_pip
+            changed = 'Saved' in out_pip
         else:
             if out_freeze_before is None:
                 changed = 'Successfully installed' in out_pip
