@@ -1,3 +1,4 @@
+---
 - name: Generate CA privatekey
   openssl_privatekey:
     path: '{{ output_dir }}/ca_privatekey.pem'
@@ -126,5 +127,16 @@
     privatekey_path: "{{ output_dir }}/privatekey3.pem"
     ownca_path: '{{ output_dir }}/ca_cert.pem'
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
-      
+
+- name: Generate ownca ECC certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_ecc.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+  register: ownca_certificate_ecc
+
 - import_tasks: ../tests/validate_ownca.yml
