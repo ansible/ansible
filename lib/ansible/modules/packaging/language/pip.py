@@ -645,9 +645,12 @@ def main():
 
         if state == 'downloaded':
 
-            dlcheck_rc, dlcheck_out, dl_check_err = module.run_command(cmd + ["--help"])
-            if any(["unknown command" in dlcheck_out, not dlcheck_rc]):
-                module.fail_json(msg="'download' command not supported in this version of pip. ")
+            dlcheck_rc, dlcheck_out, dlcheck_err = module.run_command(cmd + ["--help"])
+            if any(["unknown command" in dlcheck_out, dlcheck_rc]):
+                # if older version of pip is present that does not support the download
+                # command directly, revert to the old method of downloading
+                cmd[-1] = 'install'
+                cmd = cmd + ["--download"]
 
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
