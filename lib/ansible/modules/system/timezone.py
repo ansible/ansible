@@ -314,96 +314,115 @@ class NosystemdTimezone(Timezone):
     """
 
     conf_files = dict(
-        name=None,  # To be set in __init__
-        hwclock=None,  # To be set in __init__
         adjtime='/etc/adjtime'
     )
 
-    # It's fine if all tree config files don't exist
-    allow_no_file = dict(
-        name=True,
-        hwclock=True,
-        adjtime=True
-    )
-
-    regexps = dict(
-        name=None,  # To be set in __init__
-        hwclock=re.compile(r'^(UTC\s*=\s*"?)([^\s]+)("?)', re.MULTILINE),
+    varnames = dict(
         adjtime=re.compile(r'^()(UTC|LOCAL)()$', re.MULTILINE)
-    )
-
-    dist_regexps = dict(
-        SuSE=re.compile(r'^(TIMEZONE\s*=\s*"?)([^"\s]+)("?)', re.MULTILINE),
-        redhat=re.compile(r'(^ZONE\s*=\s*"?)([^"\s]+)("?)', re.MULTILINE),
-        debian=re.compile(r'^()([^\s]+)()', re.MULTILINE),
     )
 
     def __init__(self, module):
         super(NosystemdTimezone, self).__init__(module)
-        # Validate given timezone
-        if 'name' in self.value:
-            tzfile = self._verify_timezone()
-            # `--remove-destination` is needed if /etc/localtime is a symlink so
-            # that it overwrites it instead of following it.
-            self.update_timezone = ['%s --remove-destination %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
-        self.update_hwclock = self.module.get_bin_path('hwclock', required=True)
-        # Distribution-specific configurations
+        tzfile = self._verify_timezone() if 'name' in self.value else ''
+        self.conf = {
+            'name': {},
+            'hwclock': {
+                'update_command': self.module.get_bin_path('hwclock', required=True),
+            },
+        }
+
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
             # Debian/Ubuntu
-            if 'name' in self.value:
-                self.update_timezone = ['%s -sf %s /etc/localtime' % (self.module.get_bin_path('ln', required=True), tzfile),
-                                        '%s --frontend noninteractive tzdata' % self.module.get_bin_path('dpkg-reconfigure', required=True)]
-            self.conf_files['name'] = '/etc/timezone'
-            self.conf_files['hwclock'] = '/etc/default/rcS'
-            self.regexps['name'] = self.dist_regexps['debian']
+            self.conf['name'].update(
+                filename='/etc/timezone',
+                regexp=re.compile(r'^(\S+)'),
+                format='%s',
+                update_command=[
+                    '%s -sf %s /etc/localtime' % (self.module.get_bin_path('ln', required=True), tzfile),
+                    '%s --frontend noninteractive tzdata' % self.module.get_bin_path('dpkg-reconfigure', required=True),
+                ],
+            )
+            self.conf['hwclock'].update(
+                self._posix_kv_format('UTC'),
+                filename='/etc/default/rcS',
+            )
+        elif self.module.get_bin_path('emerge') is not None:
+            # Gentoo
+            self.conf['name'].update(
+                filename='/etc/timezone',
+                regexp=re.compile(r'^(\S+)'),
+                format='%s',
+                update_command=['%s --config sys-libs/timezone-data' % self.module.get_bin_path('emerge', required=True)],
+            )
+            # TODO: self.conf['hwclock'] ???
+        elif self.module.get_bin_path('tzdata-update') is not None and not os.path.islink('/etc/localtime'):
+            # RHEL/CentOS
+            self.conf['name'].update(
+                self._posix_kv_format('ZONE'),
+                filename='/etc/sysconfig/clock',
+                update_command=[self.module.get_bin_path('tzdata-update', required=True)],
+            )
+            self.conf['hwclock'].update(
+                self._posix_kv_format('UTC'),
+                filename='/etc/sysconfig/clock',
+            )
         else:
-            # RHEL/CentOS/SUSE
-            if self.module.get_bin_path('tzdata-update') is not None:
-                # tzdata-update cannot update the timezone if /etc/localtime is
-                # a symlink so we have to use cp to update the time zone which
-                # was set above.
-                if not os.path.islink('/etc/localtime'):
-                    self.update_timezone = [self.module.get_bin_path('tzdata-update', required=True)]
-                # else:
-                #   self.update_timezone       = 'cp --remove-destination ...' <- configured above
-            self.conf_files['name'] = '/etc/sysconfig/clock'
-            self.conf_files['hwclock'] = '/etc/sysconfig/clock'
-            try:
-                f = open(self.conf_files['name'], 'r')
-            except IOError as err:
-                if self._allow_ioerror(err, 'name'):
-                    # If the config file doesn't exist detect the distribution and set regexps.
-                    distribution = get_distribution()
-                    if distribution == 'SuSE':
-                        # For SUSE
-                        self.regexps['name'] = self.dist_regexps['SuSE']
-                    else:
-                        # For RHEL/CentOS
-                        self.regexps['name'] = self.dist_regexps['redhat']
-                else:
-                    self.abort('could not read configuration file "%s"' % self.conf_files['name'])
+            # Other (e.g.: SuSE)
+            self.conf['name'].update(
+                filename='/etc/sysconfig/clock',
+                # `--remove-destination` is needed if /etc/localtime is a symlink so that it overwrites it instead of following it.
+                update_command=['%s --remove-destination %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
+            )
+            self.conf['hwclock'].update(
+                filename='/etc/sysconfig/clock',
+            )
+            distribution = get_distribution()
+            if distribution == 'SuSE':
+                self.conf['name'].update(self._posix_kv_format('TIMEZONE'))
+                self.conf['hwclock'].update(self._posix_kv_format('HWCLOCK'))
             else:
-                # The key for timezone might be `ZONE` or `TIMEZONE`
-                # (the former is used in RHEL/CentOS and the latter is used in SUSE linux).
-                # So check the content of /etc/sysconfig/clock and decide which key to use.
-                sysconfig_clock = f.read()
-                f.close()
-                if re.search(r'^TIMEZONE\s*=', sysconfig_clock, re.MULTILINE):
-                    # For SUSE
-                    self.regexps['name'] = self.dist_regexps['SuSE']
-                else:
-                    # For RHEL/CentOS
-                    self.regexps['name'] = self.dist_regexps['redhat']
+                self.conf['name'].update(self._posix_kv_format('ZONE'))
+                self.conf['hwclock'].update(self._posix_kv_format('UTC'))
 
-    def _allow_ioerror(self, err, key):
+        # Further investigation of current config file to support wider distributions
+        # Timezone format
+        try:
+            with open(self.conf['name']['filename'], 'r') as f:
+                cuurent_content = f.read()
+        except IOError as err:
+            self._handle_ioerror(err, 'could not read configuration file "%s"' % self.conf_files['name'])
+        else:
+            if re.search(r'^TIMEZONE\s*=', cuurent_content, re.MULTILINE):
+                self.conf['name'].update(self._posix_kv_format('TIMEZONE'))
+            elif re.search(r'^ZONE\s*=', cuurent_content, re.MULTILINE):
+                self.conf['name'].update(self._posix_kv_format('ZONE'))
+        # Hwclock format
+        try:
+            with open(self.conf['name']['filename'], 'r') as f:
+                cuurent_content = f.read()
+        except IOError as err:
+            self._handle_ioerror(err, 'could not read configuration file "%s"' % self.conf_files['name'])
+        else:
+            if re.search(r'^HWCLOCK\s*=', cuurent_content, re.MULTILINE):
+                self.conf['hwclock'].update(self._posix_kv_format('HWCLOCK'))
+            elif re.search(r'^UTC\s*=', cuurent_content, re.MULTILINE):
+                self.conf['hwclock'].update(self._posix_kv_format('UTC'))
+
+    @staticmethod
+    def _posix_kv_format(key):
+        return {
+            'regexp': re.compile(r'^%s\s*=\s*["\']?([^\s"\']+)["\']?' % key),
+            'format': '%s="%%s"' % key,
+        }
+
+    def _handle_ioerror(self, err, message):
         # In some cases, even if the target file does not exist,
         # simply creating it may solve the problem.
         # In such cases, we should continue the configuration rather than aborting.
         if err.errno != errno.ENOENT:
             # If the error is not ENOENT ("No such file or directory"),
             # (e.g., permission error, etc), we should abort.
-            return False
-        return self.allow_no_file.get(key, False)
+            self.abort(message)
 
     def _edit_file(self, filename, regexp, value, key):
         """Replace the first matched line with given `value`.
@@ -420,10 +439,8 @@ class NosystemdTimezone(Timezone):
         try:
             file = open(filename, 'r')
         except IOError as err:
-            if self._allow_ioerror(err, key):
-                lines = []
-            else:
-                self.abort('tried to configure %s using a file "%s", but could not read it' % (key, filename))
+            self._handle_ioerror(err, 'tried to configure %s using a file "%s", but could not read it' % (key, filename))
+            lines = []
         else:
             lines = file.readlines()
             file.close()
@@ -431,8 +448,6 @@ class NosystemdTimezone(Timezone):
         matched_indices = []
         for i, line in enumerate(lines):
             if regexp.search(line):
-                if not matched_indices:  # This must be first match
-                    new_line = regexp.sub(value, line)
                 matched_indices.append(i)
         if len(matched_indices) > 0:
             insert_line = matched_indices[0]
@@ -442,7 +457,7 @@ class NosystemdTimezone(Timezone):
         for i in matched_indices[::-1]:
             del lines[i]
         # ...and insert the value
-        lines.insert(insert_line, new_line)
+        lines.insert(insert_line, value)
         # Write the changes
         try:
             file = open(filename, 'w')
@@ -458,20 +473,18 @@ class NosystemdTimezone(Timezone):
         try:
             file = open(filename, mode='r')
         except IOError as err:
-            if self._allow_ioerror(err, key):
-                if key == 'hwclock':
-                    return 'n/a'
-                elif key == 'adjtime':
-                    return 'UTC'
-                elif key == 'name':
-                    return 'n/a'
-            else:
-                self.abort('tried to configure %s using a file "%s", but could not read it' % (key, filename))
+            self._handle_ioerror(err, 'tried to configure %s using a file "%s", but could not read it' % (key, filename))
+            if key == 'hwclock':
+                return 'n/a'
+            elif key == 'adjtime':
+                return 'UTC'
+            elif key == 'name':
+                return 'n/a'
         else:
             status = file.read()
             file.close()
             try:
-                value = self.regexps[key].search(status).group(2)
+                value = self.varnames[key].search(status).group(1)
             except AttributeError:
                 if key == 'hwclock':
                     # If we cannot find UTC in the config that's fine.
@@ -547,7 +560,7 @@ class NosystemdTimezone(Timezone):
 
     def set_timezone(self, value):
         self._edit_file(filename=self.conf_files['name'],
-                        regexp=self.regexps['name'],
+                        regexp=self.varnames['name'],
                         value='\\1%s\\3\n' % value,
                         key='name')
         for cmd in self.update_timezone:
@@ -562,7 +575,7 @@ class NosystemdTimezone(Timezone):
             utc = 'yes'
         if self.conf_files['hwclock'] is not None:
             self._edit_file(filename=self.conf_files['hwclock'],
-                            regexp=self.regexps['hwclock'],
+                            regexp=self.varnames['hwclock'],
                             value='\\1%s\\3\n' % value,
                             key='hwclock')
         self.execute(self.update_hwclock, '--systohc', option, log=True)
