@@ -25,6 +25,7 @@ class TestCpuClassModule(TestNvosModule):
 
     def tearDown(self):
         self.mock_run_nvos_commands.stop()
+        self.mock_run_check_cli.stop()
 
     def run_cli_patch(self, module, cli, state_map):
         if state_map['update'] == 'dscp-map-pri-map-modify':
@@ -39,21 +40,21 @@ class TestCpuClassModule(TestNvosModule):
         if state == 'update':
             self.run_check_cli.return_value = True
 
-    def test_dhcp_map_pri_map_t1(self):
+    def test_dscp_map_pri_map_t1(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_pri': '0', 'pn_dsmap': '40', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
         expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 dscp-map-pri-map-modify  pri 0 name foo dsmap 40'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
-    def test_dhcp_map_pri_map_t2(self):
+    def test_dscp_map_pri_map_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_pri': '1', 'pn_dsmap': '8,10,12,14', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
         expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 dscp-map-pri-map-modify  pri 1 name foo dsmap 8,10,12,14'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
-    def test_dhcp_map_pri_map_t3(self):
+    def test_dscp_map_pri_map_t3(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
                          'pn_pri': '2', 'pn_dsmap': '25', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
