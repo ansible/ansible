@@ -125,8 +125,8 @@ def openstack_cloud_from_module(module, min_version='0.12.0'):
 
     if StrictVersion(sdk_version.__version__) < min_version:
         module.fail_json(
-            msg="To utilize this module, the installed version of"
-                "the openstacksdk library MUST be >={min_version}".format(
+            msg="To utilize this module, the installed version of "
+                "the openstacksdk library MUST be >={min_version}.".format(
                     min_version=min_version))
 
     cloud_config = module.params.pop('cloud', None)
