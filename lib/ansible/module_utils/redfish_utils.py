@@ -135,7 +135,7 @@ class RedfishUtils(object):
             data = response['data']
             for member in data[u'Members']:
                 systems_service = member[u'@odata.id']
-            self.systems_uri = systems_service
+                self.systems_uri = systems_service
             return {'ret': True}
 
     def _find_updateservice_resource(self, uri):
