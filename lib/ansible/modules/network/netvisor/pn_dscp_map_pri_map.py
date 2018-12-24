@@ -27,7 +27,7 @@ options:
     type: str
   state:
     description:
-      - State the action to perform. Use 'update' to modify
+      - State the action to perform. Use C(update) to modify
         the dscp-map-pri-map.
     required: True
     type: str
