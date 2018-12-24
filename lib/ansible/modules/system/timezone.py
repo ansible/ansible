@@ -506,7 +506,7 @@ class NosystemdTimezone(Timezone):
             status = file.read()
             file.close()
             try:
-                value = self.varnames[key].search(status).group(1)
+                value = self.conf[key]['regexp'].search(status).group(1)
             except AttributeError:
                 if key == 'hwclock':
                     # If we cannot find UTC in the config that's fine.
@@ -585,8 +585,8 @@ class NosystemdTimezone(Timezone):
             self.abort('unknown parameter "%s"' % key)
         if 'filename' in self.conf[key]:
             self._edit_file(filename=self.conf[key]['filename'],
-                            regexp=self.varnames[key]['regexp'],
-                            value=self.varnames[key]['value'],
+                            regexp=self.conf[key]['regexp'],
+                            value=self.conf[key]['value'],
                             key='hwclock')
         for cmd in self.conf[key].get('update_commands', []):
             self.execute(cmd, log=True)
