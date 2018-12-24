@@ -250,7 +250,7 @@ class Timezone(object):
         tzfile = '/usr/share/zoneinfo/%s' % tz
         if not os.path.isfile(tzfile):
             self.abort('given timezone "%s" is not available' % tz)
-        return tzfile
+        return tz, tzfile
 
 
 class SystemdTimezone(Timezone):
@@ -323,96 +323,118 @@ class NosystemdTimezone(Timezone):
 
     def __init__(self, module):
         super(NosystemdTimezone, self).__init__(module)
-        tzfile = self._verify_timezone() if 'name' in self.value else ''
-        self.conf = {
-            'name': {},
-            'hwclock': {
-                'update_command': self.module.get_bin_path('hwclock', required=True),
-            },
-        }
+        self.conf = {}
+
+        if 'name' in self.value:
+            timezone, tzfile = self._verify_timezone()
+            self.conf['name'] = {}
+        if 'hwclock' in self.value:
+            if self.value['hwclock']['planned'] == 'local':
+                hwclock = '--localtime'
+                utc = 'no'
+            else:
+                hwclock = '--utc'
+                utc = 'yes'
+            self.conf['hwclock'] = {
+                'update_commands': ['%s --systohc %s' % (self.module.get_bin_path('hwclock', required=True), hwclock)],
+            }
 
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
             # Debian/Ubuntu
-            self.conf['name'].update(
-                filename='/etc/timezone',
-                regexp=re.compile(r'^(\S+)'),
-                format='%s',
-                update_command=[
-                    '%s -sf %s /etc/localtime' % (self.module.get_bin_path('ln', required=True), tzfile),
-                    '%s --frontend noninteractive tzdata' % self.module.get_bin_path('dpkg-reconfigure', required=True),
-                ],
-            )
-            self.conf['hwclock'].update(
-                self._posix_kv_format('UTC'),
-                filename='/etc/default/rcS',
-            )
+            if 'name' in self.conf:
+                self.conf['name'].update(
+                    filename='/etc/timezone',
+                    regexp=re.compile(r'^(\S+)'),
+                    format=timezone,
+                    update_commands=[
+                        '%s -sf %s /etc/localtime' % (self.module.get_bin_path('ln', required=True), tzfile),
+                        '%s --frontend noninteractive tzdata' % self.module.get_bin_path('dpkg-reconfigure', required=True),
+                    ],
+                )
+            if 'hwclock' in self.conf:
+                self.conf['hwclock'].update(
+                    self._posix_kv_format('UTC', utc),
+                    filename='/etc/default/rcS',
+                )
         elif self.module.get_bin_path('emerge') is not None:
             # Gentoo
-            self.conf['name'].update(
-                filename='/etc/timezone',
-                regexp=re.compile(r'^(\S+)'),
-                format='%s',
-                update_command=['%s --config sys-libs/timezone-data' % self.module.get_bin_path('emerge', required=True)],
-            )
-            # TODO: self.conf['hwclock'] ???
+            if 'name' in self.conf:
+                self.conf['name'].update(
+                    filename='/etc/timezone',
+                    regexp=re.compile(r'^(\S+)'),
+                    format=timezone,
+                    update_commands=['%s --config sys-libs/timezone-data' % self.module.get_bin_path('emerge', required=True)],
+                )
+            # if 'hwclock' in self.conf:
+            #     TODO: self.conf['hwclock'] ???
         elif self.module.get_bin_path('tzdata-update') is not None and not os.path.islink('/etc/localtime'):
             # RHEL/CentOS
-            self.conf['name'].update(
-                self._posix_kv_format('ZONE'),
-                filename='/etc/sysconfig/clock',
-                update_command=[self.module.get_bin_path('tzdata-update', required=True)],
-            )
-            self.conf['hwclock'].update(
-                self._posix_kv_format('UTC'),
-                filename='/etc/sysconfig/clock',
-            )
+            if 'name' in self.conf:
+                self.conf['name'].update(
+                    self._posix_kv_format('ZONE', timezone),
+                    filename='/etc/sysconfig/clock',
+                    update_commands=[self.module.get_bin_path('tzdata-update', required=True)],
+                )
+            if 'hwclock' in self.conf:
+                self.conf['hwclock'].update(
+                    self._posix_kv_format('UTC', utc),
+                    filename='/etc/sysconfig/clock',
+                )
         else:
             # Other (e.g.: SuSE)
-            self.conf['name'].update(
-                filename='/etc/sysconfig/clock',
-                # `--remove-destination` is needed if /etc/localtime is a symlink so that it overwrites it instead of following it.
-                update_command=['%s --remove-destination %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
-            )
-            self.conf['hwclock'].update(
-                filename='/etc/sysconfig/clock',
-            )
             distribution = get_distribution()
             if distribution == 'SuSE':
-                self.conf['name'].update(self._posix_kv_format('TIMEZONE'))
-                self.conf['hwclock'].update(self._posix_kv_format('HWCLOCK'))
+                name_format = self._posix_kv_format('TIMEZONE', timezone)
+                hwclock_format = self._posix_kv_format('HWCLOCK', hwclock)
             else:
-                self.conf['name'].update(self._posix_kv_format('ZONE'))
-                self.conf['hwclock'].update(self._posix_kv_format('UTC'))
+                name_format = self._posix_kv_format('ZONE', timezone)
+                hwclock_format = self._posix_kv_format('UTC', utc)
+            if 'name' in self.conf:
+                self.conf['name'].update(
+                    name_format,
+                    filename='/etc/sysconfig/clock',
+                    # `--remove-destination` is needed if /etc/localtime is a symlink so that it overwrites it instead of following it.
+                    update_commands=['%s --remove-destination %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
+                )
+            if 'hwclock' in self.conf:
+                self.conf['hwclock'].update(
+                    hwclock_format,
+                    filename='/etc/sysconfig/clock',
+                )
 
         # Further investigation of current config file to support wider distributions
         # Timezone format
         try:
             with open(self.conf['name']['filename'], 'r') as f:
                 cuurent_content = f.read()
+        except KeyError:
+            pass
         except IOError as err:
             self._handle_ioerror(err, 'could not read configuration file "%s"' % self.conf_files['name'])
         else:
             if re.search(r'^TIMEZONE\s*=', cuurent_content, re.MULTILINE):
-                self.conf['name'].update(self._posix_kv_format('TIMEZONE'))
+                self.conf['name'].update(self._posix_kv_format('TIMEZONE', timezone))
             elif re.search(r'^ZONE\s*=', cuurent_content, re.MULTILINE):
-                self.conf['name'].update(self._posix_kv_format('ZONE'))
+                self.conf['name'].update(self._posix_kv_format('ZONE', timezone))
         # Hwclock format
         try:
-            with open(self.conf['name']['filename'], 'r') as f:
+            with open(self.conf['hwclock']['filename'], 'r') as f:
                 cuurent_content = f.read()
+        except KeyError:
+            pass
         except IOError as err:
             self._handle_ioerror(err, 'could not read configuration file "%s"' % self.conf_files['name'])
         else:
             if re.search(r'^HWCLOCK\s*=', cuurent_content, re.MULTILINE):
-                self.conf['hwclock'].update(self._posix_kv_format('HWCLOCK'))
+                self.conf['hwclock'].update(self._posix_kv_format('HWCLOCK', hwclock))
             elif re.search(r'^UTC\s*=', cuurent_content, re.MULTILINE):
-                self.conf['hwclock'].update(self._posix_kv_format('UTC'))
+                self.conf['hwclock'].update(self._posix_kv_format('UTC', utc))
 
     @staticmethod
-    def _posix_kv_format(key):
+    def _posix_kv_format(key, value):
         return {
             'regexp': re.compile(r'^%s\s*=\s*["\']?([^\s"\']+)["\']?' % key),
-            'format': '%s="%%s"' % key,
+            'format': '%s="%s"' % (key, value),
         }
 
     def _handle_ioerror(self, err, message):
@@ -558,35 +580,16 @@ class NosystemdTimezone(Timezone):
             self.abort('unknown parameter "%s"' % key)
         return value
 
-    def set_timezone(self, value):
-        self._edit_file(filename=self.conf_files['name'],
-                        regexp=self.varnames['name'],
-                        value='\\1%s\\3\n' % value,
-                        key='name')
-        for cmd in self.update_timezone:
-            self.execute(cmd)
-
-    def set_hwclock(self, value):
-        if value == 'local':
-            option = '--localtime'
-            utc = 'no'
-        else:
-            option = '--utc'
-            utc = 'yes'
-        if self.conf_files['hwclock'] is not None:
-            self._edit_file(filename=self.conf_files['hwclock'],
-                            regexp=self.varnames['hwclock'],
-                            value='\\1%s\\3\n' % value,
-                            key='hwclock')
-        self.execute(self.update_hwclock, '--systohc', option, log=True)
-
     def set(self, key, value):
-        if key == 'name':
-            self.set_timezone(value)
-        elif key == 'hwclock':
-            self.set_hwclock(value)
-        else:
+        if key not in ['name', 'hwclock']:
             self.abort('unknown parameter "%s"' % key)
+        if 'filename' in self.conf[key]:
+            self._edit_file(filename=self.conf[key]['filename'],
+                            regexp=self.varnames[key]['regexp'],
+                            value=self.varnames[key]['value'],
+                            key='hwclock')
+        for cmd in self.conf[key].get('update_commands', []):
+            self.execute(cmd, log=True)
 
 
 class SmartOSTimezone(Timezone):
