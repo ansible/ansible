@@ -28,7 +28,7 @@ options:
     type: str
   state:
     description:
-      - State the action to perform. Use 'update' to modify the
+      - State the action to perform. Use C(update) to modify the
         connection-stats-settings.
     required: True
     type: str
