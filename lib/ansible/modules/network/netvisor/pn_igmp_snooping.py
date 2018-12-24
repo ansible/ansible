@@ -27,7 +27,7 @@ options:
     type: str
   state:
     description:
-      - State the action to perform. Use 'update' to modify the igmp-snooping.
+      - State the action to perform. Use C(update) to modify the igmp-snooping.
     required: True
     type: str
     choices: ['update']
