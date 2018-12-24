@@ -43,7 +43,7 @@ class TestAdminServiceModule(TestNvosModule):
 
     def test_pn_port_cos_bw_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_port': 'all',
-                         'pn_cos': '1', 'state': 'update'})
+                         'pn_cos': '1', 'pn_weight': 'priority', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-cos-bw-modify  cos 1 port all'
+        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 port-cos-bw-modify  cos 1 port all weight priority'
         self.assertEqual(result['cli_cmd'], expected_cmd)
