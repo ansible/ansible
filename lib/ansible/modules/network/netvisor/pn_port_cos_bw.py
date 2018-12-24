@@ -121,7 +121,7 @@ def main():
         required_if=(
             ['state', 'update', ['pn_cos', 'pn_port']],
         ),
-        required_one_of=(['pn_max_bw_limit', 'pn_cos', 'pn_weight']),
+        required_one_of=(['pn_max_bw_limit', 'pn_min_bw_guarantee', 'pn_weight']),
     )
 
     # Accessing the arguments
