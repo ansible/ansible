@@ -31,12 +31,18 @@ import time
 import glob
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves.urllib.parse import urlsplit
 
 
-def write_backup(module, host, contents, encoding='utf-8'):
+def get_working_path(module):
     cwd = module._loader.get_basedir()
     if module._task._role is not None:
         cwd = module._task._role._role_path
+    return cwd
+
+
+def write_backup(module, host, contents, encoding='utf-8'):
+    cwd = get_working_path(module)
 
     backup_path = os.path.join(cwd, 'backup')
     if not os.path.exists(backup_path):
@@ -48,3 +54,38 @@ def write_backup(module, host, contents, encoding='utf-8'):
     open(filename, 'w').write(to_text(contents, encoding=encoding))
 
     return filename
+
+
+def handle_template(module):
+    src = module._task.args.get('src')
+    working_path = get_working_path(module)
+
+    if os.path.isabs(src) or urlsplit('src').scheme:
+        source = src
+    else:
+        source = module._loader.path_dwim_relative(working_path, 'templates', src)
+        if not source:
+            source = module._loader.path_dwim_relative(working_path, src)
+
+    if not os.path.exists(source):
+        raise ValueError('path specified in src not found')
+
+    try:
+        with open(source, 'r') as f:
+            template_data = to_text(f.read())
+    except IOError:
+        return dict(failed=True, msg='unable to load src file')
+
+    # Create a template search path in the following order:
+    # [working_path, self_role_path, dependent_role_paths, dirname(source)]
+    searchpath = [working_path]
+    if module._task._role is not None:
+        searchpath.append(module._task._role._role_path)
+        if hasattr(module._task, "_block:"):
+            dep_chain = module._task._block.get_dep_chain()
+            if dep_chain is not None:
+                for role in dep_chain:
+                    searchpath.append(role._role_path)
+    searchpath.append(os.path.dirname(source))
+    module._templar.environment.loader.searchpath = searchpath
+    return module._templar.template(template_data)
