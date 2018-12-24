@@ -58,7 +58,7 @@ If (! ($all_available_plans.ContainsKey($name)) )
 
 If ([System.Environment]::OSVersion.Version -ge '10.0.17134')
 {
-    $plan = Get-WmiObject -Class win32_powerplan -Namespace root\cimv2\power -Filter "ElementName='$name'"
+    $plan = Get-CimInstance -Name root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName='$name'"
     $regex = [regex]"{(.*?)}$"
     $planGuid = $regex.Match($plan.instanceID.Tostring()).groups[1].value
 
