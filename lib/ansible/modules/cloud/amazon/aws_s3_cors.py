@@ -146,7 +146,7 @@ def destroy_bucket_cors(connection, module):
     try:
         connection.get_bucket_cors(Bucket=name)
         exists = True
-    except ClientError: # NoSuchCORSConfiguration
+    except ClientError:   # NoSuchCORSConfiguration
         exists = False
 
     try:
