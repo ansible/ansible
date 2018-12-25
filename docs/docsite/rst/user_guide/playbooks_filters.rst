@@ -1290,6 +1290,56 @@ type of a variable::
     {{ myvar | type_debug }}
 
 
+Computer Therory Assertions
+```````````````````````````
+
+There are functions ``human_readable`` and ``human_to_bytes``.
+
+Human Readable
+``````````````
+
+This filter will assert if the given string is human readable or not.
+
+For example::
+
+  - name: "Human Readable"
+    assert:
+      that:
+        - '"1.00 Bytes" == 1|human_readable'
+        - '"1.00 bits" == 1|human_readable(isbits=True)'
+        - '"10.00 KB" == 10240|human_readable'
+        - '"97.66 MB" == 102400000|human_readable'
+        - '"0.10 GB" == 102400000|human_readable(unit="G")'
+        - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+Human to Bytes
+``````````````
+
+This filter will return the given string in the Bytes format.
+
+For example::
+
+  - name: "Human to Bytes"
+    assert:
+      that:
+        - "{{'0'|human_to_bytes}}        == 0"
+        - "{{'0.1'|human_to_bytes}}      == 0"
+        - "{{'0.9'|human_to_bytes}}      == 1"
+        - "{{'1'|human_to_bytes}}        == 1"
+        - "{{'10.00 KB'|human_to_bytes}} == 10240"
+        - "{{   '11 MB'|human_to_bytes}} == 11534336"
+        - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
+        - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
