@@ -119,7 +119,7 @@ def create_or_update_bucket_cors(connection, module):
     if compare_policies(new_camel_rules, current_camel_rules):
         changed = True
 
-    if changed:
+    if changed and not module.check_mode:
         try:
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
         except ClientError as e:
@@ -140,11 +140,20 @@ def create_or_update_bucket_cors(connection, module):
 def destroy_bucket_cors(connection, module):
 
     name = module.params.get("name")
+    exists = False
     changed = False
 
     try:
-        cors = connection.delete_bucket_cors(Bucket=name)
-        changed = True
+        connection.get_bucket_cors(Bucket=name)
+        exists = True
+    except ClientError: # NoSuchCORSConfiguration
+        exists = False
+
+    try:
+        if exists:
+            if not module.check_mode:
+                connection.delete_bucket_cors(Bucket=name)
+            changed = True
     except ClientError as e:
         module.fail_json(
             msg="Unable to delete CORS for bucket {0}: {1}".format(name, to_native(e)),
@@ -171,7 +180,7 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
