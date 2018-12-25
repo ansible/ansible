@@ -29,6 +29,20 @@
     path: "{{ output_dir_test }}"
     state: directory
 
+- name: check if sysctl command is available
+  shell: command -v sysctl
+  register: sysctl_command_test
+  ignore_errors: yes
+
+- set_fact:
+    reload_supported: yes
+  when: sysctl_command_test.rc == 0
+
+- set_fact:
+    reload_supported: no
+  when: sysctl_command_test.rc != 0
+
+
 ##
 ## sysctl - file manipulation
 ##
@@ -181,6 +195,7 @@
     name: k.doesnotexist
     value: 1 
     ignore_unknown_keys: yes
+    reload: "{{ reload_supported }}"
   register: sysctl_ignore_unknown_keys0
   
 - debug:
@@ -197,6 +212,7 @@
     name: k.doesnotexist
     value: 1 
     ignoreerrors: yes
+    reload: "{{ reload_supported }}"
   register: sysctl_ignoreerrors0
   
 - debug:
