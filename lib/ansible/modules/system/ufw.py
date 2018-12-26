@@ -207,6 +207,8 @@ EXAMPLES = '''
 '''
 
 import re
+import os
+
 from operator import itemgetter
 
 from ansible.module_utils.basic import AnsibleModule
@@ -248,23 +250,31 @@ def main():
         (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "en_US"})
 
         if rc != 0:
-            module.fail_json(msg=err or out)
-        return (rc, out, err)
+            module.fail_json(msg=err or out, commands=cmds)
+
+        return out
 
     def get_current_rules():
-        return execute([[grep_bin], ["'^### tuple'"], ["/lib/ufw/user.rules"],
-                        ["/lib/ufw/user6.rules"], ["/etc/ufw/user.rules"],
-                        ["/etc/ufw/user6.rules"]])
+        user_rules_files = ["/lib/ufw/user.rules",
+                            "/lib/ufw/user6.rules",
+                            "/etc/ufw/user.rules",
+                            "/etc/ufw/user6.rules"]
+
+        cmd = [[grep_bin], ["-h"], ["'^### tuple'"]]
+
+        existing_user_rules_file = [[f] for f in user_rules_files if os.path.exists(f)]
+
+        if len(existing_user_rules_file) > 0:
+            cmd.extend(existing_user_rules_file)
+            return execute(cmd)
+        else:
+            return ""
 
     def ufw_version():
         """
         Returns the major and minor version of ufw installed on the system.
         """
-        rc, out, err = module.run_command("%s --version" % ufw_bin)
-        if rc != 0:
-            module.fail_json(
-                msg="Failed to get ufw version.", rc=rc, out=out, err=err
-            )
+        out = execute([[ufw_bin], ["--version"]])
 
         lines = [x for x in out.split('\n') if x.strip() != '']
         if len(lines) == 0:
@@ -283,6 +293,9 @@ def main():
 
         return major, minor, rev
 
+    def filter_line_that_not_start_with(pattern, content):
+        return ''.join([line for line in content.splitlines(True) if line.startswith(pattern)])
+
     params = module.params
 
     # Ensure at least one of the command arguments are given
@@ -300,12 +313,10 @@ def main():
     grep_bin = module.get_bin_path('grep', True)
 
     # Save the pre state and rules in order to recognize changes
-    (_, pre_state, _) = execute([[ufw_bin], ['status'], ['verbose']])
-    (_, pre_rules, _) = get_current_rules()
+    pre_state = execute([[ufw_bin], ['status verbose']])
+    pre_rules = get_current_rules()
 
     changed = False
-
-    debug = ""
 
     # Execute commands
     for (command, value) in commands.items():
@@ -326,12 +337,12 @@ def main():
 
         elif command == 'logging':
             if module.check_mode:
-                extract = re.search(r'Logging: ([onf]+) \(([a-z]+)\)', pre_state)
+                extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', pre_state)
                 if extract:
-                    current_level = extract.group(1)
-                    current_on_off_value = extract.group(2)
+                    current_level = extract.group(2)
+                    current_on_off_value = extract.group(1)
                     if value != "off":
-                        if value != current_level:
+                        if value != "on" and value != current_level:
                             changed = True
                     elif current_on_off_value != "off":
                         changed = True
@@ -343,13 +354,13 @@ def main():
 
         elif command == 'default':
             if module.check_mode:
-                extract = re.search(r'Default: ([denyalow]+) \(incoming\), ([denyalow]+) \(outgoing\), ([denyallow]+) \(routed\)', pre_state)
+                extract = re.search(r'Default: (deny|allow) \(incoming\), (deny|allow) \(outgoing\), (deny|allow) \(routed\)', pre_state)
                 if extract:
-                    defaults = {}
-                    defaults["incoming"] = extract.group(1)
-                    defaults["outgoing"] = extract.group(2)
-                    defaults["routed"] = extract.group(3)
-                    if defaults[params['direction']] != value:
+                    current_default_values = {}
+                    current_default_values["incoming"] = extract.group(1)
+                    current_default_values["outgoing"] = extract.group(2)
+                    current_default_values["routed"] = extract.group(3)
+                    if current_default_values[params['direction']] != value:
                         changed = True
                 else:
                     changed = True
@@ -381,23 +392,24 @@ def main():
             if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
                 cmd.append([params['comment'], "comment '%s'" % params['comment']])
 
-            # delete rules with --dry-run doesn't display "Rules updated" messages
-            # we compare ## tupple
-            cmd.append([module.check_mode and module.boolean(params['delete']), "| grep -E '^### tuple'"])
+            rules_dry = execute(cmd)
 
-            (_, rules_dry, _) = execute(cmd)
             if module.check_mode:
-                if module.boolean(params['delete'] and (rules_dry != pre_rules)):
-                    changed = True
+                if module.boolean(params['delete']):
+                    # delete rules with --dry-run doesn't display "Rules updated" messages
+                    # we compare ## tupple
+                    rules_dry = filter_line_that_not_start_with("### tuple", rules_dry)
+                    if rules_dry != pre_rules:
+                        changed = True
                 elif rules_dry.find("Rules updated") != -1:
                     changed = True
 
     # Get the new state
     if module.check_mode:
-        return module.exit_json(changed=changed, commands=cmds, debug=debug)
+        return module.exit_json(changed=changed, commands=cmds)
     else:
-        (_, post_state, _) = execute([[ufw_bin], ['status'], ['verbose']])
-        (_, post_rules, _) = get_current_rules()
+        post_state = execute([[ufw_bin], ['status'], ['verbose']])
+        post_rules = get_current_rules()
         changed = (pre_state != post_state) or (pre_rules != post_rules)
         return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
 
