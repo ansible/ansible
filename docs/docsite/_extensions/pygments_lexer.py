@@ -493,9 +493,9 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
     exp_part = r'[eE](\+|-)?\d+'
 
     tokens = {
-        ##########################################
-        ## BEGIN: states from JSON lexer #########
-        ##########################################
+        # #########################################
+        # # BEGIN: states from JSON lexer #########
+        # #########################################
         'whitespace': [
             (r'\s+', token.Text),
         ],
@@ -543,9 +543,9 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
             (r'\{', token.Punctuation, 'objectvalue'),
             (r'\[', token.Punctuation, 'arrayvalue'),
         ],
-        ##########################################
-        ## END: states from JSON lexer ###########
-        ##########################################
+        # #########################################
+        # # END: states from JSON lexer ###########
+        # #########################################
 
         'host-postfix': [
             (r'\n', token.Text, '#pop:3'),
