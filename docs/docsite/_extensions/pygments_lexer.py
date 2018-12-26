@@ -507,7 +507,7 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
               '%(exp_part)s|%(frac_part)s)') % vars(),
              token.Number.Float),
             (int_part, token.Number.Integer),
-            (r'"(\\\\|\\"|[^"])*"', token.String.Double),
+            (r'"(\\\\|\\"|[^"])*"', token.String),
         ],
 
 
@@ -563,7 +563,7 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
 
         'host-name': [
             (r'(\[)([^ \]]+)(?:( )(=>)( )([^\]]+))?(\])',
-                bygroups(token.Punctuation, token.Name, token.Text, token.Punctuation, token.Text, token.Name, token.Punctuation),
+                bygroups(token.Punctuation, token.Name.Variable, token.Text, token.Punctuation, token.Text, token.Name.Variable, token.Punctuation),
                 'host-error')
         ],
 
@@ -575,7 +575,7 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
 
         'root': [
             (r'(PLAY|TASK|PLAY RECAP)(?:( )(\[)([^\]]+)(\]))?( )(\*+)(\n)',
-                bygroups(token.Keyword, token.Text, token.Punctuation, token.Literal, token.Punctuation, token.Text, token.Punctuation, token.Text)),
+                bygroups(token.Keyword, token.Text, token.Punctuation, token.Literal, token.Punctuation, token.Text, token.Name.Variable, token.Text)),
             (r'(fatal|ok|changed|skipping)(:)( )',
                 bygroups(token.Keyword, token.Punctuation, token.Text),
                 'host-name'),
