@@ -22,24 +22,32 @@ To                         Action      From
 7000/tcp (v6)              ALLOW IN    Anywhere (v6)
 """
 
-user_rules_with_port_7000 = """/etc/ufw/user.rules:### tuple ### allow any 7000 0.0.0.0/0 any 0.0.0.0/0 in
-/etc/ufw/user6.rules:### tuple ### allow any 7000 ::/0 any ::/0 in
+user_rules_with_port_7000 = """### tuple ### allow tcp 7000 0.0.0.0/0 any 0.0.0.0/0 in
+### tuple ### allow tcp 7000 ::/0 any ::/0 in
 """
+
 skippg_adding_existing_rules = "Skipping adding existing rule\nSkipping adding existing rule (v6)\n"
 
-delete_rules = ""
+grep_tupple = "grep -h '^### tuple' /"
 
 dry_mode_cmd = {
     "ufw status verbose": ufw_status_verbose_with_port_7000,
     "ufw --version": ufw_version_35,
-    "grep '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules": user_rules_with_port_7000,
     "ufw --dry-run allow from any to any port 7000 proto tcp": skippg_adding_existing_rules,
-    "ufw --dry-run delete allow from any to any port 7000 proto tcp | grep -E '^### tuple'": ""
+    "ufw --dry-run delete allow from any to any port 7000 proto tcp": "",
+    "ufw --dry-run delete allow from any to any port 7001 proto tcp": user_rules_with_port_7000,
+    # was "grep ^### tuple /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules": user_rules_with_port_7000,
+    grep_tupple: user_rules_with_port_7000,
 }
 
 
 def do_nothing_func(*args, **kwarg):
-    return 0, dry_mode_cmd[args[0]], ""
+    cmd = args[0]
+    # user ufw config file
+    if cmd.startswith(grep_tupple):
+        cmd = grep_tupple
+
+    return 0, dry_mode_cmd[cmd], ""
 
 
 def set_module_args(args):
@@ -96,7 +104,7 @@ class TestUFW(unittest.TestCase):
 
         self.assertFalse(self.__getResult().exception.args[0]['changed'])
 
-    def test_check_mode_delete_rules(self):
+    def test_check_mode_delete_existing_rules(self):
 
         set_module_args({
             'rule': 'allow',
@@ -107,6 +115,18 @@ class TestUFW(unittest.TestCase):
         })
 
         self.assertTrue(self.__getResult().exception.args[0]['changed'])
+
+    def test_check_mode_delete_not_existing_rules(self):
+
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'tcp',
+            'port': '7001',
+            'delete': 'yes',
+            '_ansible_check_mode': True,
+        })
+
+        self.assertFalse(self.__getResult().exception.args[0]['changed'])
 
     def test_enable_mode(self):
         set_module_args({
