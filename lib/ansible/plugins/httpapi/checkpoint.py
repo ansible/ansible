@@ -54,15 +54,12 @@ class HttpApi(HttpApiBase):
         if username and password:
             payload = {'user': username, 'password': password}
             url = '/web_api/login'
-            response, response_data = self._send_auth_request(
-                url, json.dumps(payload), method='POST', headers=BASE_HEADERS
-            )
-            response = self._response_to_json(self._get_response_value(response_data))
+            response, response_data = self.send_request(url, payload)
         else:
             raise AnsibleConnectionFailure('Username and password are required for login')
 
         try:
-            self.connection._auth = {'X-chkp-sid': response['sid']}
+            self.connection._auth = {'X-chkp-sid': response_data['sid']}
         except KeyError:
             raise ConnectionError(
                 'Server returned response without token info during connection authentication: %s' % response)
@@ -71,15 +68,6 @@ class HttpApi(HttpApiBase):
         url = '/web_api/logout'
 
         response, dummy = self.send_request(url, None)
-
-    def _send_auth_request(self, path, data, **kwargs):
-        try:
-            return self.connection.send(path, data, **kwargs)
-        except HTTPError as e:
-            # HttpApi connection does not read the error response from HTTPError, so we do it here and wrap it up in
-            # ConnectionError, so the actual error message is displayed to the user.
-            error_msg = self._response_to_json(to_text(e.read()))
-            raise ConnectionError('Server returned an error during authentication request: %s' % error_msg)
 
     def send_request(self, path, body_params):
         data = json.dumps(body_params) if body_params else '{}'
