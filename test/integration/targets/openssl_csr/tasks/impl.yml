@@ -137,7 +137,7 @@
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey2.pem'
     type: ECC
-    curve: secp256k1
+    curve: secp384r1
 
 - name: Generate CSR with ECC privatekey
   openssl_csr:
