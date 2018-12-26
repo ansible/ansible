@@ -766,12 +766,6 @@ class Action(object):
         parameters = convert_unicode_to_str(self._construct_parameters(**kwargs))
         change_parameters = {}
         _diff = cleanup_data(compare_dictionaries(parameters, existing_action, change_parameters))
-        if ('recovery_operations' in cleanup_data(existing_action) and
-           'acknowledge_operations' not in cleanup_data(parameters)):
-            _diff['recovery_operations'] = []
-        if ('acknowledge_operations' in cleanup_data(existing_action) and
-           'acknowledge_operations' not in cleanup_data(parameters)):
-            _diff['acknowledge_operations'] = []
         return _diff
 
     def update_action(self, **kwargs):
@@ -1564,8 +1558,8 @@ def main():
             conditions=dict(type='list', required=False, default=None),
             formula=dict(type='str', required=False, default=None),
             operations=dict(type='list', required=False, default=None),
-            recovery_operations=dict(type='list', required=False, default=None),
-            acknowledge_operations=dict(type='list', required=False, default=None)
+            recovery_operations=dict(type='list', required=False, default=[]),
+            acknowledge_operations=dict(type='list', required=False, default=[])
         ),
         supports_check_mode=True
     )
