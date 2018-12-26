@@ -539,7 +539,6 @@ class ImageManager(DockerBaseClass):
             tag=self.name,
             rm=self.rm,
             nocache=self.nocache,
-            network_mode=self.network,
             timeout=self.http_timeout,
             pull=self.pull,
             forcerm=self.rm,
@@ -559,6 +558,8 @@ class ImageManager(DockerBaseClass):
             params['buildargs'] = self.buildargs
         if self.cache_from:
             params['cache_from'] = self.cache_from
+        if self.network:
+            params['network_mode'] = self.network
 
         for line in self.client.build(**params):
             # line = json.loads(line)
