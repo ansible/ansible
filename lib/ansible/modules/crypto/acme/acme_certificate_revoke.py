@@ -31,6 +31,16 @@ notes:
       was different than the one specified here. Also, depending on the
       server, it can happen that some other error is returned if the
       certificate has already been revoked."
+seealso:
+  - name: The Let's Encrypt documentation
+    description: Documentation for the Let's Encrypt Certification Authority.
+                 Provides useful information for example on rate limits.
+    link: https://letsencrypt.org/docs/
+  - name: Automatic Certificate Management Environment (ACME)
+    description: The current draft specification of the ACME protocol.
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-17
+  - module: acme_inspect
+    description: Allows to debug problems.
 extends_documentation_fragment:
   - acme
 options:

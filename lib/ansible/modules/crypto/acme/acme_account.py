@@ -25,12 +25,20 @@ description:
       such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module only works with the ACME v2 protocol."
 notes:
-   - "Facts about an ACME account can be retrieved with the M(acme_account_facts)
-      module."
    - "The M(acme_certificate) module also allows to do basic account management.
       When using both modules, it is recommended to disable account management
       for M(acme_certificate). For that, use the C(modify_account) option of
       M(acme_certificate)."
+seealso:
+  - name: Automatic Certificate Management Environment (ACME)
+    description: The current draft specification of the ACME protocol.
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-17
+  - module: acme_account_facts
+    description: Retrieves facts about an ACME account.
+  - module: openssl_privatekey
+    description: Can be used to create a private account key.
+  - module: acme_inspect
+    description: Allows to debug problems.
 extends_documentation_fragment:
   - acme
 options:

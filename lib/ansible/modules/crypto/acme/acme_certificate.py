@@ -47,12 +47,31 @@ notes:
       option."
    - "This module was called C(letsencrypt) before Ansible 2.6. The usage
       did not change."
-   - "If you want to use the C(tls-alpn-01) challenge, you can use the
-      M(acme_challenge_cert_helper) module to prepare the challenge certificate."
-   - "You can use the M(certificate_complete_chain) module to find the root certificate
-      for the returned fullchain."
-   - "In case you want to debug problems, you might be interested in the M(acme_inspect)
-      module."
+seealso:
+  - name: The Let's Encrypt documentation
+    description: Documentation for the Let's Encrypt Certification Authority.
+                 Provides useful information for example on rate limits.
+    link: https://letsencrypt.org/docs/
+  - name: Automatic Certificate Management Environment (ACME)
+    description: The current draft specification of the ACME protocol.
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-17
+  - name: ACME TLS ALPN Challenge Extension
+    description: The current draft specification of the C(tls-alpn-01) challenge.
+    link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
+  - module: acme_challenge_cert_helper
+    description: Helps preparing C(tls-alpn-01) challenges.
+  - module: openssl_privatekey
+    description: Can be used to create private keys (both for certificates and accounts).
+  - module: openssl_csr
+    description: Can be used to create a Certificate Signing Request (CSR).
+  - module: certificate_complete_chain
+    description: Allows to find the root certificate for the returned fullchain.
+  - module: acme_certificate_revoke
+    description: Allows to revoke certificates.
+  - module: acme_account
+    description: Allows to create, modify or delete an ACME account.
+  - module: acme_inspect
+    description: Allows to debug problems.
 extends_documentation_fragment:
   - acme
 options:

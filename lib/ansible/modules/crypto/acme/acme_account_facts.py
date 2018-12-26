@@ -26,6 +26,9 @@ description:
    - "This module only works with the ACME v2 protocol."
 notes:
    - "The M(acme_account) module allows to modify, create and delete ACME accounts."
+seealso:
+  - module: acme_account
+    description: Allows to create, modify or delete an ACME account.
 extends_documentation_fragment:
   - acme
 '''
