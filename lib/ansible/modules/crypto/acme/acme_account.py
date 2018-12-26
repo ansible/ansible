@@ -21,7 +21,7 @@ version_added: "2.6"
 short_description: Create, modify or delete ACME accounts
 description:
    - "Allows to create, modify or delete accounts with a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
       such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module only works with the ACME v2 protocol."
 notes:
@@ -32,7 +32,7 @@ notes:
 seealso:
   - name: Automatic Certificate Management Environment (ACME)
     description: The current draft specification of the ACME protocol.
-    link: https://tools.ietf.org/html/draft-ietf-acme-acme-17
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
   - module: acme_account_facts
     description: Retrieves facts about an ACME account.
   - module: openssl_privatekey
@@ -63,7 +63,7 @@ options:
     description:
       - "A list of contact URLs."
       - "Email addresses must be prefixed with C(mailto:)."
-      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.1.2
+      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.1.2
          for what is allowed."
       - "Must be specified when state is C(present). Will be ignored
          if state is C(absent) or C(changed_key)."
@@ -238,7 +238,7 @@ def main():
             # Now we can start the account key rollover
             if not module.check_mode:
                 # Compose inner signed message
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3.6
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.5
                 url = account.directory['keyChange']
                 protected = {
                     "alg": new_key_data['alg'],

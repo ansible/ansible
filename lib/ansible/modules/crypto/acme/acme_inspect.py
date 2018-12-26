@@ -21,7 +21,7 @@ version_added: "2.8"
 short_description: Send direct requests to an ACME server
 description:
    - "Allows to send direct requests to an ACME server with the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
       which is supported by CAs such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module can be used to debug failed certificate request attempts,
       for example when M(acme_certificate) fails or encounters a problem which
@@ -42,7 +42,7 @@ notes:
 seealso:
   - name: Automatic Certificate Management Environment (ACME)
     description: The current draft specification of the ACME protocol.
-    link: https://tools.ietf.org/html/draft-ietf-acme-acme-17
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
   - name: ACME TLS ALPN Challenge Extension
     description: The current draft specification of the C(tls-alpn-01) challenge.
     link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
@@ -123,7 +123,7 @@ EXAMPLES = r'''
   vars:
     account_info:
       # For valid values, see
-      # https://tools.ietf.org/html/draft-ietf-acme-acme-16#section-7.3
+      # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
       contact:
       - mailto:me@example.com
 

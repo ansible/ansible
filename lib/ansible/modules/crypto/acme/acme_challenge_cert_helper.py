@@ -29,7 +29,7 @@ description:
 seealso:
   - name: Automatic Certificate Management Environment (ACME)
     description: The current draft specification of the ACME protocol.
-    link: https://tools.ietf.org/html/draft-ietf-acme-acme-17
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
   - name: ACME TLS ALPN Challenge Extension
     description: The current draft specification of the C(tls-alpn-01) challenge.
     link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
