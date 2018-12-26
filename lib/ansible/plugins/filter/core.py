@@ -185,9 +185,16 @@ def ternary(value, true_val, false_val, none_val=None):
         return false_val
 
 
-def regex_escape(string):
+def regex_escape(string, re_type='python'):
     '''Escape all regular expressions special characters from STRING.'''
-    return re.escape(string)
+    if re_type == 'python':
+        return re.escape(string)
+    elif re_type == 'basic':
+        # list of BRE special chars:
+        # https://en.wikibooks.org/wiki/Regular_Expressions/POSIX_Basic_Regular_Expressions
+        return regex_replace(string, r'([].[^$*\\])', r'\\\1')
+    else:
+        raise AnsibleFilterError('Invalid regex type (%s)' % re_type)
 
 
 def from_yaml(data):
