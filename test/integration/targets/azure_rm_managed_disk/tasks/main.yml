@@ -181,8 +181,6 @@
            - "azure_managed_disk | length == 1"
            - azure_managed_disk[0].storage_account_type == "Premium_LRS"
            - azure_managed_disk[0].disk_size_gb == 2
-           - azure_managed_disk[0].source_uri
-           - azure_managed_disk[0].create_option == "copy"
 
  - name: Gather facts
    azure_rm_managed_disk_facts:
