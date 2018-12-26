@@ -65,7 +65,7 @@
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}2"
        create_option: "copy"
-       source_resource_uri: "{{ output.state.id }}"
+       source_uri: "{{ output.state.id }}"
        disk_size_gb: 1
    register: copy
 
@@ -175,11 +175,14 @@
    azure_rm_managed_disk_facts:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
-   register: fact
 
  - assert:
        that:
            - "azure_managed_disk | length == 1"
+           - azure_managed_disk[0].storage_account_type == "Premium_LRS"
+           - azure_managed_disk[0].disk_size_gb == 2
+           - azure_managed_disk[0].source_uri
+           - azure_managed_disk[0].create_option == "copy"
 
  - name: Gather facts
    azure_rm_managed_disk_facts:
@@ -294,7 +297,6 @@
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
-       managed_by: "tr{{ rpfx }}"
        tags:
            testing: testing
            delete: never
@@ -310,6 +312,7 @@
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
+       managed_by: ''
        tags:
            testing: testing
            delete: never
@@ -325,6 +328,7 @@
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
+       managed_by: ''
        tags:
            testing: testing
            delete: never
@@ -339,6 +343,7 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
+       managed_by: ''
        disk_size_gb: 2
        tags:
            testing: testing
