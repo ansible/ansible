@@ -635,6 +635,7 @@ def main():
 
     option_minimal_versions = dict(
         cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        network=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
     )
 
     client = AnsibleDockerClient(
