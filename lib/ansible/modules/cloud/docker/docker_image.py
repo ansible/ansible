@@ -94,6 +94,11 @@ options:
     required: false
     version_added: "2.1"
     type: bool
+  network:
+    description:
+      - The network to use for C(RUN) build instructions.
+    required: false
+    version_added: "2.8"
   nocache:
     description:
       - Do not use cache when building an image.
@@ -299,6 +304,7 @@ class ImageManager(DockerBaseClass):
         self.force = parameters.get('force')
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
+        self.network = parameters.get('network')
         self.nocache = parameters.get('nocache')
         self.path = parameters.get('path')
         self.pull = parameters.get('pull')
@@ -552,6 +558,8 @@ class ImageManager(DockerBaseClass):
             params['buildargs'] = self.buildargs
         if self.cache_from:
             params['cache_from'] = self.cache_from
+        if self.network:
+            params['network_mode'] = self.network
 
         for line in self.client.build(**params):
             # line = json.loads(line)
@@ -613,6 +621,7 @@ def main():
         http_timeout=dict(type='int'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
+        network=dict(type='str'),
         nocache=dict(type='bool', default=False),
         path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
@@ -627,6 +636,7 @@ def main():
 
     option_minimal_versions = dict(
         cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        network=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
     )
 
     client = AnsibleDockerClient(
