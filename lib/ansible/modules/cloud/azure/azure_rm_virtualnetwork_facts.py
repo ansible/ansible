@@ -94,7 +94,7 @@ virtualnetworks:
                 type: str
             address_prefixes:
                 description:
-                    - List of IPv4 address ranges where each is formatted using CIDR notation. 
+                    - List of IPv4 address ranges where each is formatted using CIDR notation.
                 sample: ["10.10.0.0/16"]
                 type: list
             dns_servers:
@@ -217,7 +217,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
             item = self.network_client.virtual_networks.get(self.resource_group, self.name)
         except CloudError:
             pass
-        
+
         if item and self.has_tags(item.tags, self.tags):
             results = [item]
         return results
