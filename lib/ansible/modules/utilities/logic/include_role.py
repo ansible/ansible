@@ -21,7 +21,7 @@ module: include_role
 short_description: Load and execute a role
 description:
   - M(include_role) dynamically loads and executes a specified role as a task. It may be used (and has meaning) only
-    where Ansible tasks are allowed: inside a `pre_tasks:`, `tasks:`, or `post_tasks:` playbook object, or as a
+    where Ansible tasks are allowed - inside a `pre_tasks:`, `tasks:`, or `post_tasks:` playbook object, or as a
     task inside a role.
   - Unlike M(import_role), M(Loops), and M(Conditionals) apply to this statement.
   - The do until loop is not supported on M(include_role).
