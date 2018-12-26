@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - api_url needs to have a value before making a requst, a checker has been add to the gitlab_deploy_key module. 
+  - This will make the module fail if the value of api_url is None and return a reasonable message. (https://github.com/ansible/ansible/pull/50309)
