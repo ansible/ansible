@@ -360,7 +360,9 @@ task::
     - win_whoami:
       become: yes
 
-The output will look something similar to the below::
+The output will look something similar to the below:
+
+.. code-block:: ansible-output
 
     ok: [windows] => {
         "account": {
