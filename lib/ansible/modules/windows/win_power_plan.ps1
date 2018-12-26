@@ -69,8 +69,12 @@ If ([System.Environment]::OSVersion.Version -ge '10.0.17134')
 
     Else
     {
-        $result.changed = $true
         powercfg /S $planGuid
+        if (-not $?)
+        {
+            Fail-Json $result "Failed to set the new plan '$name' ($planGuid) using powercfg"
+        }
+        $result.changed = $true
         $result.all_available_plans = Get-PowerPlans
         Exit-Json $result
     }
