@@ -108,7 +108,7 @@ class ActionModule(ActionBase):
                 conn.send_command('exit')
 
         if 'fail_on_missing_module' not in self._task.args:
-            self._task.args['fail_on_missing_module'] = False
+            self._task.args['fail_on_missing_module'] = True
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
