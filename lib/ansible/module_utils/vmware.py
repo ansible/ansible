@@ -1096,14 +1096,14 @@ class PyVmomi(object):
     def host_version_at_least(self, version=None, vm_obj=None, host_name=None):
         """
         Check that the ESXi Host is at least a specific version number
-        
+
         Args:
             vm_obj: virtual machine object, required one of vm_obj, host_name
             host_name (string): ESXi host name
             version (tuple): a version tuple, for example (6, 7, 0)
-        
+
         Returns: bool
-        
+
         """
         if vm_obj:
             host_system = vm_obj.summary.runtime.host
@@ -1123,7 +1123,7 @@ class PyVmomi(object):
                         return False
             return True
         else:
-            self.module.fail_json(msg='Can not get the ESXi host, or the passed ESXi version is None.')
+            self.module.fail_json(msg='Can not get the ESXi host, or the passed version parameter is None.')
 
     # Network related functions
     @staticmethod

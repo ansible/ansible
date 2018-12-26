@@ -54,7 +54,7 @@ options:
     - '   folder: datacenter1/vm/folder1'
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
-    - '   folder: /folder1/datacenter1/vm/folder2'    
+    - '   folder: /folder1/datacenter1/vm/folder2'
   export_dir:
     description:
     - Absolute path to place the exported files on the server running this task, must have write permission.
@@ -98,9 +98,9 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.vmware import (connect_to_api, vmware_argument_spec, PyVmomi)
 try:
     from pyVmomi import vim
+    from pyVim import connect
 except ImportError:
     pass
-from pyVim import connect
 
 
 class LeaseProgressUpdater(Thread):
