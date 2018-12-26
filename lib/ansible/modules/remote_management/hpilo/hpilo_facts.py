@@ -239,6 +239,9 @@ def main():
         # reformat into a text friendly format
         facts['hw_memory_total'] = "{0} GB".format(facts['hw_memory_total'])
 
+    power = ilo.get_host_power_status()
+    facts['power_status'] = power
+
     module.exit_json(ansible_facts=facts)
 
 
