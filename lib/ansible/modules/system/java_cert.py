@@ -15,6 +15,7 @@ DOCUMENTATION = '''
 module: java_cert
 version_added: '2.3'
 short_description: Uses keytool to import/remove key from java keystore(cacerts)
+extends_documentation_fragment: files
 description:
   - This is a wrapper module around keytool, which can be used to import/remove
     certificates from a given java keystore.
@@ -50,6 +51,7 @@ options:
   keystore_path:
     description:
       - Path to keystore.
+    aliases: [ path ]
   keystore_pass:
     description:
       - Keystore password.
@@ -79,12 +81,15 @@ EXAMPLES = '''
     keystore_pass: changeit
     state: present
 
-- name: Remove certificate with given alias from a keystore
+- name: Remove certificate with given alias from a keystore and set file mode/owner/group
   java_cert:
     cert_url: google.com
     keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
     keystore_pass: changeit
     executable: /usr/lib/jvm/jre7/bin/keytool
+    mode:  "0644"
+    owner: "root"
+    group: "root"
     state: absent
 
 - name: Import SSL certificate from google.com to a keystore, create it if it doesn't exist
@@ -129,6 +134,12 @@ import os
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
+
+
+def set_fs_attributes_if_different(module, changed=False):
+    # Handle common file arguments (owner, group, etc.)
+    file_args = module.load_file_common_arguments(module.params)
+    return module.set_fs_attributes_if_different(file_args, changed)
 
 
 def check_cert_present(module, executable, keystore_path, keystore_pass, alias):
@@ -180,6 +191,7 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
                                                              check_rc=False)
     diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
+        set_fs_attributes_if_different(module)
         module.exit_json(changed=True, msg=import_out,
                          rc=import_rc, cmd=import_cmd, stdout=import_out,
                          diff=diff)
@@ -203,6 +215,7 @@ def import_cert_path(module, executable, path, keystore_path, keystore_pass, ali
 
     diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
+        set_fs_attributes_if_different(module)
         module.exit_json(changed=True, msg=import_out,
                          rc=import_rc, cmd=import_cmd, stdout=import_out,
                          error=import_err, diff=diff)
@@ -224,6 +237,7 @@ def import_pkcs12_path(module, executable, path, keystore_path, keystore_pass, p
 
     diff = {'before': '\n', 'after': '%s\n' % alias}
     if import_rc == 0:
+        set_fs_attributes_if_different(module)
         module.exit_json(changed=True, msg=import_out,
                          rc=import_rc, cmd=import_cmd, stdout=import_out,
                          error=import_err, diff=diff)
@@ -273,7 +287,7 @@ def main():
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
         cert_port=dict(type='int', default='443'),
-        keystore_path=dict(type='path'),
+        path=dict(type='str', aliases=['keystore_path']),
         keystore_pass=dict(type='str', required=True, no_log=True),
         keystore_create=dict(type='bool', default=False),
         executable=dict(type='str', default='keytool'),
@@ -288,17 +302,19 @@ def main():
             ['cert_url', 'cert_path', 'pkcs12_path']
         ],
         supports_check_mode=True,
+        add_file_common_args=True,
     )
+    # Force keytool message in english
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
 
     url = module.params.get('cert_url')
     path = module.params.get('cert_path')
     port = module.params.get('cert_port')
+    cert_alias = module.params.get('cert_alias') or url
 
     pkcs12_path = module.params.get('pkcs12_path')
     pkcs12_pass = module.params.get('pkcs12_password', '')
     pkcs12_alias = module.params.get('pkcs12_alias', '1')
-
-    cert_alias = module.params.get('cert_alias') or url
 
     keystore_path = module.params.get('keystore_path')
     keystore_pass = module.params.get('keystore_pass')
@@ -343,7 +359,9 @@ def main():
                 import_cert_url(module, executable, url, port, keystore_path,
                                 keystore_pass, cert_alias)
 
-    module.exit_json(changed=False)
+    changed = set_fs_attributes_if_different(module)
+
+    module.exit_json(changed=changed)
 
 
 if __name__ == "__main__":
