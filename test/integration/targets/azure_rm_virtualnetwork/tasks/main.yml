@@ -49,7 +49,10 @@
       - testing
 
 - assert:
-    that: "azure_virtualnetworks | length == 1"
+    that:
+      - "azure_virtualnetworks | length == 1"
+      - "virtualnetworks.dns_servers | length == 2"
+      - "virtualnetworks.address_prefixes | length == 2"
 
 - name: Gather facts by resource group, tags
   azure_rm_virtualnetwork_facts:
