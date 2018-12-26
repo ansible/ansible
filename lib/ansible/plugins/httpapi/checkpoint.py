@@ -71,11 +71,10 @@ class HttpApi(HttpApiBase):
 
     def send_request(self, path, body_params):
         data = json.dumps(body_params) if body_params else '{}'
-        headers = {'Content-Type': 'application/json'}
 
         try:
             self._display_request()
-            response, response_data = self.connection.send(path, data, method='POST', headers=headers)
+            response, response_data = self.connection.send(path, data, method='POST', headers=BASE_HEADERS)
             value = self._get_response_value(response_data)
 
             return response.getcode(), self._response_to_json(value)
