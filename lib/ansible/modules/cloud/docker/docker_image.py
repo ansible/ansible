@@ -204,17 +204,23 @@ EXAMPLES = '''
 
 - name: Tag and push to docker hub
   docker_image:
-    name: pacur/centos-7
-    repository: dcoppenhagan/myimage
-    tag: 7.0
+    name: pacur/centos-7:56
+    repository: dcoppenhagan/myimage:7.56
     push: yes
 
 - name: Tag and push to local registry
   docker_image:
+     # Image will be centos:7
      name: centos
+     # Will be pushed to localhost:5000/centos:7
      repository: localhost:5000/centos
      tag: 7
      push: yes
+
+- name: Add tag latest to image
+  docker_image:
+    name: myimage:7.1.2
+    repository: myimage:latest
 
 - name: Remove image
   docker_image:
