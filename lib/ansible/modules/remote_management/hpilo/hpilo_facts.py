@@ -117,6 +117,12 @@ hw_uuid:
     returned: always
     type: str
     sample: 123456ABC78901D2
+
+hw_power_status:
+    description: Power status of host
+    returned: always
+    type: str
+    sample: 'ON'
 '''
 
 import re
@@ -240,7 +246,7 @@ def main():
         facts['hw_memory_total'] = "{0} GB".format(facts['hw_memory_total'])
 
     power = ilo.get_host_power_status()
-    facts['power_status'] = power
+    facts['hw_power_status'] = power
 
     module.exit_json(ansible_facts=facts)
 
