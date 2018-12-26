@@ -96,7 +96,7 @@ options:
     type: bool
   network:
     description:
-      - The network to use for RUN build instructions.
+      - The network to use for C(RUN) build instructions.
     required: false
     version_added: "2.8"
   nocache:
