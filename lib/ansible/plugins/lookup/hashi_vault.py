@@ -7,8 +7,10 @@ __metaclass__ = type
 
 DOCUMENTATION = """
   lookup: hashi_vault
-  author: Jonathan Davila <jdavila(at)ansible.com>
   version_added: "2.0"
+  author:
+    - Jonathan Davila <jdavila(at)ansible.com>
+    - Drew Mullen (@drewmullen) <mullen.drew@gmail.com>
   short_description: retrieve secrets from HashiCorp's vault
   requirements:
     - hvac (python library)
@@ -28,6 +30,7 @@ DOCUMENTATION = """
       description: url to vault service
       env:
         - name: VAULT_ADDR
+      default: 'http://127.0.0.1:8200'
       default: 'http://127.0.0.1:8200'
     username:
       description: authentication user name
@@ -52,6 +55,9 @@ DOCUMENTATION = """
       description: controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
       type: boolean
       default: True
+    namespace:
+      description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+
+      default: None
 """
 
 EXAMPLES = """
@@ -61,6 +67,10 @@ EXAMPLES = """
 - name: Return all secrets from a path
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
+- name: Return all secrets from a path in a namespace
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
 
 - name: Vault that requires authentication via LDAP
   debug:
@@ -109,6 +119,7 @@ class HashiVault:
     def __init__(self, **kwargs):
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
+        self.namespace = kwargs.get('namespace', None)
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -131,10 +142,14 @@ class HashiVault:
         # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
         #
         self.auth_method = kwargs.get('auth_method')
-        self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
+
         if self.auth_method and self.auth_method != 'token':
             try:
-                self.client = hvac.Client(url=self.url, verify=self.verify)
+                if self.namespace is not None:
+                    self.client = hvac.Client(url=self.url, verify=self.verify, namespace=self.namespace)
+                else:
+                    self.client = hvac.Client(url=self.url, verify=self.verify)
+
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
@@ -153,7 +168,10 @@ class HashiVault:
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
-            self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
+            if self.namespace is not None:
+                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify, namespace=self.namespace)
+            else:
+                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
 
         if not self.client.is_authenticated():
             raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
