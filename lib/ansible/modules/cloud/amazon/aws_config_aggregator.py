@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_aggregator
 short_description: Manage AWS Config aggregations across multiple accounts
@@ -63,7 +63,7 @@ extends_documentation_fragment:
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Create cross-account aggregator
   aws_config_aggregator:
     name: test_config_rule
@@ -76,7 +76,7 @@ EXAMPLES = r'''
       all_aws_regions: yes
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:
