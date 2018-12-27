@@ -21,8 +21,9 @@ module: vmware_vspan_session
 short_description: Create or remove a Port Mirroring session.
 description:
    - This module can be used to create, delete or edit different kind of port mirroring sessions.
+version_added: '2.8'
 author:
-- Peter Gyorgy <gyorgy.peter1996@gmail.com>
+- Peter Gyorgy (@gyorgypeter) <gyorgy.peter1996@gmail.com>
 notes:
     - Tested on vSphere 6.7
 requirements:
@@ -33,18 +34,18 @@ options:
         description:
             - The name of the switch to create or remove
         required: True
+        aliases: [ 'switch_name' ]
     name:
         description:
             - Name of the session.
         required: True
     state:
-        default: 'present'
         choices:
             - 'present'
             - 'absent'
         description:
             - Create or remove the session.
-        required: False
+        required: True
     session_type:
         default: 'dvPortMirror'
         choices:
