@@ -60,23 +60,23 @@ Adding a plugin locally
 =======================
 Ansible loads plugins automatically too, loading each type of plugin separately from a directory named for the type of plugin. Here's the full list of plugin directory names:
 
-    * action_plugins*
-    * cache_plugins
-    * callback_plugins
-    * connection_plugins
-    * filter_plugins*
-    * inventory_plugins
-    * lookup_plugins
-    * shell_plugins
-    * strategy_plugins
-    * test_plugins*
-    * vars_plugins
+    * action*
+    * cache
+    * callback
+    * connection
+    * filter*
+    * inventory
+    * lookup
+    * shell
+    * strategy
+    * test*
+    * vars
 
 You can create or add a local plugin in any of these locations:
 
 * any directory added to the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable (these variables, such as ``$ANSIBLE_INVENTORY_PLUGINS`` and ``$ANSIBLE_VARS_PLUGINS`` take colon-separated lists like ``$PATH``)
-* the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback_plugins``
-* the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/plugin_type/action_plugins``
+* the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback/``
+* the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/connection/``
 
 Once your plugin file is in one of these locations, Ansible will load it and you can use it in a any local module, task, playbook, or role.
 
@@ -84,11 +84,27 @@ To confirm that ``plugins/plugin_type/my_custom_plugin`` is available:
 
 * type ``ansible-doc -t <plugin_type> my_custom_lookup_plugin``. For example, ``ansible-doc -t lookup my_custom_lookup_plugin``. You should see the documentation for that plugin. This works for all plugin types except the ones marked with ``*`` in the list above  - see :ref:`ansible-doc` for more details.
 
-To use your local plugin only in certain playbooks:
+Adding a plugin to a role or playbook
+=====================================
+Ansible will load role or playbook specific plugins from directories stored as part of the role or playbook. Here's a list of these directory names:
+
+* action_plugins
+* cache_plugins
+* callback_plugins
+* connection_plugins
+* filter_plugins
+* inventory_plugins
+* lookup_plugins
+* shell_plugins
+* strategy_plugins
+* test_plugins
+* vars_plugins
+
+To use your plugin only in certain playbooks:
 
 * store it in a sub-directory for the correct ``plugin_type`` (for example, ``callback_plugins`` or ``inventory_plugins``) in the directory that contains the playbook(s)
 
-To use your local plugin only in a single role:
+To use your plugin only in a single role:
 
 * store it in a sub-directory for the correct ``plugin_type`` (for example, ``cache_plugins`` or ``strategy_plugins``) within that role
 
