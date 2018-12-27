@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_delivery_channel
 short_description: Manage AWS Config delivery channels
@@ -50,7 +50,7 @@ extends_documentation_fragment:
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Create Delivery Channel for AWS Config
   aws_config_delivery_channel:
     name: test_delivery_channel
@@ -60,7 +60,7 @@ EXAMPLES = r'''
     delivery_frequency: 'Twelve_Hours'
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:
