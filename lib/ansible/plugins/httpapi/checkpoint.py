@@ -17,16 +17,11 @@ version_added: "2.8"
 """
 
 import json
-import os
-import re
 
 from ansible.module_utils.basic import to_text
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.plugins.httpapi import HttpApiBase
-from urllib3 import encode_multipart_formdata
-from urllib3.fields import RequestField
 from ansible.module_utils.connection import ConnectionError
 
 BASE_HEADERS = {
