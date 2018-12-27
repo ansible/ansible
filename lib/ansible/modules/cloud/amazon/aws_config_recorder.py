@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_recorder
 short_description: Manage AWS Config Recorders
@@ -66,7 +66,7 @@ extends_documentation_fragment:
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Create Configuration Recorder for AWS Config
   aws_config_recorder:
     name: test_configuration_recorder
@@ -77,7 +77,7 @@ EXAMPLES = r'''
         include_global_types: true
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:
