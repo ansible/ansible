@@ -23,6 +23,7 @@ class FakeCheckpointHttpApiPlugin(HttpApi):
     def __init__(self, conn):
         super(FakeCheckpointHttpApiPlugin, self).__init__(conn)
 
+
 class TestCheckpointHttpApi(unittest.TestCase):
 
     def setUp(self):
