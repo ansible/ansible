@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: aws_config_rule
 short_description: Manage AWS Config resources
@@ -86,7 +86,7 @@ extends_documentation_fragment:
   - ec2
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Create Config Rule for AWS Config
   aws_config_rule:
     name: test_config_rule
@@ -101,7 +101,7 @@ EXAMPLES = r'''
 
 '''
 
-RETURN = r'''#'''
+RETURN = '''#'''
 
 
 try:
