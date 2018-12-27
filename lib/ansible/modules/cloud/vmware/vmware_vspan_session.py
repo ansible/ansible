@@ -48,7 +48,7 @@ options:
     type:
         description:
             - Select the mirroring type.
-            - '- C(encapsulatedRemoteMirrorSource) (str): In encapsulatedRemoteMirrorSource session, Distributed Ports 
+            - '- C(encapsulatedRemoteMirrorSource) (str): In encapsulatedRemoteMirrorSource session, Distributed Ports
             can be used as source entities, and Ip address can be used as destination entities.'
             - '- C(remoteMirrorDest) (str): In remoteMirrorDest session, vlan Ids can be used as source entities, and 
             Distributed Ports can be used as destination entities.'
