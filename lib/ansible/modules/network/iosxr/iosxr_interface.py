@@ -297,14 +297,18 @@ class CliConfiguration(ConfigBase):
 
     def map_config_to_obj(self):
         data = get_config(self._module, config_filter='interface')
-        interfaces = data.strip().rstrip('!').split('!')
+        data_lines = data.splitlines()
+        start_indexes = [i for i, e in enumerate(data_lines) if e.startswith('interface')]
+        end_indexes = [i for i, e in enumerate(data_lines) if e == '!']
 
-        if not interfaces:
+        intf_configs = list()
+        for start_index, end_index in zip(start_indexes, end_indexes):
+            intf_configs.append([i.strip() for i in data_lines[start_index:end_index]])
+
+        if not intf_configs:
             return list()
 
-        for interface in interfaces:
-            intf_config = interface.strip().splitlines()
-
+        for intf_config in intf_configs:
             name = intf_config[0].strip().split()[1]
 
             active = 'act'
