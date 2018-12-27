@@ -182,6 +182,9 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+RETURN = """#
+"""
+
 try:
     from pyVmomi import vim, vmodl
 except ImportError as e:
