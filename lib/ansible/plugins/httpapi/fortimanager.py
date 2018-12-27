@@ -86,7 +86,6 @@ from ansible.module_utils.network.fortimanager.common import FMGBaseException
 from ansible.module_utils.network.fortimanager.common import FMGValidSessionException
 from ansible.module_utils.network.fortimanager.common import FMGValueError
 from ansible.module_utils.network.fortimanager.common import FMGResponseNotFormedCorrect
-from ansible.module_utils.network.fortimanager.common import FMGConnectionError
 from ansible.module_utils.network.fortimanager.common import FMGRCommon
 
 
@@ -209,8 +208,6 @@ class HttpApi(HttpApiBase):
             self._update_self_from_response(result, url, data)
             return self._handle_response(result)
 
-        except ReqConnError as err:
-            raise FMGConnectionError(err)
         except ValueError as err:
             raise FMGValueError(err)
         except KeyError as err:

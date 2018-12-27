@@ -27,8 +27,6 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-from requests.exceptions import ConnectionError as ReqConnError, ConnectTimeout as ReqConnTimeout
 from ansible.module_utils.basic import to_text
 
 
@@ -153,19 +151,6 @@ class FMGResponseNotFormedCorrect(KeyError):
     def __init__(self, *args):
         super(FMGResponseNotFormedCorrect, self).__init__(*args)
 
-
-class FMGConnectionError(ReqConnError):
-    """Wrap requests Connection error so requests is not a dependency outside this module"""
-
-    def __init__(self, *args, **kwargs):
-        super(FMGConnectionError, self).__init__(*args, **kwargs)
-
-
-class FMGConnectTimeout(ReqConnTimeout):
-    """Wrap requests Connection timeout error so requests is not a dependency outside this module"""
-
-    def __init__(self, *args, **kwargs):
-        super(FMGConnectTimeout, self).__init__(*args, **kwargs)
 # END ERROR CLASSES
 
 
