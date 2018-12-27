@@ -4,8 +4,8 @@
 # Copyright: (c) 2018, CrySyS Lab <www.crysys.hu>
 # Copyright: (c) 2018, Peter Gyorgy <gyorgy.peter@edu.bme.hu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
-import time
 
 __metaclass__ = type
 
@@ -38,14 +38,20 @@ options:
             - Name of the session.
         required: True
     state:
-        description:
-            - Create or remove the session.
         default: 'present'
         choices:
             - 'present'
             - 'absent'
+        description:
+            - Create or remove the session.
         required: False
     session_type:
+        default: 'dvPortMirror'
+        choices:
+            - 'encapsulatedRemoteMirrorSource'
+            - 'remoteMirrorDest'
+            - 'remoteMirrorSource'
+            - 'dvPortMirror'
         description:
             - Select the mirroring type.
             - '- C(encapsulatedRemoteMirrorSource) (str): In encapsulatedRemoteMirrorSource session, Distributed Ports
@@ -56,18 +62,12 @@ options:
             entities, and uplink ports name can be used as destination entities.'
             - '- C(dvPortMirror) (str): In dvPortMirror session, Distributed Ports can be used as both source and
             destination entities.'
-        default: 'dvPortMirror'
-        choices:
-            - 'encapsulatedRemoteMirrorSource'
-            - 'remoteMirrorDest'
-            - 'remoteMirrorSource'
-            - 'dvPortMirror'
         required: False
     enabled:
-        description:
-            - Whether the session is enabled.
         type: bool
         default: True
+        description:
+            - Whether the session is enabled.
     description:
         description:
             - The description for the session.
@@ -92,8 +92,8 @@ options:
     strip_original_vlan:
         description:
             - Whether to strip the original VLAN tag. if false, the original VLAN tag will be preserved on the mirrored
-            traffic. If encapsulationVlanId has been set and this property is false, the frames will be double tagged
-            with the original VLAN ID as the inner tag.
+             traffic. If encapsulationVlanId has been set and this property is false, the frames will be double tagged
+             with the original VLAN ID as the inner tag.
         type: bool
         required: False
     mirrored_packet_length:
@@ -105,13 +105,13 @@ options:
     normal_traffic_allowed:
         description:
             - Whether or not destination ports can send and receive "normal" traffic. Setting this to false will make
-            mirror ports be used solely for mirroring and not double as normal access ports.
+             mirror ports be used solely for mirroring and not double as normal access ports.
         type: bool
         required: False
     sampling_rate:
         description:
             - Sampling rate of the session. If its value is n, one of every n packets is mirrored.
-            Valid values are between 1 to 65535, and default value is 1.
+             Valid values are between 1 to 65535, and default value is 1.
         type: int
         required: False
     source_vm_transmitted:
@@ -543,9 +543,9 @@ def main():
         name=dict(type='str', required=True),
         state=dict(type='str', required=True, choices=['present', 'absent']),
         session_type=dict(type='str', default='dvPortMirror', choices=['dvPortMirror',
-                                                               'encapsulatedRemoteMirrorSource',
-                                                               'remoteMirrorDest',
-                                                               'remoteMirrorSource']),
+                                                                       'encapsulatedRemoteMirrorSource',
+                                                                       'remoteMirrorDest',
+                                                                       'remoteMirrorSource']),
         enabled=dict(type='bool', default=True),
         description=dict(type='str'),
         source_port_transmitted=dict(type='str'),
