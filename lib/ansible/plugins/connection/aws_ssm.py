@@ -49,7 +49,6 @@ options:
 import os
 import getpass
 import random
-import re
 import select
 import string
 import subprocess
@@ -204,7 +203,7 @@ class Connection(ConnectionBase):
         session.stdin.write(cmd + "\n")
 
         # echo command status and end marker
-        session.stdin.write("echo $?\n")
+        session.stdin.write("echo $'\\n'$?\n")
         session.stdin.write("echo '" + mark_end + "'\n")
 
         # Read stdout between the markers
@@ -219,8 +218,7 @@ class Connection(ConnectionBase):
                 if line.startswith(mark_end):
                     # Get command return code and throw away ending lines
                     returncode = stdout.splitlines()[-1]
-                    returncode = re.findall(r'\d+$', returncode)[0]
-                    for x in range(0, 2):
+                    for x in range(0, 3):
                         stdout = stdout[:stdout.rfind('\n')]
                     break
                 elif begin:
