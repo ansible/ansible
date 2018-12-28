@@ -8,3 +8,9 @@
 - include: debian.yml
   when:
     - ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+# Revert Trusty python version change.
+- include: cleanup.yml
+  when:
+    - ansible_distribution == 'Ubuntu'
+    - ansible_distribution_release == 'trusty'

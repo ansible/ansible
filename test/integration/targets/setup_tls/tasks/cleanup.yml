@@ -1,0 +1,7 @@
+---
+- name: revert to regular python version
+  file:
+    src: /usr/bin/python3.4
+    dest: /usr/bin/python3
+    state: link
+    force: yes
