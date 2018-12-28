@@ -152,6 +152,7 @@ launch_template:
       based on a LaunchTemplate
     returned: success
     type: complex
+    sample: None
 load_balancer_names:
     description: List of load balancers names attached to the ASG.
     returned: success
@@ -173,6 +174,7 @@ mixed_instances_policy:
       based on a MixedInstancesPolicy
     returned: success
     type: complex
+    sample: None
 new_instances_protected_from_scale_in:
     description: Whether or not new instances a protected from automatic scaling in.
     returned: success
