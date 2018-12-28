@@ -31,7 +31,7 @@ DOCUMENTATION = '''
             description:
                 - Describes the category of what the secret is used for.
                 - Currently, libvirt only supports volume, ceph, iscsi, and tls.
-                - Required when I(state: present).
+                - Required when I(state=present).
             choices:
                 - volume
                 - ceph
@@ -50,13 +50,13 @@ DOCUMENTATION = '''
         ephemeral:
             description:
                 - Whether the secret should only be kept in memory.
-                - Required when I(state: present)
+                - Required when I(state=present)
             type: bool
         private:
             description:
                 - Whether the secret should not be revealed to a caller of libvirt.
                 - If secret is private, it cannot be removed with an absent state.
-                - Required when I(state: present)
+                - Required when I(state=present)
             type: bool
         state:
             description:
@@ -67,7 +67,7 @@ DOCUMENTATION = '''
                 - absent
     notes:
         - Check mode is supported for this module.
-        - The libvirt docs can be found L(here, https://libvirt.org/formatsecret.html)
+        - The libvirt docs can be found at U(https://libvirt.org/formatsecret.html).
     requirements:
         - libvirt
 '''
@@ -137,13 +137,13 @@ RETURN = '''
 uuid:
     description: UUID of changed secret else an empty string
     returned: always
-    type: string
+    type: str
     sample: 50f71783-f894-4acc-8054-4e8f270c4f4b
 
 stderr:
     description: When failed, returns standard error message
     returned: when failed
-    type: string
+    type: str
     sample: failed to get secret a
 '''
 
