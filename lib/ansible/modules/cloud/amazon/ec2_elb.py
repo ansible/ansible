@@ -274,7 +274,7 @@ class ElbManager:
                 break
 
         if ec2_elbs:
-            lbs = sorted(lb for lb in elbs if lb.name in ec2_elbs)
+            lbs = sorted([lb for lb in elbs if lb.name in ec2_elbs], key=lambda lb: lb.__repr__())
         else:
             lbs = []
             for lb in elbs:
