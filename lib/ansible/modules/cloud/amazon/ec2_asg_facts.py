@@ -170,7 +170,7 @@ min_size:
 mixed_instances_policy:
     description: >
       Object containing data about the mixed instance policy for the ASG. Only returned if the ASG is
-    based on a MixedInstancesPolicy
+      based on a MixedInstancesPolicy
     returned: success
     type: complex
 new_instances_protected_from_scale_in:
