@@ -149,7 +149,7 @@ launch_configuration_name:
 launch_template:
     description: >
       Object containing data about the launch template for the ASG. Only returned if the ASG is
-    based on a LaunchTemplate
+      based on a LaunchTemplate
     returned: success
     type: complex
 load_balancer_names:
