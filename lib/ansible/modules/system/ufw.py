@@ -207,7 +207,6 @@ EXAMPLES = '''
 '''
 
 import re
-import os
 
 from operator import itemgetter
 
@@ -243,13 +242,13 @@ def main():
 
     cmds = []
 
-    def execute(cmd):
+    def execute(cmd, ignore_error=False):
         cmd = ' '.join(map(itemgetter(-1), filter(itemgetter(0), cmd)))
 
         cmds.append(cmd)
         (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "en_US"})
 
-        if rc != 0:
+        if rc != 0 and not ignore_error:
             module.fail_json(msg=err or out, commands=cmds)
 
         return out
@@ -262,13 +261,8 @@ def main():
 
         cmd = [[grep_bin], ["-h"], ["'^### tuple'"]]
 
-        existing_user_rules_file = [[f] for f in user_rules_files if os.path.exists(f)]
-
-        if len(existing_user_rules_file) > 0:
-            cmd.extend(existing_user_rules_file)
-            return execute(cmd)
-        else:
-            return ""
+        cmd.extend([[f] for f in user_rules_files])
+        return execute(cmd, ignore_error=True)
 
     def ufw_version():
         """
