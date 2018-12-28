@@ -76,7 +76,6 @@ options:
 
 """
 
-from requests.exceptions import ConnectionError as ReqConnError
 import json
 from ansible.plugins.httpapi import HttpApiBase
 from ansible.module_utils.basic import to_text
