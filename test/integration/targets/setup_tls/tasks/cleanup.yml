@@ -5,3 +5,11 @@
     dest: /usr/bin/python3
     state: link
     force: yes
+
+- name: remove unused packages
+  apt:
+    package: python3.6
+    state: absent
+    autoclean: yes
+    autoremove: yes
+    purge: yes
