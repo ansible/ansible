@@ -140,7 +140,9 @@ launch_config_name:
     type: str
     sample: "public-webapp-production-1"
 launch_configuration_name:
-    description: Name of launch configuration associated with the ASG.
+    description: > 
+      Name of launch configuration associated with the ASG. Only returned if the ASG is based on
+      a Launch Configuration (not LaunchTemplate or MixedInstancesPolicy)
     returned: success
     type: str
     sample: "public-webapp-production-1"
@@ -289,9 +291,11 @@ def find_asgs(conn, module, name=None, tags=None):
                 ],
                 "launch_config_name": "public-webapp-production-1",
                 "launch_configuration_name": "public-webapp-production-1",
+                "launch_template": {}",
                 "load_balancer_names": ["public-webapp-production-lb"],
                 "max_size": 4,
                 "min_size": 2,
+                "mixed_instances_policy: {}"
                 "new_instances_protected_from_scale_in": false,
                 "placement_group": None,
                 "status": None,
@@ -362,8 +366,9 @@ def find_asgs(conn, module, name=None, tags=None):
 
         if matched_name and matched_tags:
             asg = camel_dict_to_snake_dict(asg)
-            # compatibility with ec2_asg module
-            asg['launch_config_name'] = asg['launch_configuration_name']
+            if asg.get('launch_configuration_name'):
+                # compatibility with ec2_asg module
+                asg['launch_config_name'] = asg['launch_configuration_name']
             # workaround for https://github.com/ansible/ansible/pull/25015
             if 'target_group_ar_ns' in asg:
                 asg['target_group_arns'] = asg['target_group_ar_ns']
