@@ -35,7 +35,7 @@ from imp import find_module, load_module
 display = Display()
 
 _CLI_ONLY_MODULES = frozenset(['junos_netconf', 'iosxr_netconf', 'iosxr_config', 'iosxr_command'])
-_NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
+_NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr', 'ne'])
 
 
 class ActionModule(ActionBase):

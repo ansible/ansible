@@ -214,7 +214,8 @@ NETWORK_OS_DEVICE_PARAM_MAP = {
     "ios": "default",
     "dellos10": "default",
     "sros": "alu",
-    "ce": "huawei"
+    "ce": "huawei",
+    "ne": "huaweiyang"
 }
 
 
