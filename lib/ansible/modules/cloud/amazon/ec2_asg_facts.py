@@ -140,12 +140,18 @@ launch_config_name:
     type: str
     sample: "public-webapp-production-1"
 launch_configuration_name:
-    description: > 
+    description: >
       Name of launch configuration associated with the ASG. Only returned if the ASG is based on
       a Launch Configuration (not LaunchTemplate or MixedInstancesPolicy)
     returned: success
     type: str
     sample: "public-webapp-production-1"
+launch_template:
+    description: >
+      Object containing data about the launch template for the ASG. Only returned if the ASG is
+    based on a LaunchTemplate
+    returned: success
+    type: complex
 load_balancer_names:
     description: List of load balancers names attached to the ASG.
     returned: success
@@ -161,6 +167,12 @@ min_size:
     returned: success
     type: int
     sample: 1
+mixed_instances_policy:
+    description: >
+      Object containing data about the mixed instance policy for the ASG. Only returned if the ASG is
+    based on a MixedInstancesPolicy
+    returned: success
+    type: complex
 new_instances_protected_from_scale_in:
     description: Whether or not new instances a protected from automatic scaling in.
     returned: success
