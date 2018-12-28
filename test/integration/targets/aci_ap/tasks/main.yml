@@ -103,6 +103,9 @@
     ap: "{{ fakevar | default(omit) }}"
   register: query_all
 
+- debug:
+    msg: '{{ query_ap_ap.filter_string|urldecode }}'
+
 - name: query assertions
   assert:
     that:
@@ -118,7 +121,7 @@
       - query_ap_ap is not changed
       - query_ap_ap.current != []
       - query_ap_ap.current.0.fvAp is defined
-      - '"query-target-filter=eq(fvAp.name, \"anstest\")" in query_ap_ap.filter_string'
+      - '"query-target-filter=eq(fvAp.name, \"anstest\")" in query_ap_ap.filter_string|urldecode'
       - '"class/fvAp.json" in query_ap_ap.url'
       - query_all is not changed
       - query_all.current | length > 1
