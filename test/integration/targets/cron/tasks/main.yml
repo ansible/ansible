@@ -15,6 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 - block:
+  - set_fact:
+      cron_package: cron
+  - set_fact:
+      cron_package: cronie
+    when: ansible_facts.os_family == "RedHat" or ansible_facts.os_family == "Suse"
   - include: cron.yml
     when: ansible_system == 'Linux'
 

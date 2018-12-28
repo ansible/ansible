@@ -21,7 +21,7 @@
 
 - name: Install crontab dependency for test
   package:
-    name: cron
+    name: "{{ cron_package }}"
     state: present
 
 ##############################################################################
@@ -64,5 +64,6 @@
       - output is changed
       - output is not failed
       - "[] == output.jobs"
-      - "'' == crontab_output.stdout"
+      - "'#Ansible: Test run a job' not in crontab_output.stdout_lines"
+      - "'0 * * * * /bin/date' not in crontab_output.stdout_lines"
 ##############################################################################
