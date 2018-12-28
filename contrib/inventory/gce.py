@@ -493,7 +493,7 @@ class GceInventory(object):
 
             labels = node.extra['labels']
             if labels is not None:
-                for k,v in labels.iteritems():
+                for k, v in labels.items():
                     label = 'label_%s_value_%s' % (k,v)
                     if label in groups:
                         groups[label].append(name)
