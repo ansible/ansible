@@ -1,16 +1,26 @@
 ---
-# Trusty does not have the required Python3.6 available by default
-- include: trusty.yml
-  when:
-    - ansible_distribution == 'Ubuntu'
-    - ansible_distribution_release == 'trusty'
 
-- include: debian.yml
-  when:
-    - ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+- name: verify whether TLS files are already present
+  stat:
+    path: /tls/basic/result/client_certificate.pem
+  register: tls
 
-# Revert Trusty python version change.
-- include: cleanup.yml
-  when:
-    - ansible_distribution == 'Ubuntu'
-    - ansible_distribution_release == 'trusty'
+- block:
+
+  # Trusty does not have the required Python3.6 available by default
+  - include: trusty.yml
+    when:
+      - ansible_distribution == 'Ubuntu'
+      - ansible_distribution_release == 'trusty'
+
+  - include: debian.yml
+    when:
+      - ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+  # Revert Trusty python version change.
+  - include: cleanup.yml
+    when:
+      - ansible_distribution == 'Ubuntu'
+      - ansible_distribution_release == 'trusty'
+
+  when: tls.stat.exists == False
