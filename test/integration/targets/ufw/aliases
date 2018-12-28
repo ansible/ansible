@@ -2,6 +2,6 @@ shippable/posix/group2
 skip/osx
 skip/freebsd
 skip/rhel8.0
+skip/docker
 needs/root
-needs/privileged
 destructive
