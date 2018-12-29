@@ -13,3 +13,9 @@
     autoclean: yes
     autoremove: yes
     purge: yes
+
+- name: remove unused repository
+  apt_repository:
+    repo: ppa:jonathonf/python-3.6
+    filename: python36
+    state: absent

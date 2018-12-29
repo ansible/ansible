@@ -5,7 +5,8 @@
     path: /tls/basic/result/client_certificate.pem
   register: tls
 
-- block:
+- name: only run when TLS files are not present yet
+  block:
 
   # Trusty does not have the required Python3.6 available by default
   - include: trusty.yml
