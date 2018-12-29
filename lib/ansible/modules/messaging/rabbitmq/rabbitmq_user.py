@@ -118,8 +118,44 @@ EXAMPLES = '''
     state: present
 '''
 
+import distutils.version
+import json
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.collections import count
+
+
+def normalized_permissions(vhost_permission_list):
+    """Older versions of RabbitMQ output permissions with slightly different names.
+
+    In older versions of RabbitMQ, the names of the permissions had the `_priv` suffix, which was removed in versions
+    >= 3.7.6. For simplicity we only check the `configure` permission. If it's in the old format then all the other
+    ones will be wrong too.
+    """
+    for vhost_permission in vhost_permission_list:
+        if 'configure_priv' in vhost_permission:
+            yield {
+                'configure': vhost_permission['configure_priv'],
+                'read': vhost_permission['read_priv'],
+                'write': vhost_permission['write_priv'],
+                'vhost': vhost_permission['vhost']
+            }
+        else:
+            yield vhost_permission
+
+
+def as_permission_dict(vhost_permission_list):
+    return dict([(vhost_permission['vhost'], vhost_permission) for vhost_permission
+                 in normalized_permissions(vhost_permission_list)])
+
+
+def only(vhost, vhost_permissions):
+    return {vhost: vhost_permissions.get(vhost, {})}
+
+
+def first(iterable):
+    return next(iter(iterable))
 
 
 class RabbitMqUser(object):
@@ -127,84 +163,175 @@ class RabbitMqUser(object):
                  node, bulk_permissions=False):
         self.module = module
         self.username = username
-        self.password = password
+        self.password = password or ''
         self.node = node
-        if not tags:
-            self.tags = list()
-        else:
-            self.tags = tags.split(',')
-
-        self.permissions = permissions
+        self.tags = list() if not tags else tags.replace(' ', '').split(',')
+        self.permissions = as_permission_dict(permissions)
         self.bulk_permissions = bulk_permissions
 
-        self._tags = None
-        self._permissions = []
+        self.existing_tags = None
+        self.existing_permissions = dict()
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
+        self._version = self._check_version()
 
-    def _exec(self, args, run_in_check_mode=False, check_rc=True):
-        if not self.module.check_mode or run_in_check_mode:
-            cmd = [self._rabbitmqctl, '-q']
-            if self.node:
-                cmd.extend(['-n', self.node])
-            rc, out, err = self.module.run_command(cmd + args, check_rc=check_rc)
-            return out.splitlines()
-        return list()
+    def _check_version(self):
+        """Get the version of the RabbitMQ server."""
+        version = self._rabbitmq_version_post_3_7(fail_on_error=False)
+        if not version:
+            version = self._rabbitmq_version_pre_3_7(fail_on_error=False)
+        if not version:
+            self.module.fail_json(msg="Could not determine the version of the RabbitMQ server.")
+        return version
+
+    def _fail(self, msg, stop_execution=False):
+        if stop_execution:
+            self.module.fail_json(msg=msg)
+        # This is a dummy return to prevent linters from throwing errors.
+        return None
+
+    def _rabbitmq_version_post_3_7(self, fail_on_error=False):
+        """Use the JSON formatter to get a machine readable output of the version.
+
+        At this point we do not know which RabbitMQ server version we are dealing with and which
+        version of `rabbitmqctl` we are using, so we will try to use the JSON formatter and see
+        what happens. In some versions of
+        """
+        def int_list_to_str(ints):
+            return ''.join([chr(i) for i in ints])
+
+        rc, output, err = self._exec(['status', '--formatter', 'json'], check_rc=False)
+        if rc != 0:
+            return self._fail(msg="Could not parse the version of the RabbitMQ server, "
+                                  "because `rabbitmqctl status` returned no output.",
+                              stop_execution=fail_on_error)
+        try:
+            status_json = json.loads(output)
+            if 'rabbitmq_version' in status_json:
+                return distutils.version.StrictVersion(status_json['rabbitmq_version'])
+            for application in status_json.get('running_applications', list()):
+                if application[0] == 'rabbit':
+                    if isinstance(application[1][0], int):
+                        return distutils.version.StrictVersion(int_list_to_str(application[2]))
+                    else:
+                        return distutils.version.StrictVersion(application[1])
+            return self._fail(msg="Could not find RabbitMQ version of `rabbitmqctl status` command.",
+                              stop_execution=fail_on_error)
+        except ValueError as e:
+            return self._fail(msg="Could not parse output of `rabbitmqctl status` as JSON: {exc}.".format(exc=repr(e)),
+                              stop_execution=fail_on_error)
+
+    def _rabbitmq_version_pre_3_7(self, fail_on_error=False):
+        """Get the version of the RabbitMQ Server.
+
+        Before version 3.7.6 the `rabbitmqctl` utility did not support the
+        `--formatter` flag, so the output has to be parsed using regular expressions.
+        """
+        version_reg_ex = r"{rabbit,\"RabbitMQ\",\"([0-9]+\.[0-9]+\.[0-9]+)\"}"
+        rc, output, err = self._exec(['status'], check_rc=False)
+        if rc != 0:
+            if fail_on_error:
+                self.module.fail_json(msg="Could not parse the version of the RabbitMQ server, because"
+                                          " `rabbitmqctl status` returned no output.")
+            else:
+                return None
+        reg_ex_res = re.search(version_reg_ex, output, re.IGNORECASE)
+        if not reg_ex_res:
+            return self._fail(msg="Could not parse the version of the RabbitMQ server from the output of "
+                                  "`rabbitmqctl status` command: {output}.".format(output=output),
+                              stop_execution=fail_on_error)
+        try:
+            return distutils.version.StrictVersion(reg_ex_res.group(1))
+        except ValueError as e:
+            return self._fail(msg="Could not parse the version of the RabbitMQ server: {exc}.".format(exc=repr(e)),
+                              stop_execution=fail_on_error)
+
+    def _exec(self, args, check_rc=True):
+        """Execute a command using the `rabbitmqctl` utility.
+
+        By default the _exec call will cause the module to fail, if the error code is non-zero. If the `check_rc`
+        flag is set to False, then the exit_code, stdout and stderr will be returned to the calling function to
+        perform whatever error handling it needs.
+
+        :param args: the arguments to pass to the `rabbitmqctl` utility
+        :param check_rc: when set to True, fail if the utility's exit code is non-zero
+        :return: the output of the command or all the outputs plus the error code in case of error
+        """
+        cmd = [self._rabbitmqctl, '-q']
+        if self.node:
+            cmd.extend(['-n', self.node])
+        rc, out, err = self.module.run_command(cmd + args)
+        if check_rc and rc != 0:
+            # check_rc is not passed to the `run_command` method directly to allow for more fine grained checking of
+            # error messages returned by `rabbitmqctl`.
+            user_error_msg_regex = r"(Only root or .* .* run rabbitmqctl)"
+            user_error_msg = re.search(user_error_msg_regex, out)
+            if user_error_msg:
+                self.module.fail_json(msg="Wrong user used to run the `rabbitmqctl` utility: {err}"
+                                      .format(err=user_error_msg.group(1)))
+            else:
+                self.module.fail_json(msg="rabbitmqctl exited with non-zero code: {err}".format(err=err),
+                                      rc=rc, stdout=out)
+        return out if check_rc else (rc, out, err)
 
     def get(self):
-        users = self._exec(['list_users'], True)
+        """Retrieves the list of registered users from the node.
 
-        for user_tag in users:
-            if '\t' not in user_tag:
-                continue
+        If the user is already present, the node will also be queried for the user's permissions.
+        If the version of the node is >= 3.7.6 the JSON formatter will be used, otherwise the plaintext will be
+        parsed.
+        """
+        if self._version >= distutils.version.StrictVersion('3.7.6'):
+            users = dict([(user_entry['user'], user_entry['tags'])
+                          for user_entry in json.loads(self._exec(['list_users', '--formatter', 'json']))])
+        else:
+            users = self._exec(['list_users'])
 
-            user, tags = user_tag.split('\t')
+            def process_tags(tags):
+                if not tags:
+                    return list()
+                return tags.replace('[', '').replace(']', '').replace(' ', '').strip('\t').split(',')
 
-            if user == self.username:
-                for c in ['[', ']', ' ']:
-                    tags = tags.replace(c, '')
+            users_and_tags = [user_entry.split('\t') for user_entry in users.strip().split('\n')]
+            users = dict([(user, process_tags(tags)) for user, tags in users_and_tags])
 
-                if tags != '':
-                    self._tags = tags.split(',')
-                else:
-                    self._tags = list()
-
-                self._permissions = self._get_permissions()
-                return True
-        return False
+        self.existing_tags = users.get(self.username, list())
+        self.existing_permissions = self._get_permissions() if self.username in users else dict()
+        return self.username in users
 
     def _get_permissions(self):
         """Get permissions of the user from RabbitMQ."""
-        perms_out = [perm for perm in self._exec(['list_user_permissions', self.username], True) if perm.strip()]
+        if self._version >= distutils.version.StrictVersion('3.7.6'):
+            permissions = json.loads(self._exec(['list_user_permissions', self.username, '--formatter', 'json']))
+        else:
+            output = self._exec(['list_user_permissions', self.username]).strip().split('\n')
+            perms_out = [perm.split('\t') for perm in output if perm.strip()]
+            # Filter out headers from the output of the command in case they are still present
+            perms_out = [perm for perm in perms_out if perm != ["vhost", "configure", "write", "read"]]
 
-        perms_list = list()
-        for perm in perms_out:
-            vhost, configure_priv, write_priv, read_priv = perm.split('\t')
-            if not self.bulk_permissions:
-                if vhost == self.permissions[0]['vhost']:
-                    perms_list.append(dict(vhost=vhost, configure_priv=configure_priv,
-                                           write_priv=write_priv, read_priv=read_priv))
-                    break
-            else:
-                perms_list.append(dict(vhost=vhost, configure_priv=configure_priv,
-                                       write_priv=write_priv, read_priv=read_priv))
-        return perms_list
+            permissions = list()
+            for vhost, configure, write, read in perms_out:
+                permissions.append(dict(vhost=vhost, configure=configure, write=write, read=read))
+
+        if self.bulk_permissions:
+            return as_permission_dict(permissions)
+        else:
+            return only(first(self.permissions.keys()), as_permission_dict(permissions))
 
     def check_password(self):
-        return self._exec(['authenticate_user', self.username, self.password],
-                          run_in_check_mode=True, check_rc=False)
+        """Return `True` if the user can authenticate successfully."""
+        rc, out, err = self._exec(['authenticate_user', self.username, self.password], check_rc=False)
+        return rc == 0
 
     def add(self):
-        if self.password is not None:
-            self._exec(['add_user', self.username, self.password])
-        else:
-            self._exec(['add_user', self.username, ''])
+        self._exec(['add_user', self.username, self.password or ''])
+        if not self.password:
             self._exec(['clear_password', self.username])
 
     def delete(self):
         self._exec(['delete_user', self.username])
 
     def change_password(self):
-        if self.password is not None:
+        if self.password:
             self._exec(['change_password', self.username, self.password])
         else:
             self._exec(['clear_password', self.username])
@@ -213,28 +340,30 @@ class RabbitMqUser(object):
         self._exec(['set_user_tags', self.username] + self.tags)
 
     def set_permissions(self):
-        permissions_to_clear = [permission for permission in self._permissions if permission not in self.permissions]
-        permissions_to_add = [permission for permission in self.permissions if permission not in self._permissions]
-        for permission in permissions_to_clear:
-            cmd = 'clear_permissions -p {vhost} {username}'.format(username=self.username,
-                                                                   vhost=permission['vhost'])
+        permissions_to_add = list()
+        for vhost, permission_dict in self.permissions.items():
+            if permission_dict != self.existing_permissions.get(vhost, {}):
+                permissions_to_add.append(permission_dict)
+
+        permissions_to_clear = list()
+        for vhost in self.existing_permissions.keys():
+            if vhost not in self.permissions:
+                permissions_to_clear.append(vhost)
+
+        for vhost in permissions_to_clear:
+            cmd = 'clear_permissions -p {vhost} {username}'.format(username=self.username, vhost=vhost)
             self._exec(cmd.split(' '))
-        for permission in permissions_to_add:
-            cmd = ('set_permissions -p {vhost} {username} {configure_priv} {write_priv} {read_priv}'
-                   .format(username=self.username, **permission))
+        for permissions in permissions_to_add:
+            cmd = ('set_permissions -p {vhost} {username} {configure} {write} {read}'
+                   .format(username=self.username, **permissions))
             self._exec(cmd.split(' '))
+        self.existing_permissions = self._get_permissions()
 
     def has_tags_modifications(self):
-        return set(self.tags) != set(self._tags)
+        return set(self.tags) != set(self.existing_tags)
 
     def has_permissions_modifications(self):
-        def to_permission_tuple(vhost_permission_dict):
-            return vhost_permission_dict['vhost'], vhost_permission_dict
-
-        def permission_dict(vhost_permission_list):
-            return dict(map(to_permission_tuple, vhost_permission_list))
-
-        return permission_dict(self._permissions) != permission_dict(self.permissions)
+        return self.existing_permissions != self.permissions
 
 
 def main():
@@ -271,9 +400,10 @@ def main():
     update_password = module.params['update_password']
 
     if permissions:
-        vhosts = map(lambda permission: permission.get('vhost', '/'), permissions)
-        if any(map(lambda count: count > 1, count(vhosts).values())):
-            module.fail_json(msg="Error parsing permissions: You can't have two permission dicts for the same vhost")
+        vhosts = [permission.get('vhost', '/') for permission in permissions]
+        if any([vhost_count > 1 for vhost_count in count(vhosts).values()]):
+            module.fail_json(msg="Error parsing vhost permissions: You can't "
+                                 "have two permission dicts for the same vhost")
         bulk_permissions = True
     else:
         perm = {
@@ -284,6 +414,11 @@ def main():
         }
         permissions.append(perm)
         bulk_permissions = False
+
+    for permission in permissions:
+        if not permission['vhost']:
+            module.fail_json(msg="Error parsing vhost permissions: You can't"
+                                 "have an empty vhost when setting permissions")
 
     rabbitmq_user = RabbitMqUser(module, username, password, tags, permissions,
                                  node, bulk_permissions=bulk_permissions)

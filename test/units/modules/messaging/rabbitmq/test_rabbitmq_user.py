@@ -86,6 +86,33 @@ class TestRabbitMQUserModule(ModuleTestCase):
 
     @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.has_tags_modifications')
+    def test_same_permissions_parsed_and_not_changed(self, has_tags_modifications, _exec, get_bin_path):
+        """Test that user permissions are passed correctly.
+
+        This test is aimed to ensure that Ansible can parse the response of version >= RabbitMQ v3.7.9
+        where a response looks like this:
+        > rabbitmqctl list_user_permissions admin
+        vhost   configure    write     read
+          /        ^$         ^$        ^$
+        """
+        set_module_args({
+            'user': 'someuser',
+            'password': 'somepassword',
+            'state': 'present',
+            'permissions': [{'vhost': '/', 'configure_priv': '.*', 'write_priv': '.*', 'read_priv': '.*'}],
+        })
+        _exec.side_effect = [['someuser\t[]'], ['vhost\tconfigure\twrite\tread', '/\t.*\t.*\t.*']]
+        get_bin_path.return_value = '/rabbitmqctl'
+        has_tags_modifications.return_value = False
+        try:
+            self.module.main()
+        except AnsibleExitJson as e:
+            self._assert(e, 'changed', False)
+            self._assert(e, 'state', 'present')
+
+    @patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
+    @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._exec')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser._get_permissions')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.set_permissions')
     @patch('ansible.modules.messaging.rabbitmq.rabbitmq_user.RabbitMqUser.has_tags_modifications')
