@@ -80,6 +80,7 @@ DOCUMENTATION = '''
 import os
 import time
 import re
+from collections import OrderedDict
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
@@ -89,16 +90,6 @@ try:
     HAS_JUNIT_XML = True
 except ImportError:
     HAS_JUNIT_XML = False
-
-try:
-    from collections import OrderedDict
-    HAS_ORDERED_DICT = True
-except ImportError:
-    try:
-        from ordereddict import OrderedDict
-        HAS_ORDERED_DICT = True
-    except ImportError:
-        HAS_ORDERED_DICT = False
 
 
 class CallbackModule(CallbackBase):
@@ -166,12 +157,7 @@ class CallbackModule(CallbackBase):
             self._display.warning('The `junit_xml` python module is not installed. '
                                   'Disabling the `junit` callback plugin.')
 
-        if HAS_ORDERED_DICT:
-            self._task_data = OrderedDict()
-        else:
-            self.disabled = True
-            self._display.warning('The `ordereddict` python module is not installed. '
-                                  'Disabling the `junit` callback plugin.')
+        self._task_data = OrderedDict()
 
         if not os.path.exists(self._output_dir):
             os.makedirs(self._output_dir)

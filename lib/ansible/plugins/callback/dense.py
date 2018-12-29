@@ -20,13 +20,6 @@ requirements:
 - set as stdout in configuation
 '''
 
-HAS_OD = False
-try:
-    from collections import OrderedDict
-    HAS_OD = True
-except ImportError:
-    pass
-
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
@@ -34,6 +27,7 @@ from ansible.utils.color import colorize, hostcolor
 from ansible.utils.display import Display
 
 import sys
+from collections import OrderedDict
 
 display = Display()
 
@@ -160,38 +154,32 @@ class CallbackModule_dense(CallbackModule_default):
         # From CallbackModule
         self._display = display
 
-        if HAS_OD:
+        self.super_ref = super(CallbackModule, self)
+        self.super_ref.__init__()
 
-            self.disabled = False
-            self.super_ref = super(CallbackModule, self)
-            self.super_ref.__init__()
+        # Attributes to remove from results for more density
+        self.removed_attributes = (
+            #                'changed',
+            'delta',
+            #                'diff',
+            'end',
+            'failed',
+            'failed_when_result',
+            'invocation',
+            'start',
+            'stdout_lines',
+        )
 
-            # Attributes to remove from results for more density
-            self.removed_attributes = (
-                #                'changed',
-                'delta',
-                #                'diff',
-                'end',
-                'failed',
-                'failed_when_result',
-                'invocation',
-                'start',
-                'stdout_lines',
-            )
+        # Initiate data structures
+        self.hosts = OrderedDict()
+        self.keep = False
+        self.shown_title = False
+        self.count = dict(play=0, handler=0, task=0)
+        self.type = 'foo'
 
-            # Initiate data structures
-            self.hosts = OrderedDict()
-            self.keep = False
-            self.shown_title = False
-            self.count = dict(play=0, handler=0, task=0)
-            self.type = 'foo'
-
-            # Start immediately on the first line
-            sys.stdout.write(vt100.reset + vt100.save + vt100.clearline)
-            sys.stdout.flush()
-        else:
-            display.warning("The 'dense' callback plugin requires OrderedDict which is not available in this version of python, disabling.")
-            self.disabled = True
+        # Start immediately on the first line
+        sys.stdout.write(vt100.reset + vt100.save + vt100.clearline)
+        sys.stdout.flush()
 
     def __del__(self):
         sys.stdout.write(vt100.restore + vt100.reset + '\n' + vt100.save + vt100.clearline)
@@ -492,7 +480,7 @@ class CallbackModule_dense(CallbackModule_default):
 
 
 # When using -vv or higher, simply do the default action
-if display.verbosity >= 2 or not HAS_OD:
+if display.verbosity >= 2:
     CallbackModule = CallbackModule_default
 else:
     CallbackModule = CallbackModule_dense
