@@ -88,6 +88,8 @@ function cleanup
         # upload coverage report to codecov.io only when using complete on-demand coverage
         if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ]; then
             for file in test/results/reports/coverage=*.xml; do
+                ls -l "${file}"
+
                 flags="${file##*/coverage=}"
                 flags="${flags%.xml}"
                 flags="${flags//=/,}"
