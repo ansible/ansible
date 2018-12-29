@@ -372,8 +372,13 @@ def get_unlabeled_device_info(device, unit):
     parted cannot work because of a missing label. It always returns a 'unknown'
     label.
     """
-    device_name = os.path.basename(device)
-    base = "/sys/block/%s" % device_name
+    if os.path.islink(device):
+        devicelink = os.readlink(device)
+        device_name = os.path.basename(devicelink)
+        base = "/sys/block/%s" % device_name
+    else:
+        device_name = os.path.basename(device)
+        base = "/sys/block/%s" % device_name
 
     vendor = read_record(base + "/device/vendor", "Unknown")
     model = read_record(base + "/device/model", "model")
