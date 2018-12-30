@@ -5,15 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-try:
-    import botocore
-except ImportError:
-    pass  # handled by AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, snake_dict_to_camel_dict
-from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -224,6 +216,13 @@ cluster:
             returned: success
             type: boolean
 '''
+
+try:
+    import botocore
+except ImportError:
+    pass  # handled by AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec, snake_dict_to_camel_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 
 def _collect_facts(resource):
     """Transfrom cluster information to dict."""
