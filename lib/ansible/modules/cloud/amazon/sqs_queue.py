@@ -219,7 +219,7 @@ def update_sqs_queue(queue,
 
 
 def set_queue_attribute(queue, attribute, value, check_mode=False):
-    if not value and value != 0:
+    if not value and value not in (0, {}):
         return False
 
     try:
@@ -229,7 +229,7 @@ def set_queue_attribute(queue, attribute, value, check_mode=False):
 
     # convert dict attributes to JSON strings (sort keys for comparing)
     if attribute in ['Policy', 'RedrivePolicy']:
-        value = json.dumps(value, sort_keys=True)
+        value = json.dumps(value, sort_keys=True) if value else ''
         if existing_value:
             existing_value = json.dumps(json.loads(existing_value), sort_keys=True)
 
