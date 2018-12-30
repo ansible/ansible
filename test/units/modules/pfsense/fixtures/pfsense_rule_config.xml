@@ -248,6 +248,20 @@
 				</sep0>
 			</lan>
 			<opt1></opt1>
+			<opt2>
+							<sep0>
+											<row>fr0</row>
+											<text><![CDATA[test_sep1]]></text>
+											<color>bg-info</color>
+											<if>opt2</if>
+							</sep0>
+							<sep1>
+											<row>fr3</row>
+											<text><![CDATA[test_sep2]]></text>
+											<color>bg-info</color>
+											<if>opt2</if>
+							</sep1>
+			</opt2>
 		</separator>
 		<rule>
 			<updated>
@@ -396,6 +410,60 @@
 			<statetype>keep state</statetype>
 			<source>
 				<any></any>
+			</source>
+			<tracker>1545574416</tracker>
+			<interface>lan</interface>
+			<ipprotocol>inet</ipprotocol>
+			<type>pass</type>
+			<id></id>
+		</rule>
+		<rule>
+			<updated>
+				<username></username>
+				<time>1545574416</time>
+			</updated>
+			<protocol>tcp</protocol>
+			<log></log>
+			<descr>not_rule_dst</descr>
+			<created>
+				<username></username>
+				<time>1545574416</time>
+			</created>
+			<destination>
+				<address>srv_admin</address>
+				<not></not>
+				<port>port_ssh</port>
+			</destination>
+			<statetype>keep state</statetype>
+			<source>
+				<any></any>
+			</source>
+			<tracker>1545574416</tracker>
+			<interface>lan</interface>
+			<ipprotocol>inet</ipprotocol>
+			<type>pass</type>
+			<id></id>
+		</rule>
+		<rule>
+			<updated>
+				<username></username>
+				<time>1545574416</time>
+			</updated>
+			<protocol>tcp</protocol>
+			<log></log>
+			<descr>not_rule_src</descr>
+			<created>
+				<username></username>
+				<time>1545574416</time>
+			</created>
+			<destination>
+				<any></any>
+				<port>port_ssh</port>
+			</destination>
+			<statetype>keep state</statetype>
+			<source>
+				<address>srv_admin</address>
+				<not></not>
 			</source>
 			<tracker>1545574416</tracker>
 			<interface>lan</interface>
@@ -1308,6 +1376,102 @@
 			<ipprotocol>inet</ipprotocol>
 			<type>pass</type>
 			<id></id>
+			</rule>
+			<rule>
+							<id></id>
+							<tracker>1546111216</tracker>
+							<type>pass</type>
+							<interface>opt2</interface>
+							<ipprotocol>inet</ipprotocol>
+							<tag></tag>
+							<tagged></tagged>
+							<max></max>
+							<max-src-nodes></max-src-nodes>
+							<max-src-conn></max-src-conn>
+							<max-src-states></max-src-states>
+							<statetimeout></statetimeout>
+							<statetype><![CDATA[keep state]]></statetype>
+							<os></os>
+							<protocol>tcp</protocol>
+							<source>
+											<any></any>
+							</source>
+							<destination>
+											<any></any>
+							</destination>
+							<descr><![CDATA[r1]]></descr>
+							<updated>
+											<time>1546111216</time>
+											<username>admin</username>
+							</updated>
+							<created>
+											<time>1546111216</time>
+											<username>admin</username>
+							</created>
+			</rule>
+			<rule>
+							<id></id>
+							<tracker>1546111271</tracker>
+							<type>pass</type>
+							<interface>opt2</interface>
+							<ipprotocol>inet</ipprotocol>
+							<tag></tag>
+							<tagged></tagged>
+							<max></max>
+							<max-src-nodes></max-src-nodes>
+							<max-src-conn></max-src-conn>
+							<max-src-states></max-src-states>
+							<statetimeout></statetimeout>
+							<statetype><![CDATA[keep state]]></statetype>
+							<os></os>
+							<protocol>tcp</protocol>
+							<source>
+											<any></any>
+							</source>
+							<destination>
+											<any></any>
+							</destination>
+							<descr><![CDATA[r2]]></descr>
+							<updated>
+											<time>1546111271</time>
+											<username>admin</username>
+							</updated>
+							<created>
+											<time>1546111271</time>
+											<username>admin</username>
+							</created>
+			</rule>
+			<rule>
+							<id></id>
+							<tracker>1546111294</tracker>
+							<type>pass</type>
+							<interface>opt2</interface>
+							<ipprotocol>inet</ipprotocol>
+							<tag></tag>
+							<tagged></tagged>
+							<max></max>
+							<max-src-nodes></max-src-nodes>
+							<max-src-conn></max-src-conn>
+							<max-src-states></max-src-states>
+							<statetimeout></statetimeout>
+							<statetype><![CDATA[keep state]]></statetype>
+							<os></os>
+							<protocol>tcp</protocol>
+							<source>
+											<any></any>
+							</source>
+							<destination>
+											<any></any>
+							</destination>
+							<descr><![CDATA[r3]]></descr>
+							<updated>
+											<time>1546111294</time>
+											<username>admin</username>
+							</updated>
+							<created>
+											<time>1546111294</time>
+											<username>admin</username>
+							</created>
 			</rule>
 		</filter>
 	<shaper></shaper>

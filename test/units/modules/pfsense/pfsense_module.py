@@ -153,13 +153,13 @@ class TestPFSenseModule(ModuleTestCase):
     def assert_find_xml_elt(self, tag, elt_name):
         elt = tag.find(elt_name)
         if elt is None:
-            self.fail('Element not found: ' + elt_name + ' (in tag ' + tag.tag + ')')
+            self.fail('Element not found: ' + elt_name)
         return elt
 
     def assert_not_find_xml_elt(self, tag, elt_name):
         elt = tag.find(elt_name)
         if elt is not None:
-            self.fail('Element found: ' + elt_name + ' (in tag ' + tag.tag + ')')
+            self.fail('Element found: ' + elt_name)
         return elt
 
     def assert_xml_elt_equal(self, tag, elt_name, elt_value):
@@ -170,10 +170,10 @@ class TestPFSenseModule(ModuleTestCase):
             self.fail('Element <' + elt_name + '> differs. Expected: \'' + elt_value + '\' result: \'' + elt.text + '\'')
         return elt
 
-    def assert_xml_elt_is_none(self, tag, elt_name):
+    def assert_xml_elt_is_none_or_empty(self, tag, elt_name):
         elt = tag.find(elt_name)
         if elt is None:
             self.fail('Element not found: ' + elt_name)
-        if elt.text is not None:
+        if elt.text is not None and elt.text:
             self.fail('Element <' + elt_name + '> differs. Expected: NoneType result: \'' + elt.text + '\'')
         return elt

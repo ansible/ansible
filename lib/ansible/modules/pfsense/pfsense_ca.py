@@ -50,6 +50,10 @@ EXAMPLES = """
     state: absent
 """
 
+RETURN = """
+
+"""
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pfsense.pfsense import PFSenseModule
 
@@ -87,8 +91,6 @@ class pfSenseCA(object):
         changed = False
         rc = 0
         crl = {}
-        stdout = ''
-        stderr = ''
         diff = {}
         if 'crl' in ca:
             crl['method'] = 'existing'
@@ -131,14 +133,12 @@ class pfSenseCA(object):
         diff['after'] = self.pfsense.element_to_dict(caEl)
         if 'text' in crl:
             diff['after']['crl'] = crl['text']
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=changed, diff=diff)
+        self.module.exit_json(changed=changed, diff=diff)
 
     def remove(self, ca):
         caEl, i = self._find_ca(ca['descr'])
         changed = False
         rc = 0
-        stdout = ''
-        stderr = ''
         diff = {}
         diff['after'] = {}
         if caEl is not None:
@@ -153,7 +153,7 @@ class pfSenseCA(object):
             diff['before'] = {}
         if changed and not self.module.check_mode:
             self.pfsense.write_config(descr='ansible pfsense_ca removed "%s"' % (ca['descr']))
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=changed, diff=diff)
+        self.module.exit_json(changed=changed, diff=diff)
 
 
 def main():

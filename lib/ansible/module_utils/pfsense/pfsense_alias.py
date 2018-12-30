@@ -60,7 +60,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
             diff['after'] = self.diff['after']
         if 'before' in self.diff:
             diff['before'] = self.diff['before']
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=self.changed, diff=diff)
+        self.module.exit_json(stdout=stdout, stderr=stderr, changed=self.changed, diff=diff, result=self.results)
 
     def add(self, alias):
         """ add or update alias """

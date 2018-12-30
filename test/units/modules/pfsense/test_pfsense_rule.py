@@ -4,15 +4,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import unittest
 
-from copy import copy
 from xml.etree.ElementTree import fromstring, ElementTree
-
 from units.compat.mock import patch
-from units.modules.utils import set_module_args
 from ansible.modules.pfsense import pfsense_rule
-
 from .pfsense_module import TestPFSenseModule, load_fixture
 
 
@@ -83,6 +78,9 @@ class TestPFSenseRuleModule(TestPFSenseModule):
         """ return address parsed in dict """
         parts = addr.split(':')
         res = {}
+        if parts[0][0] == '!':
+            res['not'] = None
+            parts[0] = parts[0][1:]
         if parts[0] == 'any':
             res['any'] = None
         elif parts[0] == '(self)':
@@ -116,6 +114,9 @@ class TestPFSenseRuleModule(TestPFSenseModule):
             self.assert_not_find_xml_elt(addr_elt, 'network')
             self.assert_not_find_xml_elt(addr_elt, 'any')
 
+        if 'not' not in addr_dict:
+            self.assert_not_find_xml_elt(addr_elt, 'not')
+
     def check_rule_elt(self, rule):
         """ test the xml definition of rule """
         rule['interface'] = self.unalias_interface(rule['interface'])
@@ -129,7 +130,7 @@ class TestPFSenseRuleModule(TestPFSenseModule):
 
         # checking log option
         if 'log' in rule and rule['log'] == 'yes':
-            self.assert_xml_elt_is_none(rule_elt, 'log')
+            self.assert_xml_elt_is_none_or_empty(rule_elt, 'log')
         elif 'log' not in rule or rule['log'] == 'no':
             self.assert_not_find_xml_elt(rule_elt, 'log')
 
@@ -174,13 +175,19 @@ class TestPFSenseRuleModule(TestPFSenseModule):
 
     def check_rule_idx(self, rule, target_idx):
         """ test the xml position of rule """
+        floating = 'floating' in rule and rule['floating'] == 'yes'
         rule['interface'] = self.unalias_interface(rule['interface'])
         rules_elt = self.assert_find_xml_elt(self.xml_result, 'filter')
         idx = -1
         for rule_elt in rules_elt:
             interface_elt = rule_elt.find('interface')
-            if interface_elt is None or interface_elt.text is None or interface_elt.text != rule['interface']:
+            floating_elt = rule_elt.find('floating')
+            floating_rule = floating_elt is not None and floating_elt.text == 'yes'
+            if floating and not floating_rule:
                 continue
+            elif not floating:
+                if floating_rule or interface_elt is None or interface_elt.text is None or interface_elt.text != rule['interface']:
+                    continue
             idx += 1
             descr_elt = rule_elt.find('descr')
             self.assertIsNotNone(descr_elt)
@@ -190,392 +197,17 @@ class TestPFSenseRuleModule(TestPFSenseModule):
                 return
         self.fail('rule not found ' + str(idx))
 
-    def do_rule_creation_test(self, rule, failed=False):
-        """ test creation of a new rule """
-        set_module_args(args_from_var(rule))
-        self.execute_module(changed=True, failed=failed)
-        if failed:
-            self.assertFalse(self.load_xml_result())
-        else:
-            self.check_rule_elt(rule)
-
-    def do_rule_deletion_test(self, rule):
-        """ test deletion of a rule """
-        set_module_args(args_from_var(rule, 'absent'))
-        self.execute_module(changed=True)
-        self.assert_has_xml_tag('filter', dict(name=rule['name'], interface=rule['interface']), absent=True)
-
-    def do_rule_update_test(self, rule, failed=False, **kwargs):
-        """ test updating field of an host alias """
-        target = copy(rule)
-        target.update(kwargs)
-        set_module_args(args_from_var(target))
-        self.execute_module(changed=True)
-        if failed:
-            self.assertFalse(self.load_xml_result())
-        else:
-            self.check_rule_elt(target)
-
-    ############################
-    # rule creation tests
-    #
-    def test_rule_create_one_rule(self):
-        """ test creation of a new rule """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_create_log(self):
-        """ test creation of a new rule with logging """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', log='yes')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_nolog(self):
-        """ test creation of a new rule without logging """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', log='no')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_pass(self):
-        """ test creation of a new rule explictly passing """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', action='pass')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_block(self):
-        """ test creation of a new rule blocking """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', action='block')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_reject(self):
-        """ test creation of a new rule rejecting """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', action='reject')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_disabled(self):
-        """ test creation of a new disabled rule """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', disabled=True)
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_floating(self):
-        """ test creation of a new floating rule """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', floating='yes', direction='any')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_nofloating(self):
-        """ test creation of a new non-floating rule """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', floating='no')
-        self.do_rule_creation_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_create_floating_interfaces(self):
-        """ test creation of a floating rule on two interfaces """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan,wan', floating='yes', direction='any')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_inet46(self):
-        """ test creation of a new rule using ipv4 and ipv6 """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', ipprotocol='inet46')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_inet6(self):
-        """ test creation of a new rule using ipv6 """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', ipprotocol='inet6')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_tcp(self):
-        """ test creation of a new rule for tcp protocol """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', protocol='tcp')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_udp(self):
-        """ test creation of a new rule for udp protocol """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', protocol='udp')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_tcp_udp(self):
-        """ test creation of a new rule for tcp/udp protocols """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', protocol='tcp/udp')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_icmp(self):
-        """ test creation of a new rule for icmp protocol """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', protocol='icmp')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_protocol_any(self):
-        """ test creation of a new rule for (self) """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', protocol='any')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_state_keep(self):
-        """ test creation of a new rule with explicit keep state """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', statetype='keepstate')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_state_sloppy(self):
-        """ test creation of a new rule with sloppy state """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', statetype='sloppy state')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_state_synproxy(self):
-        """ test creation of a new rule with synproxy state """
-        # todo: synproxy is only valid with tcp
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', statetype='synproxy state')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_state_none(self):
-        """ test creation of a new rule with no state """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', statetype=None)
-        self.do_rule_creation_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_create_state_invalid(self):
-        """ test creation of a new rule with invalid state """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', statetype='acme state')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_after(self):
-        """ test creation of a new rule after another """
-        rule = dict(name='one_rule', source='any', destination='any', interface='vpn', after='admin_bypass')
-        self.do_rule_creation_test(rule)
-        self.check_rule_idx(rule, 13)
-
-    def test_rule_create_after_top(self):
-        """ test creation of a new rule at top """
-        rule = dict(name='one_rule', source='any', destination='any', interface='wan', after='top')
-        self.do_rule_creation_test(rule)
-        self.check_rule_idx(rule, 0)
-
-    def test_rule_create_after_invalid(self):
-        """ test creation of a new rule after an invalid rule """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', after='admin_bypass')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_before(self):
-        """ test creation of a new rule before another """
-        rule = dict(name='one_rule', source='any', destination='any', interface='vpn', before='admin_bypass')
-        self.do_rule_creation_test(rule)
-        self.check_rule_idx(rule, 12)
-
-    def test_rule_create_before_bottom(self):
-        """ test creation of a new rule at bottom """
-        rule = dict(name='one_rule', source='any', destination='any', interface='wan', before='bottom')
-        self.do_rule_creation_test(rule)
-        self.check_rule_idx(rule, 5)
-
-    def test_rule_create_before_bottom_default(self):
-        """ test creation of a new rule at bottom (default) """
-        rule = dict(name='one_rule', source='any', destination='any', interface='wan', action='pass')
-        self.do_rule_creation_test(rule)
-        self.check_rule_idx(rule, 5)
-
-    def test_rule_create_before_invalid(self):
-        """ test creation of a new rule before an invalid rule """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', before='admin_bypass')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_source_alias_invalid(self):
-        """ test creation of a new rule with an invalid source alias """
-        rule = dict(name='one_rule', source='acme', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_source_ip_invalid(self):
-        """ test creation of a new rule with an invalid source ip """
-        rule = dict(name='one_rule', source='192.193.194.195.196', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_source_net_invalid(self):
-        """ test creation of a new rule with an invalid source network """
-        rule = dict(name='one_rule', source='192.193.194.195/256', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_destination_alias_invalid(self):
-        """ test creation of a new rule with an invalid destination alias """
-        rule = dict(name='one_rule', source='any', destination='acme', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_destination_ip_invalid(self):
-        """ test creation of a new rule with an invalid destination ip """
-        rule = dict(name='one_rule', source='any', destination='192.193.194.195.196', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_destination_net_invalid(self):
-        """ test creation of a new rule with an invalid destination network """
-        rule = dict(name='one_rule', source='any', destination='192.193.194.195/256', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_source_self_lan(self):
-        """ test creation of a new rule with self"""
-        rule = dict(name='one_rule', source='(self)', destination='any', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_ip_to_ip(self):
-        """ test creation of a new rule with valid ips """
-        rule = dict(name='one_rule', source='10.10.1.1', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_net_to_net(self):
-        """ test creation of a new rule valid networks """
-        rule = dict(name='one_rule', source='10.10.1.0/24', destination='10.10.10.0/24', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_net_interface(self):
-        """ test creation of a new rule with valid interface """
-        rule = dict(name='one_rule', source='NET:lan', destination='any', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_interface(self):
-        """ test creation of a new rule with valid interface """
-        rule = dict(name='one_rule', source='vpn', destination='any', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_port_number(self):
-        """ test creation of a new rule with port """
-        rule = dict(name='one_rule', source='10.10.1.1', destination='10.10.10.1:80', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_port_alias(self):
-        """ test creation of a new rule with port alias """
-        rule = dict(name='one_rule', source='10.10.1.1', destination='10.10.10.1:port_http', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_create_port_range(self):
-        """ test creation of a new rule with range of ports """
-        rule = dict(name='one_rule', source='10.10.1.1:30000-40000', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_create_port_alias_range(self):
-        """ test creation of a new rule with range of alias ports """
-        rule = dict(name='one_rule', source='10.10.1.1:port_ssh-port_http', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule)
-
-    def test_rule_create_invalid_port_number(self):
-        """ test creation of a new rule with invalid port number """
-        rule = dict(name='one_rule', source='10.10.1.1:65536', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    def test_rule_create_invalid_port_alias(self):
-        """ test creation of a new rule with invalid port alias """
-        rule = dict(name='one_rule', source='10.10.1.1:openvpn_port', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    @unittest.expectedFailure
-    def test_rule_create_net_invalid_interface(self):
-        """ test creation of a new rule with invalid interface """
-        rule = dict(name='one_rule', source='NET:ran', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
-
-    ############################
-    # rule update tests
-    #
-    def test_rule_update_action(self):
-        """ test updating action of a rule to block """
-        rule = dict(name='test_rule', source='any', destination='any', interface='wan', action='block', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    def test_rule_update_disabled(self):
-        """ test updating disabled of a rule to True """
-        rule = dict(name='test_rule', source='any', destination='any', interface='wan', disabled='True', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    def test_rule_update_floating_direction(self):
-        """ test updating direction of a rule to out """
-        rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', floating='yes', direction='out', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    def test_rule_update_floating_yes(self):
-        """ test updating floating of a rule to yes """
-        rule = dict(name='test_rule', source='any', destination='any', interface='wan', floating='yes', direction='any', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_update_floating_no(self):
-        """ test updating floating of a rule to no """
-        rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', floating='no', direction='any', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_update_floating_default(self):
-        """ test updating floating of a rule to default """
-        rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    def test_rule_update_inet(self):
-        """ test updating ippprotocol of a rule to ipv4 and ipv6 """
-        rule = dict(name='test_rule', source='any', destination='any', interface='wan', ipprotocol='inet46', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    def test_rule_update_protocol_udp(self):
-        """ test updating protocol of a rule to udp """
-        rule = dict(name='test_rule', source='any', destination='any', interface='wan', protocol='udp')
-        self.do_rule_update_test(rule)
-
-    def test_rule_update_protocol_tcp_udp(self):
-        """ test updating protocol of a rule to tcp/udp """
-        rule = dict(name='test_rule', source='any', destination='any', interface='wan', protocol='tcp/udp')
-        self.do_rule_update_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_update_log_yes(self):
-        """ test updating log of a rule to yes """
-        rule = dict(name='test_rule', source='any', destination='any', interface='wan', log='yes', direction='any', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_update_log_no(self):
-        """ test updating log of a rule to no """
-        rule = dict(name='test_rule_2', source='any', destination='any', interface='wan', log='no', direction='any', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_update_log_default(self):
-        """ test updating log of a rule to default """
-        rule = dict(name='test_rule_2', source='any', destination='any', interface='wan', protocol='tcp')
-        self.do_rule_update_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_update_before(self):
-        """ test updating position of a rule to before another """
-        rule = dict(name='test_rule_3', source='any', destination='any', interface='wan', protocol='tcp', before='test_rule')
-        self.do_rule_update_test(rule)
-        self.check_rule_idx(rule, 0)
-
-    @unittest.expectedFailure
-    def test_rule_update_before_bottom(self):
-        """ test updating position of a rule to bottom """
-        rule = dict(name='test_rule_3', source='any', destination='any', interface='wan', protocol='tcp', before='bottom')
-        self.do_rule_update_test(rule)
-        self.check_rule_idx(rule, 5)
-
-    @unittest.expectedFailure
-    def test_rule_update_after(self):
-        """ test updating position of a rule to after another """
-        rule = dict(name='test_rule_3', source='any', destination='any', interface='wan', protocol='tcp', after='test_rule_3')
-        self.do_rule_update_test(rule)
-        self.check_rule_idx(rule, 4)
-
-    @unittest.expectedFailure
-    def test_rule_update_after_top(self):
-        """ test updating position of a rule to top """
-        rule = dict(name='test_rule_3', source='any', destination='any', interface='wan', protocol='tcp', after='top')
-        self.do_rule_update_test(rule)
-        self.check_rule_idx(rule, 0)
-
-    ##############
-    # delete
-    #
-    def test_rule_delete(self):
-        """ test updating position of a rule to top """
-        rule = dict(name='test_rule_3', source='any', destination='any', interface='wan', protocol='tcp')
-        self.do_rule_deletion_test(rule)
-
-    ##############
-    # misc
-    #
-    def test_check_mode(self):
-        """ test updating an host alias without generating result """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan')
-        set_module_args(args_from_var(rule, _ansible_check_mode=True))
-        self.execute_module(changed=True)
-        self.assertFalse(self.load_xml_result())
+    def check_separator_idx(self, interface, sep_name, expected_idx):
+        """ test the logical position of separator """
+        filter_elt = self.assert_find_xml_elt(self.xml_result, 'filter')
+        separator_elt = self.assert_find_xml_elt(filter_elt, 'separator')
+        iface_elt = self.assert_find_xml_elt(separator_elt, interface)
+        for separator in iface_elt:
+            text_elt = separator.find('text')
+            if text_elt is not None and text_elt.text == sep_name:
+                row_elt = self.assert_find_xml_elt(separator, 'row')
+                idx = int(row_elt.text.replace('fr', ''))
+                if idx != expected_idx:
+                    self.fail('Idx of separator ' + sep_name + ' if wrong: ' + str(idx) + ', expected: ' + str(expected_idx))
+                return
+        self.fail('Separator ' + sep_name + 'not found on interface ' + interface)

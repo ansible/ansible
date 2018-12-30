@@ -53,6 +53,19 @@ EXAMPLES = """
       - { name: "allow_all_https", source: any, destination: "any:port_https", protocol: tcp, interface: wan, state: present }
 """
 
+RETURN = """
+aggregated_aliases:
+    description: final set of aliases
+    returned: success
+    type: list
+    sample: []
+aggregated_rules:
+    description: final set of rules
+    returned: success
+    type: list
+    sample: []
+"""
+
 from ansible.module_utils.pfsense.pfsense import PFSenseModule
 from ansible.module_utils.pfsense.pfsense_rule import PFSenseRuleModule, RULES_ARGUMENT_SPEC, RULES_REQUIRED_IF
 from ansible.module_utils.pfsense.pfsense_alias import PFSenseAliasModule, ALIASES_ARGUMENT_SPEC, ALIASES_REQUIRED_IF

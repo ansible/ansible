@@ -167,31 +167,26 @@ class TestPFSenseAliasModule(TestPFSenseModule):
     ##############
     # networks
     #
-    @unittest.expectedFailure
     def test_network_create(self):
         """ test creation of a new network alias """
         alias = dict(name='data_networks', address='192.168.1.0/24 192.168.2.0/24', descr='', type='network', detail='')
         self.do_alias_creation_test(alias)
 
-    @unittest.expectedFailure
     def test_network_delete(self):
         """ test deletion of a network alias """
         alias = dict(name='lan_data_poc3', address='192.168.3.0/24', descr='', type='network', detail='')
         self.do_alias_deletion_test(alias)
 
-    @unittest.expectedFailure
     def test_network_update_noop(self):
         """ test not updating a network alias """
         alias = dict(name='lan_data_poc3', address='192.168.3.0/24', descr='', type='network', detail='')
         self.do_alias_update_noop_test(alias)
 
-    @unittest.expectedFailure
     def test_network_update_network(self):
         """ test updating address of a network alias """
         alias = dict(name='lan_data_poc3', address='192.168.3.0/24', descr='', type='network', detail='')
         self.do_alias_update_field(alias, address='192.168.2.0/24')
 
-    @unittest.expectedFailure
     def test_network_update_descr(self):
         """ test updating descr of a network alias """
         alias = dict(name='lan_data_poc3', address='192.168.3.0/24', descr='', type='network', detail='')

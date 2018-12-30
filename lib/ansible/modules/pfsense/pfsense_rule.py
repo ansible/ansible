@@ -88,6 +88,10 @@ EXAMPLES = """
     state: present
 """
 
+RETURN = """
+
+"""
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pfsense.pfsense_rule import PFSenseRuleModule, RULES_ARGUMENT_SPEC, RULES_REQUIRED_IF
 

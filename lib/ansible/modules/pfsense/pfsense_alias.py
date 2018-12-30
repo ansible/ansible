@@ -60,6 +60,24 @@ EXAMPLES = """
     state: absent
 """
 
+RETURN = """
+added:
+    description: aliases that were added
+    returned: always
+    type: list
+    sample: []
+deleted:
+    description: aliases that were removed
+    returned: always
+    type: list
+    sample: []
+modified:
+    description: aliases that were modified
+    returned: always
+    type: list
+    sample: []
+"""
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pfsense.pfsense_alias import PFSenseAliasModule, ALIASES_ARGUMENT_SPEC, ALIASES_REQUIRED_IF
 

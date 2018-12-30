@@ -95,6 +95,10 @@ EXAMPLES = """
     state: absent
 """
 
+RETURN = """
+
+"""
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pfsense.pfsense import PFSenseModule
 
@@ -121,8 +125,6 @@ class PFSenseAuthserverLDAP(object):
         authserverEl, i = self._find_authserver_ldap(authserver['name'])
         changed = False
         rc = 0
-        stdout = ''
-        stderr = ''
         # Replace the text CA name with the caref id
         authserver['ldap_caref'] = self.pfsense.get_caref(authserver['ca'])
         if authserver['ldap_caref'] is None:
@@ -143,21 +145,19 @@ class PFSenseAuthserverLDAP(object):
                 self.module.exit_json(changed=changed)
             if changed:
                 self.pfsense.write_config(descr='ansible pfsense_authserver_ldap updated "%s"' % (authserver['name']))
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=changed)
+        self.module.exit_json(changed=changed)
 
     def remove(self, authserver):
         authserverEl, i = self._find_authserver_ldap(authserver['name'])
         changed = False
         rc = 0
-        stdout = ''
-        stderr = ''
         if authserverEl is not None:
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
             self.authservers.remove(authserverEl)
             changed = True
             self.pfsense.write_config(descr='ansible pfsense_authserver_ldap removed "%s"' % (authserver['name']))
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=changed)
+        self.module.exit_json(changed=changed)
 
 
 def main():

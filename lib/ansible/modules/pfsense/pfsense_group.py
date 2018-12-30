@@ -60,6 +60,10 @@ EXAMPLES = """
     state: absent
 """
 
+RETURN = """
+
+"""
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pfsense.pfsense import PFSenseModule
 
@@ -86,8 +90,6 @@ class pfSenseGroup(object):
         groupEl, i = self._find_group(group['name'])
         changed = False
         rc = 0
-        stdout = ''
-        stderr = ''
         if groupEl is None:
             changed = True
             if self.module.check_mode:
@@ -102,21 +104,19 @@ class pfSenseGroup(object):
                 self.module.exit_json(changed=changed)
             if changed:
                 self.pfsense.write_config(descr='ansible pfsense_group updated "%s"' % (group['name']))
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=changed)
+        self.module.exit_json(changed=changed)
 
     def remove(self, group):
         groupEl, i = self._find_group(group['name'])
         changed = False
         rc = 0
-        stdout = ''
-        stderr = ''
         if groupEl is not None:
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
             self.groups.remove(groupEl)
             changed = True
             self.pfsense.write_config(descr='ansible pfsense_group removed "%s"' % (group['name']))
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=changed)
+        self.module.exit_json(changed=changed)
 
 
 def main():
