@@ -25,36 +25,24 @@
           Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
         }
 
-    - name: uninstall any versions of module used for tests
-      win_shell: 'Uninstall-Module {{ item }} -AllVersions -Force -ErrorAction Ignore'
-      changed_when: false
-      with_items:
-        - "powershell-yaml"
-        - "Pester"
-        - "PowerShellCookbook"
-        - "Format-Pester"
-
-    - name: unregister custom repo
-      win_shell: 'Unregister-PSRepository {{ custom_repo_name }} -ErrorAction Ignore'
+    - name: perform cleanup - 1
+      include: clean.yml
 
     - name: run all tests
       include: tests.yml
       vars:
         in_check_mode: no
 
-    - name: uninstall any versions of module used for tests
-      win_shell: 'Uninstall-Module {{ item }} -AllVersions -Force -ErrorAction Ignore'
-      changed_when: false
-      with_items:
-        - "Pester"
-        - "powershell-yaml"
-        - "PowerShellCookbook"
-        - "Format-Pester"
-
-    - name: unregister custom repo
-      win_shell: 'Unregister-PSRepository {{ custom_repo_name }} -ErrorAction Ignore'
+    - name: perform cleanup - 2
+      include: clean.yml
 
     - name: run all tests
       include: tests.yml
       vars:
         in_check_mode: yes
+
+    - name: perform cleanup - 3
+      include: clean.yml
+
+    - name: run all old tests
+      include: tests_old.yml

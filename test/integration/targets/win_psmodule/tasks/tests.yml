@@ -522,7 +522,7 @@
 - name: "copy some module to custom repo - check mode: {{ in_check_mode }}"
   win_shell: |
     $modName = "{{powershell_module}}"
-    $temp = $env:Temp;
+    $temp = $env:Temp
 
     Save-Module -Name $modName -Repository PSGallery -Path $temp | Out-Null
 
@@ -536,7 +536,7 @@
     Register-PSRepository -Name $repoName -SourceLocation $repoPath -InstallationPolicy Trusted | Out-Null
 
     Publish-Module -Path "$temp\\$modName" -Repository $repoName -Force -Confirm:$false | Out-Null
-    Get-ChildItem -Path "$repoPath\\*" | Where-Object { $_.Name -match "$modName.*.nupkg" } | ForEach { $_.Name }
+    Get-ChildItem -Path "$repoPath\\*" | Where-Object { $_.Name -match "$modName.*.nupkg" } | ForEach-Object { $_.Name }
 
   register: saved_package
 
