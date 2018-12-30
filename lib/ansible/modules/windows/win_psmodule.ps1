@@ -30,7 +30,7 @@ Function Install-NugetProvider {
     Param(
         [Bool]$CheckMode
     )
-    $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object {($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201")}
+    $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
     if (-not($PackageProvider)){
         try{
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -WhatIf:$CheckMode | out-null
@@ -46,6 +46,7 @@ Function Install-NugetProvider {
 
 Function Install-PrereqModule {
     Param(
+        [Switch]$TestInstallationOnly,
         [Bool]$CheckMode
     )
 
@@ -55,27 +56,38 @@ Function Install-PrereqModule {
         PowerShellGet = '1.6.0'
     }
 
+    [Bool]$PrereqModulesInstalled = $true
+
     ForEach ( $Name in $PrereqModules.Keys ) {
 
-        $ExistingPrereqModule = Get-Module -ListAvailable | Where-Object {($_.name -eq $Name ) -and ($_.version -ge $PrereqModules[$Name] )}
+        $ExistingPrereqModule = Get-Module -ListAvailable | Where-Object { ($_.name -eq $Name) -and ($_.version -ge $PrereqModules[$Name]) }
 
         if ( -not $ExistingPrereqModule ) {
-            try {
-                Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -WhatIf:$CheckMode | Out-Null
-
-                if ( $Name -eq 'PowerShellGet' ) {
-                    # An order has to be reverted due to dependency
-                    Remove-Module -Name PowerShellGet, PackageManagement -Force
-                    Import-Module -Name PowerShellGet, PackageManagement -Force
-                }
-
-                $result.changed = $true
+            if ( $TestInstallationOnly ) {
+                $PrereqModulesInstalled = $false
             }
-            catch{
-                $ErrorMessage = "Problems adding a prerequisite module $Name $($_.Exception.Message)"
-                Fail-Json $result $ErrorMessage
+            else {
+                try {
+                    Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -WhatIf:$CheckMode | Out-Null
+
+                    if ( $Name -eq 'PowerShellGet' ) {
+                        # An order has to be reverted due to dependency
+                        Remove-Module -Name PowerShellGet, PackageManagement -Force
+                        Import-Module -Name PowerShellGet, PackageManagement -Force
+                    }
+
+                    $result.changed = $true
+                }
+                catch {
+                    $ErrorMessage = "Problems adding a prerequisite module $Name $($_.Exception.Message)"
+                    Fail-Json $result $ErrorMessage
+                }
             }
         }
+    }
+
+    if ( $TestInstallationOnly ) {
+        $PrereqModulesInstalled
     }
 }
 
@@ -340,11 +352,14 @@ Function Remove-Repository{
     }
 }
 
-# Check PowerShell version, fail if < 5.0
+# Check PowerShell version, fail if < 5.0 and required modules are not installed
 $PsVersion = $PSVersionTable.PSVersion
-if ($PsVersion.Major -lt 5 ){
-    $ErrorMessage = "Windows PowerShell 5.0 or higher is needed"
-    Fail-Json $result $ErrorMessage
+if ($PsVersion.Major -lt 5 ) {
+    $PrereqModulesInstalled = Install-PrereqModule -TestInstallationOnly
+    if ( -not $PrereqModulesInstalled ) {
+        $ErrorMessage = "Modules PowerShellGet and PackageManagement in versions 1.6.0 and 1.1.7 respectively have to be installed before using the win_psmodule."
+        Fail-Json $result $ErrorMessage
+    }
 }
 
 if ( $required_version -and ( $minimum_version -or $maximum_version ) ) {

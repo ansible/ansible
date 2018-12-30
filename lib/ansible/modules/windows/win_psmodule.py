@@ -73,7 +73,7 @@ options:
     description:
       - URL of the custom repository to register.
 notes:
-  -  PowerShell 5.0 or higher is needed.
+   - PowerShell modules: PowerShellGet (v. 1.6.0 or higher) and PackageManagement (v. 1.1.7 or higher) are needed.
 seealso:
 - module: win_psrepository
 author:
