@@ -417,7 +417,6 @@ def main():
                 if params['noxfs']:
                     if root != npath and os.path.ismount(os.path.normpath(root)):
                         del(dirs[:])
-                        del(files[:])
                         continue
 
                 looked = looked + len(files) + len(dirs)
