@@ -298,6 +298,8 @@ class LinuxHardware(Hardware):
                             dmi_facts['form_factor'] = FORM_FACTOR[int(data)]
                         except IndexError:
                             dmi_facts['form_factor'] = 'unknown (%s)' % data
+                    elif key == 'product_name' and 'To be filled by O.E.M.' in data:
+                        dmi_facts[key] = get_file_content(path.replace('product', 'board'))
                     else:
                         dmi_facts[key] = data
                 else:
