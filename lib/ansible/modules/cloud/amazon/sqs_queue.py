@@ -57,7 +57,7 @@ options:
     version_added: "2.1"
   redrive_policy:
     description:
-      - json dict with the redrive_policy (see example)
+      - json dict with the redrive_policy (see examples)
     version_added: "2.2"
 extends_documentation_fragment:
     - aws
@@ -121,6 +121,11 @@ EXAMPLES = '''
     redrive_policy:
       maxReceiveCount: 5
       deadLetterTargetArn: arn:aws:sqs:eu-west-1:123456789012:my-dead-queue
+
+# Remove redrive policy
+- sqs_queue:
+    name: my-queue
+    redrive_policy: {}
 
 # Delete SQS queue
 - sqs_queue:
