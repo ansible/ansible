@@ -415,7 +415,7 @@ def main():
                         del(dirs[:])
                         continue
                 if params['noxfs']:
-                    if root!=npath and os.path.ismount(os.path.normpath(root)):
+                    if root != npath and os.path.ismount(os.path.normpath(root)):
                         continue
 
                 looked = looked + len(files) + len(dirs)
