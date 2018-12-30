@@ -3,7 +3,7 @@
 # Copyright: (c) 2018, Orion Poplawski <orion@nwra.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import ipaddress
+from ansible.module_utils.compat.ipaddress import ip_address, ip_network
 import shutil
 import os
 import pwd
@@ -177,14 +177,14 @@ class PFSenseModule(object):
 
         # Is it an IP address?
         try:
-            ipaddress.ip_address(unicode(address))
+            ip_address(u'{0}'.format(address))
             return True
         except ValueError:
             pass
 
         # Is it an IP network?
         try:
-            ipaddress.ip_network(unicode(address))
+            ip_network(u'{0}'.format(address))
             return True
         except ValueError:
             pass
