@@ -95,6 +95,7 @@ EXAMPLES = """
     state: absent
 """
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pfsense.pfsense import PFSenseModule
 
 
@@ -223,7 +224,5 @@ def main():
         pfauthserverldap.add(authserver)
 
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-
-main()
+if __name__ == '__main__':
+    main()

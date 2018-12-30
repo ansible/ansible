@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Orion Poplawski <orion@nwra.com>
@@ -112,6 +111,11 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         port = match.group(2)
 
         ret = dict()
+        # Check if the first character is "!"
+        if address[0] == '!':
+            # Invert the rule
+            ret['not'] = None
+            address = address[1:]
         if address == 'any':
             ret['any'] = None
         # rule with this firewall
