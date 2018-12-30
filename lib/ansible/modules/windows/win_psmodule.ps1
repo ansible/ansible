@@ -21,7 +21,10 @@ $allow_clobber = Get-AnsibleParam -obj $params -name "allow_clobber" -type "bool
 $skip_publisher_check = Get-AnsibleParam -obj $params -name "skip_publisher_check" -type "bool" -default $false
 $allow_prerelease = Get-AnsibleParam -obj $params -name "allow_prerelease" -type "bool" -default $false
 
-$result = @{changed = $false}
+$result = @{"changed" = $false
+            "output" = ""
+            "nuget_changed" = $false
+            "repository_changed" = $false}
 
 Function Install-NugetProvider {
     Param(
@@ -32,6 +35,7 @@ Function Install-NugetProvider {
         try{
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -WhatIf:$CheckMode | out-null
             $result.changed = $true
+            $result.nuget_changed = $true
         }
         catch{
             $ErrorMessage = "Problems adding package provider: $($_.Exception.Message)"
@@ -176,6 +180,7 @@ Function Install-PsModule {
             Install-Module @ht -ErrorVariable ErrorDetails | out-null
 
             $result.changed = $true
+            $result.output = "Module $($Name) installed"
         }
         catch {
 
@@ -193,6 +198,9 @@ Function Install-PsModule {
             Fail-Json $result $ErrorMessage
         }
     }
+    else {
+        $result.output = "Module $($Name) already present"
+    }
 }
 
 Function Remove-PsModule {
@@ -205,8 +213,8 @@ Function Remove-PsModule {
         [Bool]$CheckMode
     )
     # If module is present, uninstalls it.
-    if (Get-Module -Listavailable | Where-Object {$_.name -eq $Name}){
-        try{
+    if (Get-Module -Listavailable | Where-Object {$_.name -eq $Name}) {
+        try {
             $ht = @{
                 Name = $Name
                 Confirm = $false
@@ -234,12 +242,16 @@ Function Remove-PsModule {
                     Uninstall-Module @ht -ErrorVariable ErrorDetails | out-null
                 }
                 $result.changed = $true
+                $result.output = "Module $($Name) removed"
             }
         }
-        catch{
+        catch {
             $ErrorMessage = "Problems removing $($Name) module: $($ErrorDetails.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
+    }
+    else {
+        $result.output = "Module $($Name) removed"
     }
 }
 
@@ -275,6 +287,57 @@ Function Find-LatestPsModule {
     }
 
     $LatestModuleVersion
+}
+
+Function Install-Repository {
+    Param(
+    [Parameter(Mandatory=$true)]
+    [string]$Name,
+    [Parameter(Mandatory=$true)]
+    [string]$Url,
+    [bool]$CheckMode
+    )
+    $Repo = (Get-PSRepository).SourceLocation
+
+    # If repository isn't already present, try to register it as trusted.
+    if ($Repo -notcontains $Url){
+      try {
+           if ( -not ($CheckMode) ) {
+               Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop
+           }
+          $result.changed = $true
+          $result.repository_changed = $true
+      }
+      catch {
+        $ErrorMessage = "Problems adding $($Name) repository: $($_.Exception.Message)"
+        Fail-Json $result $ErrorMessage
+      }
+    }
+}
+
+Function Remove-Repository{
+    Param(
+    [Parameter(Mandatory=$true)]
+    [string]$Name,
+    [bool]$CheckMode
+    )
+
+    $Repo = (Get-PSRepository).SourceLocation
+
+    # Try to remove the repository
+    if ($Repo -contains $Name){
+        try {
+            if ( -not ($CheckMode) ) {
+                Unregister-PSRepository -Name $Name -ErrorAction Stop
+            }
+            $result.changed = $true
+            $result.repository_changed = $true
+        }
+        catch {
+            $ErrorMessage = "Problems removing $($Name)repository: $($_.Exception.Message)"
+            Fail-Json $result $ErrorMessage
+        }
+    }
 }
 
 # Check PowerShell version, fail if < 5.0
@@ -322,6 +385,13 @@ if ( ($allow_clobber -or $allow_prerelease -or
 }
 
 if ($state -eq "present") {
+    if (($repo) -and ($url)) {
+        Install-Repository -Name $repo -Url $url -CheckMode $check_mode
+    }
+    else {
+        $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
+    }
+
     if ($name) {
         $ht = @{
             Name = $name
@@ -338,6 +408,10 @@ if ($state -eq "present") {
     }
 }
 elseif ($state -eq "absent") {
+    if ($repo) {
+        Remove-Repository -Name $repo -CheckMode $check_mode
+    }
+
     if ($name) {
         $ht = @{
             Name = $Name

@@ -69,7 +69,6 @@ options:
   repository:
     description:
       - Name of the custom repository to register or use.
-    type: str
   url:
     description:
       - URL of the custom repository to register.
@@ -127,7 +126,7 @@ EXAMPLES = r'''
 RETURN = r'''
 ---
 output:
-  description: A message describing the task result.
+  description: a message describing the task result.
   returned: always
   sample: "Module PowerShellCookbook installed"
   type: str
@@ -141,16 +140,4 @@ repository_changed:
   returned: always
   type: bool
   sample: True
-powershellget_changed:
-  description: true when the PowerShellGet module is updated
-  returned: always
-  type: bool
-  sample: True
-  version_added: "2.8"
-packagemanagement_changed:
-  description: true when the PackageManagement module is updated
-  returned: always
-  type: bool
-  sample: True
-  version_added: "2.8"
 '''
