@@ -364,14 +364,28 @@
     state: reset
   check_mode: yes
   register: reset_check
+- pause:
+    # Should not be needed, but since ufw is ignoring --dry-run for reset
+    # (https://bugs.launchpad.net/ufw/+bug/1810082) we have to wait here as well.
+    seconds: 1
 - name: Reset
   ufw:
     state: reset
   register: reset
+- pause:
+    # ufw creates backups of the rule files with a timestamp; if reset is called
+    # twice in a row fast enough (so that both timestamps are taken in the same second),
+    # the second call will notice that the backup files are already there and fail.
+    # Waiting one second fixes this problem.
+    seconds: 1
 - name: Reset (idempotency)
   ufw:
     state: reset
   register: reset_idem
+- pause:
+    # Should not be needed, but since ufw is ignoring --dry-run for reset
+    # (https://bugs.launchpad.net/ufw/+bug/1810082) we have to wait here as well.
+    seconds: 1
 - name: Reset (idempotency, check mode)
   ufw:
     state: reset
