@@ -1,3 +1,6 @@
 ---
+- name: Reset ufw to factory defaults and disable
+  ufw:
+    state: reset
 - name: "Loading tasks from {{ item }}"
   include_tasks: "{{ item }}"
