@@ -4,6 +4,14 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
+try:
+    import botocore
+except ImportError:
+    pass  # handled by AnsibleAWSModule
+from ansible.module_utils.ec2 import ec2_argument_spec, snake_dict_to_camel_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
+
 __metaclass__ = type
 
 
@@ -217,17 +225,6 @@ cluster:
             type: boolean
 '''
 
-import time
-
-try:
-    import botocore
-except ImportError:
-    pass  # handled by AnsibleAWSModule
-
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, snake_dict_to_camel_dict
-from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-
-
 def _collect_facts(resource):
     """Transfrom cluster information to dict."""
     facts = {
@@ -313,7 +310,7 @@ def create_cluster(module, redshift):
                                     **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Failed to create cluster")
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e: # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="Failed to describe cluster")
     if wait:
         attempts = wait_timeout // 60
@@ -324,7 +321,7 @@ def create_cluster(module, redshift):
                 WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                module.fail_json_aws(e, msg="Timeout waiting for the cluster creation")
+            module.fail_json_aws(e, msg="Timeout waiting for the cluster creation")
     try:
         resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
@@ -377,7 +374,7 @@ def delete_cluster(module, redshift):
         )
     except is_boto3_error_code('ClusterNotFound'):
         return(False, {})
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e: # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="Failed to delete cluster")
 
     if wait:
@@ -389,7 +386,7 @@ def delete_cluster(module, redshift):
                 WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                module.fail_json_aws(e, msg="Timeout deleting the cluster")
+            module.fail_json_aws(e, msg="Timeout deleting the cluster")
 
     return(True, {})
 
@@ -434,7 +431,9 @@ def modify_cluster(module, redshift):
                 WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                module.fail_json_aws(e, msg="Timeout waiting for cluster enhanced vpc routing modification")
+            module.fail_json_aws(e,
+                                 msg="Timeout waiting for cluster enhanced vpc routing modification"
+                                )
 
     # change the rest
     try:
@@ -455,7 +454,7 @@ def modify_cluster(module, redshift):
                 WaiterConfig=dict(MaxAttempts=attempts)
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                module.fail_json_aws(e, msg="Timeout waiting for cluster modification")
+            module.fail_json_aws(e, msg="Timeout waiting for cluster modification")
     try:
         resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
@@ -469,16 +468,18 @@ def main():
     argument_spec.update(dict(
         command=dict(choices=['create', 'facts', 'delete', 'modify'], required=True),
         identifier=dict(required=True),
-        node_type=dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large',
-                                'dc2.large', 'dc1.8xlarge', 'dw1.xlarge', 'dw1.8xlarge', 'dw2.large',
-                                'dw2.8xlarge'], required=False),
+        node_type=dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge',
+                                'ds2.8xlarge', 'dc1.large', 'dc2.large',
+                                'dc1.8xlarge', 'dw1.xlarge', 'dw1.8xlarge',
+                                'dw2.large', 'dw2.8xlarge'], required=False),
         username=dict(required=False),
         password=dict(no_log=True, required=False),
         db_name=dict(require=False),
         cluster_type=dict(choices=['multi-node', 'single-node'], default='single-node'),
         cluster_security_groups=dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids=dict(aliases=['vpc_security_groups'], type='list'),
-        skip_final_cluster_snapshot=dict(aliases=['skip_final_snapshot'], type='bool', default=False),
+        skip_final_cluster_snapshot=dict(aliases=['skip_final_snapshot'],
+                                         type='bool', default=False),
         final_cluster_snapshot_identifier=dict(aliases=['final_snapshot_id'], required=False),
         cluster_subnet_group_name=dict(aliases=['subnet']),
         availability_zone=dict(aliases=['aws_zone', 'zone']),
