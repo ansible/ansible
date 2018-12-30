@@ -112,6 +112,7 @@ options:
             - If true, filesystem boundaries will not be crossed.
         type: bool
         default: False
+        version_added: "2.8"
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''
