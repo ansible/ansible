@@ -107,6 +107,11 @@ options:
               to false will override this value, which is effectively depth 1.
               Default is unlimited depth.
         version_added: "2.6"
+    noxfs:
+        description:
+            - If true, filesystem boundaries will not be crossed.
+        type: bool
+        default: False
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''
@@ -363,6 +368,7 @@ def main():
             get_checksum=dict(type='bool', default='no'),
             use_regex=dict(type='bool', default='no'),
             depth=dict(type='int', default=None),
+            noxfs=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -408,6 +414,10 @@ def main():
                     if depth > params['depth']:
                         del(dirs[:])
                         continue
+                if params['noxfs']:
+                    if root!=npath and os.path.ismount(os.path.normpath(root)):
+                        continue
+
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
