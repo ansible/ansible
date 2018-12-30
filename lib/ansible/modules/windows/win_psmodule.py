@@ -74,7 +74,7 @@ options:
     description:
       - URL of the custom repository to register.
 notes:
-   -  Powershell 5.0 or higher is needed.
+  -  PowerShell 5.0 or higher is needed.
 seealso:
 - module: win_psrepository
 author:
@@ -144,13 +144,13 @@ repository_changed:
 powershellget_changed:
   description: true when the PowerShellGet module is updated
   returned: always
-  type: boolean
+  type: bool
   sample: True
   version_added: "2.8"
 packagemanagement_changed:
   description: true when the PackageManagement module is updated
   returned: always
-  type: boolean
+  type: bool
   sample: True
   version_added: "2.8"
 '''
