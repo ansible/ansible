@@ -70,13 +70,9 @@ options:
     description:
       - Name of the custom repository to use.
 notes:
-<<<<<<< HEAD
-   -  Powershell 5.0 or higher is needed.
+  -  PowerShell 5.0 or higher is needed.
 seealso:
 - module: win_psrepository
-=======
-   -  PowerShell 5.0 or higher is needed.
->>>>>>> Correction of documentation
 author:
 - Wojciech Sciesinski (@it-praktyk)
 - Daniele Lazzari (@dlazz)
@@ -144,13 +140,13 @@ repository_changed:
 powershellget_changed:
   description: true when the PowerShellGet module is updated
   returned: always
-  type: boolean
+  type: bool
   sample: True
   version_added: "2.8"
 packagemanagement_changed:
   description: true when the PackageManagement module is updated
   returned: always
-  type: boolean
+  type: bool
   sample: True
   version_added: "2.8"
 '''
