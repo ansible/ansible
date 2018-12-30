@@ -146,9 +146,9 @@
 - name: check installing module with skip_publisher_check not active
   win_psmodule:
     name: "{{ skip_publisher_check_module }}"
-    #Adding a minimum version is required because the tested module
-    # is bundled within OS
-    minimum_version: "4.0.0"
+    # Adding a required version is required because the tested module
+    # is bundled within OS and has not be digitally signed (since 4.4.3 it's)
+    required_version: "4.2.0"
   register: fail_skip_publisher_check
   ignore_errors: yes
   when: not in_check_mode
@@ -163,9 +163,9 @@
 - name: "check installing module with skip_publisher_check active - check mode: {{ in_check_mode }}"
   win_psmodule:
     name: "{{ skip_publisher_check_module }}"
-    #Adding a minimum version is required because the tested module
-    # is bundled within OS
-    minimum_version: "4.0.0"
+    # Adding a required version is required because the tested module
+    # is bundled within OS and has not be digitally signed (since 4.4.3 it's)
+    required_version: "4.2.0"
     skip_publisher_check: yes
   check_mode: "{{ in_check_mode }}"
   register: ok_skip_publisher_check
@@ -253,6 +253,7 @@
     name: "{{ allow_prerelease_module }}"
     required_version: "{{ allow_prerelease_version }}"
     allow_prerelease: no
+    skip_publisher_check: yes
   register: fail_allow_prerelease
   ignore_errors: yes
   when: not in_check_mode
@@ -269,6 +270,7 @@
     name: "{{ allow_prerelease_module }}"
     required_version: "{{ allow_prerelease_version }}"
     allow_prerelease: yes
+    skip_publisher_check: yes
   check_mode: "{{ in_check_mode }}"
   register: ok_allow_prerelease
 
@@ -299,7 +301,7 @@
     - 'Install-Module -Name powershell-yaml -RequiredVersion 0.3.4 -Force -ErrorAction Stop'
     - 'Install-Module -Name powershell-yaml -RequiredVersion 0.2.0 -Force -ErrorAction Stop'
     - 'Install-Module -Name Pester -MinimumVersion 4.0.0 -SkipPublisherCheck -Force -ErrorAction Stop'
-    - 'Install-Module -Name Pester -RequiredVersion 4.4.0-beta2 -AllowPrerelease -Force -ErrorAction Stop'
+    - 'Install-Module -Name Pester -RequiredVersion 4.4.0-beta2 -AllowPrerelease -SkipPublisherCheck -Force -ErrorAction Stop'
     - 'Install-Module -Name PowerShellCookbook -AllowClobber -Force -ErrorAction Stop'
     - 'Install-Module -Name Format-Pester -RequiredVersion 1.4.2 -Force -ErrorAction Stop'
   when: in_check_mode
