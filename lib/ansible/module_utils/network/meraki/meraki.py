@@ -153,6 +153,17 @@ class MerakiModule(object):
                     is_changed = True
         return is_changed
 
+    def construct_params_list(self, keys, aliases=None):
+        args_list = []
+        for key in keys:
+            item = (aliases[key], self.module.params[key])
+            args_list.append(item)
+        return args_list
+
+    def encode_url_params(self, params):
+        """Encodes key value pairs for URL"""
+        return "?{0}".format(urlencode(params))
+
     def get_orgs(self):
         """Downloads all organizations for a user."""
         response = self.request('/organizations', method='GET')
