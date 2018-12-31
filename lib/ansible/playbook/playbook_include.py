@@ -38,10 +38,10 @@ class PlaybookInclude(Base, Conditional, Taggable):
     _vars = FieldAttribute(isa='dict', default=dict)
 
     @staticmethod
-    def load(data, basedir, variable_manager=None, loader=None, options=None):
-        return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader, options=options)
+    def load(data, basedir, variable_manager=None, loader=None):
+        return PlaybookInclude().load_data(ds=data, basedir=basedir, variable_manager=variable_manager, loader=loader)
 
-    def load_data(self, ds, basedir, variable_manager=None, loader=None, options=None):
+    def load_data(self, ds, basedir, variable_manager=None, loader=None):
         '''
         Overrides the base load_data(), as we're actually going to return a new
         Playbook() object rather than a PlaybookInclude object
@@ -54,7 +54,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         # first, we use the original parent method to correctly load the object
         # via the load_data/preprocess_data system we normally use for other
         # playbook objects
-        new_obj = super(PlaybookInclude, self).load_data(ds, variable_manager, loader, options=options)
+        new_obj = super(PlaybookInclude, self).load_data(ds, variable_manager, loader)
 
         all_vars = self.vars.copy()
         if variable_manager:
@@ -63,7 +63,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         templar = Templar(loader=loader, variables=all_vars)
 
         # then we use the object to load a Playbook
-        pb = Playbook(loader=loader, options=options)
+        pb = Playbook(loader=loader)
 
         file_name = templar.template(new_obj.import_playbook)
         if not os.path.isabs(file_name):
