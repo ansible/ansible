@@ -643,9 +643,7 @@ def main():
     if 'snapshots' in subset or 'all' in subset:
         facts['snapshots'] = generate_snap_dict(blade)
 
-    result = dict(ansible_purefb_facts=facts,)
-
-    module.exit_json(**result)
+    module.exit_json(ansible_facts={'ansible_purefb_facts': facts})
 
 
 if __name__ == '__main__':
