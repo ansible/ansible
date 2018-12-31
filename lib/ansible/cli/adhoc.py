@@ -65,8 +65,6 @@ class AdHocCLI(CLI):
         display.verbosity = options.verbosity
         self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
 
-        options = self.normalize_become_options(options)
-
         return options, args
 
     def _play_ds(self, pattern, async_val, poll):
@@ -129,10 +127,10 @@ class AdHocCLI(CLI):
                                       % context.CLIARGS['module_name'])
 
         play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'])
-        play = Play().load(play_ds, variable_manager=variable_manager, loader=loader, options=self.options)
+        play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         # used in start callback
-        playbook = Playbook(loader, self.options)
+        playbook = Playbook(loader)
         playbook._entries.append(play)
         playbook._file_name = '__adhoc_playbook__'
 

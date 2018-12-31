@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
@@ -87,14 +88,13 @@ class Play(Base, Taggable, Become):
 
     # =================================================================================
 
-    def __init__(self, options=None):
+    def __init__(self):
         super(Play, self).__init__()
 
         self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
         self.ROLE_CACHE = {}
-        self._options = options
 
     def __repr__(self):
         return self.get_name()
@@ -104,23 +104,20 @@ class Play(Base, Taggable, Become):
         return self.name
 
     @staticmethod
-    def load(data, variable_manager=None, loader=None, vars=None, options=None):
+    def load(data, variable_manager=None, loader=None, vars=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
                 data['name'] = data['hosts']
-        p = Play(options=options)
+        p = Play()
         if vars:
             p.vars = vars.copy()
 
-        return p.load_data(data, variable_manager=variable_manager, loader=loader, options=options)
+        return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def load_data(self, data, variable_manager=None, loader=None, vars=None, options=None):
-        if options:
-            self._options = options
-        if self._options:
-            self._set_from_CLI_options()
+    def load_data(self, data, variable_manager=None, loader=None, vars=None):
+        self._set_from_CLI_options()
         return super(Play, self).load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
@@ -355,27 +352,27 @@ class Play(Base, Taggable, Become):
         These override defaults from configuration but are a lower precedence than those set by keywords or variables.
         '''
         #  general flags that match keyword name
-        for flag in dir(self._options):
+        for flag in context.CLIARGS:
             # exclude private and mismatched names
-            if flag.startswith('_') or flag in ('tags',):
+            if flag.startswith('_') or flag in ('tags', 'args'):
                 continue
             if hasattr(self, flag):
-                attribute = getattr(self._options, flag, False)
+                attribute = context.CLIARGS.get(flag, False)
                 setattr(self, flag, attribute)
 
-        # clags that are named differently or might not be set
-        self.check_mode = boolean(self._options.check, strict=False)
+        # flags that are named differently or might not be set
+        self.check_mode = boolean(context.CLIARGS.get('check', False), strict=False)
 
         # get the tag info from options. We check to see if the options have
         # the attribute, as it is not always added via the CLI
-        if hasattr(self._options, 'tags'):
-            self.only_tags = self._options.tags
+        if 'tags' in context.CLIARGS:
+            self.only_tags = context.CLIARGS['tags']
 
-        if len(self.only_tags) == 0:
-            self.only_tags = set(['all'])
+        if 'skip_tags' in context.CLIARGS:
+            self.skip_tags = context.CLIARGS['skip_tags']
 
-        if hasattr(self._options, 'skip_tags'):
-            self.skip_tags = self._options.skip_tags
+        if not self.only_tags:
+            self.only_tags = frozenset(['all'])
 
         # ensure timeout is int (find out if post validate should already be doing this)
         self.timeout = int(self.timeout)

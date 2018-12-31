@@ -100,7 +100,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def post_process_args(self, options, args):
         options, args = super(ConsoleCLI, self).post_process_args(options, args)
         display.verbosity = options.verbosity
-        options = self.normalize_become_options(options)
         self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
         return options, args
 
@@ -196,7 +195,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 check_mode=self.check_mode,
                 diff=self.diff,
             )
-            play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader, options=self.options)
+            play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
             display.error(u"Unable to build command: %s" % to_text(e))
             return False

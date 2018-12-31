@@ -84,7 +84,7 @@ class PlaybookExecutor:
             list(become_loader.all(class_only=True))
 
             for playbook_path in self._playbooks:
-                pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader, options=self._options)
+                pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
                 if self._tqm is None:  # we are doing a listing

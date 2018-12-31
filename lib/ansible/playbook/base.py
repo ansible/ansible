@@ -14,7 +14,7 @@ from functools import partial
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-
+from ansible import context
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
@@ -204,7 +204,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 return method(ds)
         return ds
 
-    def load_data(self, ds, variable_manager=None, loader=None, options=None):
+    def load_data(self, ds, variable_manager=None, loader=None):
         ''' walk the input datastructure and assign any values '''
 
         if ds is None:
@@ -244,8 +244,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     self._attributes[target_name] = ds[name]
 
         # set defaults from CLI
-        if options:
-            self._set_options(options)
+        self._set_options()
 
         # run early, non-critical validation
         self.validate()
@@ -253,26 +252,24 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # return the constructed object
         return self
 
-    def _set_options(self, options):
+    def _set_options(self):
         '''
         Configures defaults using CLI options
         '''
-        if options:
-            for flag in dir(options):
+        for flag in context.CLIARGS:
+            # skip private and incorrect matches: i.e tags is really only_these_tags
+            if flag.startswith('_') or flag in ('tags', 'args'):
+                continue
 
-                # skip private and incorrect matches: i.e tags is really only_these_tags
-                if flag.startswith('_') or flag in ('tags',):
-                    continue
+            # use mapping when they are not named the same
+            if flag in _option_map:
+                attr = _option_map[flag]
+            else:
+                attr = flag
 
-                # use mapping when they are not named the same
-                if flag in _option_map:
-                    attr = _option_map[flag]
-                else:
-                    attr = flag
-
-                attribute = getattr(options, attr, False)
-                if attribute and hasattr(self, attr):
-                    setattr(self, attr, attribute)
+            attribute = context.CLIARGS.get(attr, False)
+            if attribute and hasattr(self, attr):
+                setattr(self, attr, attribute)
 
     def get_ds(self):
         try:
