@@ -9,21 +9,22 @@ import os
 import platform
 
 from ansible.module_utils import distro
+from ansible.module_utils.common._utils import get_all_subclasses
 
 
-# Backwards compat.  New code should just use platform.system()
-def get_platform():
-    '''
-    :rtype: NativeString
-    :returns: Name of the platform the module is running on
-    '''
-    return platform.system()
+__all__ = ('get_distribution', 'get_distribution_version', 'get_platform_subclass')
 
 
 def get_distribution():
     '''
+    Return the name of the distribution the module is running on
+
     :rtype: NativeString or None
     :returns: Name of the distribution the module is running on
+
+    This function attempts to determine what Linux distribution the code is running on and return
+    a string representing that value.  If the distribution cannot be determined, it returns
+    ``OtherLinux``.  If not run on Linux it returns None.
     '''
     distribution = None
 
@@ -42,9 +43,11 @@ def get_distribution():
 
 def get_distribution_version():
     '''
+    Get the version of the Linux distribution the code is running on
+
     :rtype: NativeString or None
-    :returns: A string representation of the version of the distribution.  None if this is not run
-        on a Linux machine
+    :returns: A string representation of the version of the distribution. If it cannot determine
+        the version, it returns empty string. If this is not run on a Linux machine it returns None
     '''
     version = None
     if platform.system() == 'Linux':
@@ -82,33 +85,36 @@ def get_distribution_codename():
     return codename
 
 
-def get_all_subclasses(cls):
+def get_platform_subclass(cls):
     '''
-    used by modules like Hardware or Network fact classes to recursively retrieve all
-    subclasses of a given class not only the direct sub classes.
-    '''
-    # Retrieve direct subclasses
-    subclasses = cls.__subclasses__()
-    to_visit = list(subclasses)
-    # Then visit all subclasses
-    while to_visit:
-        for sc in to_visit:
-            # The current class is now visited, so remove it from list
-            to_visit.remove(sc)
-            # Appending all subclasses to visit and keep a reference of available class
-            for ssc in sc.__subclasses__():
-                subclasses.append(ssc)
-                to_visit.append(ssc)
-    return subclasses
+    Finds a subclass implementing desired functionality on the platform the code is running on
 
+    :arg cls: Class to find an appropriate subclass for
+    :returns: A class that implements the functionality on this platform
 
-def load_platform_subclass(cls, *args, **kwargs):
-    '''
-    used by modules like User to have different implementations based on detected platform.  See User
-    module for an example.
+    Some Ansible modules have different implementations depending on the platform they run on.  This
+    function is used to select between the various implementations and choose one.  You can look at
+    the implementation of the Ansible :ref:`User module<user_module>` module for an example of how to use this.
+
+    This function replaces ``basic.load_platform_subclass()``.  When you port code, you need to
+    change the callers to be explicit about instantiating the class.  For instance, code in the
+    Ansible User module changed from::
+
+    .. code-block:: python
+
+        # Old
+        class User:
+            def __new__(cls, args, kwargs):
+                return load_platform_subclass(User, args, kwargs)
+
+        # New
+        class User:
+            def __new__(cls, args, kwargs):
+                new_cls = get_platform_subclass(User)
+                return super(cls, new_cls).__new__(new_cls, args, kwargs)
     '''
 
-    this_platform = get_platform()
+    this_platform = platform.system()
     distribution = get_distribution()
     subclass = None
 
@@ -124,4 +130,4 @@ def load_platform_subclass(cls, *args, **kwargs):
     if subclass is None:
         subclass = cls
 
-    return super(cls, subclass).__new__(subclass)
+    return subclass
