@@ -293,7 +293,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
 
-        if metadata and 'removed' in metadata.get('status'):
+        if metadata and 'removed' in metadata.get('status', []):
             continue
 
         category = categories
