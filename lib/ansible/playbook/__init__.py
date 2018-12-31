@@ -36,18 +36,17 @@ __all__ = ['Playbook']
 
 class Playbook:
 
-    def __init__(self, loader, options=None):
+    def __init__(self, loader):
         # Entries in the datastructure of a playbook may
         # be either a play or an include statement
         self._entries = []
         self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
         self._loader = loader
         self._file_name = None
-        self._options = options
 
     @staticmethod
-    def load(file_name, variable_manager=None, loader=None, options=None):
-        pb = Playbook(loader=loader, options=options)
+    def load(file_name, variable_manager=None, loader=None):
+        pb = Playbook(loader=loader)
         pb._load_playbook_data(file_name=file_name, variable_manager=variable_manager)
         return pb
 
@@ -89,14 +88,14 @@ class Playbook:
             if any(action in entry for action in ('import_playbook', 'include')):
                 if 'include' in entry:
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead", version="2.12")
-                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader, options=self._options)
+                pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
                     which = entry.get('import_playbook', entry.get('include', entry))
                     display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
-                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars, options=self._options)
+                entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars)
                 self._entries.append(entry_obj)
 
         # we're done, so restore the old basedir in the loader

@@ -70,9 +70,10 @@ def set_constant(name, value, export=vars()):
 
 
 def _get_become_methods():
-    p = subprocess.Popen('ansible-doc -l -t become', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p.communicate()
-    return p.stdout.splitlines()
+    # p = subprocess.Popen('ansible-doc -l -t become', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # p.communicate()
+    # return p.stdout.splitlines()
+    return []
 
 
 # CONSTANTS ### yes, actual ones
