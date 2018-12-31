@@ -63,11 +63,12 @@ EXAMPLES = '''
     url: "https://rundeck.example.org"
     token: "mytoken"
     state: present
+    
+    
+
 '''
 
 RETURN = '''
-
-????????????
 
 rundeck_response:
     description: Rundeck response when a failure occurs
@@ -169,7 +170,7 @@ class RundeckKeyStorageManager(object):
         if facts is None:
             # If in check mode don't create key, simulate a fake key creation
             if self.module.check_mode:
-                self.module.exit_json(changed=True, before={}, after={"name": self.module.params["name"]})
+                self.module.exit_json(changed=True, before={}, after={"path": self.module.params["path"]})
 
             # create a key
             resp, info = self.create_request_rundeck_api("storage/keys/%s" % self.module.params["path"],
@@ -215,8 +216,7 @@ class RundeckKeyStorageManager(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            type=dict(type='str', choices=['private_key', 'public_key', 'password'], default='private_key'),
+            type=dict(required=True, type='str', choices=['private_key', 'public_key', 'password']),
             path=dict(required=True, type='str'),
             data=dict(required=True, type='str', no_log=True),
             url=dict(required=True, type='str'),
