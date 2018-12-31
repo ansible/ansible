@@ -266,12 +266,50 @@ import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils._text import to_bytes, to_native
+
+
+# The AnsibleModule object
+module = None
 
 
 class AnsibleModuleError(Exception):
     def __init__(self, results):
         self.results = results
+
+
+# Once we get run_command moved into common, we can move this into a common/files module.  We can't
+# until then because of the module.run_command() method.  We may need to move it into
+# basic::AnsibleModule() until then but if so, make it a private function so that we don't have to
+# keep it for backwards compatibility later.
+def del_facl(path, acl_tag, acl_qualifier=None):
+    """
+    :arg path: Filepath from which to remove an acl
+    :arg acl_tag: acl tag to remove.  POSIX1.e recognizes 'u', 'g', 'o', and 'm'
+    :arg acl_qualifier: if acl_tag is 'u' then this must be specified as a username or userid.  If
+        acl_tag is 'g' then this must be specified as a groupname or groupid.  Otherwise, this
+        should be unset.
+    """
+    if acl_tag not in ('u', 'g', 'o', 'm'):
+        raise ValueError('acl_tag must be one of "u", "g", "o", or "m"')
+
+    if not acl_qualifier:
+        if acl_tag == 'u':
+            raise ValueError('acl_qualifier must be set to a username or userid when acl_tag is "u"')
+        if acl_tag == 'g':
+            raise ValueError('acl_qualifier must be set to a groupname or groupid when acl_tag is "g"')
+
+    setfacl = get_bin_path('setfacl', True)
+    if acl_qualifier:
+        acl_string = '{0}:{1}'.format(acl_tag, acl_qualifier)
+    else:
+        acl_string = acl_tag
+    # Like: ['/usr/bin/setfacl', '-x', 'u:1000', '/etc/config.cfg']
+    acl_command = [setfacl, '-x', acl_string, path]
+    rc, out, err = module.run_command(acl_command)
+    if rc != 0:
+        raise RuntimeError('Error running setfacl: stdout: {0}; stderr: {1}'.format(out, err))
 
 
 def split_pre_existing_dir(dirname):
@@ -464,6 +502,8 @@ def copy_common_dirs(src, dest, module):
 
 def main():
 
+    global module
+
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
@@ -629,6 +669,47 @@ def main():
                         else:
                             raise
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
+
+                if not remote_src:
+                    # If not remote_src, then the file was copied from the controller.  In that
+                    # case, any filesystem acls are artifacts of the copy rather than preservation
+                    # of existing attributes.  Get rid of them
+                    try:
+                        del_facl(dest, 'u', os.geteuid())
+                        del_facl(dest, 'm')
+                    except ValueError as e:
+                        if 'setfacl' in to_native(e):
+                            # No setfacl so we're okay.  The controller couldn't have set a facl
+                            # without the setfacl command
+                            pass
+                        else:
+                            raise
+                    except RuntimeError as e:
+                        # setfacl failed.
+                        # FIXME: separate out the following cases and do the appropriate thing:
+                        # * If any of the following raise errors, they can be ignored
+                        #   * If the filesystem we're copying to does not support facls
+                        #   * If we're running on python2 therefore the facls were not copied
+                        #   * If there were no facls to clear (because we we're not becoming an
+                        #     unprivileged user, for instance)
+                        #   * If the directory we copied into has a default acl, on python2, the
+                        #     file ends up with the directory's default acl.  On python3, if the
+                        #     file did not start with any acl, it will end up with the default acl.
+                        #     A failure to remove 'm' can be ignored.
+                        # * Treatment of default acls are a related bug.  On Python2, default acls
+                        #   are applied to the copied file.  On Python3, the default acls won't
+                        #   apply because we copied metadata that tells what the acls are.  Should
+                        #   we fix Python2 to not apply default acls (easier)? or fix Python3 to
+                        #   apply the default acls?
+                        # Perhaps it will be easier to:
+                        # * Make a clear_facl() function instead of del_facl().  It looks like Linux
+                        #   and freebsd support setfacl -b for this but other platforms (z/OS) do not.
+                        # * Make a get_facl() function and test:
+                        #   * Does the source file have acls?
+                        #   * Does the destination file have acls for the default acl and nothing
+                        #     else?
+                        pass
+
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
         changed = True
