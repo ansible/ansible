@@ -140,7 +140,7 @@ class RedfishUtils(object):
                     return {'ret': True}
             else:
                 return {'ret': False,
-                        'msg': "Systems Members resource not found"}
+                        'msg': "ComputerSystem's Members array is either empty or missing"}
 
     def _find_updateservice_resource(self, uri):
         response = self.get_request(self.root_uri + uri)
