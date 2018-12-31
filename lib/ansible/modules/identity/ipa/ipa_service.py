@@ -90,7 +90,7 @@ class ServiceIPAClient(IPAClient):
         super(ServiceIPAClient, self).__init__(module, host, port, protocol)
 
     def service_find(self, name):
-        return self._post_json(method='service_find', name=None, item={'all': True, 'krbcanonicalname': name})
+        return self._post_json(method='service_find', name=None, item={'all': True, 'krbprincipalname': name})
 
     def service_add(self, name, service):
         return self._post_json(method='service_add', name=name, item=service)
