@@ -32,6 +32,7 @@
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
 
@@ -256,8 +257,8 @@ class MerakiModule(object):
             if i == len(params) - 1:
                 param_string += "{0}={1}".format(k, v)
             else:
-                param_string += "{0}={1}%".format(k, v)
-        return param_string
+                param_string += "{0}={1}&".format(k, v)
+        return urlencode(param_string)
 
     def construct_path(self,
                        action,
