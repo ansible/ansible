@@ -589,9 +589,7 @@ def main():
     if 'pgroups' in subset or 'all' in subset:
         facts['pgroups'] = generate_pgroups_dict(array)
 
-    result = dict(ansible_purefa_facts=facts,)
-
-    module.exit_json(**result)
+    module.exit_json(ansible_facts={'ansible_purefa_facts': facts})
 
 
 if __name__ == '__main__':
