@@ -380,27 +380,28 @@ class PlayContext(Base):
         """ helper function to create privilege escalation commands """
         display.deprecated("PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead", version="2.13")
 
-        if cmd and self.become:
+        if not cmd or not self.become:
+            return cmd
 
-            # load/call become plugins here
-            plugin = become_loader.get(self.become_method)
-            if plugin:
+        # load/call become plugins here
+        plugin = become_loader.get(self.become_method)
 
-                options = {'become_exe': self.become_exe or getattr(self, '%s_exe' % self.become_method, self.become_method) or self.become_method,
-                           'become_flags': self.become_flags or getattr(self, '%s_flags' % self.become_method, '') or '',
-                           'become_user': self.become_user,
-                           'become_pass': self.become_pass}
-                plugin.set_options(direct=options)
+        if plugin:
+            options = {'become_exe': self.become_exe or getattr(self, '%s_exe' % self.become_method, self.become_method) or self.become_method,
+                       'become_flags': self.become_flags or getattr(self, '%s_flags' % self.become_method, '') or '',
+                       'become_user': self.become_user,
+                       'become_pass': self.become_pass}
+            plugin.set_options(direct=options)
 
-                if not executable:
-                    executable = self.executable
+            if not executable:
+                executable = self.executable
 
-                shell = get_shell_plugin(executable=executable)
-                cmd = plugin.build_become_command(cmd, shell)
-                # for backwards compat:
-                self.prompt = plugin.prompt
-            else:
-                raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
+            shell = get_shell_plugin(executable=executable)
+            cmd = plugin.build_become_command(cmd, shell)
+            # for backwards compat:
+            self.prompt = plugin.prompt
+        else:
+            raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
         return cmd
 
