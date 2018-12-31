@@ -334,7 +334,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         rule = self.pfsense.element_to_dict(rule_elt)
 
         # We use 'name' for 'descr'
-        rule['name'] = rule.pop('descr','UNKNOWN')
+        rule['name'] = rule.pop('descr', 'UNKNOWN')
 
         # Convert addresses to argument format
         for addr_item in ['source', 'destination']:
@@ -346,7 +346,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
             elt = rule_elt.find(other_item)
             if elt is not None:
                 rule[other_item] = self.pfsense.element_to_dict(elt)
-        rule['action'] = rule.pop('type','UNKNOWN')
+        rule['action'] = rule.pop('type', 'UNKNOWN')
 
         return rule
 
