@@ -1,4 +1,11 @@
+# This file is part of Ansible
+
+# test code for the win_psmodule module when using winrm connection
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ---
+
 # The file contains tests for backward compatibility only - for Ansible < 2.8.
 # They should be removed under a deprecation of the functionalities for adding/removing
 # repositories.

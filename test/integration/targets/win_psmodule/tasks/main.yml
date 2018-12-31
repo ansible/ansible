@@ -28,21 +28,12 @@
     - name: perform cleanup - 1
       include: clean.yml
 
-    - name: run all tests
+    - name: run tests
       include: tests.yml
-      vars:
-        in_check_mode: no
 
-    - name: perform cleanup - 2
-      include: clean.yml
-
-    - name: run all tests
-      include: tests.yml
-      vars:
-        in_check_mode: yes
-
+      # The second cleanup is performed inside of the tests.yml :-)
     - name: perform cleanup - 3
       include: clean.yml
 
-    - name: run all old tests
+    - name: run old tests
       include: tests_old.yml
