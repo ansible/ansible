@@ -9,18 +9,14 @@ __metaclass__ = type
 
 import pytest
 
-from units.mock.procenv import ModuleTestCase
-
 from units.compat.mock import patch
 
 from ansible.module_utils.six.moves import builtins
 
 # Functions being tested
-from ansible.module_utils.basic import get_platform
-from ansible.module_utils.basic import get_all_subclasses
-from ansible.module_utils.basic import get_distribution
-from ansible.module_utils.basic import get_distribution_version
-from ansible.module_utils.basic import load_platform_subclass
+from ansible.module_utils.common.sys_info import get_distribution
+from ansible.module_utils.common.sys_info import get_distribution_version
+from ansible.module_utils.common.sys_info import get_platform_subclass
 
 
 realimport = builtins.__import__
@@ -29,15 +25,6 @@ realimport = builtins.__import__
 @pytest.fixture
 def platform_linux(mocker):
     mocker.patch('platform.system', return_value='Linux')
-
-
-#
-# get_platform tests
-#
-
-def test_get_platform():
-    with patch('platform.system', return_value='foo'):
-        assert get_platform() == 'foo'
 
 
 #
@@ -87,10 +74,10 @@ def test_distro_found():
 
 
 #
-# Tests for LoadPlatformSubclass
+# Tests for get_platform_subclass
 #
 
-class TestLoadPlatformSubclass:
+class TestGetPlatformSubclass:
     class LinuxTest:
         pass
 
@@ -106,54 +93,16 @@ class TestLoadPlatformSubclass:
         # if neither match, the fallback should be the top-level class
         with patch('platform.system', return_value="Foo"):
             with patch('ansible.module_utils.common.sys_info.get_distribution', return_value=None):
-                assert isinstance(load_platform_subclass(self.LinuxTest), self.LinuxTest)
+                assert get_platform_subclass(self.LinuxTest) is self.LinuxTest
 
     @pytest.mark.usefixtures("platform_linux")
     def test_get_distribution_none(self):
         # match just the platform class, not a specific distribution
         with patch('ansible.module_utils.common.sys_info.get_distribution', return_value=None):
-            assert isinstance(load_platform_subclass(self.LinuxTest), self.Foo)
+            assert get_platform_subclass(self.LinuxTest) is self.Foo
 
     @pytest.mark.usefixtures("platform_linux")
     def test_get_distribution_found(self):
         # match both the distribution and platform class
         with patch('ansible.module_utils.common.sys_info.get_distribution', return_value="Bar"):
-            assert isinstance(load_platform_subclass(self.LinuxTest), self.Bar)
-
-
-#
-# Tests for get_all_subclasses
-#
-
-class TestGetAllSubclasses:
-    class Base:
-        pass
-
-    class BranchI(Base):
-        pass
-
-    class BranchII(Base):
-        pass
-
-    class BranchIA(BranchI):
-        pass
-
-    class BranchIB(BranchI):
-        pass
-
-    class BranchIIA(BranchII):
-        pass
-
-    class BranchIIB(BranchII):
-        pass
-
-    def test_bottom_level(self):
-        assert get_all_subclasses(self.BranchIIB) == []
-
-    def test_one_inheritance(self):
-        assert set(get_all_subclasses(self.BranchII)) == set([self.BranchIIA, self.BranchIIB])
-
-    def test_toplevel(self):
-        assert set(get_all_subclasses(self.Base)) == set([self.BranchI, self.BranchII,
-                                                          self.BranchIA, self.BranchIB,
-                                                          self.BranchIIA, self.BranchIIB])
+            assert get_platform_subclass(self.LinuxTest) is self.Bar
