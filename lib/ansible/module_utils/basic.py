@@ -165,11 +165,9 @@ from ansible.module_utils.common.file import (
     get_flags_from_attributes,
 )
 from ansible.module_utils.common.sys_info import (
-    get_platform,
     get_distribution,
     get_distribution_version,
-    load_platform_subclass,
-    get_all_subclasses,
+    get_platform_subclass,
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
@@ -184,6 +182,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
 
@@ -274,6 +273,42 @@ if not _PY_MIN:
         '"msg": "Ansible requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
     )
     sys.exit(1)
+
+
+#
+# Deprecated functions
+#
+
+def get_platform():
+    '''
+    **Deprecated** Use :py:func:`platform.system` directly.
+
+    :returns: Name of the platform the module is running on in a native string
+
+    Returns a native string that labels the platform ("Linux", "Solaris", etc). Currently, this is
+    the result of calling :py:func:`platform.system`.
+    '''
+    return platform.system()
+
+# End deprecated functions
+
+
+#
+# Compat shims
+#
+
+def load_platform_subclass(cls, *args, **kwargs):
+    """**Deprecated**: Use ansible.module_utils.common.sys_info.get_platform_subclass instead"""
+    platform_cls = get_platform_subclass(cls)
+    return super(cls, platform_cls).__new__(platform_cls)
+
+
+def get_all_subclasses(cls):
+    """**Deprecated**: Use ansible.module_utils.common._utils.get_all_subclasses instead"""
+    return list(_get_all_subclasses(cls))
+
+
+# End compat shims
 
 
 def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
