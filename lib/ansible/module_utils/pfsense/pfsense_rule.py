@@ -42,6 +42,8 @@ class PFSenseRuleModule(object):
         self.changed = False
         self.change_descr = ''
 
+        self.diff = {'after': {}, 'before': {}}
+
         self.results = {}
         self.results['added'] = []
         self.results['deleted'] = []
@@ -143,9 +145,9 @@ class PFSenseRuleModule(object):
 
         i = 0
         for rule_elt in self.rules:
-            descr_elt = rule_elt.find('descr')
             if not self._match_interface(rule_elt):
                 continue
+            descr_elt = rule_elt.find('descr')
             if descr_elt is not None and descr_elt.text == descr:
                 return i
             i += 1
@@ -208,12 +210,14 @@ class PFSenseRuleModule(object):
         self._adjust_separators(rule_position, before=(self._after is None and self._before is not None))
 
     def _update_rule_position(self, rule_elt):
-        """ move rule into xml if required """
+        """ move rule in xml if required """
         current_position = self._get_rule_position()
         expected_position = self._get_expected_rule_position()
         if current_position == expected_position:
             return False
 
+        self.diff['before']['position'] = current_position
+        self.diff['after']['position'] = expected_position
         self._adjust_separators(current_position, add=False)
         self.rules.remove(rule_elt)
         self._insert(rule_elt)
@@ -310,7 +314,8 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         """ delete rule_elt from xml """
         self.rules.remove(rule_elt)
         self.changed = True
-        self.results['deleted'].append(self.pfsense.element_to_dict(rule_elt))
+        self.diff['before'] = self.rule_element_to_dict(rule_elt)
+        self.results['deleted'].append(self.rule_element_to_dict(rule_elt))
 
     def _set_internals(self, rule, after=None, before=None):
         """ set members (avoid passing those by params everywhere) """
@@ -324,6 +329,27 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
     ##################
     # public methods
     #
+    def rule_element_to_dict(self, rule_elt):
+        """ convert rule_elt to dictionary like module arguments """
+        rule = self.pfsense.element_to_dict(rule_elt)
+
+        # We use 'name' for 'descr'
+        rule['name'] = rule.pop('descr','UNKNOWN')
+
+        # Convert addresses to argument format
+        for addr_item in ['source', 'destination']:
+            elt = rule_elt.find(addr_item)
+            if elt is not None:
+                rule[addr_item] = self.pfsense.addr_normalize(self.pfsense.element_to_dict(elt))
+        # Convert nested elements to dicts
+        for other_item in ['created', 'updated']:
+            elt = rule_elt.find(other_item)
+            if elt is not None:
+                rule[other_item] = self.pfsense.element_to_dict(elt)
+        rule['action'] = rule.pop('type','UNKNOWN')
+
+        return rule
+
     def add(self, rule, after=None, before='bottom'):
         """ add or update rule """
         self._set_internals(rule, after, before)
@@ -332,17 +358,20 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         timestamp = '%d' % int(time.time())
         if rule_elt is None:
             changed = True
+            self.diff['before'] = ''
             rule['id'] = ''
             rule['tracker'] = timestamp
             rule['created'] = rule['updated'] = dict()
             rule['created']['time'] = rule['updated']['time'] = timestamp
             rule['created']['username'] = rule['updated']['username'] = self.pfsense.get_username()
             rule_elt = self.pfsense.new_element('rule')
+            self.diff['after'] = self.rule_element_to_dict(rule_elt)
             self.pfsense.copy_dict_to_element(rule, rule_elt)
             self._insert(rule_elt)
             self.results['added'].append(rule)
             self.change_descr = 'ansible pfsense_rule added %s' % (rule['descr'])
         else:
+            self.diff['before'] = self.rule_element_to_dict(rule_elt)
             changed = self.pfsense.copy_dict_to_element(rule, rule_elt)
             if self._remove_deleted_rule_params(rule_elt):
                 changed = True
@@ -353,7 +382,8 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
             if changed:
                 rule_elt.find('updated').find('time').text = timestamp
                 rule_elt.find('updated').find('username').text = self.pfsense.get_username()
-                self.results['modified'].append(self.pfsense.element_to_dict(rule_elt))
+                self.diff['after'].update(self.rule_element_to_dict(rule_elt))
+                self.results['modified'].append(self.rule_element_to_dict(rule_elt))
                 self.change_descr = 'ansible pfsense_rule updated "%s" interface %s action %s' % (rule['descr'], rule['interface'], rule['type'])
 
         if changed:
@@ -364,6 +394,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         self._set_internals(rule)
         rule_elt, i = self._find_rule_by_descr(self._descr)
         if rule_elt is not None:
+            self.diff['before'] = self.rule_element_to_dict(rule_elt)
             self._adjust_separators(self._get_rule_position(), add=False)
             self._remove_rule_elt(rule_elt)
             self.change_descr = 'ansible pfsense_rule removed "%s" interface %s' % (rule['descr'], rule['interface'])
@@ -397,7 +428,8 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         if self.changed and not self.module.check_mode:
             self.pfsense.write_config(descr=self.change_descr)
             (rc, stdout, stderr) = self._update()
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=self.changed)
+
+        self.module.exit_json(stdout=stdout, stderr=stderr, changed=self.changed, diff=self.diff)
 
     def run(self, params):
         """ process input params to add/update/delete a rule """

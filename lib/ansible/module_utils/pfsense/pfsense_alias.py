@@ -55,12 +55,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
             self.pfsense.write_config(descr=self.change_descr)
             (rc, stdout, stderr) = self._update()
 
-        diff = {}
-        if 'after' in self.diff:
-            diff['after'] = self.diff['after']
-        if 'before' in self.diff:
-            diff['before'] = self.diff['before']
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=self.changed, diff=diff, result=self.results)
+        self.module.exit_json(stdout=stdout, stderr=stderr, changed=self.changed, diff=self.diff, result=self.results)
 
     def add(self, alias):
         """ add or update alias """

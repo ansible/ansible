@@ -23,6 +23,23 @@ class PFSenseModule(object):
         self.interfaces = self.get_element('interfaces')
         self.debug = open('/tmp/pfsense.debug', 'w')
 
+    def addr_normalize(self, addr):
+        """ return address element formatted like module argument """
+        address = ''
+        if 'address' in addr:
+            address = addr['address']
+        if 'any' in addr:
+            address = 'any'
+        if 'network' in addr:
+            address = 'NET:%s' % addr['network']
+        if address == '':
+            raise ValueError('UNKNOWN addr %s' % addr)
+        if 'port' in addr:
+            address += ':%s' % (addr['port'])
+        if 'not' in addr:
+            address = '!' + address
+        return address
+
     def get_element(self, node):
         """ return <node> configuration element """
         return self.root.find(node)
