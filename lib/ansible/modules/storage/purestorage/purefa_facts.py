@@ -675,9 +675,7 @@ def main():
     if 'offload' in subset or 'all' in subset:
         facts['offload'] = generate_offload_dict(array)
 
-    result = dict(ansible_purefa_facts=facts,)
-
-    module.exit_json(**result)
+    module.exit_json(ansible_facts={'ansible_purefa_facts': facts})
 
 
 if __name__ == '__main__':
