@@ -218,7 +218,7 @@ def main():
         argument_spec=dict(
             type=dict(required=True, type='str', choices=['private_key', 'public_key', 'password']),
             path=dict(required=True, type='str'),
-            data=dict(required=True, type='str', no_log=True),
+            data=dict(type='str', no_log=True),
             url=dict(required=True, type='str'),
             api_version=dict(type='int', default=14),
             token=dict(required=True, type='str', no_log=True),
