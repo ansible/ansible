@@ -165,6 +165,8 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
         msi = $false
         uninstall_string = $null
         path_error = $null
+        display_name = $null
+        display_version = $null
     }
 
     # set the location type and validate the path
@@ -263,33 +265,17 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
         }
     }
 
-    # try to find display_name in Registry and check display_version if available. Finally Get product_id 
+    # try to find display_name in Registry and check display_version if available. Finally Get product_id
     if ($metadata.display_name -ne $null) {
-        $uninstall_node = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\"
+        $uninstall_node_win32 = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\"
         $uninstall_node_wow64 = "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\"
-        $uninstall_array = Get-ChildItem -Path $uninstall_node -Name
+        $uninstall_array_win32 = Get-ChildItem -Path $uninstall_node_win32 -Name
         $uninstall_array_wow64 = Get-ChildItem -Path $uninstall_node_wow64 -Name
+
+        $uninstall_array = $uninstall_array_win32 + $uninstall_array_wow64
 
         foreach ($product_id in $uninstall_array) {
             $uninstall_path = $uninstall_node + $product_id
-            if ( Test-RegistryProperty -Path $uninstall_path -name "displayName") {
-               $displayname = (Get-ItemProperty -Path $uninstall_path -Name "displayName").displayName
-            }
-            if ( Test-RegistryProperty -Path $uninstall_path -name "displayVersion") {
-               $displayversion = (Get-ItemProperty -Path $uninstall_path -Name "displayVersion").displayVersion
-            }
-            if ($metadata.display_name -eq $displayname) {
-                $uninstall_key  = $uninstall_path
-                $metadata.product_id = $product_id
-                if ( $metadata.display_version -ne $null -and $metadata.display_version -eq $displayversion) {
-                    $metadata.installed = $true
-                } else {
-                    $metadata.installed = $true
-                }
-            }
-        }
-        foreach ($product_id in $uninstall_array_wow64) {
-            $uninstall_path = $uninstall_node_wow64 + $product_id
             if ( Test-RegistryProperty -Path $uninstall_path -name "displayName") {
                $displayname = (Get-ItemProperty -Path $uninstall_path -Name "displayName").displayName
             }
@@ -337,7 +323,6 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
         $service_exists = $existing_service -ne $null
         $metadata.installed = $service_exists
     }
-
 
     # finally throw error if path is not valid unless we want to uninstall the package and it already is
     if ($metadata.path_error -ne $null -and (-not ($state -eq "absent" -and $metadata.installed -eq $false))) {
