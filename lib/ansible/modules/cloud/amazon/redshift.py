@@ -224,6 +224,7 @@ except ImportError:
 from ansible.module_utils.ec2 import ec2_argument_spec, snake_dict_to_camel_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 
+
 def _collect_facts(resource):
     """Transfrom cluster information to dict."""
     facts = {
@@ -309,7 +310,7 @@ def create_cluster(module, redshift):
                                     **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Failed to create cluster")
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e: # pylint: disable=duplicate-except
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="Failed to describe cluster")
     if wait:
         attempts = wait_timeout // 60
@@ -373,7 +374,7 @@ def delete_cluster(module, redshift):
         )
     except is_boto3_error_code('ClusterNotFound'):
         return(False, {})
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e: # pylint: disable=duplicate-except
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
         module.fail_json_aws(e, msg="Failed to delete cluster")
 
     if wait:
@@ -432,7 +433,7 @@ def modify_cluster(module, redshift):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e,
                                  msg="Timeout waiting for cluster enhanced vpc routing modification"
-                                )
+                                 )
 
     # change the rest
     try:
