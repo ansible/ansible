@@ -83,7 +83,7 @@ class PlaybookExecutor:
         entrylist = []
         entry = {}
         try:
-            # preload become/connecition/shell to set config defs cached
+            # preload become/connection/shell to set config defs cached
             list(connection_loader.all(class_only=True))
             list(shell_loader.all(class_only=True))
             list(become_loader.all(class_only=True))
