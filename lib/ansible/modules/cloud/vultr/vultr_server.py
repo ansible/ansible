@@ -99,6 +99,9 @@ EXAMPLES = '''
     name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    ssh_keys:
+      - my_key
+      - your_key
     region: Amsterdam
     state: present
 
@@ -108,6 +111,7 @@ EXAMPLES = '''
     name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    ssh_key: my_key
     region: Amsterdam
     state: started
 
@@ -382,13 +386,22 @@ class AnsibleVultrServer(Vultr):
             use_cache=True
         )
 
-    def get_ssh_key(self):
-        return self.query_resource_by_key(
-            key='name',
-            value=self.module.params.get('ssh_key'),
-            resource='sshkey',
-            use_cache=True
-        )
+    def get_ssh_keys(self):
+        ssh_key_names = self.module.params.get('ssh_keys')
+        if not ssh_key_names:
+            return []
+
+        ssh_keys = []
+        for ssh_key_name in ssh_key_names:
+            ssh_key = self.query_resource_by_key(
+                key='name',
+                value=ssh_key_name,
+                resource='sshkey',
+                use_cache=True
+            )
+            if ssh_key:
+                ssh_keys.append(ssh_key)
+        return ssh_keys
 
     def get_region(self):
         return self.query_resource_by_key(
@@ -488,7 +501,7 @@ class AnsibleVultrServer(Vultr):
                 'OSID': self.get_os().get('OSID'),
                 'label': self.module.params.get('name'),
                 'hostname': self.module.params.get('hostname'),
-                'SSHKEYID': self.get_ssh_key().get('SSHKEYID'),
+                'SSHKEYID': ','.join([ssh_key['SSHKEYID'] for ssh_key in self.get_ssh_keys()]),
                 'enable_ipv6': self.get_yes_or_no('ipv6_enabled'),
                 'enable_private_network': self.get_yes_or_no('private_network_enabled'),
                 'auto_backups': self.get_yes_or_no('auto_backup_enabled'),
