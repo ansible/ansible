@@ -51,7 +51,7 @@ options:
             - Set to C(absent), to leave an existing cluster.
             - Set to C(remove), to remove an absent node from the cluster.
             - Set to C(inspect) to display swarm informations.
-            - Set to C(node) to update or read node availability and role
+            - Set to C(node) to update node availability and role or display node information read from manager
         required: true
         default: present
         choices:
@@ -545,6 +545,11 @@ class SwarmManager(DockerBaseClass):
             node_info = self.client.inspect_node(node_id=self.parameters.node_id)
         except APIError as exc:
             self.client.fail(msg="Failed to get node information for %s" % to_native(exc))
+
+        if (self.parameters.node_role is None) and (self.parameters.node_availability is None):
+            self.results['node_facts'] = node_info
+            self.results['changed'] = False
+            return
 
         if self.parameters.node_role is None:
             self.parameters.node_role = node_info['Spec']['Role']
