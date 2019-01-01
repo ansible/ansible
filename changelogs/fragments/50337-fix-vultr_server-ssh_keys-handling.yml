@@ -1,0 +1,2 @@
+bugfixes:
+  - vultr_server - fixed multiple ssh keys were not handled.
