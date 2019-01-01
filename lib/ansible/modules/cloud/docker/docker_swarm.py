@@ -135,12 +135,14 @@ options:
         type: bool
         default: 'no'
     node_availability:
+        version_added: "2.8"
         description: Node availability status to assign
         choices:
           - active
           - pause
           - drain
     node_role:
+        version_added: "2.8"
         description: Node role to assign
         choices:
           - manager
@@ -196,13 +198,13 @@ EXAMPLES = '''
   docker_swarm:
     state: inspect
   register: swarm_info
-  
+
 - name: Set node role
   docker_swarm:
     state: node
     node_id: mynode
     node_role: manager
-    
+
 - name: Set node availability
   docker_swarm:
     state: node
