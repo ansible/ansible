@@ -37,9 +37,19 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
         rule = dict(name='test_rule', source='any', destination='any', interface='wan', disabled='True', protocol='tcp')
         self.do_rule_update_test(rule)
 
+    def test_rule_update_enabled(self):
+        """ test updating disabled of a rule to False """
+        rule = dict(name='test_lan_100_1', source='any', destination='any', interface='lan_100', disabled='False', protocol='tcp')
+        self.do_rule_update_test(rule)
+
+    def test_rule_update_enabled_default(self):
+        """ test updating disabled of a rule to default """
+        rule = dict(name='test_lan_100_1', source='any', destination='any', interface='lan_100', protocol='tcp')
+        self.do_rule_update_test(rule)
+
     def test_rule_update_floating_interface(self):
         """ test updating interface of a floating rule """
-        rule = dict(name='test_rule_floating', source='any', destination='any', interface='lan', floating='yes', direction='out', protocol='tcp')
+        rule = dict(name='test_rule_floating', source='any', destination='any', interface='lan', floating='yes', direction='any', protocol='tcp')
         self.do_rule_update_test(rule)
 
     def test_rule_update_floating_direction(self):
@@ -82,12 +92,12 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
 
     def test_rule_update_log_yes(self):
         """ test updating log of a rule to yes """
-        rule = dict(name='test_rule', source='any', destination='any', interface='wan', log='yes', direction='any', protocol='tcp')
+        rule = dict(name='test_rule', source='any', destination='any', interface='wan', log='yes', protocol='tcp')
         self.do_rule_update_test(rule)
 
     def test_rule_update_log_no(self):
         """ test updating log of a rule to no """
-        rule = dict(name='test_rule_2', source='any', destination='any', interface='wan', log='no', direction='any', protocol='tcp')
+        rule = dict(name='test_rule_2', source='any', destination='any', interface='wan', log='no', protocol='tcp')
         self.do_rule_update_test(rule)
 
     def test_rule_update_log_default(self):
@@ -96,23 +106,23 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
         self.do_rule_update_test(rule)
 
     def test_rule_update_negate_add_source(self):
-        """ test creation of a new rule with a not source """
+        """ test updating source of a rule with a not """
         rule = dict(name='test_rule_2', source='!srv_admin', destination='any', interface='wan', protocol='tcp')
         self.do_rule_update_test(rule)
 
     def test_rule_update_negate_add_destination(self):
-        """ test creation of a new rule with a not destination """
+        """ test updating destination of a rule with a not """
         rule = dict(name='test_rule_2', source='any', destination='!srv_admin', interface='wan', protocol='tcp')
         self.do_rule_update_test(rule)
 
     def test_rule_update_negate_remove_source(self):
-        """ test creation of a new rule with a not source """
-        rule = dict(name='not_rule_src', source='srv_admin', destination='any:port_ssh', interface='wan', protocol='tcp')
+        """ test updating source of a rule remove the not """
+        rule = dict(name='not_rule_src', source='srv_admin', destination='any:port_ssh', interface='lan', protocol='tcp')
         self.do_rule_update_test(rule)
 
     def test_rule_update_negate_remove_destination(self):
-        """ test creation of a new rule with a not destination """
-        rule = dict(name='not_rule_dst', source='any', destination='srv_admin:port_ssh', interface='wan', protocol='tcp')
+        """ test updating destination of a rule remove the not """
+        rule = dict(name='not_rule_dst', source='any', destination='srv_admin:port_ssh', interface='lan', protocol='tcp')
         self.do_rule_update_test(rule)
 
     def test_rule_update_before(self):

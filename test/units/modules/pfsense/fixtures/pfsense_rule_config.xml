@@ -276,7 +276,6 @@
 			</created>
 			<destination>
 				<any></any>
-				<port>port_ssh</port>
 			</destination>
 			<statetype>keep state</statetype>
 			<source>
@@ -302,7 +301,6 @@
 			</created>
 			<destination>
 				<any></any>
-				<port>port_http</port>
 			</destination>
 			<statetype>keep state</statetype>
 			<source>
@@ -313,6 +311,31 @@
 			<ipprotocol>inet</ipprotocol>
 			<type>pass</type>
 			<id></id>
+		</rule>
+		<rule>
+			<updated>
+				<username></username>
+				<time>1545574416</time>
+			</updated>
+			<protocol>tcp</protocol>
+			<descr>test_lan_100_1</descr>
+			<created>
+				<username></username>
+				<time>1545574416</time>
+			</created>
+			<destination>
+				<any></any>
+			</destination>
+			<statetype>keep state</statetype>
+			<source>
+				<any></any>
+			</source>
+			<tracker>1545574416</tracker>
+			<interface>opt3</interface>
+			<ipprotocol>inet</ipprotocol>
+			<type>pass</type>
+			<id></id>
+			<disabled></disabled>
 		</rule>
 		<rule>
 			<updated>
@@ -345,7 +368,6 @@
 				<time>1545574416</time>
 			</updated>
 			<protocol>tcp</protocol>
-			<log></log>
 			<descr>antilock_out_3</descr>
 			<created>
 				<username></username>
@@ -423,7 +445,6 @@
 				<time>1545574416</time>
 			</updated>
 			<protocol>tcp</protocol>
-			<log></log>
 			<descr>not_rule_dst</descr>
 			<created>
 				<username></username>
@@ -450,7 +471,6 @@
 				<time>1545574416</time>
 			</updated>
 			<protocol>tcp</protocol>
-			<log></log>
 			<descr>not_rule_src</descr>
 			<created>
 				<username></username>
@@ -788,7 +808,6 @@
 				<time>1545602758</time>
 				</updated>
 			<protocol>tcp</protocol>
-			<log></log>
 			<descr>ads_to_ads_tcp_2_3</descr>
 			<created>
 				<username></username>
@@ -800,6 +819,7 @@
 				</destination>
 			<statetype>keep state</statetype>
 			<source>
+				<port>port_ldap_ssl</port>
 				<address>ad_poc3</address>
 				</source>
 			<tracker>1545602758</tracker>

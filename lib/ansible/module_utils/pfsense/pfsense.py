@@ -9,7 +9,7 @@ import os
 import pwd
 import time
 import xml.etree.ElementTree as ET
-
+from tempfile import mkstemp
 
 class PFSenseModule(object):
     """ class managing pfsense base configuration """
@@ -244,8 +244,10 @@ class PFSenseModule(object):
         revision.find('username').text = username
         # Use 'html' to have explicit close tags - 3.4 has short_empty_elements
         # xml_declaration does not appear to be working
-        self.tree.write('/tmp/config.xml', xml_declaration=True, method='html')
-        shutil.move('/tmp/config.xml', self.config)
+        (tmp_handle, tmp_name) = mkstemp()
+        os.close(tmp_handle)
+        self.tree.write(tmp_name, xml_declaration=True, method='html')
+        shutil.move(tmp_name, self.config)
         try:
             os.remove('/tmp/config.cache')
         except OSError as exception:

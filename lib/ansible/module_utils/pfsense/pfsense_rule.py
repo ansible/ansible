@@ -12,7 +12,7 @@ RULES_ARGUMENT_SPEC = dict(
     name=dict(required=True, type='str'),
     action=dict(default='pass', required=False, choices=['pass', "block", 'reject']),
     state=dict(required=True, choices=['present', 'absent']),
-    disabled=dict(default=False, required=False,),
+    disabled=dict(default=False, required=False, type='bool'),
     interface=dict(required=True, type='str'),
     floating=dict(required=False, choices=["yes", "no"]),
     direction=dict(required=False, choices=["any", "in", "out"]),
@@ -138,7 +138,7 @@ class PFSenseRuleModule(object):
             i += 1
         return last_found
 
-    def _get_rule_position(self, descr=None):
+    def _get_rule_position(self, descr=None, fail=True):
         """ get rule position in interface/floating """
         if descr is None:
             descr = self._descr
@@ -152,8 +152,9 @@ class PFSenseRuleModule(object):
                 return i
             i += 1
 
-        self.module.fail_json(msg='Failed to find rule=%s interface=%s' % (descr, self._interface_name()))
-        return -1
+        if fail:
+            self.module.fail_json(msg='Failed to find rule=%s interface=%s' % (descr, self._interface_name()))
+        return None
 
     def _get_interface_rule_count(self):
         """ get rule count in interface/floating """
@@ -167,7 +168,7 @@ class PFSenseRuleModule(object):
 
     def _get_expected_rule_xml_index(self):
         """ get expected rule index in xml """
-        if self._after is None and self._before == 'bottom':
+        if self._before == 'bottom':
             return self._get_last_rule_xml_index() + 1
         elif self._after == 'top':
             return self._get_first_rule_xml_index()
@@ -184,21 +185,30 @@ class PFSenseRuleModule(object):
             else:
                 self.module.fail_json(msg='Failed to insert before rule=%s interface=%s' % (self._before, self._interface_name()))
         else:
-            self.module.fail_json(msg='Failed to add rule')
+            found, i = self._find_rule_by_descr(self._descr)
+            if found is not None:
+                return i
+            return self._get_last_rule_xml_index() + 1
         return -1
 
     def _get_expected_rule_position(self):
         """ get expected rule position in interface/floating """
-        if self._after is None and self._before == 'bottom':
-            return self._get_interface_rule_count()
+        if self._before == 'bottom':
+            return self._get_interface_rule_count() - 1
         elif self._after == 'top':
             return 0
         elif self._after is not None:
             return self._get_rule_position(self._after) + 1
         elif self._before is not None:
-            return self._get_rule_position(self._before)
+            position = self._get_rule_position(self._before) - 1
+            if position < 0:
+                return 0
+            return position
         else:
-            self.module.fail_json(msg='Failed to add rule')
+            position = self._get_rule_position(self._after, fail=False)
+            if position is not None:
+                return position
+            return self._get_interface_rule_count()
         return -1
 
     def _insert(self, rule_elt):
@@ -307,6 +317,8 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
             changed = True
         if self._remove_deleted_rule_param(rule_elt, 'protocol'):
             changed = True
+        if self._remove_deleted_rule_param(rule_elt, 'disabled'):
+            changed = True
 
         return changed
 
@@ -350,7 +362,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
 
         return rule
 
-    def add(self, rule, after=None, before='bottom'):
+    def add(self, rule, after=None, before=None):
         """ add or update rule """
         self._set_internals(rule, after, before)
         rule_elt, i = self._find_rule_by_descr(self._descr)
@@ -417,6 +429,8 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         rule['destination'] = self._parse_address(params['destination'])
         if params['log'] == 'yes':
             rule['log'] = ''
+        if params['disabled']:
+            rule['disabled'] = ''
         rule['statetype'] = params['statetype']
 
         return rule

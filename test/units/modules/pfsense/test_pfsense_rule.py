@@ -32,30 +32,6 @@ class TestPFSenseRuleModule(TestPFSenseModule):
 
     module = pfsense_rule
 
-    def setUp(self):
-        """ mocking up """
-        super(TestPFSenseRuleModule, self).setUp()
-
-        self.mock_parse = patch('xml.etree.ElementTree.parse')
-        self.parse = self.mock_parse.start()
-
-        self.mock_shutil_move = patch('shutil.move')
-        self.shutil_move = self.mock_shutil_move.start()
-
-        self.mock_phpshell = patch('ansible.module_utils.pfsense.pfsense.PFSenseModule.phpshell')
-        self.phpshell = self.mock_phpshell.start()
-        self.phpshell.return_value = (0, '', '')
-
-        self.maxDiff = None
-
-    def tearDown(self):
-        """ mocking down """
-        super(TestPFSenseRuleModule, self).tearDown()
-
-        self.mock_parse.stop()
-        self.mock_shutil_move.stop()
-        self.mock_phpshell.stop()
-
     def load_fixtures(self, commands=None):
         """ loading data """
         config_file = 'pfsense_rule_config.xml'
@@ -172,6 +148,12 @@ class TestPFSenseRuleModule(TestPFSenseModule):
         else:
             statetype = 'keep state'
         self.assert_xml_elt_equal(rule_elt, 'statetype', statetype)
+
+        # checking disabled option
+        if 'disabled' in rule and rule['disabled'] == 'yes':
+            self.assert_xml_elt_is_none_or_empty(rule_elt, 'disabled')
+        elif 'disabled' not in rule or rule['disabled'] == 'no':
+            self.assert_not_find_xml_elt(rule_elt, 'disabled')
 
     def check_rule_idx(self, rule, target_idx):
         """ test the xml position of rule """
