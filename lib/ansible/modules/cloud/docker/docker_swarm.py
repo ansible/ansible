@@ -51,6 +51,7 @@ options:
             - Set to C(absent), to leave an existing cluster.
             - Set to C(remove), to remove an absent node from the cluster.
             - Set to C(inspect) to display swarm informations.
+            - Set to C(node) to update or read node availability and role
         required: true
         default: present
         choices:
@@ -59,10 +60,11 @@ options:
           - absent
           - remove
           - inspect
+          - node
     node_id:
         description:
             - Swarm id of the node to remove.
-            - Used with I(state=remove).
+            - Used with I(state=remove) and I(state=node).
     join_token:
         description:
             - Swarm token used to join a swarm cluster.
@@ -132,6 +134,17 @@ options:
         description: Rotate the manager join token.
         type: bool
         default: 'no'
+    node_availability:
+        description: Node availability status to assign
+        choices:
+          - active
+          - pause
+          - drain
+    node_role:
+        description: Node role to assign
+        choices:
+          - manager
+          - worker
 extends_documentation_fragment:
     - docker
 requirements:
@@ -144,6 +157,7 @@ requirements:
     - Docker API >= 1.25
 author:
   - Thierry Bouvet (@tbouvet)
+  - Piotr Wojciechowski (@wojciechowskipiotr)
 '''
 
 EXAMPLES = '''
@@ -182,6 +196,18 @@ EXAMPLES = '''
   docker_swarm:
     state: inspect
   register: swarm_info
+  
+- name: Set node role
+  docker_swarm:
+    state: node
+    node_id: mynode
+    node_role: manager
+    
+- name: Set node availability
+  docker_swarm:
+    state: node
+    node_id: mynode
+    node_availability: drain
 '''
 
 RETURN = '''
@@ -261,6 +287,10 @@ class TaskParameters(DockerBaseClass):
         self.rotate_worker_token = None
         self.rotate_manager_token = None
 
+        self.node_availability = None
+        self.node_role = None
+        self.node_id = None
+
         for key, value in client.module.params.items():
             setattr(self, key, value)
 
@@ -304,7 +334,8 @@ class SwarmManager(DockerBaseClass):
             "join": self.join,
             "absent": self.leave,
             "remove": self.remove,
-            "inspect": self.inspect_swarm
+            "inspect": self.inspect_swarm,
+            "node": self.node
         }
 
         choice_map.get(self.parameters.state)()
@@ -406,11 +437,26 @@ class SwarmManager(DockerBaseClass):
 
     def __isSwarmNode(self):
         info = self.client.info()
+        self.results['__isSwarmNode'] = info
         if info:
             json_str = json.dumps(info, ensure_ascii=False)
             self.swarm_info = json.loads(json_str)
             if self.swarm_info['Swarm']['NodeID']:
                 return True
+        return False
+
+    def __isSwarmNodeByID(self, node_id=None):
+        if node_id is None:
+            return self.__isSwarmNode()
+
+        try:
+            node_info = self.__get_node_info()
+            self.results['node_facts'] = node_info
+        except APIError:
+            return
+
+        if node_info['ID'] is not None:
+            return True
         return False
 
     def join(self):
@@ -454,6 +500,12 @@ class SwarmManager(DockerBaseClass):
             sleep(5)
         return False
 
+    def __isSwarmNodeDown(self):
+        node_info = self.__get_node_info()
+        if node_info['Status']['State'] == 'down':
+            return True
+        return False
+
     def remove(self):
         if not(self.__isSwarmManager()):
             self.client.fail(msg="This node is not a manager.")
@@ -473,11 +525,50 @@ class SwarmManager(DockerBaseClass):
         self.results['actions'].append("Node is removed from swarm cluster.")
         self.results['changed'] = True
 
+    def node(self):
+        if not(self.__isSwarmManager()):
+            self.client.fail(msg="This node is not a manager.")
+
+        if not(self.__isSwarmNodeByID(node_id=self.parameters.node_id)):
+            self.results['actions'].append("This node is not part of a swarm.")
+            return
+
+        try:
+            status_down = self.__isSwarmNodeDown()
+        except APIError:
+            return
+
+        if status_down:
+            self.client.fail(msg="Can not update the node. The status node is down.")
+
+        try:
+            node_info = self.client.inspect_node(node_id=self.parameters.node_id)
+        except APIError as exc:
+            self.client.fail(msg="Failed to get node information for %s" % to_native(exc))
+
+        if self.parameters.node_role is None:
+            self.parameters.node_role = node_info['Spec']['Role']
+
+        if self.parameters.node_availability is None:
+            self.parameters.node_availability = node_info['Spec']['Availability']
+
+        node_spec = dict(
+            Availability=self.parameters.node_availability,
+            Role=self.parameters.node_role,
+        )
+
+        try:
+            self.client.update_node(node_id=node_info['ID'], version=node_info['Version']['Index'], node_spec=node_spec)
+        except APIError as exc:
+            self.client.fail(msg="Failed to update node : %s" % to_native(exc))
+        self.results['actions'].append("Node updated")
+        self.results['changed'] = True
+
 
 def main():
     argument_spec = dict(
         advertise_addr=dict(type='str'),
-        state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect'], default='present'),
+        state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect', 'node'], default='present'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
         remote_addrs=dict(type='list', elements='str'),
@@ -498,12 +589,15 @@ def main():
         autolock_managers=dict(type='bool'),
         node_id=dict(type='str'),
         rotate_worker_token=dict(type='bool', default=False),
-        rotate_manager_token=dict(type='bool', default=False)
+        rotate_manager_token=dict(type='bool', default=False),
+        node_availability=dict(type='str', choices=['active', 'pause', 'drain']),
+        node_role=dict(type='str', choices=['worker', 'manager'])
     )
 
     required_if = [
         ('state', 'join', ['advertise_addr', 'remote_addrs', 'join_token']),
-        ('state', 'remove', ['node_id'])
+        ('state', 'remove', ['node_id']),
+        ('state', 'node', ['node_id'])
     ]
 
     option_minimal_versions = dict(
