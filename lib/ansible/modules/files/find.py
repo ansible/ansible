@@ -369,7 +369,7 @@ def main():
             get_checksum=dict(type='bool', default='no'),
             use_regex=dict(type='bool', default='no'),
             depth=dict(type='int', default=None),
-            noxfs=dict(type='bool', default=False),
+            noxfs=dict(type='bool', default='no'),
         ),
         supports_check_mode=True,
     )
