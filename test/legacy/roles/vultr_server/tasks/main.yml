@@ -37,11 +37,20 @@
     - result is failed
     - 'result.msg == "missing required arguments: os, plan, region"'
 
+- name: setup create ssh keys
+  vultr_ssh_key:
+    name: "{{ item.name }}"
+    ssh_key: "{{ item.key }}"
+  loop: "{{ vultr_server_ssh_keys }}"
+
 - name: test create server in check mode
   vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    ssh_keys:
+      - key1
+      - key2
     region: Amsterdam
     state: started
   register: result
@@ -56,6 +65,9 @@
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    ssh_keys:
+      - key1
+      - key2
     region: Amsterdam
     state: started
   register: result
@@ -74,6 +86,9 @@
     name: "{{ vultr_server_name }}"
     os: CentOS 6 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    ssh_keys:
+      - key1
+      - key2
     region: Amsterdam
     state: started
   register: result
@@ -484,3 +499,10 @@
   assert:
     that:
     - result is not changed
+
+- name: cleanup ssh keys
+  vultr_ssh_key:
+    name: "{{ item.name }}"
+    ssh_key: "{{ item.key }}"
+    state: absent
+  loop: "{{ vultr_server_ssh_keys }}"
