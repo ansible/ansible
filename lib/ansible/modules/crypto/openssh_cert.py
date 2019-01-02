@@ -196,6 +196,7 @@ import errno
 import random
 import re
 import tempfile
+import sets
 
 from datetime import datetime
 from datetime import MINYEAR, MAXYEAR
@@ -422,7 +423,7 @@ class Certificate(object):
             return self.type == cert_type
 
         def _check_principals():
-            return self.principals == principals
+            return sets.Set(self.principals) == sets.Set(principals)
 
         def _check_validity(module):
             if self.valid_from == "always":
