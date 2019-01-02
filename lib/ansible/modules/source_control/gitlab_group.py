@@ -51,6 +51,11 @@ options:
         description:
             - The path of the group you want to create, this will be server_url/group_path
             - If not supplied, the group_name will be used.
+    parent_id:
+        description:
+            - The ID of the parent group
+            - Is not used when group already exists. This means you cannot move the group with this module yet.
+        required: false
     description:
         description:
             - A description for the group.
@@ -83,6 +88,19 @@ EXAMPLES = '''
         name: my_first_group
         path: my_first_group
         state: present
+
+- name: "Create Gitlab Sub Group"
+  local_action:
+    gitlab_group:
+        server_url: https://gitlab.dj-wasabi.local"
+        validate_certs: True
+        login_user: dj-wasabi
+        login_password: "MySecretPassword"
+        name: my_first_group
+        path: my_first_group
+        parent_id: 123
+        state: present
+
 '''
 
 RETURN = '''# '''
@@ -103,10 +121,13 @@ class GitLabGroup(object):
         self._gitlab = git
         self.groupObject = None
 
-    def createOrUpdateGroup(self, name, path, description):
+    def createOrUpdateGroup(self, name, path, description, parent_id):
         changed = False
         if self.groupObject is None:
-            group = self._gitlab.groups.create({'name': name, 'path': path})
+            group = self._gitlab.groups.create({
+                'name': name,
+                'path': path,
+                'parent_id': parent_id })
             changed = True
         else:
             group = self.groupObject
@@ -159,6 +180,7 @@ def main():
             login_token=dict(required=False, no_log=True, type='str'),
             name=dict(required=True, type='str'),
             path=dict(required=False, type='str'),
+            parent_id=dict(required=False, type='str', default=None),
             description=dict(required=False, type='str'),
             state=dict(default="present", choices=["present", "absent"]),
         ),
@@ -185,6 +207,7 @@ def main():
     login_token = module.params['login_token']
     group_name = module.params['name']
     group_path = module.params['path']
+    parent_id = module.params['parent_id']
     description = module.params['description']
     state = module.params['state']
 
@@ -209,7 +232,7 @@ def main():
         if state == "absent":
             module.exit_json(changed=False, result="Group deleted or does not exists")
         else:
-            if group.createOrUpdateGroup(name=group_name, path=group_path, description=description):
+            if group.createOrUpdateGroup(name=group_name, path=group_path, description=description, parent_id=parent_id):
                 module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name)
             else:
                 module.exit_json(changed=False, result="No need to update the group %s" % group_name)
