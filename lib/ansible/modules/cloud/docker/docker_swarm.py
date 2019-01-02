@@ -233,6 +233,11 @@ swarm_facts:
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
+node_facts:
+  version_added: "2.8"
+  description: Informations about swarm node when selected state is 'node-update'.
+  returned: success
+  type: dict
 actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
