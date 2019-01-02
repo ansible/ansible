@@ -21,9 +21,10 @@ __metaclass__ = type
 
 from units.compat import unittest, mock
 from ansible.errors import AnsibleError
-from ansible.plugins.cache import FactCache
+from ansible.plugins.cache import FactCache, CachePluginAdjudicator
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
+from ansible.plugins.loader import cache_loader
 
 HAVE_MEMCACHED = True
 try:
@@ -42,6 +43,57 @@ except ImportError:
     HAVE_REDIS = False
 else:
     from ansible.plugins.cache.redis import CacheModule as RedisCache
+
+import pytest
+
+
+class TestCachePluginAdjudicator:
+    # memory plugin cache
+    cache = CachePluginAdjudicator()
+    cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
+    cache['cache_key_2'] = {'key': 'value'}
+
+    def test___setitem__(self):
+        self.cache['new_cache_key'] = {'new_key1': ['new_value1', 'new_value2']}
+        assert self.cache['new_cache_key'] == {'new_key1': ['new_value1', 'new_value2']}
+
+    def test_inner___setitem__(self):
+        self.cache['new_cache_key'] = {'new_key1': ['new_value1', 'new_value2']}
+        self.cache['new_cache_key']['new_key1'][0] = 'updated_value1'
+        assert self.cache['new_cache_key'] == {'new_key1': ['updated_value1', 'new_value2']}
+
+    def test___contains__(self):
+        assert 'cache_key' in self.cache
+        assert 'not_cache_key' not in self.cache
+
+    def test_get(self):
+        assert self.cache.get('cache_key') == {'key1': 'value1', 'key2': 'value2'}
+
+    def test_get_with_default(self):
+        assert self.cache.get('foo', 'bar') == 'bar'
+
+    def test_get_without_default(self):
+        assert self.cache.get('foo') == None
+
+    def test___getitem__(self):
+        with pytest.raises(KeyError) as err:
+            self.cache['foo']
+
+    def test_pop_with_default(self):
+        assert self.cache.pop('foo', 'bar') == 'bar'
+
+    def test_pop_without_default(self):
+        with pytest.raises(KeyError) as err:
+            assert self.cache.pop('foo')
+
+    def test_pop(self):
+        v = self.cache.pop('cache_key_2')
+        assert v == {'key': 'value'}
+        assert 'cache_key_2' not in self.cache
+
+    def test_update(self):
+        self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
+        assert self.cache['cache_key']['key2'] == 'updatedvalue'
 
 
 class TestFactCache(unittest.TestCase):
@@ -116,9 +168,21 @@ class TestAbstractClass(unittest.TestCase):
     def test_memcached_cachemodule(self):
         self.assertIsInstance(MemcachedCache(), MemcachedCache)
 
+    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
+    def test_memcached_cachemodule_with_loader(self):
+        self.assertIsInstance(cache_loader.get('memcached'), MemcachedCache)
+
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
+
+    def test_memory_cachemodule_with_loader(self):
+        self.assertIsInstance(cache_loader.get('memory'), MemoryCache)
 
     @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
     def test_redis_cachemodule(self):
         self.assertIsInstance(RedisCache(), RedisCache)
+
+    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
+    def test_redis_cachemodule_with_loader(self):
+        # The _uri option is required for the redis plugin
+        self.assertIsInstance(cache_loader.get('redis', **{'_uri': '127.0.0.1:6379:1'}), RedisCache)
