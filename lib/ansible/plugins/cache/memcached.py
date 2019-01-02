@@ -52,11 +52,14 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common._collections_compat import MutableSet
 from ansible.plugins.cache import BaseCacheModule
+from ansible.utils.display import Display
 
 try:
     import memcache
 except ImportError:
     raise AnsibleError("python-memcached is required for the memcached fact cache")
+
+display = Display()
 
 
 class ProxyClientPool(object):
@@ -166,13 +169,22 @@ class CacheModuleKeys(MutableSet):
 class CacheModule(BaseCacheModule):
 
     def __init__(self, *args, **kwargs):
-        if C.CACHE_PLUGIN_CONNECTION:
-            connection = C.CACHE_PLUGIN_CONNECTION.split(',')
-        else:
-            connection = ['127.0.0.1:11211']
+        connection = ['127.0.0.1:11211']
 
-        self._timeout = C.CACHE_PLUGIN_TIMEOUT
-        self._prefix = C.CACHE_PLUGIN_PREFIX
+        try:
+            super(CacheModule, self).__init__(*args, **kwargs)
+            if self.get_option('_uri'):
+                connection = self.get_option('_uri')
+            self._timeout = self.get_option('_timeout')
+            self._prefix = self.get_option('_prefix')
+        except AnsibleError:
+            display.deprecated('Rather than importing CacheModules directly, '
+                               'use ansible.plugins.loader.cache_loader', version='2.12')
+            if C.CACHE_PLUGIN_CONNECTION:
+                connection = C.CACHE_PLUGIN_CONNECTION.split(',')
+            self._timeout = C.CACHE_PLUGIN_TIMEOUT
+            self._prefix = C.CACHE_PLUGIN_PREFIX
+
         self._cache = {}
         self._db = ProxyClientPool(connection, debug=0)
         self._keys = CacheModuleKeys(self._db, self._db.get(CacheModuleKeys.PREFIX) or [])

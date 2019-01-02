@@ -50,11 +50,14 @@ from contextlib import contextmanager
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import BaseCacheModule
+from ansible.utils.display import Display
 
 try:
     import pymongo
 except ImportError:
     raise AnsibleError("The 'pymongo' python module is required for the mongodb fact cache, 'pip install pymongo>=3.0'")
+
+display = Display()
 
 
 class CacheModule(BaseCacheModule):
@@ -62,8 +65,18 @@ class CacheModule(BaseCacheModule):
     A caching module backed by mongodb.
     """
     def __init__(self, *args, **kwargs):
-        self._timeout = int(C.CACHE_PLUGIN_TIMEOUT)
-        self._prefix = C.CACHE_PLUGIN_PREFIX
+        try:
+            super(CacheModule, self).__init__(*args, **kwargs)
+            self._connection = self.get_option('_uri')
+            self._timeout = int(self.get_option('_timeout'))
+            self._prefix = self.get_option('_prefix')
+        except AnsibleError:
+            display.deprecated('Rather than importing CacheModules directly, '
+                               'use ansible.plugins.loader.cache_loader', version='2.12')
+            self._connection = C.CACHE_PLUGIN_CONNECTION
+            self._timeout = int(C.CACHE_PLUGIN_TIMEOUT)
+            self._prefix = C.CACHE_PLUGIN_PREFIX
+
         self._cache = {}
         self._managed_indexes = False
 
@@ -94,7 +107,7 @@ class CacheModule(BaseCacheModule):
         This is a context manager for opening and closing mongo connections as needed. This exists as to not create a global
         connection, due to pymongo not being fork safe (http://api.mongodb.com/python/current/faq.html#is-pymongo-fork-safe)
         '''
-        mongo = pymongo.MongoClient(C.CACHE_PLUGIN_CONNECTION)
+        mongo = pymongo.MongoClient(self._connection)
         try:
             db = mongo.get_default_database()
         except pymongo.errors.ConfigurationError:

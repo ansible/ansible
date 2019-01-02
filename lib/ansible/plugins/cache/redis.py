@@ -45,12 +45,16 @@ import json
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.basic import jsonify
 from ansible.plugins.cache import BaseCacheModule
+from ansible.utils.display import Display
 
 try:
     from redis import StrictRedis, VERSION
 except ImportError:
     raise AnsibleError("The 'redis' python module (version 2.4.5 or newer) is required for the redis fact cache, 'pip install redis'")
+
+display = Display()
 
 
 class CacheModule(BaseCacheModule):
@@ -63,13 +67,22 @@ class CacheModule(BaseCacheModule):
     performance.
     """
     def __init__(self, *args, **kwargs):
-        if C.CACHE_PLUGIN_CONNECTION:
-            connection = C.CACHE_PLUGIN_CONNECTION.split(':')
-        else:
-            connection = []
+        connection = []
 
-        self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
-        self._prefix = C.CACHE_PLUGIN_PREFIX
+        try:
+            super(CacheModule, self).__init__(*args, **kwargs)
+            if self.get_option('_uri'):
+                connection = self.get_option('_uri').split(':')
+            self._timeout = float(self.get_option('_timeout'))
+            self._prefix = self.get_option('_prefix')
+        except AnsibleError:
+            display.deprecated('Rather than importing CacheModules directly, '
+                               'use ansible.plugins.loader.cache_loader', version='2.12')
+            if C.CACHE_PLUGIN_CONNECTION:
+                connection = C.CACHE_PLUGIN_CONNECTION.split(':')
+            self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
+            self._prefix = C.CACHE_PLUGIN_PREFIX
+
         self._cache = {}
         self._db = StrictRedis(*connection)
         self._keys_set = 'ansible_cache_keys'
@@ -93,7 +106,7 @@ class CacheModule(BaseCacheModule):
 
     def set(self, key, value):
 
-        value2 = json.dumps(value)
+        value2 = jsonify(value, sort_keys=True, indent=4)
         if self._timeout > 0:  # a timeout of 0 is handled as meaning 'never expire'
             self._db.setex(self._make_key(key), int(self._timeout), value2)
         else:
