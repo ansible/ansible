@@ -27,7 +27,7 @@ import string
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
-from ansible.plugins.cache import InventoryFileCacheModule
+from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -128,6 +128,19 @@ def expand_hostname_range(line=None):
         return all_hosts
 
 
+def get_cache_plugin(plugin_name, **kwargs):
+    try:
+        return CacheObject(plugin_name, **kwargs)
+    except AnsibleError as e:
+        if 'fact_caching_connection' in e:
+            raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set "
+                               "to a writeable directory path:\nansible.cfg:\n[default]: fact_caching_connection,\n"
+                               "[inventory]: cache_connection;\nEnvironment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\n"
+                               "ANSIBLE_CACHE_PLUGIN_CONNECTION." % plugin_name)
+        else:
+            raise e
+
+
 class BaseInventoryPlugin(AnsiblePlugin):
     """ Parses an Inventory Source"""
 
@@ -140,7 +153,6 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._options = {}
         self.inventory = None
         self.display = display
-        self.cache = None
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates inventory from the given data. Raises an error on any parse failure
@@ -209,15 +221,12 @@ class BaseInventoryPlugin(AnsiblePlugin):
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
         self.set_options(direct=config)
-        if self._options.get('cache'):
-            self._set_cache_options(self._options)
+        if 'cache' in self._options and self.get_option('cache'):
+            cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', '_prefix')]
+            cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+            self._cache = get_cache_plugin(self.get_option('cache_plugin'), **cache_options)
 
         return config
-
-    def _set_cache_options(self, options):
-        self.cache = InventoryFileCacheModule(plugin_name=options.get('cache_plugin'),
-                                              timeout=options.get('cache_timeout'),
-                                              cache_dir=options.get('cache_connection'))
 
     def _consume_options(self, data):
         ''' update existing options from alternate configuration sources not normally used by Ansible.
@@ -254,9 +263,6 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
         return (hostnames, port)
 
-    def clear_cache(self):
-        pass
-
 
 class BaseFileInventoryPlugin(BaseInventoryPlugin):
     """ Parses a File based Inventory Source"""
@@ -268,9 +274,43 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
         super(BaseFileInventoryPlugin, self).__init__()
 
 
+class DeprecatedCache(object):
+    def __init__(self, real_cacheable):
+        self.real_cacheable = real_cacheable
+
+    def get(self, key):
+        display.deprecated('InventoryModule should utilize self._cache as a dict instead of self.cache. '
+                           'When expecting a KeyError, use self._cache[key] instead of using self.cache.get(key). '
+                           'self._cache is a dictionary and will return a default value instead of raising a KeyError '
+                           'when the key does not exist', version='2.12')
+        return self.real_cacheable._cache[key]
+
+    def set(self, key, value):
+        display.deprecated('InventoryModule should utilize self._cache as a dict instead of self.cache. '
+                           'To set the self._cache dictionary, use self._cache[key] = value instead of self.cache.set(key, value). '
+                           'To force update the underlying cache plugin with the contents of self._cache before parse() is complete, '
+                           'call self.set_cache_plugin and it will use the self._cache dictionary to update the cache plugin', version='2.12')
+        self.real_cacheable._cache[key] = value
+        self.real_cacheable.set_cache_plugin()
+
+    def __getattr__(self, name):
+        display.deprecated('InventoryModule should utilize self._cache instead of self.cache', version='2.12')
+        return self.real_cacheable._cache.__getattribute__(name)
+
+
 class Cacheable(object):
 
-    _cache = {}
+    _cache = CacheObject()
+
+    @property
+    def cache(self):
+        return DeprecatedCache(self)
+
+    def load_cache_plugin(self):
+        plugin_name = self.get_option('cache_plugin')
+        cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', '_prefix')]
+        cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+        self._cache = get_cache_plugin(plugin_name, **cache_options)
 
     def get_cache_key(self, path):
         return "{0}_{1}".format(self.NAME, self._get_cache_prefix(path))
@@ -289,7 +329,13 @@ class Cacheable(object):
         return 's_'.join([d1[:5], d2[:5]])
 
     def clear_cache(self):
-        self._cache = {}
+        self._cache.flush()
+
+    def update_cache_if_changed(self):
+        self._cache.update_cache_if_changed()
+
+    def set_cache_plugin(self):
+        self._cache.set_cache()
 
 
 class Constructable(object):
