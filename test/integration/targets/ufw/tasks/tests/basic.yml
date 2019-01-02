@@ -1,0 +1,189 @@
+---
+# ############################################
+- name: Enable
+  ufw:
+    state: enabled
+  register: enable
+- name: Enable (idempotency)
+  ufw:
+    state: enabled
+  register: enable_idem
+- assert:
+    that:
+    - enable is changed
+    - enable_idem is not changed
+
+# ############################################
+- name: ipv4 allow
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+  register: ipv4_allow
+- name: ipv4 allow (idempotency)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+  become: yes
+  register: ipv4_allow_idem
+- assert:
+    that:
+    - ipv4_allow is changed
+    - ipv4_allow_idem is not changed
+
+# ############################################
+- name: delete ipv4 allow
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+    delete: yes
+  register: delete_ipv4_allow
+- name: delete ipv4 allow (idempotency)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+    delete: yes
+  become: yes
+  register: delete_ipv4_allow_idem
+- assert:
+    that:
+    - delete_ipv4_allow is changed
+    - delete_ipv4_allow_idem is not changed
+
+# ############################################
+- name: ipv6 allow
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+  register: ipv6_allow
+- name: ipv6 allow (idempotency)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+  become: yes
+  register: ipv6_allow_idem
+- assert:
+    that:
+    - ipv6_allow is changed
+    - ipv6_allow_idem is not changed
+
+# ############################################
+- name: delete ipv6 allow
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+    delete: yes
+  register: delete_ipv6_allow
+- name: delete ipv6 allow (idempotency)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+    delete: yes
+  become: yes
+  register: delete_ipv6_allow_idem
+- assert:
+    that:
+    - delete_ipv6_allow is changed
+    - delete_ipv6_allow_idem is not changed
+
+
+# ############################################
+- name: ipv4 allow
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+  register: ipv4_allow
+- name: ipv4 allow (idempotency)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+  become: yes
+  register: ipv4_allow_idem
+- assert:
+    that:
+    - ipv4_allow is changed
+    - ipv4_allow_idem is not changed
+
+# ############################################
+- name: delete ipv4 allow
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+    delete: yes
+  register: delete_ipv4_allow
+- name: delete ipv4 allow (idempotency)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+    delete: yes
+  become: yes
+  register: delete_ipv4_allow_idem
+- assert:
+    that:
+    - delete_ipv4_allow is changed
+    - delete_ipv4_allow_idem is not changed
+
+# ############################################
+- name: ipv6 allow
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+  register: ipv6_allow
+- name: ipv6 allow (idempotency)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+  become: yes
+  register: ipv6_allow_idem
+- assert:
+    that:
+    - ipv6_allow is changed
+    - ipv6_allow_idem is not changed
+
+# ############################################
+- name: delete ipv6 allow
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+    delete: yes
+  register: delete_ipv6_allow
+- name: delete ipv6 allow (idempotency)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+    delete: yes
+  become: yes
+  register: delete_ipv6_allow_idem
+- assert:
+    that:
+    - delete_ipv6_allow is changed
+    - delete_ipv6_allow_idem is not changed
+
+# ############################################
+- name: Disable
+  ufw:
+    state: disabled
+  register: disable
+- name: Disable (idempotency)
+  ufw:
+    state: disabled
+  register: disable_idem
+- assert:
+    that:
+    - disable is changed
+    - disable_idem is not changed
