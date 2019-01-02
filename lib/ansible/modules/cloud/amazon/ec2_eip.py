@@ -21,6 +21,7 @@ description:
     - This module can allocate or release an EIP.
     - This module can associate/disassociate an EIP with instances or network interfaces.
 version_added: "1.4"
+author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 options:
   device_id:
     description:
@@ -69,10 +70,6 @@ options:
     default: 'no'
     type: bool
     version_added: "2.5"
-extends_documentation_fragment:
-    - aws
-    - ec2
-author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
    - There may be a delay between the time the EIP is assigned and when
      the cloud instance is reachable via the new address. Use wait_for and
@@ -133,16 +130,6 @@ EXAMPLES = '''
   debug:
     msg: "Allocated IP is {{ eip.public_ip }}"
 
-- name: provision new instances with ec2
-  ec2:
-    keypair: mykey
-    instance_type: c1.medium
-    image: ami-40603AD1
-    wait: yes
-    group: webserver
-    count: 3
-  register: ec2
-
 - name: associate new elastic IPs with each of the instances
   ec2_eip:
     device_id: "{{ item }}"
@@ -170,6 +157,19 @@ public_ip:
   returned: on success
   type: str
   sample: 52.88.159.209
+response_metadata:
+  description: aws response metadata
+  returned: always
+  type: dict
+  sample:
+    http_headers:
+      content-length: 1490
+      content-type: text/xml
+      date: Tue, 07 Feb 2017 16:43:04 GMT
+      server: AmazonEC2
+    http_status_code: 200
+    request_id: 7f436dea-ed54-11e6-a04c-ab2372a1f14d
+    retry_attempts: 0
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
