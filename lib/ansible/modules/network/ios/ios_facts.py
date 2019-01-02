@@ -138,13 +138,32 @@ ansible_net_all_ipv6_addresses:
   returned: when interfaces is configured
   type: list
 ansible_net_interfaces:
-  description: A hash of all interfaces running on the system
+  description: 
+    - A hash of all interfaces running on the system.
+      Expanded with other interface related facts information like
+      CDP/LLDP neighbors, Port-Channels, type (access|trunk|routed), 
+      access|voice vlans, trunk allowed vlans
   returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
   description:
     - The list of CDP and LLDP neighbors from the remote device. If both,
       CDP and LLDP neighbor data is present on one port, CDP is preferred.
+      This information is also merged into the ansible_net_interfaces hash.
+  returned: when interfaces is configured
+  type: dict
+ansible_net_ifvlans:
+  description:
+    - Switchport mode (access|trunk|routed), data and/or voice vlan,
+      trunk allowed vlans per interface. This information is also merged
+      into the ansible_net_interfaces hash.
+  returned: when interfaces is configured
+  type: dict
+ansible_net_etherchannels:
+  description:
+    - Hash containing Etherchannel information, maps logical Port-Channel
+      interface to physical member interfaces. This information is also
+      merged into the ansible_net_interfaces hash.
   returned: when interfaces is configured
   type: dict
 """
@@ -294,11 +313,13 @@ class Config(FactsBase):
 class Interfaces(FactsBase):
 
     COMMANDS = [
+        'show run | i interface|switchport mode|switchport trunk|switchport access|switchport voice|no switchport',
+        'show lldp',
+        'show cdp',
+        'show etherchannel summary',
         'show interfaces',
         'show ip interface',
         'show ipv6 interface',
-        'show lldp',
-        'show cdp'
     ]
 
     def populate(self):
@@ -311,19 +332,9 @@ class Interfaces(FactsBase):
         data = self.responses[0]
         if data:
             interfaces = self.parse_interfaces(data)
-            self.facts['interfaces'] = self.populate_interfaces(interfaces)
+            self.facts['ifvlans'] = self.populate_interfaces_vlans(interfaces)
 
         data = self.responses[1]
-        if data:
-            data = self.parse_interfaces(data)
-            self.populate_ipv4_interfaces(data)
-
-        data = self.responses[2]
-        if data:
-            data = self.parse_interfaces(data)
-            self.populate_ipv6_interfaces(data)
-
-        data = self.responses[3]
         lldp_errs = ['Invalid input', 'LLDP is not enabled']
 
         if data and not any(err in data for err in lldp_errs):
@@ -331,13 +342,39 @@ class Interfaces(FactsBase):
             if neighbors:
                 self.facts['neighbors'].update(self.parse_neighbors(neighbors[0]))
 
-        data = self.responses[4]
+        data = self.responses[2]
         cdp_errs = ['CDP is not enabled']
 
         if data and not any(err in data for err in cdp_errs):
             cdp_neighbors = self.run(['show cdp neighbors detail'])
             if cdp_neighbors:
                 self.facts['neighbors'].update(self.parse_cdp_neighbors(cdp_neighbors[0]))
+
+        data = self.responses[3]
+        if data:
+            data = self.parse_channels(data)
+            self.facts['etherchannels'] = data
+
+        data = self.responses[4]
+        if data:
+            interfaces = self.parse_interfaces(data)
+            self.facts['interfaces'] = self.populate_interfaces(interfaces)
+            self.update_interfaces_channel(self.facts['interfaces'], 
+                                           self.facts['etherchannels'])
+            self.update_interfaces_neighbors(self.facts['interfaces'],
+                                             self.facts['neighbors'])
+            self.update_interfaces_vlans(self.facts['interfaces'],
+                                             self.facts['ifvlans'])
+
+        data = self.responses[5]
+        if data:
+            data = self.parse_interfaces(data)
+            self.populate_ipv4_interfaces(data)
+
+        data = self.responses[6]
+        if data:
+            data = self.parse_interfaces(data)
+            self.populate_ipv6_interfaces(data)
 
     def populate_interfaces(self, interfaces):
         facts = dict()
@@ -356,6 +393,46 @@ class Interfaces(FactsBase):
 
             facts[key] = intf
         return facts
+
+    def populate_interfaces_vlans(self, interfaces):
+        facts = dict()
+        for key, value in iteritems(interfaces):
+            intf = dict()
+            intf['mode'] = self.parse_access_mode(value)
+            intf['vlandata'] = self.parse_access_vlan(value)
+            intf['vlanvoice'] = self.parse_voice_vlan(value)
+            intf['vlanallowed'] = self.parse_allowed_vlans(value)
+
+            facts[key] = intf
+        return facts
+
+    def update_interfaces_channel(self, interfaces, channelinfo):
+        for intf, values in iteritems(interfaces):
+            self.facts['interfaces'][intf]['channel'] = None
+            intfid = self.parse_interface_id(intf)
+            for chintf, members in iteritems(channelinfo):
+                for memberintf in members['members']:
+                    memberintfid = self.parse_interface_id(memberintf)
+                    if intfid == memberintfid:
+                        self.facts['interfaces'][intf]['channel'] = chintf
+
+    def update_interfaces_neighbors(self, interfaces, neighbors):
+        for intf, values in iteritems(interfaces):
+            self.facts['interfaces'][intf]['neighbor'] = None
+            intfid = self.parse_interface_id(intf)
+            for nintf, neighbor in iteritems(neighbors):
+                nintfid = self.parse_interface_id(nintf)
+                if intfid == nintfid:
+                    self.facts['interfaces'][intf]['neighbor'] = neighbor
+
+    def update_interfaces_vlans(self, interfaces, ifvlans):
+        for intf, values in iteritems(interfaces):
+            for vlintf, vlaninfo in iteritems(ifvlans):
+                if intf == vlintf:
+                    self.facts['interfaces'][intf]['mode'] = vlaninfo['mode']
+                    self.facts['interfaces'][intf]['vlandata'] = vlaninfo['vlandata']
+                    self.facts['interfaces'][intf]['vlanvoice'] = vlaninfo['vlanvoice']
+                    self.facts['interfaces'][intf]['vlanallowed'] = vlaninfo['vlanallowed']
 
     def populate_ipv4_interfaces(self, data):
         for key, value in data.items():
@@ -392,6 +469,24 @@ class Interfaces(FactsBase):
         else:
             self.facts['all_ipv6_addresses'].append(address)
 
+    def parse_channels(self, data):
+        facts = dict()
+        for line in data.split('\n'):
+            if line == '':
+                continue
+            fact = dict()
+            channelid = self.parse_channel_vintf(line)
+            if channelid:
+                fact['members'] = list()
+                for entry in line.split(' '):
+                    if entry == '':
+                        continue
+                    members = self.parse_channel_pintf(entry)
+                    if members:
+                        fact['members'].append(members)
+                facts[channelid] = fact
+        return facts
+
     def parse_neighbors(self, neighbors):
         facts = dict()
         for entry in neighbors.split('------------------------------------------------'):
@@ -422,6 +517,9 @@ class Interfaces(FactsBase):
                 facts[intf] = list()
             fact = dict()
             fact['host'] = self.parse_cdp_host(entry)
+            fact['platform'] = self.parse_cdp_platform(entry)
+            fact['address'] = self.parse_cdp_address(entry)
+            fact['capabilities'] = self.parse_cdp_capabilities(entry)
             fact['port'] = port
             facts[intf].append(fact)
         return facts
@@ -435,11 +533,16 @@ class Interfaces(FactsBase):
             elif line[0] == ' ':
                 parsed[key] += '\n%s' % line
             else:
-                match = re.match(r'^(\S+)', line)
+                match = re.match(r'^(interface ){0,1}(\S+)', line)
                 if match:
-                    key = match.group(1)
+                    key = match.group(2)
                     parsed[key] = line
         return parsed
+
+    def parse_interface_id(self, data):
+        match = re.search(r'\w+(([0-9]/){0,1}[0-9]/[0-9]+)', data, re.M)
+        if match:
+            return match.group(1)
 
     def parse_description(self, data):
         match = re.search(r'Description: (.+)$', data, re.M)
@@ -517,6 +620,60 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
+    def parse_cdp_platform(self, data):
+        match = re.search(r'^Platform: (\S+),', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_cdp_address(self, data):
+        match = re.search(r'IP address: (\S+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_cdp_capabilities(self, data):
+        match = re.search(r'Capabilities: (\S+)$', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_access_mode(self, data):
+        if 'no switchport' in data:
+            return 'routed'
+        else:
+            match = re.search(r'switchport mode (\w+)', data)
+            if match:
+                return match.group(1)
+
+    def parse_access_vlan(self, data):
+        match = re.search(r'switchport access vlan (\d+)', data)
+        if match:
+            return int(match.group(1))
+
+    def parse_voice_vlan(self, data):
+        match = re.search(r'switchport voice vlan (\d+)', data)
+        if match:
+            return int(match.group(1))
+
+    def parse_allowed_vlans(self, data):
+        match = re.search(r'switchport trunk allowed vlan (\S+)', data)
+        if match:
+            parsed = []
+            for i in match.group(1).split(','):
+                if '-' not in i:
+                    parsed.append(int(i))
+                else:
+                    l,h = map(int, i.split('-'))
+                    parsed += range(l,h+1)
+            return parsed
+
+    def parse_channel_vintf(self, data):
+        match = re.search(r'(Po\d+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_channel_pintf(self, data):
+        match = re.search(r'(\w+([0-9]/){0,1}[0-9]/[0-9]+)', data, re.M)
+        if match:
+            return match.group(1)
 
 FACT_SUBSETS = dict(
     default=Default,
