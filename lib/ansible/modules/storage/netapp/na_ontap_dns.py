@@ -120,7 +120,7 @@ class NetAppOntapDns(object):
         dns.add_child_elem(domains)
         if self.parameters.get('skip_validation'):
             validation = netapp_utils.zapi.NaElement('skip-config-validation')
-            validation.set_content( str( self.parameters['skip_validation']))
+            validation.set_content(str(self.parameters['skip_validation']))
             dns.add_child_elem(validation)
         try:
             self.server.invoke_successfully(dns, True)
@@ -186,7 +186,7 @@ class NetAppOntapDns(object):
         if changed:
             if self.parameters.get('skip_validation'):
                 validation = netapp_utils.zapi.NaElement('skip-config-validation')
-                validation.set_content( str( self.parameters['skip_validation']))
+                validation.set_content(str(self.parameters['skip_validation']))
                 dns.add_child_elem(validation)
             try:
                 self.server.invoke_successfully(dns, True)
