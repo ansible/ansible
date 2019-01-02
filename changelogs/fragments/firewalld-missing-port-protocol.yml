@@ -1,0 +1,2 @@
+bugfixes:
+  - fix handling of firewalld port if protocol is missing
