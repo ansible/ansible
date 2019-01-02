@@ -13,7 +13,7 @@ module: ecs_cluster_facts
 short_description: Get AWS ECS cluster facts.
 description:
     - Get AWS ECS cluster facts as well as facts of the ec2 instances assigned to those clusters.
-version_added: "2.7"
+version_added: "2.8"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
