@@ -94,6 +94,14 @@ EXAMPLES = '''
     object_name: Accounts
     state: present
   delegate_to: localhost
+
+- name: Assign view_user Read Only permission at root folder
+  vmware_object_role_permission:
+    role: ReadOnly
+    principal: view_user
+    object_name: rootFolder
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
