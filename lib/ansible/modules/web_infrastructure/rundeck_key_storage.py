@@ -22,8 +22,7 @@ module: rundeck_key_storage
 short_description: Manage Rundeck key storage.
 description:
     - Upload, update, delete Rundeck key storage through HTTP API.
-version_added: "3.0.9"
-rundeck_api_version: "27"
+version_added: "2.8"
 author: "Amine CHIKOUCHE (@aminx4)"
 options:
     type:
@@ -38,19 +37,29 @@ options:
     data:
         description:
             - set the key data
-    url:
-        description:
-            - Sets the rundeck instance URL.
-        required: True
     api_version:
         description:
             - Sets the API version used by module.
             - API version must be at least 14.
         default: 14
+    url:
+        description:
+            - Sets the rundeck instance URL.
+        required: True
     token:
         description:
             - Sets the token to authenticate against Rundeck API.
         required: True
+    state:
+        description:
+            - create, update or remove a key
+        choices: ['present', 'absent']
+        default: present
+    check_mode:
+        description:
+            - activate check mode
+        choices: ['yes', 'no']
+        default: no
 '''
 
 EXAMPLES = '''
