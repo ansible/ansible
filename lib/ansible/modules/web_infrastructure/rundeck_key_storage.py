@@ -54,18 +54,72 @@ options:
 '''
 
 EXAMPLES = '''
+
 - name: Create a rundeck private key
   rundeck_key_storage:
-    type: private_key
-    path: "myproject/rundeck_private_key"
-    data: "{{ data }}"
+    type: 'private_key'
+    path: "myProject/rundeck_private_key"
+    data: 'data'
     api_version: 27
-    url: "https://rundeck.example.org"
-    token: "mytoken"
-    state: present
+    url: "http://127.0.0.1:4440"
+    token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
+    state: "present"
+    check_mode: no
     
+- name: Create a rundeck public key
+  rundeck_key_storage:
+    type: 'public_key'
+    path: "myProject/rundeck_public_key"
+    data: 'data'
+    api_version: 27
+    url: "http://127.0.0.1:4440"
+    token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
+    state: "present"
+    check_mode: no
     
-
+- name: Create a rundeck password
+  rundeck_key_storage:
+    type: 'password'
+    path: "myProject/password"
+    data: 'data'
+    api_version: 27
+    url: "http://127.0.0.1:4440"
+    token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
+    state: "present"
+    check_mode: no
+    
+- name: delete a rundeck private key
+  rundeck_key_storage:
+    type: 'private_key'
+    path: "myProject/rundeck_private_key"
+    data: 'data'
+    api_version: 27
+    url: "http://127.0.0.1:4440"
+    token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
+    state: "absent"
+    check_mode: no
+- name: delete a rundeck password
+  rundeck_key_storage:
+    type: 'password'
+    path: "myProject/password"
+    data: 'data'
+    api_version: 27
+    url: "http://127.0.0.1:4440"
+    token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
+    state: "absent"
+    check_mode: no
+    
+- name: delete a rundeck public key
+  rundeck_key_storage:
+    type: 'public_key'
+    path: "myProject/rundeck_public_key"
+    data: 'data'
+    api_version: 27
+    url: "http://127.0.0.1:4440"
+    token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
+    state: "absent"
+    check_mode: no
+    
 '''
 
 RETURN = '''
@@ -103,56 +157,36 @@ class RundeckKeyStorageManager(object):
         elif infos["status"] >= 500:
             self.module.fail_json(msg="Fatal Rundeck API error.", rundeck_response=infos["body"])
 
-    def request_rundeck_api(self, query, content_type, accept, data, method):
+    def request_rundeck_api(self, query, headers, method, data=None):
         resp, info = fetch_url(self.module,
                                "%s/api/%d/%s" % (self.module.params["url"], self.module.params["api_version"], query),
                                data=json.dumps(data),
                                method=method,
-                               headers={
-                                   "Content-Type": content_type,
-                                   "Accept": accept,
-                                   "X-Rundeck-Auth-Token": self.module.params["token"]
-                               })
+                               headers=headers,
+                               force=True)
+
         self.handle_http_code_if_needed(info)
-        if resp is not None:
-            resp = resp.read()
-            if resp != "":
+        if resp is None or info["status"] == 204:
+            return resp, info
+        else:
+            resp_read = resp.read()
+            if resp_read != "":
                 try:
-                    json_resp = json.loads(resp)
+                    json_resp = json.loads(resp_read)
                     return json_resp, info
                 except ValueError as e:
                     self.module.fail_json(msg="Rundeck response was not a valid JSON. Exception was: %s. "
-                                              "Object was: %s" % (to_native(e), resp))
-        return resp, info
-
-    def create_request_rundeck_api(self, query, content_type, data, method):
-        resp, info = fetch_url(self.module,
-                               "%s/api/%d/%s" % (
-                                   self.module.params["url"], self.module.params["api_version"], query),
-                               data=json.dumps(data),
-                               method=method,
-                               headers={
-                                   "Content-Type": content_type,
-                                   "X-Rundeck-Auth-Token": self.module.params["token"]
-                               })
-
-        self.handle_http_code_if_needed(info)
-        if resp is not None:
-            resp = resp.read()
-            if resp != "":
-                try:
-                    json_resp = json.loads(resp)
-                    return json_resp, info
-                except ValueError as e:
-                    self.module.fail_json(msg="Rundeck response was not a valid JSON. Exception was: %s. "
-                                              "Object was: %s" % (to_native(e), resp))
-        return resp, info
+                                              "Object was: %s" % (to_native(e), resp_read))
+            return resp, info
 
     def key_storage_facts(self):
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-Rundeck-Auth-Token": self.module.params["token"]
+        }
         resp, info = self.request_rundeck_api("storage/keys/%s" % self.module.params["path"],
-                                              "application/json",
-                                              "application/json",
-                                              None,
+                                              headers,
                                               "GET")
         return resp
 
@@ -167,16 +201,20 @@ class RundeckKeyStorageManager(object):
             content_type = "x-rundeck-data-password"
 
         facts = self.key_storage_facts()
+        headers = {
+            "Content-Type": content_type,
+            "X-Rundeck-Auth-Token": self.module.params["token"]
+        }
         if facts is None:
             # If in check mode don't create key, simulate a fake key creation
             if self.module.check_mode:
                 self.module.exit_json(changed=True, before={}, after={"path": self.module.params["path"]})
 
             # create a key
-            resp, info = self.create_request_rundeck_api("storage/keys/%s" % self.module.params["path"],
-                                                         content_type,
-                                                         self.module.params["data"],
-                                                         "POST")
+            resp, info = self.request_rundeck_api("storage/keys/%s" % self.module.params["path"],
+                                                  headers,
+                                                  "POST",
+                                                  self.module.params["data"])
 
             if info["status"] == 201:
                 self.module.exit_json(changed=True, before={}, after=self.key_storage_facts())
@@ -185,10 +223,10 @@ class RundeckKeyStorageManager(object):
                                       before={}, after=self.key_storage_facts())
         else:
             # update existing key  query, content_type, accept, data, method
-            resp, info = self.create_request_rundeck_api("storage/keys/%s" % self.module.params["path"],
-                                                         content_type,
-                                                         self.module.params["data"],
-                                                         "PUT")
+            resp, info = self.request_rundeck_api("storage/keys/%s" % self.module.params["path"],
+                                                  headers,
+                                                  "PUT",
+                                                  self.module.params["data"])
 
             if info["status"] == 200:
                 self.module.exit_json(changed=True, before={}, after=self.key_storage_facts())
@@ -204,13 +242,17 @@ class RundeckKeyStorageManager(object):
         else:
             # If not in check mode, remove the project
             if not self.module.check_mode:
-                self.request_rundeck_api("storage/keys/%s" % self.module.params["path"],
-                                         "application/json",
-                                         "application/json",
-                                         None,
-                                         "DELETE")
-
-            self.module.exit_json(changed=True, before=facts, after={})
+                headers = {
+                    "Content-Type": "application/json",
+                    "X-Rundeck-Auth-Token": self.module.params["token"]
+                }
+                resp, info = self.request_rundeck_api("storage/keys/%s" % self.module.params["path"],
+                                                      headers,
+                                                      "DELETE")
+                if info["status"] == 200 or info["status"] == 204:
+                    self.module.exit_json(changed=True, before=facts, after={})
+                if info["status"] == 404:
+                    self.module.exit_json(changed=False, before=facts, after={})
 
 
 def main():
@@ -225,7 +267,7 @@ def main():
             state=dict(type='str', choices=['present', 'absent'], default='present'),
             check_mode=dict(type='str', choices=['yes', 'no'], default='no')
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if module.params["check_mode"] == 'yes':
