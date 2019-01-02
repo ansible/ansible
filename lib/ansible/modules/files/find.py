@@ -380,6 +380,7 @@ def main():
             use_regex=dict(type='bool', default='no'),
             depth=dict(type='int', default=None),
             noxfs=dict(type='bool', default='no'),
+            noxfs_overrides=dict(type='list', default=[], aliases=['noxfs_override']),
         ),
         supports_check_mode=True,
     )
