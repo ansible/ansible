@@ -113,6 +113,16 @@ options:
         type: bool
         default: False
         version_added: "2.8"
+    noxfs_overrides:
+        description:
+            - If C(noxfs) is set to true, a directory will be scanned regardless if it is a mountpoint or not,
+              if it matches at least one element of C(noxfs_overrides) which contains (shell or regex) patterns,
+              which type is controlled by C(use_regex) option.
+            - Regex patterns match (at the beginning of) the absolute path, whereas globs match either
+              an absolute path or if relative, the basename of the path/directory under consideration.
+        aliases: ['noxfs_override']
+        default: []
+        version_added: "2.8"
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''
@@ -416,7 +426,8 @@ def main():
                         del(dirs[:])
                         continue
                 if params['noxfs']:
-                    if root != npath and os.path.ismount(os.path.normpath(root)):
+                    root = os.path.normpath(root)
+                    if root != npath and os.path.ismount(root) and not any(pfilter(root if params['use_regex'] or os.path.isabs(p) else os.path.basename(root), [p], None, params['use_regex']) for p in params['noxfs_overrides']):
                         del(dirs[:])
                         continue
 
