@@ -196,9 +196,9 @@ Parameters
             </tr>
             {% if value.suboptions %}
                 {% if value.suboptions.items %}
-                    @{ loop(value.suboptions.items()) }@
+                    @{ loop(value.suboptions|dictsort) }@
                 {% elif value.suboptions[0].items %}
-                    @{ loop(value.suboptions[0].items()) }@
+                    @{ loop(value.suboptions[0]|dictsort) }@
                 {% endif %}
             {% endif %}
         {% endfor %}
@@ -324,9 +324,9 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
              # ---------------------------------------------------------#}
             {% if value.contains %}
                 {% if value.contains.items %}
-                    @{ loop(value.contains.items()) }@
+                    @{ loop(value.contains|dictsort) }@
                 {% elif value.contains[0].items %}
-                    @{ loop(value.contains[0].items()) }@
+                    @{ loop(value.contains[0]|dictsort) }@
                 {% endif %}
             {% endif %}
         {% endfor %}
@@ -394,9 +394,9 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
              # ---------------------------------------------------------#}
             {% if value.contains %}
                 {% if value.contains.items %}
-                    @{ loop(value.contains.items()) }@
+                    @{ loop(value.contains|dictsort) }@
                 {% elif value.contains[0].items %}
-                    @{ loop(value.contains[0].items()) }@
+                    @{ loop(value.contains[0]|dictsort) }@
                 {% endif %}
             {% endif %}
         {% endfor %}
