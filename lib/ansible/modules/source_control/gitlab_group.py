@@ -52,6 +52,7 @@ options:
             - The path of the group you want to create, this will be server_url/group_path
             - If not supplied, the group_name will be used.
     parent_id:
+        version_added: 2.8
         description:
             - The ID of the parent group
             - Is not used when group already exists. This means you cannot move the group with this module yet.
@@ -127,7 +128,7 @@ class GitLabGroup(object):
             group = self._gitlab.groups.create({
                 'name': name,
                 'path': path,
-                'parent_id': parent_id })
+                'parent_id': parent_id})
             changed = True
         else:
             group = self.groupObject
