@@ -179,7 +179,6 @@ from ansible.module_utils.six.moves import zip
 
 class FactsBase(object):
 
-
     COMMANDS = list()
 
     def __init__(self, module):
@@ -195,7 +194,6 @@ class FactsBase(object):
 
 
 class Default(FactsBase):
-
 
     COMMANDS = ['show version']
 
@@ -255,7 +253,6 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
-
     COMMANDS = [
         'dir',
         'show memory statistics'
@@ -301,7 +298,6 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-
     COMMANDS = ['show running-config']
 
     def populate(self):
@@ -315,7 +311,6 @@ class Config(FactsBase):
 
 
 class Interfaces(FactsBase):
-
 
     COMMANDS = [
         'show run | i interface|switchport mode|switchport trunk|switchport access|switchport voice|no switchport',
@@ -685,10 +680,10 @@ FACT_SUBSETS = dict(
     config=Config,
 )
 
+
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 warnings = list()
-
 
 def main():
     """main entry point for module execution
