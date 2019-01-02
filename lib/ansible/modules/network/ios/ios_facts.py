@@ -673,6 +673,7 @@ class Interfaces(FactsBase):
         if match:
             return match.group(1)
 
+
 FACT_SUBSETS = dict(
     default=Default,
     hardware=Hardware,
@@ -684,6 +685,7 @@ FACT_SUBSETS = dict(
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 warnings = list()
+
 
 def main():
     """main entry point for module execution
