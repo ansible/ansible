@@ -41,7 +41,7 @@ from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
 # I'll undo because it might break 3rd party plugins (or could use a toggle + deprecation period?), but this works
 from ansible.plugins.cache import CachePluginAdjudicator as FactCache
-#from ansible.vars.fact_cache import FactCache
+# from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms

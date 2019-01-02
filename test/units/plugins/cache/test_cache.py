@@ -73,7 +73,7 @@ class TestCachePluginAdjudicator:
         assert self.cache.get('foo', 'bar') == 'bar'
 
     def test_get_without_default(self):
-        assert self.cache.get('foo') == None
+        assert self.cache.get('foo') is None
 
     def test___getitem__(self):
         with pytest.raises(KeyError) as err:
