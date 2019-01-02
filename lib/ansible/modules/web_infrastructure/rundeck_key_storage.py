@@ -98,6 +98,7 @@ EXAMPLES = '''
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "absent"
     check_mode: no
+    
 - name: delete a rundeck password
   rundeck_key_storage:
     type: 'password'
@@ -129,11 +130,11 @@ rundeck_response:
     returned: failed
     type: str
 before:
-    description: dictionnary containing project informations before modification
+    description: dictionnary containing key informations before modification
     returned: success
     type: dict
 after:
-    description: dictionnary containing project informations after modification
+    description: dictionnary containing key informations after modification
     returned: success
     type: dict
 '''
