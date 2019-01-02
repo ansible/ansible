@@ -24,8 +24,8 @@ Paths where configuration file is searched are listed in :ref:`reference documen
 Getting the latest configuration
 --------------------------------
 
-If installing Ansible from a package manager, the latest ansible.cfg file should be present in /etc/ansible, possibly
-as a ".rpmnew" file (or other) as appropriate in the case of updates.
+If installing Ansible from a package manager, the latest ``ansible.cfg`` file should be present in ``/etc/ansible``, possibly
+as a ``.rpmnew`` file (or other) as appropriate in the case of updates.
 
 If you installed Ansible from pip or from source, you may want to create this file in order to override
 default settings in Ansible.
