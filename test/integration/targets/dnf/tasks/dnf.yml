@@ -50,6 +50,7 @@
   dnf:
     name: sos
     state: present
+    update_cache: True
   register: dnf_result
 
 - name: check sos with rpm
