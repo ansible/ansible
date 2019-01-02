@@ -41,8 +41,8 @@ options:
     - List of IPv4 addresses of name servers such as '123.123.123.123'.
 
   skip_validation:
-	description:
-	- Skip configuration validation.
+    description:
+    - Skip configuration validation.
 
 '''
 
@@ -119,9 +119,9 @@ class NetAppOntapDns(object):
             domains.add_child_elem(domain)
         dns.add_child_elem(domains)
         if self.parameters.get('skip_validation'):
-			validation = netapp_utils.zapi.NaElement('skip-config-validation')
-			validation.set_content( str( self.parameters['skip_validation']))
-			dns.add_child_elem(validation)
+            validation = netapp_utils.zapi.NaElement('skip-config-validation')
+            validation.set_content( str( self.parameters['skip_validation']))
+            dns.add_child_elem(validation)
         try:
             self.server.invoke_successfully(dns, True)
         except netapp_utils.zapi.NaApiError as error:
