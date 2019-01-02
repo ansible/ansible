@@ -598,13 +598,13 @@ def main():
         rotate_worker_token=dict(type='bool', default=False),
         rotate_manager_token=dict(type='bool', default=False),
         node_availability=dict(type='str', choices=['active', 'pause', 'drain']),
-        node_role=dict(type='str', choices=['worker', 'manager'])
+        node_role=dict(type='str', choices=['worker', 'manager']),
     )
 
     required_if = [
         ('state', 'join', ['advertise_addr', 'remote_addrs', 'join_token']),
         ('state', 'remove', ['node_id']),
-        ('state', 'node', ['node_id'])
+        ('state', 'node', ['node_id']),
     ]
 
     option_minimal_versions = dict(
