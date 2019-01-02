@@ -51,7 +51,7 @@ options:
             - Set to C(absent), to leave an existing cluster.
             - Set to C(remove), to remove an absent node from the cluster.
             - Set to C(inspect) to display swarm informations.
-            - Set to C(node) to update node availability and role or display node information read from manager
+            - Set to C(node-update) to update node availability and role or display node information read from manager
         required: true
         default: present
         choices:
@@ -60,7 +60,7 @@ options:
           - absent
           - remove
           - inspect
-          - node
+          - node-update
     node_id:
         description:
             - Swarm id of the node to remove.
@@ -337,7 +337,7 @@ class SwarmManager(DockerBaseClass):
             "absent": self.leave,
             "remove": self.remove,
             "inspect": self.inspect_swarm,
-            "node": self.node
+            "node-update": self.node_update,
         }
 
         choice_map.get(self.parameters.state)()
@@ -527,7 +527,7 @@ class SwarmManager(DockerBaseClass):
         self.results['actions'].append("Node is removed from swarm cluster.")
         self.results['changed'] = True
 
-    def node(self):
+    def node_update(self):
         if not(self.__isSwarmManager()):
             self.client.fail(msg="This node is not a manager.")
 
@@ -575,7 +575,7 @@ class SwarmManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         advertise_addr=dict(type='str'),
-        state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect', 'node'], default='present'),
+        state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect', 'node-update'], default='present'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
         remote_addrs=dict(type='list', elements='str'),
@@ -604,7 +604,7 @@ def main():
     required_if = [
         ('state', 'join', ['advertise_addr', 'remote_addrs', 'join_token']),
         ('state', 'remove', ['node_id']),
-        ('state', 'node', ['node_id']),
+        ('state', 'node-update', ['node_id']),
     ]
 
     option_minimal_versions = dict(
