@@ -69,15 +69,9 @@ def set_constant(name, value, export=vars()):
     export[name] = value
 
 
-def _get_become_methods():
-    p = subprocess.Popen('ansible-doc -l -t become', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p.communicate()
-    return p.stdout.splitlines()
-
-
 # CONSTANTS ### yes, actual ones
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
-BECOME_METHODS = _get_become_methods()
+BECOME_METHODS = []
 BOOL_TRUE = BOOLEANS_TRUE
 CONTROLLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
 DEFAULT_BECOME_PASS = None

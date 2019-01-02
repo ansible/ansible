@@ -75,9 +75,10 @@ class PlaybookExecutor:
         entrylist = []
         entry = {}
         try:
+            # preload plugins into constant as some connections will depend on it
+            C.BECOME_PLUGINS = list(become_loader.all(class_only=True))
             # preload become/connecition/shell to set config defs cached
             list(connection_loader.all(class_only=True))
-            list(become_loader.all(class_only=True))
             list(shell_loader.all(class_only=True))
 
             for playbook_path in self._playbooks:
