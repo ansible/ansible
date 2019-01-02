@@ -138,10 +138,10 @@ ansible_net_all_ipv6_addresses:
   returned: when interfaces is configured
   type: list
 ansible_net_interfaces:
-  description: 
+  description:
     - A hash of all interfaces running on the system.
       Expanded with other interface related facts information like
-      CDP/LLDP neighbors, Port-Channels, type (access|trunk|routed), 
+      CDP/LLDP neighbors, Port-Channels, type (access|trunk|routed),
       access|voice vlans, trunk allowed vlans
   returned: when interfaces is configured
   type: dict
@@ -179,6 +179,7 @@ from ansible.module_utils.six.moves import zip
 
 class FactsBase(object):
 
+
     COMMANDS = list()
 
     def __init__(self, module):
@@ -194,6 +195,7 @@ class FactsBase(object):
 
 
 class Default(FactsBase):
+
 
     COMMANDS = ['show version']
 
@@ -253,6 +255,7 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
+
     COMMANDS = [
         'dir',
         'show memory statistics'
@@ -298,6 +301,7 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
+
     COMMANDS = ['show running-config']
 
     def populate(self):
@@ -311,6 +315,7 @@ class Config(FactsBase):
 
 
 class Interfaces(FactsBase):
+
 
     COMMANDS = [
         'show run | i interface|switchport mode|switchport trunk|switchport access|switchport voice|no switchport',
@@ -359,12 +364,9 @@ class Interfaces(FactsBase):
         if data:
             interfaces = self.parse_interfaces(data)
             self.facts['interfaces'] = self.populate_interfaces(interfaces)
-            self.update_interfaces_channel(self.facts['interfaces'], 
-                                           self.facts['etherchannels'])
-            self.update_interfaces_neighbors(self.facts['interfaces'],
-                                             self.facts['neighbors'])
-            self.update_interfaces_vlans(self.facts['interfaces'],
-                                             self.facts['ifvlans'])
+            self.update_interfaces_channel(self.facts['interfaces'], self.facts['etherchannels'])
+            self.update_interfaces_neighbors(self.facts['interfaces'], self.facts['neighbors'])
+            self.update_interfaces_vlans(self.facts['interfaces'], self.facts['ifvlans'])
 
         data = self.responses[5]
         if data:
@@ -415,6 +417,7 @@ class Interfaces(FactsBase):
                     memberintfid = self.parse_interface_id(memberintf)
                     if intfid == memberintfid:
                         self.facts['interfaces'][intf]['channel'] = chintf
+                        self.facts['interfaces'][intf]['channelmembers'] = members['members']
 
     def update_interfaces_neighbors(self, interfaces, neighbors):
         for intf, values in iteritems(interfaces):
@@ -661,8 +664,8 @@ class Interfaces(FactsBase):
                 if '-' not in i:
                     parsed.append(int(i))
                 else:
-                    l,h = map(int, i.split('-'))
-                    parsed += range(l,h+1)
+                    l, h = map(int, i.split('-'))
+                    parsed += range(l, h + 1)
             return parsed
 
     def parse_channel_vintf(self, data):
