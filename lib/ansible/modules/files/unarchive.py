@@ -85,6 +85,14 @@ options:
     type: 'bool'
     default: 'yes'
     version_added: "2.2"
+  omit_check:
+    description:
+      - By default unarchive will make a diff of the files in the archive and the destination, to check if it needs to 
+        extract the archive and/or fix the file attributes afterwards.
+      - The bigger the archive, the longer it takes. If you are sure you don't need this check, you can disable it and gain some performance.
+    type: 'bool'
+    default: 'no'
+    version_added: "2.8"
 extends_documentation_fragment:
 - decrypt
 - files
@@ -616,6 +624,8 @@ class TgzArchive(object):
         if self.module.check_mode:
             self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
         self.excludes = [path.rstrip('/') for path in self.module.params['exclude']]
+        self.timeout_app = self.module.get_bin_path('timeout', None)
+        self.extraction_check_timeout_in_seconds = '3'
         # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
         self.cmd_path = self.module.get_bin_path('gtar', None)
         if not self.cmd_path:
@@ -678,6 +688,24 @@ class TgzArchive(object):
                 self._files_in_archive.append(to_native(filename))
 
         return self._files_in_archive
+
+    def _is_extractable(self):
+        # No need to list every file in the archive just to check if its extractable,
+        # as it can take very long for big archives!
+        # If its not extractable if will fail fast enough to not hit the timeout.
+        if self.timeout_app:
+            cmd = [self.timeout_app, self.extraction_check_timeout_in_seconds, self.cmd_path, '--list', '-C', self.dest]
+        else:
+            cmd = [self.cmd_path, '--list', '-C', self.dest]
+
+        if self.zipflag:
+            cmd.append(self.zipflag)
+        cmd.extend(['-f', self.src])
+        rc, out, err = self.module.run_command(cmd, cwd=self.dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        if rc != 0 and rc != 124:
+            raise UnarchiveError('Unable to list files in the archive')
+
+        return True
 
     def is_unarchived(self):
         cmd = [self.cmd_path, '--diff', '-C', self.dest]
@@ -752,7 +780,7 @@ class TgzArchive(object):
             return False, 'Command "%s" detected as tar type %s. GNU tar required.' % (self.cmd_path, self.tar_type)
 
         try:
-            if self.files_in_archive:
+            if self._is_extractable():
                 return True, None
         except UnarchiveError:
             return False, 'Command "%s" could not handle archive.' % self.cmd_path
@@ -810,6 +838,7 @@ def main():
             exclude=dict(type='list', default=[]),
             extra_opts=dict(type='list', default=[]),
             validate_certs=dict(type='bool', default=True),
+            omit_check=dict(type='bool', default=False),
         ),
         add_file_common_args=True,
         # check-mode only works for zip files, we cover that later
@@ -820,6 +849,7 @@ def main():
     dest = module.params['dest']
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
+    omit_check = module.params['omit_check']
 
     # did tar file arrive?
     if not os.path.exists(src):
@@ -849,7 +879,9 @@ def main():
     res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
 
     # do we need to do unpack?
-    check_results = handler.is_unarchived()
+    check_results = dict(unarchived=False)
+    if not omit_check:
+        check_results = handler.is_unarchived()
 
     # DEBUG
     # res_args['check_results'] = check_results
