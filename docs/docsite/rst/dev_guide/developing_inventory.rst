@@ -189,8 +189,75 @@ To facilitate this there are a few of helper functions used in the example below
 
 The specifics will vary depending on API and structure returned. But one thing to keep in mind, if the inventory source or any other issue crops up you should ``raise AnsibleParserError`` to let Ansible know that the source was invalid or the process failed.
 
-For examples on how to implement an inventory plug in, see the source code here:
+For examples on how to implement an inventory plugin, see the source code here:
 `lib/ansible/plugins/inventory <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/inventory>`_.
+
+.. _inventory_plugin_caching:
+
+inventory cache
+^^^^^^^^^^^^^^^
+
+If you used the Cacheable base class and have extended the inventory plugin documentation with the inventory_cache documentation fragment you have caching at your disposal.
+
+Now you can load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML based configuration files and the ``_read_config_data`` method the cache plugin is loaded within that method. Accordingly, you can skip this first step. Otherwise, for plugins that don't use ``_read_config_data``, the cache will need to be loaded with ``load_cache_plugin``.
+
+.. code-block:: python
+
+    NAME = 'myplugin'
+
+    def parse(self, inventory, loader, path, cache=True):
+        super(InventoryModule, self).parse(inventory, loader, path)
+
+        self.load_cache_plugin()
+
+Before using the cache, retrieve a unique cache key using the ``get_cache_key`` method. This needs to be done by all inventory modules using the cache.
+
+.. code-block:: python
+
+    def parse(self, inventory, loader, path, cache=True):
+        super(InventoryModule, self).parse(inventory, loader, path)
+
+        self.load_cache_plugin()
+        cache_key = self.get_cache_key(path)
+
+The last parameter of ``parse`` is ``cache``. This value comes from the inventory manager and indicates whether the inventory is being refreshed (such as via ``--refresh-inventory`` or the meta task ``flush_inventory``). Although the cache shouldn't be used to populate the inventory when being refreshed, the cache should be updated with the new inventory if the user has enabled caching. You can use ``self._cache`` like a dictionary. The following pattern allows refreshing the inventory to work in conjunction with caching.
+
+.. code-block:: python
+
+    def parse(self, inventory, loader, path, cache=True):
+        super(InventoryModule, self).parse(inventory, loader, path)
+
+        self.load_cache_plugin()
+        cache_key = self.get_cache_key(path)
+
+        # cache may be True or False at this point to indicate if the inventory is being refreshed
+        # get the user's cache option too to see if we should save the cache if it is changing
+        user_cache_setting = self.get_option('cache')
+
+        # read if the user has caching enabled and the cache isn't being refreshed
+        attempt_to_read_cache = user_cache_setting and cache
+        # update if the user has caching enabled and the cache is being refreshed; update this value to True if the cache has expired below
+        cache_needs_update = user_cache_setting and not cache
+
+        # attempt to read the cache if inventory isn't being refreshed and the user has caching enabled
+        if attempt_to_read_cache:
+            try:
+                results = self._cache[cache_key]
+            except KeyError:
+                # This occurs if the cache_key is not in the cache or if the cache_key expired, so the cache needs to be updated
+                cache_needs_update = True
+
+        if cache_needs_updates:
+            results = self.get_inventory()
+
+            # set the cache
+            self._cache[cache_key] = results
+
+        self.populate(results)
+
+After the ``parse`` method is complete, the contents of ``self._cache`` is used to set the cache plugin if the contents of the cache have changed.
+
+You also have cache methods ``set_cache_plugin``, ``update_cache_if_changed``, and ``clear_cache`` available. If you need to set the cache plugin before ``parse`` completes for some reason, you can use ``self.set_cache_plugin()`` which will force the cache plugin to be set with the contents of ``self._cache``. Alternatively, ``self.update_cache_if_changed()`` can be used to only set the cache plugin if ``self._cache`` has been modified. If you need to remove the keys in ``self._cache`` from your cache plugin, ``self.clear_cache()`` will delete those keys from the cache plugin.
 
 .. _inventory_source_common_format:
 
