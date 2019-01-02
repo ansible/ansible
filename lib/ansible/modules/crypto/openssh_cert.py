@@ -422,6 +422,8 @@ class Certificate(object):
             return self.type == cert_type
 
         def _check_principals():
+            if not principals or not self.principals:
+                return self.principals == principals
             return set(self.principals) == set(principals)
 
         def _check_validity(module):
