@@ -679,8 +679,11 @@ def main():
     zone = module.params['zone']
 
     if module.params['port'] is not None:
-        port, protocol = module.params['port'].strip().split('/')
-        if protocol is None:
+        if '/' in module.params['port']:
+            port, protocol = module.params['port'].strip().split('/')
+        else:
+            protocol = None
+        if not protocol:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
         port = None
