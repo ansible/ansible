@@ -30,7 +30,7 @@ def load_fixture(name):
 
     try:
         data = json.loads(data)
-    except:
+    except ValueError:
         pass
 
     fixture_data[path] = data

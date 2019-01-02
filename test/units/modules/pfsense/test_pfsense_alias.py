@@ -4,7 +4,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import unittest
+import pytest
+import sys
+
+if sys.version_info < (2, 7):
+    pytestmark = pytest.mark.skip("pfSense Ansible modules require Python >= 2.7")
 
 from copy import copy
 from xml.etree.ElementTree import fromstring, ElementTree

@@ -4,7 +4,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import pytest
+import sys
 import unittest
+
+if sys.version_info < (2, 7):
+    pytestmark = pytest.mark.skip("pfSense Ansible modules require Python >= 2.7")
 
 from units.modules.utils import set_module_args
 from .test_pfsense_rule import TestPFSenseRuleModule, args_from_var
@@ -130,12 +135,6 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
         rule = dict(name='one_rule', source='any', destination='any', interface='lan', statetype=None)
         self.do_rule_creation_test(rule)
 
-    @unittest.expectedFailure
-    def test_rule_create_state_invalid(self):
-        """ test creation of a new rule with invalid state """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan', statetype='acme state')
-        self.do_rule_creation_test(rule, failed=True)
-
     def test_rule_create_after(self):
         """ test creation of a new rule after another """
         rule = dict(name='one_rule', source='any', destination='any', interface='vpn', after='admin_bypass')
@@ -235,12 +234,6 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
         """ test creation of a new rule with valid interface """
         rule = dict(name='one_rule', source='NET:lan', destination='any', interface='lan')
         self.do_rule_creation_test(rule)
-
-    @unittest.expectedFailure
-    def test_rule_create_net_interface_invalid(self):
-        """ test creation of a new rule with invalid interface """
-        rule = dict(name='one_rule', source='NET:invalid_lan', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
 
     def test_rule_create_interface(self):
         """ test creation of a new rule with valid interface """
