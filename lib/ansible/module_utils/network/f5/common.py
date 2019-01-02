@@ -325,10 +325,19 @@ def is_valid_fqdn(host):
 
 
 def transform_name(partition='', name='', sub_path=''):
+    if partition != '':
+        if name.startswith(partition + '/'):
+            name = name.replace(partition + '/', '')
+        if name.startswith('/' + partition + '/'):
+            name = name.replace('/' + partition + '/', '')
+
     if name:
         name = name.replace('/', '~')
+
     if partition:
-        partition = '~' + partition
+        partition = partition.replace('/', '~')
+        if not partition.startswith('~'):
+            partition = '~' + partition
     else:
         if sub_path:
             raise F5ModuleError(
