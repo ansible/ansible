@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Ansible module to manage rundeck projects
-# (c) 2018, Amine CHIKOUCHE <amine.chikouche@fitbrain.guru>
+# (c) 2019, Amine CHIKOUCHE <amine.chikouche@fitbrain.guru>
 # Sponsored by Bnp Paribas CIB. https://group.bnpparibas/en/group/activities/corporate-institutional-banking
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -37,7 +37,7 @@ options:
         required: True
     data:
         description:
-            - set the key data 
+            - set the key data
     url:
         description:
             - Sets the rundeck instance URL.
@@ -65,7 +65,7 @@ EXAMPLES = '''
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "present"
     check_mode: no
-    
+
 - name: Create a rundeck public key
   rundeck_key_storage:
     type: 'public_key'
@@ -76,7 +76,7 @@ EXAMPLES = '''
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "present"
     check_mode: no
-    
+
 - name: Create a rundeck password
   rundeck_key_storage:
     type: 'password'
@@ -87,7 +87,7 @@ EXAMPLES = '''
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "present"
     check_mode: no
-    
+
 - name: delete a rundeck private key
   rundeck_key_storage:
     type: 'private_key'
@@ -98,7 +98,7 @@ EXAMPLES = '''
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "absent"
     check_mode: no
-    
+
 - name: delete a rundeck password
   rundeck_key_storage:
     type: 'password'
@@ -109,7 +109,7 @@ EXAMPLES = '''
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "absent"
     check_mode: no
-    
+
 - name: delete a rundeck public key
   rundeck_key_storage:
     type: 'public_key'
@@ -120,7 +120,7 @@ EXAMPLES = '''
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "absent"
     check_mode: no
-    
+
 '''
 
 RETURN = '''
