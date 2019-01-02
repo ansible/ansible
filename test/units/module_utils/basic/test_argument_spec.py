@@ -19,7 +19,6 @@ from ansible.module_utils.six.moves import builtins
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
-
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
 VALID_SPECS = (
@@ -138,6 +137,7 @@ def options_argspec_dict(options_argspec_list):
     # should test ok, for options in dict format.
     kwargs = options_argspec_list
     kwargs['argument_spec']['foobar']['type'] = 'dict'
+    kwargs['argument_spec']['foobar']['elements'] = None
 
     return kwargs
 

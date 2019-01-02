@@ -2089,7 +2089,7 @@ class AnsibleModule(object):
         for (k, v) in spec.items():
             wanted = v.get('elements', None)
             arg_type = v.get('type', None)
-            if k not in param:
+            if k not in param or wanted is None:
                 continue
 
             values = param[k]
