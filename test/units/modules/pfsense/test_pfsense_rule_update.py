@@ -57,23 +57,32 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
         rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', floating='yes', direction='out', protocol='tcp')
         self.do_rule_update_test(rule)
 
-    @unittest.expectedFailure
     def test_rule_update_floating_yes(self):
-        """ test updating floating of a rule to yes """
+        """ test updating floating of a rule to yes
+            Since you can't change the floating mode of a rule, it should create a new rule
+        """
         rule = dict(name='test_rule', source='any', destination='any', interface='wan', floating='yes', direction='any', protocol='tcp')
-        self.do_rule_update_test(rule, failed=True)
+        self.do_rule_update_test(rule)
+        other_rule = dict(name='test_rule', source='any', destination='any', interface='wan', floating='no', protocol='tcp')
+        self.check_rule_elt(other_rule)
 
-    @unittest.expectedFailure
     def test_rule_update_floating_no(self):
-        """ test updating floating of a rule to no """
+        """ test updating floating of a rule to no
+            Since you can't change the floating mode of a rule, it should create a new rule
+        """
         rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', floating='no', direction='any', protocol='tcp')
-        self.do_rule_update_test(rule, failed=True)
+        self.do_rule_update_test(rule)
+        other_rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', floating='yes', direction='any', protocol='tcp')
+        self.check_rule_elt(other_rule)
 
-    @unittest.expectedFailure
     def test_rule_update_floating_default(self):
-        """ test updating floating of a rule to default """
+        """ test updating floating of a rule to default (no)
+            Since you can't change the floating mode of a rule, it should create a new rule
+        """
         rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', protocol='tcp')
-        self.do_rule_update_test(rule, failed=True)
+        self.do_rule_update_test(rule)
+        other_rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', floating='yes', direction='any', protocol='tcp')
+        self.check_rule_elt(other_rule)
 
     def test_rule_update_inet(self):
         """ test updating ippprotocol of a rule to ipv4 and ipv6 """

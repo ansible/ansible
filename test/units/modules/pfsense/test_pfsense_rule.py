@@ -45,10 +45,14 @@ class TestPFSenseRuleModule(TestPFSenseModule):
     @staticmethod
     def unalias_interface(interface):
         """ return real alias name if required """
+        res = []
         interfaces = dict(lan='lan', wan='wan', vpn='opt1', vt1='opt2', lan_100='opt3')
-        if interface in interfaces:
-            return interfaces[interface]
-        return interface
+        for iface in interface.split(','):
+            if interface in interfaces:
+                res.append(interfaces[iface])
+            else:
+                res.append(iface)
+        return ','.join(res)
 
     def parse_address(self, addr):
         """ return address parsed in dict """
@@ -96,7 +100,10 @@ class TestPFSenseRuleModule(TestPFSenseModule):
     def check_rule_elt(self, rule):
         """ test the xml definition of rule """
         rule['interface'] = self.unalias_interface(rule['interface'])
-        rule_elt = self.assert_has_xml_tag('filter', dict(descr=rule['name'], interface=rule['interface']))
+        if 'floating' in rule and rule['floating'] == 'yes':
+            rule_elt = self.assert_has_xml_tag('filter', dict(descr=rule['name'], floating='yes'))
+        else:
+            rule_elt = self.assert_has_xml_tag('filter', dict(descr=rule['name'], interface=rule['interface']))
 
         # checking source address and ports
         self.check_rule_elt_addr(rule, rule_elt, 'source')

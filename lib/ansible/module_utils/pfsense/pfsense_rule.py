@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Orion Poplawski <orion@nwra.com>
+# Copyright: (c) 2018, Frederic Bor <frederic.bor@wanadoo.fr>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import time
@@ -296,6 +297,13 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         self.module.fail_json(msg='%s is not a valid interface' % (interface))
         return None
 
+    def _parse_floating_interfaces(self, interfaces):
+        """ validate param interface field when floating is true """
+        res = []
+        for interface in interfaces.split(','):
+            res.append(self._parse_interface(interface))
+        return ','.join(res)
+
     def _remove_deleted_rule_param(self, rule_elt, param):
         """ Remove from rule a deleted rule param """
         changed = False
@@ -416,9 +424,11 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         rule = dict()
         rule['descr'] = params['name']
         rule['type'] = params['action']
-        rule['interface'] = self._parse_interface(params['interface'])
         if params['floating'] == 'yes':
             rule['floating'] = params['floating']
+            rule['interface'] = self._parse_floating_interfaces(params['interface'])
+        else:
+            rule['interface'] = self._parse_interface(params['interface'])
         if params['direction'] is not None:
             rule['direction'] = params['direction']
         rule['ipprotocol'] = params['ipprotocol']

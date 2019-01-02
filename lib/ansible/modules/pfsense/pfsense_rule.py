@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Orion Poplawski <orion@nwra.com>
+# Copyright: (c) 2018, Frederic Bor <frederic.bor@wanadoo.fr>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,6 +17,7 @@ DOCUMENTATION = """
 module: pfsense_rule
 version_added: "2.8"
 author: Orion Poplawski (@opoplawski)
+        Frederic Bor (@-fbor)
 short_description: Manage pfSense rules
 description:
   - Manage pfSense rules
@@ -36,6 +38,7 @@ options:
     choices: [ "present", "absent" ]
   disabled:
     description: Is the rule disabled
+    type: bool
     default: false
   interface:
     description: The interface for the rule
@@ -103,9 +106,7 @@ def main():
         supports_check_mode=True)
 
     pfrule = PFSenseRuleModule(module)
-
     pfrule.run(module.params)
-
     pfrule.commit_changes()
 
 

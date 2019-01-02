@@ -69,10 +69,9 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
         rule = dict(name='one_rule', source='any', destination='any', interface='lan', floating='no')
         self.do_rule_creation_test(rule)
 
-    @unittest.expectedFailure
     def test_rule_create_floating_interfaces(self):
-        """ test creation of a floating rule on two interfaces """
-        rule = dict(name='one_rule', source='any', destination='any', interface='lan,wan', floating='yes', direction='any')
+        """ test creation of a floating rule on three interfaces """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan,wan,vt1', floating='yes', direction='any')
         self.do_rule_creation_test(rule)
 
     def test_rule_create_inet46(self):

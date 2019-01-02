@@ -11,6 +11,7 @@ import time
 import xml.etree.ElementTree as ET
 from tempfile import mkstemp
 
+
 class PFSenseModule(object):
     """ class managing pfsense base configuration """
 
