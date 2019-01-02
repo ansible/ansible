@@ -155,11 +155,12 @@ def check(module, name, state, service_id, integration_key, api_key, incident_ke
                              "Reason: %s" % info['msg'])
 
     incidents = json.loads(response.read())["incidents"]
+    msg = "No corresponding incident"
 
-    if len(incidents) == 0 and state in ('acknowledged', 'resolved'):
-        return "No corresponding incident", False
-    elif len(incidents) == 0:
-        return "No corresponding incident", True
+    if len(incidents) == 0:
+        if state in ('acknowledged', 'resolved'):
+            return msg, False
+        return msg, True
     elif state != incidents[0]["status"]:
         return incidents[0], True
 
