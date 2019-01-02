@@ -1,0 +1,2 @@
+bugfixes:
+  - Template ``ansible_failed_task`` at the time of the failure when the variables are still provided (https://github.com/ansible/ansible/issues/49942)

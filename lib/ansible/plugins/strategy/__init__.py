@@ -469,10 +469,12 @@ class StrategyBase:
                         self._tqm._failed_hosts[original_host.name] = True
 
                     if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
+                        original_task_vars = self._variable_manager.get_vars(play=iterator._play, task=original_task)
+                        templar = Templar(loader=self._loader, variables=original_task_vars)
                         self._variable_manager.set_nonpersistent_facts(
                             original_host,
                             dict(
-                                ansible_failed_task=original_task.serialize(),
+                                ansible_failed_task=templar.template(original_task.serialize()),
                                 ansible_failed_result=task_result._result,
                             ),
                         )
