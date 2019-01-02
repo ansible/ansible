@@ -9,7 +9,7 @@
 - name: Assert a meaningful error was provided for the failed Tower team creation
   assert:
     that:
-      - "'The requested object could not be found.' in result.exception"
+      - "'The requested object could not be found.' in result.msg"
 
 - name: Create a Tower team
   tower_team:
