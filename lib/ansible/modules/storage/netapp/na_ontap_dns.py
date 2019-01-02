@@ -41,9 +41,10 @@ options:
     - List of IPv4 addresses of name servers such as '123.123.123.123'.
 
   skip_validation:
+    type: bool
     description:
-    - Skip configuration validation.
-
+    - If set to "TRUE", this option bypass the DNS check on the Ontap.
+    version_added: '2.8'
 '''
 
 EXAMPLES = """
@@ -56,7 +57,7 @@ EXAMPLES = """
         vserver:  "{{vservername}}"
         domains: sales.bar.com
         nameservers: 10.193.0.250,10.192.0.250
-		skip_validation: yes
+        skip_validation: yes
 """
 
 RETURN = """
