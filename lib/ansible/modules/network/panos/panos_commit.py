@@ -34,7 +34,24 @@ author:
 version_added: "2.3"
 requirements:
     - pan-python
+    - lxml
 options:
+    ip_address:
+        description:
+            - IP address (or hostname) of PAN-OS device.
+        required: true
+    password:
+        description:
+            - Password for authentication. If the value is not specified in the
+              task, the value of environment variable C(ANSIBLE_NET_PASSWORD)
+              will be used instead.
+        required: true
+    username:
+        description:
+            - Username for authentication. If the value is not specified in the
+              task, the value of environment variable C(ANSIBLE_NET_USERNAME)
+              will be used instead.
+        required: true
     interval:
         description:
             - interval for checking commit job
@@ -62,7 +79,6 @@ options:
             - Commit changes for specified VSYS
         type: list
         version_added: "2.8"
-extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -108,7 +124,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
-from lxml import etree
+
+try:
+    from lxml import etree
+    HAS_LXML_ETREE = True
+except ImportError:
+    HAS_LXML_ETREE = False
 
 try:
     import pan.xapi
@@ -131,8 +152,11 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
+    if not HAS_LXML_ETREE:
+        module.fail_json(msg='lxml etree is required for this module')
+
     if not HAS_LIB:
-        module.fail_json(msg='pan-python required for this module')
+        module.fail_json(msg='pan-python is required for this module')
 
     ip_address = module.params["ip_address"]
     if not ip_address:
@@ -196,7 +220,7 @@ def main():
         result = xapi.xml_root().encode('utf-8')
         root = etree.fromstring(result)
         job_id = root.find('./result/job/id').text
-    except:
+    except AttributeError:
         job_id = None
 
     panos_commit_details = dict(
