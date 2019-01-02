@@ -137,6 +137,7 @@ import sys
 import re
 
 from termios import tcflush, TCIFLUSH
+from distutils.version import LooseVersion
 from binascii import hexlify
 
 from ansible import constants as C
@@ -337,17 +338,32 @@ class Connection(ConnectionBase):
             if self._play_context.private_key_file:
                 key_filename = os.path.expanduser(self._play_context.private_key_file)
 
-            ssh.connect(
-                self._play_context.remote_addr.lower(),
-                username=self._play_context.remote_user,
-                allow_agent=allow_agent,
-                look_for_keys=self.get_option('look_for_keys'),
-                key_filename=key_filename,
-                password=self._play_context.password,
-                timeout=self._play_context.timeout,
-                port=port,
-                **sock_kwarg
-            )
+            # paramiko 2.2 introduced auth_timeout parameter
+            if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
+                ssh.connect(
+                    self._play_context.remote_addr.lower(),
+                    username=self._play_context.remote_user,
+                    allow_agent=allow_agent,
+                    look_for_keys=self.get_option('look_for_keys'),
+                    key_filename=key_filename,
+                    password=self._play_context.password,
+                    timeout=self._play_context.timeout,
+                    auth_timeout=self._play_context.timeout,
+                    port=port,
+                    **sock_kwarg
+                )
+            else:
+                ssh.connect(
+                    self._play_context.remote_addr.lower(),
+                    username=self._play_context.remote_user,
+                    allow_agent=allow_agent,
+                    look_for_keys=self.get_option('look_for_keys'),
+                    key_filename=key_filename,
+                    password=self._play_context.password,
+                    timeout=self._play_context.timeout,
+                    port=port,
+                    **sock_kwarg
+                )
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except Exception as e:
