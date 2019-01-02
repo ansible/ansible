@@ -45,7 +45,7 @@ options:
     memstore:
         required: true
         description:
-            - The Memstore product the user belongs in.
+            - The Memstore product the user belongs to.
     enabled:
         required: false
         default: false
@@ -53,19 +53,35 @@ options:
         description:
             - Whether the user is enabled or disabled. Defaults to false for security.
     password:
-        required: true
+        required: false
         description:
-            - A password for the user.
+            - A password for the user. Required when the user is present.
+            - I(update_password) must be True for an existing user's password to be updated.
+    update_password:
+        required: false
+        description:
+            - Change the user's password. The user must already exist.
+            - This value will only be used if the user already exists prior to the task execution.
 '''
 
 EXAMPLES = '''
-# Create the 'test' and enable them.
-- name: create memstore user
+- name: create and enable Memstore user
   memset_memstore_user:
     username: test
     memstore: mstestyaa1
     enabled: true
     state: present
+    password: mysecretpassword
+    api_key: 5eb86c9196ab03919abcf03857163741
+  delegate_to: localhost
+
+- name: change password for Memstore user
+  memset_memstore_user:
+    username: test
+    memstore: mstestyaa1
+    state: present
+    password: mynewpa$$word
+    update_password: true
     api_key: 5eb86c9196ab03919abcf03857163741
   delegate_to: localhost
 '''
@@ -107,6 +123,11 @@ def api_validation(args=None):
     username_re = r'^[a-z0-9-\_]{1}[a-z0-9-\.\_]{1,49}$'
     errors = dict()
 
+    if args['state'] == 'present':
+        try:
+            args['password']
+        except KeyError:
+            errors['password'] = "A password is required when state is present."
     if not re.match(username_re, args['username'].lower()):
         errors['username'] = "Username can only contain numbers, letters, dots, dashes and underscores, and can't start with a dot. Must be 50 chars or less."
 
@@ -189,6 +210,33 @@ def delete_user(args=None, user=None):
     return(retvals)
 
 
+def update_password(args=None):
+    '''
+    Updates the password of an existing user.
+    '''
+    retvals, payload = dict(), dict()
+    retvals['changed'], retvals['failed'] = False, False
+
+    if args['check_mode']:
+        # Updating a password will always return changed as the API does not
+        # know if the password is actually being changed.
+        retvals['msg'] = 'Check mode not suppported when update_password is True.'
+    else:
+        payload['name'], payload['username'], payload['password'] = args['memstore'], \
+            args['username'], args['password']
+
+        api_method = 'memstore.user.set_password'
+        retvals['failed'], msg, response = memset_api_call(args['api_key'], api_method, payload)
+
+        if retvals['failed']:
+            retvals['msg'] = msg
+        else:
+            retvals['changed'] = True
+            retvals['memset_api'] = payload
+
+    return(retvals)
+
+
 def create_or_delete_user(args=None):
     '''
     Performs initial auth validation and gets a list of
@@ -216,7 +264,10 @@ def create_or_delete_user(args=None):
             break
 
     if args['state'] == 'present':
-        retvals = create_user(args=args, user=currentuser)
+        if user and args['update_password']:
+            retvals = update_password(args=args)
+        else:
+            retvals = create_user(args=args, user=currentuser)
     if args['state'] == 'absent':
         retvals = delete_user(args=args, user=currentuser)
 
@@ -229,10 +280,11 @@ def main():
         argument_spec=dict(
             state=dict(required=False, default='present', choices=['present', 'absent'], type='str'),
             api_key=dict(required=True, type='str', no_log=True),
-            username=dict(required=True, aliases=['username'], type='str'),
-            password=dict(required=True, type='str', no_log=True),
+            username=dict(required=True, aliases=['name'], type='str'),
+            password=dict(required=False, type='str', no_log=True),
             memstore=dict(required=True, type='str'),
-            enabled=dict(required=False, default=False, type='bool')
+            enabled=dict(required=False, default=False, type='bool'),
+            update_password=dict(required=False, default=False, type='bool')
         ),
         supports_check_mode=True
     )
