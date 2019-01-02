@@ -588,6 +588,15 @@ class DnfModule(YumDnf):
         except AttributeError:
             pass  # older versions of dnf didn't require this and don't have these methods
         try:
+            if self.update_cache:
+                try:
+                    base.update_cache()
+                except dnf.exceptions.RepoError as e:
+                    self.module.fail_json(
+                        msg="{0}".format(to_text(e)),
+                        results=[],
+                        rc=1
+                    )
             base.fill_sack(load_system_repo='auto')
         except dnf.exceptions.RepoError as e:
             self.module.fail_json(
@@ -601,15 +610,6 @@ class DnfModule(YumDnf):
         if self.security:
             key = {'advisory_type__eq': 'security'}
             base._update_security_filters = [base.sack.query().filter(**key)]
-        if self.update_cache:
-            try:
-                base.update_cache()
-            except dnf.exceptions.RepoError as e:
-                self.module.fail_json(
-                    msg="{0}".format(to_text(e)),
-                    results=[],
-                    rc=1
-                )
 
         return base
 
