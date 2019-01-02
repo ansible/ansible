@@ -199,7 +199,7 @@ inventory cache
 
 If you used the Cacheable base class and have extended the inventory plugin documentation with the inventory_cache documentation fragment you have caching at your disposal.
 
-Now you can load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML based configuration files and the ``_read_config_data`` method the cache plugin is loaded within that method. Accordingly, you can skip this first step. Otherwise, for plugins that don't use ``_read_config_data``, the cache will need to be loaded with ``load_cache_plugin``.
+Now you can load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML based configuration files and the ``_read_config_data`` method, the cache plugin is loaded within that method. Accordingly, you can skip this first step. Otherwise, for plugins that don't use ``_read_config_data``, the cache will need to be loaded with ``load_cache_plugin``.
 
 .. code-block:: python
 
@@ -220,7 +220,7 @@ Before using the cache, retrieve a unique cache key using the ``get_cache_key`` 
         self.load_cache_plugin()
         cache_key = self.get_cache_key(path)
 
-The last parameter of ``parse`` is ``cache``. This value comes from the inventory manager and indicates whether the inventory is being refreshed (such as via ``--refresh-inventory`` or the meta task ``flush_inventory``). Although the cache shouldn't be used to populate the inventory when being refreshed, the cache should be updated with the new inventory if the user has enabled caching. You can use ``self._cache`` like a dictionary. The following pattern allows refreshing the inventory to work in conjunction with caching.
+The last parameter of ``parse`` is ``cache``. This value comes from the inventory manager and indicates whether the inventory is being refreshed (such as via ``--flush-cache`` or the meta task ``refresh_inventory``). Although the cache shouldn't be used to populate the inventory when being refreshed, the cache should be updated with the new inventory if the user has enabled caching. You can use ``self._cache`` like a dictionary. The following pattern allows refreshing the inventory to work in conjunction with caching.
 
 .. code-block:: python
 
