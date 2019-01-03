@@ -282,7 +282,7 @@
       - "azure_rm_networkinterfaces | length == 1"
       - azure_rm_networkinterfaces[0].id == output.state.id
       - "azure_rm_networkinterfaces[0].ip_configurations | length == 2"
-      - azure_rm_networkinterfaces[0].security_group == "tn{{ rpfx }}sg"
+      - azure_rm_networkinterfaces[0].security_group.endsWith("tn{{ rpfx }}sg")
       - azure_rm_networkinterfaces[0].enable_accelerated_networking
       - azure_rm_networkinterfaces[0].enable_ip_forwarding
 
@@ -312,7 +312,7 @@
       - output.changed
       - output.state.dns_settings.dns_servers == ['8.9.10.11']
       - output.state.enable_ip_forwarding
-      - output.state.security_group == "tn{{ rpfx }}sg"
+      - output.state.security_group.endsWith("tn{{ rpfx }}sg")
       - "output.state.ip_configurations | length == 1"
       - output.state.ip_configurations[0].public_ip_address == "tn{{ rpfx }}"
       - output.state.enable_accelerated_networking
