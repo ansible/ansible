@@ -15,7 +15,7 @@ from units.modules.utils import set_module_args
 from .test_pfsense_rule import TestPFSenseRuleModule, args_from_var
 
 
-class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
+class TestPFSenseRuleUpdateModule(TestPFSenseRuleModule):
 
     def do_rule_update_test(self, rule, failed=False, **kwargs):
         """ test updating field of an host alias """

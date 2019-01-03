@@ -24,7 +24,7 @@ RULES_ARGUMENT_SPEC = dict(
     log=dict(required=False, choices=["no", "yes"]),
     after=dict(required=False, type='str'),
     before=dict(required=False, type='str'),
-    statetype=dict(required=False, default='keep state', type='str')
+    statetype=dict(required=False, default='keep state', choices=['keep state', 'sloppy state', 'synproxy state', 'none'])
 )
 
 RULES_REQUIRED_IF = [["floating", "yes", ["direction"]]]
@@ -259,12 +259,13 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         # rule with this firewall
         elif address == '(self)':
             ret['network'] = '(self)'
-        elif address == 'NET':
-            ret['network'] = port_start
-            # TODO: check if '-' is allowed into interfaces name
-            # TODO: check interface name validity
+        elif address == 'NET' or address == 'IP':
+            interface = port_start
             if port_end:
-                ret['network'] += '-' + port_end
+                interface += '-' + port_end
+            ret['network'] = self._parse_interface(interface)
+            if address == 'IP':
+                ret['network'] += 'ip'
             return ret
         # rule with interface name (LAN, WAN...)
         elif self.pfsense.is_interface_name(address):

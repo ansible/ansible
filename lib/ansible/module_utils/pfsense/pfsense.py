@@ -180,10 +180,10 @@ class PFSenseModule(object):
             username = username + '@' + sshclient
         return username
 
-    def find_alias(self, name, aliastype):
-        """ return alias named name, having type aliastype """
+    def find_alias(self, name, aliastype=None):
+        """ return alias named name, having type aliastype if specified """
         for alias in self.aliases:
-            if alias.find('name').text == name and alias.find('type').text == aliastype:
+            if alias.find('name').text == name and (aliastype is None or alias.find('type').text == aliastype):
                 return alias
         return None
 

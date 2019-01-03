@@ -6,16 +6,18 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import re
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pfsense.pfsense import PFSenseModule
 
 ALIASES_ARGUMENT_SPEC = dict(
     name=dict(required=True, type='str'),
-    type=dict(default='host', required=False, choices=['host', 'network', 'port', 'urltable']),
-    state=dict(required=True, choices=['present', 'absent']),
+    state=dict(default='present', choices=['present', 'absent']),
+    type=dict(default=None, required=False, choices=['host', 'network', 'port', 'urltable']),
     address=dict(default=None, required=False, type='str'),
     descr=dict(default=None, required=False, type='str'),
-    detail=dict(default='', required=False, type='str'),
+    detail=dict(default=None, required=False, type='str'),
     updatefreq=dict(default=None, required=False, type='str'),
 )
 
@@ -59,7 +61,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
 
     def add(self, alias):
         """ add or update alias """
-        alias_elt = self.pfsense.find_alias(alias['name'], alias['type'])
+        alias_elt = self.pfsense.find_alias(alias['name'])
         self.diff['after'] = alias
         if alias_elt is None:
             alias_elt = self.pfsense.new_element('alias')
@@ -81,7 +83,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
         if changed:
             self.changed = changed
 
-    def remove_alias_elt(self, alias_elt):
+    def _remove_alias_elt(self, alias_elt):
         """ delete alias_elt from xml """
         self.aliases.remove(alias_elt)
         self.changed = True
@@ -90,16 +92,57 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
 
     def remove(self, alias):
         """ delete alias """
-        alias_elt = self.pfsense.find_alias(alias['name'], alias['type'])
+        alias_elt = self.pfsense.find_alias(alias['name'])
         self.diff['after'] = ''
         self.diff['before'] = ''
         if alias_elt is not None:
-            self.remove_alias_elt(alias_elt)
+            self._remove_alias_elt(alias_elt)
             self.change_descr = 'ansible pfsense_alias removed "%s"' % (alias['name'])
 
-    @staticmethod
-    def params_to_alias(params):
+    def _validate_params(self, params):
+        """ do some extra checks on input parameters """
+        # check name
+        if re.match('^[a-zA-Z0-9_]+$', params['name']) is None:
+            self.module.fail_json(msg='The name of the alias may only consist of the characters "a-z, A-Z, 0-9 and _"')
+
+        # when deleting, only name is allowed
+        if params['state'] == 'absent':
+            for param, value in params.items():
+                if param != 'state' and param != 'name' and value is not None:
+                    self.module.fail_json(msg=param + " is invalid with state='absent'")
+        else:
+            # the GUI does not allow to create 2 aliases with same name and differents types
+            alias_elt = self.pfsense.find_alias(params['name'])
+            if alias_elt is not None:
+                if params['type'] != alias_elt.find('type').text:
+                    self.module.fail_json(msg='An alias with this name and a different type already exists')
+
+            missings = ['type', 'address']
+            for param, value in params.items():
+                if param in missings and value is not None and value != '':
+                    missings.remove(param)
+            if missings:
+                self.module.fail_json(msg='state is present but all of the following are missing: ' + ','.join(missings))
+
+            # updatefreq is for urltable only
+            if params['updatefreq'] is not None and params['type'] != 'urltable':
+                self.module.fail_json(msg='updatefreq is only valid with type urltable')
+
+            # check details count
+            details = params['detail'].split('||') if params['detail'] is not None else []
+            addresses = params['address'].split(' ')
+            if len(details) > len(addresses):
+                self.module.fail_json(msg='Too many details in relation to addresses')
+
+            # pfSense GUI rule
+            for detail in details:
+                if detail.startswith('|') or detail.endswith('|'):
+                    self.module.fail_json(msg='Vertical bars (|) at start or end of descriptions not allowed')
+
+    def params_to_alias(self, params):
         """ return an alias dict from module params """
+        self._validate_params(params)
+
         alias = dict()
         alias['name'] = params['name']
         alias['type'] = params['type']
@@ -131,9 +174,7 @@ def main():
         supports_check_mode=True)
 
     pfalias = PFSenseAliasModule(module)
-
     pfalias.run(module.params)
-
     pfalias.commit_changes()
 
 

@@ -58,11 +58,11 @@ options:
     default: any
     choices: [ "any", "tcp", "udp", "tcp/udp", "icmp" ]
   source:
-    description: The source address, in [!]{IP,HOST,ALIAS,any,(self)}[:port] or NET:INTERFACE format
+    description: The source address, in [!]{IP,HOST,ALIAS,any,(self)}[:port], IP:INTERFACE or NET:INTERFACE format
     required: true
     default: null
   destination:
-    description: The destination address, in [!]{IP,HOST,ALIAS,any,(self)}[:port] or NET:INTERFACE format
+    description: The destination address, in [!]{IP,HOST,ALIAS,any,(self)}[:port], IP:INTERFACE or NET:INTERFACE format
     required: true
     default: null
   log:
@@ -75,6 +75,7 @@ options:
   statetype:
     description: State type
     default: keep state
+    choices: ["keep state", "sloppy state", "synproxy state", "none"]
 """
 
 EXAMPLES = """

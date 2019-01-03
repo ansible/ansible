@@ -24,27 +24,27 @@ options:
   name:
     description: The name the alias
     required: true
-    default: null
-  type:
-    description: The type of the alias
-    required: true
-    default: host
-    choices: [ "host", "network", "port", "urltable" ]
   state:
     description: State in which to leave the alias
-    choices: [ "present", "absent" ]
-  address:
-    description: The address of the alias
     required: true
+    choices: [ "present", "absent" ]
+    default: present
+  type:
+    description: The type of the alias
+    choices: [ "host", "network", "port", "urltable" ]
+    default: null
+  address:
+    description: The address of the alias. Use a space separator for multiple values.
     default: null
   descr:
     description: Description
     default: null
   detail:
-    description: Details for items
-    default: ""
+    description: Details for items. Use || separator between items.
+    default: null
   updatefreq:
     description: Update frequency in days for urltable
+    default: null
 """
 
 EXAMPLES = """
@@ -89,9 +89,7 @@ def main():
         supports_check_mode=True)
 
     pfalias = PFSenseAliasModule(module)
-
     pfalias.run(module.params)
-
     pfalias.commit_changes()
 
 
