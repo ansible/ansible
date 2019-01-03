@@ -213,14 +213,9 @@
 
 - name: List docker networks
   shell: docker network ls
-  register: network
 
-- debug:
-    var: network.stdout
+- name: network inspect docker_gwbridge
+  shell: docker network inspect docker_gwbridge
 
 - name: Run ifconfig on docker container
-  shell: docker run --rm -it --net host alpine ifconfig
-  register: output
-
-- debug:
-    var: output.stdout
+  shell: docker run --rm --net host alpine ifconfig
