@@ -142,7 +142,7 @@
       - '"tn-anstest.json" in query_tenant.url'
       - query_bd_bd is not changed
       - query_bd_bd.current != []
-      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in query_bd_bd.filter_string'
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in query_bd_bd.filter_string|urldecode'
       - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd_bd.filter_string'
       - '"class/fvBD.json" in query_bd_bd.url'
       - query_bd is not changed

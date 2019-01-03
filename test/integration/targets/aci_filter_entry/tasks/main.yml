@@ -195,13 +195,13 @@
       - query_filter_entry is not changed
       - query_filter_entry.current.0.vzFilter.attributes.name == "anstest"
       - query_filter_entry.current.0.vzFilter.children | length == 1
-      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter_entry.filter_string'
-      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_filter_entry.filter_string'
+      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter_entry.filter_string|urldecode'
+      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_filter_entry.filter_string|urldecode'
       - '"class/vzFilter.json" in query_filter_entry.url'
       - query_tenant_entry is not changed
       - query_tenant_entry.current | length == 1
       - query_tenant_entry.current.0.fvTenant.attributes.name == "anstest"
-      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_tenant_entry.filter_string'
+      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_tenant_entry.filter_string|urldecode'
       - '"rsp-subtree-class=vzEntry" in query_tenant_entry.filter_string'
       - '"tn-anstest.json" in query_tenant_entry.url'
       - query_tenant_filter is not changed
@@ -212,11 +212,11 @@
       - '"tn-anstest/flt-anstest.json" in query_tenant_filter.url'
       - query_entry is not changed
       - query_entry.current.0.vzEntry.attributes.name == "anstest"
-      - '"query-target-filter=eq(vzEntry.name, \"anstest\")" in query_entry.filter_string'
+      - '"query-target-filter=eq(vzEntry.name, \"anstest\")" in query_entry.filter_string|urldecode'
       - '"class/vzEntry.json" in query_entry.url'
       - query_filter is not changed
       - query_filter.current.0.vzFilter.attributes.name == "anstest"
-      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter.filter_string'
+      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter.filter_string|urldecode'
       - '"rsp-subtree-class=vzEntry" in query_filter.filter_string'
       - '"class/vzFilter.json" in query_filter.url'
       - query_tenant is not changed
