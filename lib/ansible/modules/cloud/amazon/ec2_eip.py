@@ -149,12 +149,17 @@ EXAMPLES = '''
 RETURN = '''
 allocation_id:
   description: allocation_id of the elastic ip
-  returned: on success
+  returned: success
   type: str
   sample: eipalloc-51aa3a6c
+association_id:
+  description: association id when associating an eip
+  returned: success
+  type: str
+  sample: eipassoc-089c444456f4923
 public_ip:
   description: an elastic ip address
-  returned: on success
+  returned: success
   type: str
   sample: 52.88.159.209
 response_metadata:
