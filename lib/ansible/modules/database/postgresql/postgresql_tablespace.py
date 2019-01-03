@@ -18,12 +18,14 @@ module: postgresql_tablespace
 short_description: Add or remove PostgreSQL databases from a remote host.
 description:
    - Add or remove PostgreSQL tablespaces from a remote host.
-version_added: "0.6"
+version_added: "2.8"
 options:
   tablespace:
     description:
       - name of the tablespace to add or remove
     required: true
+    aliases:
+      - name
   location:
     description:
       - Path of tablespace on file system
@@ -33,10 +35,11 @@ options:
         absent implies that the database should be removed if present.
     default: present
     choices: [ "present", "absent" ]
-author: "Thesys_cat"
+author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
 '''
+RETURN = ''' # '''
 
 EXAMPLES = '''
 # Create a new database with name "acme"
@@ -124,10 +127,8 @@ def tablespace_matches(cursor, tablespace, location):
         tablespace_info = get_tablespace_info(cursor, tablespace)
         if (location != tablespace_info['location']):
             return False
-        else:    
+        else:
             return True
-
-
 
 
 def login_flags(db, host, port, user, db_prefix=True):
@@ -170,7 +171,7 @@ def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
         tablespace=dict(required=True, aliases=['name']),
-        location=dict(required=True, type = "path"),
+        location=dict(required=True, type="path"),
         state=dict(default="present", choices=["absent", "present"]),
     ))
 
@@ -206,7 +207,6 @@ def main():
 
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
-
 
     try:
         pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))

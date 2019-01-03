@@ -42,8 +42,9 @@ options:
       - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
         is used as template.
   tablespace:
+    version_added: "2.8"
     description:
-      - name of tablespace       
+      - name of tablespace
   state:
     description: |
         The database state. present implies that the database should be created if necessary.
