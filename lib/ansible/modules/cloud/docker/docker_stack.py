@@ -35,7 +35,6 @@ options:
         -   present
         -   absent
     compose:
-        required: false
         default: []
         description:
         -   List of compose definitions. Any element may be a string
