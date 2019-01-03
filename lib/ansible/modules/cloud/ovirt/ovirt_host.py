@@ -520,9 +520,12 @@ def main():
                         event
                         for event in events_service.list(
                             from_=int(last_event.id),
-                            # Fail upgrade if migration fails.
-                            search='type=65 or type=140',
-                        )
+                            # Fail upgrade if migration fails:
+                            # 17: Failed to switch Host to Maintenance mode
+                            # 65, 140: Migration failed
+                            # 166: No available host was found to migrate VM
+                            search='type=65 or type=140 or type=166 or type=17',
+                        ) if host.name in event.description
                     ]) > 0
                 ),
                 reboot=module.params['reboot_after_upgrade'],
