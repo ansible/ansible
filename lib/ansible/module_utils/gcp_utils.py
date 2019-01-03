@@ -71,6 +71,7 @@ def replace_resource_dict(item, value):
         except ValueError:
             return new_item
 
+
 # Handles all authentation and HTTP sessions for GCP API calls.
 class GcpSession(object):
     def __init__(self, module, product):
@@ -85,16 +86,25 @@ class GcpSession(object):
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
-    def post(self, url, body=None, headers={}, **kwargs):
-        kwargs.update({'json': body, 'headers': self._merge_dictionaries(headers, self._headers())})
+    def post(self, url, body=None, headers=None, **kwargs):
+        if headers:
+            headers = self.merge_dictionaries(headers, self._headers())
+        else:
+            headers = self._headers()
+
         try:
-            return self.session().post(url, json=body, headers=self._headers())
+            return self.session().post(url, json=body, headers=headers)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
-    def post_contents(self, url, file_contents=None, headers={}, **kwargs):
+    def post_contents(self, url, file_contents=None, headers=None, **kwargs):
+        if headers:
+            headers = self.merge_dictionaries(headers, self._headers())
+        else:
+            headers = self._headers()
+
         try:
-            return self.session().post(url, data=file_contents, headers=self._headers())
+            return self.session().post(url, data=file_contents, headers=headers)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
