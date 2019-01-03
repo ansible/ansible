@@ -249,7 +249,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
         return results
 
     def serialize(self, raws):
-        self.log("Seialize all items")
+        self.log("Serialize all items")
         return [self.serialize_obj(item, AZURE_OBJECT_CLASS) for item in raws] if raws else []
 
     def curated(self, raws):
