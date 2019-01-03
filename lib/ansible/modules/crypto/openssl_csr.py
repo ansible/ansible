@@ -563,7 +563,7 @@ def main():
     except AttributeError:
         module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(name=base_dir, msg='The directory %s does not exist or the file is not a directory' % base_dir)
 
