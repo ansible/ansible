@@ -1164,7 +1164,7 @@ def main():
         update_failure_action=dict(default='continue', choices=['continue', 'pause']),
         update_monitor=dict(default=5000000000, type='int'),
         update_max_failure_ratio=dict(default=0, type='float'),
-        update_order=dict(default=None, type='string'),
+        update_order=dict(default=None, type='str'),
         user=dict(default='root'))
     required_if = [
         ('state', 'present', ['image'])
