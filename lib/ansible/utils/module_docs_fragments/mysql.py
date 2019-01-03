@@ -68,7 +68,8 @@ requirements:
 notes:
    - Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) package on the remote host.
      The Python package may be installed with apt-get install python-pymysql (Ubuntu; see M(apt)) or
-     yum install python2-PyMySQL (RHEL/CentOS/Fedora; see M(yum)).
+     yum install python2-PyMySQL (RHEL/CentOS/Fedora; see M(yum)). You can also use dnf install python2-PyMySQL
+     for newer versions of Fedora; see M(dnf).
    - Both C(login_password) and C(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
