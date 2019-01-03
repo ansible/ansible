@@ -26,11 +26,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import os
-from functools import partial
-from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_text
 
 try:
     from skydive.graph import Node, Edge
@@ -45,7 +41,6 @@ except ImportError:
 
 # defining skydive constants
 SKYDIVE_LOOKUP_QUERY = 'G.V().Has'
-SKYDIVE_LOOKUP_BY_NAME = 'Name'
 
 
 class skydive_base(object):
@@ -58,6 +53,7 @@ class skydive_base(object):
         except TypeError as err:
             raise err
 
+
 class skydive_lookup(skydive_base):
 
     def __init__(self):
@@ -65,14 +61,74 @@ class skydive_lookup(skydive_base):
         self.query_str = ""
 
     def lookup_query(self, arg_val):
-        self.query_str = SKYDIVE_LOOKUP_QUERY + "('" + SKYDIVE_LOOKUP_BY_NAME + "' ,'" + arg_val + "' )"
+        query_key = arg_val.keys()[0]
+        self.query_str = SKYDIVE_LOOKUP_QUERY + "('" + query_key + "' ,'" + arg_val[query_key] + "' )"
         nodes = self.restclient_object.lookup_nodes(self.query_str)
-
         return nodes[0].__dict__
 
+
 class skydive_flow_topology(skydive_base):
-    pass
+    ''' Implements Skydive Flow capture modules '''
+    def __init__(self, module):
+        self.module = module
+        super(skydive_flow_topology, self).__init__()
+
+    def run(self, ib_spec):
+        state = self.module.params['state']
+        if state not in ('present', 'absent'):
+            self.module.fail_json(msg='state must be one of `present`, `absent`, got `%s`' % state)
+
+        result = {'changed': False}
+        obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
+
+        proposed_object = {}
+        for key, value in iteritems(ib_spec):
+            if self.module.params[key] is not None:
+                proposed_object[key] = self.module.params[key]
+
+        if state == 'present':
+            name = obj_filter.keys()[0]
+            type = obj_filter.keys()[1]
+            flow_str = SKYDIVE_LOOKUP_QUERY + "(" + name + ', ' + obj_filter[name] + ' ' + type + ', ' + obj_filter[
+                type] + " )"
+            self.restclient_object.capture_create(flow_str)
+            result['changed'] = True
+        if state == 'absent':
+            name = obj_filter.keys()[0]
+            type = obj_filter.keys()[1]
+            flow_str = SKYDIVE_LOOKUP_QUERY + "(" + name + ', ' + obj_filter[name] + ' ' + type + ', ' + obj_filter[
+                type] + " )"
+            self.restclient_object.capture_delete(flow_str)
+            result['changed'] = True
+
+        return result
+
 
 class skydive_graph_engine(skydive_base):
-    pass
+    ''' Implements Skydive Graph event bus modules '''
+    def __init__(self, module):
+        self.module = module
+        super(skydive_graph_engine, self).__init__()
 
+    def run(self, ib_spec):
+        state = self.module.params['state']
+        if state not in ('present', 'absent'):
+            self.module.fail_json(msg='state must be one of `present`, `absent`, got `%s`' % state)
+
+        result = {'changed': False}
+        obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
+
+        proposed_object = {}
+        for key, value in iteritems(ib_spec):
+            if self.module.params[key] is not None:
+                proposed_object[key] = self.module.params[key]
+
+        if state == 'present':
+            name = obj_filter.keys()[0]
+            capture_type = obj_filter.keys()[1]
+            flow_str = SKYDIVE_LOOKUP_QUERY + "('" + name + "' , '" + obj_filter[
+                name] + "' '" + capture_type + "', '" + obj_filter[capture_type] + "' )"
+            self.restclient_object.capture_create(flow_str)
+            result['changed'] = True
+
+        return result
