@@ -1,0 +1,2 @@
+bugfixes:
+- dnf - fix issue where ``conf_file`` was not being loaded properly

@@ -627,41 +627,40 @@
     that:
       - "rpm_lsof_result is failed"
 
-- name: exclude lsof
-  lineinfile:
-    dest: /etc/dnf/dnf.conf
-    regexp: (^exclude=)(.)*
-    line: "exclude=lsof*"
-    state: present
+- name: create conf file that excludes lsof
+  copy:
+    content: |
+      [main]
+      exclude=lsof*
+    dest: '{{ output_dir }}/test-dnf.conf'
+  register: test_dnf_copy
 
-# begin test case where disable_excludes is supported
-- name: Try install lsof without disable_excludes
-  dnf: name=lsof state=latest
-  register: dnf_lsof_result
-  ignore_errors: True
+- block:
+  # begin test case where disable_excludes is supported
+  - name: Try install lsof without disable_excludes
+    dnf: name=lsof state=latest conf_file={{ test_dnf_copy.dest }}
+    register: dnf_lsof_result
+    ignore_errors: True
 
-- name: verify lsof did not install because it is in exclude list
-  assert:
-    that:
-      - "dnf_lsof_result is failed"
+  - name: verify lsof did not install because it is in exclude list
+    assert:
+      that:
+        - "dnf_lsof_result is failed"
 
-- name: install lsof with disable_excludes
-  dnf: name=lsof state=latest disable_excludes=all
-  register: dnf_lsof_result_using_excludes
+  - name: install lsof with disable_excludes
+    dnf: name=lsof state=latest disable_excludes=all conf_file={{ test_dnf_copy.dest }}
+    register: dnf_lsof_result_using_excludes
 
-- name: verify lsof did install using disable_excludes=all
-  assert:
-    that:
-      - "dnf_lsof_result_using_excludes is success"
-      - "dnf_lsof_result_using_excludes is changed"
-      - "dnf_lsof_result_using_excludes is not failed"
-
-- name: remove exclude lsof (cleanup dnf.conf)
-  lineinfile:
-    dest: /etc/dnf/dnf.conf
-    regexp: (^exclude=lsof*)
-    line: "exclude="
-    state: present
-
+  - name: verify lsof did install using disable_excludes=all
+    assert:
+      that:
+        - "dnf_lsof_result_using_excludes is success"
+        - "dnf_lsof_result_using_excludes is changed"
+        - "dnf_lsof_result_using_excludes is not failed"
+  always:
+  - name: remove exclude lsof conf file
+    file:
+      path: '{{ output_dir }}/test-dnf.conf'
+      state: absent
 
 # end test case where disable_excludes is supported
