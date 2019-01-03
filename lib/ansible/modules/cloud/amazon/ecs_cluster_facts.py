@@ -49,24 +49,24 @@ active_services_count:
 cluster_arn:
   description: The Amazon Resource Name (ARN) that identifies the cluster.
   returned: always
-  type: string
+  type: str
   sample: arn:aws:ecs:us-west-2:172139249013:cluster/test-cluster-mfshcdok
 cluster_name:
   description: A user-generated string that you use to identify your cluster.
   returned: always
-  type: string
+  type: str
   sample: test-cluster-mfshcdok
 instances:
   description: A list of dicts that contain detail about each instance of the cluster.
   returned: always
-  type: string
+  type: list
   sample: []
 pending_tasks_count:
   description: The number of tasks in the cluster that are in the PENDING state.
   returned: always
   type: int
   sample: 0
-registered_container_instances_count: 
+registered_container_instances_count:
   description: The number of container instances registered into the cluster.
   returned: always
   type: int
@@ -84,7 +84,7 @@ statistics:
 status:
   description: The status of the cluster. The valid values are ACTIVE or INACTIVE.
   returned: always
-  type: string
+  type: str
   sample: ACTIVE
 '''
 
@@ -177,7 +177,7 @@ def get_cluster_facts(connection, module):
         list_of_snaked_clusters.append(camel_dict_to_snake_dict(cluster))
 
     module.exit_json(clusters=list_of_snaked_clusters)
-    
+
 
 def main():
 
@@ -192,6 +192,7 @@ def main():
     connection = module.client('ecs')
 
     get_cluster_facts(connection, module)
+
 
 if __name__ == '__main__':
     main()
