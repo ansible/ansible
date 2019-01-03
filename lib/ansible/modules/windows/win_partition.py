@@ -62,8 +62,8 @@ options:
     description:
       - Sets the partition offline.
       - Adding a mount point (such as a drive letter) will cause the partition to go online again.
-    required: no
     type: bool
+    required: no
   mbr_type:
     description:
       - Specify the partition's MBR type if the disk's partition style is MBR.

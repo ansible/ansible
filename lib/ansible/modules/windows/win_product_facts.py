@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Dag Wieers (dagwieers) <dag@wieers.com>
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_product_facts
 short_description: Provides Windows product information (product id, product key)
@@ -25,7 +25,7 @@ EXAMPLES = r'''
   win_product_facts:
 '''
 
-RETURN = '''
+RETURN = r'''
 ansible_facts:
   description: returned facts by this module
   returned: always

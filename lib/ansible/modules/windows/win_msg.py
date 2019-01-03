@@ -22,6 +22,7 @@ options:
   to:
     description:
       - Who to send the message to. Can be a username, sessionname or sessionid.
+    type: str
     default: '*'
   display_seconds:
     description:
@@ -39,6 +40,7 @@ options:
     description:
       - The text of the message to be displayed.
       - The message must be less than 256 characters.
+    type: str
     default: Hello world!
 notes:
    - This module must run on a windows host, so ensure your play targets windows
@@ -72,7 +74,7 @@ display_seconds:
     type: str
     sample: 10
 rc:
-    description: The return code of the API call
+    description: The return code of the API call.
     returned: always
     type: int
     sample: 0
