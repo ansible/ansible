@@ -84,11 +84,12 @@ EXAMPLES = """
         ipspace: Default
     - name: rename subnet
       na_ontap_net_subnet:
-        state: absent
+        state: present
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
         hostname: "{{ netapp_hostname }}"
-        name: subnet-adm
+        name: subnet-adm-new
+        from_name: subnet-adm
         ipspace: Default
 """
 
@@ -108,11 +109,11 @@ HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
 class NetAppOntapSubnet(object):
     """
-        Create, Modifies and Destroys a subnet
+    Create, Modifies and Destroys a subnet
     """
     def __init__(self):
         """
-            Initialize the Ontap IfGrp class
+        Initialize the Ontap Subnet class
         """
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
