@@ -454,9 +454,9 @@ def main():
 
         if state == 'present':
             if device_id:
-                result = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
-                                        reuse_existing_ip_allowed, allow_reassociation,
-                                        module.check_mode, isinstance=is_instance)
+                response, changed = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
+                                                   reuse_existing_ip_allowed, allow_reassociation,
+                                                   module.check_mode, isinstance=is_instance)
             else:
                 response, changed = allocate_address(ec2, domain,
                                                      reuse_existing_ip_allowed)
@@ -482,8 +482,6 @@ def main():
 
     result = dict(changed=changed, **camel_dict_to_snake_dict(response))
 
-    if instance_id:
-        result['warnings'] = warnings
     module.exit_json(**result)
 
 
