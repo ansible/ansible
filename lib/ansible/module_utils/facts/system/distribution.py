@@ -322,6 +322,11 @@ class DistributionFiles:
         elif 'SteamOS' in data:
             debian_facts['distribution'] = 'SteamOS'
             # nothing else to do, SteamOS gets correct info from python functions
+        elif path == '/etc/lsb-release' and 'Kali' in data:
+            debian_facts['distribution'] = 'Kali'
+            release = re.search('DISTRIB_RELEASE=(.*)', data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
         elif 'Devuan' in data:
             debian_facts['distribution'] = 'Devuan'
             release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
@@ -446,7 +451,7 @@ class Distribution(object):
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint', 'SteamOS', 'Devuan'],
+                                'Linux Mint', 'SteamOS', 'Devuan', 'Kali'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
