@@ -23,17 +23,18 @@ options:
   name:
     description:
       - Name of the group.
+    type: str
     required: yes
   description:
     description:
       - Description of the group.
+    type: str
   state:
     description:
       - Create or remove the group.
+    type: str
     choices: [ absent, present ]
     default: present
-notes:
-    - For non-Windows targets, please use the M(group) module instead.
 seealso:
 - module: group
 - module: win_domain_group

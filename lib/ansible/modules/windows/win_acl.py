@@ -22,20 +22,24 @@ options:
   path:
     description:
     - The path to the file or directory.
+    type: str
     required: yes
   user:
     description:
     - User or Group to add specified rights to act on src file/folder or
       registry key.
+    type: str
     required: yes
   state:
     description:
     - Specify whether to add C(present) or remove C(absent) the specified access rule.
+    type: str
     choices: [ absent, present ]
     default: present
   type:
     description:
     - Specify whether to allow or deny the rights specified.
+    type: str
     required: yes
     choices: [ allow, deny ]
   rights:
@@ -46,6 +50,7 @@ options:
       FileSystemRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.filesystemrights.aspx).
     - If C(path) is a registry key, rights can be any right under MSDN
       RegistryRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights.aspx).
+    type: str
     required: yes
   inherit:
     description:
@@ -55,12 +60,14 @@ options:
     - For more information on the choices see MSDN InheritanceFlags enumeration
       at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx).
     - Defaults to C(ContainerInherit, ObjectInherit) for Directories.
+    type: str
     choices: [ ContainerInherit, ObjectInherit ]
   propagation:
     description:
     - Propagation flag on the ACL rules.
     - For more information on the choices see MSDN PropagationFlags enumeration
       at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.propagationflags.aspx).
+    type: str
     choices: [ InheritOnly, None, NoPropagateInherit ]
     default: "None"
 notes:
@@ -92,7 +99,7 @@ EXAMPLES = r'''
     inherit: ContainerInherit, ObjectInherit
     propagation: 'None'
 
-- name: set registry key right
+- name: Set registry key right
   win_acl:
     path: HKCU:\Bovine\Key
     user: BUILTIN\Users

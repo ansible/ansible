@@ -30,7 +30,7 @@ options:
     - Use M(win_chocolatey_feature) with the name C(allowEmptyChecksums) to
       control this option globally.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.2'
   allow_multiple:
     description:
@@ -46,7 +46,7 @@ options:
     - If I(state) is C(latest), the latest pre-release package will be
       installed.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.6'
   architecture:
     description:
@@ -55,9 +55,7 @@ options:
     - When setting C(x86), will ensure Chocolatey installs the x86 package
       even when on an x64 bit OS.
     type: str
-    choices:
-    - default
-    - x86
+    choices: [ default, x86 ]
     default: default
     version_added: '2.7'
   force:
@@ -66,7 +64,7 @@ options:
     - Using I(force) will cause Ansible to always report that a change was
       made.
     type: bool
-    default: 'no'
+    default: no
   install_args:
     description:
     - Arguments to pass to the native installer.
@@ -80,20 +78,20 @@ options:
     - Use M(win_chocolatey_feature) with the name C(checksumFiles) to control
       this option globally.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.2'
   ignore_dependencies:
     description:
     - Ignore dependencies, only install/upgrade the package itself.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.1'
   name:
     description:
     - Name of the package(s) to be installed.
     - Set to C(all) to run the action on all the installed packages.
-    required: yes
     type: list
+    required: yes
   package_params:
     description:
     - Parameters to pass to the package.
@@ -102,8 +100,7 @@ options:
     - Before Ansible 2.7, this option was just I(params).
     type: str
     version_added: '2.1'
-    aliases:
-    - params
+    aliases: [ params ]
   proxy_url:
     description:
     - Proxy URL used to install chocolatey and the package.
@@ -134,7 +131,7 @@ options:
     - Do not run I(chocolateyInstall.ps1) or I(chocolateyUninstall.ps1) scripts
       when installing a package.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.4'
   source:
     description:
@@ -172,22 +169,16 @@ options:
     - When C(latest), will ensure the package is installed to the latest
       available version.
     - When C(reinstalled), will uninstall and reinstall the package.
-    choices:
-    - absent
-    - downgrade
-    - latest
-    - present
-    - reinstalled
-    default: present
     type: str
+    choices: [ absent, downgrade, latest, present, reinstalled ]
+    default: present
   timeout:
     description:
     - The time to allow chocolatey to finish before timing out.
     type: int
     default: 2700
     version_added: '2.3'
-    aliases:
-    - execution_timeout
+    aliases: [ execution_timeout ]
   validate_certs:
     description:
     - Used when downloading the Chocolatey install script if Chocolatey is not
@@ -197,7 +188,7 @@ options:
     - This should only be used on personally controlled sites using self-signed
       certificate.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.7'
   version:
     description:

@@ -17,12 +17,12 @@ description:
    - With the module you can retrieve and output detailed information about the attached disks of the target and
      its volumes and partitions if existent.
 requirements:
-    - Windows 8.1 / Windows 2012 (NT 6.2)
+   - Windows 8.1 / Windows 2012 (NT 6.2)
 notes:
   - In order to understand all the returned properties and values please visit the following site and open the respective MSFT class
     U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830612.aspx)
 author:
-    - Marc Tschapek (@marqelme)
+  - Marc Tschapek (@marqelme)
 '''
 
 EXAMPLES = r'''
@@ -41,7 +41,7 @@ EXAMPLES = r'''
     disk: '{{ ansible_facts.disks|selectattr("system_disk")|first }}'
 
     # Show disk size in Gibibytes
-    disksize_gib_human: '{{ disk.size|filesizeformat(True) }}'   # returns "223.6 GiB" (human readable)
+    disksize_gib_human: '{{ disk.size|filesizeformat(true) }}'   # returns "223.6 GiB" (human readable)
     disksize_gib: '{{ (disk.size/1024|pow(3))|round|int }} GiB'  # returns "224 GiB" (value in GiB)
 
     # Show disk size in Gigabytes
@@ -108,22 +108,22 @@ ansible_facts:
                     description: Read only status of the particular disk.
                     returned: always
                     type: bool
-                    sample: True
+                    sample: true
                 bootable:
                     description: Information whether the particular disk is a bootable disk.
                     returned: always
                     type: bool
-                    sample: False
+                    sample: false
                 system_disk:
                     description: Information whether the particular disk is a system disk.
                     returned: always
                     type: bool
-                    sample: True
+                    sample: true
                 clustered:
                     description: Information whether the particular disk is clustered (part of a failover cluster).
                     returned: always
                     type: bool
-                    sample: False
+                    sample: false
                 manufacturer:
                     description: Manufacturer of the particular disk.
                     returned: always
@@ -194,7 +194,7 @@ ansible_facts:
                             description: Information whether the particular partition has a default drive letter or not.
                             returned: if partition_style property of the particular disk has value "GPT"
                             type: bool
-                            sample: True
+                            sample: true
                         mbr_type:
                             description: mbr type of the particular partition.
                             returned: if partition_style property of the particular disk has value "MBR"
@@ -204,7 +204,7 @@ ansible_facts:
                             description: Information whether the particular partition is an active partition or not.
                             returned: if partition_style property of the particular disk has value "MBR"
                             type: bool
-                            sample: True
+                            sample: true
                         drive_letter:
                             description: Drive letter of the particular partition.
                             returned: if existent
@@ -224,12 +224,12 @@ ansible_facts:
                             description: Information whether the particular partition is hidden or not.
                             returned: always
                             type: bool
-                            sample: True
+                            sample: true
                         shadow_copy:
                             description: Information whether the particular partition is a shadow copy of another partition.
                             returned: always
                             type: bool
-                            sample: False
+                            sample: false
                         guid:
                             description: GUID of the particular partition.
                             returned: if existent
@@ -383,7 +383,7 @@ ansible_facts:
                             description: Information whether the particular physical disk can be added to a storage pool.
                             returned: always
                             type: bool
-                            sample: False
+                            sample: false
                         cannot_pool_reason:
                             description: Information why the particular physical disk can not be added to a storage pool.
                             returned: if can_pool property has value false
@@ -393,12 +393,12 @@ ansible_facts:
                             description: Information whether indication is enabled for the particular physical disk.
                             returned: always
                             type: bool
-                            sample: True
+                            sample: true
                         partial:
                             description: Information whether the particular physical disk is partial.
                             returned: always
                             type: bool
-                            sample: False
+                            sample: false
                         serial_number:
                             description: Serial number of the particular physical disk.
                             returned: always
@@ -507,27 +507,27 @@ ansible_facts:
                             description: Information whether deduplication is enabled for the particular virtual disk.
                             returned: always
                             type: bool
-                            sample: True
+                            sample: true
                         enclosure_aware:
                             description: Information whether the particular virtual disk is enclosure aware.
                             returned: always
                             type: bool
-                            sample: False
+                            sample: false
                         manual_attach:
                             description: Information whether the particular virtual disk is manual attached.
                             returned: always
                             type: bool
-                            sample: True
+                            sample: true
                         snapshot:
                             description: Information whether the particular virtual disk is a snapshot.
                             returned: always
                             type: bool
-                            sample: False
+                            sample: false
                         tiered:
                             description: Information whether the particular virtual disk is tiered.
                             returned: always
                             type: bool
-                            sample: True
+                            sample: true
                         physical_sector_size:
                             description: Physical sector size in bytes of the particular virtual disk.
                             returned: always
@@ -567,7 +567,7 @@ ansible_facts:
                             description: Information whether the particular virtual disk requests no single point of failure.
                             returned: always
                             type: bool
-                            sample: True
+                            sample: true
                         resiliency_setting_name:
                             description: Type of the physical disk redundancy of the particular virtual disk.
                             returned: always

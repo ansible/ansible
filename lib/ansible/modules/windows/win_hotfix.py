@@ -27,6 +27,7 @@ options:
     - You can get the identifier by running
       'Get-WindowsPackage -Online -PackagePath path-to-cab-in-msu' after
       expanding the msu file.
+    type: str
   hotfix_kb:
     description:
     - The name of the KB the hotfix relates to, see examples for details.
@@ -35,11 +36,13 @@ options:
       against this value, if it does not match an error will occur.
     - Because DISM uses the identifier as a key and doesn't refer to a KB in
       all cases it is recommended to use C(hotfix_identifier) instead.
+    type: str
   state:
     description:
     - Whether to install or uninstall the hotfix.
     - When C(present), C(source) MUST be set.
     - When C(absent), C(hotfix_identifier) or C(hotfix_kb) MUST be set.
+    type: str
     default: present
     choices: [ absent, present ]
   source:
@@ -64,14 +67,14 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: install Windows ADK with DISM for Server 2008 R2
+- name: Install Windows ADK with DISM for Server 2008 R2
   win_chocolatey:
     name: windows-adk
     version: 8.100.26866.0
     state: present
     install_args: /features OptionId.DeploymentTools
 
-- name: install hotfix without validating the KB and Identifier
+- name: Install hotfix without validating the KB and Identifier
   win_hotfix:
     source: C:\temp\windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
     state: present
@@ -80,7 +83,7 @@ EXAMPLES = r'''
 - win_reboot:
   when: hotfix_install.reboot_required
 
-- name: install hotfix validating KB
+- name: Install hotfix validating KB
   win_hotfix:
     hotfix_kb: KB3172729
     source: C:\temp\windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
@@ -90,7 +93,7 @@ EXAMPLES = r'''
 - win_reboot:
   when: hotfix_install.reboot_required
 
-- name: install hotfix validating Identifier
+- name: Install hotfix validating Identifier
   win_hotfix:
     hotfix_identifier: Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.0
     source: C:\temp\windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
@@ -100,7 +103,7 @@ EXAMPLES = r'''
 - win_reboot:
   when: hotfix_install.reboot_required
 
-- name: uninstall hotfix with Identifier
+- name: Uninstall hotfix with Identifier
   win_hotfix:
     hotfix_identifier: Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.0
     state: absent
@@ -109,7 +112,7 @@ EXAMPLES = r'''
 - win_reboot:
   when: hotfix_uninstall.reboot_required
 
-- name: uninstall hotfix with KB (not recommended)
+- name: Uninstall hotfix with KB (not recommended)
   win_hotfix:
     hotfix_kb: KB3172729
     state: absent
@@ -135,5 +138,5 @@ reboot_required:
     finalise.
   returned: success
   type: str
-  sample: True
+  sample: true
 '''

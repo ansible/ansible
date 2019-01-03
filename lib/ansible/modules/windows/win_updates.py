@@ -47,21 +47,22 @@ options:
           and continue to install updates after the reboot.
         - This can be used instead of using a M(win_reboot) task after this one
           and ensures all updates for that category is installed in one go.
-        - Async does not work when C(reboot=True).
+        - Async does not work when C(reboot=yes).
         type: bool
-        default: 'no'
+        default: no
         version_added: '2.5'
     reboot_timeout:
         description:
         - The time in seconds to wait until the host is back online from a
           reboot.
-        - This is only used if C(reboot=True) and a reboot is required.
+        - This is only used if C(reboot=yes) and a reboot is required.
         default: 1200
         version_added: '2.5'
     state:
         description:
         - Controls whether found updates are returned as a list or actually installed.
         - This module also supports Ansible check mode, which has the same effect as setting state=searched
+        type: str
         choices: [ installed, searched ]
         default: installed
     log_path:
@@ -91,7 +92,7 @@ options:
         - Can also be set to C(yes) on newer hosts where become does not work
           due to further privilege restrictions from the OS defaults.
         type: bool
-        default: 'no'
+        default: no
         version_added: '2.6'
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
@@ -172,44 +173,44 @@ EXAMPLES = r'''
 
 RETURN = r'''
 reboot_required:
-    description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
+    description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot).
     returned: success
     type: bool
-    sample: True
+    sample: true
 
 updates:
-    description: List of updates that were found/installed
+    description: List of updates that were found/installed.
     returned: success
     type: complex
     sample:
     contains:
         title:
-            description: Display name
+            description: Display name.
             returned: always
             type: str
             sample: "Security Update for Windows Server 2012 R2 (KB3004365)"
         kb:
-            description: A list of KB article IDs that apply to the update
+            description: A list of KB article IDs that apply to the update.
             returned: always
             type: list of strings
             sample: [ '3004365' ]
         id:
-            description: Internal Windows Update GUID
+            description: Internal Windows Update GUID.
             returned: always
             type: str (guid)
             sample: "fb95c1c8-de23-4089-ae29-fd3351d55421"
         installed:
-            description: Was the update successfully installed
+            description: Was the update successfully installed.
             returned: always
             type: bool
-            sample: True
+            sample: true
         categories:
-            description: A list of category strings for this update
+            description: A list of category strings for this update.
             returned: always
             type: list of strings
             sample: [ 'Critical Updates', 'Windows Server 2012 R2' ]
         failure_hresult_code:
-            description: The HRESULT code from a failed update
+            description: The HRESULT code from a failed update.
             returned: on install failure
             type: bool
             sample: 2147942402
@@ -223,23 +224,23 @@ filtered_updates:
     sample: see the updates return value
     contains:
         filtered_reason:
-            description: The reason why this update was filtered
+            description: The reason why this update was filtered.
             returned: always
             type: str
             sample: 'skip_hidden'
 
 found_update_count:
-    description: The number of updates found needing to be applied
+    description: The number of updates found needing to be applied.
     returned: success
     type: int
     sample: 3
 installed_update_count:
-    description: The number of updates successfully installed
+    description: The number of updates successfully installed.
     returned: success
     type: int
     sample: 2
 failed_update_count:
-    description: The number of updates that failed to install
+    description: The number of updates that failed to install.
     returned: always
     type: int
     sample: 0

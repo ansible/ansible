@@ -22,8 +22,8 @@ options:
     description:
       - File to get version.
       - Always provide absolute path.
-    required: yes
     type: path
+    required: yes
 seealso:
 - module: win_file
 author:
@@ -41,37 +41,37 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-win_file_version.path:
+path:
   description: file path
   returned: always
   type: str
 
-win_file_version.file_version:
-  description: file version number.
+file_version:
+  description: File version number..
   returned: no error
   type: str
 
-win_file_version.product_version:
-  description: the version of the product this file is distributed with.
+product_version:
+  description: The version of the product this file is distributed with.
   returned: no error
   type: str
 
-win_file_version.file_major_part:
+file_major_part:
   description: the major part of the version number.
   returned: no error
   type: str
 
-win_file_version.file_minor_part:
+file_minor_part:
   description: the minor part of the version number of the file.
   returned: no error
   type: str
 
-win_file_version.file_build_part:
+file_build_part:
   description: build number of the file.
   returned: no error
   type: str
 
-win_file_version.file_private_part:
+file_private_part:
   description: file private part number.
   returned: no error
   type: str
