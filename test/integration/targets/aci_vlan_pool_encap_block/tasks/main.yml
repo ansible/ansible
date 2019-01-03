@@ -224,9 +224,9 @@
     that:
       - encap_block_query_from_to_name is not changed
       - encap_block_query_from_to_name.url.endswith("class/fvnsEncapBlk.json")
-      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_to_name.filter_string'
-      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_from_to_name.filter_string'
-      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_from_to_name.filter_string'
+      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_to_name.filter_string|urldecode'
+      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_from_to_name.filter_string|urldecode'
+      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_from_to_name.filter_string|urldecode'
       - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
       - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
       - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
@@ -242,8 +242,8 @@
     that:
       - encap_block_query_from_name is not changed
       - encap_block_query_from_name.url.endswith("class/fvnsEncapBlk.json")
-      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_name.filter_string'
-      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_from_name.filter_string'
+      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_name.filter_string|urldecode'
+      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_from_name.filter_string|urldecode'
       - encap_block_query_from_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
       - encap_block_query_from_name.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
 
@@ -258,8 +258,8 @@
     that:
       - encap_block_query_to_name is not changed
       - encap_block_query_to_name.url.endswith("class/fvnsEncapBlk.json")
-      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_to_name.filter_string'
-      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_to_name.filter_string'
+      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_to_name.filter_string|urldecode'
+      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_to_name.filter_string|urldecode'
       - encap_block_query_to_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
       - encap_block_query_to_name.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
 
@@ -275,7 +275,7 @@
     that:
       - encap_block_query_name is not changed
       - encap_block_query_name.url.endswith("class/fvnsEncapBlk.json")
-      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_name.filter_string'
+      - '"eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_name.filter_string|urldecode'
       - encap_block_query_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
 
 - name: Query vlan pool range - from and to are filtered
@@ -289,8 +289,8 @@
     that:
       - encap_block_query_from_to is not changed
       - encap_block_query_from_to.url.endswith("class/fvnsEncapBlk.json")
-      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_to.filter_string'
-      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_from_to.filter_string'
+      - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in encap_block_query_from_to.filter_string|urldecode'
+      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in encap_block_query_from_to.filter_string|urldecode'
       - encap_block_query_from_to.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
       - encap_block_query_from_to.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
 
