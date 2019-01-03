@@ -127,8 +127,16 @@ GCE Dynamic Inventory
 
 The best way to interact with your hosts is to use the gcp_compute inventory plugin, which dynamically queries GCE and tells Ansible what nodes can be managed.
 
-To use the gcp_compute inventory plugin, create a file that ends in .gcp.yml file in your root directory. The gcp_compute inventory script takes in the same authentication
-information as any module.
+To be able to use this GCE dynamic inventory plugin, you need to enable it first by specifying the following in the ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+  [inventory]
+  enable_plugins = gcp_compute
+
+Then, create a file that ends in ``.gcp.yml`` in your root directory.
+
+The gcp_compute inventory script takes in the same authentication information as any module.
 
 Here's an example of a valid inventory file:
 
@@ -136,7 +144,7 @@ Here's an example of a valid inventory file:
 
     plugin: gcp_compute
     projects:
-      - google.com:graphite-playground
+      - graphite-playground
     filters:
     auth_kind: serviceaccount
     service_account_file: /home/alexstephen/my_account.json
