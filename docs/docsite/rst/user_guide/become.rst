@@ -365,9 +365,97 @@ task and check the output::
     - win_whoami:
       become: yes
 
-Under the ``GROUP INFORMATION`` section, the ``Mandatory Label`` entry
-determines whether the user has Administrative rights. Here are the labels that
-can be returned and what they mean:
+The output will look something similar to the below:
+
+.. code-block:: ansible-output
+
+    ok: [windows] => {
+        "account": {
+            "account_name": "vagrant-domain",
+            "domain_name": "DOMAIN",
+            "sid": "S-1-5-21-3088887838-4058132883-1884671576-1105",
+            "type": "User"
+        },
+        "authentication_package": "Kerberos",
+        "changed": false,
+        "dns_domain_name": "DOMAIN.LOCAL",
+        "groups": [
+            {
+                "account_name": "Administrators",
+                "attributes": [
+                    "Mandatory",
+                    "Enabled by default",
+                    "Enabled",
+                    "Owner"
+                ],
+                "domain_name": "BUILTIN",
+                "sid": "S-1-5-32-544",
+                "type": "Alias"
+            },
+            {
+                "account_name": "INTERACTIVE",
+                "attributes": [
+                    "Mandatory",
+                    "Enabled by default",
+                    "Enabled"
+                ],
+                "domain_name": "NT AUTHORITY",
+                "sid": "S-1-5-4",
+                "type": "WellKnownGroup"
+            },
+        ],
+        "impersonation_level": "SecurityAnonymous",
+        "label": {
+            "account_name": "High Mandatory Level",
+            "domain_name": "Mandatory Label",
+            "sid": "S-1-16-12288",
+            "type": "Label"
+        },
+        "login_domain": "DOMAIN",
+        "login_time": "2018-11-18T20:35:01.9696884+00:00",
+        "logon_id": 114196830,
+        "logon_server": "DC01",
+        "logon_type": "Interactive",
+        "privileges": {
+            "SeBackupPrivilege": "disabled",
+            "SeChangeNotifyPrivilege": "enabled-by-default",
+            "SeCreateGlobalPrivilege": "enabled-by-default",
+            "SeCreatePagefilePrivilege": "disabled",
+            "SeCreateSymbolicLinkPrivilege": "disabled",
+            "SeDebugPrivilege": "enabled",
+            "SeDelegateSessionUserImpersonatePrivilege": "disabled",
+            "SeImpersonatePrivilege": "enabled-by-default",
+            "SeIncreaseBasePriorityPrivilege": "disabled",
+            "SeIncreaseQuotaPrivilege": "disabled",
+            "SeIncreaseWorkingSetPrivilege": "disabled",
+            "SeLoadDriverPrivilege": "disabled",
+            "SeManageVolumePrivilege": "disabled",
+            "SeProfileSingleProcessPrivilege": "disabled",
+            "SeRemoteShutdownPrivilege": "disabled",
+            "SeRestorePrivilege": "disabled",
+            "SeSecurityPrivilege": "disabled",
+            "SeShutdownPrivilege": "disabled",
+            "SeSystemEnvironmentPrivilege": "disabled",
+            "SeSystemProfilePrivilege": "disabled",
+            "SeSystemtimePrivilege": "disabled",
+            "SeTakeOwnershipPrivilege": "disabled",
+            "SeTimeZonePrivilege": "disabled",
+            "SeUndockPrivilege": "disabled"
+        },
+        "rights": [
+            "SeNetworkLogonRight",
+            "SeBatchLogonRight",
+            "SeInteractiveLogonRight",
+            "SeRemoteInteractiveLogonRight"
+        ],
+        "token_type": "TokenPrimary",
+        "upn": "vagrant-domain@DOMAIN.LOCAL",
+        "user_flags": []
+    }
+
+Under the ``label`` key, the ``account_name`` entry determines whether the user
+has Administrative rights. Here are the labels that can be returned and what
+they represent:
 
 * ``Medium``: Ansible failed to get an elevated token and ran under a limited
   token. Only a subset of the privileges assigned to user are available during
@@ -582,4 +670,3 @@ Be aware of the following limitations with ``become`` on Windows:
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `webchat.freenode.net <https://webchat.freenode.net>`_
        #ansible IRC chat channel
-
