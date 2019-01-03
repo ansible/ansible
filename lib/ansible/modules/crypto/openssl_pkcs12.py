@@ -312,7 +312,7 @@ def main():
     if not pyopenssl_found:
         module.fail_json(msg='The python pyOpenSSL library is required')
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,
