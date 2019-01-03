@@ -238,11 +238,17 @@
     datacenter: "{{ (item|basename).split('_')[0] }}"
     disk:
         - size: 128mb  # index0
+          type: thin
         - size: 128mb  # index1
+          type: thin
         - size: 128mb  # index2
+          type: thin
         - size: 128mb  # index3
+          type: thin
         - size: 128mb  # index4
+          type: thin
         - size: 128mb  # index5
+          type: thin
         - size: 128mb  # index6
           type: thin
   with_items: "{{ vmlist['json'] }}"
@@ -265,12 +271,19 @@
     datacenter: "{{ (item|basename).split('_')[0] }}"
     disk:
         - size: 128mb  # index0
+          type: thin
         - size: 128mb  # index1
+          type: thin
         - size: 128mb  # index2
+          type: thin
         - size: 128mb  # index3
+          type: thin
         - size: 128mb  # index4
+          type: thin
         - size: 128mb  # index5
+          type: thin
         - size: 128mb  # index6
+          type: thin
         - size: 128mb  # index8 # Because index 7 is for scsi controller
           type: thin
   with_items: "{{ vmlist['json'] }}"
@@ -293,13 +306,21 @@
     datacenter: "{{ (item|basename).split('_')[0] }}"
     disk:
         - size: 128mb  # index0
+          type: thin
         - size: 128mb  # index1
+          type: thin
         - size: 128mb  # index2
+          type: thin
         - size: 128mb  # index3
+          type: thin
         - size: 128mb  # index4
+          type: thin
         - size: 128mb  # index5
+          type: thin
         - size: 128mb  # index6
+          type: thin
         - size: 128mb  # index8 # Because index 7 is for scsi controller
+          type: thin
         - size: 128mb  # index9
           type: thin
   with_items: "{{ vmlist['json'] }}"
@@ -322,14 +343,23 @@
     datacenter: "{{ (item|basename).split('_')[0] }}"
     disk:
         - size: 128mb  # index0
+          type: thin
         - size: 128mb  # index1
+          type: thin
         - size: 128mb  # index2
+          type: thin
         - size: 128mb  # index3
+          type: thin
         - size: 128mb  # index4
+          type: thin
         - size: 128mb  # index5
+          type: thin
         - size: 128mb  # index6
+          type: thin
         - size: 128mb  # index8 # Because index 7 is for scsi controller
+          type: thin
         - size: 128mb  # index9
+          type: thin
         - size: 128mb  # index10
           type: thin
         - size: 128mb  # index11
