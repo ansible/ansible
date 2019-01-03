@@ -4,6 +4,7 @@
 # Copyright 2006-2017 by the Pygments team, see AUTHORS at
 # https://bitbucket.org/birkenfeld/pygments-main/raw/7941677dc77d4f2bf0bbd6140ade85a9454b8b80/AUTHORS
 # Copyright by Kirill Simonov (original author of YAML lexer).
+# Copyright by Norman Richards (original author of JSON lexer).
 #
 # Licensed under BSD license:
 #
@@ -35,8 +36,8 @@
 
 from __future__ import absolute_import, print_function
 
-from pygments.lexer import LexerContext, ExtendedRegexLexer, DelegatingLexer, bygroups, include
-from pygments.lexers import DjangoLexer
+from pygments.lexer import LexerContext, ExtendedRegexLexer, DelegatingLexer, RegexLexer, bygroups, include
+from pygments.lexers import DjangoLexer, DiffLexer
 from pygments import token
 
 
@@ -476,6 +477,124 @@ class AnsibleYamlJinjaLexer(DelegatingLexer):
         super(AnsibleYamlJinjaLexer, self).__init__(AnsibleYamlLexer, DjangoLexer, **options)
 
 
+class AnsibleOutputPrimaryLexer(RegexLexer):
+    name = 'Ansible-output-primary'
+
+    # The following definitions are borrowed from Pygment's JSON lexer.
+    # It has been originally authored by Norman Richards.
+
+    # integer part of a number
+    int_part = r'-?(0|[1-9]\d*)'
+
+    # fractional part of a number
+    frac_part = r'\.\d+'
+
+    # exponential part of a number
+    exp_part = r'[eE](\+|-)?\d+'
+
+    tokens = {
+        # #########################################
+        # # BEGIN: states from JSON lexer #########
+        # #########################################
+        'whitespace': [
+            (r'\s+', token.Text),
+        ],
+
+        # represents a simple terminal value
+        'simplevalue': [
+            (r'(true|false|null)\b', token.Keyword.Constant),
+            (('%(int_part)s(%(frac_part)s%(exp_part)s|'
+              '%(exp_part)s|%(frac_part)s)') % vars(),
+             token.Number.Float),
+            (int_part, token.Number.Integer),
+            (r'"(\\\\|\\"|[^"])*"', token.String),
+        ],
+
+
+        # the right hand side of an object, after the attribute name
+        'objectattribute': [
+            include('value'),
+            (r':', token.Punctuation),
+            # comma terminates the attribute but expects more
+            (r',', token.Punctuation, '#pop'),
+            # a closing bracket terminates the entire object, so pop twice
+            (r'\}', token.Punctuation, '#pop:2'),
+        ],
+
+        # a json object - { attr, attr, ... }
+        'objectvalue': [
+            include('whitespace'),
+            (r'"(\\\\|\\"|[^"])*"', token.Name.Tag, 'objectattribute'),
+            (r'\}', token.Punctuation, '#pop'),
+        ],
+
+        # json array - [ value, value, ... }
+        'arrayvalue': [
+            include('whitespace'),
+            include('value'),
+            (r',', token.Punctuation),
+            (r'\]', token.Punctuation, '#pop'),
+        ],
+
+        # a json value - either a simple value or a complex value (object or array)
+        'value': [
+            include('whitespace'),
+            include('simplevalue'),
+            (r'\{', token.Punctuation, 'objectvalue'),
+            (r'\[', token.Punctuation, 'arrayvalue'),
+        ],
+        # #########################################
+        # # END: states from JSON lexer ###########
+        # #########################################
+
+        'host-postfix': [
+            (r'\n', token.Text, '#pop:3'),
+            (r'( )(=>)( )(\{)',
+                bygroups(token.Text, token.Punctuation, token.Text, token.Punctuation),
+                'objectvalue'),
+        ],
+
+        'host-error': [
+            (r'(?:( )(UNREACHABLE|FAILED)(!))?',
+                bygroups(token.Text, token.Keyword, token.Punctuation),
+                'host-postfix'),
+            (r'', token.Text, 'host-postfix'),
+        ],
+
+        'host-name': [
+            (r'(\[)([^ \]]+)(?:( )(=>)( )([^\]]+))?(\])',
+                bygroups(token.Punctuation, token.Name.Variable, token.Text, token.Punctuation, token.Text, token.Name.Variable, token.Punctuation),
+                'host-error')
+        ],
+
+        'host-result': [
+            (r'\n', token.Text, '#pop'),
+            (r'( +)(ok|changed|failed|skipped|unreachable)(=)([0-9]+)',
+                bygroups(token.Text, token.Keyword, token.Punctuation, token.Number.Integer)),
+        ],
+
+        'root': [
+            (r'(PLAY|TASK|PLAY RECAP)(?:( )(\[)([^\]]+)(\]))?( )(\*+)(\n)',
+                bygroups(token.Keyword, token.Text, token.Punctuation, token.Literal, token.Punctuation, token.Text, token.Name.Variable, token.Text)),
+            (r'(fatal|ok|changed|skipping)(:)( )',
+                bygroups(token.Keyword, token.Punctuation, token.Text),
+                'host-name'),
+            (r'([^ ]+)( +)(:)',
+                bygroups(token.Name, token.Text, token.Punctuation),
+                'host-result'),
+            (r'.*\n', token.Other),
+        ],
+    }
+
+
+class AnsibleOutputLexer(DelegatingLexer):
+    name = 'Ansible-output'
+    aliases = ['ansible-output']
+
+    def __init__(self, **options):
+        super(AnsibleOutputLexer, self).__init__(DiffLexer, AnsibleOutputPrimaryLexer, **options)
+
+
 # ####################################################################################################
 # # Sphinx plugin ####################################################################################
 # ####################################################################################################
@@ -490,7 +609,7 @@ def setup(app):
     """ Initializer for Sphinx extension API.
         See http://www.sphinx-doc.org/en/stable/extdev/index.html#dev-extensions.
     """
-    for lexer in [AnsibleYamlLexer(startinline=True), AnsibleYamlJinjaLexer(startinline=True)]:
+    for lexer in [AnsibleYamlLexer(startinline=True), AnsibleYamlJinjaLexer(startinline=True), AnsibleOutputLexer(startinline=True)]:
         app.add_lexer(lexer.name, lexer)
         for alias in lexer.aliases:
             app.add_lexer(alias, lexer)
