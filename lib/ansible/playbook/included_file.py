@@ -21,6 +21,8 @@ __metaclass__ = type
 
 import os
 
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible.template import Templar
@@ -78,7 +80,6 @@ class IncludedFile:
                         task_vars = task_vars_cache[cache_key]
                     except KeyError:
                         task_vars = task_vars_cache[cache_key] = variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task)
-                    templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())
                     loop_var = 'item'
@@ -94,6 +95,16 @@ class IncludedFile:
                         task_vars['_ansible_item_label'] = include_variables['_ansible_item_label'] = include_result['_ansible_item_label']
                     if original_task.no_log and '_ansible_no_log' not in include_variables:
                         task_vars['_ansible_no_log'] = include_variables['_ansible_no_log'] = original_task.no_log
+
+                    # get search path for this task to pass to lookup plugins that may be used in pathing to
+                    # the included file
+                    task_vars['ansible_search_path'] = original_task.get_search_path()
+
+                    # ensure basedir is always in (dwim already searches here but we need to display it)
+                    if loader.get_basedir() not in task_vars['ansible_search_path']:
+                        task_vars['ansible_search_path'].append(loader.get_basedir())
+
+                    templar = Templar(loader=loader, variables=task_vars)
 
                     if original_task.action in ('include', 'include_tasks'):
                         include_file = None
@@ -113,7 +124,15 @@ class IncludedFile:
                                     if isinstance(parent_include, IncludeRole):
                                         parent_include_dir = parent_include._role_path
                                     else:
-                                        parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                                        try:
+                                            parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
+                                        except AnsibleError as e:
+                                            parent_include_dir = ''
+                                            display.warning(
+                                                'Templating the path of the parent %s failed. The path to the '
+                                                'included file may not be found. '
+                                                'The error was: %s.' % (original_task.action, to_text(e))
+                                            )
                                     if cumulative_path is not None and not os.path.isabs(cumulative_path):
                                         cumulative_path = os.path.join(parent_include_dir, cumulative_path)
                                     else:
