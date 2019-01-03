@@ -87,7 +87,7 @@ options:
     version_added: "2.2"
   omit_check:
     description:
-      - By default unarchive will make a diff of the files in the archive and the destination, to check if it needs to 
+      - By default unarchive will make a diff of the files in the archive and the destination, to check if it needs to
         extract the archive and/or fix the file attributes afterwards.
       - The bigger the archive, the longer it takes. If you are sure you don't need this check, you can disable it and gain some performance.
     type: 'bool'
