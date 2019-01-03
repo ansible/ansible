@@ -239,17 +239,19 @@ def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_r
 def disassociate_ip_and_device(ec2, address, device_id, check_mode, isinstance=True):
     if not address_is_associated_with_device(ec2, address, device_id, isinstance):
         changed = False
-        return changed
+        response = {}
+        return response, changed
 
     # If we're in check mode, nothing else to do
     if not check_mode:
-        if address.get('Domain') == 'vpc':
-            res = ec2.disassociate_address(
-                AssociationId=AssociationId)
+        if address[0].get('Domain') == 'vpc':
+            response = ec2.disassociate_address(
+                AssociationId=address[0].get('AssociationId'))
         else:
-            res = ec2.disassociate_address(PublicIp=address.PublicIp)
+            response = ec2.disassociate_address(
+                PublicIp=address[0].get('PublicIp'))
 
-        if not res:
+        if not response:
             raise EIPException('disassociation failed')
 
     changed = True
@@ -283,15 +285,16 @@ def find_address(ec2, public_ip, device_id, isinstance=True):
         return _find_address_by_device_id(ec2, device_id, isinstance=False)
 
 
-def address_is_associated_with_device(ec2, address, device_id, isinstance=True):
+def address_is_associated_with_device(ec2, address, device_id, module, isinstance=True):
     """ Check if the elastic IP is currently associated with the device """
-    address = ec2.describe_addresses(PublicIps=[address[0].get('PublicIp')])
+    addresses = ec2.describe_addresses(PublicIps=[address[0].get('PublicIp')])
+    address = next(iter(addresses.values()))
 
     if address:
         if isinstance:
-            return address and address.get('InstanceId') == device_id
+            return address and address[0].get('InstanceId') == device_id
         else:
-            return address and address.get('NetworkInterfaceId') == device_id
+            return address and address[0].get('NetworkInterfaceId') == device_id
     return False
 
 
@@ -324,7 +327,8 @@ def release_address(ec2, address, check_mode):
         if not address.release():
             EIPException('release failed')
 
-    return {'changed': True}
+    changed = True
+    return changed
 
 
 def find_device(ec2, module, device_id, isinstance=True):
@@ -345,7 +349,6 @@ def find_device(ec2, module, device_id, isinstance=True):
         if interfaces:
             interfaces = next(iter(interfaces.values()))
             return interfaces[0]
-
 
     raise EIPException("could not find instance " + device_id)
 
@@ -389,19 +392,21 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
 def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
     if not address:
         changed = False
-        return changed
+        return response, changed
 
     # disassociating address from instance
     if device_id:
         if isinstance:
-            return disassociate_ip_and_device(ec2, address, device_id,
-                                              check_mode)
+            response, changed = disassociate_ip_and_device(
+                ec2, address, device_id, check_mode)
         else:
-            return disassociate_ip_and_device(ec2, address, device_id,
-                                              check_mode, isinstance=False)
+            response, changed = disassociate_ip_and_device(
+                ec2, address, device_id, check_mode, isinstance=False)
     # releasing address
     else:
-        return release_address(ec2, address, check_mode)
+        response, changed = release_address(ec2, address, check_mode)
+
+    return response, changed
 
 
 def main():
@@ -475,20 +480,13 @@ def main():
                                                      reuse_existing_ip_allowed)
         else:
             if device_id:
-                disassociated = ensure_absent(
+                response, changed = ensure_absent(
                     ec2, domain, address, device_id, module.check_mode, isinstance=is_instance)
 
-                if release_on_disassociation and disassociated['changed']:
-                    released = release_address(ec2, address, module.check_mode)
-                    result = {
-                        'changed': True, 'disassociated': disassociated, 'released': released}
-                else:
-                    result = {'changed': disassociated['changed'], 'disassociated': disassociated, 'released': {
-                        'changed': False}}
+                # if release_on_disassociation and disassociated['changed']:
+                #     response, changed = release_address(ec2, address, module.check_mode)
             else:
-                released = release_address(ec2, address, module.check_mode)
-                result = {'changed': released['changed'], 'disassociated': {
-                    'changed': False}, 'released': released}
+                response, changed = release_address(ec2, address, module.check_mode)
 
     except botocore.exceptions.BotoCoreError as e:
         raise
