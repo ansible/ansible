@@ -24,6 +24,7 @@ options:
   name:
     description:
       - Name of the event log to manage.
+    type: str
     required: yes
   state:
     description:
@@ -31,6 +32,7 @@ options:
       - When C(sources) is populated, state is checked for sources.
       - When C(sources) is not populated, state is checked for the specified log itself.
       - If C(state) is C(clear), event log entries are cleared for the target log.
+    type: str
     choices: [ absent, clear, present ]
     default: present
   sources:
@@ -56,16 +58,15 @@ options:
       - The maximum size of the event log.
       - Value must be between 64KB and 4GB, and divisible by 64KB.
       - Size can be specified in KB, MB or GB (e.g. 128KB, 16MB, 2.5GB).
+    type: str
   overflow_action:
     description:
       - The action for the log to take once it reaches its maximum size.
-      - For C(OverwriteOlder), new log entries overwrite those older than the C(retention_days) value.
-      - For C(OverwriteAsNeeded), each new entry overwrites the oldest entry.
       - For C(DoNotOverwrite), all existing entries are kept and new entries are not retained.
-    choices:
-      - OverwriteOlder
-      - OverwriteAsNeeded
-      - DoNotOverwrite
+      - For C(OverwriteAsNeeded), each new entry overwrites the oldest entry.
+      - For C(OverwriteOlder), new log entries overwrite those older than the C(retention_days) value.
+    type: str
+    choices: [ DoNotOverwrite, OverwriteAsNeeded, OverwriteOlder ]
   retention_days:
     description:
       - The minimum number of days event entries must remain in the log.

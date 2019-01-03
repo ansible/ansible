@@ -33,7 +33,7 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: get whoami information
+- name: Get whoami information
   win_whoami:
 '''
 

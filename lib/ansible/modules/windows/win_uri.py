@@ -22,25 +22,31 @@ options:
   url:
     description:
     - Supports FTP, HTTP or HTTPS URLs in the form of (ftp|http|https)://host.domain:port/path.
+    type: str
     required: yes
   method:
     description:
     - The HTTP Method of the request or response.
+    type: str
     choices: [ CONNECT, DELETE, GET, HEAD, MERGE, OPTIONS, PATCH, POST, PUT, REFRESH, TRACE ]
     default: GET
   content_type:
     description:
     - Sets the "Content-Type" header.
+    type: str
   body:
     description:
     - The body of the HTTP request/response to the web service.
+    type: raw
   user:
     description:
     - Username to use for authentication.
+    type: str
     version_added: '2.4'
   password:
     description:
     - Password to use for authentication.
+    type: str
     version_added: '2.4'
   force_basic_auth:
     description:
@@ -50,7 +56,7 @@ options:
     - This option forces the sending of the Basic authentication header upon
       the initial request.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.5'
   dest:
     description:
@@ -61,6 +67,7 @@ options:
     description:
     - Extra headers to set on the request, see the examples for more details on
       how to set this.
+    type: dict
   creates:
     description:
     - A filename, when it already exists, this step will be skipped.
@@ -78,7 +85,7 @@ options:
       "application/json", then the JSON is additionally loaded into a key
       called C(json) in the dictionary results.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.4'
   status_code:
     description:
@@ -105,6 +112,7 @@ options:
      - C(none) will not follow any redirects.
      - C(safe) will follow only "safe" redirects, where "safe" means that the client is only
        doing a C(GET) or C(HEAD) on the URI to which it is being redirected.
+    type: str
     choices: [ all, none, safe ]
     default: safe
     version_added: '2.4'
@@ -124,7 +132,7 @@ options:
       set to C(no) used on personally controlled sites using self-signed
       certificates.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.4'
   client_cert:
     description:
@@ -139,9 +147,8 @@ options:
     description:
     - The password for the client certificate (.pfx) file that is used for a
       secure web request.
+    type: str
     version_added: '2.5'
-notes:
-- For non-Windows targets, use the M(uri) module instead.
 seealso:
 - module: uri
 - module: win_get_url
@@ -178,12 +185,12 @@ EXAMPLES = r'''
 
 RETURN = r'''
 elapsed:
-  description: The number of seconds that elapsed while performing the download
+  description: The number of seconds that elapsed while performing the download.
   returned: always
   type: float
   sample: 23.2
 url:
-  description: The Target URL
+  description: The Target URL.
   returned: always
   type: str
   sample: https://www.ansible.com
@@ -208,7 +215,7 @@ content_length:
   type: int
   sample: 54447
 json:
-  description: The json structure returned under content as a dictionary
+  description: The json structure returned under content as a dictionary.
   returned: success and Content-Type is "application/json" or "application/javascript" and return_content is True
   type: dict
   sample: {"this-is-dependent": "on the actual return content"}

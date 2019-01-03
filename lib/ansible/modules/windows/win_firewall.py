@@ -25,17 +25,13 @@ options:
     description:
     - Specify one or more profiles to change.
     type: list
-    choices:
-    - Domain
-    - Private
-    - Public
-    default: [Domain, Private, Public]
+    choices: [ Domain, Private, Public ]
+    default: [ Domain, Private, Public ]
   state:
     description:
     - Set state of firewall for given profile.
-    choices:
-    - enabled
-    - disabled
+    type: str
+    choices: [ disabled, enabled ]
 seealso:
 - module: win_firewall_rule
 author:
@@ -62,17 +58,17 @@ EXAMPLES = r'''
 
 RETURN = r'''
 enabled:
-    description: current firewall status for chosen profile (after any potential change)
+    description: Current firewall status for chosen profile (after any potential change).
     returned: always
     type: bool
     sample: true
 profiles:
-    description: chosen profile
+    description: Chosen profile.
     returned: always
     type: str
     sample: Domain
 state:
-    description: desired state of the given firewall profile(s)
+    description: Desired state of the given firewall profile(s).
     returned: always
     type: list
     sample: enabled

@@ -23,6 +23,7 @@ options:
     description:
       - The C(win_shell) module takes a free form command to run.
       - There is no parameter actually named 'free form'. See the examples!
+    type: str
     required: yes
   creates:
     description:
@@ -44,6 +45,7 @@ options:
   stdin:
     description:
     - Set the stdin of the command directly to the specified value.
+    type: str
     version_added: '2.5'
 notes:
    -  If you want to run an executable securely and predictably, it may be
@@ -53,7 +55,6 @@ notes:
    -  WinRM will not return from a command execution until all child processes created have exited.
       Thus, it is not possible to use C(win_shell) to spawn long-running child or background processes.
       Consider creating a Windows service for managing background processes.
-   - For non-Windows targets, use the M(shell) module instead.
 seealso:
 - module: psexec
 - module: raw
@@ -87,7 +88,7 @@ EXAMPLES = r'''
     executable: cmd
   register: homedir_out
 
-- name: run multi-lined shell commands
+- name: Run multi-lined shell commands
   win_shell: |
     $value = Test-Path -Path C:\temp
     if ($value) {
@@ -95,7 +96,7 @@ EXAMPLES = r'''
     }
     New-Item -Path C:\temp -ItemType Directory
 
-- name: retrieve the input based on stdin
+- name: Retrieve the input based on stdin
   win_shell: '$string = [Console]::In.ReadToEnd(); Write-Output $string.Trim()'
   args:
     stdin: Input message
@@ -103,47 +104,47 @@ EXAMPLES = r'''
 
 RETURN = r'''
 msg:
-    description: changed
+    description: Changed.
     returned: always
     type: bool
-    sample: True
+    sample: true
 start:
-    description: The command execution start time
+    description: The command execution start time.
     returned: always
     type: str
     sample: '2016-02-25 09:18:26.429568'
 end:
-    description: The command execution end time
+    description: The command execution end time.
     returned: always
     type: str
     sample: '2016-02-25 09:18:26.755339'
 delta:
-    description: The command execution delta time
+    description: The command execution delta time.
     returned: always
     type: str
     sample: '0:00:00.325771'
 stdout:
-    description: The command standard output
+    description: The command standard output.
     returned: always
     type: str
     sample: 'Clustering node rabbit@slave1 with rabbit@master ...'
 stderr:
-    description: The command standard error
+    description: The command standard error.
     returned: always
     type: str
     sample: 'ls: cannot access foo: No such file or directory'
 cmd:
-    description: The command executed by the task
+    description: The command executed by the task.
     returned: always
     type: str
     sample: 'rabbitmqctl join_cluster rabbit@master'
 rc:
-    description: The command return code (0 means success)
+    description: The command return code (0 means success).
     returned: always
     type: int
     sample: 0
 stdout_lines:
-    description: The command standard output split in lines
+    description: The command standard output split in lines.
     returned: always
     type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']

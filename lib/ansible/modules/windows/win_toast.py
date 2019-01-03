@@ -28,11 +28,13 @@ options:
   group:
     description:
       - Which notification group to add the notification to.
+    type: str
     default: Powershell
   msg:
     description:
       - The message to appear inside the notification.
       - May include \n to format the message to appear within the Action Center.
+    type: str
     default: Hello, World!
   popup:
     description:
@@ -42,10 +44,12 @@ options:
   tag:
     description:
       - The tag to add to the notification.
+    type: str
     default: Ansible
   title:
     description:
       - The notification title, which appears in the pop up..
+    type: str
     default: Notification HH:mm
 notes:
    - This module must run on a windows 10 or Server 2016 host, so ensure your play targets windows hosts, or delegates to a windows host.
