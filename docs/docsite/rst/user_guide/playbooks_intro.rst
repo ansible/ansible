@@ -257,8 +257,8 @@ in a sequence should have the same effect as running it just once. One
 way to achieve idempotency is to have a module check whether its desired
 final state has already been achieved, and if that state has been achieved,
 to exit without performing any actions. If all the modules a playbook uses
-are idempotent, then the playbook itself is likely to be idempotent, so
-re-running the playbook should be safe.
+are idempotent, then the playbook itself will be idempotent, so
+re-running the playbook will be safe.
 
 The **command** and **shell** modules will typically rerun the same command again,
 which is totally ok if the command is something like
