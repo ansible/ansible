@@ -14,22 +14,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: docker_node_facts
+module: docker_swarm_facts
 
-short_description: Retrieves facts about docker swarm node from swarm manager
+short_description: Retrieves facts about docker swarm cluster from swarm manager
 
 description:
-  - Retrieves facts about a docker node.
-  - Essentially returns the output of C(docker node inspect <name>)
+  - Retrieves facts about a docker swarm.
 
 version_added: "2.8"
 
-options:
-  name:
-    description:
-      - The name of the node to inspect.
-      - When identifying an existing node name may be a name or a long or short container ID.
-    required: true
 extends_documentation_fragment:
     - docker
 
@@ -50,30 +43,37 @@ requirements:
 
 EXAMPLES = '''
 - name: Get info on node
-  docker_node_facts:
-    name: mynode
+  docker_swarm_facts:
   register: result
 
 '''
 
 RETURN = '''
-exists:
-    description:
-      - Returns whether the node exists in docker swarm cluster.
-    type: bool
-    returned: always
-    sample: true
-node_facts:
-    description:
-      - Facts representing the current state of the node. Matches the 'docker node inspect' output.
-      - Will be C(None) if node does not exist.
-    returned: always
-    type: dict
+swarm_facts:
+  description: Information about swarm including the JoinTokens
+  returned: success
+  type: complex
+  contains:
+      JoinTokens:
+          description: Tokens to connect to the Swarm.
+          returned: success
+          type: complex
+          contains:
+              Worker:
+                  description: Token to create a new I(worker) node
+                  returned: success
+                  type: str
+                  example: SWMTKN-1--xxxxx
+              Manager:
+                  description: Token to create a new I(manager) node
+                  returned: success
+                  type: str
+                  example: SWMTKN-1--xxxxx
 
 '''
 
 from ansible.module_utils.docker_common import AnsibleDockerClient
-from ansible.module_utils._text import to_native
+import json
 
 try:
     from docker.errors import APIError, NotFound
@@ -82,24 +82,17 @@ except ImportError:
     pass
 
 
-def get_node_facts(client, name):
+def get_node_facts(client):
     try:
-        return client.inspect_node(name)
-    except NotFound:
-        return None
-    except APIError as exc:
-        if exc.status_code == 503:
-            client.fail(msg="This node is not a swarm manager")
-        client.fail(msg="Error while reading from Swarm manager: %s" % to_native(exc))
-    except Exception as exc:
-        client.module.fail_json(msg="Error inspecting swarm node: %s" % exc)
+        data = client.inspect_swarm()
+        json_str = json.dumps(data, ensure_ascii=False)
+        swarm_info = json.loads(json_str)
+        return swarm_info
+    except APIError:
+        return
 
 
 def main():
-    argument_spec = dict(
-        name=dict(type='str', required=True),
-    )
-
     option_minimal_versions = dict(
         signing_ca_cert=dict(docker_api_version='1.30'),
         signing_ca_key=dict(docker_api_version='1.30'),
@@ -107,19 +100,18 @@ def main():
     )
 
     client = AnsibleDockerClient(
-        argument_spec=argument_spec,
+        argument_spec=None,
         supports_check_mode=True,
         min_docker_version='2.6.0',
         min_docker_api_version='1.25',
         option_minimal_versions=option_minimal_versions,
     )
 
-    node = get_node_facts(client, client.module.params['name'])
+    swarm_facts = get_node_facts(client)
 
     client.module.exit_json(
         changed=False,
-        exists=(True if node else False),
-        node_facts=node,
+        swarm_facts=swarm_facts,
     )
 
 
