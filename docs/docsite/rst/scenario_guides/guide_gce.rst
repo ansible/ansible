@@ -134,7 +134,7 @@ To be able to use this GCE dynamic inventory plugin, you need to enable it first
   [inventory]
   enable_plugins = gcp_compute
 
-Then, create a file that ends in ``.gcp.yml`` file in your root directory.
+Then, create a file that ends in ``.gcp.yml`` in your root directory.
 
 The gcp_compute inventory script takes in the same authentication information as any module.
 
