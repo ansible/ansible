@@ -39,7 +39,7 @@ options:
     required: true
 
   from_name:
-    description: 
+    description:
     - Name of the subnet to be renamed
 
   gateway:
@@ -48,16 +48,16 @@ options:
 
   ipspace:
     description:
-    - Specify the ipspace for the subnet. 
+    - Specify the ipspace for the subnet.
     - The default value for this parameter is the default IPspace, named 'Default'.
-    
+
   ip_ranges:
     description:
     - Specify the list of IP address ranges associated with the subnet.
 
   subnet:
     description:
-    - Specify the subnet (ip and mask). 
+    - Specify the subnet (ip and mask).
     required: true
 """
 
@@ -162,7 +162,7 @@ class NetAppOntapSubnet(object):
         result = self.server.invoke_successfully(subnet_iter, True)
 
         return_value = None
-		# check if query returns the expected subnet
+        # check if query returns the expected subnet
         if result.get_child_by_name('num-records') and \
                 int(result.get_child_content('num-records')) == 1:
 
@@ -306,12 +306,14 @@ class NetAppOntapSubnet(object):
                     self.modify_subnet()
         self.module.exit_json(changed=self.na_helper.changed)
 
+
 def main():
     """
     Creates the NetApp Ontap Net Route object and runs the correct play task
     """
     subnet_obj = NetAppOntapSubnet()
     subnet_obj.apply()
+
 
 if __name__ == '__main__':
     main()
