@@ -441,13 +441,10 @@
         - size: 128mb  # index15
           type: thin
           autoselect_datastore: True
-        - size: 128mb  # index16
-          type: thin
-          autoselect_datastore: True
     folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
   register: disk_max_ctrl_d1_c1_f0_add_disk_error
-  ignore_errors: True
+  ignore_errors: true
 
 - debug: var=disk_max_ctrl_d1_c1_f0_add_disk_error
 
@@ -455,5 +452,3 @@
   assert:
     that:
         - "disk_max_ctrl_d1_c1_f0_add_disk_error.results|map(attribute='changed')|unique|list == [false]"
-        - "disk_max_ctrl_d1_c1_f0_add_disk_error.results|map(attribute='failed')|unique|list == [true]"
-    msg: "disk_max_ctrl_d1_c1_f0_add_disk_error"
