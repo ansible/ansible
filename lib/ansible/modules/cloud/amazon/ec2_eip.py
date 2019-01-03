@@ -21,7 +21,7 @@ description:
     - This module can allocate or release an EIP.
     - This module can associate/disassociate an EIP with instances or network interfaces.
 version_added: "1.4"
-author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
+author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>", ported to boto3 by "David C. Martin (@blastik)"
 options:
   device_id:
     description:
@@ -194,10 +194,15 @@ def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_r
     if not check_mode:
         if isinstance:
             if address[0].get('Domain') == "vpc":
-                response = ec2.associate_address(InstanceId=device_id,
-                                            AllocationId=address[0].get('AllocationId'),
-                                            PrivateIpAddress=private_ip_address,
-                                            AllowReassociation=allow_reassociation)
+                if private_ip_address:
+                    response = ec2.associate_address(InstanceId=device_id,
+                                                AllocationId=address[0].get('AllocationId'),
+                                                PrivateIpAddress=private_ip_address,
+                                                AllowReassociation=allow_reassociation)
+                else:
+                    response = ec2.associate_address(InstanceId=device_id,
+                                                AllocationId=address[0].get('AllocationId'),
+                                                AllowReassociation=allow_reassociation)
             else:
                 response = ec2.associate_address(InstanceId=device_id,
                                             PublicIp=address[0].get('PublicIp'),
@@ -342,30 +347,29 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
         if isinstance:
             instance = find_device(ec2, module, device_id)
             if reuse_existing_ip_allowed:
-                if instance.vpc_id and len(instance.vpc_id) > 0 and domain is None:
+                if instance.get('VpcId') and len(instance.get('VpcId')) > 0 and domain is None:
                     raise EIPException(
                         "You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
             # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
+            response, changed = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
                                                    check_mode)
+
         else:
             instance = find_device(ec2, module, device_id, isinstance=False)
             # Associate address object (provided or allocated) with instance
-            assoc_result = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
+            response, changed = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
                                                    check_mode, isinstance=False)
 
-        if instance.vpc_id:
+        if instance.get('VpcId'):
             domain = 'vpc'
 
-        changed = changed or assoc_result['changed']
-
-    # return {'changed': changed, 'public_ip': address.PublicIp, 'allocation_id': address.AllocationId}
     return response, changed
 
 
 def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
     if not address:
-        return {'changed': False}
+        changed = False
+        return changed
 
     # disassociating address from instance
     if device_id:
