@@ -156,15 +156,15 @@
       - query_tenant_subject.current.0.fvTenant.attributes.name == "anstest"
       - query_tenant_subject.current.0.fvTenant.children.0.vzBrCP.children | length == 1
       - query_tenant_subject.current.0.fvTenant.children.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"
-      - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_tenant_subject.filter_string'
+      - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_tenant_subject.filter_string|urldecode'
       - '"rsp-subtree-class=vzSubj" in query_tenant_subject.filter_string'
       - '"tn-anstest.json" in query_tenant_subject.url'
       - query_contract_subject is not changed
       - query_contract_subject.current.0.vzBrCP.attributes.name == "anstest"
       - query_contract_subject.current.0.vzBrCP.children | length == 1
       - query_contract_subject.current.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"
-      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract_subject.filter_string'
-      - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_contract_subject.filter_string'
+      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract_subject.filter_string|urldecode'
+      - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_contract_subject.filter_string|urldecode'
       - '"rsp-subtree-class=vzSubj" in query_contract_subject.filter_string'
       - '"class/vzBrCP.json" in query_contract_subject.url'
       - query_tenant is not changed
@@ -174,12 +174,12 @@
       - '"tn-anstest.json" in query_tenant.url'
       - query_contract is not changed
       - query_contract.current.0.vzBrCP.attributes.name == "anstest"
-      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract.filter_string'
+      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract.filter_string|urldecode'
       - '"rsp-subtree-class=vzSubj" in query_contract.filter_string'
       - '"class/vzBrCP.json" in query_contract.url'
       - query_subject is not changed
       - query_subject.current.0.vzSubj.attributes.name == "anstest"
-      - '"query-target-filter=eq(vzSubj.name, \"anstest\")" in query_subject.filter_string'
+      - '"query-target-filter=eq(vzSubj.name, \"anstest\")" in query_subject.filter_string|urldecode'
       - '"class/vzSubj.json" in query_subject.url'
       - query_all is not changed
       - query_all.current > 1
