@@ -284,8 +284,8 @@ Role dependencies allow you to automatically pull in other roles when using a ro
 
 .. note::
     Role dependencies must use the classic role definition style.
-
-Role dependencies are always executed before the role that includes them, and may be recursive. Dependencies also follow the duplication rules specified above. If another role also lists it as a dependency, it will not be run again based on the same rules given above.
+    
+Role dependencies are always executed before the role that includes them, and may be recursive. Dependencies also follow the duplication rules specified above. If another role also lists it as a dependency, it will not be run again based on the same rules given above. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
 .. note::
     Always remember that when using ``allow_duplicates: true``, it needs to be in the dependent role's ``meta/main.yml``, not the parent.
