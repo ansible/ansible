@@ -168,6 +168,8 @@ Content of the *webserver.yml* file:
     - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
+.. _galaxy_dependencies:
+
 Dependencies
 ============
 
