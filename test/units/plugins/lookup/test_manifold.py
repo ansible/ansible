@@ -266,8 +266,8 @@ class TestManifoldApiClient(unittest.TestCase):
         client = ManifoldApiClient('token-123')
         with self.assertRaises(ApiError) as context:
             client.request('test', 'endpoint')
-        self.assertEqual('Failed lookup url for https://api.test.manifold.co/v1/endpoint :'
-                         ' <urlopen error URL is invalid>',
+        self.assertEqual('Failed lookup url for https://api.test.manifold.co/v1/endpoint : <url'
+                         'open error URL is invalid>',
                          str(context.exception))
 
     @patch('manifold.open_url')
