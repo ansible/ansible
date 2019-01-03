@@ -239,18 +239,25 @@
     disk:
         - size: 128mb  # index0
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index1
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index2
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index3
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index4
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index5
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index6
           type: thin
+          autoselect_datastore: True
   with_items: "{{ vmlist['json'] }}"
   register: disk_max_ctrl_d1_c1_f0_disk_7
 
@@ -272,20 +279,28 @@
     disk:
         - size: 128mb  # index0
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index1
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index2
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index3
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index4
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index5
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index6
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index8 # Because index 7 is for scsi controller
           type: thin
+          autoselect_datastore: True
   with_items: "{{ vmlist['json'] }}"
   register: disk_max_ctrl_d1_c1_f0_add_disk_8
 
@@ -307,22 +322,31 @@
     disk:
         - size: 128mb  # index0
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index1
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index2
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index3
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index4
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index5
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index6
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index8 # Because index 7 is for scsi controller
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index9
           type: thin
+          autoselect_datastore: True
   with_items: "{{ vmlist['json'] }}"
   register: disk_max_ctrl_d1_c1_f0_add_disk_9
 
@@ -344,36 +368,52 @@
     disk:
         - size: 128mb  # index0
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index1
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index2
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index3
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index4
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index5
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index6
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index8 # Because index 7 is for scsi controller
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index9
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index10
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index11
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index12
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index13
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index14
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index15
           type: thin
+          autoselect_datastore: True
         - size: 128mb  # index16
           type: thin
+          autoselect_datastore: True
   with_items: "{{ vmlist['json'] }}"
   register: disk_max_ctrl_d1_c1_f0_add_disk_error
   ignore_errors: True
