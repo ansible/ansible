@@ -16,7 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: tower_notification
-author: "Samuel Carpentier"
+author: "Samuel Carpentier (@samcarpentier)"
+version_added: "2.8"
 short_description: create, update, or destroy Ansible Tower notification.
 description:
     - Create, update, or destroy Ansible Tower notifications. See
@@ -193,13 +194,7 @@ EXAMPLES = '''
 '''
 
 
-RETURN = '''
-name:
-    description: the name of the notification
-    returned: success
-    type: string
-    sample: slack notification
-'''
+RETURN = ''' # '''
 
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode
@@ -286,7 +281,7 @@ def main():
     target = module.params.get('target')
     state = module.params.get('state')
 
-    json_output = {'name': name, 'state': state}
+    json_output = {'notification': name, 'state': state}
 
     tower_auth = tower_auth_config(module)
     with settings.runtime_values(**tower_auth):
