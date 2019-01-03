@@ -218,11 +218,12 @@ def nic_to_dict(nic):
             primary=config.primary,
             load_balancer_backend_address_pools=([item.id for item in config.load_balancer_backend_address_pools]
                                                  if config.load_balancer_backend_address_pools else None),
-            public_ip_address=config.public_ip_address.id if config.public_ip_address else None
+            public_ip_address=config.public_ip_address.id if config.public_ip_address else None,
+            public_ip_allocation_method=config.public_ip_address.public_ip_allocation_method if config.public_ip_address else None
         ) for config in nic.ip_configurations
     ]
     config = nic.ip_configurations[0] if len(nic.ip_configurations) > 0 else None
-    subnet_dict = azure_id_to_dict(config.subnet.id) if config and config.subnet else None,
+    subnet_dict = azure_id_to_dict(config.subnet.id) if config and config.subnet else None
     subnet = subnet_dict.get('subnets') if subnet_dict else None
     virtual_network = dict(
         resource_group=subnet_dict.get('resourceGroups'),
