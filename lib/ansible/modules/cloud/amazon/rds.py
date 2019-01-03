@@ -259,206 +259,211 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-engine:
-    description: the name of the database engine
-    returned: when RDS instance exists
-    type: str
-    sample: "oracle-se"
-engine_version:
-    description: the version of the database engine
-    returned: when RDS instance exists
-    type: str
-    sample: "11.2.0.4.v6"
-license_model:
-    description: the license model information
-    returned: when RDS instance exists
-    type: str
-    sample: "bring-your-own-license"
-character_set_name:
-    description: the name of the character set that this instance is associated with
-    returned: when RDS instance exists
-    type: str
-    sample: "AL32UTF8"
-allocated_storage:
-    description: the allocated storage size in gigabytes (GB)
-    returned: when RDS instance exists
-    type: str
-    sample: "100"
-publicly_accessible:
-    description: the accessibility options for the DB instance
-    returned: when RDS instance exists
-    type: bool
-    sample: "true"
-latest_restorable_time:
-    description: the latest time to which a database can be restored with point-in-time restore
-    returned: when RDS instance exists
-    type: str
-    sample: "1489707802.0"
-secondary_availability_zone:
-    description: the name of the secondary AZ for a DB instance with multi-AZ support
-    returned: when RDS instance exists and is multy-AZ
-    type: str
-    sample: "eu-west-1b"
-backup_window:
-    description: the daily time range during which automated backups are created if automated backups are enabled
-    returned: when RDS instance exists and automated backups are enabled
-    type: str
-    sample: "03:00-03:30"
-auto_minor_version_upgrade:
-    description: indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window
-    returned: when RDS instance exists
-    type: bool
-    sample: "true"
-read_replica_source_dbinstance_identifier:
-    description: the identifier of the source DB instance if this RDS instance is a read replica
-    returned: when read replica RDS instance exists
-    type: str
-    sample: "null"
-db_name:
-    description: the name of the database to create when the DB instance is created
-    returned: when RDS instance exists
-    type: str
-    sample: "ASERTG"
-endpoint:
-    description: the endpoint uri of the database instance
-    returned: when RDS instance exists
-    type: str
-    sample: "my-ansible-database.asdfaosdgih.us-east-1.rds.amazonaws.com"
-port:
-    description: the listening port of the database instance
-    returned: when RDS instance exists
-    type: int
-    sample: 3306
-parameter_groups:
-    description: the list of DB parameter groups applied to this RDS instance
-    returned: when RDS instance exists and parameter groups are defined
+instance:
+    description: the rds instance
+    returned: always
     type: complex
     contains:
-        parameter_apply_status:
-            description: the status of parameter updates
+        engine:
+            description: the name of the database engine
             returned: when RDS instance exists
-            type: str
-            sample: "in-sync"
-        parameter_group_name:
-            description: the name of the DP parameter group
-            returned: when RDS instance exists
-            type: str
-            sample: "testawsrpprodb01spfile-1ujg7nrs7sgyz"
-option_groups:
-    description: the list of option group memberships for this RDS instance
-    returned: when RDS instance exists
-    type: complex
-    contains:
-        option_group_name:
-            description: the option group name for this RDS instance
-            returned: when RDS instance exists
-            type: str
-            sample: "default:oracle-se-11-2"
-        status:
-            description: the status of the RDS instance's option group membership
-            returned: when RDS instance exists
-            type: str
-            sample: "in-sync"
-pending_modified_values:
-    description: a dictionary of changes to the RDS instance that are pending
-    returned: when RDS instance exists
-    type: complex
-    contains:
-        db_instance_class:
-            description: the new DB instance class for this RDS instance that will be applied or is in progress
-            returned: when RDS instance exists
-            type: str
-            sample: "null"
-        db_instance_identifier:
-            description: the new DB instance identifier this RDS instance that will be applied or is in progress
-            returned: when RDS instance exists
-            type: str
-            sample: "null"
-        allocated_storage:
-            description: the new allocated storage size for this RDS instance that will be applied or is in progress
-            returned: when RDS instance exists
-            type: str
-            sample: "null"
-        backup_retention_period:
-            description: the pending number of days for which automated backups are retained
-            returned: when RDS instance exists
-            type: str
-            sample: "null"
+            type: string
+            sample: "oracle-se"
         engine_version:
-            description: indicates the database engine version
+            description: the version of the database engine
             returned: when RDS instance exists
-            type: str
-            sample: "null"
-        iops:
-            description: the new provisioned IOPS value for this RDS instance that will be applied or is being applied
+            type: string
+            sample: "11.2.0.4.v6"
+        license_model:
+            description: the license model information
             returned: when RDS instance exists
-            type: str
-            sample: "null"
-        master_user_password:
-            description: the pending or in-progress change of the master credentials for this RDS instance
+            type: string
+            sample: "bring-your-own-license"
+        character_set_name:
+            description: the name of the character set that this instance is associated with
             returned: when RDS instance exists
-            type: str
-            sample: "null"
-        multi_az:
-            description: indicates that the single-AZ RDS instance is to change to a multi-AZ deployment
+            type: string
+            sample: "AL32UTF8"
+        allocated_storage:
+            description: the allocated storage size in gigabytes (GB)
             returned: when RDS instance exists
-            type: str
+            type: string
+            sample: "100"
+        publicly_accessible:
+            description: the accessibility options for the DB instance
+            returned: when RDS instance exists
+            type: boolean
+            sample: "true"
+        latest_restorable_time:
+            description: the latest time to which a database can be restored with point-in-time restore
+            returned: when RDS instance exists
+            type: string
+            sample: "1489707802.0"
+        secondary_availability_zone:
+            description: the name of the secondary AZ for a DB instance with multi-AZ support
+            returned: when RDS instance exists and is multy-AZ
+            type: string
+            sample: "eu-west-1b"
+        backup_window:
+            description: the daily time range during which automated backups are created if automated backups are enabled
+            returned: when RDS instance exists and automated backups are enabled
+            type: string
+            sample: "03:00-03:30"
+        auto_minor_version_upgrade:
+            description: indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window
+            returned: when RDS instance exists
+            type: boolean
+            sample: "true"
+        read_replica_source_dbinstance_identifier:
+            description: the identifier of the source DB instance if this RDS instance is a read replica
+            returned: when read replica RDS instance exists
+            type: string
             sample: "null"
+        db_name:
+            description: the name of the database to create when the DB instance is created
+            returned: when RDS instance exists
+            type: string
+            sample: "ASERTG"
+        endpoint:
+            description: the endpoint uri of the database instance
+            returned: when RDS instance exists
+            type: string
+            sample: "my-ansible-database.asdfaosdgih.us-east-1.rds.amazonaws.com"
         port:
-            description: specifies the pending port for this RDS instance
+            description: the listening port of the database instance
             returned: when RDS instance exists
-            type: str
-            sample: "null"
-db_subnet_groups:
-    description: information on the subnet group associated with this RDS instance
-    returned: when RDS instance exists
-    type: complex
-    contains:
-        description:
-            description: the subnet group associated with the DB instance
-            returned: when RDS instance exists
-            type: str
-            sample: "Subnets for the UAT RDS SQL DB Instance"
-        name:
-            description: the name of the DB subnet group
-            returned: when RDS instance exists
-            type: str
-            sample: "samplesubnetgrouprds-j6paiqkxqp4z"
-        status:
-            description: the status of the DB subnet group
-            returned: when RDS instance exists
-            type: str
-            sample: "complete"
-        subnets:
-            description: the description of the DB subnet group
+            type: int
+            sample: 3306
+        parameter_groups:
+            description: the list of DB parameter groups applied to this RDS instance
+            returned: when RDS instance exists and parameter groups are defined
+            type: complex
+            contains:
+                parameter_apply_status:
+                    description: the status of parameter updates
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "in-sync"
+                parameter_group_name:
+                    description: the name of the DP parameter group
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "testawsrpprodb01spfile-1ujg7nrs7sgyz"
+        option_groups:
+            description: the list of option group memberships for this RDS instance
             returned: when RDS instance exists
             type: complex
             contains:
-                availability_zone:
-                    description: subnet availability zone information
+                option_group_name:
+                    description: the option group name for this RDS instance
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "default:oracle-se-11-2"
+                status:
+                    description: the status of the RDS instance's option group membership
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "in-sync"
+        pending_modified_values:
+            description: a dictionary of changes to the RDS instance that are pending
+            returned: when RDS instance exists
+            type: complex
+            contains:
+                db_instance_class:
+                    description: the new DB instance class for this RDS instance that will be applied or is in progress
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+                db_instance_identifier:
+                    description: the new DB instance identifier this RDS instance that will be applied or is in progress
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+                allocated_storage:
+                    description: the new allocated storage size for this RDS instance that will be applied or is in progress
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+                backup_retention_period:
+                    description: the pending number of days for which automated backups are retained
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+                engine_version:
+                    description: indicates the database engine version
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+                iops:
+                    description: the new provisioned IOPS value for this RDS instance that will be applied or is being applied
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+                master_user_password:
+                    description: the pending or in-progress change of the master credentials for this RDS instance
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+                multi_az:
+                    description: indicates that the single-AZ RDS instance is to change to a multi-AZ deployment
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+                port:
+                    description: specifies the pending port for this RDS instance
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "null"
+        db_subnet_groups:
+            description: information on the subnet group associated with this RDS instance
+            returned: when RDS instance exists
+            type: complex
+            contains:
+                description:
+                    description: the subnet group associated with the DB instance
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "Subnets for the UAT RDS SQL DB Instance"
+                name:
+                    description: the name of the DB subnet group
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "samplesubnetgrouprds-j6paiqkxqp4z"
+                status:
+                    description: the status of the DB subnet group
+                    returned: when RDS instance exists
+                    type: string
+                    sample: "complete"
+                subnets:
+                    description: the description of the DB subnet group
                     returned: when RDS instance exists
                     type: complex
                     contains:
-                        name:
-                            description: avaialbility zone
+                        availability_zone:
+                            description: subnet availability zone information
                             returned: when RDS instance exists
-                            type: str
-                            sample: "eu-west-1b"
-                        provisioned_iops_capable:
-                            description: whether provisioned iops are available in AZ subnet
+                            type: complex
+                            contains:
+                                name:
+                                    description: avaialbility zone
+                                    returned: when RDS instance exists
+                                    type: string
+                                    sample: "eu-west-1b"
+                                provisioned_iops_capable:
+                                    description: whether provisioned iops are available in AZ subnet
+                                    returned: when RDS instance exists
+                                    type: boolean
+                                    sample: "false"
+                        identifier:
+                            description: the identifier of the subnet
                             returned: when RDS instance exists
-                            type: bool
-                            sample: "false"
-                identifier:
-                    description: the identifier of the subnet
-                    returned: when RDS instance exists
-                    type: str
-                    sample: "subnet-3fdba63e"
-                status:
-                    description: the status of the subnet
-                    returned: when RDS instance exists
-                    type: str
-                    sample: "active"
+                            type: string
+                            sample: "subnet-3fdba63e"
+                        status:
+                            description: the status of the subnet
+                            returned: when RDS instance exists
+                            type: string
+                            sample: "active"
 '''
 
 import time
