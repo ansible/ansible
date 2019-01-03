@@ -314,7 +314,7 @@
       - output.state.enable_ip_forwarding
       - output.state.network_security_group.name == "tn{{ rpfx }}sg"
       - "output.state.ip_configurations | length == 1"
-      - output.state.ip_configurations[0].public_ip_address == "tn{{ rpfx }}"
+      - output.state.ip_configurations[0].public_ip_address.name == "tn{{ rpfx }}"
       - output.state.enable_accelerated_networking
 
 - name: Delete the NIC (check mode)
