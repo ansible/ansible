@@ -217,11 +217,17 @@ def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_r
                                                  PrivateIpAddress=private_ip_address,
                                                  AllowReassociation=allow_reassociation)
         else:
-            response = ec2.associate_address(NetworkInterfaceId=device_id,
-                                             AllocationId=address[0].get(
-                                                 'AllocationId'),
-                                             PrivateIpAddress=private_ip_address,
-                                             AllowReassociation=allow_reassociation)
+            if private_ip_address:
+                response = ec2.associate_address(NetworkInterfaceId=device_id,
+                                                 AllocationId=address[0].get(
+                                                     'AllocationId'),
+                                                 PrivateIpAddress=private_ip_address,
+                                                 AllowReassociation=allow_reassociation)
+            else:
+                response = ec2.associate_address(NetworkInterfaceId=device_id,
+                                                 AllocationId=address[0].get(
+                                                     'AllocationId'),
+                                                 AllowReassociation=allow_reassociation)
         if not response:
             raise EIPException('association failed')
 
@@ -336,8 +342,10 @@ def find_device(ec2, module, device_id, isinstance=True):
         interfaces = ec2.describe_network_interfaces(
             NetworkInterfaceIds=[device_id])
 
-        if len(interfaces) == 1:
+        if interfaces:
+            interfaces = next(iter(interfaces.values()))
             return interfaces[0]
+
 
     raise EIPException("could not find instance " + device_id)
 
