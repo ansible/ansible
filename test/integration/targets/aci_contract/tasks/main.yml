@@ -109,7 +109,7 @@
       - '"tn-anstest.json" in query_tenant.url'
       - query_name is not changed
       - query_name.current != []
-      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_name.filter_string'
+      - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_name.filter_string|urldecode'
       - '"class/vzBrCP.json" in query_name.url'
       - query_all is not changed
       - query_all.current | length > 1

@@ -174,23 +174,23 @@
       - get_all_tenant is not changed
       - '"tn-anstest.json" in get_all_tenant.url'
       - get_all_bd is not changed
-      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in get_all_bd.filter_string'
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in get_all_bd.filter_string|urldecode'
       - '"class/fvBD.json" in get_all_bd.url'
       - get_all_tenant_bd is not changed
       - '"tn-anstest/BD-anstest.json" in get_all_tenant_bd.url'
       - get_all_tenant_bd.current.0.fvBD.children | length > 1
       - get_subnet_tenant is not changed
-      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_tenant.filter_string'
+      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_tenant.filter_string|urldecode'
       - '"tn-anstest.json" in get_subnet_tenant.url'
       - get_subnet_bd is not changed
-      - '"query-target-filter=eq(fvBD.name, \"anstest\")"'
-      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_bd.filter_string'
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")"|urldecode'
+      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_bd.filter_string|urldecode'
       - '"class/fvBD.json" in get_subnet_bd.url'
       - get_subnet is not changed
       - get_subnet.current | length == 1
       - '"tn-anstest/BD-anstest/subnet-[10.100.100.1/24].json" in get_subnet.url'
       - get_subnets_gateway is not changed
-      - '"query-target-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnets_gateway.filter_string'
+      - '"query-target-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnets_gateway.filter_string|urldecode'
       - '"class/fvSubnet.json" in get_subnets_gateway.url'
 
 - name: delete subnet - check mode works

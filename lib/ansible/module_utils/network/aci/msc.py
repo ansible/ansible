@@ -31,7 +31,7 @@
 
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule, json
-from ansible.module_utils.six.moves.urllib.parse import urljoin
+from ansible.module_utils.six.moves.urllib.parse import urlencode, urljoin
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native, to_bytes
 
@@ -79,8 +79,8 @@ def issubset(subset, superset):
 
 def update_qs(params):
     ''' Append key-value pairs to self.filter_string '''
-    accepted_params = dict((k, v) for (k, v) in params.items() if v)
-    return '?' + '&'.join(['%s=%s' % (k, v) for (k, v) in accepted_params.items()])
+    accepted_params = dict((k, v) for (k, v) in params.items() if v is not None)
+    return '?' + urlencode(accepted_params)
 
 
 def msc_argument_spec():

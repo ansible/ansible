@@ -119,7 +119,7 @@
       - query_vrf_vrf is not changed
       - query_vrf_vrf.current != []
       - query_vrf_vrf.current.0.fvCtx.attributes.name == "anstest"
-      - '"query-target-filter=eq(fvCtx.name, \"anstest\")" in query_vrf_vrf.filter_string'
+      - '"query-target-filter=eq(fvCtx.name, \"anstest\")" in query_vrf_vrf.filter_string|urldecode'
       - '"class/fvCtx.json" in query_vrf_vrf.url'
       - query_vrf is not changed
       - query_vrf.current | length == 1
