@@ -43,7 +43,7 @@ options:
   skip_validation:
     type: bool
     description:
-    - If set to "TRUE", this option bypass the DNS check on the Ontap.
+    - If set to 'true', this option bypass the DNS check on the Ontap.
     version_added: '2.8'
 '''
 
@@ -57,7 +57,7 @@ EXAMPLES = """
         vserver:  "{{vservername}}"
         domains: sales.bar.com
         nameservers: 10.193.0.250,10.192.0.250
-        skip_validation: yes
+        skip_validation: true
 """
 
 RETURN = """
