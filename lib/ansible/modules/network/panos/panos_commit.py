@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # Ansible module to manage PaloAltoNetworks Firewall
-# (c) 2016, techbizdev <techbizdev@paloaltonetworks.com>
 # (c) 2019, Tomi Raittinen <tomi.raittinen@gmail.com>
+# (c) 2016, techbizdev <techbizdev@paloaltonetworks.com>
 #
 # This file is part of Ansible
 #
@@ -184,7 +184,7 @@ def main():
 
     description = module.params["description"]
     if description:
-        cmd += "<description>{}</description>".format(description)
+        cmd += "<description>" + description + "</description>"
 
     commit_changes_by = module.params["commit_changes_by"]
     commit_vsys = module.params["commit_vsys"]
@@ -196,13 +196,13 @@ def main():
         if commit_changes_by:
             cmd += "<admin>"
             for admin in commit_changes_by:
-                cmd += "<member>{}</member>".format(admin)
+                cmd += "<member>" + admin + "</member>"
             cmd += "</admin>"
 
         if commit_vsys:
             cmd += "<vsys>"
             for vsys in commit_vsys:
-                cmd += "<member>{}</member>".format(vsys)
+                cmd += "<member>" + vsys + "</member>"
             cmd += "</vsys>"
 
         cmd += "</partial><force></force>"
@@ -229,6 +229,9 @@ def main():
         status_detail=xapi.status_detail,
         job_id=job_id
     )
+
+    if "Commit failed" in xapi.status_detail:
+        module.fail_json(msg=xapi.status_detail, panos_commit=panos_commit_details)
 
     if job_id:
         changed = True
