@@ -11,7 +11,7 @@ DOCUMENTATION = '''
     version_added: "2.8"
     short_description: get credentials from Manifold.co
     description:
-        - Retrieves resources credentials from Manifold.co
+        - Retrieves resources' credentials from Manifold.co
     options:
         _terms:
             description:
@@ -51,11 +51,8 @@ EXAMPLES = '''
 RETURN = '''
     _raw:
         description:
-            - dictionary of credentials ready to be consumed as environment variables. Resource label will be prepended
-              in upper case.
-            - Example:
-              A resource 'my-resource-1' having 'RESOURCE_TYPE_TOKEN' credentials
-              will return 'MY_RESOURCE_1_RESOURCE_TYPE_TOKEN'
+            - dictionary of credentials ready to be consumed as environment variables. If multiple resources define
+              the same environment variable(s), the last one returned by the Manifold API will take precedence.
         type: dict
 '''
 from ansible.errors import AnsibleError
@@ -64,16 +61,13 @@ from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationEr
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils import six
+from ansible.utils.display import Display
 from traceback import format_exception
 import json
 import sys
 import os
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ApiError(Exception):
@@ -101,7 +95,7 @@ class ManifoldApiClient(object):
         """
 
         default_headers = {
-            'Authorization': "Bearer {}".format(self._token),
+            'Authorization': "Bearer {0}".format(self._token),
             'Accept': "*/*"  # Otherwise server doesn't set content-type header
         }
 
@@ -113,7 +107,7 @@ class ManifoldApiClient(object):
             headers.update(arg_headers)
 
         try:
-            display.vvvv('manifold lookup connecting to {}'.format(url))
+            display.vvvv('manifold lookup connecting to {0}'.format(url))
             response = open_url(url, headers=headers, http_agent=self.http_agent, *args, **kwargs)
             data = response.read()
             if response.headers.getheader('content-type') == 'application/json':
@@ -231,7 +225,7 @@ class LookupModule(LookupBase):
             if team:
                 team_data = client.get_teams(team)
                 if len(team_data) == 0:
-                    raise AnsibleError("Team '{}' does not exist".format(team))
+                    raise AnsibleError("Team '{0}' does not exist".format(team))
                 team_id = team_data[0]['id']
             else:
                 team_id = None
@@ -239,7 +233,7 @@ class LookupModule(LookupBase):
             if project:
                 project_data = client.get_projects(project)
                 if len(project_data) == 0:
-                    raise AnsibleError("Project '{}' does not exist".format(project))
+                    raise AnsibleError("Project '{0}' does not exist".format(project))
                 project_id = project_data[0]['id']
             else:
                 project_id = None
@@ -254,7 +248,7 @@ class LookupModule(LookupBase):
             if labels and len(resources_data) < len(labels):
                 fetched_labels = [r['body']['label'] for r in resources_data]
                 not_found_labels = [label for label in labels if label not in fetched_labels]
-                raise AnsibleError("Resource(s) {} do not exist".format(', '.join(not_found_labels)))
+                raise AnsibleError("Resource(s) {0} do not exist".format(', '.join(not_found_labels)))
 
             credentials = {}
             cred_map = {}
@@ -274,7 +268,7 @@ class LookupModule(LookupBase):
             ret = [credentials]
             return ret
         except ApiError as e:
-            raise AnsibleError('API Error: {}'.format(str(e)))
+            raise AnsibleError('API Error: {0}'.format(str(e)))
         except AnsibleError as e:
             raise e
         except Exception:

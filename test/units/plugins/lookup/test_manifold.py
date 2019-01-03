@@ -194,7 +194,7 @@ def mock_fixture(open_url_mock, fixture=None, data=None, headers=None):
             headers['content-type'] = 'application/json'
 
     open_url_mock.return_value.read.return_value = data
-    open_url_mock.return_value.headers.getheader.side_effect = lambda header: headers.get(header)
+    open_url_mock.return_value.headers.getheader.side_effect = headers.get
 
 
 class TestManifoldApiClient(unittest.TestCase):
@@ -385,8 +385,8 @@ class TestLookupModule(unittest.TestCase):
                             'RESOURCE_TOKEN_4': 'token-4'
                             }]
         client_mock.return_value.get_resources.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/resources']
-        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/'\
-                                                                                 'credentials?resource_id={}'.format(x)]
+        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/'
+                                                                                      'credentials?resource_id={0}'.format(x)]
         self.assertListEqual(expected_result, self.lookup.run([], api_token='token-123'))
         client_mock.assert_called_with('token-123')
         client_mock.return_value.get_resources.assert_called_with(team_id=None, project_id=None)
@@ -397,8 +397,8 @@ class TestLookupModule(unittest.TestCase):
                             'RESOURCE_TOKEN_4': 'token-4'
                             }]
         client_mock.return_value.get_resources.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/resources?label=resource-2']
-        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/' \
-                                                                                      'credentials?resource_id={}'.format(x)]
+        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/'
+                                                                                      'credentials?resource_id={0}'.format(x)]
         self.assertListEqual(expected_result, self.lookup.run(['resource-2'], api_token='token-123'))
         client_mock.return_value.get_resources.assert_called_with(team_id=None, project_id=None, label='resource-2')
 
@@ -410,8 +410,8 @@ class TestLookupModule(unittest.TestCase):
                             'RESOURCE_TOKEN_4': 'token-4'
                             }]
         client_mock.return_value.get_resources.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/resources']
-        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/' \
-                                                                                      'credentials?resource_id={}'.format(x)]
+        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/'
+                                                                                      'credentials?resource_id={0}'.format(x)]
         self.assertListEqual(expected_result, self.lookup.run(['resource-1', 'resource-2'], api_token='token-123'))
         client_mock.assert_called_with('token-123')
         client_mock.return_value.get_resources.assert_called_with(team_id=None, project_id=None)
@@ -424,8 +424,8 @@ class TestLookupModule(unittest.TestCase):
                             }]
         client_mock.return_value.get_resources.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/resources?project_id=pid-2']
         client_mock.return_value.get_projects.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/projects?label=project-2']
-        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/' \
-                                                                                      'credentials?resource_id={}'.format(x)]
+        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/'
+                                                                                      'credentials?resource_id={0}'.format(x)]
         self.assertListEqual(expected_result, self.lookup.run([], api_token='token-123', project='project-2'))
         client_mock.assert_called_with('token-123')
         display_mock.warning.assert_has_calls([
@@ -442,8 +442,8 @@ class TestLookupModule(unittest.TestCase):
                             }]
         client_mock.return_value.get_resources.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/resources?team_id=tid-1']
         client_mock.return_value.get_teams.return_value = API_FIXTURES['https://api.identity.manifold.co/v1/teams'][0:1]
-        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/' \
-                                                                                      'credentials?resource_id={}'.format(x)]
+        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/'
+                                                                                      'credentials?resource_id={0}'.format(x)]
         self.assertListEqual(expected_result, self.lookup.run([], api_token='token-123', team='team-1'))
         client_mock.assert_called_with('token-123')
         client_mock.return_value.get_resources.assert_called_with(team_id='tid-1', project_id=None)
@@ -455,8 +455,8 @@ class TestLookupModule(unittest.TestCase):
                             }]
         client_mock.return_value.get_resources.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/resources?project_id=pid-1']
         client_mock.return_value.get_projects.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/projects'][0:1]
-        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/' \
-                                                                                      'credentials?resource_id={}'.format(x)]
+        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/'
+                                                                                      'credentials?resource_id={0}'.format(x)]
         self.assertListEqual(expected_result, self.lookup.run([], api_token='token-123', project='project-1'))
         client_mock.assert_called_with('token-123')
         client_mock.return_value.get_resources.assert_called_with(team_id=None, project_id='pid-1')
@@ -469,8 +469,8 @@ class TestLookupModule(unittest.TestCase):
         client_mock.return_value.get_resources.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/resources?team_id=tid-1&project_id=pid-1']
         client_mock.return_value.get_teams.return_value = API_FIXTURES['https://api.identity.manifold.co/v1/teams'][0:1]
         client_mock.return_value.get_projects.return_value = API_FIXTURES['https://api.marketplace.manifold.co/v1/projects'][0:1]
-        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/' \
-                                                                                      'credentials?resource_id={}'.format(x)]
+        client_mock.return_value.get_credentials.side_effect = lambda x: API_FIXTURES['https://api.marketplace.manifold.co/v1/'
+                                                                                      'credentials?resource_id={0}'.format(x)]
         self.assertListEqual(expected_result, self.lookup.run([], api_token='token-123', project='project-1'))
         client_mock.assert_called_with('token-123')
         client_mock.return_value.get_resources.assert_called_with(team_id=None, project_id='pid-1')
@@ -533,4 +533,4 @@ class TestLookupModule(unittest.TestCase):
         with self.assertRaises(AnsibleError) as context:
             self.lookup.run([])
         self.assertEqual('API token is required. Please set api_token parameter or MANIFOLD_API_TOKEN env var',
-                             str(context.exception))
+                         str(context.exception))
