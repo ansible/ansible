@@ -19,38 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
-
-from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils._text import to_text
-from ansible.module_utils.network.common.backup import write_backup, handle_template
-
-PRIVATE_KEYS_RE = re.compile('__.+__')
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
-
-        if self._task.args.get('src'):
-            try:
-                self._task.args['src'] = handle_template(self)
-            except ValueError as exc:
-                return dict(failed=True, msg=to_text(exc))
-
-        result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        if self._task.args.get('backup') and result.get('__backup__'):
-            # User requested backup and no error occurred in module.
-            # NOTE: If there is a parameter error, _backup key may not be in results.
-            filepath = write_backup(self, task_vars['inventory_hostname'], result['__backup__'])
-            result['backup_path'] = filepath
-
-        # strip out any keys that have two leading and two trailing
-        # underscore characters
-        for key in list(result.keys()):
-            if PRIVATE_KEYS_RE.match(key):
-                del result[key]
-
-        return result
+        self._config_module = True
+        return super(ActionModule, self).run(task_vars=task_vars)
