@@ -259,8 +259,6 @@
           - name: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].name }}"
             private_ip_address: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].private_ip_address }}"
             private_ip_allocation_method: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].private_ip_allocation_method }}"
-            public_ip_address: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].public_ip_address }}"
-            public_ip_allocation_method: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].public_ip_allocation_method }}"
             primary: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].primary }}"
           - name: ipconfig1
             public_ip_name: "tn{{ rpfx }}"
@@ -285,7 +283,6 @@
       - azure_rm_networkinterfaces[0].id == output.state.id
       - "azure_rm_networkinterfaces[0].ip_configurations | length == 2"
       - azure_rm_networkinterfaces[0].security_group == "tn{{ rpfx }}sg"
-      - azure_rm_networkinterfaces[0].ip_configurations[0].public_ip_address
       - azure_rm_networkinterfaces[0].enable_accelerated_networking
       - azure_rm_networkinterfaces[0].enable_ip_forwarding
 
