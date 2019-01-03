@@ -77,17 +77,17 @@ EXAMPLES = """
     - name: delete subnet
       na_ontap_net_subnet:
         state: absent
-        username={{ netapp_username }}
-        password={{ netapp_password }}
-        hostname={{ netapp_hostname }}
+        username: {{ netapp_username }}
+        password: {{ netapp_password }}
+        hostname: {{ netapp_hostname }}
         name: subnet-adm
         ipspace: Default
     - name: rename subnet
       na_ontap_net_subnet:
         state: absent
-        username={{ netapp_username }}
-        password={{ netapp_password }}
-        hostname={{ netapp_hostname }}
+        username: {{ netapp_username }}
+        password: {{ netapp_password }}
+        hostname: {{ netapp_hostname }}
         name: subnet-adm
         ipspace: Default
 """
@@ -194,7 +194,7 @@ class NetAppOntapSubnet(object):
                    'subnet': self.parameters.get('subnet')}
         subnet_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'net-subnet-create', **options)
- 
+
         if self.parameters.get('gateway'):
             subnet_create.add_new_child('gateway', self.parameters.get('gateway'))
         if self.parameters.get('ip_ranges'):
