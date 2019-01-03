@@ -490,6 +490,17 @@ class DnfModule(YumDnf):
 
         conf = base.conf
 
+        # Change the configuration file path if provided, this must be done before conf.read() is called
+        if conf_file:
+            # Fail if we can't read the configuration file.
+            if not os.access(conf_file, os.R_OK):
+                self.module.fail_json(
+                    msg="cannot read configuration file", conf_file=conf_file,
+                    results=[],
+                )
+            else:
+                conf.config_file_path = conf_file
+
         # Read the configuration file
         conf.read()
 
@@ -537,17 +548,6 @@ class DnfModule(YumDnf):
 
         if self.download_only:
             conf.downloadonly = True
-
-        # Change the configuration file path if provided
-        if conf_file:
-            # Fail if we can't read the configuration file.
-            if not os.access(conf_file, os.R_OK):
-                self.module.fail_json(
-                    msg="cannot read configuration file", conf_file=conf_file,
-                    results=[],
-                )
-            else:
-                conf.config_file_path = conf_file
 
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
