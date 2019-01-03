@@ -18,7 +18,7 @@ module: docker_stack
 author: "Dario Zanzico (@dariko)"
 short_description: docker stack module
 description:
--   Manage docker stacks using the 'docker_stack' command
+-   Manage docker stacks using the 'docker stack' command
     on the target node
     (see examples)
 version_added: "2.8"
