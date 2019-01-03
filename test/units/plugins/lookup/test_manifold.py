@@ -4,8 +4,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.tests import unittest
-from units.compat.tests.mock import patch, call
+from units.compat import unittest
+from units.compat.mock import patch, call
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import ConnectionError, SSLValidationError
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
