@@ -390,7 +390,11 @@
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     name: "{{ 'newvm_' + item|basename }}"
+    guest_id: centos64Guest
     datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
     disk:
         - size: 128mb  # index0
           type: thin
@@ -440,6 +444,7 @@
         - size: 128mb  # index16
           type: thin
           autoselect_datastore: True
+    folder: "{{ item|dirname }}"
   with_items: "{{ vmlist['json'] }}"
   register: disk_max_ctrl_d1_c1_f0_add_disk_error
   ignore_errors: True
