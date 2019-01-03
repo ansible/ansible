@@ -187,53 +187,59 @@ class EIPException(Exception):
 
 def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation, check_mode, isinstance=True):
     if address_is_associated_with_device(ec2, address, device_id, isinstance):
-        return {'changed': False}
+        changed = False
+        return changed
 
     # If we're in check mode, nothing else to do
     if not check_mode:
         if isinstance:
-            if address.domain == "vpc":
-                res = ec2.associate_address(InstanceId=device_id,
-                                            AllocationId=address.allocation_id,
+            if address[0].get('Domain') == "vpc":
+                response = ec2.associate_address(InstanceId=device_id,
+                                            AllocationId=address[0].get('AllocationId'),
                                             PrivateIpAddress=private_ip_address,
                                             AllowReassociation=allow_reassociation)
             else:
-                res = ec2.associate_address(InstanceId=device_id,
-                                            PublicIp=address.public_ip,
+                response = ec2.associate_address(InstanceId=device_id,
+                                            PublicIp=address[0].get('PublicIp'),
                                             PrivateIpAddress=private_ip_address,
                                             AllowReassociation=allow_reassociation)
         else:
-            res = ec2.associate_address(NetworkInterfaceId=device_id,
-                                        AllocationId=address.allocation_id,
+            response = ec2.associate_address(NetworkInterfaceId=device_id,
+                                        AllocationId=address[0].get('AllocationId'),
                                         PrivateIpAddress=private_ip_address,
                                         AllowReassociation=allow_reassociation)
-        if not res:
+        if not response:
             raise EIPException('association failed')
 
-    return {'changed': True}
+    changed = True
+
+    return response, changed
 
 
 def disassociate_ip_and_device(ec2, address, device_id, check_mode, isinstance=True):
     if not address_is_associated_with_device(ec2, address, device_id, isinstance):
-        return {'changed': False}
+        changed = False
+        return changed
 
     # If we're in check mode, nothing else to do
     if not check_mode:
-        if address.domain == 'vpc':
+        if address.get('Domain') == 'vpc':
             res = ec2.disassociate_address(
-                AssociationId=address.association_id)
+                AssociationId=AssociationId)
         else:
-            res = ec2.disassociate_address(PublicIp=address.public_ip)
+            res = ec2.disassociate_address(PublicIp=address.PublicIp)
 
         if not res:
             raise EIPException('disassociation failed')
 
-    return {'changed': True}
+    changed = True
+    return response, changed
 
 
 def _find_address_by_ip(ec2, public_ip):
-
-    return ec2.describe_addresses(PublicIps=[public_ip])
+    addresses = ec2.describe_addresses(PublicIps=[public_ip])
+    address = next(iter(addresses.values()))
+    return address
 
 def _find_address_by_device_id(ec2, device_id, isinstance=True):
     if isinstance:
@@ -256,12 +262,13 @@ def find_address(ec2, public_ip, device_id, isinstance=True):
 
 def address_is_associated_with_device(ec2, address, device_id, isinstance=True):
     """ Check if the elastic IP is currently associated with the device """
-    address = ec2.describe_addresses(PublicIps=[address.public_ip])
+    address = ec2.describe_addresses(PublicIps=[address[0].get('PublicIp')])
+
     if address:
         if isinstance:
-            return address and address[0].InstanceId == device_id
+            return address and address.get('InstanceId') == device_id
         else:
-            return address and address[0].NetworkInterfaceId == device_id
+            return address and address.get('NetworkInterfaceId') == device_id
     return False
 
 
@@ -301,13 +308,13 @@ def find_device(ec2, module, device_id, isinstance=True):
     """ Attempt to find the EC2 instance and return it """
 
     if isinstance:
-        reservations = ec2.describe_reserved_instances(
-            ReservedInstancesIds=[device_id])
-
-        if len(reservations) == 1:
-            instances = reservations[0].instances
-            if len(instances) == 1:
+        reservations = ec2.describe_instances(
+            InstanceIds=[device_id])
+        if reservations:
+            instances = next(iter(reservations.values()))
+            if instances:
                 return instances[0]
+
     else:
         interfaces = ec2.describe_network_interfaces(
             NetworkInterfaceIds=[device_id])
@@ -315,20 +322,20 @@ def find_device(ec2, module, device_id, isinstance=True):
         if len(interfaces) == 1:
             return interfaces[0]
 
-    raise EIPException("could not find instance" + device_id)
+    raise EIPException("could not find instance " + device_id)
 
 
 def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                    reuse_existing_ip_allowed, allow_reassociation, check_mode, isinstance=True):
-    changed = False
 
     # Return the EIP object since we've been given a public IP
     if not address:
         if check_mode:
-            return {'changed': True}
+            changed = True
+            return changed
 
-        address, changed = allocate_address(
-            ec2, domain, reuse_existing_ip_allowed)
+        address, changed = allocate_address(ec2, domain,
+                                            reuse_existing_ip_allowed)
 
     if device_id:
         # Allocate an IP for instance since no public_ip was provided
@@ -352,7 +359,8 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
 
         changed = changed or assoc_result['changed']
 
-    return {'changed': changed, 'public_ip': address.PublicIp, 'allocation_id': address.AllocationId}
+    # return {'changed': changed, 'public_ip': address.PublicIp, 'allocation_id': address.AllocationId}
+    return response, changed
 
 
 def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
@@ -404,6 +412,9 @@ def main():
     release_on_disassociation = module.params.get('release_on_disassociation')
     allow_reassociation = module.params.get('allow_reassociation')
 
+    changed = False
+    response = {}
+
     # Parameter checks
     if private_ip_address is not None and device_id is None:
         module.fail_json(
@@ -436,13 +447,8 @@ def main():
                                         reuse_existing_ip_allowed, allow_reassociation,
                                         module.check_mode, isinstance=is_instance)
             else:
-                if address:
-                    changed = False
-                else:
-                    response, changed = allocate_address(ec2, domain,
-                                                    reuse_existing_ip_allowed)
-                # result = {'changed': changed, 'public_ip': address.PublicIp,
-                #           'allocation_id': address.AllocationId}
+                response, changed = allocate_address(ec2, domain,
+                                                reuse_existing_ip_allowed)
         else:
             if device_id:
                 disassociated = ensure_absent(
