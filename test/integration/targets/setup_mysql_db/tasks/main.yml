@@ -43,9 +43,28 @@
   with_items: "{{mysql_packages}}"
   when: ansible_pkg_mgr  ==  'yum'
 
-- name: install mysqldb_test rpm dependencies
-  dnf: name={{ item }} state=latest
-  with_items: "{{mysql_packages}}"
+- block:
+  # This is required as mariadb-server has a weak dependency on Python 2 which causes the test to break on Py3 hosts
+  - name: create test dnf.conf file to ignore weak dependencies
+    copy:
+      content: |
+        [main]
+        install_weak_deps=False
+      dest: '{{ output_dir }}/dnf.conf'
+    register: test_dnf_conf_copy
+
+  - name: install mysqldb_test rpm dependencies
+    dnf:
+      name: '{{ item }}'
+      state: latest
+      conf_file: '{{ test_dnf_conf_copy.dest }}'
+    with_items: "{{mysql_packages}}"
+
+  always:
+  - name: remove test dnf.conf file
+    file:
+      path: '{{ test_dnf_conf_copy.dest }}'
+      state: absent
   when: ansible_pkg_mgr  ==  'dnf'
 
 - name: install mysqldb_test debian dependencies
