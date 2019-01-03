@@ -353,6 +353,8 @@ class DockerNetworkManager(object):
                 self.diff_result['before'], self.diff_result['after'] = self.diff_tracker.get_before_after()
             self.results['diff'] = self.diff_result
 
+        pass
+
     def get_existing_network(self):
         return self.client.get_network(name=self.parameters.network_name)
 

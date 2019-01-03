@@ -210,3 +210,17 @@
   docker_network:
     name: "{{ nname_ipam_3 }}"
     state: absent
+
+- name: List docker networks
+  shell: docker network ls
+  register: network
+
+- debug:
+    var: network.stdout
+
+- name: Run ifconfig on docker container
+  shell: docker run --rm -it --net host alpine ifconfig
+  register: output
+
+- debug:
+    var: output.stdout
