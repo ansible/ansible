@@ -6,17 +6,19 @@ from collections import namedtuple
 import rpmfluff
 
 
-RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch'])
+RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch', 'recommends'])
 
 
 SPECS = [
-    RPM('foo', '1.0', '1', None),
-    RPM('foo', '1.0', '2', '1'),
-    RPM('foo', '1.1', '1', '1'),
-    RPM('foo-bar', '1.0', '1', None),
-    RPM('foo-bar', '1.1', '1', None),
-    RPM('bar', '1.0', '1', None),
-    RPM('bar', '1.1', '1', None),
+    RPM('foo', '1.0', '1', None, None),
+    RPM('foo', '1.0', '2', '1', None),
+    RPM('foo', '1.1', '1', '1', None),
+    RPM('foo-bar', '1.0', '1', None, None),
+    RPM('foo-bar', '1.1', '1', None, None),
+    RPM('bar', '1.0', '1', None, None),
+    RPM('bar', '1.1', '1', None, None),
+    RPM('foo-with-weak-dep', '1.0', '1', None, ['foo-weak-dep']),
+    RPM('foo-weak-dep', '1.0', '1', None, None),
 ]
 
 
@@ -30,6 +32,11 @@ def main():
     for spec in SPECS:
         pkg = rpmfluff.SimpleRpmBuild(spec.name, spec.version, spec.release, [arch])
         pkg.epoch = spec.epoch
+
+        if spec.recommends:
+            for recommend in spec.recommends:
+                pkg.add_recommends(recommend)
+
         pkgs.append(pkg)
 
     repo = rpmfluff.YumRepoBuild(pkgs)
