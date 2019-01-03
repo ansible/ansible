@@ -23,11 +23,13 @@ description:
 options:
   path:
     description: The full registry key path including the hive to search for.
+    type: str
     required: yes
     aliases: [ key ]
   name:
     description:
     - The registry property name to get information for, the return json will not include the sub_keys and properties entries for the I(key) specified.
+    type: str
     aliases: [ entry, value, property ]
 seealso:
 - module: win_regedit
@@ -54,12 +56,12 @@ changed:
   description: Whether anything was changed.
   returned: always
   type: bool
-  sample: True
+  sample: true
 exists:
   description: States whether the registry key/property exists.
   returned: success and path/property exists
   type: bool
-  sample: True
+  sample: true
 properties:
   description: A dictionary containing all the properties and their values in the registry key.
   returned: success, path exists and property not specified

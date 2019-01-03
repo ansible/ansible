@@ -13,6 +13,7 @@ module: win_reboot
 short_description: Reboot a windows machine
 description:
 - Reboot a Windows machine, wait for it to go down, come back up, and respond to commands.
+- For non-Windows targets, use the M(reboot) module instead.
 version_added: '2.1'
 options:
   pre_reboot_delay:
@@ -64,7 +65,6 @@ notes:
 - If a shutdown was already scheduled on the system, C(win_reboot) will abort the scheduled shutdown and enforce its own shutdown.
 - Beware that when C(win_reboot) returns, the Windows system may not have settled yet and some base services could be in limbo.
   This can result in unexpected behavior. Check the examples for ways to mitigate this.
-- For non-Windows targets, use the M(reboot) module instead.
 seealso:
 - module: reboot
 author:
@@ -109,7 +109,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 rebooted:
-  description: true if the machine was rebooted
+  description: True if the machine was rebooted.
   returned: always
   type: bool
   sample: true

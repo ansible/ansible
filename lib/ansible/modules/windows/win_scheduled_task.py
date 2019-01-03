@@ -20,6 +20,7 @@ options:
   name:
     description:
     - The name of the scheduled task without the path.
+    type: str
     required: yes
   path:
     description:
@@ -28,11 +29,13 @@ options:
       already exist.
     - Will remove the folder when C(state=absent) and there are no tasks left
       in the folder.
+    type: str
     default: \
   state:
     description:
     - When C(state=present) will ensure the task exists.
     - When C(state=absent) will ensure the task does not exist.
+    type: str
     choices: [ absent, present ]
     default: present
 
@@ -52,13 +55,16 @@ options:
       path:
         description:
         - The path to the executable for the ExecAction.
+        type: str
         required: yes
       arguments:
         description:
         - An argument string to supply for the executable.
+        type: str
       working_directory:
         description:
         - The working directory to run the executable from.
+        type: str
     version_added: '2.5'
 
   # Trigger options
@@ -78,6 +84,7 @@ options:
         description:
         - The trigger type, this value controls what below options are
           required.
+        type: str
         required: yes
         choices: [ boot, daily, event, idle, logon, monthlydow, monthly, registration, time, weekly, session_state_change ]
       enabled:
@@ -96,15 +103,18 @@ options:
           C(time), C(weekly), (session_state_change).
         - Optional for the rest of the trigger types.
         - This is in ISO 8601 DateTime format C(YYYY-MM-DDThh:mm:ss).
+        type: str
       end_boundary:
         description:
         - The end time for when the trigger is deactivated.
         - This is in ISO 8601 DateTime format C(YYYY-MM-DDThh:mm:ss).
+        type: str
       execution_time_limit:
         description:
         - The maximum amount of time that the task is allowed to run for.
         - Optional for all the trigger types.
         - Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        type: str
       delay:
         description:
         - The time to delay the task from running once the trigger has been
@@ -112,6 +122,7 @@ options:
         - Optional when C(type) is C(boot), C(event), C(logon),
           C(registration), C(session_state_change).
         - Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        type: str
       random_delay:
         description:
         - The delay time that is randomly added to the start time of the
@@ -119,11 +130,13 @@ options:
         - Optional when C(type) is C(daily), C(monthlydow), C(monthly),
           C(time), C(weekly).
         - Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        type: str
       subscription:
         description:
         - Only used and is required for C(type=event).
         - The XML query string that identifies the event that fires the
           trigger.
+        type: str
       user_id:
         description:
         - The username that the trigger will target.
@@ -132,6 +145,7 @@ options:
         - When C(type=logon) and you want the trigger to fire when a user in a
           group logs on, leave this as null and set C(group) to the group you
           wish to trigger.
+        type: str
       days_of_week:
         description:
         - The days of the week for the trigger.
@@ -139,6 +153,7 @@ options:
           instead of mon.
         - Required when C(type) is C(weekly), C(type=session_state_change).
         - Optional when C(type=monthlydow).
+        type: str
       days_of_month:
         description:
         - The days of the month from 1 to 31 for the triggers.
@@ -146,18 +161,21 @@ options:
           use C(run_on_last_day_of_month).
         - Can be a list or comma separated string of day numbers.
         - Required when C(type=monthly).
+        type: str
       weeks_of_month:
         description:
         - The weeks of the month for the trigger.
         - Can be a list or comma separated string of the numbers 1 to 4
           representing the first to 4th week of the month.
         - Optional when C(type=monthlydow).
+        type: str
       months_of_year:
         description:
         - The months of the year for the trigger.
         - Can be a list or comma separated string of full month names e.g.
           march instead of mar.
         - Optional when C(type) is C(monthlydow), C(monthly).
+        type: str
       run_on_last_week_of_month:
         description:
         - Boolean value that sets whether the task runs on the last week of the
@@ -175,6 +193,7 @@ options:
         - The interval of weeks to run on, e.g. C(1) means every week while
           C(2) means every other week.
         - Optional when C(type=weekly).
+        type: int
       repetition:
         description:
         - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated
@@ -202,6 +221,7 @@ options:
   display_name:
     description:
     - The name of the user/group that is displayed in the Task Scheduler UI.
+    type: str
     version_added: '2.5'
   group:
     description:
@@ -209,6 +229,7 @@ options:
     - C(group) and C(username) are exclusive to each other and cannot be set
       at the same time.
     - C(logon_type) can either be not set or equal C(group).
+    type: str
     version_added: '2.5'
   logon_type:
     description:
@@ -223,20 +244,23 @@ options:
     - C(group) means that the task will run as a group.
     - C(service_account) means that a service account like System, Local
       Service or Network Service will run the task.
+    type: str
     choices: [ none, password, s4u, interactive_token, group, service_account, token_or_password ]
     version_added: '2.5'
   run_level:
     description:
     - The level of user rights used to run the task.
     - If not specified the task will be created with limited rights.
+    type: str
     choices: [ limited, highest ]
-    version_added: '2.4'
     aliases: [ runlevel ]
+    version_added: '2.4'
   username:
     description:
     - The user to run the scheduled task as.
     - Will default to the current user under an interactive token if not
       specified during creation.
+    type: str
     aliases: [ user ]
   password:
     description:
@@ -245,35 +269,41 @@ options:
       excluding the builtin service accounts.
     - If set, will always result in a change unless C(update_password) is set
       to C(no) and no othr changes are required for the service.
+    type: str
     version_added: '2.4'
   update_password:
     description:
     - Whether to update the password even when not other changes have occured.
     - When C(yes) will always result in a change when executing the module.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.5'
 
   # RegistrationInfo options
   author:
     description:
     - The author of the task.
+    type: str
     version_added: '2.5'
   date:
     description:
     - The date when the task was registered.
+    type: str
     version_added: '2.5'
   description:
     description:
     - The description of the task.
+    type: str
     version_added: '2.5'
   source:
     description:
     - The source of the task.
+    type: str
     version_added: '2.5'
   version:
     description:
     - The version number of the task.
+    type: str
     version_added: '2.5'
 
   # Settings options
@@ -305,6 +335,7 @@ options:
     - A task expires after the end_boundary has been exceeded for all triggers
       associated with the task.
     - This is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+    type: str
     version_added: '2.5'
   disallow_start_if_on_batteries:
     description:
@@ -322,6 +353,7 @@ options:
     - The amount of time allowed to complete the task.
     - When not set, the time limit is infinite.
     - This is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+    type: str
     version_added: '2.5'
   hidden:
     description:
@@ -362,6 +394,7 @@ options:
     - The maximum allowed time is 31 days.
     - The minimum allowed time is 1 minute.
     - This is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+    type: str
     version_added: '2.5'
   run_only_if_idle:
     description:
@@ -393,7 +426,7 @@ options:
     version_added: '2.5'
 notes:
 - In Ansible 2.4 and earlier, this could only be run on Server 2012/Windows 8
-  or newer. Since 2.5 this restriction has been lifted.
+  or newer. Since Ansible 2.5 this restriction has been lifted.
 - The option names and structure for actions and triggers of a service follow
   the C(RegisteredTask) naming standard and requirements, it would be useful to
   read up on this guide if coming across any issues U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa382542.aspx).
@@ -405,7 +438,7 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: create a task to open 2 command prompts as SYSTEM
+- name: Create a task to open 2 command prompts as SYSTEM
   win_scheduled_task:
     name: TaskName
     description: open command prompt
@@ -421,7 +454,7 @@ EXAMPLES = r'''
     state: present
     enabled: yes
 
-- name: create task to run a PS script as NETWORK service on boot
+- name: Create task to run a PS script as NETWORK service on boot
   win_scheduled_task:
     name: TaskName2
     description: Run a PowerShell script
@@ -434,20 +467,20 @@ EXAMPLES = r'''
     run_level: highest
     state: present
 
-- name: change above task to run under a domain user account, storing the passwords
+- name: Change above task to run under a domain user account, storing the passwords
   win_scheduled_task:
     name: TaskName2
     username: DOMAIN\User
     password: Password
     logon_type: password
 
-- name: change the above task again, choosing not to store the password
+- name: Change the above task again, choosing not to store the password
   win_scheduled_task:
     name: TaskName2
     username: DOMAIN\User
     logon_type: s4u
 
-- name: create task with multiple triggers
+- name: Create task with multiple triggers
   win_scheduled_task:
     name: TriggerTask
     path: \Custom
@@ -458,7 +491,7 @@ EXAMPLES = r'''
     - type: monthlydow
     username: SYSTEM
 
-- name: set logon type to password but don't force update the password
+- name: Set logon type to password but don't force update the password
   win_scheduled_task:
     name: TriggerTask
     path: \Custom
@@ -468,12 +501,12 @@ EXAMPLES = r'''
     password: password
     update_password: no
 
-- name: disable a task that already exists
+- name: Disable a task that already exists
   win_scheduled_task:
     name: TaskToDisable
     enabled: no
 
-- name: create a task that will be repeated every minute for five minutes
+- name: Create a task that will be repeated every minute for five minutes
   win_scheduled_task:
     name: RepeatedTask
     description: open command prompt

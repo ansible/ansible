@@ -14,22 +14,23 @@ module: win_owner
 version_added: "2.1"
 short_description: Set owner
 description:
-    - Set owner of files or directories
+    - Set owner of files or directories.
 options:
   path:
     description:
-      - Path to be used for changing owner
-    required: yes
+      - Path to be used for changing owner.
     type: path
+    required: yes
   user:
     description:
-      - Name to be used for changing owner
+      - Name to be used for changing owner.
+    type: str
     required: yes
   recurse:
     description:
-      - Indicates if the owner should be changed recursively
+      - Indicates if the owner should be changed recursively.
     type: bool
-    default: 'no'
+    default: no
 seealso:
 - module: win_file
 author:
@@ -37,7 +38,7 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Change owner of Path
+- name: Change owner of path
   win_owner:
     path: C:\apache
     user: apache

@@ -20,35 +20,43 @@ options:
   name:
     description:
       - Names of web site.
+    type: str
     required: yes
     aliases: [ website ]
   state:
     description:
       - State of the binding.
+    type: str
     choices: [ absent, present ]
     default: present
   port:
     description:
       - The port to bind to / use for the new site.
+    type: str
     default: 80
   ip:
     description:
       - The IP address to bind to / use for the new site.
+    type: str
     default: '*'
   host_header:
     description:
       - The host header to bind to / use for the new site.
       - If you are creating/removing a catch-all binding, omit this parameter rather than defining it as '*'.
+    type: str
   protocol:
     description:
       - The protocol to be used for the Web binding (usually HTTP, HTTPS, or FTP).
+    type: str
     default: http
   certificate_hash:
     description:
       - Certificate hash (thumbprint) for the SSL binding. The certificate hash is the unique identifier for the certificate.
+    type: str
   certificate_store_name:
     description:
       - Name of the certificate store where the certificate for the binding is located.
+    type: str
     default: my
   ssl_flags:
     description:
@@ -56,6 +64,7 @@ options:
       - Primarily used for enabling and disabling server name indication (SNI).
       - Set to c(0) to disable SNI.
       - Set to c(1) to enable SNI.
+    type: str
     version_added: "2.5"
 seealso:
 - module: win_iis_virtualdirectory

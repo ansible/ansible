@@ -11,7 +11,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_mapped_drive
@@ -24,6 +23,7 @@ options:
     description:
     - The letter of the network path to map to.
     - This letter must not already be in use with Windows.
+    type: str
     required: yes
   password:
     description:
@@ -31,6 +31,7 @@ options:
       connection.
     - This is never saved with a mapped drive, use the M(win_credential) module
       to persist a username and password for a host.
+    type: str
   path:
     description:
     - The UNC path to map the drive to.
@@ -44,6 +45,7 @@ options:
     description:
     - If C(present) will ensure the mapped drive exists.
     - If C(absent) will ensure the mapped drive does not exist.
+    type: str
     choices: [ absent, present ]
     default: present
   username:
@@ -55,6 +57,7 @@ options:
       custom credentials and become, or CredSSP cannot be used.
     - If become or CredSSP is used, any credentials saved with
       M(win_credential) will automatically be used instead.
+    type: str
 notes:
 - You cannot use this module to access a mapped drive in another Ansible task,
   drives mapped with this module are only accessible when logging in

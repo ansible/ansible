@@ -28,16 +28,19 @@ options:
       'File System'
     - If wanting to edit the C(Privilege Rights) section, use the
       M(win_user_right) module instead.
+    type: str
     required: yes
   key:
     description:
     - The ini key of the section or policy name to modify.
     - The module will return an error if this key is invalid.
+    type: str
     required: yes
   value:
     description:
     - The value for the ini key or policy name.
     - If the key takes in a boolean value then 0 = False and 1 = True.
+    type: str
     required: yes
 notes:
 - This module uses the SecEdit.exe tool to configure the values, more details
@@ -56,25 +59,25 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: change the guest account name
+- name: Change the guest account name
   win_security_policy:
     section: System Access
     key: NewGuestName
     value: Guest Account
 
-- name: set the maximum password age
+- name: Set the maximum password age
   win_security_policy:
     section: System Access
     key: MaximumPasswordAge
     value: 15
 
-- name: do not store passwords using reversible encryption
+- name: Do not store passwords using reversible encryption
   win_security_policy:
     section: System Access
     key: ClearTextPassword
     value: 0
 
-- name: enable system events
+- name: Enable system events
   win_security_policy:
     section: Event Audit
     key: AuditSystemEvents

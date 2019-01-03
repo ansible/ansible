@@ -21,24 +21,25 @@ options:
     description:
     - Makes the source visible to Administrators only.
     - Requires Chocolatey >= 0.10.8.
-    - When creating a new source, this defaults to C(False).
+    - When creating a new source, this defaults to C(no).
     type: bool
   allow_self_service:
     description:
     - Allow the source to be used with self-service
     - Requires Chocolatey >= 0.10.4.
-    - When creating a new source, this defaults to C(False).
+    - When creating a new source, this defaults to C(no).
     type: bool
   bypass_proxy:
     description:
     - Bypass the proxy when using this source.
     - Requires Chocolatey >= 0.10.4.
-    - When creating a new source, this defaults to C(False).
+    - When creating a new source, this defaults to C(no).
     type: bool
   certificate:
     description:
     - The path to a .pfx file to use for X509 authenticated feeds.
     - Requires Chocolatey >= 0.9.10.
+    type: str
   certificate_password:
     description:
     - The password for I(certificate) if required.
@@ -97,18 +98,18 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: remove the default public source
+- name: Remove the default public source
   win_chocolatey_source:
     name: chocolatey
     state: absent
 
-- name: add new internal source
+- name: Add new internal source
   win_chocolatey_source:
     name: internal repo
     state: present
     source: http://chocolatey-server/chocolatey
 
-- name: create HTTP source with credentials
+- name: Create HTTP source with credentials
   win_chocolatey_source:
     name: internal repo
     state: present
@@ -116,9 +117,9 @@ EXAMPLES = r'''
     source_username: username
     source_password: password
 
-- name: disable Chocolatey source
+- name: Disable Chocolatey source
   win_chocolatey_source:
-    name: chocoaltey
+    name: chocolatey
     state: disabled
 '''
 

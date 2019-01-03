@@ -39,10 +39,9 @@ options:
   name:
     description:
       - Name of the application pool.
+    type: str
     required: yes
   state:
-    choices: [ absent, present, restarted, started, stopped ]
-    default: present
     description:
       - The state of the application pool.
       - If C(absent) will ensure the app pool is removed.
@@ -51,6 +50,9 @@ options:
         is never idempotent.
       - If C(started) will ensure the app pool exists and is started.
       - If C(stopped) will ensure the app pool exists and is stopped.
+    type: str
+    choices: [ absent, present, restarted, started, stopped ]
+    default: present
 seealso:
 - module: win_iis_virtualdirectory
 - module: win_iis_webapplication
@@ -62,34 +64,34 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: return information about an existing application pool
+- name: Return information about an existing application pool
   win_iis_webapppool:
     name: DefaultAppPool
     state: present
 
-- name: create a new application pool in 'Started' state
+- name: Create a new application pool in 'Started' state
   win_iis_webapppool:
     name: AppPool
     state: started
 
-- name: stop an application pool
+- name: Stop an application pool
   win_iis_webapppool:
     name: AppPool
     state: stopped
 
-- name: restart an application pool (non-idempotent)
+- name: Restart an application pool (non-idempotent)
   win_iis_webapppool:
     name: AppPool
     state: restart
 
-- name: change application pool attributes using new dict style
+- name: Change application pool attributes using new dict style
   win_iis_webapppool:
     name: AppPool
     attributes:
       managedRuntimeVersion: v4.0
       autoStart: no
 
-- name: creates an application pool, sets attributes and starts it
+- name: Creates an application pool, sets attributes and starts it
   win_iis_webapppool:
     name: AnotherAppPool
     state: started
@@ -99,7 +101,7 @@ EXAMPLES = r'''
 
 # In the below example we are setting attributes in child element processModel
 # https://www.iis.net/configreference/system.applicationhost/applicationpools/add/processmodel
-- name: manage child element and set identity of application pool
+- name: Manage child element and set identity of application pool
   win_iis_webapppool:
     name: IdentitiyAppPool
     state: started
@@ -108,9 +110,9 @@ EXAMPLES = r'''
       processModel.identityType: SpecificUser
       processModel.userName: '{{ansible_user}}'
       processModel.password: '{{ansible_password}}'
-      processModel.loadUserProfile: True
+      processModel.loadUserProfile: true
 
-- name: manage a timespan attribute
+- name: Manage a timespan attribute
   win_iis_webapppool:
     name: TimespanAppPool
     state: started

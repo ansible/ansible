@@ -15,14 +15,17 @@ version_added: '2.4'
 short_description: Send a magic Wake-on-LAN (WoL) broadcast packet
 description:
 - The C(win_wakeonlan) module sends magic Wake-on-LAN (WoL) broadcast packets.
+- For non-Windows targets, use the M(wakeonlan) module instead.
 options:
   mac:
     description:
     - MAC address to send Wake-on-LAN broadcast packet for.
+    type: str
     required: yes
   broadcast:
     description:
     - Network broadcast address to use for broadcasting magic Wake-on-LAN packet.
+    type: str
     default: 255.255.255.255
   port:
     description:

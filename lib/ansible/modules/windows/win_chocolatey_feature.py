@@ -21,14 +21,14 @@ options:
     - The name of the feature to manage.
     - Run C(choco.exe feature list) to get a list of features that can be
       managed.
+    type: str
     required: yes
   state:
     description:
     - When C(disabled) then the feature will be disabled.
     - When C(enabled) then the feature will be enabled.
-    choices:
-    - disabled
-    - enabled
+    type: str
+    choices: [ disabled, enabled ]
     default: enabled
 seealso:
 - module: win_chocolatey
@@ -40,12 +40,12 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: disable file checksum matching
+- name: Disable file checksum matching
   win_chocolatey_feature:
     name: checksumFiles
     state: disabled
 
-- name: stop Chocolatey on the first package failure
+- name: Stop Chocolatey on the first package failure
   win_chocolatey_feature:
     name: stopOnFirstPackageFailure
     state: enabled
