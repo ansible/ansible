@@ -1954,11 +1954,11 @@ class PyVmomiHelper(PyVmomi):
         for expected_disk_spec in self.params.get('disk'):
             disk_modified = False
             # If we are manipulating and existing objects which has disks and disk_index is in disks
-            if vm_obj is not None and disks is not None and disk_index < len(disks): #(len(disks) if len(disks) < 7 else len(disks) + 1):
+            if vm_obj is not None and disks is not None and disk_index < (len(disks) if len(disks) < 7 else len(disks) + 1):
                 diskspec = vim.vm.device.VirtualDeviceSpec()
                 # set the operation to edit so that it knows to keep other settings
                 diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                diskspec.device = disks[disk_index] # if disk_index < 7 else disks[disk_index - 1]
+                diskspec.device = disks[disk_index] if disk_index < 7 else disks[disk_index - 1]
             else:
                 diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
