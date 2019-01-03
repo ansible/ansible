@@ -409,20 +409,15 @@
        - output.changed
        - output.state
 
- - name: Delete managed disk
+ - name: Delete all managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}2"
+       name: "md{{ rpfx }}{{ item }}"
+       managed_by: ''
        state: absent
-   check_mode: no
-
- - name: Delete copied managed disk
-   azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       state: absent
-   check_mode: no
+   with_items:
+       - 1
+       - 2
 
  - name: Delete virtual machine
    azure_rm_virtualmachine:
