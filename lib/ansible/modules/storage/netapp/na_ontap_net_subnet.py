@@ -51,7 +51,7 @@ options:
     - Specify the ipspace for the subnet. 
     - The default value for this parameter is the default IPspace, named 'Default'.
     
-  ip_range:
+  ip_ranges:
     description:
     - Specify the list of IP address ranges associated with the subnet.
 
@@ -73,7 +73,7 @@ EXAMPLES = """
         ip_range: [ '10.10.10.30-10.10.10.40', '10.10.10.51' ]
         gateway: 10.10.10.254
         ipspace: Default
-		broadcast_domain: Default
+        broadcast_domain: Default
     - name: delete subnet
       na_ontap_net_subnet:
         state: absent
@@ -152,7 +152,7 @@ class NetAppOntapSubnet(object):
 
         subnet_iter = netapp_utils.zapi.NaElement('net-subnet-get-iter')
         subnet_info = netapp_utils.zapi.NaElement('net-subnet-info')
-        subnet_info.add_new_child( 'subnet-name', name)
+        subnet_info.add_new_child('subnet-name', name)
 
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(subnet_info)
@@ -194,14 +194,14 @@ class NetAppOntapSubnet(object):
                    'subnet': self.parameters.get('subnet')}
         subnet_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'net-subnet-create', **options)
-        
+ 
         if self.parameters.get('gateway'):
             subnet_create.add_new_child('gateway', self.parameters.get('gateway'))
         if self.parameters.get('ip_ranges'):
-            subnet_ips =  netapp_utils.zapi.NaElement('ip-ranges')
+            subnet_ips = netapp_utils.zapi.NaElement('ip-ranges')
             subnet_create.add_child_elem(subnet_ips)
             for ip_range in self.parameters.get('ip_ranges'):
-                subnet_ips.add_new_child( 'ip-range', ip_range)
+                subnet_ips.add_new_child('ip-range', ip_range)
         if self.parameters.get('ipspace'):
             subnet_create.add_new_child('ipspace', self.parameters.get('ipspace'))
 
@@ -217,7 +217,7 @@ class NetAppOntapSubnet(object):
         """
         subnet_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'net-subnet-destroy', **{'subnet-name': self.parameters.get('name')})
-        
+
         try:
             self.server.invoke_successfully(subnet_delete, True)
         except netapp_utils.zapi.NaApiError as error:
@@ -236,15 +236,15 @@ class NetAppOntapSubnet(object):
         if self.parameters.get('gateway'):
             subnet_modify.add_new_child('gateway', self.parameters.get('gateway'))
         if self.parameters.get('ip_ranges'):
-            subnet_ips =  netapp_utils.zapi.NaElement('ip-ranges')
+            subnet_ips = netapp_utils.zapi.NaElement('ip-ranges')
             subnet_modify.add_child_elem(subnet_ips)
             for ip_range in self.parameters.get('ip_ranges'):
-                subnet_ips.add_new_child( 'ip-range', ip_range)
+                subnet_ips.add_new_child('ip-range', ip_range)
         if self.parameters.get('ipspace'):
             subnet_modify.add_new_child('ipspace', self.parameters.get('ipspace'))
         if self.parameters.get('subnet'):
             subnet_modify.add_new_child('subnet', self.parameters.get('subnet'))
-            
+
         try:
             self.server.invoke_successfully(subnet_modify, True)
         except netapp_utils.zapi.NaApiError as error:
@@ -296,7 +296,7 @@ class NetAppOntapSubnet(object):
                     self.rename_subnet()
                 # If rename is True, cd_action is NOne but modify could be true
                 if cd_action == 'create':
-                    for attribute in [ 'subnet', 'broadcast_domain' ]:
+                    for attribute in ['subnet', 'broadcast_domain']:
                         if not self.parameters.get(attribute):
                             self.module.fail_json(msg='Error - missing required arguments: %s.' % attribute)
                     self.create_subnet()
