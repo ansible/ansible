@@ -27,25 +27,25 @@ options:
   src:
     description:
       - File to be unzipped (provide absolute path).
-    required: yes
     type: path
+    required: yes
   dest:
     description:
       - Destination of zip file (provide absolute path of directory). If it does not exist, the directory will be created.
-    required: yes
     type: path
+    required: yes
   delete_archive:
     description:
       - Remove the zip file, after unzipping.
     type: bool
-    default: 'no'
+    default: no
     aliases: [ rm ]
   recurse:
     description:
       - Recursively expand zipped files within the src file.
       - Setting to a value of C(yes) requires the PSCX module to be installed.
     type: bool
-    default: 'no'
+    default: no
   creates:
     description:
       - If this file or directory exists the specified src will not be extracted.
@@ -55,7 +55,6 @@ notes:
 - For extracting any compression types other than .zip, the PowerShellCommunityExtensions (PSCX) Module is required.  This module (in conjunction with PSCX)
   has the ability to recursively unzip files within the src zip file provided and also functionality for many other compression types. If the destination
   directory does not exist, it will be created before unzipping the file.  Specifying rm parameter will force removal of the src file after extraction.
-- For non-Windows targets, use the M(unarchive) module instead.
 seealso:
 - module: unarchive
 author:
@@ -64,7 +63,7 @@ author:
 
 EXAMPLES = r'''
 # This unzips a library that was downloaded with win_get_url, and removes the file after extraction
-# $ ansible -i hosts -m win_unzip -a "src=C:\LibraryToUnzip.zip dest=C:\Lib remove=true" all
+# $ ansible -i hosts -m win_unzip -a "src=C:\LibraryToUnzip.zip dest=C:\Lib remove=yes" all
 
 - name: Unzip a bz2 (BZip) file
   win_unzip:
@@ -105,7 +104,7 @@ removed:
     description: Whether the module did remove any files during task run
     returned: always
     type: bool
-    sample: True
+    sample: true
 src:
     description: The provided source path
     returned: always

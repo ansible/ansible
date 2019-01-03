@@ -24,28 +24,31 @@ options:
   src:
     description:
     - Source file/directory to sync.
-    required: yes
     type: path
+    required: yes
   dest:
     description:
     - Destination file/directory to sync (Will receive contents of src).
-    required: yes
     type: path
+    required: yes
   recurse:
     description:
     - Includes all subdirectories (Toggles the C(/e) flag to RoboCopy).
     - If C(flags) is set, this will be ignored.
     type: bool
-    default: 'no'
+    default: no
   purge:
     description:
     - Deletes any files/directories found in the destination that do not exist in the source.
-    - Toggles the C(/purge) flag to RoboCopy. If C(flags) is set, this will be ignored.
+    - Toggles the C(/purge) flag to RoboCopy.
+    - If C(flags) is set, this will be ignored.
     type: bool
-    default: 'no'
+    default: no
   flags:
     description:
-      - Directly supply Robocopy flags. If set, C(purge) and C(recurse) will be ignored.
+      - Directly supply Robocopy flags.
+      - If set, C(purge) and C(recurse) will be ignored.
+    type: str
 notes:
 - This is not a complete port of the M(synchronize) module. Unlike the M(synchronize) module this only performs the sync/copy on the remote machine,
   not from the master to the remote machine.
@@ -97,7 +100,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 cmd:
-    description: The used command line
+    description: The used command line.
     returned: always
     type: str
     sample: robocopy C:\DirectoryOne C:\DirectoryTwo /e /purge
@@ -115,12 +118,12 @@ recurse:
     description: Whether or not the recurse flag was toggled.
     returned: always
     type: bool
-    sample: False
+    sample: false
 purge:
     description: Whether or not the purge flag was toggled.
     returned: always
     type: bool
-    sample: False
+    sample: false
 flags:
     description: Any flags passed in by the user.
     returned: always
