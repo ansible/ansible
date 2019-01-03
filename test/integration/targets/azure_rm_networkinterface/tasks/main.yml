@@ -216,7 +216,7 @@
       name: "tn{{ rpfx }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
-      enable_accelerated_networking: False
+      enable_accelerated_networking: True
       enable_ip_forwarding: True
       security_group: "tn{{ rpfx }}sg"
       dns_servers:
@@ -249,7 +249,7 @@
       name: "tn{{ rpfx }}"
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
-      enable_accelerated_networking: False
+      enable_accelerated_networking: True
       security_group: "tn{{ rpfx }}sg"
       enable_ip_forwarding: True
       dns_servers:
@@ -296,7 +296,7 @@
       virtual_network: "{{ vn.state.id }}"
       subnet: "tn{{ rpfx }}"
       security_group: "tn{{ rpfx }}sg"
-      enable_accelerated_networking: False
+      enable_accelerated_networking: True
       enable_ip_forwarding: True
       dns_servers:
         - 8.9.10.11
