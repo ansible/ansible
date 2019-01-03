@@ -55,11 +55,6 @@ options:
             - create, update or remove a key
         choices: ['present', 'absent']
         default: present
-    check_mode:
-        description:
-            - activate check mode
-        choices: ['yes', 'no']
-        default: no
 '''
 
 EXAMPLES = '''
@@ -73,7 +68,6 @@ EXAMPLES = '''
     url: "http://127.0.0.1:4440"
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "present"
-    check_mode: no
 
 - name: Create a rundeck public key
   rundeck_key_storage:
@@ -84,7 +78,6 @@ EXAMPLES = '''
     url: "http://127.0.0.1:4440"
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "present"
-    check_mode: no
 
 - name: Create a rundeck password
   rundeck_key_storage:
@@ -95,7 +88,6 @@ EXAMPLES = '''
     url: "http://127.0.0.1:4440"
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "present"
-    check_mode: no
 
 - name: delete a rundeck private key
   rundeck_key_storage:
@@ -106,7 +98,6 @@ EXAMPLES = '''
     url: "http://127.0.0.1:4440"
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "absent"
-    check_mode: no
 
 - name: delete a rundeck password
   rundeck_key_storage:
@@ -117,7 +108,6 @@ EXAMPLES = '''
     url: "http://127.0.0.1:4440"
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "absent"
-    check_mode: no
 
 - name: delete a rundeck public key
   rundeck_key_storage:
@@ -128,7 +118,6 @@ EXAMPLES = '''
     url: "http://127.0.0.1:4440"
     token: "uN7Z2VmnhNc4ANKCHYoKMxicsZWx3AZj"
     state: "absent"
-    check_mode: no
 
 '''
 
@@ -274,14 +263,10 @@ def main():
             url=dict(required=True, type='str'),
             api_version=dict(type='int', default=14),
             token=dict(required=True, type='str', no_log=True),
-            state=dict(type='str', choices=['present', 'absent'], default='present'),
-            check_mode=dict(type='str', choices=['yes', 'no'], default='no')
+            state=dict(type='str', choices=['present', 'absent'], default='present')
         ),
         supports_check_mode=True
     )
-
-    if module.params["check_mode"] == 'yes':
-        module.check_mode = True
 
     if module.params["api_version"] < 14:
         module.fail_json(msg="API version should be at least 14")
