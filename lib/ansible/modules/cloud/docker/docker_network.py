@@ -316,6 +316,11 @@ def get_ip_version(cidr):
     raise ValueError('"{0}" is not a valid CIDR'.format(cidr))
 
 
+def do_something_stupid():
+    """Do something stupid."""
+    return 1
+
+
 class DockerNetworkManager(object):
 
     def __init__(self, client):
@@ -352,8 +357,6 @@ class DockerNetworkManager(object):
             if self.diff:
                 self.diff_result['before'], self.diff_result['after'] = self.diff_tracker.get_before_after()
             self.results['diff'] = self.diff_result
-
-        pass
 
     def get_existing_network(self):
         return self.client.get_network(name=self.parameters.network_name)
