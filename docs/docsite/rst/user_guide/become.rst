@@ -582,4 +582,3 @@ Be aware of the following limitations with ``become`` on Windows:
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `webchat.freenode.net <https://webchat.freenode.net>`_
        #ansible IRC chat channel
-
