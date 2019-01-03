@@ -104,6 +104,7 @@ options:
     - Whether to install or uninstall the package.
     - The module uses C(product_id) and whether it exists at the registry path
       to see whether it needs to install or uninstall the package.
+    choices: [ absent, present ]
     default: present
     aliases: [ ensure ]
   username:
