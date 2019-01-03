@@ -32,12 +32,16 @@ requirements:
   - skydive-client
 extends_documentation_fragment: skydive
 options:
+  _query:
+    description: query dictionary with query object as dictionary key and
+    query value as dictionary value.
+    required: True
 """
 
 EXAMPLES = """
 - name: return skydive metdata if present
   set_fact:
-    skydive_meta: "{{ lookup('skydive_lookup', 'sumit-VirtualBox') }}"
+    skydive_meta: "{{ lookup('skydive_lookup', {'Name':'sumit-VirtualBox'}) }}"
 """
 
 RETURN = """
@@ -52,6 +56,7 @@ from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.network.skydive.api import skydive_lookup
 from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleError
+
 
 class LookupModule(LookupBase):
 
@@ -68,4 +73,3 @@ class LookupModule(LookupBase):
         except Exception as exc:
             raise AnsibleError(to_text(exc))
         return [result]
-
