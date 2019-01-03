@@ -602,6 +602,31 @@ VERSION_ID="12.04"
                    'distribution_version': u'12.04'}
     },
     {
+        'name': 'Kali 2019.1',
+        'input': {
+            '/etc/os-release': ("PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2019.1\"\n"
+                                "VERSION_ID=\"2019.1\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.kali.org/\"\n"
+                                "SUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\n"),
+            '/etc/lsb-release': ("DISTRIB_ID=Kali\nDISTRIB_RELEASE=kali-rolling\nDISTRIB_CODENAME=kali-rolling\n"
+                                 "DISTRIB_DESCRIPTION=\"Kali GNU/Linux Rolling\"\n"),
+            '/usr/lib/os-release': ("PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2019.1\"\n"
+                                    "VERSION_ID=\"2019.1\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.kali.org/\"\n"
+                                    "SUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\n")
+        },
+        'platform.dist': [
+            'kali',
+            '2019.1',
+            ''
+        ],
+        'result': {
+            'distribution': 'Kali',
+            'distribution_version': '2019.1',
+            'distribution_release': 'kali-rolling',
+            'distribution_major_version': '2019',
+            'os_family': 'Debian'
+        }
+    },
+    {
         "platform.dist": [
             "neon",
             "16.04",
