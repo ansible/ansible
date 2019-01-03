@@ -164,7 +164,6 @@
     that:
         - "disk_max_ctrl_d1_c1_f0_14disk_idem.results|map(attribute='changed')|unique|list == [false]"
 
-
 - name: delete the new VMs
   vmware_guest:
     validate_certs: False
@@ -230,46 +229,46 @@
 #
 # With all the test I did, vcsim doesn't seem to be able to test adding disk to a VM, it fail with InvalidDeviceSpec, so this test cannot be executed until it's fixed
 #
-- name: Modify VMs to add 1 disk so number of disk is 7
-  vmware_guest:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ 'newvm_' + item|basename }}"
-    datacenter: "{{ (item|basename).split('_')[0] }}"
-    disk:
-        - size: 128mb  # index0
-          type: thin
-          autoselect_datastore: True
-        - size: 128mb  # index1
-          type: thin
-          autoselect_datastore: True
-        - size: 128mb  # index2
-          type: thin
-          autoselect_datastore: True
-        - size: 128mb  # index3
-          type: thin
-          autoselect_datastore: True
-        - size: 128mb  # index4
-          type: thin
-          autoselect_datastore: True
-        - size: 128mb  # index5
-          type: thin
-          autoselect_datastore: True
-        - size: 128mb  # index6
-          type: thin
-          autoselect_datastore: True
-    folder: "{{ item|dirname }}"
-  with_items: "{{ vmlist['json'] }}"
-  register: disk_max_ctrl_d1_c1_f0_disk_7
-
-- debug: var=disk_max_ctrl_d1_c1_f0_disk_7
-
-- name: assert that changes were made
-  assert:
-    that:
-        - "disk_max_ctrl_d1_c1_f0_disk_7.results|map(attribute='changed')|unique|list == [true]"
+#- name: Modify VMs to add 1 disk so number of disk is 7
+#  vmware_guest:
+#    validate_certs: False
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance['json']['username'] }}"
+#    password: "{{ vcsim_instance['json']['password'] }}"
+#    name: "{{ 'newvm_' + item|basename }}"
+#    datacenter: "{{ (item|basename).split('_')[0] }}"
+#    disk:
+#        - size: 128mb  # index0
+#          type: thin
+#          autoselect_datastore: True
+#        - size: 128mb  # index1
+#          type: thin
+#          autoselect_datastore: True
+#        - size: 128mb  # index2
+#          type: thin
+#          autoselect_datastore: True
+#        - size: 128mb  # index3
+#          type: thin
+#          autoselect_datastore: True
+#        - size: 128mb  # index4
+#          type: thin
+#          autoselect_datastore: True
+#        - size: 128mb  # index5
+#          type: thin
+#          autoselect_datastore: True
+#        - size: 128mb  # index6
+#          type: thin
+#          autoselect_datastore: True
+#    folder: "{{ item|dirname }}"
+#  with_items: "{{ vmlist['json'] }}"
+#  register: disk_max_ctrl_d1_c1_f0_disk_7
+#
+#- debug: var=disk_max_ctrl_d1_c1_f0_disk_7
+#
+#- name: assert that changes were made
+#  assert:
+#    that:
+#        - "disk_max_ctrl_d1_c1_f0_disk_7.results|map(attribute='changed')|unique|list == [true]"
 #
 #- name: Modify VMs to add 1 disk so number of disk is 8
 #  vmware_guest:
