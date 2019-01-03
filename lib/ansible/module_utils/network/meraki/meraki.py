@@ -261,15 +261,18 @@ class MerakiModule(object):
                 return template['id']
         self.fail_json(msg='No configuration template named {0} found'.format(name))
 
+    def construct_params_list(self, keys, aliases=None):
+        qs = {}
+        for key in keys:
+            if key in aliases:
+                qs[aliases[key]] = self.module.params[key]
+            else:
+                qs[key] = self.module.params[key]
+        return qs
+
     def encode_url_params(self, params):
         """Encodes key value pairs for URL"""
-        param_string = "?"
-        for i, (k, v) in enumerate(params.items()):
-            if i == len(params) - 1:
-                param_string += "{0}={1}".format(k, v)
-            else:
-                param_string += "{0}={1}&".format(k, v)
-        return urlencode(param_string)
+        return "?{0}".format(urlencode(params))
 
     def construct_path(self,
                        action,
@@ -280,7 +283,6 @@ class MerakiModule(object):
                        custom=None,
                        params=None):
         """Build a path from the URL catalog.
-
         Uses function property from class for catalog lookup.
         """
         built_path = None
