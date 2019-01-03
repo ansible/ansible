@@ -196,23 +196,27 @@ def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_r
             if address[0].get('Domain') == "vpc":
                 if private_ip_address:
                     response = ec2.associate_address(InstanceId=device_id,
-                                                AllocationId=address[0].get('AllocationId'),
-                                                PrivateIpAddress=private_ip_address,
-                                                AllowReassociation=allow_reassociation)
+                                                     AllocationId=address[0].get(
+                                                         'AllocationId'),
+                                                     PrivateIpAddress=private_ip_address,
+                                                     AllowReassociation=allow_reassociation)
                 else:
                     response = ec2.associate_address(InstanceId=device_id,
-                                                AllocationId=address[0].get('AllocationId'),
-                                                AllowReassociation=allow_reassociation)
+                                                     AllocationId=address[0].get(
+                                                         'AllocationId'),
+                                                     AllowReassociation=allow_reassociation)
             else:
                 response = ec2.associate_address(InstanceId=device_id,
-                                            PublicIp=address[0].get('PublicIp'),
-                                            PrivateIpAddress=private_ip_address,
-                                            AllowReassociation=allow_reassociation)
+                                                 PublicIp=address[0].get(
+                                                     'PublicIp'),
+                                                 PrivateIpAddress=private_ip_address,
+                                                 AllowReassociation=allow_reassociation)
         else:
             response = ec2.associate_address(NetworkInterfaceId=device_id,
-                                        AllocationId=address[0].get('AllocationId'),
-                                        PrivateIpAddress=private_ip_address,
-                                        AllowReassociation=allow_reassociation)
+                                             AllocationId=address[0].get(
+                                                 'AllocationId'),
+                                             PrivateIpAddress=private_ip_address,
+                                             AllowReassociation=allow_reassociation)
         if not response:
             raise EIPException('association failed')
 
@@ -246,11 +250,14 @@ def _find_address_by_ip(ec2, public_ip):
     address = next(iter(addresses.values()))
     return address
 
+
 def _find_address_by_device_id(ec2, device_id, isinstance=True):
     if isinstance:
-        addresses = ec2.describe_addresses(Filters=[{'instance-id': device_id}])
+        addresses = ec2.describe_addresses(
+            Filters=[{'instance-id': device_id}])
     else:
-        addresses = ec2.describe_addresses(Filters=[{'network-interface-id': device_id}])
+        addresses = ec2.describe_addresses(
+            Filters=[{'network-interface-id': device_id}])
     if addresses:
         return addresses[0]
 
@@ -352,13 +359,13 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                         "You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
             # Associate address object (provided or allocated) with instance
             response, changed = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
-                                                   check_mode)
+                                                        check_mode)
 
         else:
             instance = find_device(ec2, module, device_id, isinstance=False)
             # Associate address object (provided or allocated) with instance
             response, changed = associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_reassociation,
-                                                   check_mode, isinstance=False)
+                                                        check_mode, isinstance=False)
 
         if instance.get('VpcId'):
             domain = 'vpc'
@@ -452,7 +459,7 @@ def main():
                                         module.check_mode, isinstance=is_instance)
             else:
                 response, changed = allocate_address(ec2, domain,
-                                                reuse_existing_ip_allowed)
+                                                     reuse_existing_ip_allowed)
         else:
             if device_id:
                 disassociated = ensure_absent(
