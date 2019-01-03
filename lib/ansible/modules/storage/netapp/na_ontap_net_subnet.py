@@ -77,17 +77,17 @@ EXAMPLES = """
     - name: delete subnet
       na_ontap_net_subnet:
         state: absent
-        username: {{ netapp_username }}
-        password: {{ netapp_password }}
-        hostname: {{ netapp_hostname }}
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
         name: subnet-adm
         ipspace: Default
     - name: rename subnet
       na_ontap_net_subnet:
         state: absent
-        username: {{ netapp_username }}
-        password: {{ netapp_password }}
-        hostname: {{ netapp_hostname }}
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+        hostname: "{{ netapp_hostname }}"
         name: subnet-adm
         ipspace: Default
 """
