@@ -298,46 +298,29 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
 
     def get_item(self):
         self.log('Get properties for {0}'.format(self.name))
-        result = []
         item = None
         try:
             item = self.network_client.network_interfaces.get(self.resource_group, self.name)
         except Exception:
             pass
 
-        if item and self.has_tags(item.tags, self.tags):
-            nic = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-            result = [nic]
-
-        return result
+        return [item] if item and self.has_tags(item.tags, self.tags) else []
 
     def list_resource_group(self):
         self.log('List for resource group')
         try:
             response = self.network_client.network_interfaces.list(self.resource_group)
+            return [item for item in response if self.has_tags(item.tags, self.tags)]
         except Exception as exc:
             self.fail("Error listing by resource group {0} - {1}".format(self.resource_group, str(exc)))
-
-        results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                nic = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                results.append(nic)
-        return results
 
     def list_all(self):
         self.log('List all')
         try:
             response = self.network_client.network_interfaces.list_all()
+            return [item for item in response if self.has_tags(item.tags, self.tags)]
         except Exception as exc:
             self.fail("Error listing all - {0}".format(str(exc)))
-
-        results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                nic = self.serialize_obj(item, AZURE_OBJECT_CLASS)
-                results.append(nic)
-        return results
 
     def serialize_nics(self, raws):
         return [self.serialize_obj(item, AZURE_OBJECT_CLASS) for item in raws] if raws else []
