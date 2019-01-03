@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -19,6 +20,7 @@ description:
     - Manages the Docker nodes via Swarm Manager
     - Change node role
     - Change node availability
+    - Change or remove node labels
     - List Swarm nodes
 options:
     force:
@@ -42,7 +44,11 @@ options:
             - Used with I(state=update).
     labels:
         description:
-            - User-defined key/value metadata.
+            - User-defined key/value metadata. Provided labels will replace existing ones
+    labels_remove:
+        description: If C(True) then labels are removed from mode, the I(label) is ignored
+        type: bool
+        default: false
     availability:
         description: Node availability status to assign
         choices:
@@ -86,6 +92,19 @@ EXAMPLES = '''
     state: update
     name: mynode
     availability: drain
+
+- name: Set node labels
+  docker_node:
+    state: update
+    name: mynode
+    labels:
+      key: value
+
+- name: Remove node labels
+  docker_node:
+    state: update
+    name: mynode
+    labels_remove: true
 '''
 
 RETURN = '''
@@ -127,10 +146,12 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
 
         self.state = None
+        self.force = None
 
         # Spec
         self.name = None
         self.labels = None
+        self.labels_remove = None
 
         # Node
         self.availability = None
@@ -208,10 +229,10 @@ class SwarmNodeManager(DockerBaseClass):
         return node_info
 
     def node_update(self):
-        if not(self.__isSwarmManager()):
+        if not (self.__isSwarmManager()):
             self.client.fail(msg="This node is not a manager.")
 
-        if not(self.__isSwarmNodeByID(node_id=self.parameters.name)):
+        if not (self.__isSwarmNodeByID(node_id=self.parameters.name)):
             self.results['actions'].append("This node is not part of a swarm.")
             return
 
@@ -234,22 +255,29 @@ class SwarmNodeManager(DockerBaseClass):
         if self.parameters.availability is None:
             self.parameters.availability = node_info['Spec']['Availability']
 
+        if self.parameters.labels is None:
+            self.parameters.labels = node_info['Spec']['Labels']
+
+        if self.parameters.labels_remove is True:
+            self.parameters.labels = {}
+
         node_spec = dict(
             Availability=self.parameters.availability,
             Role=self.parameters.role,
+            Labels=self.parameters.labels,
         )
 
         try:
-            self.client.update_node(node_id=node_info['ID'], version=node_info['Version']['Index'], node_spec=node_spec)
+            self.client.update_node(node_id=node_info['ID'], version=node_info['Version']['Index'],
+                                    node_spec=node_spec)
         except APIError as exc:
             self.client.fail(msg="Failed to update node : %s" % to_native(exc))
-
         self.results['node_facts'] = self.__get_node_info()
         self.results['actions'].append("Node updated")
         self.results['changed'] = True
 
     def node_list(self):
-        if not(self.__isSwarmManager()):
+        if not (self.__isSwarmManager()):
             self.client.fail(msg="This node is not a manager.")
 
         try:
@@ -272,6 +300,7 @@ def main():
         force=dict(type='bool', default=False),
         name=dict(type='str'),
         labels=dict(type='dict'),
+        labels_remove=dict(type='bool', default=False),
         availability=dict(type='str', choices=['active', 'pause', 'drain']),
         role=dict(type='str', choices=['worker', 'manager']),
     )
