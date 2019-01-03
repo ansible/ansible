@@ -21,6 +21,13 @@ description:
 version_added: "2.0"
 author:
 - Peter Sprygada (@privateip)
+notes:
+- VMware sold their vCloud Air service in Q2 2017.
+- VMware made significant changes to the pyvcloud interface around this time.  The C(vca_vapp) module relies on now deprecated code.
+- Mileage with C(vca_vapp) may vary as vCloud Director APIs advance.
+- A viable alternative maybe U(https://github.com/vmware/ansible-module-vcloud-director)
+requirements:
+- pyvcloud <= 18.2.2
 options:
   vapp_name:
     description:

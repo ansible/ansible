@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -21,8 +21,12 @@ notes:
   is required when the state is C(absent) or C(present).
 - The C(tenant) and C(bd) used must exist before using this module in your playbook.
   The M(aci_tenant) module and M(aci_bd) can be used for these.
-- More information about the internal APIC class B(fv:Subnet) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_bd
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Subnet).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -30,10 +34,12 @@ options:
   bd:
     description:
     - The name of the Bridge Domain.
+    type: str
     aliases: [ bd_name ]
   description:
     description:
     - The description for the Subnet.
+    type: str
     aliases: [ descr ]
   enable_vip:
     description:
@@ -43,6 +49,7 @@ options:
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
+    type: str
     aliases: [ gateway_ip ]
   mask:
     description:
@@ -55,6 +62,7 @@ options:
   nd_prefix_policy:
     description:
     - The IPv6 Neighbor Discovery Prefix Policy to associate with the Subnet.
+    type: str
   preferred:
     description:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
@@ -64,9 +72,11 @@ options:
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
+    type: str
   route_profile_l3_out:
     description:
     - The L3 Out that contains the assocated Route Profile.
+    type: str
   scope:
     description:
     - Determines the scope of the Subnet.
@@ -88,19 +98,23 @@ options:
     - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
     - The APIC defaults to C(nd_ra) when unset during creation.
+    type: str
     choices: [ nd_ra, no_gw, querier_ip, unspecified ]
   subnet_name:
     description:
     - The name of the Subnet.
+    type: str
     aliases: [ name ]
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -113,6 +127,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     tenant: production
+    state: present
+  delegate_to: localhost
 
 - name: Create a bridge domain
   aci_bd:
@@ -121,6 +137,8 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     tenant: production
     bd: database
+    state: present
+  delegate_to: localhost
 
 - name: Create a subnet
   aci_bd_subnet:
@@ -131,6 +149,8 @@ EXAMPLES = r'''
     bd: database
     gateway: 10.1.1.1
     mask: 24
+    state: present
+  delegate_to: localhost
 
 - name: Create a subnet with options
   aci_bd_subnet:
@@ -146,6 +166,8 @@ EXAMPLES = r'''
     scope: public
     route_profile_l3_out: corp
     route_profile: corp_route_profile
+    state: present
+  delegate_to: localhost
 
 - name: Update a subnets scope to private and shared
   aci_bd_subnet:
@@ -157,6 +179,8 @@ EXAMPLES = r'''
     gateway: 10.1.1.1
     mask: 24
     scope: [private, shared]
+    state: present
+  delegate_to: localhost
 
 - name: Get all subnets
   aci_bd_subnet:
@@ -164,38 +188,44 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
 
 - name: Get all subnets of specific gateway in specified tenant
   aci_bd_subnet:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     tenant: production
     gateway: 10.1.1.1
     mask: 24
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Get specific subnet
   aci_bd_subnet:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     tenant: production
     bd: database
     gateway: 10.1.1.1
     mask: 24
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Delete a subnet
   aci_bd_subnet:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: absent
     tenant: production
     bd: database
     gateway: 10.1.1.1
     mask: 24
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -230,7 +260,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -279,17 +309,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -299,7 +329,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -372,20 +402,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvBD',
             aci_rn='BD-{0}'.format(bd),
-            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
+            target_filter={'name': bd},
         ),
         subclass_2=dict(
             aci_class='fvSubnet',
             aci_rn='subnet-[{0}]'.format(gateway),
-            filter_target='eq(fvSubnet.ip, "{0}")'.format(gateway),
             module_object=gateway,
+            target_filter={'ip': gateway},
         ),
         child_classes=['fvRsBDSubnetToProfile', 'fvRsNdPfxPol'],
     )

@@ -75,17 +75,17 @@ target_groups:
         health_check_path:
             description: The destination for the health check request.
             returned: always
-            type: string
+            type: str
             sample: /index.html
         health_check_port:
             description: The port to use to connect with the target.
             returned: always
-            type: string
+            type: str
             sample: traffic-port
         health_check_protocol:
             description: The protocol to use to connect with the target.
             returned: always
-            type: string
+            type: str
             sample: HTTP
         health_check_timeout_seconds:
             description: The amount of time, in seconds, during which no response means a failed health check.
@@ -117,7 +117,7 @@ target_groups:
         protocol:
             description: The protocol to use for routing traffic to the targets.
             returned: always
-            type: string
+            type: str
             sample: HTTP
         stickiness_enabled:
             description: Indicates whether sticky sessions are enabled.
@@ -132,7 +132,7 @@ target_groups:
         stickiness_type:
             description: The type of sticky sessions.
             returned: always
-            type: string
+            type: str
             sample: lb_cookie
         tags:
             description: The tags attached to the target group.
@@ -144,12 +144,12 @@ target_groups:
         target_group_arn:
             description: The Amazon Resource Name (ARN) of the target group.
             returned: always
-            type: string
+            type: str
             sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
         target_group_name:
             description: The name of the target group.
             returned: always
-            type: string
+            type: str
             sample: mytargetgroup
         unhealthy_threshold_count:
             description: The number of consecutive health check failures required before considering the target unhealthy.
@@ -159,7 +159,7 @@ target_groups:
         vpc_id:
             description: The ID of the VPC for the targets.
             returned: always
-            type: string
+            type: str
             sample: vpc-0123456
 '''
 

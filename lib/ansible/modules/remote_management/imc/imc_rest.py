@@ -210,7 +210,7 @@ elapsed:
 response:
   description: HTTP response message, including content length
   returned: always
-  type: string
+  type: str
   sample: OK (729 bytes)
 status:
   description: The HTTP response status code
@@ -232,24 +232,24 @@ error:
 error_code:
   description: Cisco IMC error code
   returned: failed
-  type: string
+  type: str
   sample: ERR-xml-parse-error
 error_text:
   description: Cisco IMC error message
   returned: failed
-  type: string
+  type: str
   sample: |
     XML PARSING ERROR: Element 'computeRackUnit', attribute 'admin_Power': The attribute 'admin_Power' is not allowed.
 input:
   description: RAW XML input sent to the Cisco IMC, causing the error
   returned: failed
-  type: string
+  type: str
   sample: |
     <configConfMo><inConfig><computeRackUnit dn="sys/rack-unit-1" admin_Power="down"/></inConfig></configConfMo>
 output:
   description: RAW XML output eceived from the Cisco IMC, with error details
   returned: failed
-  type: string
+  type: str
   sample: >
     <error cookie=""
       response="yes"
@@ -376,7 +376,7 @@ def main():
     # Store cookie for future requests
     try:
         cookie = result['aaaLogin']['attributes']['outCookie']
-    except:
+    except Exception:
         module.fail_json(msg='Could not find cookie in output', **result)
 
     # If we would not log out properly, we run out of sessions quickly

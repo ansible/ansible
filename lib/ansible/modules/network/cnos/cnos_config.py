@@ -37,7 +37,7 @@ description:
     an implementation for working with CNOS configuration sections in
     a deterministic way.
 notes:
-  - Tested against CNOS 10.8.0.42
+  - Tested against CNOS 10.8.1
 options:
   provider:
     version_added: "2.6"
@@ -196,7 +196,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/cnos01.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule

@@ -53,6 +53,7 @@ options:
     description:
       - Indicates whether the VPN connection uses static routes only. Static routes must be used for devices that don't support BGP.
     default: False
+    type: bool
     required: no
   tunnel_options:
     description:
@@ -108,6 +109,7 @@ options:
   purge_routes:
     description:
       - Whether or not to delete VPN connections routes that are not specified in the task.
+    type: bool
 """
 
 EXAMPLES = """
@@ -228,7 +230,7 @@ routes:
             }]
 state:
   description: The status of the VPN connection.
-  type: string
+  type: str
   returned: I(state=present)
   sample:
     state: available
@@ -699,7 +701,7 @@ def main():
         vpn_gateway_id=dict(type='str'),
         tags=dict(default={}, type='dict'),
         connection_type=dict(default='ipsec.1', type='str'),
-        tunnel_options=dict(type='list', default=[]),
+        tunnel_options=dict(no_log=True, type='list', default=[]),
         static_only=dict(default=False, type='bool'),
         customer_gateway_id=dict(type='str'),
         vpn_connection_id=dict(type='str'),

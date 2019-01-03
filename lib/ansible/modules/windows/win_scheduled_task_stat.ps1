@@ -252,7 +252,10 @@ try {
     $result.folder_exists = $true
 } catch {
     $result.folder_exists = $false
-    $task_folder = $null
+    if ($null -ne $name) {
+        $result.task_exists = $false
+    }
+    Exit-Json -obj $result
 }
 
 $folder_tasks = $task_folder.GetTasks(1)

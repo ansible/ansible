@@ -252,11 +252,11 @@ matches:
     returned: when parameter 'print_match' is set
 msg:
     description: A message related to the performed action(s).
-    type: string
+    type: str
     returned: always
 xmlstring:
     description: An XML string of the resulting output.
-    type: string
+    type: str
     returned: when parameter 'xmlstring' is set
 '''
 
@@ -266,7 +266,6 @@ import os
 import re
 import traceback
 
-from collections import MutableMapping
 from distutils.version import LooseVersion
 from io import BytesIO
 
@@ -279,6 +278,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.common._collections_compat import MutableMapping
 
 _IDENT = r"[a-zA-Z-][a-zA-Z0-9_\-\.]*"
 _NSIDENT = _IDENT + "|" + _IDENT + ":" + _IDENT

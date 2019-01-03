@@ -14,29 +14,9 @@ $result = @{
     changed = $false
 }
 
-Function ConvertTo-HashtableFromPsCustomObject($psObject)
-{
-    $hashtable = @{}
-    $psObject | Get-Member -MemberType *Property | ForEach-Object {
-        $value = $psObject.($_.Name)
-        if ($value -is [PSObject])
-        {
-            $value = ConvertTo-HashtableFromPsCustomObject -myPsObject $value
-        }
-        $hashtable.($_.Name) = $value
-    }
-
-    return ,$hashtable
-}
-
 Function Cast-ToCimInstance($name, $value, $className)
 {
     # this converts a hashtable to a CimInstance
-    if ($value -is [PSObject])
-    {
-        # convert to hashtable
-        $value = ConvertTo-HashtableFromPsCustomObject -psObject $value
-    }
 
     $valueType = $value.GetType()
     if ($valueType -ne [hashtable])

@@ -6,7 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.onyx import onyx_mlag_vip
 from units.modules.utils import set_module_args
 from .onyx_module import TestOnyxModule, load_fixture
@@ -63,6 +63,14 @@ class TestOnyxMlagVipModule(TestOnyxModule):
                              delay=0))
         commands = ['mlag-vip neo-mlag-vip-500 ip 10.209.25.107 /24 force',
                     'mlag system-mac 00:00:5e:00:01:4e', 'no mlag shutdown']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_mlag_send_group_name_only_change(self):
+        self._mlag_enabled = False
+        set_module_args(dict(group_name='neo-mlag-vip-500',
+                             delay=0))
+        commands = ['mlag-vip neo-mlag-vip-500',
+                    'no mlag shutdown']
         self.execute_module(changed=True, commands=commands)
 
     def test_mlag_absent_no_change(self):

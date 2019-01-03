@@ -17,16 +17,16 @@ description:
   - Windows defaults to C(balanced) which will cause CPU throttling. In some cases it can be preferable
     to change the mode to C(high performance) to increase CPU performance.
 version_added: "2.4"
-author:
-  - Noah Sparks (@nwsparks)
+requirements:
+  - Windows Server 2008R2 (6.1)/Windows 7 or higher
 options:
   name:
     description:
       - String value that indicates the desired power plan. The power plan must already be
         present on the system. Commonly there will be options for C(balanced) and C(high performance).
     required: yes
-requirements:
-  - Windows Server 2008R2 (6.1)/Windows 7 or higher
+author:
+  - Noah Sparks (@nwsparks)
 '''
 
 EXAMPLES = '''
@@ -39,17 +39,17 @@ RETURN = r'''
 power_plan_name:
   description: Value of the intended power plan
   returned: always
-  type: string
+  type: str
   sample: balanced
 power_plan_enabled:
   description: State of the intended power plan
   returned: success
-  type: boolean
+  type: bool
   sample: True
 all_available_plans:
   description: The name and enabled state of all power plans
   returned: always
-  type: dictionary
+  type: dict
   sample: |
     {
         "High performance":  false,

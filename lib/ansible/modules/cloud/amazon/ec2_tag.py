@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -32,7 +32,8 @@ options:
     choices: ['present', 'absent', 'list']
   tags:
     description:
-      - a hash/dictionary of tags to add to the resource; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - A dictionary of tags to add or remove from the resource.
+      - If the value provided for a tag is null and C(state) is I(absent), the tag will be removed regardless of its current value.
     required: true
   purge_tags:
     description:
@@ -68,7 +69,7 @@ EXAMPLES = '''
     tags:
       Name: dbserver
       Env: production
-  with_items: '{{ ec2_vol.volumes }}'
+  loop: '{{ ec2_vol.volumes }}'
 
 - name: Retrieve all tags on an instance
   ec2_tag:
@@ -76,6 +77,22 @@ EXAMPLES = '''
     resource: i-xxxxxxxxxxxxxxxxx
     state: list
   register: ec2_tags
+
+- name: Remove the Env tag
+  ec2_tag:
+    region: eu-west-1
+    resource: i-xxxxxxxxxxxxxxxxx
+    tags:
+      Env:
+    state: absent
+
+- name: Remove the Env tag if it's currently 'development'
+  ec2_tag:
+    region: eu-west-1
+    resource: i-xxxxxxxxxxxxxxxxx
+    tags:
+      Env: development
+    state: absent
 
 - name: Remove all tags except for Name from an instance
   ec2_tag:
@@ -107,7 +124,7 @@ from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dic
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
-except:
+except Exception:
     pass    # Handled by AnsibleAWSModule
 
 
@@ -149,8 +166,8 @@ def main():
     remove_tags = {}
     if state == 'absent':
         for key in tags:
-            if key in current_tags and current_tags[key] == tags[key]:
-                remove_tags[key] = tags[key]
+            if key in current_tags and (tags[key] is None or current_tags[key] == tags[key]):
+                remove_tags[key] = current_tags[key]
 
     for key in remove:
         remove_tags[key] = current_tags[key]

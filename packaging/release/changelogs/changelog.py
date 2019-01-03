@@ -24,6 +24,8 @@ try:
 except ImportError:
     argcomplete = None
 
+from ansible import constants as C
+
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 CHANGELOG_DIR = os.path.join(BASE_DIR, 'changelogs')
 CONFIG_PATH = os.path.join(CHANGELOG_DIR, 'config.yaml')
@@ -173,7 +175,9 @@ def load_plugins(version, force_reload):
         LOGGER.info('refreshing plugin cache')
 
         plugins_data['version'] = version
-        plugins_data['plugins'] = json.loads(subprocess.check_output([os.path.join(BASE_DIR, 'bin', 'ansible-doc'), '--json']))
+        for plugin_type in C.DOCUMENTABLE_PLUGINS:
+            plugins_data['plugins'][plugin_type] = json.loads(subprocess.check_output([os.path.join(BASE_DIR, 'bin', 'ansible-doc'),
+                                                                                       '--json', '-t', plugin_type]))
 
         # remove empty namespaces from plugins
         for section in plugins_data['plugins'].values():
@@ -443,6 +447,7 @@ class ChangelogGenerator(object):
 
         builder = RstBuilder()
         builder.set_title('Ansible %s "%s" Release Notes' % (major_minor_version, codename))
+        builder.add_raw_rst('.. contents:: Topics\n\n')
 
         for version, release in release_entries.items():
             builder.add_section('v%s' % version)

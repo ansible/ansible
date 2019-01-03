@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 ---
 module: cobbler_system
 version_added: '2.7'
-short_description: Manage system ojects in Cobbler
+short_description: Manage system objects in Cobbler
 description:
 - Add, modify or remove systems in Cobbler
 options:

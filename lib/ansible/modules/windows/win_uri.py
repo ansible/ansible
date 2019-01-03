@@ -142,6 +142,9 @@ options:
     version_added: '2.5'
 notes:
 - For non-Windows targets, use the M(uri) module instead.
+seealso:
+- module: uri
+- module: win_get_url
 author:
 - Corwin Brown (@blakfeld)
 - Dag Wieers (@dagwieers)
@@ -174,10 +177,15 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+elapsed:
+  description: The number of seconds that elapsed while performing the download
+  returned: always
+  type: float
+  sample: 23.2
 url:
   description: The Target URL
   returned: always
-  type: string
+  type: str
   sample: https://www.ansible.com
 status_code:
   description: The HTTP Status Code of the response.
@@ -187,12 +195,12 @@ status_code:
 status_description:
   description: A summary of the status.
   returned: success
-  type: string
+  type: str
   sample: OK
 content:
   description: The raw content of the HTTP response.
   returned: success and return_content is True
-  type: string
+  type: str
   sample: '{"foo": "bar"}'
 content_length:
   description: The byte size of the response.

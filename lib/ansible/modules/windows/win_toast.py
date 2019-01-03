@@ -47,13 +47,16 @@ options:
     description:
       - The notification title, which appears in the pop up..
     default: Notification HH:mm
-author:
-- Jon Hawkesworth (@jhawkesworth)
 notes:
    - This module must run on a windows 10 or Server 2016 host, so ensure your play targets windows hosts, or delegates to a windows host.
    - The module does not fail if there are no logged in users to notify.
    - Messages are only sent to the local host where the module is run.
    - You must run this module with async, otherwise it will hang until the expire period has passed.
+seealso:
+- module: win_msg
+- module: win_say
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''
@@ -70,17 +73,17 @@ RETURN = r'''
 expire_at_utc:
     description: Calculated utc date time when the notification expires.
     returned: allways
-    type: string
+    type: str
     sample: 07 July 2017 04:50:54
 no_toast_sent_reason:
     description: Text containing the reason why a notification was not sent.
     returned: when no logged in users are detected
-    type: string
+    type: str
     sample: No logged in users to notify
 sent_localtime:
     description: local date time when the notification was sent.
     returned: allways
-    type: string
+    type: str
     sample: 07 July 2017 05:45:54
 time_taken:
     description: How long the module took to run on the remote windows host in seconds.
@@ -90,6 +93,6 @@ time_taken:
 toast_sent:
     description: Whether the module was able to send a toast notification or not.
     returned: allways
-    type: boolean
+    type: bool
     sample: false
 '''

@@ -24,7 +24,7 @@ DOCUMENTATION = """
 ---
 module: ce_config
 version_added: "2.4"
-author: "QijunPan (@CloudEngine-Ansible)"
+author: "QijunPan (@QijunPan)"
 short_description: Manage Huawei CloudEngine configuration sections.
 description:
   - Huawei CloudEngine configurations use a simple block indent file syntax
@@ -185,7 +185,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/ce_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule

@@ -31,8 +31,8 @@ description: This module will allow user to pass and execute any supported OP co
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.5"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
-    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
+    - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
 notes:
     - Checkmode is NOT supported.
     - Panorama is NOT supported.
@@ -79,18 +79,17 @@ RETURN = '''
 stdout:
     description: output of the given OP command as JSON formatted string
     returned: success
-    type: string
+    type: str
     sample: "{system: {app-release-date: 2017/05/01  15:09:12}}"
 
 stdout_xml:
     description: output of the given OP command as JSON formatted string
     returned: success
-    type: string
+    type: str
     sample: "<response status=success><result><system><hostname>fw2</hostname>"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
 
 try:
     import pan.xapi
@@ -133,9 +132,7 @@ def main():
     try:
         xml_output = device.op(cmd, xml=True)
         changed = True
-    except PanXapiError:
-        exc = get_exception()
-
+    except PanXapiError as exc:
         if 'non NULL value' in exc.message:
             # rewrap and call again
             cmd_array = cmd.split()
@@ -145,8 +142,7 @@ def main():
             try:
                 xml_output = device.op(cmd2, xml=True)
                 changed = True
-            except PanXapiError:
-                exc = get_exception()
+            except PanXapiError as exc:
                 module.fail_json(msg=exc.message)
 
     obj_dict = xmltodict.parse(xml_output)

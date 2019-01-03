@@ -2,7 +2,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
-from ansible.compat.tests.mock import patch
+import os
+from units.compat.mock import patch
 from ansible.modules.network.cnos import cnos_bgp
 from units.modules.utils import set_module_args
 from .cnos_module import TestCnosModule, load_fixture
@@ -28,21 +29,18 @@ class TestCnosBgpModule(TestCnosModule):
     def test_bgp_neighbor(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'asNum': '33',
+                         'outputfile': self.test_log, 'asNum': '33',
                          'bgpArg1': 'neighbor', 'bgpArg2': '10.241.107.40',
                          'bgpArg3': '13', 'bgpArg4': 'address-family',
                          'bgpArg5': 'ipv4', 'bgpArg6': 'next-hop-self'})
         result = self.execute_module(changed=True)
-        file = open('Anil.txt', "a")
-        file.write(str(result))
-        file.close()
         expected_result = 'BGP configurations accomplished'
         self.assertEqual(result['msg'], expected_result)
 
     def test_cnos_bgp_dampening(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'asNum': '33',
+                         'outputfile': self.test_log, 'asNum': '33',
                          'bgpArg1': 'address-family', 'bgpArg2': 'ipv4',
                          'bgpArg3': 'dampening', 'bgpArg4': '13',
                          'bgpArg5': '233', 'bgpArg6': '333',
@@ -54,7 +52,7 @@ class TestCnosBgpModule(TestCnosModule):
     def test_cnos_bgp_network(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'asNum': '33',
+                         'outputfile': self.test_log, 'asNum': '33',
                          'bgpArg1': 'address-family', 'bgpArg2': 'ipv4',
                          'bgpArg3': 'network', 'bgpArg4': '1.2.3.4/5',
                          'bgpArg5': 'backdoor'})
@@ -65,7 +63,7 @@ class TestCnosBgpModule(TestCnosModule):
     def test_cnos_bgp_clusterid(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'asNum': '33',
+                         'outputfile': self.test_log, 'asNum': '33',
                          'bgpArg1': 'cluster-id', 'bgpArg2': '10.241.107.40'})
         result = self.execute_module(changed=True)
         expected_result = 'BGP configurations accomplished'
@@ -74,7 +72,7 @@ class TestCnosBgpModule(TestCnosModule):
     def test_cnos_bgp_graceful_restart(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'asNum': '33',
+                         'outputfile': self.test_log, 'asNum': '33',
                          'bgpArg1': 'graceful-restart', 'bgpArg2': '333'})
         result = self.execute_module(changed=True)
         expected_result = 'BGP configurations accomplished'
@@ -83,7 +81,7 @@ class TestCnosBgpModule(TestCnosModule):
     def test_cnos_bgp_routerid(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'asNum': '33',
+                         'outputfile': self.test_log, 'asNum': '33',
                          'bgpArg1': 'router-id', 'bgpArg2': '1.2.3.4'})
         result = self.execute_module(changed=True)
         expected_result = 'BGP configurations accomplished'
@@ -92,7 +90,7 @@ class TestCnosBgpModule(TestCnosModule):
     def test_cnos_bgp_vrf(self):
         set_module_args({'username': 'admin', 'password': 'pass',
                          'host': '10.241.107.39', 'deviceType': 'g8272_cnos',
-                         'outputfile': 'test.log', 'asNum': '33',
+                         'outputfile': self.test_log, 'asNum': '33',
                          'bgpArg1': 'vrf'})
         result = self.execute_module(changed=True)
         expected_result = 'BGP configurations accomplished'

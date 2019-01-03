@@ -21,11 +21,12 @@ __metaclass__ = type
 
 from io import StringIO
 import sys
+import pytest
 
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock
-from ansible.compat.tests.mock import patch
+from units.compat import mock
+from units.compat import unittest
+from units.compat.mock import MagicMock
+from units.compat.mock import patch
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ConnectionBase
@@ -41,9 +42,11 @@ from ansible.plugins.connection.ssh import Connection as SSHConnection
 from ansible.plugins.connection.docker import Connection as DockerConnection
 # from ansible.plugins.connection.winrm import Connection as WinRmConnection
 from ansible.plugins.connection.network_cli import Connection as NetworkCliConnection
+from ansible.plugins.connection.httpapi import Connection as HttpapiConnection
+
+pytest.importorskip("ncclient")
 
 PY3 = sys.version_info[0] == 3
-
 builtin_import = __import__
 
 mock_ncclient = MagicMock(name='ncclient')
@@ -162,10 +165,15 @@ class TestConnectionBaseClass(unittest.TestCase):
 #        self.assertIsInstance(WinRmConnection(), WinRmConnection)
 
     def test_network_cli_connection_module(self):
+        self.play_context.network_os = 'eos'
         self.assertIsInstance(NetworkCliConnection(self.play_context, self.in_stream), NetworkCliConnection)
 
     def test_netconf_connection_module(self):
         self.assertIsInstance(NetconfConnection(self.play_context, self.in_stream), NetconfConnection)
+
+    def test_httpapi_connection_module(self):
+        self.play_context.network_os = 'eos'
+        self.assertIsInstance(HttpapiConnection(self.play_context, self.in_stream), HttpapiConnection)
 
     def test_check_password_prompt(self):
         local = (

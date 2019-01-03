@@ -1,23 +1,22 @@
 .. _release_managers:
 
-
-Release Managers
-================
+**************************
+Release Manager Guidelines
+**************************
 
 .. contents:: Topics
 
 The release manager's purpose is to ensure a smooth release.  To achieve that goal, they need to
 coordinate between:
 
-* Developers with Commit privileges on the `Ansible github repository <https://github.com/ansible/ansible/>`_
+* Developers with commit privileges on the `Ansible GitHub repository <https://github.com/ansible/ansible/>`_
 * Contributors without commit privileges
 * The community
 * Ansible documentation team
 * Ansible Tower team
 
-
-Pre-releases: What and Why
---------------------------
+Pre-releases: what and why
+==========================
 
 Pre-releases exist to draw testers. They give people who don't feel comfortable running from source
 control a means to get an early version of the code to test and give us feedback. To ensure we get
@@ -35,18 +34,18 @@ back those changes to give people time to test between. People cannot test what 
 we have to get those tarballs out there even if people feel they have to install more frequently.
 
 
-What is Beta?
-~~~~~~~~~~~~~
+Beta releases
+-------------
 
-In a Beta release, we know there are still bugs.  We will continue to accept fixes for these.
+In a beta release, we know there are still bugs.  We will continue to accept fixes for these.
 Although we review these fixes, sometimes they can be invasive or potentially destabilize other
 areas of the code.
 
 During the beta, we will no longer accept feature submissions.
 
 
-What is a Release Candidate?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Release candidates
+------------------
 
 In a release candidate, we've fixed all known blockers. Any remaining bugfixes are
 ones that we are willing to leave out of the release. At this point we need user testing to
@@ -74,8 +73,8 @@ The last RC should be as close to the final as possible. The following things ma
     (like the Tower Team) which would want to test the code.
 
 
-Release Process
-===============
+Ansible release process
+=======================
 
 The release process is kept in a `separate document
 <https://docs.google.com/document/d/10EWLkMesi9s_CK_GmbZlE_ZLhuQr6TBrdMLKo5dnMAI/edit#heading=h.ooo3izcel3cz>`_

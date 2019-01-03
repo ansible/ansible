@@ -42,6 +42,16 @@ DOCUMENTATION = '''
         ini:
           - section: callback_slack
             key: username
+      validate_certs:
+        description: validate the SSL certificate of the Slack server. (For HTTPS URLs)
+        version_added: "2.8"
+        env:
+          - name: SLACK_VALIDATE_CERTS
+        ini:
+          - section: callback_slack
+            key: validate_certs
+        default: True
+        type: bool
 '''
 
 import json
@@ -53,6 +63,7 @@ try:
 except ImportError:
     cli = None
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 
@@ -99,6 +110,7 @@ class CallbackModule(CallbackBase):
         self.channel = self.get_option('channel')
         self.username = self.get_option('username')
         self.show_invocation = (self._display.verbosity > 1)
+        self.validate_certs = self.get_option('validate_certs')
 
         if self.webhook_url is None:
             self.disabled = True
@@ -121,11 +133,11 @@ class CallbackModule(CallbackBase):
         self._display.debug(data)
         self._display.debug(self.webhook_url)
         try:
-            response = open_url(self.webhook_url, data=data)
+            response = open_url(self.webhook_url, data=data, validate_certs=self.validate_certs)
             return response.read()
         except Exception as e:
-            self._display.warning('Could not submit message to Slack: %s' %
-                                  str(e))
+            self._display.warning(u'Could not submit message to Slack: %s' %
+                                  to_text(e))
 
     def v2_playbook_on_start(self, playbook):
         self.playbook_name = os.path.basename(playbook._file_name)

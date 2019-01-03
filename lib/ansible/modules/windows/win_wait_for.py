@@ -87,6 +87,9 @@ options:
     - The maximum number of seconds to wait for.
     type: int
     default: 300
+seealso:
+- module: wait_for
+- module: win_wait_for_process
 author:
 - Jordan Borean (@jborean93)
 '''

@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -18,9 +18,10 @@ module: aci_vlan_pool
 short_description: Manage VLAN pools (fvns:VlanInstP)
 description:
 - Manage VLAN pools on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(fvns:VlanInstP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fvns:VlanInstP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 - Dag Wieers (@dagwieers)
@@ -29,20 +30,24 @@ options:
   pool_allocation_mode:
     description:
     - The method used for allocating VLANs to resources.
-    aliases: [ allocation_mode, mode ]
+    type: str
     choices: [ dynamic, static]
+    aliases: [ allocation_mode, mode ]
   description:
     description:
     - Description for the C(pool).
+    type: str
     aliases: [ descr ]
   pool:
     description:
     - The name of the pool.
+    type: str
     aliases: [ name, pool_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -58,6 +63,7 @@ EXAMPLES = r'''
     pool_allocation_mode: dynamic
     description: Production VLANs
     state: present
+  delegate_to: localhost
 
 - name: Remove a VLAN pool
   aci_vlan_pool:
@@ -67,6 +73,7 @@ EXAMPLES = r'''
     pool: production
     pool_allocation_mode: dynamic
     state: absent
+  delegate_to: localhost
 
 - name: Query a VLAN pool
   aci_vlan_pool:
@@ -76,6 +83,8 @@ EXAMPLES = r'''
     pool: production
     pool_allocation_mode: dynamic
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VLAN pools
   aci_vlan_pool:
@@ -83,6 +92,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -117,7 +128,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -166,17 +177,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -186,7 +197,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -231,8 +242,8 @@ def main():
         root_class=dict(
             aci_class='fvnsVlanInstP',
             aci_rn='infra/vlanns-{0}'.format(pool_name),
-            filter_target='eq(fvnsVlanInstP.name, "{0}")'.format(pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
     )
 

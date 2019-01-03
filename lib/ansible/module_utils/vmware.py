@@ -15,6 +15,11 @@ from random import randint
 try:
     # requests is required for exception handling of the ConnectionError
     import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
@@ -27,7 +32,8 @@ from ansible.module_utils.basic import env_fallback
 
 
 class TaskError(Exception):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(TaskError, self).__init__(*args, **kwargs)
 
 
 def wait_for_task(task, max_backoff=64, timeout=3600):
@@ -51,14 +57,17 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
             error_msg = task.info.error
+            host_thumbprint = None
             try:
                 error_msg = error_msg.msg
+                if hasattr(task.info.error, 'thumbprint'):
+                    host_thumbprint = task.info.error.thumbprint
             except AttributeError:
                 pass
             finally:
-                raise_from(TaskError(error_msg), task.info.error)
+                raise_from(TaskError(error_msg, host_thumbprint), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
-            sleep_time = min(2 ** failure_counter + randint(1, 1000), max_backoff)
+            sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
             time.sleep(sleep_time)
             failure_counter += 1
 
@@ -67,8 +76,9 @@ def wait_for_vm_ip(content, vm, timeout=300):
     facts = dict()
     interval = 15
     while timeout > 0:
-        facts = gather_vm_facts(content, vm)
-        if facts['ipv4'] or facts['ipv6']:
+        _facts = gather_vm_facts(content, vm)
+        if _facts['ipv4'] or _facts['ipv6']:
+            facts = _facts
             break
         time.sleep(interval)
         timeout -= interval
@@ -76,28 +86,20 @@ def wait_for_vm_ip(content, vm, timeout=300):
     return facts
 
 
-def find_obj(content, vimtype, name, first=True):
-    container = content.viewManager.CreateContainerView(container=content.rootFolder, recursive=True, type=vimtype)
-    obj_list = container.view
+def find_obj(content, vimtype, name, first=True, folder=None):
+    container = content.viewManager.CreateContainerView(folder or content.rootFolder, recursive=True, type=vimtype)
+    # Get all objects matching type (and name if given)
+    obj_list = [obj for obj in container.view if not name or to_text(obj.name) == to_text(name)]
     container.Destroy()
 
-    # Backward compatible with former get_obj() function
-    if name is None:
+    # Return first match or None
+    if first:
         if obj_list:
             return obj_list[0]
         return None
 
-    # Select the first match
-    if first is True:
-        for obj in obj_list:
-            if to_text(obj.name) == to_text(name):
-                return obj
-
-        # If no object found, return None
-        return None
-
-    # Return all matching objects if needed
-    return [obj for obj in obj_list if obj.name == name]
+    # Return all matching objects or empty list
+    return obj_list
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
@@ -108,17 +110,6 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
         if pg.name == portgroup_name:
             return pg
 
-    return None
-
-
-# Maintain for legacy, or remove with 2.1 ?
-# Should be replaced with find_cluster_by_name
-def find_cluster_by_name_datacenter(datacenter, cluster_name):
-
-    host_folder = datacenter.hostFolder
-    for folder in host_folder.childEntity:
-        if folder.name == cluster_name:
-            return folder
     return None
 
 
@@ -295,6 +286,7 @@ def gather_vm_facts(content, vm):
         'customvalues': {},
         'snapshots': [],
         'current_snapshot': None,
+        'vnc': {},
     }
 
     # facts that may or may not exist
@@ -329,7 +321,7 @@ def gather_vm_facts(content, vm):
             for item in vm.layout.disk:
                 for disk in item.diskFile:
                     facts['hw_files'].append(disk)
-    except BaseException:
+    except Exception:
         pass
 
     facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
@@ -353,13 +345,11 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
-    for dummy, v in iteritems(net_dict):
-        for ipaddress in v:
-            if ipaddress:
-                if '::' in ipaddress:
-                    facts['ipv6'] = ipaddress
-                else:
-                    facts['ipv4'] = ipaddress
+    if vm.guest.ipAddress:
+        if ':' in vm.guest.ipAddress:
+            facts['ipv6'] = vm.guest.ipAddress
+        else:
+            facts['ipv4'] = vm.guest.ipAddress
 
     ethernet_idx = 0
     for entry in vm.config.hardware.device:
@@ -398,6 +388,8 @@ def gather_vm_facts(content, vm):
     if 'snapshots' in snapshot_facts:
         facts['snapshots'] = snapshot_facts['snapshots']
         facts['current_snapshot'] = snapshot_facts['current_snapshot']
+
+    facts['vnc'] = get_vnc_extraconfig(vm)
     return facts
 
 
@@ -441,6 +433,15 @@ def list_snapshots(vm):
         result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
     else:
         result['current_snapshot'] = dict()
+    return result
+
+
+def get_vnc_extraconfig(vm):
+    result = {}
+    for opts in vm.config.extraConfig:
+        for optkeyname in ['enabled', 'ip', 'port', 'password']:
+            if opts.key.lower() == "remotedisplay.vnc." + optkeyname:
+                result[optkeyname] = opts.value
     return result
 
 
@@ -772,6 +773,10 @@ class PyVmomi(object):
         """
         Constructor
         """
+        if not HAS_REQUESTS:
+            module.fail_json(msg="Unable to find 'requests' Python library which is required."
+                                 " Please install using 'pip install requests'")
+
         if not HAS_PYVMOMI:
             module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
 
@@ -963,14 +968,14 @@ class PyVmomi(object):
                 folder_name = fp.name + '/' + folder_name
                 try:
                     fp = fp.parent
-                except BaseException:
+                except Exception:
                     break
             folder_name = '/' + folder_name
         return folder_name
 
     def get_vm_or_template(self, template_name=None):
         """
-        Function to find the virtual machine or virtual machine template using name
+        Find the virtual machine or virtual machine template using name
         used for cloning purpose.
         Args:
             template_name: Name of virtual machine or virtual machine template
@@ -979,8 +984,20 @@ class PyVmomi(object):
 
         """
         template_obj = None
+        if not template_name:
+            return template_obj
 
-        if template_name:
+        if "/" in template_name:
+            vm_obj_path = os.path.dirname(template_name)
+            vm_obj_name = os.path.basename(template_name)
+            template_obj = find_vm_by_id(self.content, vm_obj_name, vm_id_type="inventory_path", folder=vm_obj_path)
+            if template_obj:
+                return template_obj
+        else:
+            template_obj = find_vm_by_id(self.content, vm_id=template_name, vm_id_type="uuid")
+            if template_obj:
+                return template_obj
+
             objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
             templates = []
 
@@ -997,6 +1014,7 @@ class PyVmomi(object):
                 self.module.fail_json(msg="Multiple virtual machines or templates with same name [%s] found." % template_name)
             elif templates:
                 template_obj = templates[0]
+
         return template_obj
 
     # Cluster related functions

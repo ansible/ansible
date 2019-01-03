@@ -149,10 +149,7 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 class DoManager:
@@ -224,7 +221,7 @@ class DoManager:
         return resp['droplet']
 
     def all_tags(self):
-        resp = self.send('tags/')
+        resp = self.send('tags')
         return resp['tags']
 
 
@@ -323,7 +320,7 @@ class DigitalOceanInventory(object):
 
     def read_settings(self):
         """ Reads the settings from the digital_ocean.ini file """
-        config = ConfigParser.SafeConfigParser()
+        config = ConfigParser.ConfigParser()
         config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'digital_ocean.ini')
         config.read(config_path)
 

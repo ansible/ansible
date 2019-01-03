@@ -17,7 +17,7 @@ author:
 - Vincent Van der Kussen (@vincentvdk)
 short_description: oVirt/RHEV platform management
 description:
-    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vms) supports oVirt/RHV version 4.
+    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vm) supports oVirt/RHV version 4.
     - Allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform.
 version_added: "1.4"
 options:
@@ -228,7 +228,7 @@ def conn(url, user, password):
     api = API(url=url, username=user, password=password, insecure=True)
     try:
         value = api.test()
-    except:
+    except Exception:
         raise Exception("error connecting to the oVirt API")
     return api
 
@@ -262,16 +262,16 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
 
     try:
         conn.vms.add(vmparams)
-    except:
+    except Exception:
         raise Exception("Error creating VM with specified parameters")
     vm = conn.vms.get(name=vmname)
     try:
         vm.disks.add(vmdisk)
-    except:
+    except Exception:
         raise Exception("Error attaching disk")
     try:
         vm.nics.add(nic_net1)
-    except:
+    except Exception:
         raise Exception("Error adding nic")
 
 
@@ -280,7 +280,7 @@ def create_vm_template(conn, vmname, image, zone):
     vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), template=conn.templates.get(name=image), disks=params.Disks(clone=True))
     try:
         conn.vms.add(vmparams)
-    except:
+    except Exception:
         raise Exception('error adding template %s' % image)
 
 

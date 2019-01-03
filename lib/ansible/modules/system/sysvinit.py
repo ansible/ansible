@@ -175,12 +175,12 @@ def main():
 
     # figure out started status, everyone does it different!
     is_started = False
+    worked = False
 
     # user knows other methods fail and supplied pattern
     if pattern:
-        is_started = get_ps(module, pattern)
+        worked = is_started = get_ps(module, pattern)
     else:
-        worked = False
         if location.get('service'):
             # standard tool that has been 'destandarized' by reimplementation in other OS/distros
             cmd = '%s %s status' % (location['service'], name)
@@ -267,7 +267,7 @@ def main():
             # Perform enable/disable here
             if enabled:
                 if location.get('update-rc.d'):
-                    (rc, out, err) = module.run_command("%s %s enable" % (location['update-rc.d'], name))
+                    (rc, out, err) = module.run_command("%s %s defaults" % (location['update-rc.d'], name))
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s %s on" % (location['chkconfig'], name))
             else:

@@ -22,7 +22,7 @@ from __future__ import (absolute_import, division, print_function)
 import copy
 import pytest
 
-from ansible.compat.tests.mock import MagicMock, Mock, patch
+from units.compat.mock import MagicMock, Mock, patch
 from ansible.module_utils import basic
 from units.modules.utils import set_module_args
 

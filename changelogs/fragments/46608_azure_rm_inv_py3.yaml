@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm inventory plugin - fix runtime error under Python3 (https://github.com/ansible/ansible/pull/46608)

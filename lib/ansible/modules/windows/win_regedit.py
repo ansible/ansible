@@ -87,6 +87,9 @@ notes:
   applying changes.
 - Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths in the root folder.
 - Since ansible 2.4, when checking if a string registry value has changed, a case-sensitive test is used. Previously the test was case-insensitive.
+seealso:
+- module: win_reg_stat
+- module: win_regmerge
 author:
 - Adam Keech (@smadam813)
 - Josh Ludwig (@joshludwig)
@@ -183,7 +186,7 @@ EXAMPLES = r'''
     path: HKLM:\ANSIBLE\Control Panel\Mouse
     name: MouseTrails
     data: 10
-    type: string
+    type: str
     state: present
     hive: C:\Users\Default\NTUSER.dat
 '''
@@ -192,11 +195,11 @@ RETURN = r'''
 data_changed:
     description: whether this invocation changed the data in the registry value
     returned: success
-    type: boolean
+    type: bool
     sample: False
 data_type_changed:
     description: whether this invocation changed the datatype of the registry value
     returned: success
-    type: boolean
+    type: bool
     sample: True
 '''

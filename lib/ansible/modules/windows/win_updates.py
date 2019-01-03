@@ -33,22 +33,14 @@ options:
         version_added: '2.5'
     category_names:
         description:
-        - A scalar or list of categories to install updates from
+        - A scalar or list of categories to install updates from. To get the list
+          of categories, run the module with C(state=searched). The category must
+          be the full category string, but is case insensitive.
+        - Some possible categories are Application, Connectors, Critical Updates,
+          Definition Updates, Developer Kits, Feature Packs, Guidance, Security
+          Updates, Service Packs, Tools, Update Rollups and Updates.
         type: list
         default: [ CriticalUpdates, SecurityUpdates, UpdateRollups ]
-        choices:
-        - Application
-        - Connectors
-        - CriticalUpdates
-        - DefinitionUpdates
-        - DeveloperKits
-        - FeaturePacks
-        - Guidance
-        - SecurityUpdates
-        - ServicePacks
-        - Tools
-        - UpdateRollups
-        - Updates
     reboot:
         description:
         - Ansible will automatically reboot the remote host if it is required
@@ -101,18 +93,26 @@ options:
         type: bool
         default: 'no'
         version_added: '2.6'
-author:
-- Matt Davis (@nitzmahone)
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
 - By default C(win_updates) does not manage reboots, but will signal when a
-  reboot is required with the I(reboot_required) return value, as of Ansible 2.5
+  reboot is required with the I(reboot_required) return value, as of Ansible v2.5
   C(reboot) can be used to reboot the host if required in the one task.
 - C(win_updates) can take a significant amount of time to complete (hours, in some cases).
   Performance depends on many factors, including OS version, number of updates, system load, and update server load.
+- Beware that just after C(win_updates) reboots the system, the Windows system may not have settled yet
+  and some base services could be in limbo. This can result in unexpected behavior.
+  Check the examples for ways to mitigate this.
 - More information about PowerShell and how it handles RegEx strings can be
   found at U(https://technet.microsoft.com/en-us/library/2007.11.powershell.aspx).
+seealso:
+- module: win_chocolatey
+- module: win_feature
+- module: win_hotfix
+- module: win_package
+author:
+- Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = r'''
@@ -148,7 +148,7 @@ EXAMPLES = r'''
     - KB4056892
     - KB4073117
 
-- name: Exlude updates based on the update title
+- name: Exclude updates based on the update title
   win_updates:
     category_name:
     - SecurityUpdates
@@ -156,13 +156,25 @@ EXAMPLES = r'''
     blacklist:
     - Windows Malicious Software Removal Tool for Windows
     - \d{4}-\d{2} Cumulative Update for Windows Server 2016
+
+# One way to ensure the system is reliable just after a reboot, is to set WinRM to a delayed startup
+- name: Ensure WinRM starts when the system has settled and is ready to work reliably
+  win_service:
+    name: WinRM
+    start_mode: delayed
+
+# Optionally, you can increase the reboot_timeout to survive long updates during reboot
+- name: Ensure we wait long enough for the updates to be applied during reboot
+  win_updates:
+    reboot: yes
+    reboot_timeout: 3600
 '''
 
 RETURN = r'''
 reboot_required:
     description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
     returned: success
-    type: boolean
+    type: bool
     sample: True
 
 updates:
@@ -174,7 +186,7 @@ updates:
         title:
             description: Display name
             returned: always
-            type: string
+            type: str
             sample: "Security Update for Windows Server 2012 R2 (KB3004365)"
         kb:
             description: A list of KB article IDs that apply to the update
@@ -184,27 +196,37 @@ updates:
         id:
             description: Internal Windows Update GUID
             returned: always
-            type: string (guid)
+            type: str (guid)
             sample: "fb95c1c8-de23-4089-ae29-fd3351d55421"
         installed:
             description: Was the update successfully installed
             returned: always
-            type: boolean
+            type: bool
             sample: True
+        categories:
+            description: A list of category strings for this update
+            returned: always
+            type: list of strings
+            sample: [ 'Critical Updates', 'Windows Server 2012 R2' ]
         failure_hresult_code:
             description: The HRESULT code from a failed update
             returned: on install failure
-            type: boolean
+            type: bool
             sample: 2147942402
 
 filtered_updates:
     description: List of updates that were found but were filtered based on
-      I(blacklist) or I(whitelist). The return value is in the same form as
-      I(updates).
+      I(blacklist), I(whitelist) or I(category_names). The return value is in
+      the same form as I(updates), along with I(filtered_reason).
     returned: success
     type: complex
     sample: see the updates return value
-    contains: {}
+    contains:
+        filtered_reason:
+            description: The reason why this update was filtered
+            returned: always
+            type: str
+            sample: 'skip_hidden'
 
 found_update_count:
     description: The number of updates found needing to be applied

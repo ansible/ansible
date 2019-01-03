@@ -49,7 +49,7 @@ EXAMPLES = '''
   register: resp_out
 - set_fact:
     not_after_date: "{{ item.not_after }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?name=='web-cert-01']"
 - debug: var=not_after_date

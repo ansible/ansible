@@ -31,6 +31,9 @@ options:
         default: ha-datacenter
         description:
         - Datacenter to deploy to.
+    cluster:
+        description:
+        - Cluster to deploy to.
     datastore:
         default: datastore1
         description:
@@ -107,18 +110,33 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = r'''
 - vmware_deploy_ovf:
-    hostname: esx.example.org
-    username: root
-    password: passw0rd
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
     ovf: /path/to/ubuntu-16.04-amd64.ovf
     wait_for_ip_address: true
+  delegate_to: localhost
+
+# Deploys a new VM named 'NewVM' in specific datacenter/cluster, with network mapping taken from variable and using ova template from an absolute path
+- vmware_deploy_ovf:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: Datacenter1
+    cluster: Cluster1
+    datastore: vsandatastore
+    name: NewVM
+    networks: "{u'VM Network':u'{{ ProvisioningNetworkLabel }}'}"
+    validate_certs: no
+    power_on: no
+    ovf: /absolute/path/to/template/mytemplate.ova
   delegate_to: localhost
 '''
 
 
 RETURN = r'''
 instance:
-    description: metadata about the new virtualmachine
+    description: metadata about the new virtual machine
     returned: always
     type: dict
     sample: None
@@ -138,8 +156,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import generic_urlparse, open_url, urlparse, urlunparse
 from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_datacenter_by_name, find_datastore_by_name,
-                                         find_network_by_name, find_resource_pool_by_name, find_vm_by_name, gather_vm_facts,
-                                         vmware_argument_spec, wait_for_task, wait_for_vm_ip)
+                                         find_network_by_name, find_resource_pool_by_name, find_vm_by_name, find_cluster_by_name,
+                                         gather_vm_facts, vmware_argument_spec, wait_for_task, wait_for_vm_ip)
 try:
     from ansible.module_utils.vmware import vim
     from pyVmomi import vmodl
@@ -178,7 +196,7 @@ class TarFileProgressReader(tarfile.ExFileObject):
     def __exit__(self, exc_type, exc_value, traceback):
         try:
             self.close()
-        except:
+        except Exception:
             pass
 
     def read(self, size=10240):
@@ -282,9 +300,16 @@ class VMwareDeployOvf:
         if not self.datacenter:
             self.module.fail_json(msg='%(datacenter)s could not be located' % self.params)
 
-        self.resource_pool = find_resource_pool_by_name(self.si, self.params['resource_pool'])
-        if not self.resource_pool:
-            self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
+        if self.params['cluster']:
+            cluster = find_cluster_by_name(self.si, self.params['cluster'])
+            if cluster is None:
+                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
+            else:
+                self.resource_pool = cluster.resourcePool
+        else:
+            self.resource_pool = find_resource_pool_by_name(self.si, self.params['resource_pool'])
+            if not self.resource_pool:
+                self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
 
         for key, value in self.params['networks'].items():
             network = find_network_by_name(self.si, value)
@@ -333,7 +358,7 @@ class VMwareDeployOvf:
             for key, value in self.params['properties'].items():
                 property_mapping = vim.KeyValue()
                 property_mapping.key = key
-                property_mapping.value = value
+                property_mapping.value = str(value) if isinstance(value, bool) else value
                 params['propertyMapping'].append(property_mapping)
 
         if self.params['folder']:
@@ -405,6 +430,9 @@ class VMwareDeployOvf:
         return urlunparse(url_parts.as_list())
 
     def upload(self):
+        if self.params['ovf'] is None:
+            self.module.fail_json(msg="OVF path is required for upload operation.")
+
         ovf_dir = os.path.dirname(self.params['ovf'])
 
         lease, import_spec = self.get_lease()
@@ -426,6 +454,7 @@ class VMwareDeployOvf:
                     msg='Failed to find deviceUrl for file %s' % file_item.path
                 )
 
+            vmdk_tarinfo = None
             if self.tar:
                 vmdk = self.tar
                 try:
@@ -448,7 +477,6 @@ class VMwareDeployOvf:
                     self.module.fail_json(
                         msg='Failed to find VMDK file at %s' % vmdk
                     )
-                vmdk_tarinfo = None
 
             uploaders.append(
                 VMDKUploader(
@@ -508,6 +536,9 @@ def main():
         },
         'datacenter': {
             'default': 'ha-datacenter',
+        },
+        'cluster': {
+            'default': None,
         },
         'deployment_option': {
             'default': None,

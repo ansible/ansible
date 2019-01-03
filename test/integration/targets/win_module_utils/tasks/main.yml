@@ -143,3 +143,23 @@
 - assert:
     that:
     - privilege_util_test.data == 'success'
+
+- name: call module with C# reference
+  csharp_util:
+  register: csharp_res
+
+- name: assert call module with C# reference
+  assert:
+    that:
+    - not csharp_res is failed
+    - csharp_res.res == '{"a":"a","b":1}'
+
+- name: call module with AddType tests
+  add_type_test:
+  register: add_type_test
+
+- name: assert call module with AddType tests
+  assert:
+    that:
+    - not add_type_test is failed
+    - add_type_test.res == 'success'

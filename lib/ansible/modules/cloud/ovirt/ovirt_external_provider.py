@@ -80,6 +80,7 @@ options:
         description:
             - "Specify if the network should be read only."
             - "Applicable if C(type) is I(network)."
+        type: bool
     network_type:
         description:
             - "Type of the external network provider either external (for example OVN) or neutron."
@@ -158,22 +159,22 @@ external_host_provider:
     description: "Dictionary of all the external_host_provider attributes. External provider attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/external_host_provider."
     returned: "On success and if parameter 'type: foreman' is used."
-    type: dictionary
+    type: dict
 openstack_image_provider:
     description: "Dictionary of all the openstack_image_provider attributes. External provider attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_image_provider."
     returned: "On success and if parameter 'type: os_image' is used."
-    type: dictionary
+    type: dict
 openstack_volume_provider:
     description: "Dictionary of all the openstack_volume_provider attributes. External provider attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_volume_provider."
     returned: "On success and if parameter 'type: os_volume' is used."
-    type: dictionary
+    type: dict
 openstack_network_provider:
     description: "Dictionary of all the openstack_network_provider attributes. External provider attributes can be found on your oVirt/RHV instance
                   at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/openstack_network_provider."
     returned: "On success and if parameter 'type: network' is used."
-    type: dictionary
+    type: dict
 '''
 
 import traceback
@@ -359,9 +360,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_external_providers':
-        module.deprecate("The 'ovirt_external_providers' module is being renamed 'ovirt_external_provider'", version=2.8)
 
     check_sdk(module)
     check_params(module)

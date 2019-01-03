@@ -46,7 +46,7 @@ requirements:
 RETURN = '''
 get_status:
     description: State of the GitHub issue
-    type: string
+    type: str
     returned: success
     sample: open, closed
 '''

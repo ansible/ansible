@@ -1,7 +1,8 @@
 .. _developing_inventory:
 
-Developing Dynamic Inventory
-============================
+****************************
+Developing dynamic inventory
+****************************
 
 .. contents:: Topics
    :local:
@@ -11,9 +12,9 @@ including cloud sources, using the supplied :ref:`inventory plugins <inventory_p
 If the source you want is not currently covered by existing plugins, you can create your own as with any other plugin type.
 
 In previous versions you had to create a script or program that can output JSON in the correct format when invoked with the proper arguments.
-You can still use and write inventory scripts, as we ensured backwards compatiblity via the :ref:`script inventory plugin <script_inventory>`
+You can still use and write inventory scripts, as we ensured backwards compatibility via the :ref:`script inventory plugin <script_inventory>`
 and there is no restriction on the programming language used.
-If you choose to write a script, however, you will need to implement some features youself.
+If you choose to write a script, however, you will need to implement some features yourself.
 i.e caching, configuration management, dynamic variable and group composition, etc.
 While with :ref:`inventory plugins <inventory_plugins>` you can leverage the Ansible codebase to add these common features.
 
@@ -21,34 +22,33 @@ While with :ref:`inventory plugins <inventory_plugins>` you can leverage the Ans
 .. _inventory_sources:
 
 Inventory sources
------------------
+=================
 
 Inventory sources are strings (i.e what you pass to ``-i`` in the command line),
 they can represent a path to a file/script or just be the raw data for the plugin to use.
 Here are some plugins and the type of source they use:
 
-+--------------------------------------------+--------------------------------------+
-|  Plugin                                    | Source                               |
-+--------------------------------------------+--------------------------------------+
-| :ref:`host list <host_list_inventory>`     | A comma separated list of hosts      |
-+--------------------------------------------+--------------------------------------+
-| :ref:`yaml <yaml_inventory>`               | Path to a YAML format data file      |
-+--------------------------------------------+--------------------------------------+
-| :ref:`constructed <constructed_inventory>` | Path to a YAML configuration file    |
-+--------------------------------------------+--------------------------------------+
-| :ref:`ini <ini_inventory>`                 | Path to An ini formated data file    |
-+--------------------------------------------+--------------------------------------+
-| :ref:`virtualbox <virtualbox_inventory>`   | Path to a YAML configuration file    |
-+--------------------------------------------+--------------------------------------+
-| :ref:`script plugin <script_inventory>`    | Path to an executable outputing JSON |
-+--------------------------------------------+--------------------------------------+
-
++--------------------------------------------+---------------------------------------+
+|  Plugin                                    | Source                                |
++--------------------------------------------+---------------------------------------+
+| :ref:`host list <host_list_inventory>`     | A comma separated list of hosts       |
++--------------------------------------------+---------------------------------------+
+| :ref:`yaml <yaml_inventory>`               | Path to a YAML format data file       |
++--------------------------------------------+---------------------------------------+
+| :ref:`constructed <constructed_inventory>` | Path to a YAML configuration file     |
++--------------------------------------------+---------------------------------------+
+| :ref:`ini <ini_inventory>`                 | Path to an INI formatted data file    |
++--------------------------------------------+---------------------------------------+
+| :ref:`virtualbox <virtualbox_inventory>`   | Path to a YAML configuration file     |
++--------------------------------------------+---------------------------------------+
+| :ref:`script plugin <script_inventory>`    | Path to an executable outputting JSON |
++--------------------------------------------+---------------------------------------+
 
 
 .. _developing_inventory_inventory_plugins:
 
-Inventory Plugins
------------------
+Inventory plugins
+=================
 
 Like most plugin types (except modules) they must be developed in Python, since they execute on the controller they should match the same requirements :ref:`control_machine_requirements`.
 
@@ -61,8 +61,8 @@ When using the 'persistent' cache, inventory plugins can also use the configured
 
 .. _developing_an_inventory_plugin:
 
-Developing an Inventory Plugin
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Developing an inventory plugin
+------------------------------
 
 The first thing you want to do is use the base class:
 
@@ -91,7 +91,7 @@ For the bulk of the work in the plugin, We mostly want to deal with 2 methods ``
 .. _inventory_plugin_verify_file:
 
 verify_file
-"""""""""""
+^^^^^^^^^^^
 
 This method is used by Ansible to make a quick determination if the inventory source is usable by the plugin. It does not need to be 100% accurate as there might be overlap in what plugins can handle and Ansible will try the enabled plugins (in order) by default.
 
@@ -102,11 +102,11 @@ This method is used by Ansible to make a quick determination if the inventory so
         valid = False
         if super(InventoryModule, self).verify_file(path):
             # base class verifies that file exists and is readable by current user
-            if path.endswith(('.vbox.yaml', '.vbox.yml')):
+            if path.endswith(('virtualbox.yaml', 'virtualbox.yml', 'vbox.yaml', 'vbox.yml')):
                 valid = True
         return valid
 
-In this case, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid yaml file. You can add any type of condition here, but the most common one is 'extension matching'
+In this case, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid yaml file. You can add any type of condition here, but the most common one is 'extension matching'. If you implement extension matching for YAML configuration files the path suffix <plugin_name>.<yml|yaml> should be accepted. All valid extensions should be documented in the plugin description.
 
 Another example that actually does not use a 'file' but the inventory source string itself,
 from the :ref:`host list <host_list_inventory>` plugin:
@@ -123,16 +123,16 @@ from the :ref:`host list <host_list_inventory>` plugin:
             valid = True
         return valid
 
-This method is just to expedite the inventory process and avoid uneccessary parsing of sources that are easy to filter out before causing a parse error.
+This method is just to expedite the inventory process and avoid unnecessary parsing of sources that are easy to filter out before causing a parse error.
 
 .. _inventory_plugin_parse:
 
 parse
-"""""
+^^^^^
 
 This method does the bulk of the work in the plugin.
 
-It takes the following paramters:
+It takes the following parameters:
 
  * inventory: inventory object with existing data and the methods to add hosts/groups/variables to inventory
  * loader: Ansible's DataLoader. The DataLoader can read files, auto load JSON/YAML and decrypt vaulted data, and cache read files.
@@ -168,7 +168,7 @@ To facilitate this there are a few of helper functions used in the example below
 
             # if NOT using _read_config_data you should call set_options directly,
             # to process any defined configuration for this plugin,
-            # if you dont define any options you can skip
+            # if you don't define any options you can skip
             #self.set_options()
 
             # example consuming options from inventory source
@@ -178,14 +178,14 @@ To facilitate this there are a few of helper functions used in the example below
             )
 
 
-            # make requests to get data to feed into inventorya
-            mydata = myselss.getitall()
+            # make requests to get data to feed into inventory
+            mydata = mysession.getitall()
 
             #parse data and create inventory objects:
             for colo in mydata:
                 for server in mydata[colo]['servers']:
                     self.inventory.add_host(server['name'])
-                    self.inventory.set_varaible('ansible_host', server['external_ip'])
+                    self.inventory.set_variable('ansible_host', server['external_ip'])
 
 The specifics will vary depending on API and structure returned. But one thing to keep in mind, if the inventory source or any other issue crops up you should ``raise AnsibleParserError`` to let Ansible know that the source was invalid or the process failed.
 
@@ -194,8 +194,8 @@ For examples on how to implement an inventory plug in, see the source code here:
 
 .. _inventory_source_common_format:
 
-inventory source common format
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Inventory source common format
+------------------------------
 
 To simplify development, most plugins use a mostly standard configuration file as the inventory source, YAML based and with just one required field ``plugin`` which should contain the name of the plugin that is expected to consume the file.
 Depending on other common features used, other fields might be needed, but each plugin can also add it's own custom options as needed.
@@ -204,7 +204,7 @@ For example, if you use the integrated caching, ``cache_plugin``, ``cache_timeou
 .. _inventory_development_auto:
 
 The 'auto' plugin
-^^^^^^^^^^^^^^^^^
+-----------------
 
 Since Ansible 2.5, we include the :ref:`auto inventory plugin <auto_inventory>` enabled by default, which itself just loads other plugins if they use the common YAML configuration format that specifies a ``plugin`` field that matches an inventory plugin name, this makes it easier to use your plugin w/o having to update configurations.
 
@@ -212,8 +212,8 @@ Since Ansible 2.5, we include the :ref:`auto inventory plugin <auto_inventory>` 
 .. _inventory_scripts:
 .. _developing_inventory_scripts:
 
-Inventory Scripts
------------------
+Inventory scripts
+=================
 
 Even though we now have inventory plugins, we still support inventory scripts, not only for backwards compatibility but also to allow users to leverage other programming languages.
 
@@ -221,7 +221,7 @@ Even though we now have inventory plugins, we still support inventory scripts, n
 .. _inventory_script_conventions:
 
 Inventory script conventions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 Inventory scripts must accept the ``--list`` and ``--host <hostname>`` arguments, other arguments are allowed but Ansible will not use them.
 They might still be useful for when executing the scripts directly.
@@ -264,8 +264,8 @@ Printing variables is optional. If the script does not do this, it should print 
 
 .. _inventory_script_tuning:
 
-Tuning the External Inventory Script
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Tuning the external inventory script
+------------------------------------
 
 .. versionadded:: 1.3
 
@@ -342,7 +342,7 @@ An easy way to see how this should look is using :ref:`ansible-inventory`, which
        How to develop modules
    :doc:`developing_plugins`
        How to develop plugins
-   `Ansible Tower <https://ansible.com/ansible-tower>`_
+   `Ansible Tower <https://www.ansible.com/products/tower>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics

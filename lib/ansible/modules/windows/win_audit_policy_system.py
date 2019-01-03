@@ -15,11 +15,7 @@ module: win_audit_policy_system
 short_description: Used to make changes to the system wide Audit Policy
 description:
   - Used to make changes to the system wide Audit Policy.
-  - It is recommended to take a backup of the policies before adjusting them for the first time.
-  - See this page for in depth information U(https://technet.microsoft.com/en-us/library/cc766468.aspx).
 version_added: "2.5"
-author:
-  - Noah Sparks (@nwsparks)
 options:
   category:
     description:
@@ -37,6 +33,13 @@ options:
     required: yes
     type: list
     choices: [ failure, none, success ]
+notes:
+  - It is recommended to take a backup of the policies before adjusting them for the first time.
+  - See this page for in depth information U(https://technet.microsoft.com/en-us/library/cc766468.aspx).
+seealso:
+- module: win_audit_rule
+author:
+  - Noah Sparks (@nwsparks)
 '''
 
 EXAMPLES = r'''
@@ -60,7 +63,7 @@ RETURN = '''
 current_audit_policy:
   description: details on the policy being targetted
   returned: always
-  type: dictionary
+  type: dict
   sample: |-
     {
       "File Share":"failure"

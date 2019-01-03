@@ -73,10 +73,11 @@
         name: foo
         state: absent
     # ============================================================================
-    - name: Install 1:foo-1.0-2
+    - name: Downgrade foo
       yum:
-        name: "1:foo-1.0-2.{{ ansible_architecture }}"
+        name: foo-1.0-1
         state: present
+        allow_downgrade: yes
       register: yum_result
 
     - name: Check foo with rpm
@@ -87,30 +88,7 @@
       assert:
         that:
             - "yum_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-2')"
-
-    - name: Verify yum module outputs
-      assert:
-        that:
-            - "'msg' in yum_result"
-            - "'rc' in yum_result"
-            - "'results' in yum_result"
-    # ============================================================================
-    - name: Install foo-1.0-2 again
-      yum:
-        name: foo-1.0-2
-        state: present
-      register: yum_result
-
-    - name: Check foo with rpm
-      shell: rpm -q foo
-      register: rpm_result
-
-    - name: Verify installation
-      assert:
-        that:
-            - "not yum_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-2')"
+            - "rpm_result.stdout.startswith('foo-1.0-1')"
 
     - name: Verify yum module outputs
       assert:
@@ -278,30 +256,6 @@
         that:
             - "not yum_result.changed"
             - "rpm_result.stdout.startswith('foo-1.0-2')"
-
-    - name: Verify yum module outputs
-      assert:
-        that:
-            - "'msg' in yum_result"
-            - "'rc' in yum_result"
-            - "'results' in yum_result"
-    # ============================================================================
-    - name: Downgrade foo
-      yum:
-        name: foo-1.0-1
-        state: present
-        allow_downgrade: yes
-      register: yum_result
-
-    - name: Check foo with rpm
-      shell: rpm -q foo
-      register: rpm_result
-
-    - name: Verify installation
-      assert:
-        that:
-            - "yum_result.changed"
-            - "rpm_result.stdout.startswith('foo-1.0-1')"
 
     - name: Verify yum module outputs
       assert:
@@ -505,4 +459,185 @@
     - name: Clean up
       yum:
         name: foo
+        state: absent
+
+# FIXME: dnf currently doesn't support epoch as part of it's pkg_spec for
+#        finding install candidates
+#         https://bugzilla.redhat.com/show_bug.cgi?id=1619687
+- block:
+    - name: Install 1:foo-1.0-2
+      yum:
+        name: "1:foo-1.0-2.{{ ansible_architecture }}"
+        state: present
+      register: yum_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: foo
+        state: absent
+
+  when: ansible_pkg_mgr == 'yum'
+
+# DNF1 (Fedora < 26) had some issues:
+# - did not accept architecture tag as valid component of a package spec unless
+#   installing a file (i.e. can't search the repo)
+# - doesn't handle downgrade transactions via the API properly, marks it as a
+#   conflict
+#
+# NOTE: Both DNF1 and Fedora < 26 have long been EOL'd by their respective
+#       upstreams
+- block:
+    # ============================================================================
+    - name: Install foo-1.0-2
+      yum:
+        name: "foo-1.0-2.{{ ansible_architecture }}"
+        state: present
+      register: yum_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+
+    - name: Install foo-1.0-2 again
+      yum:
+        name: foo-1.0-2
+        state: present
+      register: yum_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not yum_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: foo
+        state: absent
+  when: not (ansible_distribution == "Fedora" and ansible_distribution_major_version|int < 26)
+
+# https://github.com/ansible/ansible/issues/47689
+- block:
+    - name: Install foo == 1.0
+      yum:
+        name: "foo == 1.0"
+        state: present
+      register: yum_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('foo-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: foo
+        state: absent
+
+  when: ansible_pkg_mgr == 'yum'
+
+# https://github.com/ansible/ansible/issues/45250
+- block:
+    - name: Install foo-1.0, foo-bar-1.0, bar-1.0
+      yum:
+        name: "foo-1.0,foo-bar-1.0,bar-1.0"
+        state: present
+
+    - name: Upgrade foo*
+      yum:
+        name: foo*
+        state: latest
+      register: yum_result
+
+    - name: Check foo with rpm
+      shell: rpm -q foo
+      register: rpm_result
+
+    - name: Verify update of foo
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('foo-1.1-1')"
+
+    - name: Check foo-bar with rpm
+      shell: rpm -q foo-bar
+      register: rpm_result
+
+    - name: Verify update of foo-bar
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('foo-bar-1.1-1')"
+
+    - name: Check bar with rpm
+      shell: rpm -q bar
+      register: rpm_result
+
+    - name: Verify bar did NOT get updated
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('bar-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "yum_result is changed"
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: foo,foo-bar,bar
         state: absent

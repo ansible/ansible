@@ -54,8 +54,6 @@ options:
       - Full path to a C(.wav) file containing a sound to play after the text has been spoken.
       - Useful on conference calls to alert other speakers that ansible has finished speaking.
     type: path
-author:
-- Jon Hawkesworth (@jhawkesworth)
 notes:
    - Needs speakers or headphones to do anything useful.
    - |
@@ -67,6 +65,11 @@ notes:
                  $speech.Dispose()
 
    - Speech can be surprisingly slow, so it's best to keep message text short.
+seealso:
+- module: win_msg
+- module: win_toast
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''
@@ -97,16 +100,16 @@ RETURN = r'''
 message_text:
     description: the text that the module attempted to speak
     returned: success
-    type: string
+    type: str
     sample: "Warning, deployment commencing in 5 minutes."
 voice:
     description: the voice used to speak the text.
     returned: success
-    type: string
+    type: str
     sample: Microsoft Hazel Desktop
 voice_info:
     description: the voice used to speak the text.
     returned: when requested voice could not be loaded
-    type: string
+    type: str
     sample: Could not load voice TestVoice, using system default voice
 '''

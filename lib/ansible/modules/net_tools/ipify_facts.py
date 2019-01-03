@@ -39,6 +39,7 @@ options:
       - When set to C(NO), SSL certificates will not be validated.
     required: false
     default: "yes"
+    type: bool
     version_added: "2.4"
 notes:
   - "Visit https://www.ipify.org to get more information."
@@ -61,7 +62,7 @@ RETURN = '''
 ipify_public_ip:
   description: Public IP of the internet gateway.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 '''
 

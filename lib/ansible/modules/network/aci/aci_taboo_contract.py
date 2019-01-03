@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -20,8 +20,11 @@ description:
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(vz:BrCP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:BrCP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -29,26 +32,31 @@ options:
   taboo_contract:
     description:
     - The name of the Taboo Contract.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the Taboo Contract.
+    type: str
     aliases: [ descr ]
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
   scope:
     description:
     - The scope of a service contract.
     - The APIC defaults to C(context) when unset during creation.
+    type: str
     choices: [ application-profile, context, global, tenant ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -63,6 +71,7 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: present
+  delegate_to: localhost
 
 - name: Remove taboo contract
   aci_taboo_contract:
@@ -72,6 +81,7 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: absent
+  delegate_to: localhost
 
 - name: Query all taboo contracts
   aci_taboo_contract:
@@ -79,6 +89,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a specific taboo contract
   aci_taboo_contract:
@@ -88,6 +100,8 @@ EXAMPLES = r'''
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -122,7 +136,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -171,17 +185,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -191,7 +205,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -229,14 +243,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzTaboo',
             aci_rn='taboo-{0}'.format(taboo_contract),
-            filter_target='eq(vzTaboo.name, "{0}")'.format(taboo_contract),
             module_object=taboo_contract,
+            target_filter={'name': taboo_contract},
         ),
     )
 

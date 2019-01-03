@@ -12,8 +12,6 @@ DOCUMENTATION = r'''
 ---
 module: win_tempfile
 version_added: "2.3"
-author:
-- Dag Wieers (@dagwieers)
 short_description: Creates temporary files and directories
 description:
   - Creates temporary files and directories.
@@ -40,6 +38,10 @@ options:
     default: ''
 notes:
   - For non-Windows targets, please use the M(tempfile) module instead.
+seealso:
+- module: tempfile
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r"""
@@ -58,6 +60,6 @@ RETURN = r'''
 path:
   description: Path to created file or directory
   returned: success
-  type: string
+  type: str
   sample: C:\Users\Administrator\AppData\Local\Temp\ansible.bMlvdk
 '''

@@ -1,0 +1,36 @@
+---
+# defaults file for ec2_instance
+ec2_instance_name: '{{resource_prefix}}-node'
+ec2_instance_owner: 'integration-run-{{resource_prefix}}'
+ec2_ami_image:
+  # https://wiki.centos.org/Cloud/AWS collected 2018-01-10
+  ap-northeast-1: ami-571e3c30
+  ap-northeast-2: ami-97cb19f9
+  ap-south-1: ami-11f0837e
+  ap-southeast-1: ami-30318f53
+  ap-southeast-2: ami-24959b47
+  ca-central-1: ami-daeb57be
+  eu-central-1: ami-7cbc6e13
+  eu-west-1: ami-0d063c6b
+  eu-west-2: ami-c22236a6
+  sa-east-1: ami-864f2dea
+  us-east-1: ami-ae7bfdb8
+  us-east-2: ami-9cbf9bf9
+  us-west-1: ami-7c280d1c
+  us-west-2: ami-0c2aba6c
+# We need to use ENA enabled AMIs to get EBS optimized instances.
+ec2_ebs_optimized_ami_image:
+  ap-northeast-1: ami-00f9d04b3b3092052
+  ap-northeast-2: ami-0c764df09c35858b8
+  ap-south-1: ami-00796998f258969fd
+  ap-southeast-1: ami-085fd1bd447be68e8
+  ap-southeast-2: ami-0b8dea0e70b969adc
+  ca-central-1: ami-05cac140c6a1fb960
+  eu-central-1: ami-02ea8f348fa28c108
+  eu-west-1: ami-0a5e707736615003c
+  eu-west-2: ami-017b0e29fac27906b
+  sa-east-1: ami-0160a8b6087883cb6
+  us-east-1: ami-013be31976ca2c322
+  us-east-2: ami-0350c5670171b5391
+  us-west-1: ami-01beb64058d271bc4
+  us-west-2: ami-061e7ebbc234015fe

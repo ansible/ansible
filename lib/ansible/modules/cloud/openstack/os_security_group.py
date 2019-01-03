@@ -36,6 +36,11 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   project:
+     description:
+        - Unique name or ID of the project.
+     required: false
+     version_added: "2.7"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -55,6 +60,13 @@ EXAMPLES = '''
     state: present
     name: foo
     description: updated description for the foo security group
+
+# Create a security group for a given project
+- os_security_group:
+    cloud: mordred
+    state: present
+    name: foo
+    project: myproj
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -87,6 +99,7 @@ def main():
         name=dict(required=True),
         description=dict(default=''),
         state=dict(default='present', choices=['absent', 'present']),
+        project=dict(default=None),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -97,10 +110,24 @@ def main():
     name = module.params['name']
     state = module.params['state']
     description = module.params['description']
+    project = module.params['project']
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
-        secgroup = cloud.get_security_group(name)
+        if project is not None:
+            proj = cloud.get_project(project)
+            if proj is None:
+                module.fail_json(msg='Project %s could not be found' % project)
+            project_id = proj['id']
+        else:
+            project_id = cloud.current_project_id
+
+        if project_id:
+            filters = {'tenant_id': project_id}
+        else:
+            filters = None
+
+        secgroup = cloud.get_security_group(name, filters=filters)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, secgroup))
@@ -108,7 +135,11 @@ def main():
         changed = False
         if state == 'present':
             if not secgroup:
-                secgroup = cloud.create_security_group(name, description)
+                kwargs = {}
+                if project_id:
+                    kwargs['project_id'] = project_id
+                secgroup = cloud.create_security_group(name, description,
+                                                       **kwargs)
                 changed = True
             else:
                 if _needs_update(module, secgroup):

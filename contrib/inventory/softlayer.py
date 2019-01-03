@@ -36,10 +36,7 @@ import SoftLayer
 import re
 import argparse
 import itertools
-try:
-    import json
-except:
-    import simplejson as json
+import json
 
 
 class SoftLayerInventory(object):
@@ -52,7 +49,7 @@ class SoftLayerInventory(object):
         'primaryBackendIpAddress',
         'primaryIpAddress',
         'datacenter',
-        'tagReferences.tag.name',
+        'tagReferences',
         'userData.value',
     ]
 
@@ -85,7 +82,7 @@ class SoftLayerInventory(object):
             self.get_all_servers()
             print(self.json_format_dict(self.inventory, True))
         elif self.args.host:
-            self.get_virtual_servers()
+            self.get_all_servers()
             print(self.json_format_dict(self.inventory["_meta"]["hostvars"][self.args.host], True))
 
     def to_safe(self, word):
@@ -142,6 +139,12 @@ class SoftLayerInventory(object):
 
         dest = instance['primaryIpAddress']
 
+        instance['tags'] = list()
+        for tag in instance['tagReferences']:
+            instance['tags'].append(tag['tag']['name'])
+
+        del instance['tagReferences']
+
         self.inventory["_meta"]["hostvars"][dest] = instance
 
         # Inventory: group by memory
@@ -171,9 +174,8 @@ class SoftLayerInventory(object):
         # Inventory: group by type (hardware/virtual)
         self.push(self.inventory, instance_type, dest)
 
-        # Inventory: group by tag
-        for tag in instance['tagReferences']:
-            self.push(self.inventory, tag['tag']['name'], dest)
+        for tag in instance['tags']:
+            self.push(self.inventory, tag, dest)
 
     def get_virtual_servers(self):
         '''Get all the CCI instances'''

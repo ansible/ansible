@@ -40,16 +40,13 @@ from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.release import __version__
+from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 from ansible.utils.vars import load_extra_vars, load_options_vars
 from ansible.vars.manager import VariableManager
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class SortedOptParser(optparse.OptionParser):
@@ -99,7 +96,7 @@ class InvalidOptsParser(SortedOptParser):
 class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
 
-    VALID_ACTIONS = []
+    VALID_ACTIONS = frozenset()
 
     _ITALIC = re.compile(r"I\(([^)]+)\)")
     _BOLD = re.compile(r"B\(([^)]+)\)")
@@ -202,7 +199,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         for password_file in vault_password_files:
             id_slug = u'%s@%s' % (C.DEFAULT_VAULT_IDENTITY, password_file)
 
-            # note this makes --vault-id higher precendence than --vault-password-file
+            # note this makes --vault-id higher precedence than --vault-password-file
             # if we want to intertwingle them in order probably need a cli callback to populate vault_ids
             # used by --vault-id and --vault-password-file
             vault_ids.append(id_slug)
@@ -239,7 +236,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         if create_new_password:
             prompt_formats['prompt'] = ['New vault password (%(vault_id)s): ',
-                                        'Confirm vew vault password (%(vault_id)s): ']
+                                        'Confirm new vault password (%(vault_id)s): ']
             # 2.3 format prompts for --ask-vault-pass
             prompt_formats['prompt_ask_vault_pass'] = ['New Vault password: ',
                                                        'Confirm New Vault password: ']
@@ -270,7 +267,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                                                           vault_id=built_vault_id)
 
                 # a empty or invalid password from the prompt will warn and continue to the next
-                # without erroring globablly
+                # without erroring globally
                 try:
                     prompted_vault_secret.load()
                 except AnsibleError as exc:
@@ -344,7 +341,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
 
         def _dep(which):
-            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.6')
+            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.9')
 
         if self.options.become:
             pass
@@ -420,6 +417,10 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # base opts
         parser = SortedOptParser(usage, version=CLI.version("%prog"), description=desc, epilog=epilog)
+        parser.remove_option('--version')
+        version_help = "show program's version number, config file location, configured module search path," \
+                       " module location, executable location and exit"
+        parser.add_option('--version', action="version", help=version_help)
         parser.add_option('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
                           help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
@@ -583,13 +584,6 @@ class CLI(with_metaclass(ABCMeta, object)):
             # optparse defaults does not do what's expected
             self.options.tags = ['all']
         if hasattr(self.options, 'tags') and self.options.tags:
-            if not C.MERGE_MULTIPLE_CLI_TAGS:
-                if len(self.options.tags) > 1:
-                    display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. '
-                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
-                                       version=2.5, removed=False)
-                    self.options.tags = [self.options.tags[-1]]
-
             tags = set()
             for tag_set in self.options.tags:
                 for tag in tag_set.split(u','):
@@ -598,13 +592,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # process skip_tags
         if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
-            if not C.MERGE_MULTIPLE_CLI_TAGS:
-                if len(self.options.skip_tags) > 1:
-                    display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. '
-                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
-                                       version=2.5, removed=False)
-                    self.options.skip_tags = [self.options.skip_tags[-1]]
-
             skip_tags = set()
             for tag_set in self.options.skip_tags:
                 for tag in tag_set.split(u','):
@@ -821,7 +808,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         no_hosts = False
         if len(inventory.list_hosts()) == 0:
             # Empty inventory
-            if C.LOCALHOST_WARNING:
+            if C.LOCALHOST_WARNING and pattern not in C.LOCALHOST:
                 display.warning("provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'")
             no_hosts = True
 

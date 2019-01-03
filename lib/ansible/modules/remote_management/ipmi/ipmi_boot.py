@@ -72,14 +72,14 @@ options:
 requirements:
   - "python >= 2.6"
   - pyghmi
-author: "Bulat Gaifullin (gaifullinbf@gmail.com)"
+author: "Bulat Gaifullin (@bgaifullin) <gaifullinbf@gmail.com>"
 '''
 
 RETURN = '''
 bootdev:
     description: The boot device name which will be used beyond next boot.
     returned: success
-    type: string
+    type: str
     sample: default
 persistent:
     description: If True, system firmware will use this device beyond next boot.

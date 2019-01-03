@@ -56,10 +56,23 @@ options:
         run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
     required: false
     default: true
+    type: bool
+  force:
+    description:
+      - Whether or not to force full deployment, equivalent to serverless `--force` option.
+    required: false
+    default: false
+    version_added: "2.7"
+  verbose:
+    description:
+      - Shows all stack events during deployment, and display any Stack Output.
+    required: false
+    default: false
+    version_added: "2.7"
 notes:
    - Currently, the `serverless` command must be in the path of the node executing the task. In the future this may be a flag.
 requirements: [ "serverless", "yaml" ]
-author: "Ryan Scott Brown @ryansb"
+author: Ryan Scott Brown (@ryansb)
 '''
 
 EXAMPLES = """
@@ -99,16 +112,16 @@ EXAMPLES = """
 
 RETURN = """
 service_name:
-  type: string
+  type: str
   description: The service name specified in the serverless.yml that was just deployed.
   returned: always
   sample: my-fancy-service-dev
 state:
-  type: string
+  type: str
   description: Whether the stack for the serverless project is present/absent.
   returned: always
 command:
-  type: string
+  type: str
   description: Full `serverless` command run by this module, in case you want to re-run the command outside the module.
   returned: always
   sample: serverless deploy --stage production
@@ -160,7 +173,9 @@ def main():
             region=dict(default='', required=False),
             stage=dict(default='', required=False),
             deploy=dict(default=True, type='bool', required=False),
-            serverless_bin_path=dict(required=False, type='path')
+            serverless_bin_path=dict(required=False, type='path'),
+            force=dict(default=False, required=False),
+            verbose=dict(default=False, required=False)
         ),
     )
 
@@ -173,6 +188,8 @@ def main():
     region = module.params.get('region')
     stage = module.params.get('stage')
     deploy = module.params.get('deploy', True)
+    force = module.params.get('force', False)
+    verbose = module.params.get('verbose', False)
     serverless_bin_path = module.params.get('serverless_bin_path')
 
     if serverless_bin_path is not None:
@@ -187,12 +204,18 @@ def main():
     else:
         module.fail_json(msg="State must either be 'present' or 'absent'. Received: {}".format(state))
 
-    if not deploy and state == 'present':
-        command += '--noDeploy '
+    if state == 'present':
+        if not deploy:
+            command += '--noDeploy '
+        elif force:
+            command += '--force '
+
     if region:
         command += '--region {} '.format(region)
     if stage:
         command += '--stage {} '.format(stage)
+    if verbose:
+        command += '--verbose '
 
     rc, out, err = module.run_command(command, cwd=service_path)
     if rc != 0:

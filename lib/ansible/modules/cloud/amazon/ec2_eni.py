@@ -60,9 +60,8 @@ options:
     default: 0
   attached:
     description:
-      - Specifies if network interface should be attached or detached from instance. If ommited, attachment status
+      - Specifies if network interface should be attached or detached from instance. If omitted, attachment status
         won't change
-    default: 'yes'
     version_added: 2.2
     type: bool
   force_detach:
@@ -70,16 +69,19 @@ options:
       - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id
         to None or when deleting an interface with state=absent.
     default: 'no'
+    type: bool
   delete_on_termination:
     description:
       - Delete the interface when the instance it is attached to is terminated. You can only specify this flag when the
         interface is being modified, not on creation.
     required: false
+    type: bool
   source_dest_check:
     description:
       - By default, interfaces perform source/destination checks. NAT instances however need this check to be disabled.
         You can only specify this flag when the interface is being modified, not on creation.
     required: false
+    type: bool
   secondary_private_ip_addresses:
     description:
       - A list of IP addresses to assign as secondary IP addresses to the network interface.
@@ -91,6 +93,7 @@ options:
       - To be used with I(secondary_private_ip_addresses) to determine whether or not to remove any secondary IP addresses other than those specified.
         Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
     default: no
+    type: bool
     version_added: 2.5
   secondary_private_ip_address_count:
     description:
@@ -103,6 +106,7 @@ options:
         to be reassigned to the specified network interface.
     required: false
     default: 'no'
+    type: bool
     version_added: 2.7
 extends_documentation_fragment:
     - aws
@@ -201,7 +205,7 @@ interface:
   contains:
     description:
       description: interface description
-      type: string
+      type: str
       sample: Firewall network interface
     groups:
       description: list of security groups
@@ -209,19 +213,19 @@ interface:
       sample: [ { "sg-f8a8a9da": "default" } ]
     id:
       description: network interface id
-      type: string
+      type: str
       sample: "eni-1d889198"
     mac_address:
       description: interface's physical address
-      type: string
+      type: str
       sample: "00:00:5E:00:53:23"
     owner_id:
       description: aws account id
-      type: string
+      type: str
       sample: 812381371
     private_ip_address:
       description: primary ip address of this interface
-      type: string
+      type: str
       sample: 10.20.30.40
     private_ip_addresses:
       description: list of all private ip addresses associated to this interface
@@ -229,19 +233,19 @@ interface:
       sample: [ { "primary_address": true, "private_ip_address": "10.20.30.40" } ]
     source_dest_check:
       description: value of source/dest check flag
-      type: boolean
+      type: bool
       sample: True
     status:
       description: network interface status
-      type: string
+      type: str
       sample: "pending"
     subnet_id:
       description: which vpc subnet the interface is bound
-      type: string
+      type: str
       sample: subnet-b0a0393c
     vpc_id:
       description: which vpc this network interface is bound
-      type: string
+      type: str
       sample: vpc-9a9a9da
 
 '''

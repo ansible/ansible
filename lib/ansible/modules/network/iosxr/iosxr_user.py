@@ -689,7 +689,7 @@ def main():
     config_object = None
     if is_cliconf(module):
         module.deprecate(msg="cli support for 'iosxr_user' is deprecated. Use transport netconf instead",
-                         version="4 releases from v2.5")
+                         version="2.9")
         config_object = CliConfiguration(module, result)
     elif is_netconf(module):
         config_object = NCConfiguration(module, result)

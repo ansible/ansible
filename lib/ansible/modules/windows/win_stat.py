@@ -53,6 +53,9 @@ options:
         version_added: "2.3"
 notes:
      - For non-Windows targets, use the M(stat) module instead.
+seealso:
+- module: stat
+- module: win_file
 author:
 - Chris Church (@cchurch)
 '''
@@ -102,7 +105,7 @@ RETURN = r'''
 changed:
     description: Whether anything was changed
     returned: always
-    type: boolean
+    type: bool
     sample: True
 stat:
     description: dictionary containing all the stat data
@@ -112,13 +115,13 @@ stat:
         attributes:
             description: Attributes of the file at path in raw form
             returned: success, path exists
-            type: string
+            type: str
             sample: "Archive, Hidden"
         checksum:
             description: The checksum of a file based on checksum_algorithm specified
             returned: success, path exist, path is a file, get_checksum == True
               checksum_algorithm specified is supported
-            type: string
+            type: str
             sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
         creationtime:
             description: The create time of the file represented in seconds since epoch
@@ -128,17 +131,17 @@ stat:
         exists:
             description: If the path exists or not
             returned: success
-            type: boolean
+            type: bool
             sample: True
         extension:
             description: The extension of the file at path
             returned: success, path exists, path is a file
-            type: string
+            type: str
             sample: ".ps1"
         filename:
             description: The name of the file (without path)
             returned: success, path exists, path is a file
-            type: string
+            type: str
             sammple: foo.ini
         hlnk_targets:
             description: List of other files pointing to the same file (hard links), excludes the current file
@@ -150,42 +153,42 @@ stat:
         isarchive:
             description: If the path is ready for archiving or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         isdir:
             description: If the path is a directory or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         ishidden:
             description: If the path is hidden or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         isjunction:
             description: If the path is a junction point or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         islnk:
             description: If the path is a symbolic link or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         isreadonly:
             description: If the path is read only or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         isreg:
             description: If the path is a regular file
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         isshared:
             description: If the path is shared or not
             returned: success, path exists
-            type: boolean
+            type: bool
             sample: True
         lastaccesstime:
             description: The last access time of the file represented in seconds since epoch
@@ -200,17 +203,17 @@ stat:
         lnk_source:
             description: Target of the symlink normalized for the remote filesystem
             returned: success, path exists and the path is a symbolic link or junction point
-            type: string
+            type: str
             sample: C:\temp\link
         lnk_target:
             description: Target of the symlink. Note that relative paths remain relative
             returned: success, path exists and the path is a symbolic link or junction point
-            type: string
+            type: str
             sample: ..\link
         md5:
             description: The MD5 checksum of a file (Between Ansible 1.9 and 2.2 this was returned as a SHA1 hash), will be removed in 2.9
             returned: success, path exist, path is a file, get_md5 == True
-            type: string
+            type: str
             sample: 09cb79e8fc7453c84a07f644e441fd81623b7f98
         nlink:
             description: Number of links to the file (hard links)
@@ -220,17 +223,17 @@ stat:
         owner:
             description: The owner of the file
             returned: success, path exists
-            type: string
+            type: str
             sample: BUILTIN\Administrators
         path:
             description: The full absolute path to the file
             returned: success, path exists, file exists
-            type: string
+            type: str
             sample: C:\foo.ini
         sharename:
             description: The name of share if folder is shared
             returned: success, path exists, file is a directory and isshared == True
-            type: string
+            type: str
             sample: file-share
         size:
             description: The size in bytes of a file or folder

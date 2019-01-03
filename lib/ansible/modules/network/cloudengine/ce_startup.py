@@ -28,7 +28,7 @@ short_description: Manages a system startup information on HUAWEI CloudEngine sw
 description:
     - Manages a system startup information on HUAWEI CloudEngine switches.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     cfg_file:
         description:
@@ -96,7 +96,7 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 proposed:
     description: k/v pairs of parameters passed into module

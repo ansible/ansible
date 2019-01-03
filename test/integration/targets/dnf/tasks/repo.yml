@@ -87,6 +87,7 @@
       dnf:
         name: "{{ repodir }}/foo-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
+        allow_downgrade: True
       register: dnf_result
 
     - name: Check foo with rpm

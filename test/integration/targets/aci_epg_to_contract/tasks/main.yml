@@ -8,6 +8,22 @@
     msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
   when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
 
+- name: Ensure contract binding does not exist prior to testing
+  aci_epg_to_contract:
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    contract_type: provider
+    contract: "anstest_http"
+    state: absent
+
 - name: ensure tenant exists for tests to kick off
   aci_tenant: &aci_tenant_present
     host: "{{ aci_hostname }}"
@@ -17,8 +33,8 @@
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     output_level: debug
-    state: present
     tenant: anstest
+    state: present
   register: tenant_present
 
 - name: ensure contracts exist for tests to kick off
@@ -43,7 +59,7 @@
   aci_epg_to_contract: &aci_epg_provide_present
     <<: *aci_epg_present
     contract_type: provider
-    contract: "anstest_http"
+    contract: anstest_http
   check_mode: yes
   register: provide_present_check_mode
 
@@ -94,21 +110,21 @@
 - name: present assertions
   assert:
     that:
-      - provide_present_check_mode.changed == true
+      - provide_present_check_mode is changed
       - 'provide_present_check_mode.sent == {"fvRsProv": {"attributes": {"tnVzBrCPName": "anstest_http"}}}'
-      - provide_present.changed == true
+      - provide_present is changed
       - provide_present.sent == provide_present_check_mode.sent
       - provide_present.previous == []
-      - consume_present.changed == true
+      - consume_present is changed
       - consume_present.previous == []
       - 'consume_present.sent == {"fvRsCons": {"attributes": {"tnVzBrCPName": "anstest_db"}}}'
-      - provide_present2.changed == true
+      - provide_present2 is changed
       - provide_present2.previous == []
-      - missing_param_present.failed == true
+      - missing_param_present is failed
       - 'missing_param_present.msg == "state is present but all of the following are missing: ap, contract, epg"'
-      - missing_required_present.failed == true
+      - missing_required_present is failed
       - 'missing_required_present.msg == "missing required arguments: contract_type"'
-      - incompatible_present.failed == true
+      - incompatible_present is failed
       - incompatible_present.msg == "the 'provider_match' is only configurable for Provided Contracts"
 
 - name: get binding
@@ -141,15 +157,15 @@
 - name: query assertions
   assert:
     that:
-      - query_provide_contract.changed == false
+      - query_provide_contract is not changed
       - query_provide_contract.current != []
-      - '"class/fvRsProv.json" in query_provide_contract.url'
-      - query_consume_contract.changed == false
+      - '"uni/tn-anstest/ap-anstest/epg-anstest/rsprov-anstest_https.json" in query_provide_contract.url'
+      - query_consume_contract is not changed
       - query_consume_contract.current != []
-      - '"class/fvRsCons.json" in query_consume_contract.url'
-      - query_all.changed == false
+      - '"uni/tn-anstest/ap-anstest/epg-anstest/rscons-anstest_db.json" in query_consume_contract.url'
+      - query_all is not changed
       - '"class/fvRsProv.json" in query_all.url'
-      - missing_required_query.failed == true
+      - missing_required_query is failed
       - 'missing_required_query.msg == "missing required arguments: contract_type"'
 
 - name: delete consume binding - check mode works
@@ -198,18 +214,18 @@
 - name: absent assertions
   assert:
     that:
-      - consume_absent_check_mode.changed == true
+      - consume_absent_check_mode is changed
       - consume_absent_check_mode.previous.0.fvRsCons is defined
-      - consume_absent.changed == true
+      - consume_absent is changed
       - consume_absent.previous == consume_absent_check_mode.previous
-      - provide_absent.changed == true
+      - provide_absent is changed
       - provide_absent.previous.0.fvRsProv is defined
-      - provide_absent2.changed == true
-      - consume_absent_idempotent.changed == false
+      - provide_absent2 is changed
+      - consume_absent_idempotent is not changed
       - consume_absent_idempotent.previous == []
-      - missing_param_absent.failed == true
+      - missing_param_absent is failed
       - 'missing_param_absent.msg == "state is absent but all of the following are missing: contract"'
-      - missing_required_absent.failed == true
+      - missing_required_absent is failed
       - 'missing_required_absent.msg == "missing required arguments: contract_type"'
 
 - name: cleanup contracts
@@ -223,16 +239,16 @@
   aci_epg:
     <<: *aci_epg_present
     state: absent
-  when: epg_present.changed == true
+  when: epg_present is changed
 
 - name: cleanup ap
   aci_ap:
     <<: *aci_ap_present
     state: absent
-  when: ap_present.changed == true
+  when: ap_present is changed
 
 - name: cleanup tenant
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

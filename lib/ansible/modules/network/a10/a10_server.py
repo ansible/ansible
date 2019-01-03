@@ -22,7 +22,9 @@ version_added: 1.8
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices' server object.
 description:
     - Manage SLB (Server Load Balancer) server objects on A10 Networks devices via aXAPIv2.
-author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
+author:
+  - Eric Chou (@ericchou)
+  - Mischa Peters (@mischapeters)
 notes:
     - Requires A10 Networks aXAPI 2.1.
 extends_documentation_fragment:
@@ -91,7 +93,7 @@ RETURN = '''
 content:
   description: the full info regarding the slb_server
   returned: success
-  type: string
+  type: str
   sample: "mynewserver"
 '''
 import json
@@ -115,7 +117,7 @@ def validate_ports(module, ports):
         if 'port_num' in item:
             try:
                 item['port_num'] = int(item['port_num'])
-            except:
+            except Exception:
                 module.fail_json(msg="port_num entries in the port definitions must be integers")
         else:
             module.fail_json(msg="port definitions must define the port_num field")

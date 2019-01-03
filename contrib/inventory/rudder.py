@@ -59,10 +59,7 @@ from time import time
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 
 class RudderInventory(object):
@@ -261,7 +258,7 @@ class RudderInventory(object):
 
         try:
             response, content = self.conn.request(target.geturl(), method, body, headers)
-        except:
+        except Exception:
             self.fail_with_error('Error connecting to Rudder server')
 
         try:

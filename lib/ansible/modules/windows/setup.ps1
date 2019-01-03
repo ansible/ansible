@@ -68,7 +68,7 @@ $result = @{
 $grouped_subsets = @{
     min=[System.Collections.Generic.List[string]]@('date_time','distribution','dns','env','local','platform','powershell_version','user')
     network=[System.Collections.Generic.List[string]]@('all_ipv4_addresses','all_ipv6_addresses','interfaces','windows_domain', 'winrm')
-    hardware=[System.Collections.Generic.List[string]]@('bios','memory','processor','uptime')
+    hardware=[System.Collections.Generic.List[string]]@('bios','memory','processor','uptime','virtual')
     external=[System.Collections.Generic.List[string]]@('facter')
 }
 
@@ -298,8 +298,8 @@ if($gather_subset.Contains('memory')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
     $ansible_facts += @{
         # Win32_PhysicalMemory is empty on some virtual platforms
-        ansible_memtotal_mb = ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
-        ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024 / 1024))
+        ansible_memtotal_mb = ([math]::ceiling($win32_cs.TotalPhysicalMemory / 1024 / 1024))
+        ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024))
     }
 }
 
@@ -308,6 +308,13 @@ if($gather_subset.Contains('platform')) {
     $win32_cs = Get-LazyCimInstance Win32_ComputerSystem
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
     $ip_props = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties()
+
+    try {
+        $ansible_reboot_pending = Get-PendingRebootStatus
+    } catch {
+        # fails for non-admin users, set to null in this case
+        $ansible_reboot_pending = $null
+    }
 
     $ansible_facts += @{
         ansible_architecture = $win32_os.OSArchitecture
@@ -320,7 +327,7 @@ if($gather_subset.Contains('platform')) {
         ansible_owner_contact = ([string] $win32_cs.PrimaryOwnerContact)
         ansible_owner_name = ([string] $win32_cs.PrimaryOwnerName)
         # FUTURE: should this live in its own subset?
-        ansible_reboot_pending = (Get-PendingRebootStatus)
+        ansible_reboot_pending = $ansible_reboot_pending
         ansible_system = $osversion.Platform.ToString()
         ansible_system_description = ([string] $win32_os.Description)
         ansible_system_vendor = $win32_cs.Manufacturer
@@ -397,7 +404,8 @@ if($gather_subset.Contains('windows_domain')) {
 
 if($gather_subset.Contains('winrm')) {
 
-    $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse | Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
+    $winrm_https_listener_parent_paths = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse -ErrorAction SilentlyContinue | `
+        Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
     if ($winrm_https_listener_parent_paths -isnot [array]) {
        $winrm_https_listener_parent_paths = @($winrm_https_listener_parent_paths)
     }
@@ -428,6 +436,42 @@ if($gather_subset.Contains('winrm')) {
     if ($winrm_cert_expirations) {
         # this fact was renamed from ansible_winrm_certificate_expires due to collision with ansible_winrm_X connection var pattern
         $ansible_facts.Add("ansible_win_rm_certificate_expires", $winrm_cert_expirations[0].NotAfter.ToString("yyyy-MM-dd HH:mm:ss"))
+    }
+}
+
+if($gather_subset.Contains('virtual')) {
+    $machine_info = Get-LazyCimInstance Win32_ComputerSystem
+
+    switch ($machine_info.model) {
+        "Virtual Machine" {
+            $machine_type="Hyper-V"
+            $machine_role="guest"
+        }
+
+        "VMware Virtual Platform" {
+            $machine_type="VMware"
+            $machine_role="guest"
+        }
+
+        "VirtualBox" { 
+            $machine_type="VirtualBox" 
+            $machine_role="guest"
+        }
+
+        "HVM domU" {
+            $machine_type="Xen"
+            $machine_role="guest" 
+        }
+
+        default {
+            $machine_type="NA"
+            $machine_role="NA"
+        }
+    }
+    
+    $ansible_facts += @{
+        ansible_virtualization_role = $machine_role
+        ansible_virtualization_type = $machine_type
     }
 }
 

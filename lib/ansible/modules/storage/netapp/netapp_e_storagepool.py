@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: netapp_e_storagepool
-short_description: Manage disk groups and disk pools
+short_description: NetApp E-Series manage disk groups and disk pools
 version_added: '2.2'
 description:
     - Create or remove disk groups and disk pools for NetApp E-series storage arrays.
@@ -57,6 +57,7 @@ options:
   criteria_drive_require_fde:
     description:
     - Whether full disk encryption ability is required for drives to be added to the storage pool
+    type: bool
   raid_level:
     required: true
     choices: ['raidAll', 'raid0', 'raid1', 'raid3', 'raid5', 'raid6', 'raidDiskPool']
@@ -81,6 +82,7 @@ options:
     default: False
     description:
     - Prior to removing a storage pool, delete all volumes in the pool.
+    type: bool
 author: Kevin Hulquest (@hulquest)
 
 '''
@@ -99,7 +101,7 @@ RETURN = '''
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Json facts for the pool that was created.
 '''
 
@@ -145,7 +147,10 @@ class GroupBy(object):
     def _grouper(self, tgtkey):
         while self.currkey == tgtkey:
             yield self.currvalue
-            self.currvalue = next(self.it)  # Exit on StopIteration
+            try:
+                self.currvalue = next(self.it)  # Exit on StopIteration
+            except StopIteration:
+                return
             self.currkey = self.keyfunc(self.currvalue)
 
 

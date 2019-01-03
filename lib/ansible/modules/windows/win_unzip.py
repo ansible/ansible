@@ -56,6 +56,8 @@ notes:
   has the ability to recursively unzip files within the src zip file provided and also functionality for many other compression types. If the destination
   directory does not exist, it will be created before unzipping the file.  Specifying rm parameter will force removal of the src file after extraction.
 - For non-Windows targets, use the M(unarchive) module instead.
+seealso:
+- module: unarchive
 author:
 - Phil Schwartz (@schwartzmx)
 '''
@@ -97,16 +99,16 @@ RETURN = r'''
 dest:
     description: The provided destination path
     returned: always
-    type: string
+    type: str
     sample: C:\ExtractedLogs\application-error-logs
 removed:
     description: Whether the module did remove any files during task run
     returned: always
-    type: boolean
+    type: bool
     sample: True
 src:
     description: The provided source path
     returned: always
-    type: string
+    type: str
     sample: C:\Logs\application-error-logs.gz
 '''

@@ -31,6 +31,7 @@ options:
       description:
         - Fail loudly if the I(job_id) does not reference a running job.
       default: False
+      type: bool
 extends_documentation_fragment: tower
 '''
 
@@ -49,7 +50,7 @@ id:
 status:
     description: status of the cancel request
     returned: success
-    type: string
+    type: str
     sample: canceled
 '''
 

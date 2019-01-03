@@ -39,23 +39,23 @@ options:
   username:
     description:
       - Username of the user to be created if account did not exist.
-      - Required on C(state=present).
+      - Required on I(state=present).
   password:
     description:
       - Password of the user to be created if account did not exist.
-      - Required on C(state=present).
+      - Required on I(state=present) if I(ldap_domain) is not set.
   first_name:
     description:
       - First name of the user to be created if account did not exist.
-      - Required on C(state=present).
+      - Required on I(state=present) if I(ldap_domain) is not set.
   last_name:
     description:
       - Last name of the user to be created if account did not exist.
-      - Required on C(state=present).
+      - Required on I(state=present) if I(ldap_domain) is not set.
   email:
     description:
       - Email of the user to be created if account did not exist.
-      - Required on C(state=present).
+      - Required on I(state=present) if I(ldap_domain) is not set.
   timezone:
     description:
       - Timezone of the user to be created if account did not exist.
@@ -71,6 +71,21 @@ options:
     description:
       - Domain the account is related to.
     default: 'ROOT'
+  role:
+    description:
+      - Creates the account under the specified role name or id.
+    version_added: 2.8
+  ldap_domain:
+    description:
+      - Name of the LDAP group or OU to bind.
+      - If set, account will be linked to LDAP.
+    version_added: 2.8
+  ldap_type:
+    description:
+      - Type of the ldap name. GROUP or OU, defaults to GROUP.
+    default: 'GROUP'
+    choices: [ 'GROUP', 'OU' ]
+    version_added: 2.8
   state:
     description:
       - State of the account.
@@ -96,6 +111,7 @@ EXAMPLES = '''
     first_name: John
     email: john.doe@example.com
     domain: CUSTOMERS
+    role: Domain Admin
 
 # Lock an existing account in domain 'CUSTOMERS'
 - local_action:
@@ -124,6 +140,22 @@ EXAMPLES = '''
     name: customer_xy
     domain: CUSTOMERS
     state: absent
+
+# Create a single user LDAP account in domain 'CUSTOMERS'
+- local_action:
+    module: cs_account
+    name: customer_xy
+    username: customer_xy
+    domain: CUSTOMERS
+    ldap_domain: cn=customer_xy,cn=team_xy,ou=People,dc=domain,dc=local
+
+# Create a LDAP account in domain 'CUSTOMERS' and bind it to a LDAP group
+- local_action:
+    module: cs_account
+    name: team_xy
+    username: customer_xy
+    domain: CUSTOMERS
+    ldap_domain: cn=team_xy,ou=People,dc=domain,dc=local
 '''
 
 RETURN = '''
@@ -131,33 +163,38 @@ RETURN = '''
 id:
   description: UUID of the account.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 name:
   description: Name of the account.
   returned: success
-  type: string
+  type: str
   sample: linus@example.com
 account_type:
   description: Type of the account.
   returned: success
-  type: string
+  type: str
   sample: user
 state:
   description: State of the account.
   returned: success
-  type: string
+  type: str
   sample: enabled
 network_domain:
   description: Network domain of the account.
   returned: success
-  type: string
+  type: str
   sample: example.local
 domain:
   description: Domain the account is related.
   returned: success
-  type: string
+  type: str
   sample: ROOT
+role:
+  description: The role name of the account
+  returned: success
+  type: str
+  sample: Domain Admin
 '''
 
 # import cloudstack common
@@ -175,6 +212,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
         super(AnsibleCloudStackAccount, self).__init__(module)
         self.returns = {
             'networkdomain': 'network_domain',
+            'rolename': 'role',
         }
         self.account = None
         self.account_types = {
@@ -182,6 +220,21 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
             'root_admin': 1,
             'domain_admin': 2,
         }
+
+    def get_role_id(self):
+        role_param = self.module.params.get('role')
+        role_id = None
+
+        if role_param:
+            role_list = self.query_api('listRoles')
+            for role in role_list['role']:
+                if role_param in [role['name'], role['id']]:
+                    role_id = role['id']
+
+            if not role_id:
+                self.module.fail_json(msg="Role not found: %s" % role_param)
+
+        return role_id
 
     def get_account_type(self):
         account_type = self.module.params.get('account_type')
@@ -254,35 +307,78 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
         return account
 
     def present_account(self):
-        required_params = [
-            'email',
-            'username',
-            'password',
-            'first_name',
-            'last_name',
-        ]
-        self.module.fail_on_missing_params(required_params=required_params)
-
         account = self.get_account()
 
         if not account:
             self.result['changed'] = True
 
+            if self.module.params.get('ldap_domain'):
+                required_params = [
+                    'domain',
+                    'username',
+                ]
+                self.module.fail_on_missing_params(required_params=required_params)
+
+                account = self.create_ldap_account(account)
+
+            else:
+                required_params = [
+                    'email',
+                    'username',
+                    'password',
+                    'first_name',
+                    'last_name',
+                ]
+                self.module.fail_on_missing_params(required_params=required_params)
+
+                account = self.create_account(account)
+
+        return account
+
+    def create_ldap_account(self, account):
+        args = {
+            'account': self.module.params.get('name'),
+            'domainid': self.get_domain(key='id'),
+            'accounttype': self.get_account_type(),
+            'networkdomain': self.module.params.get('network_domain'),
+            'username': self.module.params.get('username'),
+            'timezone': self.module.params.get('timezone'),
+            'roleid': self.get_role_id()
+        }
+        if not self.module.check_mode:
+            res = self.query_api('ldapCreateAccount', **args)
+            account = res['account']
+
             args = {
                 'account': self.module.params.get('name'),
                 'domainid': self.get_domain(key='id'),
                 'accounttype': self.get_account_type(),
-                'networkdomain': self.module.params.get('network_domain'),
-                'username': self.module.params.get('username'),
-                'password': self.module.params.get('password'),
-                'firstname': self.module.params.get('first_name'),
-                'lastname': self.module.params.get('last_name'),
-                'email': self.module.params.get('email'),
-                'timezone': self.module.params.get('timezone')
+                'ldapdomain': self.module.params.get('ldap_domain'),
+                'type': self.module.params.get('ldap_type')
             }
-            if not self.module.check_mode:
-                res = self.query_api('createAccount', **args)
-                account = res['account']
+
+            self.query_api('linkAccountToLdap', **args)
+
+        return account
+
+    def create_account(self, account):
+        args = {
+            'account': self.module.params.get('name'),
+            'domainid': self.get_domain(key='id'),
+            'accounttype': self.get_account_type(),
+            'networkdomain': self.module.params.get('network_domain'),
+            'username': self.module.params.get('username'),
+            'password': self.module.params.get('password'),
+            'firstname': self.module.params.get('first_name'),
+            'lastname': self.module.params.get('last_name'),
+            'email': self.module.params.get('email'),
+            'timezone': self.module.params.get('timezone'),
+            'roleid': self.get_role_id()
+        }
+        if not self.module.check_mode:
+            res = self.query_api('createAccount', **args)
+            account = res['account']
+
         return account
 
     def absent_account(self):
@@ -323,6 +419,9 @@ def main():
         username=dict(),
         password=dict(no_log=True),
         timezone=dict(),
+        role=dict(),
+        ldap_domain=dict(),
+        ldap_type=dict(choices=['GROUP', 'OU'], default='GROUP'),
         poll_async=dict(type='bool', default=True),
     ))
 

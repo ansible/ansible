@@ -21,12 +21,9 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def _generic_g(prop_name, self):
@@ -162,6 +159,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # need a unique object here (all members contained within are
         # unique already).
         self._attributes = self._attributes.copy()
+        for key, value in self._attributes.items():
+            if callable(value):
+                self._attributes[key] = value()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
@@ -363,7 +363,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
-                    setattr(self, name, attribute.default)
+                    if callable(attribute.default):
+                        setattr(self, name, attribute.default())
+                    else:
+                        setattr(self, name, attribute.default)
                     continue
 
                 # and make sure the attribute is of the type it should be
@@ -382,18 +385,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                         if isinstance(value, string_types) and '%' in value:
                             value = value.replace('%', '')
                         value = float(value)
-                    elif attribute.isa in ('list', 'barelist'):
+                    elif attribute.isa == 'list':
                         if value is None:
                             value = []
                         elif not isinstance(value, list):
-                            if isinstance(value, string_types) and attribute.isa == 'barelist':
-                                display.deprecated(
-                                    "Using comma separated values for a list has been deprecated. "
-                                    "You should instead use the correct YAML syntax for lists. "
-                                )
-                                value = value.split(',')
-                            else:
-                                value = [value]
+                            value = [value]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
@@ -553,7 +549,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if name in data:
                 setattr(self, name, data[name])
             else:
-                setattr(self, name, attribute.default)
+                if callable(attribute.default):
+                    setattr(self, name, attribute.default())
+                else:
+                    setattr(self, name, attribute.default)
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
@@ -581,6 +580,7 @@ class Base(FieldAttributeBase):
     _no_log = FieldAttribute(isa='bool')
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
+    _ignore_unreachable = FieldAttribute(isa='bool')
     _check_mode = FieldAttribute(isa='bool')
     _diff = FieldAttribute(isa='bool')
     _any_errors_fatal = FieldAttribute(isa='bool')

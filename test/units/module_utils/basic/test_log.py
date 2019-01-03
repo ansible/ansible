@@ -55,21 +55,23 @@ class TestAnsibleModuleLogSmokeTest:
 class TestAnsibleModuleLogSyslog:
     """Test the AnsibleModule Log Method"""
 
-    PY2_OUTPUT_DATA = {
-        u'Text string': b'Text string',
-        u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test'.encode('utf-8'),
-        b'Byte string': b'Byte string',
-        u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test'.encode('utf-8'),
-        b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace').encode('utf-8'),
-    }
+    PY2_OUTPUT_DATA = [
+        (u'Text string', b'Text string'),
+        (u'Toshio くらとみ non-ascii test', u'Toshio くらとみ non-ascii test'.encode('utf-8')),
+        (b'Byte string', b'Byte string'),
+        (u'Toshio くらとみ non-ascii test'.encode('utf-8'), u'Toshio くらとみ non-ascii test'.encode('utf-8')),
+        (b'non-utf8 :\xff: test', b'non-utf8 :\xff: test'.decode('utf-8', 'replace').encode('utf-8')),
+    ]
 
-    PY3_OUTPUT_DATA = {
-        u'Text string': u'Text string',
-        u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test',
-        b'Byte string': u'Byte string',
-        u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test',
-        b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
-    }
+    PY3_OUTPUT_DATA = [
+        (u'Text string', u'Text string'),
+        (u'Toshio くらとみ non-ascii test', u'Toshio くらとみ non-ascii test'),
+        (b'Byte string', u'Byte string'),
+        (u'Toshio くらとみ non-ascii test'.encode('utf-8'), u'Toshio くらとみ non-ascii test'),
+        (b'non-utf8 :\xff: test', b'non-utf8 :\xff: test'.decode('utf-8', 'replace')),
+    ]
+
+    OUTPUT_DATA = PY3_OUTPUT_DATA if PY3 else PY2_OUTPUT_DATA
 
     @pytest.mark.parametrize('no_log, stdin', (product((True, False), [{}])), indirect=['stdin'])
     def test_no_log(self, am, mocker, no_log):
@@ -85,8 +87,7 @@ class TestAnsibleModuleLogSyslog:
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
     @pytest.mark.parametrize('msg, param, stdin',
-                             ((m, p, {}) for m, p in
-                              (PY3_OUTPUT_DATA.items() if PY3 else PY2_OUTPUT_DATA.items())),  # pylint: disable=undefined-variable
+                             ((m, p, {}) for m, p in OUTPUT_DATA),  # pylint: disable=undefined-variable
                              indirect=['stdin'])
     def test_output_matches(self, am, mocker, msg, param):
         """Check that log messages are sent correctly"""
@@ -101,13 +102,13 @@ class TestAnsibleModuleLogSyslog:
 class TestAnsibleModuleLogJournal:
     """Test the AnsibleModule Log Method"""
 
-    OUTPUT_DATA = {
-        u'Text string': u'Text string',
-        u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test',
-        b'Byte string': u'Byte string',
-        u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test',
-        b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace')
-    }
+    OUTPUT_DATA = [
+        (u'Text string', u'Text string'),
+        (u'Toshio くらとみ non-ascii test', u'Toshio くらとみ non-ascii test'),
+        (b'Byte string', u'Byte string'),
+        (u'Toshio くらとみ non-ascii test'.encode('utf-8'), u'Toshio くらとみ non-ascii test'),
+        (b'non-utf8 :\xff: test', b'non-utf8 :\xff: test'.decode('utf-8', 'replace')),
+    ]
 
     @pytest.mark.parametrize('no_log, stdin', (product((True, False), [{}])), indirect=['stdin'])
     def test_no_log(self, am, mocker, no_log):
@@ -127,7 +128,7 @@ class TestAnsibleModuleLogJournal:
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
     @pytest.mark.parametrize('msg, param, stdin',
-                             ((m, p, {}) for m, p in OUTPUT_DATA.items()),  # pylint: disable=undefined-variable
+                             ((m, p, {}) for m, p in OUTPUT_DATA),  # pylint: disable=undefined-variable
                              indirect=['stdin'])
     def test_output_matches(self, am, mocker, msg, param):
         journal_send = mocker.patch('systemd.journal.send')

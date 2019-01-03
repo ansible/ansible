@@ -146,6 +146,31 @@ class TestFindIniFile:
 
     # ANSIBLE_CONFIG not specified
     @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
+    # All config files are present except in cwd
+    @pytest.mark.parametrize('setup_existing_files',
+                             [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_file, alt_cfg_file)]],
+                             indirect=['setup_existing_files'])
+    def test_no_cwd_cfg_no_warning_on_writable(self, setup_env, setup_existing_files, monkeypatch):
+        """If the cwd is writable but there is no config file there, move on with no warning"""
+        real_stat = os.stat
+
+        def _os_stat(path):
+            if path == working_dir:
+                from posix import stat_result
+                stat_info = list(real_stat(path))
+                stat_info[stat.ST_MODE] |= stat.S_IWOTH
+                return stat_result(stat_info)
+            else:
+                return real_stat(path)
+
+        monkeypatch.setattr('os.stat', _os_stat)
+
+        warnings = set()
+        assert find_ini_config_file(warnings) == cfg_in_homedir
+        assert len(warnings) == 0
+
+    # ANSIBLE_CONFIG not specified
+    @pytest.mark.parametrize('setup_env', [[None]], indirect=['setup_env'])
     # All config files are present
     @pytest.mark.parametrize('setup_existing_files',
                              [[('/etc/ansible/ansible.cfg', cfg_in_homedir, cfg_in_cwd, cfg_file, alt_cfg_file)]],

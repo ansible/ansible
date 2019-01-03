@@ -76,7 +76,7 @@ def get_pool(module, system):
     """Return Pool or None"""
     try:
         return system.pools.get(name=module.params['pool'])
-    except:
+    except Exception:
         return None
 
 
@@ -85,7 +85,7 @@ def get_filesystem(module, system):
     """Return Filesystem or None"""
     try:
         return system.filesystems.get(name=module.params['name'])
-    except:
+    except Exception:
         return None
 
 
@@ -143,7 +143,7 @@ def main():
     if module.params['size']:
         try:
             Capacity(module.params['size'])
-        except:
+        except Exception:
             module.fail_json(msg='size (Physical Capacity) should be defined in MB, GB, TB or PB units')
 
     state = module.params['state']

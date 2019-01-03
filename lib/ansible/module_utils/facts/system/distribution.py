@@ -20,8 +20,9 @@ import os
 import platform
 import re
 
+from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
+    get_distribution_codename
 from ansible.module_utils.facts.utils import get_file_content
-
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -57,6 +58,7 @@ class DistributionFiles:
     #  - have a function get_distribution_DISTNAME implemented
     # keep names in sync with Conditionals page of docs
     OSDIST_LIST = (
+        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
         {'path': '/etc/redhat-release', 'name': 'RedHat'},
@@ -72,23 +74,21 @@ class DistributionFiles:
         {'path': '/etc/os-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
-        {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
+        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
-        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
     )
 
     SEARCH_STRING = {
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
-        'Altlinux': 'ALT Linux',
-        'ClearLinux': 'Clear Linux',
+        'Altlinux': 'ALT',
         'SMGL': 'Source Mage GNU/Linux',
     }
 
     # We can't include this in SEARCH_STRING because a name match on its keys
-    # causes a fallback to using the first whitespace seperated item from the file content
+    # causes a fallback to using the first whitespace separated item from the file content
     # as the name. For os-release, that is in form 'NAME=Arch'
     OS_RELEASE_ALIAS = {
         'Archlinux': 'Arch Linux'
@@ -112,7 +112,7 @@ class DistributionFiles:
         dist_file_dict = {}
         if name in self.SEARCH_STRING:
             # look for the distribution string in the data and replace according to RELEASE_NAME_MAP
-            # only the distribution name is set, the version is assumed to be correct from platform.dist()
+            # only the distribution name is set, the version is assumed to be correct from distro.linux_distribution()
             if self.SEARCH_STRING[name] in dist_file_content:
                 # this sets distribution=RedHat if 'Red Hat' shows up in data
                 dist_file_dict['distribution'] = name
@@ -153,12 +153,15 @@ class DistributionFiles:
 
     def _guess_distribution(self):
         # try to find out which linux distribution this is
-        dist = platform.dist()
+        dist = (get_distribution(), get_distribution_version(), get_distribution_codename())
         distribution_guess = {}
-        distribution_guess['distribution'] = dist[0].capitalize() or 'NA'
+        distribution_guess['distribution'] = dist[0] or 'NA'
         distribution_guess['distribution_version'] = dist[1] or 'NA'
-        distribution_guess['distribution_major_version'] = dist[1].split('.')[0] or 'NA'
-        distribution_guess['distribution_release'] = dist[2] or 'NA'
+        distribution_guess['distribution_major_version'] = \
+            distribution_guess['distribution_version'].split('.')[0] or 'NA'
+        # distribution_release can be the empty string
+        distribution_guess['distribution_release'] = 'NA' if dist[2] is None else dist[2]
+
         return distribution_guess
 
     def process_dist_files(self):
@@ -269,6 +272,10 @@ class DistributionFiles:
                     else:
                         release = "0"  # no minor number, so it is the first release
                     suse_facts['distribution_release'] = release
+                # Starting with SLES4SAP12 SP3 NAME reports 'SLES' instead of 'SLES_SAP'
+                # According to SuSe Support (SR101182877871) we should use the CPE_NAME to detect SLES4SAP
+                if re.search("^CPE_NAME=.*sles_sap.*$", line):
+                    suse_facts['distribution'] = 'SLES_SAP'
         elif path == '/etc/SuSE-release':
             if 'open' in data.lower():
                 data = data.splitlines()
@@ -315,6 +322,15 @@ class DistributionFiles:
         elif 'SteamOS' in data:
             debian_facts['distribution'] = 'SteamOS'
             # nothing else to do, SteamOS gets correct info from python functions
+        elif 'Devuan' in data:
+            debian_facts['distribution'] = 'Devuan'
+            release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1)
         else:
             return False, debian_facts
 
@@ -350,8 +366,7 @@ class DistributionFiles:
     def parse_distribution_file_Coreos(self, name, data, path, collected_facts):
         coreos_facts = {}
         # FIXME: pass in ro copy of facts for this kind of thing
-        dist = platform.dist()
-        distro = dist[0]
+        distro = get_distribution()
 
         if distro.lower() == 'coreos':
             if not data:
@@ -365,6 +380,23 @@ class DistributionFiles:
             return False, coreos_facts  # TODO: remove if tested without this
 
         return True, coreos_facts
+
+    def parse_distribution_file_ClearLinux(self, name, data, path, collected_facts):
+        clear_facts = {}
+        if "clearlinux" not in name.lower():
+            return False, clear_facts
+
+        version = re.search('VERSION_ID=(.*)', data)
+        if version:
+            clear_facts['distribution_major_version'] = version.groups()[0]
+            clear_facts['distribution_version'] = version.groups()[0]
+        release = re.search('ID=(.*)', data)
+        if release:
+            clear_facts['distribution_release'] = release.groups()[0]
+        pname = re.search('NAME="(.*)"', data)
+        if pname:
+            clear_facts['distribution'] = pname.groups()[0]
+        return True, clear_facts
 
 
 class Distribution(object):
@@ -396,9 +428,9 @@ class Distribution(object):
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
+        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
-        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
     )
 
     SEARCH_STRING = {
@@ -412,9 +444,9 @@ class Distribution(object):
     # keep keys in sync with Conditionals page of docs
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
-                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer'],
+                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint', 'SteamOS'],
+                                'Linux Mint', 'SteamOS', 'Devuan'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
@@ -428,7 +460,8 @@ class Distribution(object):
                      'AIX': ['AIX'],
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
-                     'FreeBSD': ['FreeBSD', 'TrueOS']}
+                     'FreeBSD': ['FreeBSD', 'TrueOS'],
+                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
@@ -477,8 +510,11 @@ class Distribution(object):
         rc, out, err = self.module.run_command("/usr/bin/oslevel")
         data = out.split('.')
         aix_facts['distribution_major_version'] = data[0]
-        aix_facts['distribution_version'] = data[0]
-        aix_facts['distribution_release'] = data[1]
+        if len(data) > 1:
+            aix_facts['distribution_version'] = '%s.%s' % (data[0], data[1])
+            aix_facts['distribution_release'] = data[1]
+        else:
+            aix_facts['distribution_version'] = data[0]
         return aix_facts
 
     def get_distribution_HPUX(self):

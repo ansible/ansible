@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.dellos6 import dellos6_command
 from units.modules.utils import set_module_args
 from .dellos6_module import TestDellos6Module, load_fixture

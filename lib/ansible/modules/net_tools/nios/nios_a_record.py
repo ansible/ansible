@@ -7,7 +7,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -97,6 +97,17 @@ EXAMPLES = '''
     name: a.ansible.com
     ipv4: 192.168.10.1
     state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+
+- name: update an A record name
+  nios_a_record:
+    name: {new_name: a_new.ansible.com, old_name: a.ansible.com}
+    ipv4: 192.168.10.1
+    state: present
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin

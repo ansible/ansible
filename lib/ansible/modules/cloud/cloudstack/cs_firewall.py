@@ -141,22 +141,22 @@ RETURN = '''
 id:
   description: UUID of the rule.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 ip_address:
   description: IP address of the rule if C(type=ingress)
   returned: success
-  type: string
+  type: str
   sample: 10.100.212.10
 type:
   description: Type of the rule.
   returned: success
-  type: string
+  type: str
   sample: ingress
 cidr:
   description: CIDR string of the rule.
   returned: success
-  type: string
+  type: str
   sample: 0.0.0.0/0
 cidrs:
   description: CIDR list of the rule.
@@ -167,7 +167,7 @@ cidrs:
 protocol:
   description: Protocol of the rule.
   returned: success
-  type: string
+  type: str
   sample: tcp
 start_port:
   description: Start port of the rule.
@@ -192,7 +192,7 @@ icmp_type:
 network:
   description: Name of the network if C(type=egress)
   returned: success
-  type: string
+  type: str
   sample: my_network
 '''
 

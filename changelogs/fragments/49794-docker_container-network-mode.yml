@@ -1,0 +1,2 @@
+bugfixes:
+- docker_container - fix ``network_mode`` idempotency if the ``container:<container-name>`` form is used (as opposed to ``container:<container-id>``) (https://github.com/ansible/ansible/issues/49794)

@@ -12,6 +12,12 @@
       delete: on-exit
     resource_group: "{{ resource_group }}"
 
+- name: Create route table
+  azure_rm_routetable:
+    name: routetableforsubnet
+    resource_group: "{{ resource_group }}"
+  register: route_table
+
 - name: Remove subnet
   azure_rm_subnet:
     state: absent
@@ -56,6 +62,11 @@
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
     security_group: secgroupfoo
+    service_endpoints:
+      - service: Microsoft.Sql
+        locations:
+          - eastus
+          - westus
     tags:
        testing: testing
        delete: on-fini
@@ -67,6 +78,11 @@
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
     security_group: secgroupfoo
+    service_endpoints:
+      - service: Microsoft.Sql
+        locations:
+          - eastus
+          - westus
     tags:
        testing: testing
        delete: on-fini
@@ -87,6 +103,7 @@
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
+    route_table: "{{ route_table.id }}"
     security_group:
       name: secgroupfoo
       resource_group: "{{ resource_group_secondary }}"
@@ -106,6 +123,7 @@
     virtual_network_name: My_Virtual_Network
     resource_group: "{{ resource_group }}"
     address_prefix_cidr: "10.1.0.0/16"
+    route_table: "{{ route_table.id }}"
     security_group: "{{ nsg.state.id }}"
     tags:
        testing: testing

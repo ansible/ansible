@@ -24,8 +24,6 @@ Scenario Requirements
 
 * Hardware
 
-    * At least one standalone ESXi server or
-
     * vCenter Server with at least one ESXi server
 
 * Access / Credentials
@@ -36,14 +34,32 @@ Scenario Requirements
 
     * Administrator user with following privileges
 
-        - Virtual machine.Provisioning.Clone virtual machine on the virtual machine you are cloning
-        - Virtual machine.Inventory.Create from existing on the datacenter or virtual machine folder
-        - Virtual machine.Configuration.Add new disk on the datacenter or virtual machine folder
-        - Resource.Assign virtual machine to resource pool on the destination host, cluster, or resource pool
-        - Datastore.Allocate space on the destination datastore or datastore folder
-        - Network.Assign network on the network to which the virtual machine will be assigned
-        - Virtual machine.Provisioning.Customize on the virtual machine or virtual machine folder if you are customizing the guest operating system
-        - Virtual machine.Provisioning.Read customization specifications on the root vCenter Server if you are customizing the guest operating system
+        - ``Datastore.AllocateSpace`` on the destination datastore or datastore folder
+        - ``Network.Assign`` on the network to which the virtual machine will be assigned
+        - ``Resource.AssignVMToPool`` on the destination host, cluster, or resource pool
+        - ``VirtualMachine.Config.AddNewDisk`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.AddRemoveDevice`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Interact.PowerOn`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Inventory.CreateFromExisting`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Provisioning.Clone`` on the virtual machine you are cloning
+        - ``VirtualMachine.Provisioning.Customize`` on the virtual machine or virtual machine folder if you are customizing the guest operating system
+        - ``VirtualMachine.Provisioning.DeployTemplate`` on the template you are using
+        - ``VirtualMachine.Provisioning.ReadCustSpecs`` on the root vCenter Server if you are customizing the guest operating system
+        
+        Depending on your requirements, you could also need one or more of the following privileges: 
+
+        - ``VirtualMachine.Config.CPUCount`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.Memory`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.DiskExtend`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.Annotation`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.AdvancedConfig`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.EditDevice`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.Resource`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.Settings`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.UpgradeVirtualHardware`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Interact.SetCDMedia`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Interact.SetFloppyMedia`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Interact.DeviceConnection`` on the datacenter or virtual machine folder
 
 Assumptions
 ===========
@@ -70,7 +86,6 @@ In this use case / example, we will be selecting a virtual machine template and 
     ---
     - name: Create a VM from a template
       hosts: localhost
-      connection: local
       gather_facts: no
       tasks:
       - name: Clone the template
@@ -90,7 +105,7 @@ In this use case / example, we will be selecting a virtual machine template and 
 
 Since Ansible utilizes the VMware API to perform actions, in this use case we will be connecting directly to the API from our localhost. This means that our playbooks will not be running from the vCenter or ESXi Server. We do not necessarily need to collect facts about our localhost, so the ``gather_facts`` parameter will be disabled. You can run these modules against another server that would then connect to the API if your localhost does not have access to vCenter. If so, the required Python modules will need to be installed on that target server.
 
-To begin, there are a few bits of information we will need. First and foremost is the hostname of the ESXi server or vCenter server. After this, you will need the username and password for this server. For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion using  :ref:`ansible-vault` or using `Ansible Tower credentials <http://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html>`_. If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the ``validate_certs`` parameter. To do this you need to set ``validate_certs=False`` in your playbook.
+To begin, there are a few bits of information we will need. First and foremost is the hostname of the ESXi server or vCenter server. After this, you will need the username and password for this server. For now, you will be entering these directly, but in a more advanced playbook this can be abstracted out and stored in a more secure fashion using  :ref:`ansible-vault` or using `Ansible Tower credentials <https://docs.ansible.com/ansible-tower/latest/html/userguide/credentials.html>`_. If your vCenter or ESXi server is not setup with proper CA certificates that can be verified from the Ansible server, then it is necessary to disable validation of these certificates by using the ``validate_certs`` parameter. To do this you need to set ``validate_certs=False`` in your playbook.
 
 Now you need to supply the information about the virtual machine which will be created. Give your virtual machine a name, one that conforms to all VMware requirements for naming conventions.  Next, select the display name of the template from which you want to clone new virtual machine. This must match what's displayed in VMware Web UI exactly. Then you can specify a folder to place this new virtual machine in. This path can either be a relative path or a full path to the folder including the Datacenter. You may need to specify a state for the virtual machine.  This simply tells the module which action you want to take, in this case you will be ensure that the virtual machine exists and is powered on.  An optional parameter is ``wait_for_ip_address``, this will tell Ansible to wait for the virtual machine to fully boot up and VMware Tools is running before completing this task.
 

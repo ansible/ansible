@@ -175,72 +175,72 @@ RETURN = '''
 id:
   description: UUID of the network.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the network.
   returned: success
-  type: string
+  type: str
   sample: web project
 display_text:
   description: Display text of the network.
   returned: success
-  type: string
+  type: str
   sample: web project
 dns1:
   description: IP address of the 1st nameserver.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 dns2:
   description: IP address of the 2nd nameserver.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 cidr:
   description: IPv4 network CIDR.
   returned: success
-  type: string
+  type: str
   sample: 10.101.64.0/24
 gateway:
   description: IPv4 gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.101.64.1
 netmask:
   description: IPv4 netmask.
   returned: success
-  type: string
+  type: str
   sample: 255.255.255.0
 cidr_ipv6:
   description: IPv6 network CIDR.
   returned: success
-  type: string
+  type: str
   sample: 2001:db8::/64
 gateway_ipv6:
   description: IPv6 gateway.
   returned: success
-  type: string
+  type: str
   sample: 2001:db8::1
 zone:
   description: Name of zone.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 domain:
   description: Domain the network is related to.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 account:
   description: Account the network is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project.
   returned: success
-  type: string
+  type: str
   sample: Production
 tags:
   description: List of resource tags associated with the network.
@@ -250,59 +250,59 @@ tags:
 acl_type:
   description: Access type of the VPC network tier (Domain, Account).
   returned: success
-  type: string
+  type: str
   sample: Account
 acl:
   description: Name of the access control list for the VPC network tier.
   returned: success
-  type: string
+  type: str
   sample: My ACL
   version_added: "2.5"
 acl_id:
   description: ID of the access control list for the VPC network tier.
   returned: success
-  type: string
+  type: str
   sample: dfafcd55-0510-4b8c-b6c5-b8cedb4cfd88
   version_added: "2.5"
 broadcast_domain_type:
   description: Broadcast domain type of the network.
   returned: success
-  type: string
+  type: str
   sample: Vlan
 type:
   description: Type of the network.
   returned: success
-  type: string
+  type: str
   sample: Isolated
 traffic_type:
   description: Traffic type of the network.
   returned: success
-  type: string
+  type: str
   sample: Guest
 state:
   description: State of the network (Allocated, Implemented, Setup).
   returned: success
-  type: string
+  type: str
   sample: Allocated
 is_persistent:
   description: Whether the network is persistent or not.
   returned: success
-  type: boolean
+  type: bool
   sample: false
 network_domain:
   description: The network domain
   returned: success
-  type: string
+  type: str
   sample: example.local
 network_offering:
   description: The network offering name.
   returned: success
-  type: string
+  type: str
   sample: DefaultIsolatedNetworkOfferingWithSourceNatService
 network_offering_display_text:
   description: The network offering display text.
   returned: success
-  type: string
+  type: str
   sample: Offering for Isolated Vpc networks with Source Nat service enabled
   version_added: "2.5"
 network_offering_conserve_mode:
@@ -314,7 +314,7 @@ network_offering_conserve_mode:
 network_offering_availability:
   description: The availability of the network offering the network is created from
   returned: success
-  type: string
+  type: str
   sample: Optional
   version_added: "2.5"
 is_system:

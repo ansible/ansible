@@ -1,0 +1,16 @@
+- name: execute the script
+  command: "'{{ ansible_python_interpreter }}' '{{ role_path }}/files/adhoc_example1.py' '{{ output_dir }}'"
+  environment:
+    AWX_LIB_DIRECTORY: "{{ callback_path }}"
+  register: script
+
+- name: parse script output
+  # work around for ansible-runner showing ansible warnings on stdout
+  set_fact:
+    adexec1_json: "{{ script.stdout | parse_json }}"
+
+- assert:
+    that:
+        - "adexec1_json.rc == 0"
+        - "adexec1_json.events|length == 3"
+        - "'localhost' in adexec1_json.stats.ok"

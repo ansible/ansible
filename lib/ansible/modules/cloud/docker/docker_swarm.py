@@ -136,12 +136,12 @@ extends_documentation_fragment:
     - docker
 requirements:
     - python >= 2.7
-    - "docker-py >= 2.6.0"
+    - "docker >= 2.6.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
        Version 2.1.0 or newer is only available with the C(docker) module."
-    - Docker API >= 1.35
+    - Docker API >= 1.25
 author:
   - Thierry Bouvet (@tbouvet)
 '''
@@ -151,7 +151,6 @@ EXAMPLES = '''
 - name: Init a new swarm with default parameters
   docker_swarm:
     state: present
-    advertise_addr: 192.168.1.1
 
 - name: Update swarm configuration
   docker_swarm:
@@ -215,6 +214,7 @@ actions:
 '''
 
 import json
+from distutils.version import LooseVersion
 from time import sleep
 try:
     from docker.errors import APIError
@@ -222,7 +222,11 @@ except ImportError:
     # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    docker_version,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -330,9 +334,6 @@ class SwarmManager(DockerBaseClass):
             return
 
         try:
-            if self.parameters.advertise_addr is None:
-                self.client.fail(msg="advertise_addr is required to initialize a swarm cluster.")
-
             self.client.init_swarm(
                 advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
                 force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
@@ -433,7 +434,7 @@ class SwarmManager(DockerBaseClass):
             self.client.leave_swarm(force=self.parameters.force)
         except APIError as exc:
             self.client.fail(msg="This node can not leave the Swarm Cluster: %s" % to_native(exc))
-        self.results['actions'].append("Node has leaved the swarm cluster")
+        self.results['actions'].append("Node has left the swarm cluster")
         self.results['changed'] = True
 
     def __get_node_info(self):
@@ -479,7 +480,7 @@ def main():
         state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect'], default='present'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
-        remote_addrs=dict(type='list'),
+        remote_addrs=dict(type='list', elements='str'),
         join_token=dict(type='str'),
         snapshot_interval=dict(type='int'),
         task_history_retention_limit=dict(type='int'),
@@ -505,10 +506,19 @@ def main():
         ('state', 'remove', ['node_id'])
     ]
 
+    option_minimal_versions = dict(
+        signing_ca_cert=dict(docker_api_version='1.30'),
+        signing_ca_key=dict(docker_api_version='1.30'),
+        ca_force_rotate=dict(docker_api_version='1.30'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if
+        required_if=required_if,
+        min_docker_version='2.6.0',
+        min_docker_api_version='1.25',
+        option_minimal_versions=option_minimal_versions,
     )
 
     results = dict(

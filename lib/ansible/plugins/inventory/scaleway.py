@@ -46,12 +46,20 @@ DOCUMENTATION = '''
                 - public_ipv6
                 - hostname
                 - id
+        variables:
+            description: 'set individual variables: keys are variable names and
+                          values are templates. Any value returned by the
+                          L(Scaleway API, https://developer.scaleway.com/#servers-server-get)
+                          can be used.'
+            type: dict
 '''
 
 EXAMPLES = '''
 # scaleway_inventory.yml file in YAML format
 # Example command line: ansible-inventory --list -i scaleway_inventory.yml
 
+# use hostname as inventory_hostname
+# use the private IP address to connect to the host
 plugin: scaleway
 regions:
   - ams1
@@ -59,35 +67,59 @@ regions:
 tags:
   - foobar
 hostnames:
-  - public_ipv4
+  - hostname
+variables:
+  ansible_host: private_ip
+  state: state
+
+# use hostname as inventory_hostname and public IP address to connect to the host
+plugin: scaleway
+hostnames:
+  - hostname
+regions:
+  - par1
+variables:
+  ansible_host: public_ip.address
 '''
 
 import json
 
 from ansible.errors import AnsibleError
-from ansible.plugins.inventory import BaseInventoryPlugin
-from ansible.module_utils.scaleway import SCALEWAY_LOCATION
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
+from ansible.module_utils.scaleway import SCALEWAY_LOCATION, parse_pagination_link
 from ansible.module_utils.urls import open_url
 from ansible.module_utils._text import to_native
 
+import ansible.module_utils.six.moves.urllib.parse as urllib_parse
+
 
 def _fetch_information(token, url):
-    try:
-        response = open_url(url,
-                            headers={'X-Auth-Token': token,
-                                     'Content-type': 'application/json'})
-    except Exception as e:
-        raise AnsibleError("Error while fetching %s: %s" % (url, to_native(e)))
+    results = []
+    paginated_url = url
+    while True:
+        try:
+            response = open_url(paginated_url,
+                                headers={'X-Auth-Token': token,
+                                         'Content-type': 'application/json'})
+        except Exception as e:
+            raise AnsibleError("Error while fetching %s: %s" % (url, to_native(e)))
+        try:
+            raw_json = json.loads(response.read())
+        except ValueError:
+            raise AnsibleError("Incorrect JSON payload")
 
-    try:
-        raw_json = json.loads(response.read())
-    except ValueError:
-        raise AnsibleError("Incorrect JSON payload")
+        try:
+            results.extend(raw_json["servers"])
+        except KeyError:
+            raise AnsibleError("Incorrect format from the Scaleway API response")
 
-    try:
-        return raw_json["servers"]
-    except KeyError:
-        raise AnsibleError("Incorrect format from the Scaleway API response")
+        link = response.headers['Link']
+        if not link:
+            return results
+        relations = parse_pagination_link(link)
+        if 'next' not in relations:
+            return results
+        paginated_url = urllib_parse.urljoin(paginated_url, relations['next'])
 
 
 def _build_server_url(api_endpoint):
@@ -152,11 +184,8 @@ extractors = {
 }
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable):
     NAME = 'scaleway'
-
-    def verify_file(self, path):
-        return "scaleway" in path
 
     def _fill_host_variables(self, host, server_info):
         targeted_attributes = (
@@ -166,7 +195,6 @@ class InventoryModule(BaseInventoryPlugin):
             "organization",
             "state",
             "hostname",
-            "state"
         )
         for attribute in targeted_attributes:
             self.inventory.set_variable(host, attribute, server_info[attribute])
@@ -178,7 +206,9 @@ class InventoryModule(BaseInventoryPlugin):
 
         if extract_public_ipv4(server_info=server_info):
             self.inventory.set_variable(host, "public_ipv4", extract_public_ipv4(server_info=server_info))
-            self.inventory.set_variable(host, "ansible_host", extract_public_ipv4(server_info=server_info))
+
+        if extract_private_ipv4(server_info=server_info):
+            self.inventory.set_variable(host, "private_ipv4", extract_private_ipv4(server_info=server_info))
 
     def _get_zones(self, config_zones):
         return set(SCALEWAY_LOCATION.keys()).intersection(config_zones)
@@ -232,6 +262,9 @@ class InventoryModule(BaseInventoryPlugin):
                 self.inventory.add_group(group=group)
                 self.inventory.add_host(group=group, host=hostname)
                 self._fill_host_variables(host=hostname, server_info=host_infos)
+
+                # Composed variables
+                self._set_composite_vars(self.get_option('variables'), host_infos, hostname, strict=False)
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)

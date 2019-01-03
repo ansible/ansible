@@ -108,7 +108,4 @@ $result.reboot_required = ConvertTo-Bool -obj $action_results.RestartNeeded
 # controls whether Ansible will fail or not
 $result.failed = (-not $action_results.Success)
 
-# DEPRECATED 2.4, remove in 2.8 (standardize naming to "reboot_required")
-$result.restart_needed = $result.reboot_required
-
 Exit-Json -obj $result

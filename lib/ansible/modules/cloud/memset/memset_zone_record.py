@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: memset_zone_record
-author: "Simon Weald (@analbeard)"
+author: "Simon Weald (@glitchcrab)"
 version_added: "2.6"
 short_description: Create and delete records in Memset DNS zones.
 notes:
@@ -118,42 +118,42 @@ memset_api:
     address:
       description: Record content (may be an IP, string or blank depending on record type).
       returned: always
-      type: string
+      type: str
       sample: 1.1.1.1
     id:
       description: Record ID.
       returned: always
-      type: string
+      type: str
       sample: "b0bb1ce851aeea6feeb2dc32fe83bf9c"
     priority:
       description: Priority for C(MX) and C(SRV) records.
       returned: always
-      type: integer
+      type: int
       sample: 10
     record:
       description: Name of record.
       returned: always
-      type: string
+      type: str
       sample: "www"
     relative:
       description: Adds the current domain onto the address field for C(CNAME), C(MX), C(NS) and C(SRV) types.
       returned: always
-      type: boolean
+      type: bool
       sample: False
     ttl:
       description: Record TTL.
       returned: always
-      type: integer
+      type: int
       sample: 10
     type:
       description: Record type.
       returned: always
-      type: string
+      type: str
       sample: AAAA
     zone_id:
       description: Zone ID.
       returned: always
-      type: string
+      type: str
       sample: "b0bb1ce851aeea6feeb2dc32fe83bf9c"
 '''
 

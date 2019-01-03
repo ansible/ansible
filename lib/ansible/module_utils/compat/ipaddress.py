@@ -346,7 +346,7 @@ def _find_address_range(addresses):
 
     """
     it = iter(addresses)
-    first = last = next(it)
+    first = last = next(it)  # pylint: disable=stop-iteration-return
     for ip in it:
         if ip._ip != last._ip + 1:
             yield first, last
@@ -1155,7 +1155,7 @@ class _BaseNetwork(_IPAddressBase):
         try:
             # Always false if one is v4 and the other is v6.
             if a._version != b._version:
-                raise TypeError("%s and %s are not of the same version" (a, b))
+                raise TypeError("%s and %s are not of the same version" % (a, b))
             return (b.network_address <= a.network_address and
                     b.broadcast_address >= a.broadcast_address)
         except AttributeError:

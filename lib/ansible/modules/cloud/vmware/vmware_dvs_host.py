@@ -55,10 +55,10 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Add Host to dVS
   vmware_dvs_host:
-    hostname: vcenter_ip_or_hostname
-    username: vcenter_username
-    password: vcenter_password
-    esxi_hostname: esxi_hostname_as_listed_in_vcenter
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
     switch_name: dvSwitch
     vmnics:
         - vmnic0

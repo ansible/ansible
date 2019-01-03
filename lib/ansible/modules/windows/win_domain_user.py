@@ -169,6 +169,13 @@ notes:
   - Note that some individuals have confirmed successful operation on Windows
     2008R2 servers with AD and AD Web Services enabled, but this has not
     received the same degree of testing as Windows 2012R2.
+seealso:
+- module: win_domain
+- module: win_domain_controller
+- module: win_domain_computer
+- module: win_domain_group
+- module: win_domain_membership
+- module: win_user
 author:
     - Nick Chandler (@nwchandler)
 '''
@@ -222,52 +229,52 @@ RETURN = r'''
 account_locked:
     description: true if the account is locked
     returned: always
-    type: boolean
+    type: bool
     sample: false
 changed:
     description: true if the account changed during execution
     returned: always
-    type: boolean
+    type: bool
     sample: false
 city:
     description: The user city
     returned: always
-    type: string
+    type: str
     sample: Indianapolis
 company:
     description: The user company
     returned: always
-    type: string
+    type: str
     sample: RedHat
 country:
     description: The user country
     returned: always
-    type: string
+    type: str
     sample: US
 description:
     description: A description of the account
     returned: always
-    type: string
+    type: str
     sample: Server Administrator
 distinguished_name:
     description: DN of the user account
     returned: always
-    type: string
+    type: str
     sample: CN=nick,OU=test,DC=domain,DC=local
 email:
     description: The user email address
     returned: always
-    type: string
+    type: str
     sample: nick@domain.local
 enabled:
     description: true if the account is enabled and false if disabled
     returned: always
-    type: string
+    type: str
     sample: true
 firstname:
     description: The user first name
     returned: always
-    type: string
+    type: str
     sample: Nick
 groups:
     description: AD Groups to which the account belongs
@@ -277,61 +284,61 @@ groups:
 msg:
     description: Summary message of whether the user is present or absent
     returned: always
-    type: string
+    type: str
     sample: User nick is present
 name:
     description: The username on the account
     returned: always
-    type: string
+    type: str
     sample: nick
 password_expired:
     description: true if the account password has expired
     returned: always
-    type: boolean
+    type: bool
     sample: false
 password_updated:
     description: true if the password changed during this execution
     returned: always
-    type: boolean
+    type: bool
     sample: true
 postal_code:
     description: The user postal code
     returned: always
-    type: string
+    type: str
     sample: 46033
 sid:
     description: The SID of the account
     returned: always
-    type: string
+    type: str
     sample: S-1-5-21-2752426336-228313920-2202711348-1175
 state:
     description: The state of the user account
     returned: always
-    type: string
+    type: str
     sample: present
 state_province:
     description: The user state or province
     returned: always
-    type: string
+    type: str
     sample: IN
 street:
     description: The user street address
     returned: always
-    type: string
+    type: str
     sample: 123 4th St.
 surname:
     description: The user last name
     returned: always
-    type: string
+    type: str
     sample: Doe
 upn:
     description: The User Principal Name of the account
     returned: always
-    type: string
+    type: str
     sample: nick@domain.local
 user_cannot_change_password:
     description: true if the user is not allowed to change password
     returned: always
-    type: string
+    type: str
     sample: false
 '''

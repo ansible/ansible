@@ -22,8 +22,9 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.tests import BUILTINS, unittest
-from ansible.compat.tests.mock import mock_open, patch, MagicMock
+from units.compat import unittest
+from units.compat.builtins import BUILTINS
+from units.compat.mock import mock_open, patch, MagicMock
 from ansible.plugins.loader import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
 
 
@@ -95,7 +96,7 @@ class TestErrors(unittest.TestCase):
     def test__load_module_source_no_duplicate_names(self):
         '''
         This test simulates importing 2 plugins with the same name,
-        and validating that the import is shortcirtuited if a file with the same name
+        and validating that the import is short circuited if a file with the same name
         has already been imported
         '''
 
@@ -103,7 +104,7 @@ class TestErrors(unittest.TestCase):
 
         pl = PluginLoader('test', '', 'test', 'test_plugin')
         one = pl._load_module_source('import_fixture', os.path.join(fixture_path, 'import_fixture.py'))
-        # This line wouldn't even succeed if we didn't short cirtuit on finding a duplicate name
+        # This line wouldn't even succeed if we didn't short circuit on finding a duplicate name
         two = pl._load_module_source('import_fixture', '/path/to/import_fixture.py')
 
         self.assertEqual(one, two)

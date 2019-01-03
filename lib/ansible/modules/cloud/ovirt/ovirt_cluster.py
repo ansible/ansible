@@ -2,22 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -33,13 +18,17 @@ author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage clusters in oVirt/RHV"
 options:
+    id:
+        description:
+            - "ID of the cluster to manage."
+        version_added: "2.8"
     name:
         description:
             - "Name of the cluster to manage."
         required: true
     state:
         description:
-            - "Should the cluster be present or absent"
+            - "Should the cluster be present or absent."
         choices: ['present', 'absent']
         default: present
     data_center:
@@ -59,43 +48,53 @@ options:
             - "If I(True) enable memory balloon optimization. Memory balloon is used to
                re-distribute / reclaim the host memory based on VM needs
                in a dynamic way."
+        type: bool
     virt:
         description:
             - "If I(True), hosts in this cluster will be used to run virtual machines."
+        type: bool
     gluster:
         description:
             - "If I(True), hosts in this cluster will be used as Gluster Storage
                server nodes, and not for running virtual machines."
             - "By default the cluster is created for virtual machine hosts."
+        type: bool
     threads_as_cores:
         description:
             - "If I(True) the exposed host threads would be treated as cores
                which can be utilized by virtual machines."
+        type: bool
     ksm:
         description:
             - "I I(True) MoM enables to run Kernel Same-page Merging I(KSM) when
                necessary and when it can yield a memory saving benefit that
                outweighs its CPU cost."
+        type: bool
     ksm_numa:
         description:
-            - "If I(True) enables KSM C(ksm) for best berformance inside NUMA nodes."
+            - "If I(True) enables KSM C(ksm) for best performance inside NUMA nodes."
+        type: bool
     ha_reservation:
         description:
-            - "If I(True) enable the oVirt/RHV to monitor cluster capacity for highly
+            - "If I(True) enables the oVirt/RHV to monitor cluster capacity for highly
                available virtual machines."
+        type: bool
     trusted_service:
         description:
-            - "If (True) enable integration with an OpenAttestation server."
+            - "If I(True) enables integration with an OpenAttestation server."
+        type: bool
     vm_reason:
         description:
-            - "If I(True) enable an optional reason field when a virtual machine
+            - "If I(True) enables an optional reason field when a virtual machine
                is shut down from the Manager, allowing the administrator to
                provide an explanation for the maintenance."
+        type: bool
     host_reason:
         description:
-            - "If I(True) enable an optional reason field when a host is placed
+            - "If I(True) enables an optional reason field when a host is placed
                into maintenance mode from the Manager, allowing the administrator
                to provide an explanation for the maintenance."
+        type: bool
     memory_policy:
         description:
             - "I(disabled) - Disables memory page sharing."
@@ -114,16 +113,19 @@ options:
         description:
             - "If I(True) enables fencing on the cluster."
             - "Fencing is enabled by default."
+        type: bool
     fence_skip_if_sd_active:
         description:
             - "If I(True) any hosts in the cluster that are Non Responsive
                and still connected to storage will not be fenced."
+        type: bool
     fence_skip_if_connectivity_broken:
         description:
             - "If I(True) fencing will be temporarily disabled if the percentage
                of hosts in the cluster that are experiencing connectivity issues
                is greater than or equal to the defined threshold."
             - "The threshold can be specified by C(fence_connectivity_threshold)."
+        type: bool
     fence_connectivity_threshold:
         description:
             - "The threshold used by C(fence_skip_if_connectivity_broken)."
@@ -207,7 +209,7 @@ options:
     switch_type:
         description:
             - "Type of switch to be used by all networks in given cluster.
-               Either I(legacy) which is using linux brigde or I(ovs) using
+               Either I(legacy) which is using linux bridge or I(ovs) using
                Open vSwitch."
         choices: ['legacy', 'ovs']
     compatibility_version:
@@ -281,6 +283,11 @@ EXAMPLES = '''
 - ovirt_cluster:
     state: absent
     name: mycluster
+
+# Change cluster Name
+- ovirt_cluster:
+    id: 00000000-0000-0000-0000-000000000000
+    name: "new_cluster_name"
 '''
 
 RETURN = '''
@@ -396,6 +403,7 @@ class ClustersModule(BaseModule):
     def build_entity(self):
         sched_policy = self._get_sched_policy()
         return otypes.Cluster(
+            id=self.param('id'),
             name=self.param('name'),
             comment=self.param('comment'),
             description=self.param('description'),
@@ -558,6 +566,7 @@ class ClustersModule(BaseModule):
 
         return (
             check_custom_scheduling_policy_properties() and
+            equal(self.param('name'), entity.name) and
             equal(self.param('comment'), entity.comment) and
             equal(self.param('description'), entity.description) and
             equal(self.param('switch_type'), str(entity.switch_type)) and
@@ -614,6 +623,7 @@ def main():
             default='present',
         ),
         name=dict(default=None, required=True),
+        id=dict(default=None),
         ballooning=dict(default=None, type='bool', aliases=['balloon']),
         gluster=dict(default=None, type='bool'),
         virt=dict(default=None, type='bool'),
@@ -659,9 +669,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if module._name == 'ovirt_clusters':
-        module.deprecate("The 'ovirt_clusters' module is being renamed 'ovirt_cluster'", version=2.8)
 
     check_sdk(module)
 

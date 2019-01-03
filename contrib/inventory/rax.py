@@ -155,10 +155,7 @@ import ConfigParser
 
 from six import iteritems
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     import pyrax
@@ -245,7 +242,7 @@ def _list_into_cache(regions):
             # pylint: disable=unexpected-keyword-arg
             ip_versions = map(int, get_config(p, 'rax', 'access_ip_version',
                                               'RAX_ACCESS_IP_VERSION', 4, islist=True))
-    except:
+    except Exception:
         ip_versions = [4]
     else:
         ip_versions = [v for v in ip_versions if v in [4, 6]]

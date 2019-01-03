@@ -40,14 +40,17 @@ options:
       - The text of the message to be displayed.
       - The message must be less than 256 characters.
     default: Hello world!
-author:
-- Jon Hawkesworth (@jhawkesworth)
 notes:
    - This module must run on a windows host, so ensure your play targets windows
      hosts, or delegates to a windows host.
    - Messages are only sent to the local host where the module is run.
    - The module does not support sending to users listed in a file.
    - Setting wait to C(yes) can result in long run times on systems with many logged in users.
+seealso:
+- module: win_say
+- module: win_toast
+author:
+- Jon Hawkesworth (@jhawkesworth)
 '''
 
 EXAMPLES = r'''
@@ -61,12 +64,12 @@ RETURN = r'''
 msg:
     description: Test of the message that was sent.
     returned: changed
-    type: string
+    type: str
     sample: Automated upgrade about to start.  Please save your work and log off before 22 July 2016 18:00:00
 display_seconds:
     description: Value of display_seconds module parameter.
     returned: success
-    type: string
+    type: str
     sample: 10
 rc:
     description: The return code of the API call
@@ -76,16 +79,16 @@ rc:
 runtime_seconds:
     description: How long the module took to run on the remote windows host.
     returned: success
-    type: string
+    type: str
     sample: 22 July 2016 17:45:51
 sent_localtime:
     description: local time from windows host when the message was sent.
     returned: success
-    type: string
+    type: str
     sample: 22 July 2016 17:45:51
 wait:
     description: Value of wait module parameter.
     returned: success
-    type: boolean
+    type: bool
     sample: false
 '''

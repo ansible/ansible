@@ -270,7 +270,7 @@
     state: present
     version: 0.1.0
   register: fail_multiple_versions
-  failed_when: fail_multiple_versions.msg != "Chocolatey package '" + test_choco_package1 + "' is already installed at version '0.0.1' but was expecting '0.1.0'. Either change the expected version, set state=latest, or set force=yes to continue"
+  failed_when: fail_multiple_versions.msg != "Chocolatey package '" + test_choco_package1 + "' is already installed with version(s) '0.0.1' but was expecting '0.1.0'. Either change the expected version, set state=latest, set allow_multiple=yes, or set force=yes to continue"
 
 - name: force the upgrade of an existing version
   win_chocolatey:
@@ -450,3 +450,43 @@
     that:
     - all_latest is changed
     - all_latest_actual.stdout_lines == [test_choco_package1 + "|0.1.0"]
+
+- name: install newer version of package
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+
+- name: install older package with allow_multiple
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+    allow_multiple: True
+    version: '0.0.1'
+  register: allow_multiple
+
+- name: get result of install older package with allow_multiple
+  win_command: choco.exe list --local-only --limit-output --all-versions --exact {{ test_choco_package1|quote }}
+  register: allow_multiple_actual
+
+- name: assert install older package with allow_multiple
+  assert:
+    that:
+    - allow_multiple is changed
+    - allow_multiple_actual.stdout == "ansible|0.1.0\r\nansible|0.0.1\r\n"
+
+- name: uninstall specific version installed with allow_multiple
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: absent
+    version: '0.0.1'
+  register: remove_multiple
+
+- name: get result of uninstall specific version installed with allow_multiple
+  win_command: choco.exe list --local-only --limit-output --all-versions --exact {{ test_choco_package1|quote }}
+  register: remove_multiple_actual
+
+- name: assert uninstall specific version installed with allow_multiple
+  assert:
+    that:
+    - remove_multiple is changed
+    - remove_multiple_actual.stdout == "ansible|0.1.0\r\n"

@@ -71,6 +71,8 @@ options:
       - The minimum number of days event entries must remain in the log.
       - This option is only used when C(overflow_action) is C(OverwriteOlder).
     type: int
+seealso:
+- module: win_eventlog_entry
 author:
     - Andrew Saraceni (@andrewsaraceni)
 '''
@@ -122,12 +124,12 @@ RETURN = r'''
 name:
     description: The name of the event log.
     returned: always
-    type: string
+    type: str
     sample: MyNewLog
 exists:
     description: Whether the event log exists or not.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 entries:
     description: The count of entries present in the event log.
@@ -142,7 +144,7 @@ maximum_size_kb:
 overflow_action:
     description: The action the log takes once it reaches its maximum size.
     returned: success
-    type: string
+    type: str
     sample: OverwriteOlder
 retention_days:
     description: The minimum number of days entries are retained in the log.

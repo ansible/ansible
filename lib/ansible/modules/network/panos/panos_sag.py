@@ -25,12 +25,12 @@ module: panos_sag
 short_description: Create a static address group.
 description:
     - Create a static address group object in the firewall used for policy rules.
-author: "Vinay Venkataraghavan @vinayvenkat"
+author: "Vinay Venkataraghavan (@vinayvenkat)"
 version_added: "2.4"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.org/project/pan-python/)
-    - pandevice can be obtained from PyPi U(https://pypi.org/project/pandevice/)
-    - xmltodict can be obtained from PyPi U(https://pypi.org/project/xmltodict/)
+    - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
+    - xmltodict can be obtained from PyPI U(https://pypi.org/project/xmltodict/)
 options:
     api_key:
         description:

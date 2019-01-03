@@ -27,12 +27,15 @@ options:
     wait:
         description:
             - "I(True) if the module should wait for the entity to get into desired state."
+        default: true
+        type: bool
     fetch_nested:
         description:
             - "If I(True) the module will fetch additional data from the API."
             - "It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other
                attributes of the nested entities by specifying C(nested_attributes)."
         version_added: "2.3"
+        type: bool
     nested_attributes:
         description:
             - "Specifies list of the attributes which should be fetched from the API."

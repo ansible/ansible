@@ -30,12 +30,9 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import PY3
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 try:
     import curses
@@ -73,8 +70,8 @@ def clear_line(stdout):
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
-    PAUSE_TYPES = ['seconds', 'minutes', 'prompt', 'echo', '']
     BYPASS_HOST_LOOP = True
+    _VALID_ARGS = frozenset(('echo', 'minutes', 'prompt', 'seconds'))
 
     def run(self, tmp=None, task_vars=None):
         ''' run the pause action module '''
@@ -99,11 +96,6 @@ class ActionModule(ActionBase):
             delta=None,
             echo=echo
         ))
-
-        if not set(self._task.args.keys()) <= set(self.PAUSE_TYPES):
-            result['failed'] = True
-            result['msg'] = "Invalid argument given. Must be one of: %s" % ", ".join(self.PAUSE_TYPES)
-            return result
 
         # Should keystrokes be echoed to stdout?
         if 'echo' in self._task.args:

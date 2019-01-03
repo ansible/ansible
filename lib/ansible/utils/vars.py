@@ -23,7 +23,6 @@ import ast
 import random
 import uuid
 
-from collections import MutableMapping
 from json import dumps
 
 
@@ -31,6 +30,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.splitter import parse_kv
 
 
@@ -69,7 +69,7 @@ def _validate_mutable_mappings(a, b):
         for x in [a, b]:
             try:
                 myvars.append(dumps(x))
-            except:
+            except Exception:
                 myvars.append(to_native(x))
         raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
             a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])

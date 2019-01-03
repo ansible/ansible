@@ -45,6 +45,7 @@
           autoselect_datastore: True
     state: poweredoff
     folder: "{{ item|dirname }}"
+    convert: thin
   with_items: "{{ vmlist['json'] }}"
   register: clone_d1_c1_f0
 

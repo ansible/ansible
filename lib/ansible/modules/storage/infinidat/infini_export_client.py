@@ -104,7 +104,7 @@ def get_export(module, system):
 
     try:
         export = system.exports.get(export_path=module.params['export'])
-    except:
+    except Exception:
         module.fail_json(msg="Export with export path {} not found".format(module.params['export']))
 
     return export

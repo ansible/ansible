@@ -17,21 +17,16 @@
     variables:
       ansible_connection: local
 
-- name: Create a private key (which will not be used)
-  copy:
-    content: |
+- name: create an unused SSH / Machine credential
+  tower_credential:
+    name: dummy
+    kind: ssh
+    ssh_key_data: |
       -----BEGIN EC PRIVATE KEY-----
       MHcCAQEEIIUl6R1xgzR6siIUArz4XBPtGZ09aetma2eWf1v3uYymoAoGCCqGSM49
       AwEHoUQDQgAENJNjgeZDAh/+BY860s0yqrLDprXJflY0GvHIr7lX3ieCtrzOMCVU
       QWzw35pc5tvuP34SSi0ZE1E+7cVMDDOF3w==
       -----END EC PRIVATE KEY-----
-    dest: "{{ output_dir }}/tower_project_unused_key"
-
-- name: create an unused SSH / Machine credential
-  tower_credential:
-    name: dummy
-    kind: ssh
-    ssh_key_data: "{{ output_dir }}/tower_project_unused_key"
     organization: Default
 
 - name: Disable bubblewrap

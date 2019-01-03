@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,8 +19,13 @@ description:
 notes:
 - The C(tenant), C(src_group), and C(dst_group) must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_tenant_span_src_group), and M(aci_tenant_span_dst_group) modules can be used for this.
-- More information about the internal APIC class B(span:SrcGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- module: aci_tenant_span_src_group
+- module: aci_tenant_span_dst_group
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(span:SrcGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -28,22 +33,27 @@ options:
   description:
     description:
     - The description for Span source group to destination group binding.
+    type: str
     aliases: [ descr ]
   dst_group:
     description:
     - The Span destination group to associate with the source group.
+    type: str
   src_group:
     description:
     - The name of the Span source group.
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 '''
@@ -57,6 +67,7 @@ EXAMPLES = r'''
     src_group: "{{ src_group }}"
     dst_group: "{{ dst_group }}"
     description: "{{ description }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -91,7 +102,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -140,17 +151,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -160,7 +171,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -198,20 +209,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='spanSrcGrp',
             aci_rn='srcgrp-{0}'.format(src_group),
-            filter_target='eq(spanSrcGrp.name, "{0}")'.format(src_group),
             module_object=src_group,
+            target_filter={'name': src_group},
         ),
         subclass_2=dict(
             aci_class='spanSpanLbl',
             aci_rn='spanlbl-{0}'.format(dst_group),
-            filter_target='eq(spanSpanLbl.name, "{0}")'.format(dst_group),
             module_object=dst_group,
+            target_filter={'name': dst_group},
         ),
     )
 

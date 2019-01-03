@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -16,9 +16,10 @@ module: aci_interface_policy_lldp
 short_description: Manage LLDP interface policies (lldp:IfPol)
 description:
 - Manage LLDP interface policies on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(lldp:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(lldp:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -26,11 +27,13 @@ options:
   lldp_policy:
     description:
     - The LLDP interface policy name.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the LLDP interface policy name.
+    type: str
     aliases: [ descr ]
   receive_state:
     description:
@@ -46,6 +49,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -61,6 +65,7 @@ EXAMPLES = r'''
     description: '{{ description }}'
     receive_state: '{{ receive_state }}'
     transmit_state: '{{ transmit_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -95,7 +100,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -144,17 +149,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -164,7 +169,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -203,8 +208,8 @@ def main():
         root_class=dict(
             aci_class='lldpIfPol',
             aci_rn='infra/lldpIfP-{0}'.format(lldp_policy),
-            filter_target='eq(lldpIfPol.name, "{0}")'.format(lldp_policy),
             module_object=lldp_policy,
+            target_filter={'name': lldp_policy},
         ),
     )
 

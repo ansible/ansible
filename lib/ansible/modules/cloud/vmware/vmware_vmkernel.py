@@ -26,7 +26,7 @@ version_added: 2.0
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)
-- Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
+- Abhijeet Kasurde (@Akasurde)
 notes:
     - Tested on vSphere 5.5, 6.5
 requirements:
@@ -34,94 +34,101 @@ requirements:
     - PyVmomi
 options:
     vswitch_name:
-        description:
-            - The name of the vSwitch where to add the VMKernel interface.
-            - Required parameter only if C(state) is set to C(present).
-            - Optional parameter from version 2.5 and onwards.
-        required: False
+      description:
+      - The name of the vSwitch where to add the VMKernel interface.
+      - Required parameter only if C(state) is set to C(present).
+      - Optional parameter from version 2.5 and onwards.
     portgroup_name:
-        description:
-            - The name of the port group for the VMKernel interface.
-        required: True
+      description:
+      - The name of the port group for the VMKernel interface.
+      required: True
     network:
-        description:
-            - A dictionary of network details.
-            - 'Following parameter is required:'
-            - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
-            - 'Following parameters are required in case of C(type) is set to C(static)'
-            - ' - C(ip_address) (string): Static IP address (implies C(type: static)).'
-            - ' - C(subnet_mask) (string): Static netmask required for C(ip).'
-        version_added: 2.5
+      description:
+      - A dictionary of network details.
+      - 'Following parameter is required:'
+      - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)).'
+      - 'Following parameters are required in case of C(type) is set to C(static)'
+      - ' - C(ip_address) (string): Static IP address (implies C(type: static)).'
+      - ' - C(subnet_mask) (string): Static netmask required for C(ip).'
+      version_added: 2.5
     ip_address:
-        description:
-            - The IP Address for the VMKernel interface.
-            - Use C(network) parameter with C(ip_address) instead.
-            - Deprecated option, will be removed in version 2.9.
+      description:
+      - The IP Address for the VMKernel interface.
+      - Use C(network) parameter with C(ip_address) instead.
+      - Deprecated option, will be removed in version 2.9.
     subnet_mask:
-        description:
-            - The Subnet Mask for the VMKernel interface.
-            - Use C(network) parameter with C(subnet_mask) instead.
-            - Deprecated option, will be removed in version 2.9.
+      description:
+      - The Subnet Mask for the VMKernel interface.
+      - Use C(network) parameter with C(subnet_mask) instead.
+      - Deprecated option, will be removed in version 2.9.
     vlan_id:
-        description:
-            - The VLAN ID for the VMKernel interface.
-            - Required parameter only if C(state) is set to C(present).
-            - Optional parameter from version 2.5 and onwards.
-        required: False
-        version_added: 2.0
+      description:
+      - The VLAN ID for the VMKernel interface.
+      - Required parameter only if C(state) is set to C(present).
+      - Optional parameter from version 2.5 and onwards.
+      version_added: 2.0
     mtu:
-        description:
-            - The MTU for the VMKernel interface.
-            - The default value of 1500 is valid from version 2.5 and onwards.
-        required: False
-        default: 1500
+      description:
+      - The MTU for the VMKernel interface.
+      - The default value of 1500 is valid from version 2.5 and onwards.
+      default: 1500
     enable_vsan:
-        description:
-            - Enable the VMKernel interface for VSAN traffic.
-        required: False
-        type: bool
+      description:
+      - Enable the VMKernel interface for VSAN traffic.
+      type: bool
     enable_vmotion:
-        description:
-            - Enable the VMKernel interface for vMotion traffic.
-        required: False
-        type: bool
+      description:
+      - Enable the VMKernel interface for vMotion traffic.
+      type: bool
     enable_mgmt:
-        description:
-            - Enable the VMKernel interface for Management traffic.
-        required: False
-        type: bool
+      description:
+      - Enable the VMKernel interface for Management traffic.
+      type: bool
     enable_ft:
-        description:
-            - Enable the VMKernel interface for Fault Tolerance traffic.
-        required: False
-        type: bool
+      description:
+      - Enable the VMKernel interface for Fault Tolerance traffic.
+      type: bool
+    enable_provisioning:
+      description:
+      - Enable the VMKernel interface for provisioning service.
+      type: bool
+      version_added: 2.8
+    enable_replication:
+      description:
+      - Enable the VMKernel interface for vSphere replication service.
+      type: bool
+      version_added: 2.8
+    enable_replication_nfc:
+      description:
+      - Enable the VMKernel interface for vSphere replication NFC service.
+      type: bool
+      version_added: 2.8
     state:
-        description:
-            - If set to C(present), VMKernel is created with the given specifications.
-            - If set to C(absent), VMKernel is removed from the given configurations.
-            - If set to C(present) and VMKernel exists then VMKernel configurations are updated.
-        required: False
-        choices: [ present, absent ]
-        default: present
-        version_added: 2.5
+      description:
+      - If set to C(present), VMKernel is created with the given specifications.
+      - If set to C(absent), VMKernel is removed from the given configurations.
+      - If set to C(present) and VMKernel exists then VMKernel configurations are updated.
+      choices: [ present, absent ]
+      default: present
+      version_added: 2.5
     esxi_hostname:
-        description:
-            - Name of ESXi host to which VMKernel is to be managed.
-            - "From version 2.5 onwards, this parameter is required."
-        required: True
-        version_added: 2.5
+      description:
+      - Name of ESXi host to which VMKernel is to be managed.
+      - "From version 2.5 onwards, this parameter is required."
+      required: True
+      version_added: 2.5
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
 -  name: Add Management vmkernel port using static network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0001
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       network:
         type: 'static'
         ip_address: 192.168.127.10
@@ -132,12 +139,12 @@ EXAMPLES = '''
 
 -  name: Add Management vmkernel port using DHCP network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0002
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       state: present
       network:
         type: 'dhcp'
@@ -146,12 +153,12 @@ EXAMPLES = '''
 
 -  name: Delete VMkernel port using DHCP network type
    vmware_vmkernel:
-      hostname: 192.168.127.9
-      username: admin
-      password: supersecret123
+      hostname: '{{ esxi_hostname }}'
+      username: '{{ esxi_username }}'
+      password: '{{ esxi_password }}'
       vswitch_name: vSwitch0
       portgroup_name: PG_0002
-      vlan_id: vlan_id
+      vlan_id: '{{ vlan_id }}'
       state: absent
    delegate_to: localhost
 '''
@@ -161,7 +168,9 @@ result:
     description: metadata about VMKernel name
     returned: always
     type: dict
-    sample: { results : "vmk1" }
+    sample: {
+        results : "vmk1"
+    }
 '''
 
 try:
@@ -186,6 +195,10 @@ class PyVmomiHelper(PyVmomi):
         self.enable_vmotion = self.params['enable_vmotion']
         self.enable_mgmt = self.params['enable_mgmt']
         self.enable_ft = self.params['enable_ft']
+        self.enable_provisioning = self.params['enable_provisioning']
+        self.enable_replication = self.params['enable_replication']
+        self.enable_replication_nfc = self.params['enable_replication_nfc']
+
         self.vswitch_name = self.params['vswitch_name']
         self.vlan_id = self.params['vlan_id']
 
@@ -210,7 +223,7 @@ class PyVmomiHelper(PyVmomi):
 
     def get_port_group_by_name(self, host_system, portgroup_name):
         """
-        Function to get specific port group by given name
+        Get specific port group by given name
         Args:
             host_system: Name of Host System
             portgroup_name: Name of Port Group
@@ -227,7 +240,7 @@ class PyVmomiHelper(PyVmomi):
 
     def ensure(self):
         """
-        Function to manage internal VMKernel management
+        Manage internal VMKernel management
         Returns: NA
 
         """
@@ -255,7 +268,7 @@ class PyVmomiHelper(PyVmomi):
 
     def get_vmkernel(self, port_group_name=None):
         """
-        Function to check if vmkernel
+        Check if vmkernel available or not
         Args:
             port_group_name: name of port group
 
@@ -270,7 +283,7 @@ class PyVmomiHelper(PyVmomi):
 
     def check_state(self):
         """
-        Function to check internal state management
+        Check internal state management
         Returns: Present if found, absent if not, update if change in fields
 
         """
@@ -308,11 +321,24 @@ class PyVmomiHelper(PyVmomi):
             if (self.enable_vsan and self.vnic.device not in service_type_vmks['vsan']) or \
                     (not self.enable_vsan and self.vnic.device in service_type_vmks['vsan']):
                 state = 'update'
+
+            if (self.enable_provisioning and self.vnic.device not in service_type_vmks['vSphereProvisioning']) or \
+                    (not self.enable_provisioning and self.vnic.device in service_type_vmks['vSphereProvisioning']):
+                state = 'update'
+
+            if (self.enable_replication and self.vnic.device not in service_type_vmks['vSphereReplication']) or \
+                    (not self.enable_provisioning and self.vnic.device in service_type_vmks['vSphereReplication']):
+                state = 'update'
+
+            if (self.enable_replication_nfc and self.vnic.device not in service_type_vmks['vSphereReplicationNFC']) or \
+                    (not self.enable_provisioning and self.vnic.device in service_type_vmks['vSphereReplicationNFC']):
+                state = 'update'
+
         return state
 
     def host_vmk_delete(self):
         """
-        Function to delete VMKernel
+        Delete VMKernel
         Returns: NA
 
         """
@@ -336,7 +362,7 @@ class PyVmomiHelper(PyVmomi):
 
     def host_vmk_unchange(self):
         """
-        Function to denote no change in VMKernel
+        Denote no change in VMKernel
         Returns: NA
 
         """
@@ -402,6 +428,21 @@ class PyVmomiHelper(PyVmomi):
         elif not self.enable_ft and self.vnic.device in service_type_vmk['faultToleranceLogging']:
             results['changed'] = self.set_service_type(vnic_manager=vnic_manager, vmk=self.vnic, service_type='faultToleranceLogging', operation='deselect')
 
+        if self.enable_provisioning and self.vnic.device not in service_type_vmk['vSphereProvisioning']:
+            results['changed'] = self.set_service_type(vnic_manager=vnic_manager, vmk=self.vnic, service_type='vSphereProvisioning')
+        elif not self.enable_provisioning and self.vnic.device in service_type_vmk['vSphereProvisioning']:
+            results['changed'] = self.set_service_type(vnic_manager=vnic_manager, vmk=self.vnic, service_type='vSphereProvisioning', operation='deselect')
+
+        if self.enable_replication and self.vnic.device not in service_type_vmk['vSphereReplication']:
+            results['changed'] = self.set_service_type(vnic_manager=vnic_manager, vmk=self.vnic, service_type='vSphereReplication')
+        elif not self.enable_replication and self.vnic.device in service_type_vmk['vSphereReplication']:
+            results['changed'] = self.set_service_type(vnic_manager=vnic_manager, vmk=self.vnic, service_type='vSphereReplication', operation='deselect')
+
+        if self.enable_replication_nfc and self.vnic.device not in service_type_vmk['vSphereReplicationNFC']:
+            results['changed'] = self.set_service_type(vnic_manager=vnic_manager, vmk=self.vnic, service_type='vSphereReplicationNFC')
+        elif not self.enable_replication_nfc and self.vnic.device in service_type_vmk['vSphereReplicationNFC']:
+            results['changed'] = self.set_service_type(vnic_manager=vnic_manager, vmk=self.vnic, service_type='vSphereReplicationNFC', operation='deselect')
+
         if self.enable_vsan and self.vnic.device not in service_type_vmk['vsan']:
             results['changed'], results['result'] = self.set_vsan_service_type()
         elif not self.enable_vsan and self.vnic.device in service_type_vmk['vsan']:
@@ -412,7 +453,7 @@ class PyVmomiHelper(PyVmomi):
 
     def set_vsan_service_type(self):
         """
-        Function to set VSAN service type
+        Set VSAN service type
         Returns: True and result for success, False and result for failure
 
         """
@@ -435,7 +476,7 @@ class PyVmomiHelper(PyVmomi):
 
     def host_vmk_create(self):
         """
-        Function to create VMKernel
+        Create VMKernel
         Returns: NA
 
         """
@@ -489,11 +530,20 @@ class PyVmomiHelper(PyVmomi):
         if self.enable_ft:
             results['changed'] = self.set_service_type(host_vnic_manager, self.vnic, 'faultToleranceLogging')
 
+        if self.enable_provisioning:
+            results['changed'] = self.set_service_type(host_vnic_manager, self.vnic, 'vSphereProvisioning')
+
+        if self.enable_replication:
+            results['changed'] = self.set_service_type(host_vnic_manager, self.vnic, 'vSphereReplication')
+
+        if self.enable_replication_nfc:
+            results['changed'] = self.set_service_type(host_vnic_manager, self.vnic, 'vSphereReplicationNFC')
+
         self.module.exit_json(**results)
 
     def set_service_type(self, vnic_manager, vmk, service_type, operation='select'):
         """
-        Function to set service type to given VMKernel
+        Set service type to given VMKernel
         Args:
             vnic_manager: Virtual NIC manager object
             vmk: VMkernel managed object
@@ -521,11 +571,20 @@ class PyVmomiHelper(PyVmomi):
 
     def get_all_vmks_by_service_type(self):
         """
-        Function to return information about service types and VMKernel
+        Return information about service types and VMKernel
         Returns: Dictionary of service type as key and VMKernel list as value
 
         """
-        service_type_vmk = dict(vmotion=[], vsan=[], management=[], faultToleranceLogging=[])
+        service_type_vmk = dict(
+            vmotion=[],
+            vsan=[],
+            management=[],
+            faultToleranceLogging=[],
+            vSphereProvisioning=[],
+            vSphereReplication=[],
+            vSphereReplicationNFC=[],
+        )
+
         for service_type in service_type_vmk.keys():
             vmks_list = self.query_service_type_for_vmks(service_type)
             service_type_vmk[service_type] = vmks_list
@@ -533,7 +592,7 @@ class PyVmomiHelper(PyVmomi):
 
     def query_service_type_for_vmks(self, service_type):
         """
-        Function to return list of VMKernels
+        Return list of VMKernels
         Args:
             service_type: Name of service type
 
@@ -573,6 +632,9 @@ def main():
         enable_vmotion=dict(required=False, type='bool'),
         enable_mgmt=dict(required=False, type='bool'),
         enable_ft=dict(required=False, type='bool'),
+        enable_provisioning=dict(type='bool'),
+        enable_replication=dict(type='bool'),
+        enable_replication_nfc=dict(type='bool'),
         vswitch_name=dict(required=False, type='str'),
         vlan_id=dict(required=False, type='int'),
         state=dict(type='str',

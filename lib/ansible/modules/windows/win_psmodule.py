@@ -42,9 +42,10 @@ options:
     default: present
 notes:
    -  Powershell 5.0 or higher is needed.
-
+seealso:
+- module: win_psrepository
 author:
-- Daniele Lazzari
+- Daniele Lazzari (@dlazz)
 '''
 
 EXAMPLES = '''
@@ -85,15 +86,15 @@ output:
   description: a message describing the task result.
   returned: always
   sample: "Module PowerShellCookbook installed"
-  type: string
+  type: str
 nuget_changed:
   description: true when Nuget package provider is installed
   returned: always
-  type: boolean
+  type: bool
   sample: True
 repository_changed:
   description: true when a custom repository is installed or removed
   returned: always
-  type: boolean
+  type: bool
   sample: True
 '''

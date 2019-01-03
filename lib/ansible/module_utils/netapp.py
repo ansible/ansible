@@ -27,23 +27,24 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
+import os
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.api import basic_auth_argument_spec
+try:
+    from ansible.module_utils.ansible_release import __version__ as ansible_version
+except ImportError:
+    ansible_version = 'unknown'
 
-HAS_NETAPP_LIB = False
 try:
     from netapp_lib.api.zapi import zapi
-    from netapp_lib.api.zapi import errors as zapi_errors
     HAS_NETAPP_LIB = True
-except:
+except ImportError:
     HAS_NETAPP_LIB = False
 
+import ssl
 
 HAS_SF_SDK = False
 SF_BYTE_MAP = dict(
@@ -60,13 +61,27 @@ SF_BYTE_MAP = dict(
     yb=1000 ** 8
 )
 
+POW2_BYTE_MAP = dict(
+    # Here, 1 kb = 1024
+    bytes=1,
+    b=1,
+    kb=1024,
+    mb=1024 ** 2,
+    gb=1024 ** 3,
+    tb=1024 ** 4,
+    pb=1024 ** 5,
+    eb=1024 ** 6,
+    zb=1024 ** 7,
+    yb=1024 ** 8
+)
+
 try:
     from solidfire.factory import ElementFactory
     from solidfire.custom.models import TimeIntervalFrequency
     from solidfire.models import Schedule, ScheduleInfo
 
     HAS_SF_SDK = True
-except:
+except Exception:
     HAS_SF_SDK = False
 
 
@@ -84,7 +99,10 @@ def na_ontap_host_argument_spec():
         hostname=dict(required=True, type='str'),
         username=dict(required=True, type='str', aliases=['user']),
         password=dict(required=True, type='str', aliases=['pass'], no_log=True),
-        https=dict(required=False, type='bool', default=False)
+        https=dict(required=False, type='bool', default=False),
+        validate_certs=dict(required=False, type='bool', default=True),
+        http_port=dict(required=False, type='int'),
+        ontapi=dict(required=False, type='int')
     )
 
 
@@ -106,7 +124,7 @@ def create_sf_connection(module, port=None):
         try:
             return_val = ElementFactory.create(hostname, username, password, port=port)
             return return_val
-        except:
+        except Exception:
             raise Exception("Unable to create SF connection")
     else:
         module.fail_json(msg="the python SolidFire SDK module is required")
@@ -117,6 +135,9 @@ def setup_na_ontap_zapi(module, vserver=None):
     username = module.params['username']
     password = module.params['password']
     https = module.params['https']
+    validate_certs = module.params['validate_certs']
+    port = module.params['http_port']
+    version = module.params['ontapi']
 
     if HAS_NETAPP_LIB:
         # set up zapi
@@ -125,15 +146,26 @@ def setup_na_ontap_zapi(module, vserver=None):
         server.set_password(password)
         if vserver:
             server.set_vserver(vserver)
-        # Todo : Replace hard-coded values with configurable parameters.
-        server.set_api_version(major=1, minor=21)
-        # default is HTTP
-        if https is True:
-            server.set_port(443)
-            server.set_transport_type('HTTPS')
+        if version:
+            minor = version
         else:
-            server.set_port(80)
-            server.set_transport_type('HTTP')
+            minor = 110
+        server.set_api_version(major=1, minor=minor)
+        # default is HTTP
+        if https:
+            if port is None:
+                port = 443
+            transport_type = 'HTTPS'
+            # HACK to bypass certificate verification
+            if validate_certs is False:
+                if not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
+                    ssl._create_default_https_context = ssl._create_unverified_context
+        else:
+            if port is None:
+                port = 80
+            transport_type = 'HTTP'
+        server.set_transport_type(transport_type)
+        server.set_port(port)
         server.set_server_type('FILER')
         return server
     else:
@@ -153,7 +185,7 @@ def setup_ontap_zapi(module, vserver=None):
         if vserver:
             server.set_vserver(vserver)
         # Todo : Replace hard-coded values with configurable parameters.
-        server.set_api_version(major=1, minor=21)
+        server.set_api_version(major=1, minor=110)
         server.set_port(80)
         server.set_server_type('FILER')
         server.set_transport_type('HTTP')
@@ -184,7 +216,12 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
+
         }
+    headers.update({"netapp-client-type": "Ansible-%s" % ansible_version})
+
+    if not http_agent:
+        http_agent = "Ansible / %s" % (ansible_version)
 
     try:
         r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
@@ -200,7 +237,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:
@@ -214,7 +251,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
         return resp_code, data
 
 
-def ems_log_event(source, server, name="Ansible", id="12345", version="1.1",
+def ems_log_event(source, server, name="Ansible", id="12345", version=ansible_version,
                   category="Information", event="setup", autosupport="false"):
     ems_log = zapi.NaElement('ems-autosupport-log')
     # Host name invoking the API.

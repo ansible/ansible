@@ -234,7 +234,14 @@
             "ses:GetIdentityPolicies",
             "ses:PutIdentityPolicy",
             "ses:DeleteIdentityPolicy",
-            "ses:ListIdentityPolicies"
+            "ses:ListIdentityPolicies",
+            "ses:SetIdentityFeedbackForwardingEnabled",
+            "ses:ListReceiptRuleSets",
+            "ses:DescribeReceiptRuleSet",
+            "ses:DescribeActiveReceiptRuleSet",
+            "ses:SetActiveReceiptRuleSet",
+            "ses:CreateReceiptRuleSet",
+            "ses:DeleteReceiptRuleSet"
           ],
           "Resource": [
             "*"
@@ -246,9 +253,13 @@
             "Action": [
               "SNS:CreateTopic",
               "SNS:DeleteTopic",
-              "SNS:ListTopics",
               "SNS:GetTopicAttributes",
-              "SNS:ListSubscriptionsByTopic"
+              "SNS:ListSubscriptions",
+              "SNS:ListSubscriptionsByTopic",
+              "SNS:ListTopics",
+              "SNS:SetTopicAttributes",
+              "SNS:Subscribe",
+              "SNS:Unsubscribe"
             ],
             "Resource": [
               "*"

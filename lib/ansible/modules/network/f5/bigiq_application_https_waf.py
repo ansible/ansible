@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -49,7 +49,7 @@ options:
       - Traffic destined to the C(redirect_virtual) will be offloaded to this
         parameter to ensure that proper redirection from insecure, to secure, occurs.
     suboptions:
-      destination:
+      address:
         description:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
@@ -73,7 +73,7 @@ options:
         C(inbound_virtual) parameter to ensure that proper redirection from insecure,
         to secure, occurs.
     suboptions:
-      destination:
+      address:
         description:
           - Specifies destination IP address information to which the virtual server
             sends traffic.
@@ -107,8 +107,7 @@ options:
             per profile.
           - If you attempt to assign two RSA, DSA, or ECDSA certificate/key combo,
             the device will reject this.
-          - This list is a complex list that specifies a number of keys. There are
-            several supported keys.
+          - This list is a complex list that specifies a number of keys.
           - When creating a new profile, if this parameter is not specified, the
             default value of C(inherit) will be used.
         suboptions:
@@ -177,11 +176,11 @@ EXAMPLES = r'''
       - address: 5.6.7.8
         port: 8080
     inbound_virtual:
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 443
     redirect_virtual:
-      destination: 2.2.2.2
+      address: 2.2.2.2
       netmask: 255.255.255.255
       port: 80
     provider:
@@ -196,22 +195,22 @@ RETURN = r'''
 description:
   description: The new description of the application of the resource.
   returned: changed
-  type: string
+  type: str
   sample: My application
 service_environment:
   description: The environment which the service was deployed to.
   returned: changed
-  type: string
+  type: str
   sample: my-ssg1
 inbound_virtual_destination:
   description: The destination of the virtual that was created.
   returned: changed
-  type: string
+  type: str
   sample: 6.7.8.9
 inbound_virtual_netmask:
   description: The network mask of the provided inbound destination.
   returned: changed
-  type: string
+  type: str
   sample: 255.255.255.0
 inbound_virtual_port:
   description: The port the inbound virtual address listens on.
@@ -226,7 +225,7 @@ servers:
     address:
       description: The IP address of the server.
       returned: changed
-      type: string
+      type: str
       sample: 2.3.4.5
     port:
       description: The port that the server listens on.
@@ -239,7 +238,6 @@ servers:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import string_types
 
 try:
@@ -250,6 +248,7 @@ try:
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -258,12 +257,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import fq_name
-
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
@@ -341,11 +335,10 @@ class ModuleParameters(Parameters):
 
     @property
     def default_device_reference(self):
-        try:
+        if is_valid_ip(self.service_environment):
             # An IP address was specified
-            netaddr.IPAddress(self.service_environment)
             filter = "address+eq+'{0}'".format(self.service_environment)
-        except netaddr.core.AddrFormatError:
+        else:
             # Assume a hostname was specified
             filter = "hostname+eq+'{0}'".format(self.service_environment)
 
@@ -999,11 +992,10 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5RestClient(module=module)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

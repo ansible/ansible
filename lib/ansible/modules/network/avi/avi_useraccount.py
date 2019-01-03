@@ -31,7 +31,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_useraccount
-author: Chaitanya Deshpande (chaitanya.deshpande@avinetworks.com)
+author: Chaitanya Deshpande (@chaitanyaavi) <chaitanya.deshpande@avinetworks.com>
 
 short_description: Avi UserAccount Module
 description:
@@ -115,7 +115,7 @@ def main():
             token=api_creds.token, port=api_creds.port)
         password_changed = True
         return ansible_return(module, None, False, req=data)
-    except:
+    except Exception:
         pass
 
     if not password_changed:

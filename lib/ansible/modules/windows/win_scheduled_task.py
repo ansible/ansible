@@ -15,12 +15,6 @@ version_added: "2.0"
 short_description: Manage scheduled tasks
 description:
 - Creates/modified or removes Windows scheduled tasks.
-notes:
-- In Ansible 2.4 and earlier, this could only be run on Server 2012/Windows 8
-  or newer. Since 2.5 this restriction has been lifted.
-- The option names and structure for actions and triggers of a service follow
-  the C(RegisteredTask) naming standard and requirements, it would be useful to
-  read up on this guide if coming across any issues U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa382542.aspx).
 options:
   # module definition options
   name:
@@ -186,9 +180,22 @@ options:
         - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated
           after the task is started.
         - It takes in the following keys, C(duration), C(interval), C(stop_at_duration_end)
-        - C(duration) is how long the pattern is repeated and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
-        - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
-        - C(stop_at_duration_end) is a boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
+        suboptions:
+          duration:
+            description:
+            - Defines how long the pattern is repeated.
+            - The value is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+            - By default this is not set which means it will repeat indefinitely.
+            type: str
+          interval:
+            description:
+            - The amount of time between each restart of the task.
+            - The value is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+            type: str
+          stop_at_duration_end:
+            description:
+            - Whether a running instance of the task is stopped at the end of the repetition pattern.
+            type: bool
     version_added: '2.5'
 
   # Principal options
@@ -384,6 +391,14 @@ options:
     - Whether the task will wake the computer when it is time to run the task.
     type: bool
     version_added: '2.5'
+notes:
+- In Ansible 2.4 and earlier, this could only be run on Server 2012/Windows 8
+  or newer. Since 2.5 this restriction has been lifted.
+- The option names and structure for actions and triggers of a service follow
+  the C(RegisteredTask) naming standard and requirements, it would be useful to
+  read up on this guide if coming across any issues U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa382542.aspx).
+seealso:
+- module: win_scheduled_task_stat
 author:
 - Peter Mounce (@petemounce)
 - Jordan Borean (@jborean93)
@@ -468,7 +483,7 @@ EXAMPLES = r'''
     triggers:
     - type: registration
       repetition:
-      - interval: PT1M
+        interval: PT1M
         duration: PT5M
         stop_at_duration_end: yes
 '''

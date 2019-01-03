@@ -40,11 +40,11 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Migrate VCSA to vDS
   vmware_vm_vss_dvs_migrate:
-    hostname: vcenter_ip_or_hostname
-    username: vcenter_username
-    password: vcenter_password
-    vm_name: virtual_machine_name
-    dvportgroup_name: distributed_portgroup_name
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    vm_name: '{{ vm_name }}'
+    dvportgroup_name: '{{ distributed_portgroup_name }}'
   delegate_to: localhost
 '''
 

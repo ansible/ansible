@@ -252,19 +252,19 @@ RETURN = '''
 plugin:
     description: plugin name
     returned: success
-    type: string
+    type: str
     sample: build-pipeline-plugin
 state:
     description: state of the target, after execution
     returned: success
-    type: string
+    type: str
     sample: "present"
 '''
 
 from ansible.module_utils.basic import AnsibleModule, to_bytes
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, text_type, binary_type
 import base64
 import hashlib
 import json
@@ -387,7 +387,7 @@ class JenkinsPlugin(object):
                 self.params['jenkins_home'],
                 self.params['name']))
 
-        if not self.is_installed and self.params['version'] is None:
+        if not self.is_installed and self.params['version'] in [None, 'latest']:
             if not self.module.check_mode:
                 # Install the plugin (with dependencies)
                 install_script = (
@@ -610,7 +610,7 @@ class JenkinsPlugin(object):
         # Store the plugin into a temp file and then move it
         tmp_f_fd, tmp_f = tempfile.mkstemp()
 
-        if isinstance(data, str):
+        if isinstance(data, (text_type, binary_type)):
             os.write(tmp_f_fd, data)
         else:
             os.write(tmp_f_fd, data.read())

@@ -19,11 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, binary_type, text_type
+from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -59,8 +59,8 @@ def hash_params(params):
     # Any container is unhashable if it contains unhashable items (for
     # instance, tuple() is a Hashable subclass but if it contains a dict, it
     # cannot be hashed)
-    if isinstance(params, collections.Container) and not isinstance(params, (text_type, binary_type)):
-        if isinstance(params, collections.Mapping):
+    if isinstance(params, Container) and not isinstance(params, (text_type, binary_type)):
+        if isinstance(params, Mapping):
             try:
                 # Optimistically hope the contents are all hashable
                 new_params = frozenset(params.items())
@@ -71,7 +71,7 @@ def hash_params(params):
                     new_params.update((k, hash_params(v)))
                 new_params = frozenset(new_params)
 
-        elif isinstance(params, (collections.Set, collections.Sequence)):
+        elif isinstance(params, (Set, Sequence)):
             try:
                 # Optimistically hope the contents are all hashable
                 new_params = frozenset(params)
@@ -94,7 +94,7 @@ def hash_params(params):
 class Role(Base, Become, Conditional, Taggable):
 
     _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _delegate_facts = FieldAttribute(isa='bool')
 
     def __init__(self, play=None, from_files=None, from_include=False):
         self._role_name = None
@@ -230,7 +230,7 @@ class Role(Base, Become, Conditional, Taggable):
                 raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name,
                                          obj=task_data, orig_exc=e)
 
-        handler_data = self._load_role_yaml('handlers')
+        handler_data = self._load_role_yaml('handlers', main=self._from_files.get('handlers'))
         if handler_data:
             try:
                 self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,

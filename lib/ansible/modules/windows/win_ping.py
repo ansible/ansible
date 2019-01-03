@@ -30,6 +30,8 @@ options:
 notes:
   - For non-Windows targets, use the M(ping) module instead.
   - For Network targets, use the M(net_ping) module instead.
+seealso:
+- module: ping
 author:
 - Chris Church (@cchurch)
 '''
@@ -50,6 +52,6 @@ RETURN = '''
 ping:
     description: value provided with the data parameter
     returned: success
-    type: string
+    type: str
     sample: pong
 '''

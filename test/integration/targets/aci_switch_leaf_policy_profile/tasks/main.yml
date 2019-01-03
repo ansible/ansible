@@ -18,6 +18,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     leaf_profile: ansible_test
     state: absent
 
@@ -31,6 +32,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     leaf_profile: ansible_test
     state: present
   check_mode: yes
@@ -52,8 +54,10 @@
 - name: Verify add_switch_leaf_profile
   assert:
     that:
-    - cm_add_switch_leaf_profile.changed == nm_add_switch_leaf_profile.changed == true
-    - cm_add_switch_leaf_profile_again.changed == nm_add_switch_leaf_profile_again.changed == false
+    - cm_add_switch_leaf_profile is changed
+    - nm_add_switch_leaf_profile is changed
+    - cm_add_switch_leaf_profile_again is not changed
+    - nm_add_switch_leaf_profile_again is not changed
 
 
 # CHANGE SWITCH LEAF PROFILE
@@ -86,8 +90,10 @@
 - name: Verify add_switch_leaf_profile_descr
   assert:
     that:
-    - cm_add_switch_leaf_profile_descr.changed == nm_add_switch_leaf_profile_descr.changed == true
-    - cm_add_switch_leaf_profile_descr_again.changed == nm_add_switch_leaf_profile_descr_again.changed == false
+    - cm_add_switch_leaf_profile_descr is changed
+    - nm_add_switch_leaf_profile_descr is changed
+    - cm_add_switch_leaf_profile_descr_again is not changed
+    - nm_add_switch_leaf_profile_descr_again is not changed
 
 
 # ADD LEAF PROFILE AGAIN
@@ -103,7 +109,8 @@
 - name: Verify add_switch_leaf_profile_again_no_descr
   assert:
     that:
-    - cm_add_switch_leaf_profile_again_no_descr.changed == nm_add_switch_leaf_profile_again_no_descr.changed == false
+    - cm_add_switch_leaf_profile_again_no_descr is not changed
+    - nm_add_switch_leaf_profile_again_no_descr is not changed
 
 
 # QUERY ALL LEAF PROFILES
@@ -115,6 +122,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_switch_leaf_profiles
@@ -126,7 +134,8 @@
 - name: Verify query_all_switch_leaf_profiles
   assert:
     that:
-    - cm_query_all_switch_leaf_profiles.changed == nm_query_all_switch_leaf_profiles.changed == false
+    - cm_query_all_switch_leaf_profiles is not changed
+    - nm_query_all_switch_leaf_profiles is not changed
     # NOTE: Order of switch_leaf_profiles is not stable between calls
     #- cm_query_all_switch_leaf_profiles == nm_query_all_switch_leaf_profiles
 
@@ -148,7 +157,8 @@
 - name: Verify query_switch_leaf_profile
   assert:
     that:
-    - cm_query_switch_leaf_profile.changed == nm_query_switch_leaf_profile.changed == false
+    - cm_query_switch_leaf_profile is not changed
+    - nm_query_switch_leaf_profile is not changed
     - cm_query_switch_leaf_profile == nm_query_switch_leaf_profile
 
 
@@ -174,8 +184,10 @@
 - name: Verify remove_switch_leaf_profile
   assert:
     that:
-    - cm_remove_switch_leaf_profile.changed == nm_remove_switch_leaf_profile.changed == true
-    - cm_remove_switch_leaf_profile_again.changed == nm_remove_switch_leaf_profile_again.changed == false
+    - cm_remove_switch_leaf_profile is changed
+    - nm_remove_switch_leaf_profile is changed
+    - cm_remove_switch_leaf_profile_again is not changed
+    - nm_remove_switch_leaf_profile_again is not changed
 
 
 # QUERY NON-EXISTING LEAF PROFILE
@@ -196,5 +208,6 @@
 - name: Verify query_non_switch_leaf_profile
   assert:
     that:
-    - cm_query_non_switch_leaf_profile.changed == nm_query_non_switch_leaf_profile.changed == false
+    - cm_query_non_switch_leaf_profile is not changed
+    - nm_query_non_switch_leaf_profile is not changed
     - cm_query_non_switch_leaf_profile == nm_query_non_switch_leaf_profile

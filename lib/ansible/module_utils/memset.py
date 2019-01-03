@@ -60,7 +60,6 @@ def memset_api_call(api_key, api_method, payload=None):
     else:
         payload = payload.copy()
 
-    payload['api_key'] = api_key
     # set some sane defaults
     has_failed = False
     msg = None
@@ -71,7 +70,7 @@ def memset_api_call(api_key, api_method, payload=None):
     api_uri = '{0}{1}/' . format(api_uri_base, api_method)
 
     try:
-        resp = open_url(api_uri, data=data, headers=headers, method="POST")
+        resp = open_url(api_uri, data=data, headers=headers, method="POST", force_basic_auth=True, url_username=api_key)
         response.content = resp.read().decode('utf-8')
         response.status_code = resp.getcode()
     except urllib_error.HTTPError as e:
@@ -88,8 +87,6 @@ def memset_api_call(api_key, api_method, payload=None):
             msg = "Memset API returned a {0} response ({1}, {2})." . format(response.status_code, response.json()['error_type'], response.json()['error'])
         else:
             msg = "Memset API returned an error ({0}, {1})." . format(response.json()['error_type'], response.json()['error'])
-
-    del payload['api_key']
 
     if msg is None:
         msg = response.json()

@@ -17,6 +17,9 @@ DOCUMENTATION = '''
     short_description: OpenStack inventory source
     requirements:
         - openstacksdk
+    extends_documentation_fragment:
+        - inventory_cache
+        - constructed
     description:
         - Get inventory hosts from OpenStack clouds
         - Uses openstack.(yml|yaml) YAML configuration file to configure the inventory plugin
@@ -152,10 +155,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if 'clouds' in self._config_data:
             self._config_data = {}
 
+        if cache:
+            cache = self.get_option('cache')
         source_data = None
-        if cache and cache_key in self._cache:
+        if cache:
             try:
-                source_data = self._cache[cache_key]
+                source_data = self.cache.get(cache_key)
             except KeyError:
                 pass
 
@@ -167,7 +172,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 config_files = None
 
-            # TODO(mordred) Integrate shade's logging with ansible's logging
+            # TODO(mordred) Integrate openstack's logging with ansible's logging
             sdk.enable_logging()
 
             cloud_inventory = sdk_inventory.OpenStackInventory(
@@ -191,7 +196,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            self._cache[cache_key] = source_data
+            if self.cache is not None:
+                self.cache.set(cache_key, source_data)
 
         self._populate_from_source(source_data)
 
@@ -234,7 +240,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # create composite vars
             self._set_composite_vars(
-                self._config_data.get('compose'), hostvars, host)
+                self._config_data.get('compose'), hostvars[host], host)
 
             # actually update inventory
             for key in hostvars[host]:
@@ -242,7 +248,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # constructed groups based on conditionals
             self._add_host_to_composed_groups(
-                self._config_data.get('groups'), hostvars, host)
+                self._config_data.get('groups'), hostvars[host], host)
+
+            # constructed groups based on jinja expressions
+            self._add_host_to_keyed_groups(
+                self._config_data.get('keyed_groups'), hostvars[host], host)
 
         for group_name, group_hosts in groups.items():
             self.inventory.add_group(group_name)

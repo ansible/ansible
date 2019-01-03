@@ -72,20 +72,20 @@ EXAMPLES = r'''
 - name: List all networks associated to the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: query
+    state: query
     org_name: YourOrg
   delegate_to: localhost
 - name: Query network named MyNet in the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: query
+    state: query
     org_name: YourOrg
     net_name: MyNet
   delegate_to: localhost
 - name: Create network named MyNet in the YourOrg organization
   meraki_network:
     auth_key: abc12345
-    status: present
+    state: present
     org_name: YourOrg
     net_name: MyNet
     type: switch
@@ -103,32 +103,32 @@ data:
       id:
         description: Identification string of network.
         returned: success
-        type: string
+        type: str
         sample: N_12345
       name:
         description: Written name of network.
         returned: success
-        type: string
+        type: str
         sample: YourNet
       organizationId:
         description: Organization ID which owns the network.
         returned: success
-        type: string
+        type: str
         sample: 0987654321
       tags:
         description: Space delimited tags assigned to network.
         returned: success
-        type: string
+        type: str
         sample: " production wireless "
       timeZone:
         description: Timezone where network resides.
         returned: success
-        type: string
+        type: str
         sample: America/Chicago
       type:
         description: Functional type of network.
         returned: success
-        type: string
+        type: str
         sample: switch
       disableMyMerakiCom:
         description: States whether U(my.meraki.com) and other device portals should be disabled.
@@ -226,7 +226,7 @@ def main():
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
             payload['timeZone'] = meraki.params['timezone']
-        if meraki.params['disable_my_meraki']:
+        if meraki.params['disable_my_meraki'] is not None:
             payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
 
     # manipulate or modify the state as needed (this is going to be the

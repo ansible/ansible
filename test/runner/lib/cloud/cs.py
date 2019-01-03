@@ -17,6 +17,7 @@ from lib.util import (
     display,
     SubprocessError,
     is_shippable,
+    ConfigParser,
 )
 
 from lib.http import (
@@ -31,15 +32,9 @@ from lib.docker_util import (
     docker_inspect,
     docker_pull,
     docker_network_inspect,
+    docker_exec,
     get_docker_container_id,
 )
-
-try:
-    # noinspection PyPep8Naming
-    import ConfigParser as configparser
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    import configparser
 
 
 class CsCloudProvider(CloudProvider):
@@ -53,7 +48,7 @@ class CsCloudProvider(CloudProvider):
         super(CsCloudProvider, self).__init__(args, config_extension='.ini')
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'quay.io/ansible/cloudstack-test-container:1.0.0'
+        self.image = 'quay.io/ansible/cloudstack-test-container:1.2.0'
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
@@ -119,7 +114,7 @@ class CsCloudProvider(CloudProvider):
 
     def _setup_static(self):
         """Configure CloudStack tests for use with static configuration."""
-        parser = configparser.RawConfigParser()
+        parser = ConfigParser()
         parser.read(self.config_static_path)
 
         self.endpoint = parser.get('cloudstack', 'endpoint')
@@ -162,8 +157,13 @@ class CsCloudProvider(CloudProvider):
             display.info('Starting a new CloudStack simulator docker container.', verbosity=1)
             docker_pull(self.args, self.image)
             docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
+
+            # apply work-around for OverlayFS issue
+            # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
+            docker_exec(self.args, self.container_name, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'])
+
             if not self.args.explain:
-                display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
+                display.notice('The CloudStack simulator will probably be ready in 2 - 4 minutes.')
 
         container_id = get_docker_container_id()
 
@@ -211,7 +211,7 @@ class CsCloudProvider(CloudProvider):
             containers = bridge['Containers']
             container = [containers[container] for container in containers if containers[container]['Name'] == self.DOCKER_SIMULATOR_NAME][0]
             return re.sub(r'/[0-9]+$', '', container['IPv4Address'])
-        except:
+        except Exception:
             display.error('Failed to process the following docker network inspect output:\n%s' %
                           json.dumps(networks, indent=4, sort_keys=True))
             raise
@@ -233,7 +233,7 @@ class CsCloudProvider(CloudProvider):
             except SubprocessError:
                 pass
 
-            time.sleep(30)
+            time.sleep(10)
 
         raise ApplicationError('Timeout waiting for CloudStack service.')
 
@@ -255,7 +255,7 @@ class CsCloudProvider(CloudProvider):
                 except HttpError as ex:
                     display.error(ex)
 
-            time.sleep(30)
+            time.sleep(10)
 
         raise ApplicationError('Timeout waiting for CloudStack credentials.')
 

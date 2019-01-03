@@ -29,7 +29,7 @@
   vyos_command:
     commands:
         # NOTE: We only test show commands that will output <ANSIBLE_VYOS_TERMINAL_LENGTH
-        # Otherwise you will get ": "timeout trying to send command: show log authorization"
+        # Otherwise you will get ": "command timeout triggered"
       - show hardware cpu detail
       - show hardware mem
       - show license

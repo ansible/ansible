@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,28 +19,33 @@ description:
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
-notes:
-- More information about the internal APIC class B(fc:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fc:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 options:
   fc_policy:
     description:
     - The name of the Fiber Channel interface policy.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description of the Fiber Channel interface policy.
+    type: str
     aliases: [ descr ]
   port_mode:
     description:
     - The Port Mode to use.
     - The APIC defaults to C(f) when unset during creation.
+    type: str
     choices: [ f, np ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -55,6 +60,7 @@ EXAMPLES = r'''
     port_mode: '{{ port_mode }}'
     description: '{{ description }}'
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -89,7 +95,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -138,17 +144,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -158,7 +164,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -194,8 +200,8 @@ def main():
         root_class=dict(
             aci_class='fcIfPol',
             aci_rn='infra/fcIfPol-{0}'.format(fc_policy),
-            filter_target='eq(fcIfPol.name, "{0}")'.format(fc_policy),
             module_object=fc_policy,
+            target_filter={'name': fc_policy},
         ),
     )
 

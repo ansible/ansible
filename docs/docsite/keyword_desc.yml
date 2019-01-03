@@ -2,7 +2,7 @@ accelerate: "*DEPRECATED*, set to True to use accelerate connection plugin."
 accelerate_ipv6: "*DEPRECATED*, set to True to force accelerate plugin to use ipv6 for its connection."
 accelerate_port: "*DEPRECATED*, set to override default port use for accelerate connection."
 action: "The 'action' to execute for a task, it normally translates into a C(module) or action plugin."
-args: "*DEPRECATED*, A secondary way to add arguments into a task. Takes a dictionary in which keys map to options and values."
+args: "A secondary way to add arguments into a task. Takes a dictionary in which keys map to options and values."
 always: List of tasks, in a block, that execute no matter if there is an error in the block or not.
 any_errors_fatal: Force any un-handled task errors on any host to propagate to all hosts and end the play.
 async: Run a task asynchronously if the C(action) supports this; value is maximum runtime in seconds.
@@ -37,6 +37,7 @@ gather_timeout: Allows you to set the timeout for the fact gathering plugin cont
 handlers: "A section with tasks that are treated as handlers, these won't get executed normally, only when notified after each section of tasks is complete."
 hosts: "A list of groups, hosts or host pattern that translates into a list of hosts that are the play's target."
 ignore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
+ignore_unreachable: Boolean that allows you to ignore unreachable hosts and continue with play. This does not affect other task errors (see :term:`ignore_errors`) but is useful for groups of volatile/ephemeral hosts.
 loop: "Takes a list for the task to iterate over, saving each list element into the ``item`` variable (configurable via loop_control)"
 loop_control: |
     Several keys here allow you to modify/set loop behaviour in a task.

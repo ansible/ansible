@@ -8,28 +8,23 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
 module: na_ontap_broadcast_domain_ports
-short_description: Manage NetApp Ontap broadcast domain ports
+short_description: NetApp ONTAP manage broadcast domain ports
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author:
-- Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
-- Modify Ontap broadcast domain ports
+- Add or remove ONTAP broadcast domain ports.  Existing ports that are not listed are kept.
 options:
   state:
     description:
     - Whether the specified broadcast domain should exist or not.
     choices: ['present', 'absent']
     default: present
-  vserver:
-    description:
-    - The name of the vserver
-    required: true
   broadcast_domain:
     description:
     - Specify the broadcast_domain name
@@ -39,7 +34,7 @@ options:
     - Specify the ipspace for the broadcast domain
   ports:
     description:
-    - Specify the list of ports associated with this broadcast domain.
+    - Specify the list of ports to add to or remove from this broadcast domain.
 
 '''
 
@@ -47,7 +42,6 @@ EXAMPLES = """
     - name: create broadcast domain ports
       na_ontap_broadcast_domain_ports:
         state=present
-        vserver={{ Vserver name }}
         username={{ netapp_username }}
         password={{ netapp_password }}
         hostname={{ netapp_hostname }}
@@ -56,7 +50,6 @@ EXAMPLES = """
     - name: delete broadcast domain ports
       na_ontap_broadcast_domain_ports:
         state=absent
-        vserver={{ Vserver name }}
         username={{ netapp_username }}
         password={{ netapp_password }}
         hostname={{ netapp_hostname }}
@@ -88,7 +81,6 @@ class NetAppOntapBroadcastDomainPorts(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
-            vserver=dict(required=False, type='str'),
             broadcast_domain=dict(required=True, type='str'),
             ipspace=dict(required=False, type='str', default=None),
             ports=dict(required=True, type='list'),
@@ -98,12 +90,9 @@ class NetAppOntapBroadcastDomainPorts(object):
             argument_spec=self.argument_spec,
             supports_check_mode=True
         )
-
         parameters = self.module.params
-
         # set up state variables
         self.state = parameters['state']
-        self.vserver = parameters['vserver']
         self.broadcast_domain = parameters['broadcast_domain']
         self.ipspace = parameters['ipspace']
         self.ports = parameters['ports']
@@ -135,14 +124,18 @@ class NetAppOntapBroadcastDomainPorts(object):
                 int(result.get_child_content('num-records')) == 1:
             domain_info = result.get_child_by_name('attributes-list').get_child_by_name('net-port-broadcast-domain-info')
             domain_name = domain_info.get_child_content('broadcast-domain')
-            domain_ports = domain_info.get_child_content('port-info')
+            domain_ports = domain_info.get_child_by_name('ports')
+            if domain_ports is not None:
+                ports = [port.get_child_content('port') for port in domain_ports.get_children()]
+            else:
+                ports = []
             domain_exists = {
                 'domain-name': domain_name,
-                'ports': domain_ports
+                'ports': ports
             }
         return domain_exists
 
-    def create_broadcast_domain_ports(self):
+    def create_broadcast_domain_ports(self, ports):
         """
         Creates new broadcast domain ports
         """
@@ -150,24 +143,20 @@ class NetAppOntapBroadcastDomainPorts(object):
         domain_obj.add_new_child("broadcast-domain", self.broadcast_domain)
         if self.ipspace:
             domain_obj.add_new_child("ipspace", self.ipspace)
-        if self.ports:
+        if ports:
             ports_obj = netapp_utils.zapi.NaElement('ports')
             domain_obj.add_child_elem(ports_obj)
-            for port in self.ports:
+            for port in ports:
                 ports_obj.add_new_child('net-qualified-port-name', port)
         try:
             self.server.invoke_successfully(domain_obj, True)
             return True
         except netapp_utils.zapi.NaApiError as error:
-            # Error 18605 denotes port already being used.
-            if to_native(error.code) == "18605":
-                return False
-            else:
-                self.module.fail_json(msg='Error creating port for broadcast domain %s: %s' %
-                                      (self.broadcast_domain, to_native(error)),
-                                      exception=traceback.format_exc())
+            self.module.fail_json(msg='Error creating port for broadcast domain %s: %s' %
+                                  (self.broadcast_domain, to_native(error)),
+                                  exception=traceback.format_exc())
 
-    def delete_broadcast_domain_ports(self):
+    def delete_broadcast_domain_ports(self, ports):
         """
         Deletes broadcast domain ports
         """
@@ -175,22 +164,18 @@ class NetAppOntapBroadcastDomainPorts(object):
         domain_obj.add_new_child("broadcast-domain", self.broadcast_domain)
         if self.ipspace:
             domain_obj.add_new_child("ipspace", self.ipspace)
-        if self.ports:
+        if ports:
             ports_obj = netapp_utils.zapi.NaElement('ports')
             domain_obj.add_child_elem(ports_obj)
-            for port in self.ports:
+            for port in ports:
                 ports_obj.add_new_child('net-qualified-port-name', port)
         try:
             self.server.invoke_successfully(domain_obj, True)
             return True
         except netapp_utils.zapi.NaApiError as error:
-            # Error 13001 denotes port already not being used.
-            if to_native(error.code) == "13001":
-                return False
-            else:
-                self.module.fail_json(msg='Error deleting port for broadcast domain %s: %s' %
-                                      (self.broadcast_domain, to_native(error)),
-                                      exception=traceback.format_exc())
+            self.module.fail_json(msg='Error deleting port for broadcast domain %s: %s' %
+                                  (self.broadcast_domain, to_native(error)),
+                                  exception=traceback.format_exc())
 
     def apply(self):
         """
@@ -198,27 +183,23 @@ class NetAppOntapBroadcastDomainPorts(object):
         """
         changed = False
         broadcast_domain_details = self.get_broadcast_domain_ports()
-        broadcast_domain_exists = False
         results = netapp_utils.get_cserver(self.server)
         cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_broadcast_domain_ports", cserver)
-        if broadcast_domain_details:
-            broadcast_domain_exists = True
-            if self.state == 'absent':  # delete
-                changed = True
-            elif self.state == 'present':  # create
-                changed = True
-        else:
+        if broadcast_domain_details is None:
+            self.module.fail_json(msg='Error broadcast domain not found: %s' % self.broadcast_domain)
+        if self.module.check_mode:
             pass
-        if changed:
-            if self.module.check_mode:
-                pass
-            else:
-                if broadcast_domain_exists:
-                    if self.state == 'present':  # execute create
-                        changed = self.create_broadcast_domain_ports()
-                    elif self.state == 'absent':  # execute delete
-                        changed = self.delete_broadcast_domain_ports()
+        else:
+            if self.state == 'present':  # execute create
+                ports_to_add = [port for port in self.ports if port not in broadcast_domain_details['ports']]
+                if len(ports_to_add) > 0:
+                    changed = self.create_broadcast_domain_ports(ports_to_add)
+            elif self.state == 'absent':  # execute delete
+                ports_to_delete = [port for port in self.ports if port in broadcast_domain_details['ports']]
+                if len(ports_to_delete) > 0:
+                    changed = self.delete_broadcast_domain_ports(ports_to_delete)
+
         self.module.exit_json(changed=changed)
 
 

@@ -1,0 +1,15 @@
+stack_compose_base:
+    version: '3'
+    services:
+        busybox:
+            image: busybox:latest
+            command: sleep 3600
+
+stack_compose_overrides:
+    version: '3'
+    services:
+        busybox:
+            environment:
+                envvar: value
+
+stack_update_expected_diff: '{"test_stack_busybox": {"TaskTemplate": {"ContainerSpec": {"Env": ["envvar=value"]}}}}'

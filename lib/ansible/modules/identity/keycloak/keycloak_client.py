@@ -32,7 +32,7 @@ description:
       Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/).
       Aliases are provided so camelCased versions can be used as well.
 
-    - The Keycloak API does not always enforce for only sensible settings to be used -- you can set
+    - The Keycloak API does not always sanity check inputs e.g. you can set
       SAML-specific settings on an OpenID Connect client for instance and vice versa. Be careful.
       If you do not specify a setting, usually a sensible default is chosen.
 
@@ -44,6 +44,10 @@ options:
             - On C(absent), the client will be removed if it exists
         choices: ['present', 'absent']
         default: 'present'
+
+    realm:
+        description:
+            - The realm to create the client in.
 
     client_id:
         description:
@@ -90,6 +94,7 @@ options:
     enabled:
         description:
             - Is this client enabled or not?
+        type: bool
 
     client_authenticator_type:
         description:
@@ -153,6 +158,7 @@ options:
               This is 'bearerOnly' in the Keycloak REST API.
         aliases:
             - bearerOnly
+        type: bool
 
     consent_required:
         description:
@@ -160,6 +166,7 @@ options:
               This is 'consentRequired' in the Keycloak REST API.
         aliases:
             - consentRequired
+        type: bool
 
     standard_flow_enabled:
         description:
@@ -167,6 +174,7 @@ options:
               This is 'standardFlowEnabled' in the Keycloak REST API.
         aliases:
             - standardFlowEnabled
+        type: bool
 
     implicit_flow_enabled:
         description:
@@ -174,6 +182,7 @@ options:
               This is 'implictFlowEnabled' in the Keycloak REST API.
         aliases:
             - implicitFlowEnabled
+        type: bool
 
     direct_access_grants_enabled:
         description:
@@ -181,6 +190,7 @@ options:
               This is 'directAccessGrantsEnabled' in the Keycloak REST API.
         aliases:
             - directAccessGrantsEnabled
+        type: bool
 
     service_accounts_enabled:
         description:
@@ -188,6 +198,7 @@ options:
               This is 'serviceAccountsEnabled' in the Keycloak REST API.
         aliases:
             - serviceAccountsEnabled
+        type: bool
 
     authorization_services_enabled:
         description:
@@ -195,6 +206,7 @@ options:
               This is 'authorizationServicesEnabled' in the Keycloak REST API.
         aliases:
             - authorizationServicesEnabled
+        type: bool
 
     public_client:
         description:
@@ -202,6 +214,7 @@ options:
               This is 'publicClient' in the Keycloak REST API.
         aliases:
             - publicClient
+        type: bool
 
     frontchannel_logout:
         description:
@@ -209,6 +222,7 @@ options:
               This is 'frontchannelLogout' in the Keycloak REST API.
         aliases:
             - frontchannelLogout
+        type: bool
 
     protocol:
         description:
@@ -221,6 +235,7 @@ options:
               This is 'fullScopeAllowed' in the Keycloak REST API.
         aliases:
             - fullScopeAllowed
+        type: bool
 
     node_re_registration_timeout:
         description:
@@ -251,6 +266,7 @@ options:
               This is 'useTemplateConfig' in the Keycloak REST API.
         aliases:
             - useTemplateConfig
+        type: bool
 
     use_template_scope:
         description:
@@ -258,6 +274,7 @@ options:
               This is 'useTemplateScope' in the Keycloak REST API.
         aliases:
             - useTemplateScope
+        type: bool
 
     use_template_mappers:
         description:
@@ -265,6 +282,7 @@ options:
               This is 'useTemplateMappers' in the Keycloak REST API.
         aliases:
             - useTemplateMappers
+        type: bool
 
     surrogate_auth_required:
         description:
@@ -272,6 +290,7 @@ options:
               This is 'surrogateAuthRequired' in the Keycloak REST API.
         aliases:
             - surrogateAuthRequired
+        type: bool
 
     authorization_settings:
         description:
@@ -577,7 +596,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: "Client testclient has been updated"
 
 proposed:

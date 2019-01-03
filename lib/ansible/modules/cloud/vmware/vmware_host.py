@@ -259,13 +259,17 @@ class VMwareHost(PyVmomi):
                 return success, result
             except TaskError as task_error_exception:
                 task_error = task_error_exception.args[0]
-                if self.esxi_ssl_thumbprint == '' and isinstance(task_error, vim.fault.SSLVerifyFault):
+                if len(task_error_exception.args) == 2:
+                    host_thumbprint = task_error_exception.args[1]
+                else:
+                    host_thumbprint = None
+                if self.esxi_ssl_thumbprint == '' and host_thumbprint:
                     # User has not specified SSL Thumbprint for ESXi host,
                     # try to grab it using SSLVerifyFault exception
-                    host_connect_spec.sslThumbprint = task_error.thumbprint
+                    host_connect_spec.sslThumbprint = host_thumbprint
                 else:
                     self.module.fail_json(msg="Failed to add host %s to vCenter: %s" % (self.esxi_hostname,
-                                                                                        to_native(task_error.msg)))
+                                                                                        to_native(task_error)))
             except vmodl.fault.NotSupported:
                 self.module.fail_json(msg="Failed to add host %s to vCenter as host is"
                                           " being added to a folder %s whose childType"

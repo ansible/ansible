@@ -9,43 +9,43 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
 
 module: na_ontap_lun
 
-short_description: Manage  NetApp Ontap luns
+short_description: NetApp ONTAP manage LUNs
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: Sumit Kumar (sumit4@netapp.com), Suhas Bangalore Shekar (bsuhas@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
-- Create, destroy, resize luns on NetApp Ontap.
+- Create, destroy, resize LUNs on NetApp ONTAP.
 
 options:
 
   state:
     description:
-    - Whether the specified lun should exist or not.
+    - Whether the specified LUN should exist or not.
     choices: ['present', 'absent']
     default: present
 
   name:
     description:
-    - The name of the lun to manage.
+    - The name of the LUN to manage.
     required: true
 
   flexvol_name:
     description:
-    - The name of the FlexVol the lun should exist on.
+    - The name of the FlexVol the LUN should exist on.
     required: true
 
   size:
     description:
-    - The size of the lun in C(size_unit).
+    - The size of the LUN in C(size_unit).
     - Required when C(state=present).
 
   size_unit:
@@ -92,6 +92,14 @@ options:
     type: bool
     default: True
 
+  space_allocation:
+    description:
+    - This enables support for the SCSI Thin Provisioning features.  If the Host and file system do
+      not support this do not enable it.
+    type: bool
+    default: False
+    version_added: '2.7'
+
 '''
 
 EXAMPLES = """
@@ -109,7 +117,7 @@ EXAMPLES = """
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
 
-- name: Resize Lun
+- name: Resize LUN
   na_ontap_lun:
     state: present
     name: ansibleLUN
@@ -168,6 +176,7 @@ class NetAppOntapLUN(object):
             vserver=dict(required=True, type='str'),
             ostype=dict(required=False, type='str', default='image'),
             space_reserve=dict(required=False, type='bool', default=True),
+            space_allocation=dict(required=False, type='bool', default=False),
         ))
 
         self.module = AnsibleModule(
@@ -195,6 +204,7 @@ class NetAppOntapLUN(object):
         self.vserver = parameters['vserver']
         self.ostype = parameters['ostype']
         self.space_reserve = parameters['space_reserve']
+        self.space_allocation = parameters['space_allocation']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -283,7 +293,8 @@ class NetAppOntapLUN(object):
             'lun-create-by-size', **{'path': path,
                                      'size': str(self.size),
                                      'ostype': self.ostype,
-                                     'space-reservation-enabled': str(self.space_reserve)})
+                                     'space-reservation-enabled': str(self.space_reserve),
+                                     'space-allocation-enabled': str(self.space_allocation)})
 
         try:
             self.server.invoke_successfully(lun_create, enable_tunneling=True)

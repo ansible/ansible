@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: dellos6_config
 version_added: "2.2"
-author: "Abirami N(@abirami-n)"
+author: "Abirami N (@abirami-n)"
 short_description: Manage Dell EMC Networking OS6 configuration sections
 description:
   - OS6 configurations use a simple block indent file syntax
@@ -169,7 +169,7 @@ saved:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/dellos6_config.2017-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule

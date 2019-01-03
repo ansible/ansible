@@ -1,0 +1,2 @@
+bugfixes:
+- aci_switch_leaf_selector - Support empty policy_group

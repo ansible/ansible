@@ -69,6 +69,7 @@ options:
         description:
             - Is the "Full Scope Allowed" feature set for this client template or not.
               This is 'fullScopeAllowed' in the Keycloak REST API.
+        type: bool
 
     protocol_mappers:
         description:
@@ -211,7 +212,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: "Client template testclient has been updated"
 
 proposed:

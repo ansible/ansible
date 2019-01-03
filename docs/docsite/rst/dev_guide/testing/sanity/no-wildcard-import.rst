@@ -1,3 +1,5 @@
+:orphan:
+
 Sanity Tests » no-wildcard-import
 =================================
 

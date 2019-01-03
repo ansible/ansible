@@ -6,15 +6,10 @@ class ModuleDocFragment(object):
         # GCP doc fragment.
         DOCUMENTATION = '''
 options:
-    state:
-        description:
-            - Whether the given zone should or should not be present.
-        required: true
-        choices: ["present", "absent"]
-        default: "present"
     project:
         description:
             - The Google Cloud Platform project to use.
+        default: null
     auth_kind:
         description:
             - The type of credential used.
@@ -30,7 +25,6 @@ options:
     scopes:
       description:
           - Array of scopes to be used.
-      required: true
 notes:
   - For authentication, you can set service_account_file using the
     C(GCP_SERVICE_ACCOUNT_FILE) env variable.

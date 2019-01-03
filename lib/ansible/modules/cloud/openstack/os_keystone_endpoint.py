@@ -45,6 +45,7 @@ options:
      description:
         - Is the service enabled.
      default: True
+     type: bool
    state:
      description:
        - Should the resource be C(present) or C(absent).
@@ -81,27 +82,27 @@ endpoint:
     contains:
         id:
             description: Endpoint ID.
-            type: string
+            type: str
             sample: 3292f020780b4d5baf27ff7e1d224c44
         region:
             description: Region Name.
-            type: string
+            type: str
             sample: RegionOne
         service_id:
             description: Service ID.
-            type: string
+            type: str
             sample: b91f1318f735494a825a55388ee118f3
         interface:
             description: Endpoint Interface.
-            type: string
+            type: str
             sample: public
         url:
             description: Service URL.
-            type: string
+            type: str
             sample: http://controller:9292
         enabled:
             description: Service status.
-            type: boolean
+            type: bool
             sample: True
 '''
 

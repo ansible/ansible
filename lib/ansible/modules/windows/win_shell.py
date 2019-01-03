@@ -54,7 +54,13 @@ notes:
       Thus, it is not possible to use C(win_shell) to spawn long-running child or background processes.
       Consider creating a Windows service for managing background processes.
    - For non-Windows targets, use the M(shell) module instead.
-   - See also M(win_command), M(raw)
+seealso:
+- module: psexec
+- module: raw
+- module: script
+- module: shell
+- module: win_command
+- module: win_psexec
 author:
     - Matt Davis (@nitzmahone)
 '''
@@ -99,37 +105,37 @@ RETURN = r'''
 msg:
     description: changed
     returned: always
-    type: boolean
+    type: bool
     sample: True
 start:
     description: The command execution start time
     returned: always
-    type: string
+    type: str
     sample: '2016-02-25 09:18:26.429568'
 end:
     description: The command execution end time
     returned: always
-    type: string
+    type: str
     sample: '2016-02-25 09:18:26.755339'
 delta:
     description: The command execution delta time
     returned: always
-    type: string
+    type: str
     sample: '0:00:00.325771'
 stdout:
     description: The command standard output
     returned: always
-    type: string
+    type: str
     sample: 'Clustering node rabbit@slave1 with rabbit@master ...'
 stderr:
     description: The command standard error
     returned: always
-    type: string
+    type: str
     sample: 'ls: cannot access foo: No such file or directory'
 cmd:
     description: The command executed by the task
     returned: always
-    type: string
+    type: str
     sample: 'rabbitmqctl join_cluster rabbit@master'
 rc:
     description: The command return code (0 means success)

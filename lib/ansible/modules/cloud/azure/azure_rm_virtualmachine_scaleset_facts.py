@@ -38,6 +38,7 @@ options:
             - If C(raw) is selected information will be returned in raw format from Azure Python SDK.
             - If C(curated) is selected the structure will be identical to input parameters of azure_rm_virtualmachine_scaleset module.
             - In Ansible 2.5 and lower facts are always returned in raw format.
+            - Please note that this option will be deprecated in 2.10 when curated format will become the only supported format.
         default: 'raw'
         choices:
             - 'curated'
@@ -70,11 +71,17 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-azure_vmss:
+vmss:
     description: List of virtual machine scale sets
     returned: always
     type: complex
     contains:
+        id:
+            description:
+                - Resource ID
+            returned: always
+            type: str
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.Compute/scalesets/myscaleset
         admin_username:
             description:
                 - Admin username used to access the host after it is created.
@@ -175,6 +182,11 @@ azure_vmss:
             type: str
             returned: always
             sample: Linux
+        overprovision:
+            description:
+                - Specifies whether the Virtual Machine Scale Set should be overprovisioned.
+            type: bool
+            sample: true
         resource_group:
             description:
                 - Resource group.
@@ -217,6 +229,10 @@ azure_vmss:
             type: str
             returned: always
             sample: Standard_D4
+        tags:
+            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            type: dict
+            sample: { "tag1": "abc" }
 '''  # NOQA
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -224,7 +240,7 @@ import re
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 
@@ -292,7 +308,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     subnet_id = (vmss['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations'][0]
                                  ['properties']['ipConfigurations'][0]['properties']['subnet']['id'])
                     subnet_name = re.sub('.*subnets\\/', '', subnet_id)
-                except:
+                except Exception:
                     self.log('Could not extract subnet name')
 
                 try:
@@ -300,13 +316,13 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                                                ['properties']['ipConfigurations'][0]['properties']['loadBalancerBackendAddressPools'][0]['id'])
                     load_balancer_name = re.sub('\\/backendAddressPools.*', '', re.sub('.*loadBalancers\\/', '', backend_address_pool_id))
                     virtual_network_name = re.sub('.*virtualNetworks\\/', '', re.sub('\\/subnets.*', '', subnet_id))
-                except:
+                except Exception:
                     self.log('Could not extract load balancer / virtual network name')
 
                 try:
                     ssh_password_enabled = (not vmss['properties']['virtualMachineProfile']['osProfile'],
                                                     ['linuxConfiguration']['disablePasswordAuthentication'])
-                except:
+                except Exception:
                     self.log('Could not extract SSH password enabled')
 
                 data_disks = vmss['properties']['virtualMachineProfile']['storageProfile'].get('dataDisks', [])
@@ -322,6 +338,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     data_disks[disk_index] = new_disk
 
                 updated = {
+                    'id': vmss['id'],
                     'resource_group': self.resource_group,
                     'name': vmss['name'],
                     'state': 'present',
@@ -336,14 +353,20 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
                     'image': vmss['properties']['virtualMachineProfile']['storageProfile']['imageReference'],
                     'os_disk_caching': vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['caching'],
                     'os_type': 'Linux' if (vmss['properties']['virtualMachineProfile']['osProfile'].get('linuxConfiguration') is not None) else 'Windows',
+                    'overprovision': vmss['properties']['overprovision'],
                     'managed_disk_type': vmss['properties']['virtualMachineProfile']['storageProfile']['osDisk']['managedDisk']['storageAccountType'],
                     'data_disks': data_disks,
                     'virtual_network_name': virtual_network_name,
                     'subnet_name': subnet_name,
-                    'load_balancer': load_balancer_name
+                    'load_balancer': load_balancer_name,
+                    'tags': vmss.get('tags')
                 }
 
                 self.results['ansible_facts']['azure_vmss'][index] = updated
+
+            # proper result format we want to support in the future
+            # dropping 'ansible_facts' and shorter name 'vmss'
+            self.results['vmss'] = self.results['ansible_facts']['azure_vmss']
 
         return self.results
 

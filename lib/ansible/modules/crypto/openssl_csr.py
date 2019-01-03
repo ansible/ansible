@@ -249,12 +249,12 @@ RETURN = '''
 privatekey:
     description: Path to the TLS/SSL private key the CSR was generated for
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/private/ansible.com.pem
 filename:
     description: Path to the generated Certificate Signing Request
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/csr/www.ansible.com.csr
 subject:
     description: A list of the subject tuples attached to the CSR
@@ -465,7 +465,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             return _check_keyUsage_(extensions, b'basicConstraints', self.basicConstraints, self.basicConstraints_critical)
 
         def _check_ocspMustStaple(extensions):
-            oms_ext = [ext for ext in extensions if ext.get_short_name() == MUST_STAPLE_NAME and str(ext) == MUST_STAPLE_VALUE]
+            oms_ext = [ext for ext in extensions if to_bytes(ext.get_short_name()) == MUST_STAPLE_NAME and to_bytes(ext) == MUST_STAPLE_VALUE]
             if OpenSSL.SSL.OPENSSL_VERSION_NUMBER < 0x10100000:
                 # Older versions of libssl don't know about OCSP Must Staple
                 oms_ext.extend([ext for ext in extensions if ext.get_short_name() == b'UNDEF' and ext.get_data() == b'\x30\x03\x02\x01\x05'])
@@ -529,13 +529,13 @@ def main():
             organizationalUnitName=dict(aliases=['OU', 'organizational_unit_name'], type='str'),
             commonName=dict(aliases=['CN', 'common_name'], type='str'),
             emailAddress=dict(aliases=['E', 'email_address'], type='str'),
-            subjectAltName=dict(aliases=['subject_alt_name'], type='list'),
+            subjectAltName=dict(aliases=['subject_alt_name'], type='list', elements='str'),
             subjectAltName_critical=dict(aliases=['subject_alt_name_critical'], default=False, type='bool'),
-            keyUsage=dict(aliases=['key_usage'], type='list'),
+            keyUsage=dict(aliases=['key_usage'], type='list', elements='str'),
             keyUsage_critical=dict(aliases=['key_usage_critical'], default=False, type='bool'),
             extendedKeyUsage=dict(aliases=['extKeyUsage', 'extended_key_usage'], type='list'),
-            extendedKeyUsage_critical=dict(aliases=['extKeyUsage_critical', 'extended_key_usage_critical'], default=False, type='bool'),
-            basicConstraints=dict(aliases=['basic_constraints'], type='list'),
+            extendedKeyUsage_critical=dict(aliases=['extKeyUsage_critical', 'extended_key_usage_critical'], default=False, type='bool', elements='str'),
+            basicConstraints=dict(aliases=['basic_constraints'], type='list', elements='str'),
             basicConstraints_critical=dict(aliases=['basic_constraints_critical'], default=False, type='bool'),
             ocspMustStaple=dict(aliases=['ocsp_must_staple'], default=False, type='bool'),
             ocspMustStaple_critical=dict(aliases=['ocsp_must_staple_critical'], default=False, type='bool'),

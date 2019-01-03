@@ -60,12 +60,13 @@ options:
         type: bool
         default: 'no'
 requirements: [openssl, keytool]
-author: Guillaume Grossetie
+author: Guillaume Grossetie (@Mogztter)
 '''
 
 EXAMPLES = '''
 # Create a key store for the given certificate (inline)
 - java_keystore:
+    name: example
     certificate: |
       -----BEGIN CERTIFICATE-----
       h19dUZ2co2fI/ibYiwxWk4aeNE6KWvCaTQOMQ8t6Uo2XKhpL/xnjoAgh1uCQN/69
@@ -81,6 +82,7 @@ EXAMPLES = '''
 
 # Create a key store for the given certificate (lookup)
 - java_keystore:
+    name: example
     certificate: "{{lookup('file', '/path/to/certificate.crt') }}"
     private_key: "{{lookup('file', '/path/to/private.key') }}"
     password: changeit
@@ -91,7 +93,7 @@ RETURN = '''
 msg:
   description: Output from stdout of keytool/openssl command after execution of given command or an error.
   returned: changed and failure
-  type: string
+  type: str
   sample: "Unable to find the current certificate fingerprint in ..."
 
 rc:
@@ -103,7 +105,7 @@ rc:
 cmd:
   description: Executed command to get action done
   returned: changed and failure
-  type: string
+  type: str
   sample: "openssl x509 -noout -in /tmp/cert.crt -fingerprint -sha1"
 '''
 

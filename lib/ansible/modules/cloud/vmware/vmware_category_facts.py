@@ -39,23 +39,23 @@ extends_documentation_fragment: vmware_rest_client.documentation
 EXAMPLES = r'''
 - name: Gather facts about tag categories
   vmware_category_facts:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   delegate_to: localhost
   register: all_tag_category_facts
 
 - name: Gather category id from given tag category
   vmware_category_facts:
-    hostname: "{{ vcenter_server }}"
-    username: "{{ vcenter_user }}"
-    password: "{{ vcenter_pass }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   delegate_to: localhost
   register: tag_category_results
 
 - set_fact:
     category_id: "{{ item.category_id }}"
-  with_items: "{{ tag_category_results.tag_category_facts|json_query(query) }}"
+  loop: "{{ tag_category_results.tag_category_facts|json_query(query) }}"
   vars:
     query: "[?category_name==`Category0001`]"
 - debug: var=category_id

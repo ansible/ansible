@@ -1,5 +1,6 @@
+**********************************
 Developing the Ansible Core Engine
-==================================
+**********************************
 
 Although many of the pieces of the Ansible Core Engine are plugins that can be
 swapped out via playbook directives or configuration, there are still pieces
@@ -21,4 +22,3 @@ those pieces work together.
        The development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible-devel IRC chat channel
-

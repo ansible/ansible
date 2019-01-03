@@ -1,8 +1,8 @@
 import os
 import tempfile
-import ansible.module_utils.basic as basic
+from ansible.module_utils import basic
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.basic import AnsibleModule
 

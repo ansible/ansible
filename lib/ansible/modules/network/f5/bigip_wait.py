@@ -1,15 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -48,25 +49,28 @@ author:
 EXAMPLES = r'''
 - name: Wait for BIG-IP to be ready to take configuration
   bigip_wait:
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Wait a maximum of 300 seconds for BIG-IP to be ready to take configuration
   bigip_wait:
     timeout: 300
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Wait for BIG-IP to be ready, don't start checking for 10 seconds
   bigip_wait:
     delay: 10
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -81,25 +85,19 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 
 def hard_timeout(module, want, start):
@@ -158,10 +156,7 @@ class ModuleManager(object):
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.execute()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.execute()
 
         changes = self.changes.to_return()
         result.update(**changes)
@@ -178,7 +173,7 @@ class ModuleManager(object):
             )
 
     def _get_client_connection(self):
-        return F5Client(**self.module.params)
+        return F5RestClient(**self.module.params)
 
     def execute(self):
         signal.signal(
@@ -210,7 +205,10 @@ class ModuleManager(object):
                 if self._is_mprov_running_on_device():
                     self._wait_for_module_provisioning()
                 break
-            except Exception:
+            except Exception as ex:
+                if 'Failed to validate the SSL' in str(ex):
+                    raise F5ModuleError(str(ex))
+
                 # The types of exception's we're handling here are "REST API is not
                 # ready" exceptions.
                 #
@@ -248,15 +246,28 @@ class ModuleManager(object):
         return False
 
     def _device_is_rebooting(self):
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "runlevel"'
+        params = {
+            "command": "run",
+            "utilCmdArgs": '-c "runlevel"'
+        }
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
+        resp = self.client.api.post(uri, json=params)
         try:
-            if '6' in output.commandResult:
-                return True
-        except AttributeError:
-            return False
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response and '6' in response['commandResult']:
+            return True
+        return False
 
     def _wait_for_module_provisioning(self):
         # To prevent things from running forever, the hack is to check
@@ -271,17 +282,32 @@ class ModuleManager(object):
                     nops += 1
                 else:
                     nops = 0
-            except Exception:
+            except Exception as ex:
                 # This can be caused by restjavad restarting.
                 pass
             time.sleep(10)
 
     def _is_mprov_running_on_device(self):
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "ps aux | grep \'[m]prov\'"'
+        params = {
+            "command": "run",
+            "utilCmdArgs": '-c "ps aux | grep \'[m]prov\'"'
+        }
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
         )
-        if hasattr(output, 'commandResult'):
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'commandResult' in response:
             return True
         return False
 
@@ -307,15 +333,15 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        mm = ModuleManager(module=module)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        module.exit_json(**results)
-    except F5ModuleError as e:
-        module.fail_json(msg=str(e))
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

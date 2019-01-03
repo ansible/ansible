@@ -85,6 +85,7 @@ options:
       - Enable statefile locking, if you use a service that accepts locks (such
         as S3+DynamoDB) to store your statefile.
     required: false
+    type: bool
   lock_timeout:
     description:
       - How long to maintain the lock on the statefile, if you use a service
@@ -98,10 +99,15 @@ options:
     default: false
     required: false
     type: bool
+  backend_config:
+    description:
+      - A group of key-values to provide at init stage to the -backend-config parameter.
+    required: false
+    version_added: 2.7
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
-author: "Ryan Scott Brown @ryansb"
+author: "Ryan Scott Brown (@ryansb)"
 '''
 
 EXAMPLES = """
@@ -109,6 +115,16 @@ EXAMPLES = """
 - terraform:
     project_path: '{{ project_dir }}'
     state: present
+
+# Define the backend configuration at init
+- terraform:
+    project_path: 'project/'
+    state: "{{ state }}"
+    force_init: true
+    backend_config:
+      region: "eu-west-1"
+      bucket: "some-bucket"
+      key: "random.tfstate"
 """
 
 RETURN = """
@@ -123,19 +139,19 @@ outputs:
       returned: always
       description: Whether Terraform has marked this value as sensitive
     type:
-      type: string
+      type: str
       returned: always
       description: The type of the value (string, int, etc)
     value:
       returned: always
       description: The value of the output as interpolated by Terraform
 stdout:
-  type: string
+  type: str
   description: Full `terraform` command stdout, in case you want to display it or examine the event log
   returned: always
   sample: ''
 command:
-  type: string
+  type: str
   description: Full `terraform` command built by this module, in case you want to re-run the command outside the module or debug a problem.
   returned: always
   sample: terraform apply ...
@@ -145,6 +161,7 @@ import os
 import json
 import tempfile
 import traceback
+from ansible.module_utils.six.moves import shlex_quote
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -161,7 +178,7 @@ def preflight_validation(bin_path, project_path, variables_args=None, plan_file=
     if not os.path.isdir(project_path):
         module.fail_json(msg="Path for Terraform project '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
 
-    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path)
+    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path, use_unsafe_shell=True)
     if rc != 0:
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
@@ -174,8 +191,14 @@ def _state_args(state_file):
     return []
 
 
-def init_plugins(bin_path, project_path):
+def init_plugins(bin_path, project_path, backend_config):
     command = [bin_path, 'init', '-input=false']
+    if backend_config:
+        for key, val in backend_config.items():
+            command.extend([
+                '-backend-config',
+                shlex_quote('{0}={1}'.format(key, val))
+            ])
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
@@ -224,12 +247,12 @@ def build_plan(bin_path, project_path, variables_args, state_file, targets, plan
 
     command = [bin_path, 'plan', '-input=false', '-no-color', '-detailed-exitcode', '-out', plan_path]
 
-    for t in (module.params.get('targets') or []):
+    for t in (targets or []):
         command.extend(['-target', t])
 
     command.extend(_state_args(state_file))
 
-    rc, out, err = module.run_command(command + variables_args, cwd=project_path)
+    rc, out, err = module.run_command(command + variables_args, cwd=project_path, use_unsafe_shell=True)
 
     if rc == 0:
         # no changes
@@ -261,6 +284,7 @@ def main():
             lock=dict(type='bool', default=True),
             lock_timeout=dict(type='int',),
             force_init=dict(type='bool', default=False),
+            backend_config=dict(type='dict', default=None),
         ),
         required_if=[('state', 'planned', ['plan_file'])],
         supports_check_mode=True,
@@ -276,6 +300,7 @@ def main():
     plan_file = module.params.get('plan_file')
     state_file = module.params.get('state_file')
     force_init = module.params.get('force_init')
+    backend_config = module.params.get('backend_config')
 
     if bin_path is not None:
         command = [bin_path]
@@ -283,7 +308,7 @@ def main():
         command = [module.get_bin_path('terraform', required=True)]
 
     if force_init:
-        init_plugins(command[0], project_path)
+        init_plugins(command[0], project_path, backend_config)
 
     workspace_ctx = get_workspace_context(command[0], project_path)
     if workspace_ctx["current"] != workspace:

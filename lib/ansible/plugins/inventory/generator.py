@@ -73,24 +73,21 @@ EXAMPLES = '''
 
 import os
 
+from itertools import product
+
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin
-
-from itertools import product
 
 
 class InventoryModule(BaseInventoryPlugin):
-    """ constructs groups and vars using Jinaj2 template expressions """
+    """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'generator'
 
     def __init__(self):
 
         super(InventoryModule, self).__init__()
-
-        self._cache = FactCache()
 
     def verify_file(self, path):
 

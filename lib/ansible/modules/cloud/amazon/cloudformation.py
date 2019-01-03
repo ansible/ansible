@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -33,8 +34,6 @@ options:
   create_timeout:
     description:
       - The amount of time (in minutes) that can pass before the stack status becomes CREATE_FAILED
-    required: false
-    default: null
     version_added: "2.6"
   template_parameters:
     description:
@@ -62,7 +61,7 @@ options:
   stack_policy:
     description:
       - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified.
-        (for instance, [allow all updates](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
+        for instance, allow all updates U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
     version_added: "1.9"
   tags:
     description:
@@ -73,22 +72,23 @@ options:
       - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
         as the stack.
       - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
     version_added: "2.0"
   create_changeset:
     description:
       - "If stack already exists create a changeset instead of directly applying changes.
-        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
+        See the AWS Change Sets docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
         WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
         changeset."
+    type: bool
     default: 'no'
     version_added: "2.4"
   changeset_name:
     description:
       - Name given to the changeset when creating a changeset, only used when create_changeset is true. By default a name prefixed with Ansible-STACKNAME
         is generated based on input parameters.
-        See the AWS Change Sets docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+        See the AWS Change Sets docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
     version_added: "2.4"
   template_format:
     description:
@@ -100,17 +100,18 @@ options:
   role_arn:
     description:
     - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role
-      docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
+      docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
     version_added: "2.3"
   termination_protection:
     description:
     - enable or disable termination protection on the stack. Only works with botocore >= 1.7.18.
+    type: bool
     version_added: "2.5"
   template_body:
     description:
       - Template body. Use this to pass in the actual body of the Cloudformation template.
       - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
         'template_body' nor 'template_url' are specified, the previous template will be reused.
     version_added: "2.5"
   events_limit:
@@ -118,6 +119,28 @@ options:
     - Maximum number of CloudFormation events to fetch from a stack when creating or updating it.
     default: 200
     version_added: "2.7"
+  backoff_delay:
+    description:
+    - Number of seconds to wait for the next retry.
+    default: 3
+    version_added: "2.8"
+    type: int
+    required: False
+  backoff_max_delay:
+    description:
+    - Maximum amount of time to wait between retries.
+    default: 30
+    version_added: "2.8"
+    type: int
+    required: False
+  backoff_retries:
+    description:
+    - Number of times to retry operation.
+    - AWS API throttling mechanism fails Cloudformation module so we have to retry a couple of times.
+    default: 10
+    version_added: "2.8"
+    type: int
+    required: False
 
 author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
@@ -382,8 +405,10 @@ def create_changeset(module, stack_params, cfn, events_limit):
                 elif newcs['Status'] == 'FAILED' and "The submitted information didn't contain changes" in newcs['StatusReason']:
                     cfn.delete_change_set(ChangeSetName=cs['Id'])
                     result = dict(changed=False,
-                                  output='Stack is already up-to-date, Change Set refused to create due to lack of changes.')
-                    module.exit_json(**result)
+                                  output='The created Change Set did not contain any changes to this stack and was deleted.')
+                    # a failed change set does not trigger any stack events so we just want to
+                    # skip any further processing of result and just return it directly
+                    return result
                 else:
                     break
                 # Lets not hog the cpu/spam the AWS API
@@ -452,7 +477,7 @@ def stack_operation(cfn, stack_name, operation, events_limit, op_token=None):
         try:
             stack = get_stack_facts(cfn, stack_name)
             existed.append('yes')
-        except:
+        except Exception:
             # If the stack previously existed, and now can't be found then it's
             # been deleted successfully.
             if 'yes' in existed or operation == 'DELETE':  # stacks may delete fast, look in a few ways.
@@ -575,6 +600,9 @@ def main():
         tags=dict(default=None, type='dict'),
         termination_protection=dict(default=None, type='bool'),
         events_limit=dict(default=200, type='int'),
+        backoff_retries=dict(type='int', default=10, required=False),
+        backoff_delay=dict(type='int', default=3, required=False),
+        backoff_max_delay=dict(type='int', default=30, required=False),
     )
     )
 
@@ -646,7 +674,11 @@ def main():
 
     # Wrap the cloudformation client methods that this module uses with
     # automatic backoff / retry for throttling error codes
-    backoff_wrapper = AWSRetry.jittered_backoff(retries=10, delay=3, max_delay=30)
+    backoff_wrapper = AWSRetry.jittered_backoff(
+        retries=module.params.get('backoff_retries'),
+        delay=module.params.get('backoff_delay'),
+        max_delay=module.params.get('backoff_max_delay')
+    )
     cfn.describe_stack_events = backoff_wrapper(cfn.describe_stack_events)
     cfn.create_stack = backoff_wrapper(cfn.create_stack)
     cfn.list_change_sets = backoff_wrapper(cfn.list_change_sets)

@@ -25,7 +25,8 @@ version_added: 2.6
 author:
     - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:
-    - Tested on vSphere 6.0 and 6.5
+    - Tested on vSphere 6.0 and 6.5.
+    - Disk UUID information is added in version 2.8.
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -65,9 +66,9 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Gather disk facts from virtual machine using UUID
   vmware_guest_disk_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: ha-datacenter
     validate_certs: no
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
@@ -76,9 +77,9 @@ EXAMPLES = '''
 
 - name: Gather disk facts from virtual machine using name
   vmware_guest_disk_facts:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     datacenter: ha-datacenter
     validate_certs: no
     name: VM_225
@@ -126,7 +127,7 @@ class PyVmomiHelper(PyVmomi):
 
     def gather_disk_facts(self, vm_obj):
         """
-        Function to gather facts about VM's disks
+        Gather facts about VM's disks
         Args:
             vm_obj: Managed object of virtual machine
 
@@ -149,6 +150,7 @@ class PyVmomiHelper(PyVmomi):
                     backing_disk_mode=disk.backing.diskMode,
                     backing_writethrough=disk.backing.writeThrough,
                     backing_thinprovisioned=disk.backing.thinProvisioned,
+                    backing_uuid=disk.backing.uuid,
                     backing_eagerlyscrub=bool(disk.backing.eagerlyScrub),
                     controller_key=disk.controllerKey,
                     unit_number=disk.unitNumber,
@@ -167,8 +169,11 @@ def main():
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           required_one_of=[['name', 'uuid']])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[['name', 'uuid']],
+        supports_check_mode=True,
+    )
 
     if module.params['folder']:
         # FindByInventoryPath() does not require an absolute path

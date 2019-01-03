@@ -17,8 +17,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.ios import ios_facts
+from ansible.module_utils.six import assertCountEqual
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
 
@@ -86,4 +87,21 @@ class TestIosFactsModule(TestIosModule):
         )
         self.assertEqual(
             result['ansible_facts']['ansible_net_filesystems_info']['bootflash:']['spacefree_kb'], 6453180.0
+        )
+
+    def test_ios_facts_neighbors(self):
+        set_module_args(dict(gather_subset='interfaces'))
+        result = self.execute_module()
+        assertCountEqual(
+            self,
+            result['ansible_facts']['ansible_net_neighbors'].keys(), ['GigabitEthernet1', 'GigabitEthernet3']
+        )
+        assertCountEqual(
+            self,
+            result['ansible_facts']['ansible_net_neighbors']['GigabitEthernet1'],
+            [{'host': 'R2', 'port': 'GigabitEthernet2'}, {'host': 'R3', 'port': 'GigabitEthernet3'}]
+        )
+        assertCountEqual(
+            self,
+            result['ansible_facts']['ansible_net_neighbors']['GigabitEthernet3'], [{'host': 'Rtest', 'port': 'Gi1'}]
         )

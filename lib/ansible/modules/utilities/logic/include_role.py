@@ -22,7 +22,8 @@ short_description: Load and execute a role
 description:
   - Loads and executes a role as a task dynamically. This frees roles from the `roles:` directive and allows them to be
     treated more as tasks.
-  - Unlike M(import_role), most keywords, including loops and conditionals, apply to this statement.
+  - Unlike M(import_role), most keywords, including loop, with_items, and conditionals, apply to this statement.
+  - The do until loop is not supported on M(include_role).
   - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
@@ -51,10 +52,6 @@ options:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     type: bool
     default: 'yes'
-  private:
-    description:
-      - This option is a no op, and the functionality described in previous versions was not implemented. This
-        option will be removed in Ansible v2.8.
   public:
     description:
       - This option dictates whether the role's C(vars) and C(defaults) are exposed to the playbook. If set to C(yes)
@@ -64,6 +61,11 @@ options:
     type: bool
     default: 'no'
     version_added: '2.7'
+  handlers_from:
+    description:
+      - File to load from a role's C(handlers/) directory.
+    default: main
+    version_added: '2.8'
 notes:
   - Handlers are made available to the whole play.
   - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
@@ -89,8 +91,8 @@ EXAMPLES = """
 
 - name: Use role in loop
   include_role:
-    name: myrole
-  with_items:
+    name: '{{ roleinputvar }}'
+  loop:
     - '{{ roleinput1 }}'
     - '{{ roleinput2 }}'
   loop_control:

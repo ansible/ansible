@@ -19,14 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import json
 import re
 
 from itertools import chain
 from functools import wraps
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
@@ -90,7 +91,7 @@ class Cliconf(CliconfBase):
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
 
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         resp = {}
         results = []
@@ -100,29 +101,38 @@ class Cliconf(CliconfBase):
             candidate = 'load replace {0}'.format(replace)
 
         for line in to_list(candidate):
-            if not isinstance(line, collections.Mapping):
+            if not isinstance(line, Mapping):
                 line = {'command': line}
             cmd = line['command']
-            results.append(self.send_command(**line))
+            try:
+                results.append(self.send_command(**line))
+            except AnsibleConnectionFailure as exc:
+                if "error: commit failed" in exc.message:
+                    self.discard_changes()
+                raise
             requests.append(cmd)
 
         diff = self.compare_configuration()
         if diff:
             resp['diff'] = diff
 
-        if commit:
-            self.commit(comment=comment)
+            if commit:
+                self.commit(comment=comment)
+            else:
+                self.discard_changes()
+
         else:
-            self.discard_changes()
+            for cmd in ['top', 'exit']:
+                self.send_command(cmd)
 
         resp['request'] = requests
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     @configure
     def commit(self, comment=None, confirmed=False, at_time=None, synchronize=False):
@@ -145,12 +155,19 @@ class Cliconf(CliconfBase):
             command += ' peers-synchronize'
 
         command += ' and-quit'
-        return self.send_command(command)
+
+        try:
+            response = self.send_command(command)
+        except AnsibleConnectionFailure:
+            self.discard_changes()
+            raise
+
+        return response
 
     @configure
     def discard_changes(self):
         command = 'rollback 0'
-        for cmd in chain(to_list(command), 'exit'):
+        for cmd in chain(to_list(command), ['exit']):
             self.send_command(cmd)
 
     @configure
@@ -163,10 +180,30 @@ class Cliconf(CliconfBase):
         if rollback_id is not None:
             command += ' rollback %s' % int(rollback_id)
         resp = self.send_command(command)
+
+        r = resp.splitlines()
+        if len(r) == 1 and '[edit]' in r[0]:
+            resp = ''
+
+        return resp
+
+    @configure
+    def rollback(self, rollback_id, commit=True):
+        resp = {}
+        self.send_command('rollback %s' % int(rollback_id))
+        resp['diff'] = self.compare_configuration()
+        if commit:
+            self.commit()
+        else:
+            self.discard_changes()
         return resp
 
     def get_diff(self, rollback_id=None):
-        return self.compare_configuration(rollback_id=rollback_id)
+        diff = {'config_diff': None}
+        response = self.compare_configuration(rollback_id=rollback_id)
+        if response:
+            diff['config_diff'] = response
+        return diff
 
     def get_device_operations(self):
         return {

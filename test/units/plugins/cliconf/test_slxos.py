@@ -24,7 +24,7 @@ import json
 
 from mock import MagicMock, call
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.plugins.cliconf import slxos
 
 FIXTURE_DIR = b'%s/fixtures/slxos' % (
@@ -111,7 +111,8 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
                 command=command,
                 prompt_retry_check=False,
                 sendonly=False,
-                newline=True
+                newline=True,
+                check_all=False
             ))
 
         self._mock_connection.send.assert_has_calls(send_calls)

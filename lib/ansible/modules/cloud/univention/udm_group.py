@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_group
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage of the posix group
 description:
     - "This module allows to manage user groups on a univention corporate server (UCS).
@@ -143,7 +144,7 @@ def main():
                     grp.create()
                 else:
                     grp.modify()
-        except:
+        except Exception:
             module.fail_json(
                 msg="Creating/editing group {} in {} failed".format(name, container)
             )
@@ -154,7 +155,7 @@ def main():
             if not module.check_mode:
                 grp.remove()
             changed = True
-        except:
+        except Exception:
             module.fail_json(
                 msg="Removing group {} failed".format(name)
             )

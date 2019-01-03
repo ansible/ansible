@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -33,6 +33,7 @@ options:
       - Force overwrite of already existing key pair if key has changed.
     required: false
     default: true
+    type: bool
     version_added: "2.3"
   state:
     description:
@@ -45,6 +46,7 @@ options:
       - Wait for the specified action to complete before returning. This option has no effect since version 2.5.
     required: false
     default: false
+    type: bool
     version_added: "1.6"
   wait_timeout:
     description:
@@ -102,7 +104,7 @@ changed:
 msg:
   description: short message describing the action taken
   returned: always
-  type: string
+  type: str
   sample: key pair created
 key:
   description: details of the keypair (this is set to null when state is absent)
@@ -112,17 +114,17 @@ key:
     fingerprint:
       description: fingerprint of the key
       returned: when state is present
-      type: string
+      type: str
       sample: 'b0:22:49:61:d9:44:9d:0c:7e:ac:8a:32:93:21:6c:e8:fb:59:62:43'
     name:
       description: name of the keypair
       returned: when state is present
-      type: string
+      type: str
       sample: my_keypair
     private_key:
       description: private key of a newly created keypair
       returned: when a new keypair is created by AWS (key_material is not provided)
-      type: string
+      type: str
       sample: '-----BEGIN RSA PRIVATE KEY-----
         MIIEowIBAAKC...
         -----END RSA PRIVATE KEY-----'
@@ -186,13 +188,16 @@ def create_key_pair(module, ec2_client, name, key_material, force):
     key = find_key_pair(module, ec2_client, name)
     if key:
         if key_material and force:
-            new_fingerprint = get_key_fingerprint(module, ec2_client, key_material)
-            if key['KeyFingerprint'] != new_fingerprint:
-                if not module.check_mode:
+            if not module.check_mode:
+                new_fingerprint = get_key_fingerprint(module, ec2_client, key_material)
+                if key['KeyFingerprint'] != new_fingerprint:
                     delete_key_pair(module, ec2_client, name, finish_task=False)
                     key = import_key_pair(module, ec2_client, name, key_material)
-                key_data = extract_key_data(key)
-                module.exit_json(changed=True, key=key_data, msg="key pair updated")
+                    key_data = extract_key_data(key)
+                    module.exit_json(changed=True, key=key_data, msg="key pair updated")
+            else:
+                # Assume a change will be made in check mode since a comparison can't be done
+                module.exit_json(changed=True, key=extract_key_data(key), msg="key pair updated")
         key_data = extract_key_data(key)
         module.exit_json(changed=False, key=key_data, msg="key pair already exists")
     else:

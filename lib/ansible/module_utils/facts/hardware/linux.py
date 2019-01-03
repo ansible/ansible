@@ -267,7 +267,7 @@ class LinuxHardware(Hardware):
         if os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
             # Use kernel DMI info, if available
 
-            # DMI SPEC -- http://www.dmtf.org/sites/default/files/standards/documents/DSP0134_2.7.0.pdf
+            # DMI SPEC -- https://www.dmtf.org/sites/default/files/standards/documents/DSP0134_3.2.0.pdf
             FORM_FACTOR = ["Unknown", "Other", "Unknown", "Desktop",
                            "Low Profile Desktop", "Pizza Box", "Mini Tower", "Tower",
                            "Portable", "Laptop", "Notebook", "Hand Held", "Docking Station",
@@ -275,7 +275,9 @@ class LinuxHardware(Hardware):
                            "Main Server Chassis", "Expansion Chassis", "Sub Chassis",
                            "Bus Expansion Chassis", "Peripheral Chassis", "RAID Chassis",
                            "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
-                           "CompactPCI", "AdvancedTCA", "Blade"]
+                           "CompactPCI", "AdvancedTCA", "Blade", "Blade Enclosure",
+                           "Tablet", "Convertible", "Detachable", "IoT Gateway",
+                           "Embedded PC", "Mini PC", "Stick PC"]
 
             DMI_DICT = {
                 'bios_date': '/sys/devices/virtual/dmi/id/bios_date',

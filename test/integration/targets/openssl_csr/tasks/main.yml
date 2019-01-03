@@ -1,3 +1,4 @@
+---
 - block:
     - name: Generate privatekey
       openssl_privatekey:
@@ -65,6 +66,19 @@
         subject_alt_name: "DNS:www.ansible.com"
         ocsp_must_staple: true
       register: csr_ocsp_idempotency
+
+    - name: Generate ECC privatekey
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekey2.pem'
+        type: ECC
+        curve: secp256k1
+
+    - name: Generate CSR with ECC privatekey
+      openssl_csr:
+        path: '{{ output_dir }}/csr2.csr'
+        privatekey_path: '{{ output_dir }}/privatekey2.pem'
+        subject:
+          commonName: www.ansible.com
 
     - import_tasks: ../tests/validate.yml
 

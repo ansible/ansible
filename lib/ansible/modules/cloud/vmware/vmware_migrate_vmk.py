@@ -57,10 +57,10 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Migrate Management vmk
   vmware_migrate_vmk:
-    hostname: vcsa_host
-    username: vcsa_user
-    password: vcsa_pass
-    esxi_hostname: esxi_hostname
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    esxi_hostname: "{{ esxi_hostname }}"
     device: vmk1
     current_switch_name: temp_vswitch
     current_portgroup_name: esx-mgmt

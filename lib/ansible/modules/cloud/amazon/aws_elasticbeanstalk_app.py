@@ -35,6 +35,7 @@ options:
     description:
       - when set to true, running environments will be terminated before deleting the application
     default: false
+    type: bool
 author:
     - Harpreet Singh (@hsingh)
     - Stephen Granger (@viper233)
@@ -76,7 +77,7 @@ app:
 output:
     description: message indicating what change will occur
     returned: in check mode
-    type: string
+    type: str
     sample: App is up-to-date
 '''
 

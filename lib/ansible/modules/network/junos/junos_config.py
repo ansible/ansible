@@ -61,6 +61,7 @@ options:
         remote device configuration back to initial defaults.  This
         argument will effectively remove all current configuration
         statements on the remote device.
+    type: bool
   confirm:
     description:
       - The C(confirm) argument will configure a time out value in minutes
@@ -101,7 +102,7 @@ options:
   update:
     description:
       - This argument will decide how to load the configuration
-        data particulary when the candidate configuration and loaded
+        data particularly when the candidate configuration and loaded
         configuration contain conflicting statements. Following are
         accepted values.
         C(merge) combines the data in the loaded configuration with the
@@ -122,6 +123,13 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  check_commit:
+    description:
+      - This argument will check correctness of syntax; do not apply changes.
+      - Note that this argument can be used to confirm verified configuration done via commit confirmed operation
+    type: bool
+    default: 'no'
+    version_added: "2.8"
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -131,6 +139,7 @@ notes:
     L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
   - Loading JSON-formatted configuration I(json) is supported
     starting in Junos OS Release 16.1 onwards.
+  - Update C(override) not currently compatible with C(set) notation.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
   - Recommended connection is C(netconf). See L(the Junos OS Platform Options,../network/user_guide/platform_junos.html).
   - This module also works with C(local) connections for legacy playbooks.
@@ -155,6 +164,10 @@ EXAMPLES = """
       - set vlans vlan01 vlan-id 1
       - set interfaces irb unit 10 family inet address 10.0.0.1/24
       - set vlans vlan01 l3-interface irb.10
+
+- name: Check correctness of commit configuration
+  junos_config:
+    check_commit: yes
 
 - name: rollback the configuration to id 10
   junos_config:
@@ -186,7 +199,7 @@ RETURN = """
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 """
 import re
@@ -312,6 +325,7 @@ def main():
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
         confirm_commit=dict(type='bool', default=False),
+        check_commit=dict(type='bool', default=False),
 
         # config operations
         backup=dict(type='bool', default=False),
@@ -389,6 +403,9 @@ def main():
 
                     if module._diff:
                         result['diff'] = {'prepared': diff}
+
+        elif module.params['check_commit']:
+            commit_configuration(module, check=True)
 
         elif module.params['confirm_commit']:
             with locked_config(module):

@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 module: win_domain_controller
 short_description: Manage domain controller/member server state for a Windows host
-version_added: 2.3
+version_added: '2.3'
 description:
      - Ensure that a Windows Server 2012+ host is configured as a domain controller or demoted to member server. This module may require
        subsequent use of the M(win_reboot) action if changes are made.
@@ -67,6 +67,12 @@ options:
     - If not set then the default path is C(%SYSTEMROOT%\SYSVOL).
     type: path
     version_added: '2.5'
+seealso:
+- module: win_domain
+- module: win_domain_computer
+- module: win_domain_group
+- module: win_domain_membership
+- module: win_domain_user
 author:
     - Matt Davis (@nitzmahone)
 '''
@@ -75,7 +81,7 @@ RETURN = '''
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
-    type: boolean
+    type: bool
     sample: true
 
 '''

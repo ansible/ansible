@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright (c) 2017 Ansible Project
+
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
@@ -49,7 +50,7 @@ options:
   tags:
     description:
       - A hash/dictionary of tags to add to the new Snapshot; '{"key":"value"}' and '{"key":"value","key":"value"}'
-author: "Deepak Kothandan <deepak.kdy@gmail.com>"
+author: Deepak Kothandan (@Deepakkothandan) <deepak.kdy@gmail.com>
 extends_documentation_fragment:
     - aws
     - ec2
@@ -101,7 +102,7 @@ RETURN = '''
 snapshot_id:
     description: snapshot id of the newly created snapshot
     returned: when snapshot copy is successful
-    type: string
+    type: str
     sample: "snap-e9095e8c"
 '''
 

@@ -66,6 +66,28 @@ options:
         the username is created.
     default: always
     choices: ['on_create', 'always']
+  password_type:
+    description:
+      - This argument determines whether a 'password' or 'secret' will be
+        configured.
+    default: secret
+    choices: ['secret', 'password']
+    version_added: "2.8"
+  hashed_password:
+    description:
+      - This option allows configuring hashed passwords on Cisco IOS devices.
+    suboptions:
+      type:
+        description:
+          - Specifies the type of hash (e.g., 5 for MD5, 8 for PBKDF2, etc.)
+          - For this to work, the device needs to support the desired hash type
+        type: int
+        required: True
+      value:
+        description:
+          - The actual hashed password to be configured on the device
+        required: True
+    version_added: "2.8"
   privilege:
     description:
       - The C(privilege) argument configures the privilege level of the
@@ -82,7 +104,7 @@ options:
     description:
       - Specifies the SSH public key to configure
         for the given username.  This argument accepts a valid SSH key value.
-    version_added: "2.6"
+    version_added: "2.7"
   nopassword:
     description:
       - Defines the username without assigning
@@ -121,6 +143,14 @@ EXAMPLES = """
   ios_user:
     purge: yes
 
+- name: remove all users except admin and these listed users
+  ios_user:
+    aggregate:
+      - name: testuser1
+      - name: testuser2
+      - name: testuser3
+    purge: yes
+
 - name: set multiple users to privilege level 15
   ios_user:
     aggregate:
@@ -149,6 +179,19 @@ EXAMPLES = """
       - name: ansibletest3
     view: network-admin
 
+- name: Add a user specifying password type
+  ios_user:
+    name: ansibletest4
+    configured_password: "{{ new_password }}"
+    password_type: password
+
+- name: Add a user with MD5 hashed password
+  ios_user:
+    name: ansibletest5
+    hashed_password:
+      type: 5
+      value: $3$8JcDilcYgFZi.yz4ApaqkHG2.8/
+
 - name: Delete users with aggregate
   ios_user:
     aggregate:
@@ -170,7 +213,7 @@ commands:
 from copy import deepcopy
 
 import re
-import json
+import ast
 import base64
 import hashlib
 
@@ -217,6 +260,7 @@ def map_obj_to_commands(updates, module):
     commands = list()
     state = module.params['state']
     update_password = module.params['update_password']
+    password_type = module.params['password_type']
 
     def needs_update(want, have, x):
         return want.get(x) and (want.get(x) != have.get(x))
@@ -224,22 +268,28 @@ def map_obj_to_commands(updates, module):
     def add(command, want, x):
         command.append('username %s %s' % (want['name'], x))
 
+    def add_hashed_password(command, want, x):
+        command.append('username %s secret %s %s' % (want['name'], ast.literal_eval(x)['type'],
+                                                     ast.literal_eval(x)['value']))
+
     def add_ssh(command, want, x=None):
         command.append('ip ssh pubkey-chain')
-        command.append(' no username %s' % want['name'])
         if x:
-            command.append(' username %s' % want['name'])
-            command.append('  key-hash %s' % x)
-            command.append('  exit')
-        command.append(' exit')
+            command.append('username %s' % want['name'])
+            command.append('key-hash %s' % x)
+            command.append('exit')
+        else:
+            command.append('no username %s' % want['name'])
+        command.append('exit')
 
     for update in updates:
         want, have = update
 
         if want['state'] == 'absent':
-            commands.append(user_del_cmd(want['name']))
-            add_ssh(commands, want)
-            continue
+            if have['sshkey']:
+                add_ssh(commands, want)
+            else:
+                commands.append(user_del_cmd(want['name']))
 
         if needs_update(want, have, 'view'):
             add(commands, want, 'view %s' % want['view'])
@@ -252,7 +302,13 @@ def map_obj_to_commands(updates, module):
 
         if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
-                add(commands, want, 'secret %s' % want['configured_password'])
+                if have and password_type != have['password_type']:
+                    module.fail_json(msg='Can not have both a user password and a user secret.' +
+                                         ' Please choose one or the other.')
+                add(commands, want, '%s %s' % (password_type, want['configured_password']))
+
+        if needs_update(want, have, 'hashed_password'):
+            add_hashed_password(commands, want, want['hashed_password'])
 
         if needs_update(want, have, 'nopassword'):
             if want['nopassword']:
@@ -281,10 +337,17 @@ def parse_privilege(data):
         return int(match.group(1))
 
 
+def parse_password_type(data):
+    type = None
+    if data and data.split()[-3] in ['password', 'secret']:
+        type = data.split()[-3]
+    return type
+
+
 def map_config_to_obj(module):
     data = get_config(module, flags=['| section username'])
 
-    match = re.findall(r'^username (\S+)', data, re.M)
+    match = re.findall(r'(?:^(?:u|\s{2}u))sername (\S+)', data, re.M)
     if not match:
         return list()
 
@@ -302,6 +365,8 @@ def map_config_to_obj(module):
             'state': 'present',
             'nopassword': 'nopassword' in cfg,
             'configured_password': None,
+            'hashed_password': None,
+            'password_type': parse_password_type(cfg),
             'sshkey': parse_sshkey(sshcfg),
             'privilege': parse_privilege(cfg),
             'view': parse_view(cfg)
@@ -355,6 +420,7 @@ def map_params_to_obj(module):
     for item in aggregate:
         get_value = partial(get_param_value, item=item, module=module)
         item['configured_password'] = get_value('configured_password')
+        item['hashed_password'] = get_value('hashed_password')
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['view'] = get_value('view')
@@ -381,12 +447,19 @@ def update_objects(want, have):
 def main():
     """ main entry point for module execution
     """
+    hashed_password_spec = dict(
+        type=dict(type='int', required=True),
+        value=dict(no_log=True, required=True)
+    )
+
     element_spec = dict(
         name=dict(),
 
         configured_password=dict(no_log=True),
+        hashed_password=dict(no_log=True, elements='dict', options=hashed_password_spec),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
+        password_type=dict(default='secret', choices=['secret', 'password']),
 
         privilege=dict(type='int'),
         view=dict(aliases=['role']),
@@ -409,7 +482,7 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(ios_argument_spec)
 
-    mutually_exclusive = [('name', 'aggregate')]
+    mutually_exclusive = [('name', 'aggregate'), ('nopassword', 'hashed_password', 'configured_password')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
@@ -441,12 +514,6 @@ def main():
                 commands.append(user_del_cmd(item))
 
     result['commands'] = commands
-
-    # the ios cli prevents this by rule so capture it and display
-    # a nice failure message
-    for cmd in commands:
-        if 'no username admin' in cmd:
-            module.fail_json(msg='cannot delete the `admin` account')
 
     if commands:
         if not module.check_mode:

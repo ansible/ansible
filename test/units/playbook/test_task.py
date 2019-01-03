@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
+from units.compat import unittest
+from units.compat.mock import patch
 from ansible.playbook.task import Task
 from ansible.parsing.yaml import objects
 from ansible import errors
@@ -84,11 +84,11 @@ class TestTask(unittest.TestCase):
         self.assertIsInstance(cm.exception, errors.AnsibleParserError)
         self.assertEqual(cm.exception._obj, ds)
         self.assertEqual(cm.exception._obj, kv_bad_args_ds)
-        self.assertIn("The error appears to have been in 'test_task_faux_playbook.yml", cm.exception.message)
+        self.assertIn("The error appears to be in 'test_task_faux_playbook.yml", cm.exception.message)
         self.assertIn(kv_bad_args_str, cm.exception.message)
         self.assertIn('apk', cm.exception.message)
         self.assertEquals(cm.exception.message.count('The offending line'), 1)
-        self.assertEquals(cm.exception.message.count('The error appears to have been in'), 1)
+        self.assertEquals(cm.exception.message.count('The error appears to be in'), 1)
 
     def test_task_auto_name(self):
         assert 'name' not in kv_command_task

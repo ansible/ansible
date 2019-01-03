@@ -17,12 +17,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: lineinfile
-author:
-    - Daniel Hokka Zakrissoni (@dhozac)
-    - Ahti Kitsik (@ahtik)
-extends_documentation_fragment:
-    - files
-    - validate
 short_description: Manage lines in text files
 description:
   - This module ensures a particular line is in a file, or replace an
@@ -40,13 +34,17 @@ options:
     aliases: [ dest, destfile, name ]
     required: true
   regexp:
-    aliases: [ 'regex' ]
+    aliases: [ regex ]
     description:
-      - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found. Only the last line
-        found will be replaced. For C(state=absent), the pattern of the line(s)
-        to remove. Uses Python regular expressions.
-        See U(http://docs.python.org/2/library/re.html).
+      - The regular expression to look for in every line of the file.
+      - For C(state=present), the pattern to replace if found. Only the last line found will be replaced.
+      - For C(state=absent), the pattern of the line(s) to remove.
+      - If the regular expression is not matched, the line will be
+        added to the file in keeping with`insertbefore` or `insertafter`
+        settings.
+      - When modifying a line the regexp should typically match both the initial state of
+        the line as well as its state after replacement by C(line) to ensure idempotence.
+      - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
     description:
@@ -78,6 +76,7 @@ options:
         A special value is available; C(EOF) for inserting the line at the
         end of the file.
         If specified regular expression has no matches, EOF will be used instead.
+        If regular expressions are passed to both C(regexp) and C(insertafter), C(insertafter) is only honored if no match for C(regexp) is found.
         May not be used with C(backrefs).
     choices: [ EOF, '*regex*' ]
     default: EOF
@@ -89,7 +88,9 @@ options:
         A value is available; C(BOF) for inserting the line at
         the beginning of the file.
         If specified regular expression has no matches, the line will be
-        inserted at the end of the file.  May not be used with C(backrefs).
+        inserted at the end of the file.
+        If regular expressions are passed to both C(regexp) and C(insertbefore), C(insertbefore) is only honored if no match for C(regexp) is found.
+        May not be used with C(backrefs).
     choices: [ BOF, '*regex*' ]
     version_added: "1.1"
   create:
@@ -115,8 +116,18 @@ options:
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
+extends_documentation_fragment:
+    - files
+    - validate
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+seealso:
+- module: blockinfile
+- module: file
+- module: win_lineinfile
+author:
+    - Daniel Hokka Zakrissoni (@dhozac)
+    - Ahti Kitsik (@ahtik)
 """
 
 EXAMPLES = r"""
@@ -291,7 +302,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     msg = ''
     changed = False
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
-    # Regexp matched a line in the file
+    # Exact line or Regexp matched a line in the file
     if index[0] != -1:
         if backrefs:
             b_new_line = m.expand(b_line)
@@ -302,9 +313,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        # If no regexp was given and a line match is found anywhere in the file,
+        # If no regexp was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and m:
+        if regexp is None and m is None:
 
             # Insert lines
             if insertafter and insertafter != 'EOF':
@@ -328,15 +339,15 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             elif insertbefore and insertbefore != 'BOF':
                 # If the line to insert before is at the beginning of the file
                 # use the appropriate index value.
-                if index[1] == 0:
+                if index[1] <= 0:
                     if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
                         b_lines.insert(index[1], b_line + b_linesep)
-                        msg = 'line replaced'
+                        msg = 'line added'
                         changed = True
 
                 elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
-                    msg = 'line replaced'
+                    msg = 'line added'
                     changed = True
 
         elif b_lines[index[0]] != b_new_line:

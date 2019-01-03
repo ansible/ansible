@@ -10,12 +10,12 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: bigiq_regkey_license_assignment
-short_description: Manage regkey license assignment on BIG-IPs from a BIG-IQ.
+short_description: Manage regkey license assignment on BIG-IPs from a BIG-IQ
 description:
   - Manages the assignment of regkey licenses on a BIG-IQ. Assignment means that
     the license is assigned to a BIG-IP, or, it needs to be assigned to a BIG-IP.
@@ -83,34 +83,37 @@ EXAMPLES = r'''
     managed: no
     device_username: admin
     device_password: secret
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
-- name: Register an managed device, by name
+- name: Register a managed device, by name
   bigiq_regkey_license_assignment:
     pool: my-regkey-pool
     key: XXXX-XXXX-XXXX-XXXX-XXXX
     device: bigi1.foo.com
     managed: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
-- name: Register an managed device, by UUID
+- name: Register a managed device, by UUID
   bigiq_regkey_license_assignment:
     pool: my-regkey-pool
     key: XXXX-XXXX-XXXX-XXXX-XXXX
     device: 7141a063-7cf8-423f-9829-9d40599fa3e0
     managed: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -119,6 +122,7 @@ RETURN = r'''
 '''
 
 import re
+import time
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -129,6 +133,7 @@ try:
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.ipaddress import is_valid_ip
 except ImportError:
     from ansible.module_utils.network.f5.bigiq import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -136,11 +141,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
-try:
-    import netaddr
-    HAS_NETADDR = True
-except ImportError:
-    HAS_NETADDR = False
+    from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
 class Parameters(AnsibleF5Parameters):
@@ -205,11 +206,9 @@ class ModuleParameters(Parameters):
 
     @property
     def device_is_address(self):
-        try:
-            netaddr.IPAddress(self.device)
+        if is_valid_ip(self.device):
             return True
-        except (ValueError, netaddr.core.AddrFormatError):
-            return False
+        return False
 
     @property
     def device_is_id(self):
@@ -484,6 +483,10 @@ class ModuleManager(object):
         self.remove_from_device()
         if self.exists():
             raise F5ModuleError("Failed to delete the resource.")
+        # Artificial sleeping to wait for remote licensing (on BIG-IP) to complete
+        #
+        # This should be something that BIG-IQ can do natively in 6.1-ish time.
+        time.sleep(60)
         return True
 
     def create(self):
@@ -505,6 +508,11 @@ class ModuleManager(object):
                 "Failed to license the remote device."
             )
         self.wait_for_device_to_be_licensed()
+
+        # Artificial sleeping to wait for remote licensing (on BIG-IP) to complete
+        #
+        # This should be something that BIG-IQ can do natively in 6.1-ish time.
+        time.sleep(60)
         return True
 
     def create_on_device(self):
@@ -530,7 +538,7 @@ class ModuleManager(object):
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
-                raise F5ModuleError(resp._content)
+                raise F5ModuleError(resp.content)
 
     def wait_for_device_to_be_licensed(self):
         count = 0
@@ -552,7 +560,7 @@ class ModuleManager(object):
                 if 'message' in response:
                     raise F5ModuleError(response['message'])
                 else:
-                    raise F5ModuleError(resp._content)
+                    raise F5ModuleError(resp.content)
             if response['status'] == 'LICENSED':
                 count += 1
             else:
@@ -611,11 +619,10 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         required_if=spec.required_if
     )
-    if not HAS_NETADDR:
-        module.fail_json(msg="The python netaddr module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5RestClient(module=module)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         exit_json(module, results, client)

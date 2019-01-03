@@ -12,27 +12,27 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = """
 
 module: na_ontap_lun_map
 
-short_description: Manage NetApp Ontap lun maps
+short_description: NetApp ONTAP LUN maps
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: chhaya gunawat (chhayag@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
-- Map and unmap luns on NetApp Ontap.
+- Map and unmap LUNs on NetApp ONTAP.
 
 options:
 
   state:
     description:
-    - Whether the specified lun should exist or not.
+    - Whether the specified LUN should exist or not.
     choices: ['present', 'absent']
     default: present
 
@@ -44,7 +44,7 @@ options:
   path:
     description:
     - Path of the LUN..
-    - Required when C(state=present).
+    required: true
 
   vserver:
     required: true
@@ -59,7 +59,7 @@ options:
 """
 
 EXAMPLES = """
-- name: Create lun mapping
+- name: Create LUN mapping
   na_ontap_lun_map:
     state: present
     initiator_group_name: ansibleIgroup3234
@@ -69,7 +69,7 @@ EXAMPLES = """
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
 
-- name: Unmap Lun
+- name: Unmap LUN
   na_ontap_lun_map:
     state: absent
     initiator_group_name: ansibleIgroup3234
@@ -81,7 +81,36 @@ EXAMPLES = """
 """
 
 RETURN = """
-
+lun_node:
+    description: NetApp controller that is hosting the LUN.
+    returned: success
+    type: str
+    sample: node01
+lun_ostype:
+    description: Specifies the OS of the host accessing the LUN.
+    returned: success
+    type: str
+    sample: vmware
+lun_serial:
+    description: A unique, 12-byte, ASCII string used to identify the LUN.
+    returned: success
+    type: str
+    sample: 80E7/]LZp1Tt
+lun_naa_id:
+    description: The Network Address Authority (NAA) identifier for the LUN.
+    returned: success
+    type: str
+    sample: 600a0980383045372f5d4c5a70315474
+lun_state:
+    description: Online or offline status of the LUN.
+    returned: success
+    type: str
+    sample: online
+lun_size:
+    description: Size of the LUN in bytes.
+    returned: success
+    type: int
+    sample: 2199023255552
 """
 
 import traceback
@@ -101,10 +130,10 @@ class NetAppOntapLUNMap(object):
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             initiator_group_name=dict(required=True, type='str'),
-            path=dict(type='str'),
+            path=dict(required=True, type='str'),
             vserver=dict(required=True, type='str'),
-            lun_id=dict(required=False, type='str', default=None)),
-        )
+            lun_id=dict(required=False, type='str', default=None),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -112,6 +141,10 @@ class NetAppOntapLUNMap(object):
                 ('state', 'present', ['path'])
             ],
             supports_check_mode=True
+        )
+
+        self.result = dict(
+            changed=False,
         )
 
         p = self.module.params
@@ -152,6 +185,41 @@ class NetAppOntapLUNMap(object):
 
         return return_value
 
+    def get_lun(self):
+        """
+        Return details about the LUN
+
+        :return: Details about the lun
+        :rtype: dict
+        """
+        # build the lun query
+        query_details = netapp_utils.zapi.NaElement('lun-info')
+        query_details.add_new_child('path', self.path)
+
+        query = netapp_utils.zapi.NaElement('query')
+        query.add_child_elem(query_details)
+
+        lun_query = netapp_utils.zapi.NaElement('lun-get-iter')
+        lun_query.add_child_elem(query)
+
+        # find lun using query
+        result = self.server.invoke_successfully(lun_query, True)
+        return_value = None
+        if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
+            lun = result.get_child_by_name('attributes-list').get_child_by_name('lun-info')
+
+            # extract and assign lun infomation to return value
+            return_value = {
+                'lun_node': lun.get_child_content('node'),
+                'lun_ostype': lun.get_child_content('multiprotocol-type'),
+                'lun_serial': lun.get_child_content('serial-number'),
+                'lun_naa_id': '600a0980' + lun.get_child_content('serial-number').encode('hex'),
+                'lun_state': lun.get_child_content('state'),
+                'lun_size': lun.get_child_content('size'),
+            }
+
+        return return_value
+
     def create_lun_map(self):
         """
         Create LUN map
@@ -165,7 +233,7 @@ class NetAppOntapLUNMap(object):
             self.server.invoke_successfully(lun_map_create, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg="Error mapping lun %s of initiator_group_name %s: %s" %
-                                      (self.path, self.initiator_group_name, to_native(e)),
+                                  (self.path, self.initiator_group_name, to_native(e)),
                                   exception=traceback.format_exc())
 
     def delete_lun_map(self):
@@ -178,43 +246,27 @@ class NetAppOntapLUNMap(object):
             self.server.invoke_successfully(lun_map_delete, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg="Error unmapping lun %s of initiator_group_name %s: %s" %
-                                      (self.path, self.initiator_group_name, to_native(e)),
+                                  (self.path, self.initiator_group_name, to_native(e)),
                                   exception=traceback.format_exc())
 
     def apply(self):
-        property_changed = False
-        lun_map_exists = False
         netapp_utils.ems_log_event("na_ontap_lun_map", self.server)
-        lun_map_detail = self.get_lun_map()
+        lun_details = self.get_lun()
+        lun_map_details = self.get_lun_map()
 
-        if lun_map_detail:
-            lun_map_exists = True
+        if self.state == 'present' and lun_details:
+            self.result.update(lun_details)
 
-            if self.state == 'absent':
-                property_changed = True
+        if self.state == 'present' and not lun_map_details:
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                self.create_lun_map()
+        elif self.state == 'absent' and lun_map_details:
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                self.delete_lun_map()
 
-            elif self.state == 'present':
-                pass
-
-        else:
-            if self.state == 'present':
-                property_changed = True
-
-        if property_changed:
-            if self.module.check_mode:
-                pass
-            else:
-                if self.state == 'present':
-                    # TODO delete this line in next release
-                    if not lun_map_exists:
-                        self.create_lun_map()
-
-                elif self.state == 'absent':
-                    self.delete_lun_map()
-
-        changed = property_changed
-        # TODO: include other details about the lun (size, etc.)
-        self.module.exit_json(changed=changed)
+        self.module.exit_json(**self.result)
 
 
 def main():

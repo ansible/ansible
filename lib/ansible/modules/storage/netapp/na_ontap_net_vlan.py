@@ -8,45 +8,41 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = '''
 module: na_ontap_net_vlan
-short_description: Manage NetApp Ontap network vlan
+short_description: NetApp ONTAP network VLAN
 extends_documentation_fragment:
-    - netapp.ontap
+    - netapp.na_ontap
 version_added: '2.6'
-author: Chris Archibald (carchi@netapp.com), Kevin Hutton (khutton@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
-- Create or Delete a network vlan
+- Create or Delete a network VLAN
 options:
   state:
     description:
-    - Whether the specified network vlan should exist or not
+    - Whether the specified network VLAN should exist or not
     choices: ['present', 'absent']
     default: present
   parent_interface:
     description:
-    - The interface that hosts the vlan interface.
+    - The interface that hosts the VLAN interface.
     required: true
   vlanid:
     description:
-    - The vlan id. Ranges from 1 to 4094.
+    - The VLAN id. Ranges from 1 to 4094.
     required: true
   node:
     description:
-    - Node name of vlan interface.
-  interface_name:
-    description:
-    - Name of vlan interface. The name must be of the format <parent-inteface>-<vlanid>
-  gvrp_enabled:
-    type: bool
-    description:
-    - GVRP is deprecated and this attribute is ignored in cluster mode.
+    - Node name of VLAN interface.
+    required: true
+notes:
+  - The C(interface_name) option has been removed and should be deleted from playbooks
 '''
 
 EXAMPLES = """
-    - name: create vlan
+    - name: create VLAN
       na_ontap_net_vlan:
         state=present
         vlanid=13
@@ -75,14 +71,12 @@ class NetAppOntapVlan(object):
         """
         Initializes the NetAppOntapVlan function
         """
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             parent_interface=dict(required=True, type='str'),
             vlanid=dict(required=True, type='str'),
             node=dict(required=True, type='str'),
-            interface_name=dict(required=False, type='str'),
-            gvrp_enabled=dict(required=False, type='bool', default=False),
         ))
 
         self.module = AnsibleModule(
@@ -96,13 +90,12 @@ class NetAppOntapVlan(object):
         self.parent_interface = p['parent_interface']
         self.vlanid = p['vlanid']
         self.node = p['node']
-        self.interface_name = p['interface_name']
-        self.gvrp_enabled = p['gvrp_enabled']
+        self.interface_name = str(p['parent_interface']) + '-' + str(self.vlanid)
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
         return
 
     def create_vlan(self):
@@ -131,7 +124,7 @@ class NetAppOntapVlan(object):
         :return: Returns True if the vlan exists, false if it dosn't
         """
         vlan_obj = netapp_utils.zapi.NaElement("net-vlan-get")
-        vlan_obj.add_new_child("interface-name", self.parent_interface + "-" + self.vlanid)
+        vlan_obj.add_new_child("interface-name", self.interface_name)
         vlan_obj.add_new_child("node", self.node)
         try:
             result = self.server.invoke_successfully(vlan_obj, True)
@@ -150,15 +143,7 @@ class NetAppOntapVlan(object):
         #  set up the vlan_info object:
         vlan_info.add_new_child("parent-interface", self.parent_interface)
         vlan_info.add_new_child("vlanid", self.vlanid)
-        #  add the optional line if they exist.
-        if self.node:
-            vlan_info.add_new_child("node", self.node)
-        if self.interface_name:
-            vlan_info.add_new_child("interface-name", self.interface_name)
-        if self.gvrp_enabled:
-            vlan_info.add_new_child("gvrp-enabled", 'true')
-        else:
-            vlan_info.add_new_child("gvrp-enabled", 'false')
+        vlan_info.add_new_child("node", self.node)
         return vlan_info
 
     def apply(self):
@@ -169,7 +154,7 @@ class NetAppOntapVlan(object):
         changed = False
         result = None
         results = netapp_utils.get_cserver(self.server)
-        cserver = netapp_utils.setup_ontap_zapi(module=self.module, vserver=results)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
         netapp_utils.ems_log_event("na_ontap_net_vlan", cserver)
         existing_vlan = self.does_vlan_exist()
         if existing_vlan:

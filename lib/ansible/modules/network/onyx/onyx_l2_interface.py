@@ -50,7 +50,6 @@ EXAMPLES = """
     name: Eth1/1
     mode: access
     access_vlan: 30
-
 - name: remove Layer-2 interface configuration
   onyx_l2_interface:
     name: Eth1/1
@@ -150,18 +149,33 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
     @classmethod
     def get_allowed_vlans(cls, if_data):
         allowed_vlans = cls.get_config_attr(if_data, 'Allowed vlans')
+        interface_allwoed_vlans = []
         if allowed_vlans:
-            vlans = allowed_vlans.split(',')
-            allowed_vlans = [int(vlan.strip()) for vlan in vlans]
-        return allowed_vlans
+            vlans = [x.strip() for x in allowed_vlans.split(',')]
+            for vlan in vlans:
+                if '-' not in vlan:
+                    interface_allwoed_vlans.append(int(vlan))
+                else:
+                    vlan_range = vlan.split("-")
+                    min_number = int(vlan_range[0].strip())
+                    max_number = int(vlan_range[1].strip())
+                    vlan_list = range(min_number, max_number + 1)
+                    interface_allwoed_vlans.extend(vlan_list)
+        return interface_allwoed_vlans
 
     @classmethod
     def get_access_vlan(cls, if_data):
         access_vlan = cls.get_config_attr(if_data, 'Access vlan')
         if access_vlan:
-            return int(access_vlan)
+            try:
+                return int(access_vlan)
+            except ValueError:
+                return None
 
     def _create_switchport_data(self, if_name, if_data):
+        if self._os_version >= self.ONYX_API_VERSION:
+            if_data = if_data[0]
+
         return {
             'name': if_name,
             'mode': self.get_config_attr(if_data, 'Mode'),
@@ -174,6 +188,7 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
 
     def load_current_config(self):
         # called in base class in run function
+        self._os_version = self._get_os_version()
         self._current_config = dict()
         switchports_config = self._get_switchport_config()
         if not switchports_config:
@@ -220,13 +235,13 @@ class OnyxL2InterfaceModule(BaseOnyxModule):
         if req_trunk_vlans:
             req_trunk_vlans = set(req_trunk_vlans)
         if req_mode != 'access' and curr_trunk_vlans != req_trunk_vlans:
-            removed_vlans = curr_trunk_vlans - req_trunk_vlans
-            for vlan_id in removed_vlans:
-                commands.append('switchport %s allowed-vlan remove %s' %
-                                (req_mode, vlan_id))
             added_vlans = req_trunk_vlans - curr_trunk_vlans
             for vlan_id in added_vlans:
                 commands.append('switchport %s allowed-vlan add %s' %
+                                (req_mode, vlan_id))
+            removed_vlans = curr_trunk_vlans - req_trunk_vlans
+            for vlan_id in removed_vlans:
+                commands.append('switchport %s allowed-vlan remove %s' %
                                 (req_mode, vlan_id))
 
         if commands:

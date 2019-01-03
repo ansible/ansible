@@ -101,7 +101,7 @@ options:
     description:
     - The number of seconds this check will wait when attempting to collect
       results. Must be less than the period.
-author: Ash Wilson
+author: Ash Wilson (@smashwilson)
 extends_documentation_fragment: rackspace.openstack
 '''
 
