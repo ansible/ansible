@@ -194,9 +194,9 @@ class RundeckKeyStorageManager(object):
 
         if self.module.params["type"] == "private_key":
             content_type = "application/octet-stream"
-        if self.module.params["type"] == "public_key":
+        elif self.module.params["type"] == "public_key":
             content_type = "application/pgp-keys"
-        if self.module.params["type"] == "password":
+        elif self.module.params["type"] == "password":
             content_type = "x-rundeck-data-password"
 
         facts = self.key_storage_facts()
