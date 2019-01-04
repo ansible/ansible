@@ -83,7 +83,7 @@
     state: directory
     owner: "{{ pg_user }}"
     group: "{{ pg_group }}"
-    mode: "0711"
+    mode: "0777"
 
 - name: create directory for custom tablespace
   file:
@@ -91,7 +91,7 @@
     state: directory
     owner: "{{ pg_user }}"
     group: "{{ pg_group }}"
-    mode: "0711"
+    mode: "0777"
 
 - name: Copy pg_hba into place
   template:
