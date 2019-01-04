@@ -126,21 +126,21 @@ options:
     ownca_not_before:
         default: +0s
         description:
-            - The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
-              Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
-              where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-              Note that if using relative time this module is NOT idempotent.
-              If this value is not specified, the certificate will start being valid from now.
+            - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will start being valid from now."
         version_added: "2.7"
 
     ownca_not_after:
         default: +3650d
         description:
-            - The point in time at which the certificate stops being valid. Time can be specified either as relative time or as absolute timestamp.
-              Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
-              where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-              Note that if using relative time this module is NOT idempotent.
-              If this value is not specified, the certificate will stop being valid 10 years from now.
+            - "The point in time at which the certificate stops being valid. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will stop being valid 10 years from now."
         version_added: "2.7"
 
     acme_accountkey_path:
