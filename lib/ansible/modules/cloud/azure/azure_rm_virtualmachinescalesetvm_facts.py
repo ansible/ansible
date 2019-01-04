@@ -121,7 +121,7 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            name=dict(
+            vmss_name=dict(
                 type='str',
                 required=True
             ),
@@ -138,7 +138,7 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
         )
         self.mgmt_client = None
         self.resource_group = None
-        self.name = None
+        self.vmss_name = None
         self.instance_id = None
         self.tags = None
         super(AzureRMVirtualMachineScaleSetVMFacts, self).__init__(self.module_arg_spec, supports_tags=False)
@@ -160,7 +160,7 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
         results = []
         try:
             response = self.mgmt_client.virtual_machine_scale_set_vms.get(resource_group_name=self.resource_group,
-                                                                          virtual_machine_scale_set_name=self.name,
+                                                                          virtual_machine_scale_set_name=self.vmss_name,
                                                                           instance_id=self.instance_id)
             self.log("Response : {0}".format(response))
         except CloudError as e:
@@ -175,7 +175,7 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
         items = None
         try:
             items = self.mgmt_client.virtual_machine_scale_set_vms.list(resource_group_name=self.resource_group,
-                                                                        virtual_machine_scale_set_name=self.name)
+                                                                        virtual_machine_scale_set_name=self.vmss_name)
             self.log("Response : {0}".format(items))
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine ScaleSet VM.')
