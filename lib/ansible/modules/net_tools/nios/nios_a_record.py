@@ -119,7 +119,7 @@ EXAMPLES = '''
 - name: dynamically add a record to next available ip
   nios_a_record:
     name: a.ansible.com
-    ipv4: {nios_next_ip, 192.168.10.0/24}
+    ipv4: {nios_next_ip: 192.168.10.0/24}
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
