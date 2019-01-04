@@ -20,7 +20,7 @@ import json
 import sys
 
 try:
-    with open(sys.argv[1], 'rb') as f:
+    with open(sys.argv[1], 'r') as f:
         data = json.load(f)
 except (IOError, OSError, IndexError):
     print(json.dumps(dict(msg="No argument file provided", failed=True)))

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -15,14 +15,14 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 if [ -f "$1" ]; then
-    source "$1"
+    . "$1"
 else
     echo '{"msg": "No argument file provided", "failed": True}'
     exit 1
 fi
 
-SALUTATION=${salutation:-Hello}
-NAME=${name:-World}
+SALUTATION=${salutation:=Hello}
+NAME=${name:=World}
 
 cat << EOF
 {"msg": "${SALUTATION}, ${NAME}!"}
