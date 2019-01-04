@@ -122,10 +122,10 @@ options:
                     - '<>'
                     - 'like'
                     - 'not like'
-                    - 'in' (used when I(type) is set to C(time_period))
+                    - 'in (used when I(type) is set to C(time_period))'
                     - '>='
                     - '<='
-                    - 'not in' (used when I(type) is set to C(time_period))
+                    - 'not in (used when I(type) is set to C(time_period))'
             formulaid:
                 description:
                     - Arbitrary unique ID that is used to reference the condition from a custom expression.
