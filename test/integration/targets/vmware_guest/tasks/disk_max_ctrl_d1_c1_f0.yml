@@ -451,4 +451,4 @@
 - name: assert that changes were not made
   assert:
     that:
-        - "disk_max_ctrl_d1_c1_f0_add_disk_error.results|map(attribute='changed')|unique|list == [false]"
+        - "disk_max_ctrl_d1_c1_f0_add_disk_error.results|map(attribute='failed')|unique|list == [true]"
