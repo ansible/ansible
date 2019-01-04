@@ -112,6 +112,20 @@ class TestRecursiveFinder(object):
         assert finder_containers.py_module_cache == {}
         assert frozenset(finder_containers.zf.namelist()) == MODULE_UTILS_BASIC_FILES
 
+    def test_module_utils_with_syntax_error(self, finder_containers):
+        name = 'fake_module'
+        data = b'#!/usr/bin/python\ndef something(:\n   pass\n'
+        with pytest.raises(ansible.errors.AnsibleError) as exec_info:
+            recursive_finder(name, data, *finder_containers)
+        assert 'Unable to import fake_module due to invalid syntax' in str(exec_info)
+
+    def test_module_utils_with_identation_error(self, finder_containers):
+        name = 'fake_module'
+        data = b'#!/usr/bin/python\n    def something():\n    pass\n'
+        with pytest.raises(ansible.errors.AnsibleError) as exec_info:
+            recursive_finder(name, data, *finder_containers)
+        assert 'Unable to import fake_module due to unexpected indent' in str(exec_info)
+
     def test_from_import_toplevel_package(self, finder_containers, mocker):
         if PY2:
             module_utils_data = BytesIO(b'# License\ndef do_something():\n    pass\n')
