@@ -74,9 +74,6 @@ RESET_VARS = (
     'ansible_ssh_executable',
 )
 
-OPTION_FLAGS = ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff',
-                'ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args')
-
 
 class PlayContext(Base):
 
@@ -150,6 +147,9 @@ class PlayContext(Base):
     _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
+        # Note: play is really not optional.  The only time it could be omitted is when we create
+        # a PlayContext just so we can invoke its deserialize method to load it from a serialized
+        # data source.
 
         super(PlayContext, self).__init__()
 
@@ -167,9 +167,12 @@ class PlayContext(Base):
 
         # set options before play to allow play to override them
         if context.CLIARGS:
-            self.set_options()
+            self.set_attributes_from_cli()
 
-    def set_options_from_plugin(self, plugin):
+        if play:
+            self.set_attributes_from_play(play)
+
+    def set_attributes_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
         # get options for plugins
@@ -185,41 +188,85 @@ class PlayContext(Base):
         # for flag in ('ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args'):
         #     setattr(self, flag, getattr(options, flag, ''))
 
-    def set_options(self):
+    def set_attributes_from_play(self, play):
+        # From ansible.playbook.Become
+        self.become = play.become
+        self.become_method = play.become_method
+        self.become_user = play.become_user
+
+        # From ansible.playbook.Base
+        self.check_mode = play.check_mode
+        self.diff = play.diff
+        self.connection = play.connection
+        self.remote_user = play.remote_user
+
+        # from ansible.playbook.Play
+        self.force_handlers = play.force_handlers
+        self.timeout = play.timeout
+        self.only_tags = play.only_tags
+        self.skip_tags = play.skip_tags
+
+    def set_attributes_from_cli(self):
         '''
         Configures this connection information instance with data from
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
         '''
+        # From the command line.  These should probably be used directly by plugins instead
+        # For now, they are likely to be moved to FieldAttribute defaults
+        self.private_key_file = context.CLIARGS['private_key_file']  # Else default
+        self.verbosity = context.CLIARGS['verbosity']  # Else default
+        self.ssh_common_args = context.CLIARGS['ssh_common_args']  # Else default
+        self.ssh_extra_args = context.CLIARGS['ssh_extra_args']  # Else default
+        self.sftp_extra_args = context.CLIARGS['sftp_extra_args']  # Else default
+        self.scp_extra_args = context.CLIARGS['scp_extra_args']  # Else default
 
-        # privilege escalation
-        self.become = context.CLIARGS['become']
-        self.become_method = context.CLIARGS['become_method']
-        self.become_user = context.CLIARGS['become_user']
+        # Not every cli that uses PlayContext has these command line args so have a default
+        self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
 
-        self.check_mode = boolean(context.CLIARGS['check'], strict=False)
-        self.diff = boolean(context.CLIARGS['diff'], strict=False)
+        # Docker_extra_args is not passable on the command line, it appears to have been in
+        # OPTION_FLAGS by mistake
+        # self.docker_extra_args = context.CLIARGS['docker_extra_args']  # Else default
 
-        #  general flags (should we move out?)
-        #  should only be 'non plugin' flags
-        for flag in OPTION_FLAGS:
-            attribute = context.CLIARGS.get(flag, False)
-            if attribute:
-                setattr(self, flag, attribute)
+        # Step is used by strategy plugins directly from the command line args.  No need for it to
+        # be in play_context
+        # self.step = context.CLIARGS.get('step', None)  # Else default
+        return
 
-        if context.CLIARGS.get('timeout', False):
-            self.timeout = context.CLIARGS['timeout']
+        # FIXME: dead code.  Compare this against what's in Play._set_from_CLI_options() and then
+        # remove
 
-        # get the tag info from options. We check to see if the options have
-        # the attribute, as it is not always added via the CLI
-        if context.CLIARGS.get('tags', False):
-            self.only_tags.update(context.CLIARGS['tags'])
+# OPTION_FLAGS = ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff',
+#                 'ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args')
 
-        if len(self.only_tags) == 0:
-            self.only_tags = set(['all'])
+        # # privilege escalation
+        # self.become = context.CLIARGS['become']
+        # self.become_method = context.CLIARGS['become_method']
+        # self.become_user = context.CLIARGS['become_user']
 
-        if context.CLIARGS.get('skip_tags', False):
-            self.skip_tags.update(context.CLIARGS['skip_tags'])
+        # self.check_mode = boolean(context.CLIARGS['check'], strict=False)
+        # self.diff = boolean(context.CLIARGS['diff'], strict=False)
+
+        # #  general flags (should we move out?)
+        # #  should only be 'non plugin' flags
+        # for flag in OPTION_FLAGS:
+        #     attribute = context.CLIARGS.get(flag, False)
+        #     if attribute:
+        #         setattr(self, flag, attribute)
+
+        # if context.CLIARGS.get('timeout', False):
+        #     self.timeout = context.CLIARGS['timeout']
+
+        # # get the tag info from options. We check to see if the options have
+        # # the attribute, as it is not always added via the CLI
+        # if context.CLIARGS.get('tags', False):
+        #     self.only_tags.update(context.CLIARGS['tags'])
+
+        # if len(self.only_tags) == 0:
+        #     self.only_tags = set(['all'])
+
+        # if context.CLIARGS.get('skip_tags', False):
+        #     self.skip_tags.update(context.CLIARGS['skip_tags'])
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''

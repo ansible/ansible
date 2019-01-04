@@ -15,6 +15,7 @@ from ansible import context
 from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
+from ansible.playbook.play import Play
 from ansible.utils import context_objects as co
 
 
@@ -46,8 +47,13 @@ def test_play_context(mocker, parser, reset_cli_args):
     (options, args) = parser.parse_args(['-vv', '--check'])
     options.args = args
     context._init_global_context(options)
-    play_context = PlayContext()
+    play = Play.load({})
+    play_context = PlayContext(play=play)
 
+    # Note: **Must** test the value from _attributes here because play_context.connection will end
+    # up calling PlayContext._get_attr_connection() which changes the 'smart' connection type into
+    # the best guessed type (and since C.DEFAULT_TRANSPORT starts off as smart, we would then never
+    # match)
     assert play_context._attributes['connection'] == C.DEFAULT_TRANSPORT
     assert play_context.remote_addr is None
     assert play_context.remote_user is None
