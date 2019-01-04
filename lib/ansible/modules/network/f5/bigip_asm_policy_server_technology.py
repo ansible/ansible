@@ -22,7 +22,7 @@ version_added: 2.8
 options:
   name:
     description:
-      - Specifies the name of the server technology to apply/remove to the ASM policy.
+      - Specifies the name of the server technology to apply on or remove from the ASM policy.
     required: True
     choices:
       - jQuery
