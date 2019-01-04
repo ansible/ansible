@@ -1,0 +1,24 @@
+interface Port-channel10
+ switchport trunk encapsulation dot1q
+ switchport trunk allowed vlan 10,20
+ switchport mode trunk
+!
+interface GigabitEthernet0/9
+ description UPLINK
+ switchport trunk encapsulation dot1q
+ switchport trunk allowed vlan 10,20
+ switchport mode trunk
+ srr-queue bandwidth share 10 30 20 40
+ priority-queue out 
+ mls qos trust dscp
+ channel-group 10 mode active
+!
+interface GigabitEthernet0/10
+ description UPLINK
+ switchport trunk encapsulation dot1q
+ switchport trunk allowed vlan 10,20
+ switchport mode trunk
+ srr-queue bandwidth share 10 30 20 40
+ priority-queue out 
+ mls qos trust dscp
+ channel-group 10 mode active
