@@ -35,7 +35,7 @@ def main():
 
         if spec.recommends:
             # Skip packages that require weak deps but an older version of RPM is being used
-            if not rpmfluff.can_use_rpm_weak_deps():
+            if not hasattr(rpmfluff, "can_use_rpm_weak_deps") or not rpmfluff.can_use_rpm_weak_deps():
                 continue
 
             for recommend in spec.recommends:
