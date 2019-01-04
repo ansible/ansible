@@ -430,7 +430,7 @@ def main():
                     root = os.path.normpath(root)
                     if root != npath and os.path.ismount(root) \
                        and not any(pfilter(root if params['use_regex'] or os.path.isabs(p) else os.path.basename(root),
-                       [p], None, params['use_regex']) for p in params['noxfs_overrides']):
+                                           [p], None, params['use_regex']) for p in params['noxfs_overrides']):
                         del(dirs[:])
                         continue
 
