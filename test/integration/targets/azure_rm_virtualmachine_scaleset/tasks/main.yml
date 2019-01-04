@@ -197,7 +197,7 @@
 - name: Retrieve scaleset VMs facts
   azure_rm_virtualmachinescalesetinstance_facts:
     resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}
+    vmss_name: testVMSS{{ rpfx }}
   register: instances
 
 - name: Assert that facts returned correctly
