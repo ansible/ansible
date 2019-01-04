@@ -206,6 +206,7 @@ from ansible.module_utils.ec2 import compare_aws_tags
 import base64
 import hashlib
 import traceback
+import re
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError, ValidationError, ParamValidationError
@@ -276,12 +277,14 @@ def set_tag(client, module, tags, function):
     arn = function['Configuration']['FunctionArn']
 
     try:
-        current_tags = client.list_tags(Resource=arn).get('Tags', {})
+        current_custom_tags = {}
+        all_current_tags = client.list_tags(Resource=arn).get('Tags', {})
+        current_custom_tags.append((tag, all_current_tags[tag]) for tag in all_current_tags if re.match('^[^aws:]', tag))
     except ClientError as e:
         module.fail_json(msg="Unable to list tags: {0}".format(to_native(e)),
                          exception=traceback.format_exc())
 
-    tags_to_add, tags_to_remove = compare_aws_tags(current_tags, tags, purge_tags=True)
+    tags_to_add, tags_to_remove = compare_aws_tags(current_custom_tags, tags, purge_tags=True)
 
     try:
         if tags_to_remove:
