@@ -63,7 +63,8 @@ virtualmachines:
                 - Resource Id
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/myVMSS/virtualMachines/2
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/my
+                     VMSS/virtualMachines/2"
         tags:
             description:
                 - Resource tags
@@ -185,7 +186,6 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
             if self.has_tags(item.tags, self.tags):
                 results.append(self.format_response(item))
         return results
-
 
     def format_response(self, item):
         d = item.as_dict()

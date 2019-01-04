@@ -202,6 +202,7 @@
 
 - name: Assert that facts returned correctly
   assert:
+    that:
       - output_instances.virtualmachines | length == 1
       - results.virtualmachines[0].id != None
       - results.virtualmachines[0].name != None
