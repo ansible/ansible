@@ -51,7 +51,7 @@ options:
               task, the value of environment variable C(ANSIBLE_NET_USERNAME)
               will be used instead if defined. C(admin) will be used if nothing
               above is defined.
-        required: true
+        default: admin
     interval:
         description:
             - interval for checking commit job
