@@ -64,6 +64,9 @@ class TerminalModule(TerminalBase):
         if '15' in out:
             return
 
+        if self.validate_user_role():
+            return
+
         cmd = {u'command': u'enable'}
         if passwd:
             cmd[u'prompt'] = to_text(r"(?i)[\r\n]?Password: $", errors='surrogate_or_strict')
@@ -98,3 +101,16 @@ class TerminalModule(TerminalBase):
                 self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
+
+    def validate_user_role(self):
+        user = self._connection._play_context.remote_user
+
+        out = self._exec_cli_command('show user-account %s' % user)
+        out = to_text(out, errors='surrogate_then_replace').strip()
+
+        match = re.search(r'roles:(.+)$', out, re.M)
+        if match:
+            roles = match.group(1).split()
+            if 'network-admin' in roles:
+                return True
+            return False
