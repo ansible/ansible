@@ -99,7 +99,8 @@ class TestIosFactsModule(TestIosModule):
         assertCountEqual(
             self,
             result['ansible_facts']['ansible_net_neighbors']['GigabitEthernet1'],
-            [{'platform': 'cisco CSR1000V', 'address': '10.0.0.3', 'capabilities': 'Router IGMP', 'host': 'R2', 'port': 'GigabitEthernet2'}]
+            [{'platform': 'cisco CSR1000V', 'address': '10.0.0.3', 'capabilities': 'Router IGMP', 'host': 'R2', 'port': 'GigabitEthernet2'},
+             {'platform': 'cisco CSR1000V', 'address': '10.0.0.4', 'capabilities': 'Router IGMP', 'host': 'R3', 'port': 'GigabitEthernet3'}]
         )
         assertCountEqual(
             self,

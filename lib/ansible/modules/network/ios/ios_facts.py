@@ -629,7 +629,7 @@ class Interfaces(FactsBase):
             return match.group(1)
 
     def parse_cdp_capabilities(self, data):
-        match = re.search(r'Capabilities: (.+)$', data, re.M)
+        match = re.search(r'Capabilities: (.+)\s{0,1}$', data, re.M)
         if match:
             return match.group(1)
 
