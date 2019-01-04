@@ -34,9 +34,9 @@ options:
   state:
     description:
       - When C(state) is C(present), and C(template) parameter is provided,
-        new ASM policy is created from template with the given C(name).
+        new ASM policy is created from template with the given policy C(name).
       - When C(state) is present and no C(template) parameter is provided
-        new blank ASM policy is created with the given C(name).
+        new blank ASM policy is created with the given policy C(name).
       - When C(state) is C(absent), ensures that the policy is removed, even if it is
         currently active.
     choices:
