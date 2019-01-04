@@ -352,9 +352,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if next_link:
             self._enqueue_get(url=next_link, api_version=self._compute_api_version, handler=self._on_vm_page_response)
 
-        for h in response['value']:
-            # FUTURE: add direct VM filtering by tag here (performance optimization)?
-            self._hosts.append(AzureHost(h, self, vmss=vmss))
+        if 'value' in response:
+            for h in response['value']:
+                # FUTURE: add direct VM filtering by tag here (performance optimization)?
+                self._hosts.append(AzureHost(h, self, vmss=vmss))
 
     def _on_vmss_page_response(self, response):
         next_link = response.get('nextLink')
