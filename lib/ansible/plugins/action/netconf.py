@@ -22,16 +22,18 @@ __metaclass__ = type
 import copy
 import sys
 
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.utils.display import Display
 
 display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
+
+        self._config_module = True if self._task.action == 'netconf_config' else False
 
         if self._play_context.connection not in ['netconf', 'local'] and self._task.action == 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for netconf_config module. '
