@@ -109,23 +109,17 @@ class TestIosFactsModule(TestIosModule):
     def test_ios_facts_run(self):
         set_module_args(dict(gather_subset='interfaces'))
         result = self.execute_module()
-        assertCountEqual(
-            self,
-            result['ansible_facts']['ansible_net_ifvlans'].keys(), ['GigabitEthernet0/2', 'GigabitEthernet0/10']
-        )
+
         assertCountEqual(
             self,
             result['ansible_facts']['ansible_net_ifvlans']['GigabitEthernet0/2'],
-            [{'mode': 'access', 'vlanallowed': 'null', 'vlandata': '10', 'vlanvoice': '20'}]
+            {'mode': 'access', 'vlanallowed': 'null', 'vlandata': '10', 'vlanvoice': '20'}
         )
 
     def test_ios_facts_etherchannel(self):
         set_module_args(dict(gather_subset='interfaces'))
         result = self.execute_module()
-        assertCountEqual(
-            self,
-            result['ansible_facts']['ansible_net_etherchannels'].keys(), ['Po10']
-        )
+
         assertCountEqual(
             self,
             result['ansible_facts']['ansible_net_etherchannels']['Po10']['members'], ['Gi0/9', 'Gi0/10']
