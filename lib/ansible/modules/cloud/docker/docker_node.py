@@ -28,7 +28,7 @@ options:
             - Use with state C(present) to force creating a new Swarm, even if already part of one.
             - Use with state C(absent) to Leave the swarm even if this node is a manager.
         type: bool
-        default: 'no'
+        default: 'False'
     state:
         description:
             - Set to C(list) to display swarm nodes names lists.
@@ -48,7 +48,7 @@ options:
     labels_remove:
         description: If C(True) then labels are removed from mode, the I(label) is ignored
         type: bool
-        default: false
+        default: 'False'
     availability:
         description: Node availability status to assign
         choices:
