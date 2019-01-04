@@ -21,9 +21,9 @@ else
     exit 1
 fi
 
-SALUTATION=${salutation:=Hello}
-NAME=${name:=World}
+salutation=${salutation:=Hello}
+name=${name:=World}
 
 cat << EOF
-{"msg": "${SALUTATION}, ${NAME}!"}
+{"msg": "${salutation}, ${name}!"}
 EOF
