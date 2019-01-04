@@ -1,0 +1,73 @@
+- name: Test vmware_drs_group_facts
+  hosts: localhost
+
+  tasks:
+
+    - name: Gather DRS group facts about given Cluster
+      vmware_drs_group_facts:
+        hostname: '10.70.21.10'
+        username: 'administrator@vsphere.local'
+        password: 'HPinvent1!'
+        cluster_name: 'sto1'
+        datacenter: 'sto1'
+        validate_certs: false
+      delegate_to: localhost
+      register: drs_group_facts
+
+    - name: Dump vmware_drs_group_facts
+      debug:
+        msg: '{{ drs_group_facts }}'
+    #
+    # - name: Create DRS Affinity Rule for VM-HOST
+    #   vmware_vm_host_drs_rule:
+    #     # Login creds
+    #     hostname: '10.70.21.10'
+    #     username: 'administrator@vsphere.local'
+    #     password: 'HPinvent1!'
+    #     validate_certs: false
+    #     # Options
+    #     cluster_name: 'sto1'
+    #     vm_group_name: STO1_VM_GROUP_TEST_001
+    #     host_group_name: STO1_S1
+    #     drs_rule_name: STO1_RULE_AFF_001
+    #     enabled: true
+    #     mandatory: true
+    #     affinity_rule: true
+    #     state: present
+    #   delegate_to: localhost
+    #
+    # - name: Create DRS Affinity Rule for VM-HOST
+    #   vmware_vm_host_drs_rule:
+    #     # Login creds
+    #     hostname: '10.70.21.10'
+    #     username: 'administrator@vsphere.local'
+    #     password: 'HPinvent1!'
+    #     validate_certs: false
+    #     # Options
+    #     cluster_name: 'sto1'
+    #     vm_group_name: STO1_VM_GROUP_TEST_002
+    #     host_group_name: STO1_S2
+    #     drs_rule_name: STO1_RULE_AFF_002
+    #     enabled: true
+    #     mandatory: true
+    #     affinity_rule: true
+    #     state: present
+    #   delegate_to: localhost
+
+    # - name: Create DRS Affinity Rule for VM-VM
+    #   vmware_vm_vm_drs_rule:
+    #     # Login creds
+    #     hostname: '10.70.21.10'
+    #     username: 'administrator@vsphere.local'
+    #     password: 'HPinvent1!'
+    #     validate_certs: false
+    #     # Options
+    #     cluster_name: 'sto1'
+    #     vms:
+    #       - sto1-test-node01
+    #       - sto1-test-node02
+    #     drs_rule_name: vm1-vm2-affinity-rule-001
+    #     enabled: true
+    #     mandatory: true
+    #     affinity_rule: true
+    #   delegate_to: localhost
