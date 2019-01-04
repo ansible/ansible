@@ -483,6 +483,20 @@ files:
     support: core
   $module_utils/urls.py:
     support: core
+  $module_utils/six:
+    support: core
+  $module_utils/common:
+    support: core
+  $module_utils/compat:
+    support: core
+  $module_utils/_text.py:
+    support: core
+  $module_utils/parsing:
+    support: core
+  $module_utils/splitter.py:
+    support: core
+  $module_utils/yumdnf.py:
+    support: core
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
