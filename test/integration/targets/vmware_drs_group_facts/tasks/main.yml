@@ -43,6 +43,22 @@
 
 - assert:
     that:
-      - "drs_group_0001_results.drs_group_facts is defined"
       - "drs_group_0001_results.drs_group_facts.DC0_C0 is defined"
+      - "not drs_group_0001_results.drs_group_facts.DC0_C1 is defined"
       - "not drs_group_0001_results.changed"
+
+- name: Gather DRS group facts from given datacenter
+  vmware_drs_group_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: DC0
+  register: drs_group_0002_results
+
+- debug: var=drs_group_0002_results
+
+- assert:
+    that:
+      - "drs_group_0002_results.drs_group_facts.DC0_C0 is defined"
+      - "drs_group_0002_results.drs_group_facts.DC0_C1 is defined"
+      - "not drs_group_0002_results.changed"
