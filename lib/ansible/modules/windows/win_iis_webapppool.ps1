@@ -226,11 +226,13 @@ if ($state -eq "absent") {
                     }
                 }
             } else {
+              if (-not $check_mode) {
                 try {
                     Set-ItemProperty -Path IIS:\AppPools\$name -Name $attribute_key -Value $new_value -WhatIf:$check_mode
                 } catch {
                     Fail-Json $result "Failed to set attribute to Web App Pool $name. Attribute: $attribute_key, Value: $new_value, Exception: $($_.Exception.Message)"
                 }
+              }
             }
             $result.changed = $true
         }
