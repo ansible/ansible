@@ -462,7 +462,10 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     the module its module_utils files needs.
     """
     # Parse the module and find the imports of ansible.module_utils
-    tree = ast.parse(data)
+    try:
+        tree = ast.parse(data)
+    except (SyntaxError, IndentationError) as e:
+        raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
     finder = ModuleDepFinder()
     finder.visit(tree)
 
