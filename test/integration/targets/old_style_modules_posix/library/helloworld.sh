@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-test -e "$1" && source $1 || { echo '{"msg": "No argument file provided", "failed": True}'; exit 1; }
+test -e "$1" && source "$1" || { echo '{"msg": "No argument file provided", "failed": True}'; exit 1; }
 
 SALUTATION=${salutation:-Hello}
 NAME=${name:-World}
