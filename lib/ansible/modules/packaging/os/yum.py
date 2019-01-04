@@ -190,6 +190,13 @@ options:
     default: 0
     type: int
     version_added: "2.8"
+  install_weak_deps:
+    description:
+      - Will also install all packages linked by a weak dependency relation.
+      - "NOTE: This feature requires yum >= 4 (RHEL/CentOS 8+)"
+    type: bool
+    default: "yes"
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.

@@ -184,6 +184,12 @@ options:
     default: 0
     type: int
     version_added: "2.8"
+  install_weak_deps:
+    description:
+      - Will also install all packages linked by a weak dependency relation.
+    type: bool
+    default: "yes"
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -558,6 +564,9 @@ class DnfModule(YumDnf):
 
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
+
+        # Default in dnf (and module default) is True
+        conf.install_weak_deps = self.install_weak_deps
 
     def _specify_repositories(self, base, disablerepo, enablerepo):
         """Enable and disable repositories matching the provided patterns."""
