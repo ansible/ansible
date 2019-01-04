@@ -16,54 +16,50 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = r'''
 ---
-module: vmware_drs_group_facts
-short_description: Gathers facts about DRS VM/Host groups on the given cluster
-description:
-- 'This module can be used to gather facts about DRS VM/HOST groups from the given cluster.'
-version_added: '2.8'
 author:
-- Karsten Kaj Jakobsen (@karstenjakobsen)
+  - "Karsten Kaj Jakobsen (@karstenjakobsen)"
+description:
+  - "This module can be used to gather facts about DRS VM/HOST groups from the given cluster."
+extends_documentation_fragment: vmware.documentation
+module: vmware_drs_group_facts
 notes:
-- Tested on vSphere 6.5 and 6.7
-requirements:
-- python >= 2.6
-- PyVmomi
+  - "Tested on vSphere 6.5 and 6.7"
 options:
-  datacenter:
-    description:
-     - Datacenter to search for DRS VM/Host groups.
-     - This parameter is required.
-     required: True
-     aliases: ['datacenter_name']
   cluster_name:
     description:
-    - Cluster to search for VM/Host groups.
-    - If set, facts of DRS groups belonging this cluster will be returned.
-    required: False
-extends_documentation_fragment: vmware.documentation
+      - "Cluster to search for VM/Host groups."
+      - "If set, facts of DRS groups belonging this cluster will be returned."
+    required: false
+  datacenter:
+    description:
+      - "Datacenter to search for DRS VM/Host groups."
+    required: true
+requirements:
+  - "python >= 2.6"
+  - PyVmomi
+short_description: "Gathers facts about DRS VM/Host groups on the given cluster"
+version_added: "2.8"
 '''
 
 EXAMPLES = r'''
-- name: Gather DRS facts about given Cluster
-  vmware_drs_group_facts:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    validate_certs: False
-    cluster_name: '{{ cluster_name }}'
-    datacenter: '{{ datacenter }}'
-  delegate_to: localhost
+---
+- name: "Gather DRS facts about given Cluster"
   register: cluster_drs_group_facts
+  vmware_drs_group_facts:
+    cluster_name: "{{ cluster_name }}"
+    datacenter: "{{ datacenter }}"
+    hostname: "{{ vcenter_hostname }}"
+    password: "{{ vcenter_password }}"
+    username: "{{ vcenter_username }}"
 
-- name: Gather DRS group facts about all clusters in given datacenter
-  vmware_drs_group_facts:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-    validate_certs: False
-    datacenter: '{{ datacenter }}'
-  delegate_to: localhost
+- name: "Gather DRS group facts about all clusters in given datacenter"
   register: cluster_drs_group_facts
+  vmware_drs_group_facts:
+    datacenter: "{{ datacenter }}"
+    hostname: "{{ vcenter_hostname }}"
+    password: "{{ vcenter_password }}"
+    username: "{{ vcenter_username }}"
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -71,40 +67,41 @@ drs_group_facts:
     description: metadata about DRS group from given cluster / datacenter
     returned: always
     type: dict
-    sample: "drs_group_facts": {
-        "DC0_C0": [
-            {
-                "group_name": "GROUP_HOST_S01",
-                "hosts": [
-                    "vm-01.zone",
-                    "vm-02.zone"
-                ],
-                "type": "host"
-            },
-            {
-                "group_name": "GROUP_HOST_S02",
-                "hosts": [
-                    "vm-03.zone",
-                    "vm-04.zone"
-                ],
-                "type": "host"
-            },
-            {
-                "group_name": "GROUP_VM_S01",
-                "type": "vm",
-                "vms": [
-                    "test-node01"
-                ]
-            },
-            {
-                "group_name": "GROUP_VM_S02",
-                "type": "vm",
-                "vms": [
-                    "test-node02"
-                ]
-            }
-        ]
-    }
+    sample:
+        "drs_group_facts": {
+            "DC0_C0": [
+                {
+                    "group_name": "GROUP_HOST_S01",
+                    "hosts": [
+                        "vm-01.zone",
+                        "vm-02.zone"
+                    ],
+                    "type": "host"
+                },
+                {
+                    "group_name": "GROUP_HOST_S02",
+                    "hosts": [
+                        "vm-03.zone",
+                        "vm-04.zone"
+                    ],
+                    "type": "host"
+                },
+                {
+                    "group_name": "GROUP_VM_S01",
+                    "type": "vm",
+                    "vms": [
+                        "test-node01"
+                    ]
+                },
+                {
+                    "group_name": "GROUP_VM_S02",
+                    "type": "vm",
+                    "vms": [
+                        "test-node02"
+                    ]
+                }
+            ]
+        }
 '''
 
 try:
