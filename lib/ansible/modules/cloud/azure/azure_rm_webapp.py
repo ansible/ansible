@@ -388,7 +388,7 @@ def webapp_to_dict(webapp):
 
 
 class Actions:
-    NoAction, CreateOrUpdate, UpdateAppSettings, Delete = range(4)
+    CreateOrUpdate, UpdateAppSettings, Delete = range(3)
 
 
 class AzureRMWebApps(AzureRMModuleBase):
