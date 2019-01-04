@@ -29,16 +29,17 @@ requirements:
 - python >= 2.6
 - PyVmomi
 options:
-  cluster_name:
-    description:
-    - Name of the cluster.
-    - DRS group facts for the given cluster will be returned.
-    - This is not required parameter.
   datacenter:
-    description:
-    - Name of the datacenter.
-    - DRS group facts for all the clusters from the given datacenter will be returned.
-    - This is required parameter
+     description:
+     - Datacenter to search for DRS VM/Host groups.
+     - This parameter is required.
+     required: True
+     aliases: ['datacenter_name']
+   cluster_name:
+     description:
+     - Cluster to search for VM/Host groups.
+     - If set, facts of DRS groups belonging this cluster will be returned.
+     required: False
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -221,10 +222,7 @@ def main():
     )
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
-        required_one_of=[
-            ['cluster_name', 'datacenter'],
-        ],
+        argument_spec=argument_spec,        
         supports_check_mode=True,
     )
 
