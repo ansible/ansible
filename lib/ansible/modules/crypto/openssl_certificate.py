@@ -592,7 +592,21 @@ class OwnCACertificate(Certificate):
     def __init__(self, module):
         super(OwnCACertificate, self).__init__(module)
         self.notBefore = module.params['ownca_not_before']
+        if self.notBefore.startswith("+") or self.notBefore.startswith("-"):
+            self.notBefore = crypto_utils.convert_relative_to_datetime(
+                self.notBefore).strftime("%Y%m%d%H%M%SZ")
+        if self.notBefore is None:
+            raise CertificateError(
+                'The timespec %s for ownca_not_before is not valid' %
+                module.params['ownca_not_before'])
         self.notAfter = module.params['ownca_not_after']
+        if self.notAfter.startswith("+") or self.notAfter.startswith("-"):
+            self.notAfter = crypto_utils.convert_relative_to_datetime(
+                self.notAfter).strftime("%Y%m%d%H%M%SZ")
+        if self.notAfter is None:
+            raise CertificateError(
+                'The timespec %s for ownca_not_after is not valid' %
+                module.params['ownca_not_after'])
         self.digest = module.params['ownca_digest']
         self.version = module.params['ownca_version']
         self.serial_number = randint(1000, 99999)
@@ -625,18 +639,8 @@ class OwnCACertificate(Certificate):
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
-            if self.notBefore.startswith("+") or self.notBefore.startswith("-"):
-                timestring = crypto_utils.convert_relative_to_datetime(
-                    self.notBefore).strftime("%Y%m%d%H%M%SZ")
-                cert.set_notBefore(to_bytes(timestring))
-            else:
-                cert.set_notBefore(to_bytes(self.notBefore))
-            if self.notAfter.startswith("+") or self.notAfter.startswith("-"):
-                timestring = crypto_utils.convert_relative_to_datetime(
-                    self.notAfter).strftime("%Y%m%d%H%M%SZ")
-                cert.set_notAfter(to_bytes(timestring))
-            else:
-                cert.set_notAfter(to_bytes(self.notAfter))
+            cert.set_notBefore(to_bytes(self.notBefore))
+            cert.set_notAfter(to_bytes(self.notAfter))
             cert.set_subject(self.csr.get_subject())
             cert.set_issuer(self.ca_cert.get_subject())
             cert.set_version(self.version - 1)
