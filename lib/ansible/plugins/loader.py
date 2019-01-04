@@ -835,6 +835,6 @@ httpapi_loader = PluginLoader(
 become_loader = PluginLoader(
     'BecomeModule',
     'ansible.plugins.become',
-    C.BECOME_PLUGIN_PATH,
+    C.DEFAULT_BECOME_PLUGIN_PATH,
     'become_plugins'
 )
