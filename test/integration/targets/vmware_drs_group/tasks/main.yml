@@ -1,0 +1,22 @@
+# Test code for the vmware_drs_group_facts module
+# Copyright: (c) 2018, Karsten Kaj Jakobsen <kj@patientsky.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Create DRS VM/Host group
+  vmware_drs_group:
+    # Login creds
+    hostname: '10.70.21.10'
+    username: 'administrator@vsphere.local'
+    password: 'HPinvent1!'
+    validate_certs: false
+    # Options
+    datacenter: DC01
+    cluster_name: DC01_C01
+    group_name: TEST_S1
+    hosts:
+      - vm-01-st01
+      - vm-02-st01
+    state: present
+  register: drs_group_0001_results
+
+- debug: var=drs_group_0001_results
