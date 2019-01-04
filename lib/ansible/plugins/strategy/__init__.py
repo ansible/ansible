@@ -1061,7 +1061,7 @@ class StrategyBase:
                 del self._active_connections[target_host]
             else:
                 connection = connection_loader.get(play_context.connection, play_context, os.devnull)
-                play_context.set_options_from_plugin(connection)
+                play_context.set_attributes_from_plugin(connection)
 
             if connection:
                 try:
