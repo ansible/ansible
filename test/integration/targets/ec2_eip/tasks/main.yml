@@ -1,0 +1,130 @@
+---
+# tasks file for  test_ec2_eip
+
+- name: Set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+
+  # ============================================================
+  # Preparing environment, an ec2 and a VPC needed
+  # ============================================================
+
+    - ec2_ami_facts:
+        <<: *aws_connection_info
+        filters:
+          architecture: x86_64
+          virtualization-type: hvm
+          root-device-type: ebs
+          name: "amzn-ami-hvm-2018.*"
+      register: amis
+
+    - name: create a VPC to work in
+      ec2_vpc_net:
+        cidr_block: 19.41.53.0/24
+        state: present
+        name: '{{ resource_prefix }}_ansible_ec2_eip_test'
+        tags:
+          'Name': '{{ resource_prefix }}_ansible_ec2_eip_test'
+        <<: *aws_connection_info
+      register: test_vpc
+
+    - name: create a subnet to use
+      ec2_vpc_subnet:
+        az: '{{ aws_region }}a'
+        tags:
+          'Name': '{{ resource_prefix }}_ansible_ec2_eip_test'
+        vpc_id: '{{ test_vpc.vpc.id }}'
+        cidr: 19.41.53.0/24
+        state: present
+        <<: *aws_connection_info
+      register: test_subnet
+
+    - name: provision ec2 instance to associate eip
+      ec2:
+        instance_type: t2.micro
+        state: present
+        image: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
+        wait: yes
+        instance_tags:
+          'Name': '{{resource_prefix}}_ansible_ec2_eip_test'
+        vpc_subnet_id: '{{ test_subnet.subnet.id }}'
+        <<: *aws_connection_info
+      register: test_instance
+
+  # ============================================================
+  # Start EIP tets
+  # ============================================================
+
+    - name: allocate a new elastic IP
+      ec2_eip:
+        region: '{{ aws_region }}'
+        state: present
+        in_vpc: yes
+      register: allocated_eip
+
+    - name: assert eip exists
+      assert:
+        that:
+          - allocated_eip.changed == True
+
+    - name:  associate it with the instance
+      ec2_eip:
+        device_id: '{{ test_instance.instance_ids }}'
+        public_ip: '{{ allocated_eip.public_ip }}'
+        in_vpc: yes
+      register: result
+
+    - name: assert association
+      assert:
+        that:
+          - result.changed == True
+
+    - name:  disassociate it from the instance and release
+      ec2_eip:
+        device_id: '{{ test_instance.instance_ids }}'
+        public_ip: '{{ allocated_eip.public_ip }}'
+        in_vpc: yes
+        release_on_disassociation: yes
+      register: result
+
+    - name: assert disassociation
+      assert:
+        that:
+          - result.changed == True
+
+  always:
+    # ============================================================
+    # Teardown starts here
+    # ============================================================
+
+    - name: remove test ec2 instance
+      ec2:
+        instance_ids: '{{ test_instance.instance_ids }}'
+        state: absent
+        wait: yes
+        <<: *aws_connection_info
+
+    - name: remove test subnet
+      ec2_vpc_subnet:
+        az: '{{ aws_region }}a'
+        tags: '{{resource_prefix}}_ansible_ec2_eip_test'
+        vpc_id: '{{ test_subnet.subnet.vpc_id }}'
+        cidr: 19.41.53.0/24
+        state: absent
+        <<: *aws_connection_info
+
+    - name: remove test VPC
+      ec2_vpc_net:
+        cidr_block: 19.41.53.0/24
+        state: absent
+        name: '{{ resource_prefix }}_ansible_ec2_eip_test'
+        tags:
+          'Name': '{{ resource_prefix }}_ansible_ec2_eip_test'
+        <<: *aws_connection_info
