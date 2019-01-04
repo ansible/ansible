@@ -55,6 +55,8 @@ NIOS_SRV_RECORD = 'record:srv'
 NIOS_NAPTR_RECORD = 'record:naptr'
 NIOS_TXT_RECORD = 'record:txt'
 NIOS_NSGROUP = 'nsgroup'
+NIOS_IPV4_FIXED_ADDRESS = 'fixedaddress'
+NIOS_IPV6_FIXED_ADDRESS = 'ipv6fixedaddress'
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(),
@@ -368,6 +370,8 @@ class WapiModule(WapiBase):
                     test_obj_filter = dict([('name', name)])
                 else:
                     test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
+            elif (ib_obj_type == NIOS_IPV4_FIXED_ADDRESS or ib_obj_type == NIOS_IPV6_FIXED_ADDRESS and 'mac' in obj_filter):
+                test_obj_filter = dict([['mac', obj_filter['mac']]])
             # check if test_obj_filter is empty copy passed obj_filter
             else:
                 test_obj_filter = obj_filter
