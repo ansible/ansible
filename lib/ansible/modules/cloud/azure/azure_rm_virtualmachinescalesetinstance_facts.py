@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachinescalesetvm_facts
 version_added: "2.8"
-short_description: Get Azure Virtual Machine Scale Set VM facts.
+short_description: Get Azure Virtual Machine Scale Set Instance facts.
 description:
     - Get facts of Azure Virtual Machine Scale Set VMs.
 
@@ -47,13 +47,13 @@ author:
 
 EXAMPLES = '''
   - name: List VM instances in Virtual Machine ScaleSet
-    azure_rm_computevirtualmachinescalesetvm_facts:
+    azure_rm_computevirtualmachinescalesetinstance_facts:
       resource_group: myResourceGroup
       vmss_name: myVMSS
 '''
 
 RETURN = '''
-virtualmachines:
+instances:
     description: A list of dictionaries containing facts for Virtual Machine Scale Set V M.
     returned: always
     type: complex
