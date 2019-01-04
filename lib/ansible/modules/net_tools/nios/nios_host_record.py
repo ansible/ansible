@@ -204,7 +204,7 @@ EXAMPLES = '''
   nios_host_record:
     name: host.ansible.com
     ipv4:
-      - address: {nios_next_ip, 192.168.10.0/24}
+      - address: {nios_next_ip: 192.168.10.0/24}
     comment: this is a test comment
     state: present
     provider:
