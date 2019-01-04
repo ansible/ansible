@@ -124,15 +124,23 @@ options:
         version_added: "2.7"
 
     ownca_not_before:
+        default: +0s
         description:
-            - The timestamp at which the certificate starts being valid. The timestamp is formatted as an ASN.1 TIME.
-              If this value is not specified, certificate will start being valid from now.
+            - The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
+              Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+              where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+              Note that if using relative time this module is NOT idempotent.
+              If this value is not specified, the certificate will start being valid from now.
         version_added: "2.7"
 
     ownca_not_after:
+        default: +3650d
         description:
-            - The timestamp at which the certificate stops being valid. The timestamp is formatted as an ASN.1 TIME.
-              If this value is not specified, certificate will stop being valid 10 years from now.
+            - The point in time at which the certificate stops being valid. Time can be specified either as relative time or as absolute timestamp.
+              Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+              where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+              Note that if using relative time this module is NOT idempotent.
+              If this value is not specified, the certificate will stop being valid 10 years from now.
         version_added: "2.7"
 
     acme_accountkey_path:
@@ -617,16 +625,18 @@ class OwnCACertificate(Certificate):
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
-            if self.notBefore:
+            if self.notBefore.startswith("+") or self.notBefore.startswith("-"):
+                timestring = crypto_utils.convert_relative_to_datetime(
+                    self.notBefore).strftime("%Y%m%d%H%M%SZ")
+                cert.set_notBefore(to_bytes(timestring))
+            else:
                 cert.set_notBefore(to_bytes(self.notBefore))
+            if self.notAfter.startswith("+") or self.notAfter.startswith("-"):
+                timestring = crypto_utils.convert_relative_to_datetime(
+                    self.notAfter).strftime("%Y%m%d%H%M%SZ")
+                cert.set_notAfter(to_bytes(timestring))
             else:
-                cert.gmtime_adj_notBefore(0)
-            if self.notAfter:
                 cert.set_notAfter(to_bytes(self.notAfter))
-            else:
-                # If no NotAfter specified, expire in
-                # 10 years. 315360000 is 10 years in seconds.
-                cert.gmtime_adj_notAfter(315360000)
             cert.set_subject(self.csr.get_subject())
             cert.set_issuer(self.ca_cert.get_subject())
             cert.set_version(self.version - 1)
@@ -1018,8 +1028,8 @@ def main():
             ownca_privatekey_passphrase=dict(type='path', no_log=True),
             ownca_digest=dict(type='str', default='sha256'),
             ownca_version=dict(type='int', default='3'),
-            ownca_not_before=dict(type='str'),
-            ownca_not_after=dict(type='str'),
+            ownca_not_before=dict(type='str', default='+0s'),
+            ownca_not_after=dict(type='str', default='+3650d'),
 
             # provider: acme
             acme_accountkey_path=dict(type='path'),
