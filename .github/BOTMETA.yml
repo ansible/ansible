@@ -481,6 +481,34 @@ files:
     maintainers: resmo felixfontein
   $module_utils/basic.py:
     support: core
+  $module_utils/urls.py:
+    support: core
+  $module_utils/six:
+    support: core
+  $module_utils/common:
+    support: core
+  $module_utils/compat:
+    support: core
+  $module_utils/_text.py:
+    support: core
+  $module_utils/parsing:
+    support: core
+  $module_utils/splitter.py:
+    support: core
+  $module_utils/yumdnf.py:
+    support: core
+  $module_utils/ansible_release.py:
+    support: core
+  $module_utils/distro:
+    support: core
+  $module_utils/ismount.py:
+    support: core
+  $module_utils/json_utils.py:
+    support: core
+  $module_utils/pycompat24.py:
+    support: core
+  $module_utils/service.py:
+    support: core
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
