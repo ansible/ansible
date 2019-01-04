@@ -11,7 +11,7 @@
     validate_certs: false
     # Options
     datacenter: DC01
-    cluster_name: DC01_C01
+    cluster_name: sto1
     group_name: TEST_S1
     hosts:
       - vm-01-st01

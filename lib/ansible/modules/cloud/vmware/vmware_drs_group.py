@@ -45,8 +45,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec, wait_for_task,
-                                         find_vm_by_id, find_cluster_by_name)
+from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec,
+                                         wait_for_task, find_cluster_by_name)
 
 class VmwareDrsGroupManager(PyVmomi):
     """
@@ -77,18 +77,6 @@ class VmwareDrsGroupManager(PyVmomi):
         """
         self.__result = result
 
-    def get_failed(self):
-        """
-        Message
-        """
-        return self.__failed
-
-    def set_failed(self, failed):
-        """
-        Message
-        """
-        self.__failed = failed
-
     def __init__(self, module, cluster_name, group_name, datacenter, vm_list=None, host_list=None):
         """
         Message
@@ -102,24 +90,33 @@ class VmwareDrsGroupManager(PyVmomi):
         self.__vm_list = vm_list
         self.__host_list = host_list
         self.__msg = 'Nothing to see here...'
-        self.__failed = True
         self.__result = dict()
+
+        # Sanity checks
+        self.__cluster_obj = find_cluster_by_name(content=self.content,
+                                                  cluster_name=self.__cluster_name)
+        if self.__cluster_obj is None:
+            raise Exception("Failed to find the cluster %s" % self.__cluster_name)
 
     def __create_host_group(self):
 
-        self.set_result(dict(type='host'))
-        self.set_failed(False)
-        self.set_msg("Create successfully %s" % self.__group_name )
+        group = vim.cluster.HostGroup()
 
-        return None
+        group.name = self.__group_name
+        group.host = [self.find_hostsystem_by_name('vm-sto1-01.sto1.privatedns.zone')]
+
+        group_spec = vim.cluster.GroupSpec(info=group, operation='add')
+        config_spec = vim.cluster.ConfigSpecEx(groupSpec=[group_spec])
+
+        task = self.__cluster_obj.ReconfigureEx(config_spec, modify=True)
+
+        self.set_result(dict(type='host'))
+        self.set_msg("Created host group successfully %s" % group)
 
     def __create_vm_group(self):
 
         self.set_result(dict(type='vm'))
-        self.set_failed(False)
-        self.set_msg("Create successfully %s" % self.__group_name )
-
-        return None
+        self.set_msg("Create vm group successfully %s" % self.__group_name)
 
     # Create
     def create_drs_group(self):
@@ -132,17 +129,21 @@ class VmwareDrsGroupManager(PyVmomi):
         elif self.__host_list is None:
             self.__create_vm_group()
         else:
-            self.set_failed(True)
-            self.set_msg('Failed, no hosts or vms defined')
+            raise Exception('Failed, no hosts or vms defined')
 
 
     # Create
     def delete_drs_group(self):
         """
-        Function to create a DRS host group
+        Function to delete a DRS host group
         """
 
-        return None
+        if self.__vm_list is None:
+            self.__create_host_group()
+        elif self.__host_list is None:
+            self.__create_vm_group()
+        else:
+            raise Exception('Failed, no hosts or vms defined')
 
 
 def main():
@@ -168,23 +169,27 @@ def main():
         required_one_of=[['vms', 'hosts']],
     )
 
-    # Create instance of VmwareDrsGroupManager
-    vmware_drs_group = VmwareDrsGroupManager(module=module,
-                                             datacenter=module.params['datacenter'],
-                                             cluster_name=module.params['cluster_name'],
-                                             group_name=module.params['group_name'])
+    try:
+        # Create instance of VmwareDrsGroupManager
+        vmware_drs_group = VmwareDrsGroupManager(module=module,
+                                                 datacenter=module.params['datacenter'],
+                                                 cluster_name=module.params['cluster_name'],
+                                                 group_name=module.params['group_name'])
 
-    if module.params['state'] == 'present':
-        # Add DRS group
-        vmware_drs_group.create_drs_group()
-    elif module.params['state'] == 'absent':
-        # Delete DRS group
-        vmware_drs_group.delete_drs_group()
+        if module.params['state'] == 'present':
+            # Add DRS group
+            vmware_drs_group.create_drs_group()
+        elif module.params['state'] == 'absent':
+            # Delete DRS group
+            vmware_drs_group.delete_drs_group()
 
-    # Set results
-    results = dict(msg=vmware_drs_group.get_msg(),
-                   failed=vmware_drs_group.get_failed(),
-                   result=vmware_drs_group.get_result())
+        # Set results
+        results = dict(msg=vmware_drs_group.get_msg(),
+                       failed=False,
+                       result=vmware_drs_group.get_result())
+
+    except Exception as e:
+        results = dict(failed=True, msg="Error: %s" % e)
 
     if results['failed']:
         module.fail_json(**results)
