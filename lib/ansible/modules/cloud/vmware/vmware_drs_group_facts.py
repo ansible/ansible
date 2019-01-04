@@ -30,16 +30,16 @@ requirements:
 - PyVmomi
 options:
   datacenter:
-     description:
+    description:
      - Datacenter to search for DRS VM/Host groups.
      - This parameter is required.
      required: True
      aliases: ['datacenter_name']
-   cluster_name:
-     description:
-     - Cluster to search for VM/Host groups.
-     - If set, facts of DRS groups belonging this cluster will be returned.
-     required: False
+  cluster_name:
+    description:
+    - Cluster to search for VM/Host groups.
+    - If set, facts of DRS groups belonging this cluster will be returned.
+    required: False
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -67,8 +67,8 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-drs_rule_facts:
-    description: metadata about DRS rule from given cluster / datacenter
+drs_group_facts:
+    description: metadata about DRS group from given cluster / datacenter
     returned: always
     type: dict
     sample: "drs_group_facts": {
@@ -222,7 +222,7 @@ def main():
     )
 
     module = AnsibleModule(
-        argument_spec=argument_spec,        
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
