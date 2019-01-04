@@ -101,24 +101,38 @@
       - output.webapps[0].app_settings | length == 1
       - output.webapps[0].frameworks | length > 1 # there's default frameworks eg net_framework
 
-- name: Update app settings
+- name: Update app settings and framework
   azure_rm_webapp:
     resource_group: "{{ resource_group }}"
     name: "{{ win_app_name }}4"
     plan: "{{ win_plan_name }}"
     frameworks:
       - name: "java"
-        version: "1.8"
+        version: "1.7"
         settings:
           java_container: "Tomcat"
-          java_container_version: "8.0"
+          java_container_version: "8.5"
     app_settings:
       testkey2: "testvalue2"
   register: output
 
 - name: Assert the web app was updated
   assert:
-    that: output.changed
+    that:
+    - output.changed
+
+- name: get web app with name
+  azure_rm_webapp_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ win_app_name }}4"
+  register: output
+
+- name: Assert updating
+  assert:
+    that:
+    - output.webapps[0].app_settings | length == 2
+    - output.webapps[0].app_settings['testkey'] == 'testvalue'
+    - output.webapps[0].app_settings['testkey2'] == 'testvalue2'
 
 - name: get web app with return publishing profile
   azure_rm_webapp_facts:
