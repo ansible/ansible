@@ -38,7 +38,7 @@ class TerminalModule(TerminalBase):
     terminal_stderr_re = [
         re.compile(br"unknown command"),
         re.compile(br"syntax error"),
-        re.compile(br"error: commit failed")
+        re.compile(br"[\r\n]error:")
     ]
 
     def on_open_shell(self):
