@@ -344,7 +344,6 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
 
         https_request = AbstractHTTPHandler.do_request_
 
-
     class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
         '''Handles client authentication via cert/key
 
