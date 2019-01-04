@@ -504,7 +504,7 @@ class AzureRMWebApps(AzureRMModuleBase):
             id=None,
         )
         self.state = None
-        self.to_do = Actions.NoAction
+        self.to_do = []
 
         self.frameworks = None
 
@@ -642,7 +642,7 @@ class AzureRMWebApps(AzureRMModuleBase):
                 self.log("Web App instance doesn't exist")
 
                 to_be_updated = True
-                self.to_do = Actions.CreateOrUpdate
+                self.to_do.append(Actions.CreateOrUpdate)
                 self.site.tags = self.tags
 
                 # service plan is required for creation
@@ -688,19 +688,19 @@ class AzureRMWebApps(AzureRMModuleBase):
                 # check if root level property changed
                 if self.is_updatable_property_changed(old_response):
                     to_be_updated = True
-                    self.to_do = Actions.CreateOrUpdate
+                    self.to_do.append(Actions.CreateOrUpdate)
 
                 # check if site_config changed
                 old_config = self.get_webapp_configuration()
 
                 if self.is_site_config_changed(old_config):
                     to_be_updated = True
-                    self.to_do = Actions.CreateOrUpdate
+                    self.to_do.append(Actions.CreateOrUpdate)
 
                 # check if linux_fx_version changed
                 if old_config.linux_fx_version != self.site_config.get('linux_fx_version', ''):
                     to_be_updated = True
-                    self.to_do = Actions.CreateOrUpdate
+                    self.to_do.append(Actions.CreateOrUpdate)
 
                 self.app_settings_strDic = self.list_app_settings()
 
@@ -708,12 +708,12 @@ class AzureRMWebApps(AzureRMModuleBase):
                 if self.purge_app_settings:
                     to_be_updated = True
                     self.app_settings_strDic.properties = dict()
-                    self.to_do = Actions.UpdateAppSettings
+                    self.to_do.append(Actions.UpdateAppSettings)
 
                 # check if app settings changed
                 if self.purge_app_settings or self.is_app_settings_changed():
                     to_be_updated = True
-                    self.to_do = Actions.UpdateAppSettings
+                    self.to_do.append(Actions.UpdateAppSettings)
 
                     if self.app_settings:
                         for key in self.app_settings.keys():
@@ -741,12 +741,12 @@ class AzureRMWebApps(AzureRMModuleBase):
             if self.check_mode:
                 return self.results
 
-            if self.to_do == Actions.CreateOrUpdate:
+            if Actions.CreateOrUpdate in self.to_do:
                 response = self.create_update_webapp()
 
                 self.results['id'] = response['id']
 
-            if self.to_do == Actions.UpdateAppSettings:
+            if Actions.UpdateAppSettings in self.to_do:
                 update_response = self.update_app_settings()
                 self.results['id'] = update_response.id
 
