@@ -119,8 +119,11 @@ def main():
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = user.delete(username=username)
+
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(msg='Failed to update the user: {0}'.format(excinfo), changed=False)
+        except tower_cli.exceptions.AuthError as excinfo:
+            module.fail_json(msg='Invalid Tower authentication credentials'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
