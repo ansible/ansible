@@ -223,22 +223,27 @@ class AnsibleConnectionFailure(AnsibleRuntimeError):
     pass
 
 
-class AnsibleFilterError(AnsibleRuntimeError):
-    ''' a templating failure '''
-    pass
-
-
-class AnsibleLookupError(AnsibleRuntimeError):
-    ''' a lookup failure '''
-    pass
-
-
 class AnsibleCallbackError(AnsibleRuntimeError):
     ''' a callback failure '''
     pass
 
 
-class AnsibleUndefinedVariable(AnsibleRuntimeError):
+class AnsibleTemplateError(AnsibleRuntimeError):
+    '''A template related errror'''
+    pass
+
+
+class AnsibleFilterError(AnsibleTemplateError):
+    ''' a templating failure '''
+    pass
+
+
+class AnsibleLookupError(AnsibleTemplateError):
+    ''' a lookup failure '''
+    pass
+
+
+class AnsibleUndefinedVariable(AnsibleTemplateError):
     ''' a templating failure '''
     pass
 
