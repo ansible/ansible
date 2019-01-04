@@ -28,7 +28,7 @@ from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.junos.junos import junos_provider_spec
 from ansible.plugins.loader import connection_loader, module_loader
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.utils.display import Display
 
 display = Display()
@@ -36,11 +36,12 @@ display = Display()
 CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        self._config_module = True if self._task.action == 'junos_config' else False
         module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
         if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
             return super(ActionModule, self).run(task_vars=task_vars)
