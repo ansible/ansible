@@ -34,6 +34,7 @@ yumdnf_argument_spec = dict(
         exclude=dict(type='list', default=[]),
         installroot=dict(type='str', default="/"),
         install_repoquery=dict(type='bool', default=True),
+        install_weak_deps=dict(type='bool', default=True),
         list=dict(type='str'),
         name=dict(type='list', aliases=['pkg'], default=[]),
         releasever=dict(default=None),
@@ -77,6 +78,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.exclude = self.module.params['exclude']
         self.installroot = self.module.params['installroot']
         self.install_repoquery = self.module.params['install_repoquery']
+        self.install_weak_deps = self.module.params['install_weak_deps']
         self.list = self.module.params['list']
         self.names = [p.strip() for p in self.module.params['name']]
         self.releasever = self.module.params['releasever']
