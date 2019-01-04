@@ -32,7 +32,7 @@ except ImportError:
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_native
@@ -519,7 +519,7 @@ class VariableManager:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=self._templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
                     items = lookup_loader.get(task.loop_with, loader=self._loader, templar=self._templar).run(terms=loop_terms, variables=vars_copy)
-                except AnsibleUndefinedVariable:
+                except AnsibleTemplateError:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
@@ -528,7 +528,7 @@ class VariableManager:
         elif task.loop is not None:
             try:
                 items = self._templar.template(task.loop)
-            except AnsibleUndefinedVariable:
+            except AnsibleTemplateError:
                 # This task will be skipped later due to this, so we just setup
                 # a dummy array for the later code so it doesn't fail
                 items = [None]
