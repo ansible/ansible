@@ -27,7 +27,6 @@ options:
   dest:
     description:
       - A directory to save the policy file into.
-      - Di
       - This option is ignored when C(inline) is set to c(yes).
     type: path
   file:
@@ -61,7 +60,7 @@ options:
     type: bool
   partition:
     description:
-      - Device partition to which contain ASM policy to export.
+      - Device partition which contains ASM policy to export.
     default: Common
 extends_documentation_fragment: f5
 author:
@@ -396,11 +395,10 @@ class ModuleManager(object):
             return self.create()
 
     def update(self):
-        if os.path.exists(self.want.dest):
-            if not self.want.force:
-                raise F5ModuleError(
-                    "File '{0}' already exists".format(self.want.fulldest)
-                )
+        if not self.want.force:
+            raise F5ModuleError(
+                "File '{0}' already exists.".format(self.want.fulldest)
+            )
         self.execute()
 
     def create(self):
@@ -434,37 +432,9 @@ class ModuleManager(object):
         return True
 
     def exists(self):
-        name = '{0}~{1}'.format(self.client.provider['user'], self.want.file)
-        tpath = '/ts/var/rest/{0}'.format(
-            name,
-        )
-        params = dict(
-            command='run',
-            utilCmdArgs=tpath
-        )
-
-        uri = "https://{0}:{1}/mgmt/tm/util/unix-ls/".format(
-            self.client.provider['server'],
-            self.client.provider['server_port']
-        )
-
-        resp = self.client.api.post(uri, json=params)
-
-        try:
-            response = resp.json()
-        except ValueError as ex:
-            raise F5ModuleError(str(ex))
-
-        if 'code' in response and response['code'] in [400, 403]:
-            if 'message' in response:
-                raise F5ModuleError(response['message'])
-            else:
-                raise F5ModuleError(resp.content)
-
-        if 'commandResult' in response:
-            if 'cannot access' in response['commandResult']:
-                return False
-            return True
+        if not self.want.inline:
+            if os.path.exists(self.want.fulldest):
+                return True
         return False
 
     def create_on_device(self):
