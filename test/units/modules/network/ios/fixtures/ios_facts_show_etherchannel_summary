@@ -1,24 +1,18 @@
-interface Port-channel10
- switchport trunk encapsulation dot1q
- switchport trunk allowed vlan 10,20
- switchport mode trunk
-!
-interface GigabitEthernet0/9
- description UPLINK
- switchport trunk encapsulation dot1q
- switchport trunk allowed vlan 10,20
- switchport mode trunk
- srr-queue bandwidth share 10 30 20 40
- priority-queue out 
- mls qos trust dscp
- channel-group 10 mode active
-!
-interface GigabitEthernet0/10
- description UPLINK
- switchport trunk encapsulation dot1q
- switchport trunk allowed vlan 10,20
- switchport mode trunk
- srr-queue bandwidth share 10 30 20 40
- priority-queue out 
- mls qos trust dscp
- channel-group 10 mode active
+Flags:  D - down        P - bundled in port-channel
+        I - stand-alone s - suspended
+        H - Hot-standby (LACP only)
+        R - Layer3      S - Layer2
+        U - in use      f - failed to allocate aggregator
+
+        M - not in use, minimum links not met
+        u - unsuitable for bundling
+        w - waiting to be aggregated
+        d - default port
+
+
+Number of channel-groups in use: 1
+Number of aggregators:           1
+
+Group  Port-channel  Protocol    Ports
+------+-------------+-----------+-----------------------------------------------
+10     Po10(SU)        LACP      Gi0/9(P)    Gi0/10(D)  
