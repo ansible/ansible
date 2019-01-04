@@ -87,7 +87,7 @@ class LookupModule(LookupBase):
                             newsearchpath.append(os.path.join(p, 'templates'))
                             newsearchpath.append(p)
                         searchpath = newsearchpath
-                    searchpath.append(os.path.dirname(lookupfile))
+                    searchpath.insert(0, os.path.dirname(lookupfile))
 
                     self._templar.environment.loader.searchpath = searchpath
                     if variable_start_string is not None:
