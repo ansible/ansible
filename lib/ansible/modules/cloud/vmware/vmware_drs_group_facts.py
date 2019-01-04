@@ -14,9 +14,97 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = ''
+DOCUMENTATION = r'''
+---
+module: vmware_drs_group_facts
+short_description: Gathers facts about DRS VM/Host groups on the given cluster
+description:
+- 'This module can be used to gather facts about DRS VM/HOST groups from the given cluster.'
+version_added: '2.8'
+author:
+- Karsten Kaj Jakobsen (@karstenjakobsen)
+notes:
+- Tested on vSphere 6.5 and 6.7
+requirements:
+- python >= 2.6
+- PyVmomi
+options:
+  cluster_name:
+    description:
+    - Name of the cluster.
+    - DRS group facts for the given cluster will be returned.
+    - This is not required parameter.
+  datacenter:
+    description:
+    - Name of the datacenter.
+    - DRS group facts for all the clusters from the given datacenter will be returned.
+    - This is required parameter
+extends_documentation_fragment: vmware.documentation
+'''
 
-RETURN = ''
+EXAMPLES = r'''
+- name: Gather DRS facts about given Cluster
+  vmware_drs_group_facts:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: False
+    cluster_name: '{{ cluster_name }}'
+    datacenter: '{{ datacenter }}'
+  delegate_to: localhost
+  register: cluster_drs_group_facts
+
+- name: Gather DRS group facts about all clusters in given datacenter
+  vmware_drs_group_facts:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: False
+    datacenter: '{{ datacenter }}'
+  delegate_to: localhost
+  register: cluster_drs_group_facts
+'''
+
+RETURN = r'''
+drs_rule_facts:
+    description: metadata about DRS rule from given cluster / datacenter
+    returned: always
+    type: dict
+    sample: "drs_group_facts": {
+        "DC0_C0": [
+            {
+                "group_name": "GROUP_HOST_S01",
+                "hosts": [
+                    "vm-01.zone",
+                    "vm-02.zone"
+                ],
+                "type": "host"
+            },
+            {
+                "group_name": "GROUP_HOST_S02",
+                "hosts": [
+                    "vm-03.zone",
+                    "vm-04.zone"
+                ],
+                "type": "host"
+            },
+            {
+                "group_name": "GROUP_VM_S01",
+                "type": "vm",
+                "vms": [
+                    "test-node01"
+                ]
+            },
+            {
+                "group_name": "GROUP_VM_S02",
+                "type": "vm",
+                "vms": [
+                    "test-node02"
+                ]
+            }
+        ]
+    }
+'''
 
 try:
     from pyVmomi import vim
@@ -128,7 +216,7 @@ def main():
     argument_spec = vmware_argument_spec()
 
     argument_spec.update(
-        datacenter=dict(type='str', required=False),
+        datacenter=dict(type='str', required=True),
         cluster_name=dict(type='str', required=False),
     )
 
