@@ -17,7 +17,15 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes.
+Distribution Facts
+------------------
+
+The information returned for the ``ansible_distribution_*`` group of facts may have changed
+slightly.  Ansible 2.8 uses a new backend library for information about distributions: `nir0s/distro <https://github.com/nir0s/distro>`_. This library runs on Python-3.8 and fixes many bugs, including correcting release and version names.
+
+The two facts used in playbooks most often, ``ansible_distribution`` and ``ansible_distribution_major_version``, should not change. If you discover a change in these facts, please file a bug so we can address the
+difference.  However, other facts like ``ansible_distribution_release`` and
+``ansible_distribution_version`` may change as erroneous information gets corrected.
 
 
 Command Line
