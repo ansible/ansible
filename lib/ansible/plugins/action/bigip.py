@@ -27,7 +27,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.utils.display import Display
 
 try:
@@ -38,9 +38,11 @@ except Exception:
 display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
+
+        self._config_module = True if self._task.action == 'bigip_imish_config' else False
         socket_path = None
         transport = 'rest'
 
