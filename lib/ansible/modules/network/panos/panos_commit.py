@@ -34,7 +34,6 @@ author:
 version_added: "2.3"
 requirements:
     - pan-python
-    - lxml
 options:
     ip_address:
         description:
@@ -50,7 +49,8 @@ options:
         description:
             - Username for authentication. If the value is not specified in the
               task, the value of environment variable C(ANSIBLE_NET_USERNAME)
-              will be used instead.
+              will be used instead if defined. C(admin) will be used if nothing
+              above is defined.
         required: true
     interval:
         description:
@@ -124,12 +124,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
-
-try:
-    from lxml import etree
-    HAS_LXML_ETREE = True
-except ImportError:
-    HAS_LXML_ETREE = False
+import xml.etree.ElementTree as etree
 
 try:
     import pan.xapi
@@ -142,7 +137,7 @@ def main():
     argument_spec = dict(
         ip_address=dict(required=True, type='str'),
         password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
-        username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+        username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), default="admin"),
         interval=dict(default=0.5),
         timeout=dict(),
         sync=dict(type='bool', default=True),
@@ -151,9 +146,6 @@ def main():
         commit_vsys=dict(type='list')
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
-
-    if not HAS_LXML_ETREE:
-        module.fail_json(msg='lxml etree is required for this module')
 
     if not HAS_LIB:
         module.fail_json(msg='pan-python is required for this module')
@@ -234,11 +226,9 @@ def main():
         module.fail_json(msg=xapi.status_detail, panos_commit=panos_commit_details)
 
     if job_id:
-        changed = True
+        module.exit_json(changed=True, msg="Commit successful.", panos_commit=panos_commit_details)
     else:
-        changed = False
-
-    module.exit_json(changed=changed, msg=xapi.status_detail, panos_commit=panos_commit_details)
+        module.exit_json(changed=False, msg="No changes to commit.", panos_commit=panos_commit_details)
 
 
 if __name__ == '__main__':
