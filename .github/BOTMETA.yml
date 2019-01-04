@@ -481,6 +481,8 @@ files:
     maintainers: resmo felixfontein
   $module_utils/basic.py:
     support: core
+  $module_utils/urls.py:
+    support: core
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
