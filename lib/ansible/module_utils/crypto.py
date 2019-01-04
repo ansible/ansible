@@ -141,16 +141,19 @@ def convert_relative_to_datetime(relative_time_string):
         # not matched
         return None
 
-    offset = datetime.timedelta(seconds=int(parsed_result.group("seconds")))
-    if parsed_result.group("weeks"):
+    offset = datetime.timedelta(0)
+    if parsed_result.group("weeks") is not None:
         offset += datetime.timedelta(weeks=int(parsed_result.group("weeks")))
-    if parsed_result.group("days"):
+    if parsed_result.group("days") is not None:
         offset += datetime.timedelta(days=int(parsed_result.group("days")))
-    if parsed_result.group("hours"):
+    if parsed_result.group("hours") is not None:
         offset += datetime.timedelta(hours=int(parsed_result.group("hours")))
-    if parsed_result.group("minutes"):
+    if parsed_result.group("minutes") is not None:
         offset += datetime.timedelta(
             minutes=int(parsed_result.group("minutes")))
+    if parsed_result.group("seconds") is not None:
+        offset += datetime.timedelta(
+            seconds=int(parsed_result.group("seconds")))
 
     if parsed_result.group("prefix") == "+":
         return datetime.datetime.utcnow() + offset
