@@ -6,6 +6,5 @@ db_user2: 'ansible_db_user2'
 db_user3: 'ansible_db_user3'
 db_tablespace: 'ansible_tablespace'
 
-tmp_dir: '/tmp'
-db_tablespace_parent: "{{ tmp_dir }}/tablespaces"
+db_tablespace_parent: "{{ pg_dir }}/tablespaces"
 db_tablespace_location: "{{ db_tablespace_parent }}/{{ db_tablespace }}"
