@@ -8,6 +8,11 @@
 {{name}}
 {{ '=' * name_len }}
 
+{% set name_len = name|length + 0-%}
+{{ '=' * name_len }}
+{{name}}
+{{ '=' * name_len }}
+
 Ansible supports a few ways of providing configuration variables, mainly through environment variables, command line switches and an ini file named ``ansible.cfg``.
 
 Starting at Ansible 2.4 the ``ansible-config`` utility allows users to see all the configuration settings available, their defaults, how to set them and
