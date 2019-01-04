@@ -21,7 +21,7 @@ author: "David Kainz (@lolcube)"
 version_added: "2.8"
 short_description: Generate OpenSSH host or user certificates.
 description:
-    - Generate and regenerate OpensSSH host or user certificates.
+    - Generate and regenerate OpenSSH host or user certificates.
 requirements:
     - "ssh-keygen"
 options:
