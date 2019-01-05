@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author:
   - Kairo Araujo (@kairoaraujo)
@@ -27,51 +27,54 @@ version_added: "2.5"
 options:
   account_subsystem:
     description:
-      - Specifies whether the file system is to be processed by the accounting
-        subsystem.
+      - Specifies whether the file system is to be processed by the accounting subsystem.
     type: bool
-    default: "no"
+    default: no
   attributes:
     description:
       - Specifies attributes for files system separated by comma.
+    type: str
     default: agblksize='4096',isnapshot='no'
   auto_mount:
     description:
       - File system is automatically mounted at system restart.
     type: bool
-    default: "yes"
+    default: yes
   device:
     description:
-      - Logical volume (LV) device name or remote export device to create a NFS
-        file system. It is used to create a file system on an already existing
-        logical volume or the exported NFS file system.
-      - If not mentioned a new logical volume name will be created following
-        AIX standards (LVM).
+      - Logical volume (LV) device name or remote export device to create a NFS file system.
+      - It is used to create a file system on an already existing logical volume or the exported NFS file system.
+      - If not mentioned a new logical volume name will be created following AIX standards (LVM).
+    type: str
   fs_type:
     description:
       - Specifies the virtual file system type.
+    type: str
     default: jfs2
   permissions:
     description:
       - Set file system permissions. C(rw) (read-write) or C(ro) (read-only).
-    choices: [rw, ro]
+    type: str
+    choices: [ ro, rw ]
     default: rw
   mount_group:
     description:
       - Specifies the mount group.
+    type: str
   filesystem:
     description:
-      - Specifies the mount point, which is the directory where the file system
-        will be mounted.
+      - Specifies the mount point, which is the directory where the file system will be mounted.
+    type: str
     required: true
   nfs_server:
     description:
       - Specifies a Network File System (NFS) server.
+    type: str
   rm_mount_point:
     description:
       - Removes the mount point directory when used with state C(absent).
     type: bool
-    default: "no"
+    default: no
   size:
     description:
       - Specifies the file system size.
@@ -80,30 +83,31 @@ options:
         it will be in Megabytes. If the value has G specified it will be in
         Gigabytes.
       - If no M or G the value will be 512-byte blocks.
-      - If "+" is specified in begin of value, the value will be added. If "-"
-        is specified in begin of value, the value will be removed. If "+" or
-        "-" is not specified, the total value will be the specified.
+      - If "+" is specified in begin of value, the value will be added.
+      - If "-" is specified in begin of value, the value will be removed.
+      - If "+" or "-" is not specified, the total value will be the specified.
       - Size will respects the LVM AIX standards.
+    type: str
   state:
     description:
       - Controls the file system state.
       - C(present) check if file system exists, creates or resize.
       - C(absent) removes existing file system if already C(unmounted).
-      - C(mounted) checks if the file system is mounted or mount the file
-        system.
-      - C(unmounted) check if the file system is unmounted or unmount the file
-        system.
-    choices: [present, absent, mounted, unmounted]
-    default: present
+      - C(mounted) checks if the file system is mounted or mount the file system.
+      - C(unmounted) check if the file system is unmounted or unmount the file system.
+    type: str
     required: true
+    choices: [ absent, mounted, present, unmounted ]
+    default: present
   vg:
     description:
       - Specifies an existing volume group (VG).
+    type: str
 notes:
   - For more C(attributes), please check "crfs" AIX manual.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create filesystem in a previously defined logical volume.
   aix_filesystem:
     device: testlv
@@ -160,7 +164,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 changed:
   description: Return changed for aix_filesystems actions as true or false.
   returned: always
@@ -467,12 +471,12 @@ def main():
             device=dict(type='str'),
             filesystem=dict(type='str', required=True),
             fs_type=dict(type='str', default='jfs2'),
-            permissions=dict(choices=['rw', 'ro'], default='rw'),
+            permissions=dict(type='str', default='rw', choices=['rw', 'ro']),
             mount_group=dict(type='str'),
             nfs_server=dict(type='str'),
             rm_mount_point=dict(type='bool', default=False),
             size=dict(type='str'),
-            state=dict(choices=['absent', 'present', 'mounted', 'unmounted'], default='present'),
+            state=dict(type='str', default='present', choices=['absent', 'mounted', 'present', 'unmounted']),
             vg=dict(type='str'),
         ),
         supports_check_mode=True,
@@ -495,7 +499,6 @@ def main():
     result = dict(
         changed=False,
         msg='',
-        state=state
     )
 
     if state == 'present':
@@ -567,6 +570,7 @@ def main():
             result['changed'], result['msg'] = unmount_fs(module, filesystem)
 
     else:
+        # Unreachable codeblock
         result['msg'] = "Unexpected state %s." % state
         module.fail_json(**result)
 
