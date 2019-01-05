@@ -54,7 +54,7 @@ options:
         required: false
     state:
         description:
-            - State: present - create/update template; absent - delete template
+            - 'State: present - create/update template; absent - delete template'
         required: false
         choices: [present, absent, dump]
         default: "present"
