@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_host
-short_description: Zabbix host creates/updates/deletes
+short_description: Create/update/delete Zabbix hosts
 description:
    - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
 version_added: "2.0"
