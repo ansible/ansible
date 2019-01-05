@@ -44,7 +44,7 @@ requirements:
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
        Version 2.1.0 or newer is only available with the C(docker) module."
-    - Docker API >= 1.25
+    - Docker API >= 1.24
 '''
 
 EXAMPLES = '''
