@@ -21,7 +21,7 @@ short_description: Retrieves facts about docker swarm node from Swarm Manager
 description:
   - Retrieves facts about a docker node.
   - Essentially returns the output of C(docker node inspect <name>).
-  - Must be executed on host running as Swarm Manager
+  - Must be executed on a host running as Swarm Manager.
 
 version_added: "2.8"
 
