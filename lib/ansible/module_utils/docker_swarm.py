@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # (c) 2019 Piotr Wojciechowski (@wojciechowskipiotr) <piotr@it-playground.pl>
 # (c) Thierry Bouvet (@tbouvet)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
