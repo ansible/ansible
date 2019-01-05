@@ -406,22 +406,17 @@ class NosystemdTimezone(Timezone):
                 return ''
             self.abort('%s: failed to read %s' % (error_prefix, filename))
 
-    def _edit_file(self, filename, regexp, value, key):
-        """Replace the first matched line with given `value`.
+    def _edit_config_file(self, value, key):
+        """Replace the first matched line with configured value for the key.
 
-        If `regexp` matched more than once, other than the first line will be deleted.
-
-        Args:
-            filename: The name of the file to edit.
-            regexp:   The regular expression to search with.
-            value:    The line which will be inserted.
-            key:      For what key the file is being editted.
+        If regexp matched more than once, other than the first line will be deleted.
         """
+        filename = self.conf[key]['filename']
         lines = self._read_file(filename, error_prefix='tried to configure %s' % key).splitlines(True)
         # Find the all matched lines
         matched_indices = []
         for i, line in enumerate(lines):
-            if regexp.search(line):
+            if self.conf[key]['regexp'].search(line):
                 matched_indices.append(i)
         if len(matched_indices) > 0:
             insert_line = matched_indices[0]
@@ -431,7 +426,7 @@ class NosystemdTimezone(Timezone):
         for i in matched_indices[::-1]:
             del lines[i]
         # ...and insert the value
-        lines.insert(insert_line, value)
+        lines.insert(insert_line, self.conf[key]['value'])
         # Write the changes
         try:
             file = open(filename, 'w')
@@ -442,99 +437,64 @@ class NosystemdTimezone(Timezone):
             file.close()
         self.msg.append('Added 1 line and deleted %s line(s) on %s' % (len(matched_indices), filename))
 
-    def _get_value_from_config(self, key, phase):
-        filename = self.conf_files[key]
-        status = self._read_file(filename, error_prefix='tried to configure %s' % key)
-        if not status:
-            if key == 'hwclock':
-                return 'n/a'
-            elif key == 'adjtime':
-                return 'UTC'
-            elif key == 'name':
-                return 'n/a'
-        else:
-            status = file.read()
-            file.close()
-            try:
-                value = self.conf[key]['regexp'].search(status).group(1)
-            except AttributeError:
-                if key == 'hwclock':
-                    # If we cannot find UTC in the config that's fine.
-                    return 'n/a'
-                elif key == 'adjtime':
-                    # If we cannot find UTC/LOCAL in /etc/cannot that means UTC
-                    # will be used by default.
-                    return 'UTC'
-                elif key == 'name':
-                    if phase == 'before':
-                        # In 'before' phase UTC/LOCAL doesn't need to be set in
-                        # the timezone config file, so we ignore this error.
-                        return 'n/a'
-                    else:
-                        self.abort('tried to configure %s using a file "%s", but could not find a valid value in it' % (key, filename))
-            else:
-                if key == 'hwclock':
-                    # convert yes/no -> UTC/local
-                    if self.module.boolean(value):
-                        value = 'UTC'
-                    else:
-                        value = 'local'
-                elif key == 'adjtime':
-                    # convert LOCAL -> local
-                    if value != 'UTC':
-                        value = value.lower()
-        return value
+    def _get_value_from_config(self, key):
+        status = self._read_file(self.conf[key]['filename'], error_prefix='tried to configure %s' % key)
+        try:
+            value = self.conf[key]['regexp'].search(status).group(1)
+        except AttributeError:
+            return 'n/a'
+        return self.conf[key].get('converter', lambda x: x)(value)
 
     def get(self, key, phase):
         planned = self.value[key]['planned']
-        if key == 'hwclock':
-            value = self._get_value_from_config(key, phase)
-            if value == planned:
-                # If the value in the config file is the same as the 'planned'
-                # value, we need to check /etc/adjtime.
-                value = self._get_value_from_config('adjtime', phase)
-        elif key == 'name':
-            value = self._get_value_from_config(key, phase)
-            if value == planned:
-                # If the planned values is the same as the one in the config file
-                # we need to check if /etc/localtime is also set to the 'planned' zone.
-                if os.path.islink('/etc/localtime'):
-                    # If /etc/localtime is a symlink and is not set to the TZ we 'planned'
-                    # to set, we need to return the TZ which the symlink points to.
-                    if os.path.exists('/etc/localtime'):
-                        # We use readlink() because on some distros zone files are symlinks
-                        # to other zone files, so it's hard to get which TZ is actually set
-                        # if we follow the symlink.
-                        path = os.readlink('/etc/localtime')
-                        linktz = re.search(r'/usr/share/zoneinfo/(.*)', path, re.MULTILINE)
-                        if linktz:
-                            valuelink = linktz.group(1)
-                            if valuelink != planned:
-                                value = valuelink
-                        else:
-                            # Set current TZ to 'n/a' if the symlink points to a path
-                            # which isn't a zone file.
-                            value = 'n/a'
-                    else:
-                        # Set current TZ to 'n/a' if the symlink to the zone file is broken.
-                        value = 'n/a'
-                else:
-                    # If /etc/localtime is not a symlink best we can do is compare it with
-                    # the 'planned' zone info file and return 'n/a' if they are different.
-                    try:
-                        if not filecmp.cmp('/etc/localtime', '/usr/share/zoneinfo/' + planned):
-                            return 'n/a'
-                    except Exception:
-                        return 'n/a'
-        else:
+        try:
+            value = self._get_value_from_config(key)
+        except KeyError:
             self.abort('unknown parameter "%s"' % key)
+        if value != planned:
+            return value
+
+        # If the value in the config file is the same as the 'planned'
+        # value, we need further examination of other file.
+        if key == 'hwclock':
+            adjtime = self._get_value_from_config('adjtime')
+            if adjtime == 'n/a':
+                return 'UTC' # It's default value for adjtime
+            return adjtime
+        if key == 'name':
+            if not os.path.islink('/etc/localtime'):
+                # If /etc/localtime is not a symlink best we can do is compare it with
+                # the 'planned' zone info file and return 'n/a' if they are different.
+                try:
+                    if not filecmp.cmp('/etc/localtime', '/usr/share/zoneinfo/' + planned):
+                        return 'n/a'
+                except IOError:
+                    return 'n/a'
+            # If /etc/localtime is a symlink and is not set to the TZ we 'planned'
+            # to set, we need to return the TZ which the symlink points to.
+            if not os.path.exists('/etc/localtime'):
+                # Set current TZ to 'n/a' if the symlink to the zone file is broken.
+                return 'n/a'
+            # We use readlink() because on some distros zone files are symlinks
+            # to other zone files, so it's hard to get which TZ is actually set
+            # if we follow the symlink.
+            path = os.readlink('/etc/localtime')
+            linktz = re.search(r'/usr/share/zoneinfo/(.*)', path, re.MULTILINE)
+            if linktz:
+                valuelink = linktz.group(1)
+                if valuelink != planned:
+                    value = valuelink
+            else:
+                # Set current TZ to 'n/a' if the symlink points to a path
+                # which isn't a zone file.
+                return 'n/a'
         return value
 
     def set(self, key, value):
         if key not in ['name', 'hwclock']:
             self.abort('unknown parameter "%s"' % key)
         if 'filename' in self.conf[key]:
-            self._edit_file(filename=self.conf[key]['filename'],
+            self._edit_config_file(filename=self.conf[key]['filename'],
                             regexp=self.conf[key]['regexp'],
                             value=self.conf[key]['value'],
                             key='hwclock')
