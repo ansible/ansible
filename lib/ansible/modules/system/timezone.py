@@ -339,13 +339,14 @@ class NosystemdTimezone(Timezone):
                 'update_commands': ['%s --systohc %s' % (self.module.get_bin_path('hwclock', required=True), hwclock)],
             }
 
+        # Distribution-specific configuration
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
             # Debian/Ubuntu
             if 'name' in self.conf:
                 self.conf['name'].update(
                     filename='/etc/timezone',
                     regexp=re.compile(r'^(\S+)'),
-                    format=timezone,
+                    value=timezone,
                     update_commands=[
                         '%s -sf %s /etc/localtime' % (self.module.get_bin_path('ln', required=True), tzfile),
                         '%s --frontend noninteractive tzdata' % self.module.get_bin_path('dpkg-reconfigure', required=True),
@@ -353,7 +354,7 @@ class NosystemdTimezone(Timezone):
                 )
             if 'hwclock' in self.conf:
                 self.conf['hwclock'].update(
-                    self._posix_kv_format('UTC', utc),
+                    self._posix_kv('UTC', utc),
                     filename='/etc/default/rcS',
                 )
         elif self.module.get_bin_path('emerge') is not None:
@@ -362,7 +363,7 @@ class NosystemdTimezone(Timezone):
                 self.conf['name'].update(
                     filename='/etc/timezone',
                     regexp=re.compile(r'^(\S+)'),
-                    format=timezone,
+                    value=timezone,
                     update_commands=['%s --config sys-libs/timezone-data' % self.module.get_bin_path('emerge', required=True)],
                 )
             # if 'hwclock' in self.conf:
@@ -371,39 +372,39 @@ class NosystemdTimezone(Timezone):
             # RHEL/CentOS
             if 'name' in self.conf:
                 self.conf['name'].update(
-                    self._posix_kv_format('ZONE', timezone),
+                    self._posix_kv('ZONE', timezone),
                     filename='/etc/sysconfig/clock',
                     update_commands=[self.module.get_bin_path('tzdata-update', required=True)],
                 )
             if 'hwclock' in self.conf:
                 self.conf['hwclock'].update(
-                    self._posix_kv_format('UTC', utc),
+                    self._posix_kv('UTC', utc),
                     filename='/etc/sysconfig/clock',
                 )
         else:
             # Other (e.g.: SuSE)
             distribution = get_distribution()
             if distribution == 'SuSE':
-                name_format = self._posix_kv_format('TIMEZONE', timezone)
-                hwclock_format = self._posix_kv_format('HWCLOCK', hwclock)
+                name = self._posix_kv('TIMEZONE', timezone)
+                hwclock = self._posix_kv('HWCLOCK', hwclock)
             else:
-                name_format = self._posix_kv_format('ZONE', timezone)
-                hwclock_format = self._posix_kv_format('UTC', utc)
+                name = self._posix_kv('ZONE', timezone)
+                hwclock = self._posix_kv('UTC', utc)
             if 'name' in self.conf:
                 self.conf['name'].update(
-                    name_format,
+                    name,
                     filename='/etc/sysconfig/clock',
                     # `--remove-destination` is needed if /etc/localtime is a symlink so that it overwrites it instead of following it.
                     update_commands=['%s --remove-destination %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
                 )
             if 'hwclock' in self.conf:
                 self.conf['hwclock'].update(
-                    hwclock_format,
+                    hwclock,
                     filename='/etc/sysconfig/clock',
                 )
 
         # Further investigation of current config file to support wider distributions
-        # Timezone format
+        # Timezone
         try:
             with open(self.conf['name']['filename'], 'r') as f:
                 cuurent_content = f.read()
@@ -413,10 +414,10 @@ class NosystemdTimezone(Timezone):
             self._handle_ioerror(err, 'could not read configuration file "%s"' % self.conf_files['name'])
         else:
             if re.search(r'^TIMEZONE\s*=', cuurent_content, re.MULTILINE):
-                self.conf['name'].update(self._posix_kv_format('TIMEZONE', timezone))
+                self.conf['name'].update(self._posix_kv('TIMEZONE', timezone))
             elif re.search(r'^ZONE\s*=', cuurent_content, re.MULTILINE):
-                self.conf['name'].update(self._posix_kv_format('ZONE', timezone))
-        # Hwclock format
+                self.conf['name'].update(self._posix_kv('ZONE', timezone))
+        # Hwclock
         try:
             with open(self.conf['hwclock']['filename'], 'r') as f:
                 cuurent_content = f.read()
@@ -426,15 +427,15 @@ class NosystemdTimezone(Timezone):
             self._handle_ioerror(err, 'could not read configuration file "%s"' % self.conf_files['name'])
         else:
             if re.search(r'^HWCLOCK\s*=', cuurent_content, re.MULTILINE):
-                self.conf['hwclock'].update(self._posix_kv_format('HWCLOCK', hwclock))
+                self.conf['hwclock'].update(self._posix_kv('HWCLOCK', hwclock))
             elif re.search(r'^UTC\s*=', cuurent_content, re.MULTILINE):
-                self.conf['hwclock'].update(self._posix_kv_format('UTC', utc))
+                self.conf['hwclock'].update(self._posix_kv('UTC', utc))
 
     @staticmethod
-    def _posix_kv_format(key, value):
+    def _posix_kv(key, value):
         return {
             'regexp': re.compile(r'^%s\s*=\s*["\']?([^\s"\']+)["\']?' % key),
-            'format': '%s="%s"' % (key, value),
+            'value': '%s="%s"' % (key, value),
         }
 
     def _handle_ioerror(self, err, message):
