@@ -34,6 +34,7 @@ options:
   validate_occasion:
     description:
       - Set this to no to turn off validation of the occasion string and try your luck.
+    type: bool
     default: yes
     version_added: "2.8"
   count:
