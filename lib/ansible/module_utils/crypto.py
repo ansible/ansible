@@ -137,8 +137,8 @@ def convert_relative_to_datetime(relative_time_string):
         r"^(?P<prefix>[+-])((?P<weeks>\d+)[wW])?((?P<days>\d+)[dD])?((?P<hours>\d+)[hH])?((?P<minutes>\d+)[mM])?((?P<seconds>\d+)[sS]?)?$",
         relative_time_string)
 
-    if parsed_result is None:
-        # not matched
+    if parsed_result is None or len(relative_time_string) == 1:
+        # not matched or only a single "+" or "-"
         return None
 
     offset = datetime.timedelta(0)
