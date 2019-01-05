@@ -26,15 +26,21 @@ options:
   script_file:
     description:
      - An existing script file to be executed in the future.
+  occasion:
+    description:
+     - Supply a specific date string to execute the job on.
+     - Various formats are acceptable including midnight, noon, teatime, tomorrow, mon, JAN, next saturday, 2:45 PM DD/MM/YYYY, 4pm + 3 days or now + 60 minutes.
+  validate_occasion:
+    description:
+      - Set this to no to turn off validation of the occasion string and try your luck.
+    default: yes
   count:
     description:
      - The count of units in the future to execute the command or script file.
-    required: true
   units:
     description:
      - The type of units in the future to execute the command or script file.
     choices: [ minutes, hours, days, weeks ]
-    required: true
   state:
     description:
      - The state dictates if the command or script file should be evaluated as present(added) or absent(deleted).
@@ -69,16 +75,49 @@ EXAMPLES = '''
     count: 20
     units: minutes
     unique: yes
+
+- name: Schedule a command for tomorrow
+  at:
+    command: ls -d / >/dev/null
+    occasion: tomorrow
+
+- name: Schedule a command for midnight
+  at:
+    command: ls -d / >/dev/null
+    occasion: midnight
+
+- name: Schedule a command for noon tomorrow
+  at:
+    command: ls -d / >/dev/null
+    occasion: noon tomorrow
+
+- name: Schedule a command for next saturday
+  at:
+    command: ls -d / >/dev/null
+    occasion: next saturday
+
+- name: Schedule a command for monday
+  at:
+    command: ls -d / >/dev/null
+    occasion: mon
+
+- name: Schedule a command for a fixed date
+  at:
+    command: ls -d / >/dev/null
+    occasion: 2:30 PM 17.09.2099
 '''
 
-import os
+import os, re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 
 
-def add_job(module, result, at_cmd, count, units, command, script_file):
-    at_command = "%s -f %s now + %s %s" % (at_cmd, script_file, count, units)
+def add_job(module, result, at_cmd, occasion, count, units, command, script_file):
+    if count:
+        at_command = "%s -f %s now + %s %s" % (at_cmd, script_file, count, units)
+    else:
+        at_command = "%s -f %s %s" % (at_cmd, script_file, occasion)
     rc, out, err = module.run_command(at_command, check_rc=True)
     if command:
         os.unlink(script_file)
@@ -137,12 +176,14 @@ def main():
         argument_spec=dict(
             command=dict(type='str'),
             script_file=dict(type='str'),
+            occasion=dict(type='str'),
+            validate_occasion=dict(type='bool', default=True),
             count=dict(type='int'),
             units=dict(type='str', choices=['minutes', 'hours', 'days', 'weeks']),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             unique=dict(type='bool', default=False),
         ),
-        mutually_exclusive=[['command', 'script_file']],
+        mutually_exclusive=[['command', 'script_file'], ['occasion', 'count']],
         required_one_of=[['command', 'script_file']],
         supports_check_mode=False,
     )
@@ -151,13 +192,49 @@ def main():
 
     command = module.params['command']
     script_file = module.params['script_file']
+    occasion = module.params['occasion']
+    validate_occasion = module.params['validate_occasion']
     count = module.params['count']
     units = module.params['units']
     state = module.params['state']
     unique = module.params['unique']
 
-    if (state == 'present') and (not count or not units):
-        module.fail_json(msg="present state requires count and units")
+    occasion_regexp = [
+        "tomorrow",
+        "midnight",
+        "noon",
+        "teatime",
+        "noon tomorrow",
+        "next week",
+        "next monday",
+        "next tuesday",
+        "next wednesday",
+        "next thursday",
+        "next friday",
+        "next saturday",
+        "next sunday",
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat",
+        "sun",
+        '[0-2][0-9]\:[0-9][0-9]', # HH:MM
+        '[0-2][0-9]\:[0-9][0-9]\:[0-9][0-9]', # HH:MM:ss
+        '[0-9]+\:[0-5][0-9] [A|P]M', # 12:30 AM
+        '[0-9]+\:[0-5][0-9] [P|A]M [M|T|W|T|F|S][o|u|e|h|r|a][n|e|d|u|i|t]', # 9:30 PM Thu
+        'now \+ [0-9]+ (minutes*|hours*|days*|weeks*|months*|years*)', # now + 3 days
+        '[0-9]+ [A|P]M \+ [0-9]+ (minutes*|hours*|days*|weeks*|months*|years*)', # 4 PM + 55 minutes
+        '[0-9]+\:[0-9]+ [A|P]M (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]+', # 2:30 PM Sep 17
+    ]
+    if (state == 'present' and ((count and not units) or (units and not count) or (not count and not units and not occasion))):
+        module.fail_json(msg="present state requires count and units or occasion to be set")
+    if occasion:
+        if any(re.compile(regex).match(occasion) for regex in occasion_regexp) or not validate_occasion:
+            pass
+        else:
+            module.fail_json(msg="occasion is in an invalid format. Check the format or set validate_occasion to 'no'")
 
     result = dict(
         changed=False,
@@ -180,10 +257,13 @@ def main():
             module.exit_json(**result)
 
     result['script_file'] = script_file
-    result['count'] = count
-    result['units'] = units
+    if count:
+        result['count'] = count
+        result['units'] = units
+    else:
+        result['occasion'] = occasion
 
-    add_job(module, result, at_cmd, count, units, command, script_file)
+    add_job(module, result, at_cmd, occasion, count, units, command, script_file)
 
     module.exit_json(**result)
 
