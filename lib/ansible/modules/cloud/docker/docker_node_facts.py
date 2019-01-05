@@ -102,8 +102,8 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        min_docker_version='2.6.0',
-        min_docker_api_version='1.25',
+        min_docker_version='1.10.0',
+        min_docker_api_version='1.24',
     )
 
     node = get_node_facts(client, client.module.params['name'])
