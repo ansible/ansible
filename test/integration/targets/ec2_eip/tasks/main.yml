@@ -67,6 +67,7 @@
         region: '{{ aws_region }}'
         state: present
         in_vpc: yes
+        <<: *aws_connection_info
       register: allocated_eip
 
     - name: assert eip exists
@@ -79,6 +80,7 @@
         device_id: '{{ test_instance.instance_ids }}'
         public_ip: '{{ allocated_eip.public_ip }}'
         in_vpc: yes
+        <<: *aws_connection_info
       register: result
 
     - name: assert association
@@ -92,6 +94,7 @@
         public_ip: '{{ allocated_eip.public_ip }}'
         in_vpc: yes
         release_on_disassociation: yes
+        <<: *aws_connection_info
       register: result
 
     - name: assert disassociation
@@ -104,6 +107,16 @@
     # Teardown starts here
     # ============================================================
 
+    - name: remove allocated eips if any
+      ec2_eip:
+        release_on_disassociation: yes
+        state: absent
+        ip: '{{ allocated_eip.public_ip }}'
+        in_vpc: yes
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+
     - name: remove test ec2 instance
       ec2:
         instance_ids: '{{ test_instance.instance_ids }}'
@@ -114,7 +127,8 @@
     - name: remove test subnet
       ec2_vpc_subnet:
         az: '{{ aws_region }}a'
-        tags: '{{resource_prefix}}_ansible_ec2_eip_test'
+        tags:
+          'Name': '{{resource_prefix}}_ansible_ec2_eip_test'
         vpc_id: '{{ test_subnet.subnet.vpc_id }}'
         cidr: 19.41.53.0/24
         state: absent

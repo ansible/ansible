@@ -297,7 +297,7 @@ def address_is_associated_with_device(ec2, address, device_id, module, is_aninst
     # Check if the elastic IP is currently associated with the device
 
     if device_id.startswith('eni-'):
-        is_instance = False
+        is_aninstance = False
 
     if isinstance(address, list):
         address = address[0]
@@ -337,6 +337,8 @@ def allocate_address(ec2, domain, reuse_existing_ip_allowed):
 def release_address(ec2, address, check_mode):
     # Release a previously allocated elastic IP address
 
+    #FIXME:  release not working
+
     # If we're in check mode, nothing else to do
     if not check_mode:
         if not address.release():
@@ -357,14 +359,14 @@ def find_device(ec2, module, device_id, is_aninstance=True):
             instances = next(iter(reservations.values()))
             if instances:
                 return instances[0]
-
+    #FIXME: for some reason device_id i- goes this way
     else:
-        interfaces = ec2.describe_network_interfaces(
+        eni_interfaces = ec2.describe_network_interfaces(
             NetworkInterfaceIds=[device_id])
-
-        if interfaces:
-            interfaces = next(iter(interfaces.values()))
-            return interfaces[0]
+        if eni_interfaces:
+            interfaces = next(iter(eni_interfaces.values()))
+            if interfaces:
+                return interfaces[0]
 
     raise EIPException("could not find instance " + device_id)
 
@@ -373,6 +375,7 @@ def ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                    reuse_existing_ip_allowed, allow_reassociation, check_mode, is_aninstance=True):
 
     # Return the EIP object since we've been given a public IP
+
     if not address:
         if check_mode:
             changed = True
@@ -466,18 +469,17 @@ def main():
             msg="parameters are required together: ('device_id', 'private_ip_address')")
 
     if instance_id:
-        warnings = [
-            "instance_id is no longer used, please use device_id going forward"]
         is_instance = True
         device_id = instance_id
     else:
-        if device_id and device_id.startswith('i-'):
-            is_instance = True
-        elif device_id:
-            if device_id.startswith('eni-') and not in_vpc:
-                module.fail_json(
-                    msg="If you are specifying an ENI, in_vpc must be true")
-            is_instance = False
+        if device_id:
+            if device_id.startswith('i-'):
+                is_instance = True
+            elif device_id.startswith('eni-'):
+                if not in_vpc:
+                    module.fail_json(
+                        msg="If you are specifying an ENI, in_vpc must be true")
+                is_instance = False
 
     try:
         if device_id:
