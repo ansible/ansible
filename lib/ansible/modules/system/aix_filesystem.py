@@ -23,7 +23,7 @@ description:
   - This module creates, removes, mount and unmount LVM and NFS file system for
     AIX using C(/etc/filesystems).
   - For LVM file systems is possible to resize a file system.
-version_added: "2.5"
+version_added: '2.8'
 options:
   account_subsystem:
     description:
@@ -168,13 +168,11 @@ RETURN = r'''
 changed:
   description: Return changed for aix_filesystems actions as true or false.
   returned: always
-  type: boolean
-  version_added: "2.5"
+  type: bool
 msg:
   description: Return message regarding the action.
   returned: always
-  type: string
-  version_added: "2.5"
+  type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -466,7 +464,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             account_subsystem=dict(type='bool', default=False),
-            attributes=dict(type='list', default=['agblksize="4096"', 'isnapshot="no"']),
+            attributes=dict(type='list', default=["agblksize='4096'", "isnapshot='no'"]),
             auto_mount=dict(type='bool', default=True),
             device=dict(type='str'),
             filesystem=dict(type='str', required=True),
