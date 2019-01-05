@@ -367,69 +367,28 @@ class NosystemdTimezone(Timezone):
                     update_commands=['%s --config sys-libs/timezone-data' % self.module.get_bin_path('emerge', required=True)],
                 )
             # if 'hwclock' in self.conf:
-            #     TODO: self.conf['hwclock'] ???
-        elif self.module.get_bin_path('tzdata-update') is not None and not os.path.islink('/etc/localtime'):
-            # RHEL/CentOS
+            #     TODO: self.conf['hwclock'] ??? Or should we fail?
+        else:
+            # RHEL/CentOS/SuSE...etc
+            filename = '/etc/sysconfig/clock'
+            current_file = self._read_file(filename, error_prefix='initial setup')
+            is_suse_like = get_distribution() in ['SuSE']
             if 'name' in self.conf:
-                self.conf['name'].update(
-                    self._posix_kv('ZONE', timezone),
-                    filename='/etc/sysconfig/clock',
-                    update_commands=[self.module.get_bin_path('tzdata-update', required=True)],
-                )
+                self.conf['name']['filename'] = filename
+                if self.module.get_bin_path('tzdata-update') is not None and not os.path.islink('/etc/localtime'):
+                    self.conf['name']['update_commands'] = [self.module.get_bin_path('tzdata-update', required=True)]
+                else:
+                    self.conf['name']['update_commands'] = ['%s --remove-destination %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
+                if re.search(r'^TIMEZONE\s*=', current_file, re.MULTILINE) or is_suse_like:
+                    self.conf['name'].update(self._posix_kv('TIMEZONE', timezone))
+                else:
+                    self.conf['name'].update(self._posix_kv('ZONE', timezone))
             if 'hwclock' in self.conf:
-                self.conf['hwclock'].update(
-                    self._posix_kv('UTC', utc),
-                    filename='/etc/sysconfig/clock',
-                )
-        else:
-            # Other (e.g.: SuSE)
-            distribution = get_distribution()
-            if distribution == 'SuSE':
-                name = self._posix_kv('TIMEZONE', timezone)
-                hwclock = self._posix_kv('HWCLOCK', hwclock)
-            else:
-                name = self._posix_kv('ZONE', timezone)
-                hwclock = self._posix_kv('UTC', utc)
-            if 'name' in self.conf:
-                self.conf['name'].update(
-                    name,
-                    filename='/etc/sysconfig/clock',
-                    # `--remove-destination` is needed if /etc/localtime is a symlink so that it overwrites it instead of following it.
-                    update_commands=['%s --remove-destination %s /etc/localtime' % (self.module.get_bin_path('cp', required=True), tzfile)]
-                )
-            if 'hwclock' in self.conf:
-                self.conf['hwclock'].update(
-                    hwclock,
-                    filename='/etc/sysconfig/clock',
-                )
-
-        # Further investigation of current config file to support wider distributions
-        # Timezone
-        try:
-            with open(self.conf['name']['filename'], 'r') as f:
-                cuurent_content = f.read()
-        except KeyError:
-            pass
-        except IOError as err:
-            self._handle_ioerror(err, 'could not read configuration file "%s"' % self.conf_files['name'])
-        else:
-            if re.search(r'^TIMEZONE\s*=', cuurent_content, re.MULTILINE):
-                self.conf['name'].update(self._posix_kv('TIMEZONE', timezone))
-            elif re.search(r'^ZONE\s*=', cuurent_content, re.MULTILINE):
-                self.conf['name'].update(self._posix_kv('ZONE', timezone))
-        # Hwclock
-        try:
-            with open(self.conf['hwclock']['filename'], 'r') as f:
-                cuurent_content = f.read()
-        except KeyError:
-            pass
-        except IOError as err:
-            self._handle_ioerror(err, 'could not read configuration file "%s"' % self.conf_files['name'])
-        else:
-            if re.search(r'^HWCLOCK\s*=', cuurent_content, re.MULTILINE):
-                self.conf['hwclock'].update(self._posix_kv('HWCLOCK', hwclock))
-            elif re.search(r'^UTC\s*=', cuurent_content, re.MULTILINE):
-                self.conf['hwclock'].update(self._posix_kv('UTC', utc))
+                self.conf['hwclock']['filename']=filename
+                if re.search(r'^HWCLOCK\s*=', current_file, re.MULTILINE) or is_suse_like:
+                    self.conf['hwclock'].update(self._posix_kv('HWCLOCK', hwclock))
+                else:
+                    self.conf['hwclock'].update(self._posix_kv('UTC', utc))
 
     @staticmethod
     def _posix_kv(key, value):
@@ -438,14 +397,14 @@ class NosystemdTimezone(Timezone):
             'value': '%s="%s"' % (key, value),
         }
 
-    def _handle_ioerror(self, err, message):
-        # In some cases, even if the target file does not exist,
-        # simply creating it may solve the problem.
-        # In such cases, we should continue the configuration rather than aborting.
-        if err.errno != errno.ENOENT:
-            # If the error is not ENOENT ("No such file or directory"),
-            # (e.g., permission error, etc), we should abort.
-            self.abort(message)
+    def _read_file(self, filename, error_prefix):
+        try:
+            with open(filename) as f:
+                return f.read()
+        except IOError as err:
+            if err.errno == errno.ENOENT:
+                return ''
+            self.abort('%s: failed to read %s' % (error_prefix, filename))
 
     def _edit_file(self, filename, regexp, value, key):
         """Replace the first matched line with given `value`.
@@ -458,15 +417,7 @@ class NosystemdTimezone(Timezone):
             value:    The line which will be inserted.
             key:      For what key the file is being editted.
         """
-        # Read the file
-        try:
-            file = open(filename, 'r')
-        except IOError as err:
-            self._handle_ioerror(err, 'tried to configure %s using a file "%s", but could not read it' % (key, filename))
-            lines = []
-        else:
-            lines = file.readlines()
-            file.close()
+        lines = self._read_file(filename, error_prefix='tried to configure %s' % key).splitlines(True)
         # Find the all matched lines
         matched_indices = []
         for i, line in enumerate(lines):
@@ -493,10 +444,8 @@ class NosystemdTimezone(Timezone):
 
     def _get_value_from_config(self, key, phase):
         filename = self.conf_files[key]
-        try:
-            file = open(filename, mode='r')
-        except IOError as err:
-            self._handle_ioerror(err, 'tried to configure %s using a file "%s", but could not read it' % (key, filename))
+        status = self._read_file(filename, error_prefix='tried to configure %s' % key)
+        if not status:
             if key == 'hwclock':
                 return 'n/a'
             elif key == 'adjtime':
