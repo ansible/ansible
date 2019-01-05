@@ -151,9 +151,9 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if (self.instance_id is None):
-            self.results['virtualmachines'] = self.list()
+            self.results['instances'] = self.list()
         else:
-            self.results['virtualmachines'] = self.get()
+            self.results['instances'] = self.get()
         return self.results
 
     def get(self):
