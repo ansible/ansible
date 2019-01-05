@@ -23,12 +23,6 @@ description:
     - Change or remove node labels
     - List Swarm nodes
 options:
-    force:
-        description:
-            - Use with state C(present) to force creating a new Swarm, even if already part of one.
-            - Use with state C(absent) to Leave the swarm even if this node is a manager.
-        type: bool
-        default: 'False'
     state:
         description:
             - Set to C(list) to display swarm nodes names lists.
@@ -63,13 +57,17 @@ options:
 extends_documentation_fragment:
     - docker
 requirements:
-    - python >= 2.7
-    - "docker >= 2.6.0"
+    - "python >= 2.6"
+    - "docker-py >= 1.10.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       Version 2.1.0 or newer is only available with the C(docker) module."
-    - Docker API >= 1.25
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time. Also note that when both modules are installed
+       and one of them is uninstalled, the other might no longer function and a
+       reinstall of it is required."
+    - "The docker server >= 1.10.0"
 author:
   - Piotr Wojciechowski (@wojciechowskipiotr)
   - Thierry Bouvet (@tbouvet)
@@ -125,8 +123,6 @@ actions:
 
 '''
 
-import json
-
 try:
     from docker.errors import APIError
 except ImportError:
@@ -134,11 +130,12 @@ except ImportError:
     pass
 
 from ansible.module_utils.docker_common import (
-    AnsibleDockerClient,
     DockerBaseClass,
 )
 
 from ansible.module_utils._text import to_native
+
+from ansible.module_utils.docker_swarm import AnsibleDockerSwarmClient
 
 
 class TaskParameters(DockerBaseClass):
@@ -181,63 +178,16 @@ class SwarmNodeManager(DockerBaseClass):
 
         choice_map.get(self.parameters.state)()
 
-    def __isSwarmManager(self):
-        try:
-            data = self.client.inspect_swarm()
-            json_str = json.dumps(data, ensure_ascii=False)
-            self.swarm_info = json.loads(json_str)
-            return True
-        except APIError:
-            return False
-
-    def __isSwarmNode(self):
-        info = self.client.info()
-        self.results['__isSwarmNode'] = info
-        if info:
-            json_str = json.dumps(info, ensure_ascii=False)
-            self.swarm_info = json.loads(json_str)
-            if self.swarm_info['Swarm']['NodeID']:
-                return True
-        return False
-
-    def __isSwarmNodeByID(self, node_id=None):
-        if node_id is None:
-            return self.__isSwarmNode()
-
-        try:
-            node_info = self.__get_node_info()
-        except APIError:
-            return
-
-        if node_info['ID'] is not None:
-            return True
-        return False
-
-    def __isSwarmNodeDown(self):
-        node_info = self.__get_node_info()
-        if node_info['Status']['State'] == 'down':
-            return True
-        return False
-
-    def __get_node_info(self):
-        try:
-            node_info = self.client.inspect_node(node_id=self.parameters.name)
-        except APIError as exc:
-            raise exc
-        json_str = json.dumps(node_info, ensure_ascii=False)
-        node_info = json.loads(json_str)
-        return node_info
-
     def node_update(self):
-        if not (self.__isSwarmManager()):
+        if not (self.client.check_if_swarm_manager()):
             self.client.fail(msg="This node is not a manager.")
 
-        if not (self.__isSwarmNodeByID(node_id=self.parameters.name)):
+        if not (self.client.check_if_swarm_node(node_id=self.parameters.name)):
             self.results['actions'].append("This node is not part of a swarm.")
             return
 
         try:
-            status_down = self.__isSwarmNodeDown()
+            status_down = self.client.check_if_swarm_node_is_down()
         except APIError:
             return
 
@@ -272,12 +222,12 @@ class SwarmNodeManager(DockerBaseClass):
                                     node_spec=node_spec)
         except APIError as exc:
             self.client.fail(msg="Failed to update node : %s" % to_native(exc))
-        self.results['node_facts'] = self.__get_node_info()
+        self.results['node_facts'] = self.client.get_node_info(node_id=node_info['ID'])
         self.results['actions'].append("Node updated")
         self.results['changed'] = True
 
     def node_list(self):
-        if not (self.__isSwarmManager()):
+        if not (self.client.check_if_swarm_manager()):
             self.client.fail(msg="This node is not a manager.")
 
         try:
@@ -315,12 +265,12 @@ def main():
         ca_force_rotate=dict(docker_api_version='1.30'),
     )
 
-    client = AnsibleDockerClient(
+    client = AnsibleDockerSwarmClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=required_if,
-        min_docker_version='2.6.0',
-        min_docker_api_version='1.25',
+        min_docker_version='1.10.0',
+        min_docker_api_version='1.24',
         option_minimal_versions=option_minimal_versions,
     )
 
