@@ -29,7 +29,7 @@ options:
   occasion:
     description:
      - Supply a specific date string to execute the job on.
-     - Various formats are acceptable including midnight, noon, teatime, tomorrow, mon, JAN, next saturday, 2:45 PM DD/MM/YYYY, 4pm + 3 days or now + 60 minutes.
+     - Various formats are acceptable including midnight, noon, teatime, tomorrow, mon, JAN, next saturday, 4pm + 3 days or now + 60 minutes.
     version_added: "2.8"
   validate_occasion:
     description:
