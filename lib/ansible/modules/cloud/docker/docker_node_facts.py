@@ -29,7 +29,7 @@ options:
   name:
     description:
       - The name of the node to inspect.
-      - When identifying an existing node name may be a name or a long or short container ID.
+      - When identifying an existing node name may either the hostname of the node (as registered in Swarm) or node ID
     required: true
 extends_documentation_fragment:
     - docker
@@ -38,8 +38,8 @@ author:
     - Piotr Wojciechowski (@wojciechowskipiotr)
 
 requirements:
-    - python >= 2.7
-    - "docker >= 2.6.0"
+    - python >= 2.6
+    - "docker >= 1.10.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
