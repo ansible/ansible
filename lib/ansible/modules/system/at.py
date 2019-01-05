@@ -30,10 +30,12 @@ options:
     description:
      - Supply a specific date string to execute the job on.
      - Various formats are acceptable including midnight, noon, teatime, tomorrow, mon, JAN, next saturday, 2:45 PM DD/MM/YYYY, 4pm + 3 days or now + 60 minutes.
+    version_added: "2.8"
   validate_occasion:
     description:
       - Set this to no to turn off validation of the occasion string and try your luck.
     default: yes
+    version_added: "2.8"
   count:
     description:
      - The count of units in the future to execute the command or script file.
@@ -107,7 +109,8 @@ EXAMPLES = '''
     occasion: 2:30 PM 17.09.2099
 '''
 
-import os, re
+import os
+import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
@@ -220,13 +223,13 @@ def main():
         "fri",
         "sat",
         "sun",
-        '[0-2][0-9]\:[0-9][0-9]', # HH:MM
-        '[0-2][0-9]\:[0-9][0-9]\:[0-9][0-9]', # HH:MM:ss
-        '[0-9]+\:[0-5][0-9] [A|P]M', # 12:30 AM
-        '[0-9]+\:[0-5][0-9] [P|A]M [M|T|W|T|F|S][o|u|e|h|r|a][n|e|d|u|i|t]', # 9:30 PM Thu
-        'now \+ [0-9]+ (minutes*|hours*|days*|weeks*|months*|years*)', # now + 3 days
-        '[0-9]+ [A|P]M \+ [0-9]+ (minutes*|hours*|days*|weeks*|months*|years*)', # 4 PM + 55 minutes
-        '[0-9]+\:[0-9]+ [A|P]M (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]+', # 2:30 PM Sep 17
+        r'[0-2][0-9]\:[0-9][0-9]',  # HH:MM
+        r'[0-2][0-9]\:[0-9][0-9]\:[0-9][0-9]',  # HH:MM:ss
+        r'[0-9]+\:[0-5][0-9] [A|P]M',  # 12:30 AM
+        r'[0-9]+\:[0-5][0-9] [P|A]M [M|T|W|T|F|S][o|u|e|h|r|a][n|e|d|u|i|t]',  # 9:30 PM Thu
+        r'now \+ [0-9]+ (minutes*|hours*|days*|weeks*|months*|years*)',  # now + 3 days
+        r'[0-9]+ [A|P]M \+ [0-9]+ (minutes*|hours*|days*|weeks*|months*|years*)',  # 4 PM + 55 minutes
+        r'[0-9]+\:[0-9]+ [A|P]M (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]+',  # 2:30 PM Sep 17
     ]
     if (state == 'present' and ((count and not units) or (units and not count) or (not count and not units and not occasion))):
         module.fail_json(msg="present state requires count and units or occasion to be set")
