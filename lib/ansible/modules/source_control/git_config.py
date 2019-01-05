@@ -51,6 +51,12 @@ options:
         also specify the repo parameter. It defaults to system only when
         not using I(list_all)=yes.
     choices: [ "local", "global", "system" ]
+  state:
+    description:
+      - Indicates the setting should be set/unset.
+    choices: [ 'present', 'absent' ]
+    default: 'present'
+    version_added: '2.8'
   value:
     description:
       - When specifying the name of a single setting, supply a value to
@@ -68,6 +74,12 @@ EXAMPLES = '''
     name: alias.st
     scope: global
     value: status
+
+# Unset some settings in ~/.gitconfig
+- git_config:
+    name: alias.ci
+    scope: global
+    state: absent
 
 # Or system-wide:
 - git_config:
@@ -149,9 +161,10 @@ def main():
             name=dict(type='str'),
             repo=dict(type='path'),
             scope=dict(required=False, type='str', choices=['local', 'global', 'system']),
+            state=dict(required=False, type='str', default='present', choices=['present', 'absent']),
             value=dict(required=False)
         ),
-        mutually_exclusive=[['list_all', 'name'], ['list_all', 'value']],
+        mutually_exclusive=[['list_all', 'name'], ['list_all', 'value'], ['list_all', 'state']],
         required_if=[('scope', 'local', ['repo'])],
         required_one_of=[['list_all', 'name']],
         supports_check_mode=True,
@@ -174,6 +187,11 @@ def main():
         scope = None
     else:
         scope = 'system'
+
+    if params['state'] == 'absent':
+        unset = 'unset'
+    else:
+        unset = None
 
     if params['value']:
         new_value = params['value']
@@ -212,12 +230,18 @@ def main():
             k, v = value.split('=', 1)
             config_values[k] = v
         module.exit_json(changed=False, msg='', config_values=config_values)
-    elif not new_value:
+    elif not new_value and not unset:
         module.exit_json(changed=False, msg='', config_value=out.rstrip())
+    elif unset and not out:
+        module.exit_json(changed=False, msg='no setting to unset')
     else:
         old_value = out.rstrip()
         if old_value == new_value:
             module.exit_json(changed=False, msg="")
+
+    if unset:
+        args.insert(len(args) - 1, "--" + unset)
+        new_value = ''  # No new value when unset
 
     if not module.check_mode:
         new_value_quoted = shlex_quote(new_value)
