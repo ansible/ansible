@@ -68,7 +68,7 @@ exists:
     sample: true
 node_facts:
     description:
-      - Facts representing the current state of the node. Matches the 'docker node inspect' output.
+      - Facts representing the current state of the node. Matches the C(docker node inspect) output.
       - Will be C(None) if node does not exist.
     returned: always
     type: dict
