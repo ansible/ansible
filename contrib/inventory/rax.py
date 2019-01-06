@@ -151,7 +151,6 @@ import sys
 import argparse
 import warnings
 import collections
-import ConfigParser
 
 from six import iteritems
 
@@ -168,17 +167,18 @@ from time import time
 from ansible.constants import get_config
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import configparser
 
 NON_CALLABLES = (text_type, str, bool, dict, int, list, type(None))
 
 
 def load_config_file():
-    p = ConfigParser.ConfigParser()
+    p = configparser.ConfigParser()
     config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                'rax.ini')
     try:
         p.read(config_file)
-    except ConfigParser.Error:
+    except configparser.Error:
         return None
     else:
         return p
