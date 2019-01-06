@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_hostmacro
-short_description: Zabbix host macro creates/updates/deletes
+short_description: Create/update/delete Zabbix host macros
 description:
    - manages Zabbix host macros, it can create, update or delete them.
 version_added: "2.0"
