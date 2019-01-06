@@ -54,7 +54,8 @@
         shell: 'docker network ls --no-trunc --format {% raw %}"{{.Name}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker network rm'
         register: docker_networks
       - name: Cleaned docker resources
-        debug: var=docker_resources
+        debug:
+          var: docker_resources
         vars:
           docker_resources:
             containers: "{{ docker_containers.stdout_lines }}"
@@ -75,7 +76,8 @@
         command: docker images --no-trunc -a
         register: docker_images
       - name: Still existing docker resources
-        debug: var=docker_resources
+        debug:
+          var: docker_resources
         vars:
           docker_resources:
             containers: "{{ docker_containers.stdout_lines }}"
