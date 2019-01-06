@@ -143,7 +143,6 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
 
         self.state = None
-        self.force = None
 
         # Spec
         self.name = None
@@ -247,7 +246,6 @@ class SwarmNodeManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         state=dict(type='str', choices=['list', 'update'], default='list'),
-        force=dict(type='bool', default=False),
         name=dict(type='str'),
         labels=dict(type='dict'),
         labels_remove=dict(type='bool', default=False),
