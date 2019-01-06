@@ -29,7 +29,7 @@ options:
   name:
     description:
       - The name of the node to inspect.
-      - When identifying an existing node name may either the hostname of the node (as registered in Swarm) or node ID
+      - When identifying an existing node name may either the hostname of the node (as registered in Swarm) or node ID.
     required: true
 extends_documentation_fragment:
     - docker
