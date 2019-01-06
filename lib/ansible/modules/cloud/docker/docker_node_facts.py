@@ -62,7 +62,7 @@ EXAMPLES = '''
 RETURN = '''
 exists:
     description:
-      - Returns whether the node exists in docker swarm cluster. Module will fail if executed on a non-manager node
+      - Returns whether the node exists in docker swarm cluster.
     type: bool
     returned: always
     sample: true
