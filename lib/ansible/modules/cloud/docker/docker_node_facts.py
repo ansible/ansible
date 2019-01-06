@@ -48,7 +48,7 @@ requirements:
        be installed at the same time. Also note that when both modules are installed
        and one of them is uninstalled, the other might no longer function and a
        reinstall of it is required."
-    - "The docker server >= 1.10.0"
+    - "Docker API >= 1.24"
 '''
 
 EXAMPLES = '''
