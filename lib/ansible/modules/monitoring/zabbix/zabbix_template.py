@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_template
-short_description: create/delete/dump zabbix template
+short_description: Create/delete/dump Zabbix template
 description:
-    - create/delete/dump zabbix template
+    - Create/delete/dump Zabbix template.
 version_added: "2.5"
 author:
     - "sookido (@sookido)"
@@ -29,11 +29,11 @@ requirements:
 options:
     template_name:
         description:
-            - Name of zabbix template
+            - Name of Zabbix template.
         required: true
     template_json:
         description:
-            - JSON dump of template to import
+            - JSON dump of template to import.
         required: false
     template_groups:
         description:
@@ -46,15 +46,15 @@ options:
     clear_templates:
         description:
             - List of templates cleared from the template.
-            - see templates_clear in https://www.zabbix.com/documentation/3.0/manual/api/reference/template/update
+            - See templates_clear in https://www.zabbix.com/documentation/3.0/manual/api/reference/template/update
         required: false
     macros:
         description:
-            - List of templates macro
+            - List of template macros.
         required: false
     state:
         description:
-            - state present create/update template, absent delete template
+            - 'State: present - create/update template; absent - delete template'
         required: false
         choices: [present, absent, dump]
         default: "present"
@@ -65,7 +65,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 ---
-# Creates a new zabbix template from linked template
+# Creates a new Zabbix template from linked template
 - name: Create Zabbix template using linked template
   local_action:
     module: zabbix_template
@@ -92,8 +92,8 @@ EXAMPLES = '''
         value: 'Example'
     state: present
 
-# Create a new template from a json config definition
-- name: Import Zabbix json template configuration
+# Create a new template from a JSON config definition
+- name: Import Zabbix JSON template configuration
   local_action:
     module: zabbix_template
     server_url: http://127.0.0.1
@@ -106,7 +106,7 @@ EXAMPLES = '''
     state: present
 
 # Import a template from Ansible variable dict
-- name: Import Zabbix Template
+- name: Import Zabbix template
   zabbix_template:
     login_user: username
     login_password: password
@@ -149,7 +149,7 @@ EXAMPLES = '''
     template_name: Template
     state: absent
 
-# Export template json definition
+# Export template JSON definition
 - name: Dump Zabbix template
   local_action:
     module: zabbix_template
