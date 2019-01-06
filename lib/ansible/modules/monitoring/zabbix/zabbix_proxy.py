@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_proxy
-short_description: Zabbix proxy creates/deletes/gets/updates
+short_description: Create/delete/get/update Zabbix proxies
 description:
    - This module allows you to create, modify, get and delete Zabbix proxy entries.
 version_added: "2.5"
@@ -44,7 +44,7 @@ options:
         required: true
     description:
         description:
-            - Description of the proxy..
+            - Description of the proxy.
         required: false
     status:
         description:
@@ -102,7 +102,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Create a new proxy or update an existing proxies info
+- name: Create a new proxy or update an existing proxy
   local_action:
     module: zabbix_proxy
     server_url: http://monitor.example.com

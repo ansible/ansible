@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_screen
-short_description: Zabbix screen creates/updates/deletes
+short_description: Create/update/delete Zabbix screens
 description:
     - This module allows you to create, modify and delete Zabbix screens and associated graph data.
 version_added: "2.0"
@@ -30,14 +30,14 @@ requirements:
 options:
     screens:
         description:
-            - List of screens to be created/updated/deleted(see example).
-            - If the screen(s) already been added, the screen(s) name won't be updated.
-            - When creating or updating screen(s), C(screen_name), C(host_group) are required.
-            - When deleting screen(s), the C(screen_name) is required.
-            - Option C(graphs_in_row) will limit columns of screen and make multiple rows (default 3)
+            - List of screens to be created/updated/deleted (see example).
+            - If a screen has already been added, the screen name won't be updated.
+            - When creating or updating a screen, C(screen_name) and C(host_group) are required.
+            - When deleting a screen, the C(screen_name) is required.
+            - Option C(graphs_in_row) will limit columns of a screen and make multiple rows (default 3).
             - >
-              The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s)
-              will just be updated as needed.
+              The available states are: C(present) (default) and C(absent). If the screen already exists, and the state is not C(absent), the screen
+              will be updated as needed.
         required: true
 
 extends_documentation_fragment:
