@@ -3,7 +3,6 @@
 # You do not need this template if you are:
 #
 # 1) Running integration tests without using ansible-test.
-# 2) Using the automatically provisioned Vultr credentials in ansible-test.
 #
 # If you want to test against the Vultr public API,
 # fill in the values below and save this file without the .template extension.
