@@ -77,7 +77,7 @@ class LookupModule(LookupBase):
                     template_data = to_text(f.read(), errors='surrogate_or_strict')
 
                     # set jinja2 internal search path for includes
-                    searchpath = variables.get('ansible_search_path')
+                    searchpath = variables.get('ansible_search_path', [])
                     if searchpath:
                         # our search paths aren't actually the proper ones for jinja includes.
                         # We want to search into the 'templates' subdir of each search path in
@@ -87,8 +87,8 @@ class LookupModule(LookupBase):
                             newsearchpath.append(os.path.join(p, 'templates'))
                             newsearchpath.append(p)
                         searchpath = newsearchpath
-                    else:
-                        searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
+                    searchpath.insert(0, os.path.dirname(lookupfile))
+
                     self._templar.environment.loader.searchpath = searchpath
                     if variable_start_string is not None:
                         self._templar.environment.variable_start_string = variable_start_string

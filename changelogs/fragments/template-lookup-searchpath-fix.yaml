@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix searchpath in the template lookup to work the same way as in the template module.
