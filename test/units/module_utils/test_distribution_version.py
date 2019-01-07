@@ -510,6 +510,26 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
         }
     },
     {
+        'name': "Devuan",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux ascii"
+NAME="Devuan GNU/Linux"
+ID=devuan
+HOME_URL="https://www.devuan.org/"
+SUPPORT_URL="https://devuan.org/os/community"
+BUG_REPORT_URL="https://bugs.devuan.org/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': u'Devuan',
+            'distribution_major_version': u'NA',
+            'distribution_release': u'ascii',
+            'os_family': 'Debian',
+            'distribution_version': u'NA'
+        }
+    },
+    {
         "platform.dist": [
             "Ubuntu",
             "16.04",
