@@ -70,7 +70,7 @@ This playbook configured the hostname and DNS servers.  Let's verify that config
 Convert the playbook into a role
 ---------------------------------
 
-Now that we've seen a simple playbook in action, let's convert this into a reusable role. The Ansible Galaxy command line tool has the ability to create the standard framework for a role from scratch using the ``ansible-galaxy init`` command.  While not a requirement this can make it really easy to quickly start creating a role.
+Now that we've seen a simple playbook in action, let's convert this into a reusable role. You can create the directory structure manually, or you can use ``ansible-galaxy init`` to create the standard framework for a role.
 
 .. code-block:: bash
 
@@ -106,7 +106,7 @@ For this first demonstration we'll only use the **tasks** and **vars** directori
    └── vars
        └── main.yml
 
-We'll now separate out the ``vars`` section and the ``tasks`` section from our original Ansible Playbook.  Move the two tasks into the ``tasks/main.yml`` file.  The file will look as follows:
+Next, move the content of the ``vars`` and ``tasks`` sections from our original Ansible Playbook into the role. First, move the two tasks into the ``tasks/main.yml`` file:
 
 .. code-block:: bash
 
@@ -120,7 +120,7 @@ We'll now separate out the ``vars`` section and the ``tasks`` section from our o
      ios_config:
        lines: ip name-server {{dns}}
 
-Move the vars into the ``vars/main.yml`` file.  The file will look as follows:
+Next, move the variables into the ``vars/main.yml`` file:
 
 .. code-block:: bash
 
@@ -128,7 +128,7 @@ Move the vars into the ``vars/main.yml`` file.  The file will look as follows:
    ---
    dns: "8.8.8.8 8.8.4.4"
 
-Finally we'll modify the original Ansible Playbook to remove the keyword ``tasks`` and the keyword ``vars`` and then add the keyword ``roles``  with the name of the role, in this case ``system-demo``.  The playbook will now look like this:
+Finally, modify the original Ansible Playbook to remove the ``tasks`` and ``vars`` sections and add the keyword ``roles``  with the name of the role, in this case ``system-demo``.  You'll have this playbook:
 
 .. code-block:: yaml
 
