@@ -882,14 +882,30 @@ class StrategyBase:
         host_results = []
         for host in notified_hosts:
             if not iterator.is_failed(host) or iterator._play.force_handlers:
-                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
-                self.add_tqm_variables(task_vars, play=iterator._play)
-                self._queue_task(host, handler, task_vars, play_context)
+                if handler.action == 'meta':
+                    meta_name = handler.args.get('_raw_params', None)
+                    # FIXME filter others?
+                    if meta_name in ('flush_handlers'):
+                        display.error('%s not supported as a handler, skipping...' % meta_name)
+                        return_data  = {'msg': '%s not supported as a handler' % meta_name, 'skipped': True}
+                        host_result = TaskResult(host, handler, return_data)
+                        host_results.append(host_result)
+                        continue
+
+                    if meta_name not in ('noop', 'reset_connection', 'end_host'):
+                        run_once = True
+
+                    host_results.extend(self._execute_meta(handler, play_context, iterator, host))
+                else:
+                    task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
+                    self.add_tqm_variables(task_vars, play=iterator._play)
+                    self._queue_task(host, handler, task_vars, play_context)
+
                 if run_once:
                     break
 
         # collect the results from the handler run
-        host_results = self._wait_on_handler_results(iterator, handler, notified_hosts)
+        host_results += self._wait_on_handler_results(iterator, handler, notified_hosts)
 
         try:
             included_files = IncludedFile.process_include_results(
