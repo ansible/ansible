@@ -2772,11 +2772,11 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self.option_minimal_versions['stop_timeout']['supported'] = stop_timeout_supported
 
     def __init__(self, **kwargs):
-        def detect_ipvX_address_usage():
+        def detect_ipvX_address_usage(client):
             '''
             Helper function to detect whether any specified network uses ipv4_address or ipv6_address
             '''
-            for network in self.module.params.get("networks") or []:
+            for network in client.module.params.get("networks") or []:
                 if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
                     return True
             return False
