@@ -1,0 +1,39 @@
+# Copyright (c) 2018, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+vultr_resource_prefix: "vultr-test-prefix"
+vultr_dns_domain_name: "{{ vultr_resource_prefix }}-example-ansible.com"
+vultr_dns_record_items:
+# Single A record
+- name: test-www
+  data: 10.10.10.10
+  ttl: 400
+  update_data: 10.10.10.11
+  update_ttl: 200
+
+# Multiple A records
+- name: test-www-multiple
+  data: 10.10.11.10
+  update_data: 10.10.11.11
+  multiple: true
+  update_ttl: 600
+
+# CNAME
+- name: test-cname
+  data: www.ansible.com
+  update_data: www.ansible.ch
+  record_type: CNAME
+
+# Single Multiple MX record
+- data: mx1.example-ansible.com
+  priority: 10
+  update_priority: 20
+  record_type: MX
+
+# Multiple MX records
+- data: mx2.example-ansible.com
+  priority: 10
+  update_data: mx1.example-ansible.com
+  update_priority: 20
+  record_type: MX
+  multiple: true
