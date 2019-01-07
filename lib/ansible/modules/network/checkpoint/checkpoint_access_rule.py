@@ -92,7 +92,7 @@ EXAMPLES = """
 
 RETURN = """
 checkpoint_access_rules:
-  description: The checkpoint access rule object created or updated. 
+  description: The checkpoint access rule object created or updated.
   returned: always, except when deleting the access rule.
   type: list
 """
