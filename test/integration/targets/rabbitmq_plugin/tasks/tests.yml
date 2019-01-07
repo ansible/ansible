@@ -6,6 +6,7 @@
     rabbitmq_plugin:
       name: "{{ plugin_name }}"
       state: enabled
+      new_only: True
     register: result
 
   - name: Get rabbitmq-plugins output
@@ -25,6 +26,7 @@
     rabbitmq_plugin:
       name: "{{ plugin_name }}"
       state: enabled
+      new_only: True
     register: result
 
   - name: Check idempotency
