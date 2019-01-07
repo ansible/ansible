@@ -36,6 +36,16 @@ class TestCheckpointHttpApi(unittest.TestCase):
             self.checkpoint_plugin.login(None, None)
         assert 'Username and password are required' in str(res.exception)
 
+    def test_login_raises_exception_when_invalid_response(self):
+        self.connection_mock.send.return_value = self._connection_response(
+            {'NOSIDKEY': 'NOSIDVALUE'}
+        )
+
+        with self.assertRaises(ConnectionError) as res:
+            self.checkpoint_plugin.login('foo', 'bar')
+
+        assert 'Server returned response without token info during connection authentication' in str(res.exception)
+
     @staticmethod
     def _connection_response(response, status=200):
         response_mock = mock.Mock()
