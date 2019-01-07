@@ -75,10 +75,8 @@ class MockONTAPConnection(object):
         data = {'num-records': 1, 'attributes-list': {'cifs-share': {
             'share-name': 'test',
             'path': '/test',
-            'share-properties': {'cifs-share-properties': 'browsable',
-                                 'cifs-share-properties': 'oplocks'},
-            'symlink-properties': {'cifs-share-symlink-properties': 'enable',
-                                   'cifs-share-symlink-properties': 'read_only'},
+            'share-properties': {'cifs-share-properties': 'browsable'},
+            'symlink-properties': {'cifs-share-symlink-properties': 'enable'},
         }}}
         xml.translate_struct(data)
         print(xml.to_string())
