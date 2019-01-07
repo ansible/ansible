@@ -41,7 +41,7 @@ To demonstrate the concept of what a role is, the example ``playbook.yml`` below
         ios_config:
           lines: ip name-server {{dns}}
 
-Next, we'll run this playbook using the ``ansible-playbook`` command.  For brevity we used ``-l`` option to limit the playbook to only executing on the **rtr1** node.
+If you run this playbook using the ``ansible-playbook`` command, you'll see the output below.  This example used ``-l`` option to limit the playbook to only executing on the **rtr1** node.
 
 .. code-block:: bash
 
@@ -59,7 +59,7 @@ Next, we'll run this playbook using the ``ansible-playbook`` command.  For brevi
    rtr1                       : ok=2    changed=2    unreachable=0    failed=0
 
 
-This playbook configured the hostname and DNS servers.  Let's verify that configuration on the Cisco IOS XE **rtr1** router:
+This playbook configured the hostname and DNS servers.  You can verify that configuration on the Cisco IOS XE **rtr1** router:
 
 .. code-block:: bash
 
@@ -70,7 +70,7 @@ This playbook configured the hostname and DNS servers.  Let's verify that config
 Convert the playbook into a role
 ---------------------------------
 
-Now that we've seen a simple playbook in action, let's convert this into a reusable role. You can create the directory structure manually, or you can use ``ansible-galaxy init`` to create the standard framework for a role.
+The next step is to convert this playbook into a reusable role. You can create the directory structure manually, or you can use ``ansible-galaxy init`` to create the standard framework for a role.
 
 .. code-block:: bash
 
@@ -95,7 +95,7 @@ Now that we've seen a simple playbook in action, let's convert this into a reusa
    └── vars
      └── main.yml
 
-For this first demonstration we'll only use the **tasks** and **vars** directories.  The directory structure would look as follows:
+This first demonstration uses only the **tasks** and **vars** directories.  The directory structure would look as follows:
 
 .. code-block:: bash
 
@@ -106,7 +106,7 @@ For this first demonstration we'll only use the **tasks** and **vars** directori
    └── vars
        └── main.yml
 
-Next, move the content of the ``vars`` and ``tasks`` sections from our original Ansible Playbook into the role. First, move the two tasks into the ``tasks/main.yml`` file:
+Next, move the content of the ``vars`` and ``tasks`` sections from the original Ansible Playbook into the role. First, move the two tasks into the ``tasks/main.yml`` file:
 
 .. code-block:: bash
 
@@ -141,7 +141,7 @@ Finally, modify the original Ansible Playbook to remove the ``tasks`` and ``vars
      roles:
        - system-demo
 
-To summarize, we now have a total of three directories and three YAML files.  There is the ``system-demo`` folder, which represents the role.  This ``system-demo`` contains two folders, ``tasks`` and ``vars``.  There is a ``main.yml`` is each respective folder.  The ``vars/main.yml`` contains the variables from ``playbook.yml``.  The ``tasks/main.yml`` contains the tasks from ``playbook.yml``.  The ``playbook.yml`` file has been modified to call the role rather than specifying vars and tasks directly.  Here is a tree of the current working directory:
+To summarize, this demonstration now has a total of three directories and three YAML files.  There is the ``system-demo`` folder, which represents the role.  This ``system-demo`` contains two folders, ``tasks`` and ``vars``.  There is a ``main.yml`` is each respective folder.  The ``vars/main.yml`` contains the variables from ``playbook.yml``.  The ``tasks/main.yml`` contains the tasks from ``playbook.yml``.  The ``playbook.yml`` file has been modified to call the role rather than specifying vars and tasks directly.  Here is a tree of the current working directory:
 
 .. code-block:: bash
 
@@ -187,7 +187,7 @@ This is why Ansible roles can be simply thought of as deconstructed playbooks. T
 Variable precedence
 -------------------
 
-Hey hold on!  What if you want to change the DNS servers.  Are you expected to change the ``vars/main.yml`` within the role structure?  Absolutely not. Ansible has many places where you can specify variables for a given play. See :ref:`playbooks_variables` for details on variables and precedence. There are actually 21 places to put variables.  While this list can seem overwhelming at first glance, the vast majority of use cases only involve knowing the spot for variables of least precedence and how to pass variables with most precedence.
+What if you want to change the DNS servers?  You aren't expected to change the ``vars/main.yml`` within the role structure. Ansible has many places where you can specify variables for a given play. See :ref:`playbooks_variables` for details on variables and precedence. There are actually 21 places to put variables.  While this list can seem overwhelming at first glance, the vast majority of use cases only involve knowing the spot for variables of least precedence and how to pass variables with most precedence. See :ref:`ansible_variable_precedence` for more guidance on where you should put variables.
 
 Lowest precedence
 ^^^^^^^^^^^^^^^^^
@@ -204,7 +204,7 @@ The lowest precedence is the ``defaults`` directory within a role.  This means a
    ├── tasks
    │   └── main.yml
 
-Add a new ``vars`` section to the playbook to override the default behavior (where the variable ``dns`` is set to 8.8.8.8 and 8.8.4.4).  For this demonstration, let's set ``dns`` to 1.1.1.1, so ``playbook.yml`` becomes:
+Add a new ``vars`` section to the playbook to override the default behavior (where the variable ``dns`` is set to 8.8.8.8 and 8.8.4.4).  For this demonstration, set ``dns`` to 1.1.1.1, so ``playbook.yml`` becomes:
 
 .. code-block:: yaml
 
@@ -218,7 +218,7 @@ Add a new ``vars`` section to the playbook to override the default behavior (whe
      roles:
        - system-demo
 
-We'll run this updated playbook on **rtr2**:
+Run this updated playbook on **rtr2**:
 
 .. code-block:: bash
 
@@ -231,7 +231,7 @@ The configuration on the **rtr2** Cisco router will look as follows:
    rtr2#sh run | i name-server
    ip name-server 1.1.1.1
 
-The variable configured in the playbook now has precedence over the ``defaults`` directory.  In fact, any other spot we configure variables would win over the values in the ``defaults`` directory.
+The variable configured in the playbook now has precedence over the ``defaults`` directory.  In fact, any other spot you configure variables would win over the values in the ``defaults`` directory.
 
 Highest precedence
 ^^^^^^^^^^^^^^^^^^
