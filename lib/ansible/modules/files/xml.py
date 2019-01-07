@@ -1,11 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2014, Red Hat, Inc.
-#     Tim Bielawa <tbielawa@redhat.com>
-#     Magnus Hedemark <mhedemar@redhat.com>
-# Copyright 2017, Dag Wieers <dag@wieers.com>
-
+# Copyright: (c) 2014, Red Hat, Inc.
+# Copyright: (c) 2014, Tim Bielawa <tbielawa@redhat.com>
+# Copyright: (c) 2014, Magnus Hedemark <mhedemar@redhat.com>
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -21,45 +20,51 @@ module: xml
 short_description: Manage bits and pieces of XML files or strings
 description:
 - A CRUD-like interface to managing bits of XML files.
-- You might also be interested in a brief tutorial from U(https://www.w3schools.com/xml/xpath_intro.asp)
-  and U(https://developer.mozilla.org/en-US/docs/Web/XPath).
 version_added: '2.4'
 options:
   path:
     description:
-    - Path to the file to operate on. File must exist ahead of time.
+    - Path to the file to operate on.
+    - This file must exist ahead of time.
     - This parameter is required, unless C(xmlstring) is given.
+    type: path
     required: yes
     aliases: [ dest, file ]
   xmlstring:
     description:
     - A string containing XML on which to operate.
     - This parameter is required, unless C(path) is given.
+    type: str
     required: yes
   xpath:
     description:
     - A valid XPath expression describing the item(s) you want to manipulate.
     - Operates on the document root, C(/), by default.
+    type: str
   namespaces:
     description:
     - The namespace C(prefix:uri) mapping for the XPath expression.
     - Needs to be a C(dict), not a C(list) of items.
+    type: dict
   state:
     description:
     - Set or remove an xpath selection (node(s), attribute(s)).
-    default: present
+    type: str
     choices: [ absent, present ]
+    default: present
     aliases: [ ensure ]
   attribute:
     description:
     - The attribute to select when using parameter C(value).
     - This is a string, not prepended with C(@).
+    type: raw
   value:
     description:
     - Desired state of the selected attribute.
     - Either a string, or to unset a value, the Python C(None) keyword (YAML Equivalent, C(null)).
     - Elements default to no value (but present).
     - Attributes default to an empty string.
+    type: raw
   add_children:
     description:
     - Add additional child-element(s) to a selected element for a given C(xpath).
@@ -67,37 +72,41 @@ options:
       (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
       or a hash where the key is an element name and the value is the element value.
     - This parameter requires C(xpath) to be set.
+    type: list
   set_children:
     description:
     - Set the child-element(s) of a selected element for a given C(xpath).
     - Removes any existing children.
     - Child elements must be specified as in C(add_children).
     - This parameter requires C(xpath) to be set.
+    type: list
   count:
     description:
     - Search for a given C(xpath) and provide the count of any matches.
     - This parameter requires C(xpath) to be set.
     type: bool
-    default: 'no'
+    default: no
   print_match:
     description:
     - Search for a given C(xpath) and print out any matches.
     - This parameter requires C(xpath) to be set.
     type: bool
-    default: 'no'
+    default: no
   pretty_print:
     description:
     - Pretty print XML output.
     type: bool
-    default: 'no'
+    default: no
   content:
     description:
     - Search for a given C(xpath) and get content.
     - This parameter requires C(xpath) to be set.
+    type: str
     choices: [ attribute, text ]
   input_type:
     description:
     - Type of input for C(add_children) and C(set_children).
+    type: str
     choices: [ xml, yaml ]
     default: yaml
   backup:
@@ -105,13 +114,13 @@ options:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: 'no'
+    default: no
   strip_cdata_tags:
     description:
       - Remove CDATA tags surrounding text values.
       - Note that this might break your XML file if text values contain characters that could be interpreted as XML.
     type: bool
-    default: 'no'
+    default: no
     version_added: '2.7'
 requirements:
 - lxml >= 2.3.0
@@ -119,9 +128,18 @@ notes:
 - Use the C(--check) and C(--diff) options when testing your expressions.
 - The diff output is automatically pretty-printed, so may not reflect the actual file content, only the file structure.
 - This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
-- Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter.
+- Beware that in case your XML elements are namespaced, you need to use the C(namespaces) parameter, see the examples.
 - Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
-- More information about this module is available from the community wiki at U(https://github.com/ansible/community/wiki/Module:-xml)
+seealso:
+- name: Xml module development community wiki
+  description: More information related to the development of this xml module.
+  link: https://github.com/ansible/community/wiki/Module:-xml
+- name: Introduction to XPath
+  description: A brief tutorial on XPath (w3schools.com).
+  link: https://www.w3schools.com/xml/xpath_intro.asp
+- name: XPath Reference document
+  description: The reference documentation on XSLT/XPath (developer.mozilla.org).
+  link: https://developer.mozilla.org/en-US/docs/Web/XPath
 author:
 - Tim Bielawa (@tbielawa)
 - Magnus Hedemark (@magnus919)
@@ -129,20 +147,36 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Remove the subjective attribute of the rating element
+# Consider the following XML file:
+#
+# <business type="bar">
+#   <name>Tasty Beverage Co.</name>
+#     <beers>
+#       <beer>Rochefort 10</beer>
+#       <beer>St. Bernardus Abbot 12</beer>
+#       <beer>Schlitz</beer>
+#    </beers>
+#   <rating subjective="true">10</rating>
+#   <website>
+#     <mobilefriendly/>
+#     <address>http://tastybeverageco.com</address>
+#   </website>
+# </business>
+
+- name: Remove the 'subjective' attribute of the 'rating' element
   xml:
     path: /foo/bar.xml
     xpath: /business/rating/@subjective
     state: absent
 
-- name: Set the rating to 11
+- name: Set the rating to '11'
   xml:
     path: /foo/bar.xml
     xpath: /business/rating
     value: 11
 
 # Retrieve and display the number of nodes
-- name: Get count of beers nodes
+- name: Get count of 'beers' nodes
   xml:
     path: /foo/bar.xml
     xpath: /business/beers/beer
@@ -152,13 +186,14 @@ EXAMPLES = r'''
 - debug:
     var: hits.count
 
-- name: Add a phonenumber element to the business element
+# Example where parent XML nodes are created automatically
+- name: Add a 'phonenumber' element to the 'business' element
   xml:
     path: /foo/bar.xml
     xpath: /business/phonenumber
     value: 555-555-1234
 
-- name: Add several more beers to the beers element
+- name: Add several more beers to the 'beers' element
   xml:
     path: /foo/bar.xml
     xpath: /business/beers
@@ -167,12 +202,13 @@ EXAMPLES = r'''
     - beer: Old Motor Oil
     - beer: Old Curmudgeon
 
-- name: Add a validxhtml element to the website element
+# NOTE: The 'state' defaults to 'present' and 'value' defaults to 'null' for elements
+- name: Add a 'validxhtml' element to the 'website' element
   xml:
     path: /foo/bar.xml
     xpath: /business/website/validxhtml
 
-- name: Add an empty validatedon attribute to the validxhtml element
+- name: Add an empty 'validatedon' attribute to the 'validxhtml' element
   xml:
     path: /foo/bar.xml
     xpath: /business/website/validxhtml/@validatedon
@@ -197,27 +233,27 @@ EXAMPLES = r'''
   debug:
     var: xmlresp.matches[0].validxhtml.validatedon
 
-- name: Remove all children from the website element (option 1)
+- name: Remove all children from the 'website' element (option 1)
   xml:
     path: /foo/bar.xml
     xpath: /business/website/*
     state: absent
 
-- name: Remove all children from the website element (option 2)
+- name: Remove all children from the 'website' element (option 2)
   xml:
     path: /foo/bar.xml
     xpath: /business/website
     children: []
 
-# In case of namespaces, like in below XML, they have to be explicitely stated
-# NOTE: there's the prefix "x" in front of the "bar", too
-#<?xml version='1.0' encoding='UTF-8'?>
-#<foo xmlns="http://x.test" xmlns:attr="http://z.test">
-#  <bar>
-#    <baz xmlns="http://y.test" attr:my_namespaced_attribute="true" />
-#  </bar>
-#</foo>
+# In case of namespaces, like in below XML, they have to be explicitely stated.
+#
+# <foo xmlns="http://x.test" xmlns:attr="http://z.test">
+#   <bar>
+#     <baz xmlns="http://y.test" attr:my_namespaced_attribute="true" />
+#   </bar>
+# </foo>
 
+# NOTE: There is the prefix 'x' in front of the 'bar' element, too.
 - name: Set namespaced '/x:foo/x:bar/y:baz/@z:my_namespaced_attribute' to 'false'
   xml:
     path: foo.xml
