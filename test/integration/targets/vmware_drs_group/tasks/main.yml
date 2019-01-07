@@ -2,23 +2,50 @@
 # Copyright: (c) 2018, Karsten Kaj Jakobsen <kj@patientsky.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?cluster=2
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- debug: var=vcsim_instance
+
 - name: Create DRS VM/Host group
   vmware_drs_group:
     # Login creds
-    hostname: '10.70.21.10'
-    username: 'administrator@vsphere.local'
-    password: 'HPinvent1!'
-    validate_certs: false
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: False
     # Options
-    datacenter: DC01
-    cluster_name: sto1
+    cluster_name: DC0_C0
+    datacenter: DC0
     group_name: TEST_S1_01
     vms:
-      - sto1-test-node01
-      - sto1-test-node02
+      - test-node01
+      - test-node02
     state: present
   register: drs_vm_group_01_results
-  check_mode: false
 
 - debug: var=drs_vm_group_01_results
 
