@@ -51,7 +51,7 @@ class GalaxyCLI(CLI):
         common = opt_help.argparse.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
-                                 help='Ignore SSL certificate validation errors.')
+                            help='Ignore SSL certificate validation errors.')
 
         # options that apply to more than one action
         user_repo = opt_help.argparse.ArgumentParser(add_help=False)
