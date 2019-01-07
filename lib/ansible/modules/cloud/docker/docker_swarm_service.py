@@ -1046,36 +1046,7 @@ class DockerServiceManager():
         self.client = client
         self.diff_tracker = DifferenceTracker()
 
-    def test_parameter_versions(self):
-        parameters_versions = [
-            {'param': 'dns', 'attribute': 'dns', 'min_version': '1.25'},
-            {'param': 'dns_options', 'attribute': 'dns_options', 'min_version': '1.25'},
-            {'param': 'dns_search', 'attribute': 'dns_search', 'min_version': '1.25'},
-            {'param': 'hostname', 'attribute': 'hostname', 'min_version': '1.25'},
-            {'param': 'tty', 'attribute': 'tty', 'min_version': '1.25'},
-            {'param': 'secrets', 'attribute': 'secrets', 'min_version': '1.25'},
-            {'param': 'configs', 'attribute': 'configs', 'min_version': '1.30'},
-            {'param': 'update_order', 'attribute': 'update_order', 'min_version': '1.29'}]
-        params = self.client.module.params
-        empty_service = DockerService()
-        for pv in parameters_versions:
-            if (params[pv['param']] != getattr(empty_service, pv['attribute']) and
-                    (LooseVersion(self.client.version()['ApiVersion']) <
-                     LooseVersion(pv['min_version']))):
-                self.client.module.fail_json(
-                    msg=('%s parameter supported only with api_version>=%s'
-                         % (pv['param'], pv['min_version'])))
-
-        for publish_def in self.client.module.params.get('publish', []):
-            if 'mode' in publish_def.keys():
-                if LooseVersion(self.client.version()['ApiVersion']) < LooseVersion('1.25'):
-                    self.client.module.fail_json(msg='publish.mode parameter supported only with api_version>=1.25')
-                if LooseVersion(docker_version) < LooseVersion('3.0.0'):
-                    self.client.module.fail_json(msg='publish.mode parameter requires docker python library>=3.0.0')
-
     def run(self):
-        self.test_parameter_versions()
-
         module = self.client.module
         try:
             current_service = self.get_service(module.params['name'])
@@ -1145,6 +1116,11 @@ class DockerServiceManager():
         return msg, changed, rebuilt, differences.get_legacy_docker_diffs(), facts
 
 
+def _detect_publish_mode_usage(client):
+    for publish_def in client.module.params.get('publish', []):
+        return 'mode' in publish_def.keys()
+
+
 def main():
     argument_spec = dict(
         name=dict(required=True),
@@ -1186,14 +1162,35 @@ def main():
         update_max_failure_ratio=dict(default=0, type='float'),
         update_order=dict(default=None, type='str'),
         user=dict(default='root'))
+
+    option_minimal_versions = dict(
+        dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+        dns_options=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+        dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+        hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
+        tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
+        secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
+        update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
+        # specials
+        publish_mode=dict(
+            docker_py_version='3.0.0',
+            docker_api_version='1.25',
+            detect_usage=_detect_publish_mode_usage,
+            usage_msg='set publish.mode'
+        )
+    )
+
     required_if = [
         ('state', 'present', ['image'])
     ]
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True,
         min_docker_version='2.0.0',
+        option_minimal_versions=option_minimal_versions
     )
 
     dsm = DockerServiceManager(client)
