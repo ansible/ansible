@@ -34,6 +34,7 @@ options:
     description:
       - "Datacenter to search for DRS VM/Host groups."
     required: true
+    aliases: ['datacenter_name']
 requirements:
   - "python >= 2.6"
   - PyVmomi
@@ -214,7 +215,7 @@ def main():
     argument_spec = vmware_argument_spec()
 
     argument_spec.update(
-        datacenter=dict(type='str', required=True),
+        datacenter=dict(type='str', required=True, aliases=['datacenter_name']),
         cluster_name=dict(type='str', required=False),
     )
 
