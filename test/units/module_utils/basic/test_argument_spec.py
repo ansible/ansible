@@ -49,7 +49,8 @@ VALID_SPECS = (
     # Simple type=bool
     ({'arg': {'type': 'bool'}}, {'arg': True}, True),
     # Simple type=list elements=bool
-    ({'arg': {'type': 'list', 'elements': 'bool'}}, {'arg': [True, 'true', 1, 'yes', False, 'false', 'no', 0]}, [True, True, True, True, False, False, False, False]),
+    ({'arg': {'type': 'list', 'elements': 'bool'}}, {'arg': [True, 'true', 1, 'yes', False, 'false', 'no', 0]},
+     [True, True, True, True, False, False, False, False]),
     # Type=int with conversion from string
     ({'arg': {'type': 'bool'}}, {'arg': 'yes'}, True),
     # Type=str converts to string
@@ -72,7 +73,7 @@ INVALID_SPECS = (
     # Type is int; unable to convert float
     ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> cannot be converted to an int"),
     # Type is list, elements is int; unable to convert float
-    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32,2]}, "'float'> cannot be converted to an int"),
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "'float'> cannot be converted to an int"),
     # type is a callable that fails to convert
     ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
     # type is a list, elements is callable that fails to convert
@@ -350,7 +351,6 @@ class TestComplexOptions:
         ({"foobar": [{"foo": "good", "bam": "required_one_of", "bar1": [1, "good", "yes"], "bar2": ['1', 1], "bar3":['1.3', 1.3, 1]}]},
          [{'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': None, 'baz': None, 'bam': 'required_one_of',
            'bar1': ["1", "good", "yes"], 'bar2': [1, 1], 'bar3': [1.3, 1.3, 1.0], 'bar4': None}]
-
          ),
     )
 
@@ -378,10 +378,12 @@ class TestComplexOptions:
         # Check required_by options
         ({"foobar": {"foo": "required", "bar": "good", "baz": "good", "bam4": "required_by", "bam1": "ok", "bam3": "yes"}},
          {'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None, 'foo': 'required'}
-         ),
+        ),
         # Check for elements in sub-options
-        ({"foobar": {"foo": "good", "bam": "required_one_of", "bar1": [1, "good", "yes"], "bar2": ['1', 1], "bar3":['1.3', 1.3, 1]}},
-         {'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': None, 'baz': None, 'bam': 'required_one_of',
+        ({"foobar": {"foo": "good", "bam": "required_one_of", "bar1": [1, "good", "yes"],
+                     "bar2": ['1', 1], "bar3": ['1.3', 1.3, 1]}},
+         {'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': None,
+          'baz': None, 'bam': 'required_one_of',
           'bar1': ["1", "good", "yes"], 'bar2': [1, 1], 'bar3': [1.3, 1.3, 1.0], 'bar4': None}
         ),
     )
@@ -487,7 +489,9 @@ class TestComplexOptions:
         assert isinstance(am.params['foobar']['baz'], str)
         assert am.params['foobar']['baz'] == 'test data'
 
-    @pytest.mark.parametrize('stdin', [{'foobar': {'foo': 'required', 'bam1': 'test', 'baz': 'data', 'bar': 'case', 'bar4': '~/test'}}], indirect=['stdin'])
+    @pytest.mark.parametrize('stdin',
+                             [{'foobar': {'foo': 'required', 'bam1': 'test', 'baz': 'data', 'bar': 'case', 'bar4': '~/test'}}],
+                             indirect=['stdin'])
     def test_elements_path_in_option(self, mocker, stdin, options_argspec_dict):
         """Test that the complex argspec works with elements path type"""
 
