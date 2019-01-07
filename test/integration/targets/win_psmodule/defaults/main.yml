@@ -14,10 +14,10 @@ powershell_module_ultra_low_version: 0.0.1
 
 skip_publisher_check_module: Pester
 
-powershell_module_2: Format-Pester
-powershell_module_2_minimum_version_request: 1.3.5
-powershell_module_2_maximum_version_request: 1.4.6
-powershell_module_2_minimum_maximum_version_result: 1.4.2
+powershell_module_2: Pester
+powershell_module_2_minimum_version_request: 3.1.2
+powershell_module_2_maximum_version_request: 3.3.0
+powershell_module_2_minimum_maximum_version_result: 3.2.0
 
 allow_prerelease_module: Pester
 allow_prerelease_version: 4.4.0-beta2

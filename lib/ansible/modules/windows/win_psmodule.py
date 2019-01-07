@@ -74,6 +74,9 @@ options:
       - URL of the custom repository to register.
 notes:
   - PowerShell modules PowerShellGet (v. 1.6.0 or higher) and PackageManagement (v. 1.1.7 or higher) are needed.
+    On PowerShell 5.x required modules will be updated under the first run of the win_psmodule module.
+    On PowerShell 3.x and 4.x you have to install them before using the win_psmodule. You can check how to do that
+    when you check integration tests of the win_psmodule.
 seealso:
 - module: win_psrepository
 author:
