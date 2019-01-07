@@ -1,0 +1,6 @@
+---
+bugfixes:
+- Changes how ansible-connection names socket lock files. They now use
+  the same name as the socket itself, and as such do not lock other
+  attempts on connections to the same host, or cause issues with
+  overly-long hostnames.
