@@ -54,7 +54,7 @@ EXAMPLES = '''
 
 RETURN = '''
 instances:
-    description: A list of dictionaries containing facts for Virtual Machine Scale Set V M.
+    description: A list of dictionaries containing facts for Virtual Machine Scale Set VM.
     returned: always
     type: complex
     contains:
@@ -171,7 +171,7 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
                                                                           instance_id=self.instance_id)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Virtual Machine Scale Set V M.')
+            self.log('Could not get facts for Virtual Machine Scale Set VM.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
