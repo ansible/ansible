@@ -209,7 +209,8 @@
       - instances.instances[0].instance_id != None
       - instances.instances[0].provisioning_state != None
       - instances.instances[0].vm_id != None
-      - instances.instances[0].latest_model_applied != None
+      - instances.instances[0].latest_model != None
+      - instances.instances[0].power_state != None
 
 - name: Get scaleset body
   set_fact:
