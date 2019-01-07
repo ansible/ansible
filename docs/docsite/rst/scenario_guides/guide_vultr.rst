@@ -141,3 +141,39 @@ For example, this allows you to take action on nodes grouped by location or OS n
       - name: Rebooting the machine
         shell: reboot
         become: True
+
+
+Integration tests
+-----------------
+
+Ansible includes integration tests for all Vultr modules.
+
+These tests are meant to run against the public Vultr API and that is why they require a valid key to access the API.
+
+Prepare the test setup:
+
+.. code-block:: shell
+
+  $ cd ansible # location the ansible source is
+  $ source ./hacking/env-setup
+
+Set the Vultr API key:
+
+.. code-block:: shell
+
+  $ cd test/integration
+  $ cp cloud-config-vultr.ini.template cloud-config-vultr.ini
+  $ vi cloud-config-vultr.ini
+
+Run all Vultr tests:
+
+.. code-block:: shell
+
+  $ ansible-test integration cloud/vultr/ -v --diff --allow-unsupported
+
+
+To run a specific test, e.g. vultr_account_facts:
+
+.. code-block:: shell
+
+  $ ansible-test integration cloud/vultr/vultr_account_facts -v --diff --allow-unsupported
