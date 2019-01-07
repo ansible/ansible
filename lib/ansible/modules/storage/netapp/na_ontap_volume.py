@@ -85,7 +85,7 @@ options:
   junction_path:
     description:
     - Junction path of the volume.
-    - To unmount, use junction path ''.
+    - To unmount, use junction path C('').
 
   space_guarantee:
     description:
