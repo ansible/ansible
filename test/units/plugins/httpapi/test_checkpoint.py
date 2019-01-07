@@ -51,7 +51,7 @@ class TestCheckpointHttpApi(unittest.TestCase):
                                                           StringIO('{"errorMessage": "ERROR"}'))
 
         resp = self.checkpoint_plugin.send_request('/test', None)
-        
+
         assert resp == (500, {'errorMessage': 'ERROR'})
 
     @staticmethod
