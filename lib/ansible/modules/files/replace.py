@@ -111,7 +111,7 @@ EXAMPLES = r'''
     after: Start after line.*
     backup: yes
 
-# Replace before the expression till the begin of the file (requires Ansible >= 2.4)
+- name: Replace before the expression till the begin of the file (requires Ansible >= 2.4)
 - replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
