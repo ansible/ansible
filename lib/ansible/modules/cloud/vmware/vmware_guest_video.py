@@ -20,6 +20,7 @@ short_description: Modify video card configurations of specified virtual machine
 description:
     - This module is used to reconfigure video card settings of given virtual machine.
     - All parameters and VMware object names are case sensitive.
+version_added: '2.8'
 author:
     - Diane Wang (@Tomorrow9) <dianew@vmware.com>
 notes:
@@ -322,4 +323,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
