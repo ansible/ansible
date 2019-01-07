@@ -16,8 +16,6 @@ import ansible.module_utils.netapp as netapp_utils
 from ansible.modules.storage.netapp.na_ontap_net_subnet \
     import NetAppOntapSubnet as my_module  # module under test
 
-import pprint
-
 if not netapp_utils.has_netapp_lib():
     pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 
@@ -120,7 +118,7 @@ class TestMyModule(unittest.TestCase):
             'gateway': '10.0.0.1',
             'ipspace': 'Default',
             'subnet': '10.0.0.0/24',
-            'ip_ranges': [ '10.0.0.10-10.0.0.20', '10.0.0.30' ]
+            'ip_ranges': ['10.0.0.10-10.0.0.20', '10.0.0.30']
         })
 
     def test_module_fail_when_required_args_missing(self):
@@ -214,7 +212,7 @@ class TestMyModule(unittest.TestCase):
     def test_successful_modify(self):
         ''' modifying subnet and testing idempotency '''
         data = self.set_default_args()
-        data.update({'ip_ranges': [ '10.0.0.10-10.0.0.25', '10.0.0.30']})
+        data.update({'ip_ranges': ['10.0.0.10-10.0.0.25', '10.0.0.30']})
         set_module_args(data)
         my_obj = my_module()
         my_obj.server = MockONTAPConnection(kind='subnet', data=self.set_default_args())

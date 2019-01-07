@@ -106,6 +106,7 @@ from ansible.module_utils.netapp_module import NetAppModule
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
+
 class NetAppOntapSubnet(object):
     """
     Create, Modifies and Destroys a subnet
