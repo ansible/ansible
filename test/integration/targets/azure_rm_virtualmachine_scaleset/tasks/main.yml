@@ -194,6 +194,24 @@
     format: curated
   register: output_scaleset
 
+- name: Retrieve scaleset VMs facts
+  azure_rm_virtualmachinescalesetinstance_facts:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+  register: instances
+
+- name: Assert that facts returned correctly
+  assert:
+    that:
+      - instances.instances | length == 1
+      - instances.instances[0].id != None
+      - instances.instances[0].name != None
+      - instances.instances[0].instance_id != None
+      - instances.instances[0].provisioning_state != None
+      - instances.instances[0].vm_id != None
+      - instances.instances[0].latest_model != None
+      - instances.instances[0].power_state != None
+
 - name: Get scaleset body
   set_fact:
     body: "{{ output_scaleset.vmss[0] }}"
