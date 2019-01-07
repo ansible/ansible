@@ -85,6 +85,7 @@ EXAMPLES = """
     action: Drop
 
 - name: Delete access rule
+  checkpoint_access_rule:
     layer: Network
     name: "Drop attacker"
 """
