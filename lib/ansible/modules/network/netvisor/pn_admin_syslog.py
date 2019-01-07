@@ -18,9 +18,9 @@ author: "Pluribus Networks (@rajaspachipulusu17)"
 version_added: "2.8"
 short_description: CLI command to create/modify/delete admin-syslog
 description:
-  - C(present): create the scope and other parameters of syslog event collection.
-  - C(update): modify parameters of syslog event collection.
-  - C(absent): delete the scope and other parameters of syslog event collection.
+  - This module can be used to create the scope and other parameters of syslog event collection.
+  - This module can be used to modify parameters of syslog event collection.
+  - This module can be used to delete the scope and other parameters of syslog event collection.
 options:
   pn_cliswitch:
     description:
@@ -54,6 +54,7 @@ options:
     description:
       - Transport for log events - tcp/tls or udp.
     required: False
+    type: str
     choices: ['tcp-tls', 'udp']
     default: 'udp'
   pn_message_format:
@@ -61,6 +62,7 @@ options:
       - message-format for log events - structured or legacy.
     required: False
     choices: ['structured', 'legacy']
+    type: str
   pn_name:
     description:
       - name of the system log.
