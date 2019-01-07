@@ -300,7 +300,10 @@ class CloudWatchEventRule(object):
                 if 'task_count' in target['ecs_parameters']:
                     target_request['EcsParameters']['TaskCount'] = ecs_parameters['task_count']
                 if 'launch_type' in target['ecs_parameters']:
-                    target_request['EcsParameters']['LaunchType'] = ecs_parameters['launch_type']
+                    if self.module.botocore_at_least('1.11.0'):
+                        target_request['EcsParameters']['LaunchType'] = ecs_parameters['launch_type']
+                    else:
+                        self.module.fail_json(msg='botocore needs to be version 1.11.0 or higher to use launch_type in ecs_parameters')
                 if 'network_configuration' in target['ecs_parameters']:
                     target_request['EcsParameters']['NetworkConfiguration'] = {
                         'awsvpcConfiguration': target['ecs_parameters']['network_configuration']['awsvpc_configuration']
