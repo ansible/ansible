@@ -1,0 +1,22 @@
+# This file is part of Ansible
+
+# test code for the win_psmodule module when using winrm connection
+# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+---
+- name: uninstall any versions of modules used for tests
+  win_shell: 'Uninstall-Module {{ item }} -AllVersions -Force -ErrorAction Ignore'
+  changed_when: false
+  with_items:
+    - "powershell-yaml"
+    - "Pester"
+    - "PowerShellCookbook"
+    - "Format-Pester"
+
+- name: unregister the custom repo
+  win_shell: 'Unregister-PSRepository {{ custom_repo_name }} -ErrorAction Ignore'
+
+- name: remove the custom repo folder
+  win_shell: 'Remove-Item {{ custom_repo_path }} -Recurse -Force -ErrorAction Ignore'
+  ignore_errors: yes
