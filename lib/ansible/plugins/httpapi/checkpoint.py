@@ -60,7 +60,7 @@ class HttpApi(HttpApiBase):
             return response.getcode(), self._response_to_json(value)
         except HTTPError as e:
             error = json.loads(e.read())
-            return error['code'], error['message']
+            return e.code, error
 
     def _display_request(self):
         self.connection.queue_message('vvvv', 'Web Services: %s %s' % ('POST', self.connection._url))

@@ -46,6 +46,14 @@ class TestCheckpointHttpApi(unittest.TestCase):
 
         assert 'Server returned response without token info during connection authentication' in str(res.exception)
 
+    def test_send_request_should_return_error_info_when_http_error_raises(self):
+        self.connection_mock.send.side_effect = HTTPError('http://testhost.com', 500, '', {},
+                                                          StringIO('{"errorMessage": "ERROR"}'))
+
+        resp = self.checkpoint_plugin.send_request('/test', None)
+        
+        assert resp == (500, {'errorMessage': 'ERROR'})
+
     @staticmethod
     def _connection_response(response, status=200):
         response_mock = mock.Mock()
