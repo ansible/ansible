@@ -110,7 +110,7 @@ Function Get-PsModule {
 
     if ( $ExistingModulesCount -gt 0 ) {
 
-        $ExistingModules | Add-Member -MemberType ScriptProperty -Name FullVersion -Value { "$($this.Version)-$(($this | Select-Object -ExpandProperty PrivateData).PSData.Prerelease)".TrimEnd('-') }
+        $ExistingModules | Add-Member -MemberType ScriptProperty -Name FullVersion -Value { if ( $null -ne ( $this.PrivateData ) ) { [String]"$($this.Version)-$(($this | Select-Object -ExpandProperty PrivateData).PSData.Prerelease)".TrimEnd('-') } else { [String]"$($this.Version)" } }
 
         if ( -not ($RequiredVersion -or
                 $MinimumVersion -or
@@ -165,8 +165,6 @@ Function Install-PsModule {
 
             $ht = @{
                 Name = $Name
-                AllowClobber = $AllowClobber
-                SkipPublisherCheck = $SkipPublisherCheck
                 WhatIf = $CheckMode
                 'Force' = $true
             }
@@ -182,6 +180,14 @@ Function Install-PsModule {
 
             if ( $AllowPrerelease ) {
                 $ht.Add("AllowPrerelease",$AllowPrerelease)
+            }
+
+            if ( $AllowClobber ) {
+                $ht.Add("AllowClobber",$AllowClobber)
+            }
+
+            if ( $SkipPublisherCheck ) {
+                $ht.Add("SkipPublisherCheck", $SkipPublisherCheck)
             }
 
             # If specified, use repository name to select module source.
@@ -392,11 +398,16 @@ if ( $repo ) {
 
 }
 
-if ( ($allow_clobber -or $allow_prerelease -or
+if ( ($allow_clobber -or $allow_prerelease -or $skip_publisher_check -or
     $required_version -or $minimum_version -or $maximum_version) ) {
     # Update the PowerShellGet and PackageManagement modules.
     # It's required to support AllowClobber, AllowPrerelease parameters.
     Install-PrereqModule -CheckMode $check_mode
+}
+
+if ( $PSVersionTable.PSVersion.Major -lt 5 ) {
+    Import-Module -Name PackageManagement
+    Import-Module -Name PowerShellGet
 }
 
 if ($state -eq "present") {
