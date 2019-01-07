@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: win_psmodule
 version_added: "2.4"
@@ -23,12 +23,14 @@ options:
   name:
     description:
       - Name of the Windows PowerShell module that has to be installed.
+    type: str
     required: yes
   state:
     description:
       - If C(present) a new module is installed.
       - If C(absent) a module is removed.
       - If C(latest) a module is updated to the newest version. The option was added in version 2.8.
+    type: str
     choices: [ absent, latest, present ]
     default: present
   required_version:
@@ -69,9 +71,11 @@ options:
   repository:
     description:
       - Name of the custom repository to register or use.
+    type: str
   url:
     description:
       - URL of the custom repository to register.
+    type: str
 notes:
   - PowerShell modules PowerShellGet (v. 1.6.0 or higher) and PackageManagement (v. 1.1.7 or higher) are needed.
     On PowerShell 5.x required modules will be updated under the first run of the win_psmodule module.
@@ -84,7 +88,7 @@ author:
 - Daniele Lazzari (@dlazz)
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 ---
 - name: Add a PowerShell module
   win_psmodule:
@@ -126,10 +130,10 @@ EXAMPLES = r'''
     state: absent
 '''
 
-RETURN = r'''
+RETURN = '''
 ---
 output:
-  description: a message describing the task result.
+  description: A message describing the task result.
   returned: always
   sample: "Module PowerShellCookbook installed"
   type: str
@@ -142,5 +146,5 @@ repository_changed:
   description: True when a custom repository is installed or removed.
   returned: always
   type: bool
-  sample: True
+  sample: true
 '''
