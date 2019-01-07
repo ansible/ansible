@@ -66,6 +66,7 @@ options:
     description:
       - Enabled or disabled flag.
     type: bool
+    default: True
   state:
     description:
       - State of the access rule (present or absent). Defaults to present.
