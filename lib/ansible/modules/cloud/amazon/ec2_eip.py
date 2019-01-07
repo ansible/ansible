@@ -127,19 +127,11 @@ EXAMPLES = '''
     state: present
   register: eip
 
-- name: output the IP
-  debug:
-    msg: "Allocated IP is {{ eip.public_ip }}"
-
-- name: associate new elastic IPs with each of the instances
-  ec2_eip:
-    device_id: "{{ item }}"
-  loop: "{{ ec2.instance_ids }}"
-
 - name: allocate a new elastic IP inside a VPC in us-west-2
   ec2_eip:
     region: us-west-2
     in_vpc: yes
+    state: present
   register: eip
 '''
 
@@ -238,8 +230,6 @@ def associate_ip_and_device(ec2, address, private_ip_address, device_id, allow_r
                                                  AllocationId=address.get(
                                                      'AllocationId'),
                                                  AllowReassociation=allow_reassociation)
-        if not response:
-            raise EIPException('association failed')
 
     changed = True
 
@@ -256,9 +246,6 @@ def disassociate_ip_and_device(ec2, address, device_id, check_mode, is_aninstanc
             response = ec2.disassociate_address(
                 PublicIp=address.get('PublicIp'))
 
-        if not response:
-            raise EIPException('disassociation failed')
-
     changed = True
     return response, changed
 
@@ -266,7 +253,8 @@ def disassociate_ip_and_device(ec2, address, device_id, check_mode, is_aninstanc
 def _find_address_by_ip(ec2, public_ip):
     addresses = ec2.describe_addresses(PublicIps=[public_ip])
     address = next(iter(addresses.values()))
-    return address
+    if address:
+        return address[0]
 
 
 def _find_address_by_device_id(ec2, device_id, is_aninstance=True):
@@ -337,15 +325,14 @@ def allocate_address(ec2, domain, reuse_existing_ip_allowed):
 def release_address(ec2, address, check_mode):
     # Release a previously allocated elastic IP address
 
-    #FIXME:  release not working
-
     # If we're in check mode, nothing else to do
-    if not check_mode:
-        if not address.release():
-            EIPException('release failed')
+    if check_mode:
+        changed = False
+        response = None
+    else:
+        response = ec2.release_address(AllocationId=address.get('AllocationId'))
+        changed = True
 
-    changed = True
-    response = None
     return response, changed
 
 
@@ -359,7 +346,6 @@ def find_device(ec2, module, device_id, is_aninstance=True):
             instances = next(iter(reservations.values()))
             if instances:
                 return instances[0]
-    #FIXME: for some reason device_id i- goes this way
     else:
         eni_interfaces = ec2.describe_network_interfaces(
             NetworkInterfaceIds=[device_id])
@@ -469,22 +455,23 @@ def main():
             msg="parameters are required together: ('device_id', 'private_ip_address')")
 
     if instance_id:
-        is_instance = True
         device_id = instance_id
+        an_instance = True
     else:
         if device_id:
+            an_instance = None
             if device_id.startswith('i-'):
-                is_instance = True
+                an_instance = True
             elif device_id.startswith('eni-'):
                 if not in_vpc:
                     module.fail_json(
                         msg="If you are specifying an ENI, in_vpc must be true")
-                is_instance = False
+                an_instance = False
 
     try:
         if device_id:
             address = find_address(
-                ec2, public_ip, device_id, is_aninstance=is_instance)
+                ec2, public_ip, device_id, is_aninstance=an_instance)
         else:
             address = find_address(ec2, public_ip, None)
 
@@ -492,17 +479,17 @@ def main():
             if device_id:
                 response, changed = ensure_present(ec2, module, domain, address, private_ip_address, device_id,
                                                    reuse_existing_ip_allowed, allow_reassociation,
-                                                   module.check_mode, is_aninstance=is_instance)
+                                                   module.check_mode, is_aninstance=an_instance)
             else:
                 response, changed = allocate_address(ec2, domain,
                                                      reuse_existing_ip_allowed)
         else:
             if device_id:
-                response, changed = ensure_absent(
-                    ec2, domain, address, device_id, module.check_mode, is_aninstance=is_instance)
+                response, changed = ensure_absent(ec2, domain, address, device_id, module.check_mode, is_aninstance=an_instance)
+                if release_on_disassociation and changed:
+                    response, changed = release_address(ec2, address, module.check_mode)
             else:
-                response, changed = release_address(
-                    ec2, address, module.check_mode)
+                response, changed = release_address(ec2, address, module.check_mode)
 
     except botocore.exceptions.BotoCoreError as e:
         raise

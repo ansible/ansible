@@ -46,7 +46,7 @@
         <<: *aws_connection_info
       register: test_subnet
 
-    - name: provision ec2 instance to associate eip
+    - name: provision ec2 instance INSIDE VPC to associate eip
       ec2:
         instance_type: t2.micro
         state: present
@@ -56,17 +56,70 @@
           'Name': '{{resource_prefix}}_ansible_ec2_eip_test'
         vpc_subnet_id: '{{ test_subnet.subnet.id }}'
         <<: *aws_connection_info
+      register: test_vpc_instance
+
+    - name: provision ec2 instance OUTSIDE VPC to associate eip
+      ec2:
+        instance_type: t2.micro
+        state: present
+        image: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
+        wait: yes
+        instance_tags:
+          'Name': '{{resource_prefix}}_ansible_ec2_eip_test'
+        <<: *aws_connection_info
       register: test_instance
 
   # ============================================================
-  # Start EIP tets
+  # Start EIP tests - VPC
+  # ============================================================
+
+    - name: allocate a new elastic IP in VPC
+      ec2_eip:
+        in_vpc: yes
+        state: present
+        <<: *aws_connection_info
+      register: allocated_vpc_eip
+
+    - name: assert eip exists
+      assert:
+        that:
+          - allocated_vpc_eip.changed == True
+
+    - name:  associate it with the VPC instance
+      ec2_eip:
+        device_id: '{{ test_vpc_instance.instances[0].id }}'
+        public_ip: '{{ allocated_vpc_eip.public_ip }}'
+        in_vpc: yes
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert association
+      assert:
+        that:
+          - result.changed == True
+
+    - name:  disassociate it from the VPC instance and release
+      ec2_eip:
+        device_id: '{{ test_vpc_instance.instances[0].id }}'
+        public_ip: '{{ allocated_vpc_eip.public_ip }}'
+        in_vpc: yes
+        state: absent
+        release_on_disassociation: yes
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert disassociation
+      assert:
+        that:
+          - result.changed == True
+
+  # ============================================================
+  # Start EIP tests - NO VPC
   # ============================================================
 
     - name: allocate a new elastic IP
       ec2_eip:
-        region: '{{ aws_region }}'
         state: present
-        in_vpc: yes
         <<: *aws_connection_info
       register: allocated_eip
 
@@ -77,9 +130,8 @@
 
     - name:  associate it with the instance
       ec2_eip:
-        device_id: '{{ test_instance.instance_ids }}'
+        device_id: '{{ test_instance.instances[0].id }}'
         public_ip: '{{ allocated_eip.public_ip }}'
-        in_vpc: yes
         <<: *aws_connection_info
       register: result
 
@@ -90,9 +142,9 @@
 
     - name:  disassociate it from the instance and release
       ec2_eip:
-        device_id: '{{ test_instance.instance_ids }}'
+        device_id: '{{ test_instance.instances[0].id }}'
         public_ip: '{{ allocated_eip.public_ip }}'
-        in_vpc: yes
+        state: absent
         release_on_disassociation: yes
         <<: *aws_connection_info
       register: result
@@ -111,18 +163,24 @@
       ec2_eip:
         release_on_disassociation: yes
         state: absent
-        ip: '{{ allocated_eip.public_ip }}'
+        ip: '{{ item }}'
         in_vpc: yes
         <<: *aws_connection_info
+      loop:
+        - '{{ allocated_vpc_eip.public_ip }}'
+        - '{{ allocated_eip.public_ip }}'
       ignore_errors: yes
 
 
-    - name: remove test ec2 instance
+    - name: remove test ec2 instances
       ec2:
-        instance_ids: '{{ test_instance.instance_ids }}'
+        instance_ids: '{{ item }}'
         state: absent
         wait: yes
         <<: *aws_connection_info
+      loop:
+        - '{{ test_vpc_instance.instances[0].id }}'
+        - '{{ test_instance.instances[0].id }}'
 
     - name: remove test subnet
       ec2_vpc_subnet:
