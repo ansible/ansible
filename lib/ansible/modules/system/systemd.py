@@ -253,6 +253,8 @@ status:
         }
 '''  # NOQA
 
+import os
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
 from ansible.module_utils._text import to_native
@@ -325,6 +327,9 @@ def main():
     )
 
     systemctl = module.get_bin_path('systemctl', True)
+
+    if os.getenv('XDG_RUNTIME_DIR') is None:
+        os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
 
     ''' Set CLI options depending on params '''
     if module.params['user'] is not None:
