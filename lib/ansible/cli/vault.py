@@ -64,7 +64,7 @@ class VaultCLI(CLI):
         output = opt_help.argparse.ArgumentParser(add_help=False)
         output.add_argument('--output', default=None, dest='output_file',
                             help='output file name for encrypt or decrypt; use - for stdout',
-                            type=opt_help.unfrack_path)
+                            type=opt_help.unfrack_path())
 
         # For encrypting actions, we can also specify which of multiple vault ids should be used for encrypting
         vault_id = opt_help.argparse.ArgumentParser(add_help=False)
@@ -109,7 +109,7 @@ class VaultCLI(CLI):
         rekey_parser.set_defaults(func=self.execute_rekey)
         rekey_new_group = rekey_parser.add_mutually_exclusive_group()
         rekey_new_group.add_argument('--new-vault-password-file', default=None, dest='new_vault_password_file',
-                                     help="new vault password file for rekey", type=opt_help.unfrack_path)
+                                     help="new vault password file for rekey", type=opt_help.unfrack_path())
         rekey_new_group.add_argument('--new-vault-id', default=None, dest='new_vault_id', type=str,
                                      help='the new vault identity to use for rekey')
         rekey_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')

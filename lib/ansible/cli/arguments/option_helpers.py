@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import copy
 import operator
 import argparse
 import os
@@ -27,15 +28,57 @@ class SortingHelpFormatter(argparse.HelpFormatter):
         super(SortingHelpFormatter, self).add_arguments(actions)
 
 
+class PrependAction(argparse.Action):
+    """A near clone of ``argparse._AppendAction``, but designed to prepend values
+    instead of appending.
+    """
+    def __init__(self, option_strings, dest, nargs=None, const=None, default=None, type=None,
+                 choices=None, required=False, help=None, metavar=None):
+        if nargs == 0:
+            raise ValueError('nargs for append actions must be > 0; if arg '
+                             'strings are not supplying the value to append, '
+                             'the append const action may be more appropriate')
+        if const is not None and nargs != OPTIONAL:
+            raise ValueError('nargs must be %r to supply const' % OPTIONAL)
+        super(PrependAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=nargs,
+            const=const,
+            default=default,
+            type=type,
+            choices=choices,
+            required=required,
+            help=help,
+            metavar=metavar
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        items = copy.copy(ensure_value(namespace, self.dest, []))
+        items[0:0] = values
+        setattr(namespace, self.dest, items)
+
+
+def ensure_value(namespace, name, value):
+    if getattr(namespace, name, None) is None:
+        setattr(namespace, name, value)
+    return getattr(namespace, name)
+
+
 #
 # Callbacks to validate and normalize Options
 #
-def unfrack_path(value):
+def unfrack_path(pathsep=False):
     """Turn an Option's data into a single path in Ansible locations"""
-    if value == '-':
-        return value
+    def inner(value):
+        if pathsep:
+            return [unfrackpath(x) for x in value.split(os.pathsep) if x]
 
-    return unfrackpath(value)
+        if value == '-':
+            return value
+
+        return unfrackpath(value)
+    return inner
 
 
 def _git_repo_info(repo_path):
@@ -179,7 +222,7 @@ def add_connect_options(parser):
     connect_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                                help='ask for connection password')
     connect_group.add_argument('--private-key', '--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                               help='use this file to authenticate the connection', type=unfrack_path)
+                               help='use this file to authenticate the connection', type=unfrack_path())
     connect_group.add_argument('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
                                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
     connect_group.add_argument('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
@@ -226,7 +269,7 @@ def add_module_options(parser):
     """Add options for commands that load modules"""
     parser.add_argument('-M', '--module-path', dest='module_path', default=None,
                         help="prepend colon-separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
-                        type=unfrack_path)
+                        type=unfrack_path(pathsep=True), action=PrependAction)
 
 
 def add_output_options(parser):
@@ -311,4 +354,4 @@ def add_vault_options(parser):
     base_group.add_argument('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
     base_group.add_argument('--vault-password-file', default=[], dest='vault_password_files',
-                            help="vault password file", type=unfrack_path, action='append')
+                            help="vault password file", type=unfrack_path(), action='append')
