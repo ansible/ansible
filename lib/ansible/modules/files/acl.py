@@ -73,7 +73,7 @@ options:
     version_added: '2.0'
   use_nfsv4_acls:
     description:
-      - Use NFSv4 ACLs instead of POSIX ACLs.
+    - Use NFSv4 ACLs instead of POSIX ACLs.
     type: bool
     default: no
     version_added: '2.2'
@@ -85,12 +85,6 @@ options:
     choices: [ default, mask, no_mask ]
     default: default
     version_added: '2.7'
-  use_nfsv4_acls:
-    description:
-    - Use NFSv4 ACLs instead of POSIX ACLs.
-    type: bool
-    default: no
-    version_added: '2.8'
 author:
 - Brian Coca (@bcoca)
 - Jérémie Astori (@astorije)
