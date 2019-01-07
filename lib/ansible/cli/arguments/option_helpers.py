@@ -38,8 +38,8 @@ class PrependAction(argparse.Action):
             raise ValueError('nargs for append actions must be > 0; if arg '
                              'strings are not supplying the value to append, '
                              'the append const action may be more appropriate')
-        if const is not None and nargs != OPTIONAL:
-            raise ValueError('nargs must be %r to supply const' % OPTIONAL)
+        if const is not None and nargs != argparse.OPTIONAL:
+            raise ValueError('nargs must be %r to supply const' % argparse.OPTIONAL)
         super(PrependAction, self).__init__(
             option_strings=option_strings,
             dest=dest,
@@ -184,9 +184,14 @@ def create_base_parser(usage="", desc=None, epilog=None):
     version_help = "show program's version number, config file location, configured module search path," \
                    " module location, executable location and exit"
     parser.add_argument('--version', action='version', version=version("%(prog)s"), help=version_help)
+    add_verbosity_options(parser)
+    return parser
+
+
+def add_verbosity_options(parser):
+    """Add options for verbosity"""
     parser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
                         help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
-    return parser
 
 
 def add_async_options(parser):

@@ -11,6 +11,7 @@ import yaml
 
 from ansible import context
 from ansible.cli import CLI
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting, find_ini_config_file
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
@@ -36,21 +37,24 @@ class ConfigCLI(CLI):
         super(ConfigCLI, self).init_parser(
             desc="View, edit, and manage ansible configuration.",
         )
-        self.parser.add_argument('-c', '--config', dest='config_file',
-                                 help="path to configuration file, defaults to first file found in precedence.")
+
+        common = opt_help.argparse.ArgumentParser(add_help=False)
+        opt_help.add_verbosity_options(common)
+        common.add_argument('-c', '--config', dest='config_file',
+                            help="path to configuration file, defaults to first file found in precedence.")
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
 
-        list_parser = subparsers.add_parser('list', help='Print all config options')
+        list_parser = subparsers.add_parser('list', help='Print all config options', parents=[common])
         list_parser.set_defaults(func=self.execute_list)
 
-        dump_parser = subparsers.add_parser('dump', help='Dump configuration')
+        dump_parser = subparsers.add_parser('dump', help='Dump configuration', parents=[common])
         dump_parser.set_defaults(func=self.execute_dump)
         dump_parser.add_argument('--only-changed', dest='only_changed', action='store_true',
                                  help="Only show configurations that have changed from the default")
 
-        view_parser = subparsers.add_parser('view', help='View configuration file')
+        view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
 
         # update_parser = subparsers.add_parser('update', help='Update configuration option')

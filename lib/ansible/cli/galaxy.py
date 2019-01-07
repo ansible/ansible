@@ -52,6 +52,7 @@ class GalaxyCLI(CLI):
         common.add_argument('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
         common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
                             help='Ignore SSL certificate validation errors.')
+        opt_help.add_verbosity_options(common)
 
         # options that apply to more than one action
         user_repo = opt_help.argparse.ArgumentParser(add_help=False)

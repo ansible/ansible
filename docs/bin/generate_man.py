@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import optparse
+import argparse
 import os
 import sys
 
@@ -57,9 +58,9 @@ def get_options(optlist):
     for opt in optlist:
         res = {
             'desc': opt.help,
-            'options': opt._short_opts + opt._long_opts
+            'options': opt.option_strings
         }
-        if opt.action == 'store':
+        if isinstance(opt, argparse._StoreAction):
             res['arg'] = opt.dest.upper()
         opts.append(res)
 
@@ -68,11 +69,11 @@ def get_options(optlist):
 
 def get_option_groups(option_parser):
     groups = []
-    for option_group in option_parser.option_groups:
+    for action_group in option_parser._action_groups:
         group_info = {}
-        group_info['desc'] = option_group.get_description()
-        group_info['options'] = option_group.option_list
-        group_info['group_obj'] = option_group
+        group_info['desc'] = action_group.description
+        group_info['options'] = action_group._actions
+        group_info['group_obj'] = action_group
         groups.append(group_info)
     return groups
 
@@ -81,10 +82,10 @@ def opt_doc_list(cli):
     ''' iterate over options lists '''
 
     results = []
-    for option_group in cli.parser.option_groups:
-        results.extend(get_options(option_group.option_list))
+    for option_group in cli.parser._action_groups:
+        results.extend(get_options(option_group._actions))
 
-    results.extend(get_options(cli.parser.option_list))
+    results.extend(get_options(cli.parser._actions))
 
     return results
 
@@ -106,7 +107,7 @@ def opts_docs(cli_class_name, cli_module_name):
 
     # parse the common options
     try:
-        cli.parse()
+        cli.init_parser()
     except Exception:
         pass
 

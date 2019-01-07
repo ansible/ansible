@@ -55,8 +55,9 @@ class VaultCLI(CLI):
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
-        base = opt_help.argparse.ArgumentParser(add_help=False)
-        opt_help.add_vault_options(base)
+        common = opt_help.argparse.ArgumentParser(add_help=False)
+        opt_help.add_vault_options(common)
+        opt_help.add_verbosity_options(common)
 
         subparsers = self.parser.add_subparsers(dest='action')
         subparsers.required = True
@@ -72,29 +73,29 @@ class VaultCLI(CLI):
                               action='store', type=str,
                               help='the vault id used to encrypt (required if more than vault-id is provided)')
 
-        create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, base])
+        create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
         create_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
-        decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, base])
+        decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
-        decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='+')
+        decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
-        edit_parser = subparsers.add_parser('edit', help='Edit vault encrypted file', parents=[vault_id, base])
+        edit_parser = subparsers.add_parser('edit', help='Edit vault encrypted file', parents=[vault_id, common])
         edit_parser.set_defaults(func=self.execute_edit)
         edit_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
-        view_parser = subparsers.add_parser('view', help='View vault encrypted file', parents=[base])
+        view_parser = subparsers.add_parser('view', help='View vault encrypted file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
         view_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
-        encrypt_parser = subparsers.add_parser('encrypt', help='Encrypt YAML file', parents=[base, output, vault_id])
+        encrypt_parser = subparsers.add_parser('encrypt', help='Encrypt YAML file', parents=[common, output, vault_id])
         encrypt_parser.set_defaults(func=self.execute_encrypt)
-        encrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='+')
+        encrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
 
-        enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[base, output, vault_id])
+        enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[common, output, vault_id])
         enc_str_parser.set_defaults(func=self.execute_encrypt_string)
-        enc_str_parser.add_argument('args', help='String to encrypt', metavar='string_to_encrypt', nargs='+')
+        enc_str_parser.add_argument('args', help='String to encrypt', metavar='string_to_encrypt', nargs='*')
         enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
                                     action='store_true',
                                     help="Prompt for the string to encrypt")
@@ -105,7 +106,7 @@ class VaultCLI(CLI):
                                     default=None,
                                     help="Specify the variable name for stdin")
 
-        rekey_parser = subparsers.add_parser('rekey', help='Re-key a vault encrypted file', parents=[base, vault_id])
+        rekey_parser = subparsers.add_parser('rekey', help='Re-key a vault encrypted file', parents=[common, vault_id])
         rekey_parser.set_defaults(func=self.execute_rekey)
         rekey_new_group = rekey_parser.add_mutually_exclusive_group()
         rekey_new_group.add_argument('--new-vault-password-file', default=None, dest='new_vault_password_file',
