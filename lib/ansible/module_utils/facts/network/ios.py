@@ -16,7 +16,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import glob, q
+import glob
 import os
 import re
 import socket
@@ -39,7 +39,6 @@ class IosNetwork(Network):
 
     def populate(self, collected_facts=None):
         network_facts = {}
-        q(network_facts)
         data = self.get('show interfaces')
         network_facts['network_interfaces'] = {}
 
@@ -51,19 +50,16 @@ class IosNetwork(Network):
         network_facts['all_ipv4_address'] = []
 
         if data:
-            interfaces = self.parse_interface(data)
-            network_facts['all_ipv4_address'] = self.populate_ipv4_interfaces(data)
+            interfaces = self.parse_interfaces(data)
+            network_facts['all_ipv4_address'] = self.populate_ipv4_interfaces(interfaces)
 
         data = self.get('show ipv6 interface')
         network_facts['all_ipv6_address'] = []
 
         if data:
-            interfaces = self.parse_interface(data)
-            network_facts['all_ipv6_address'] = self.populate_ipv6_interfaces(data)
+            interfaces = self.parse_interfaces(data)
+            network_facts['all_ipv6_address'] = self.populate_ipv6_interfaces(interfaces)
 
-        for key, value in iteritems(interfaces['interfaces']):
-            name = value['name']
-        q(network_facts)
         return network_facts
 
     def parse_interfaces(self, data):
@@ -92,10 +88,9 @@ class IosNetwork(Network):
             facts[key] = intf
         return facts
 
-    def populate_ipv4_interfaces(self, data):
+    def populate_ipv4_interfaces(self, interfaces):
         ipv4_interfaces = list()
-        for key, value in data.items():
-            ipv4_interfaces = list()
+        for key, value in iteritems(interfaces):
             primary_address = addresses = []
             primary_address = re.findall(r'Internet address is (.+)$', value, re.M)
             addresses = re.findall(r'Secondary address (.+)$', value, re.M)
@@ -107,9 +102,9 @@ class IosNetwork(Network):
                 ipv4_interfaces.append(addr)
         return ipv4_interfaces
 
-    def populate_ipv6_interfaces(self, data):
+    def populate_ipv6_interfaces(self, interfaces):
         ipv6_interfaces = list()
-        for key, value in iteritems(data):
+        for key, value in iteritems(interfaces):
             addresses = re.findall(r'\s+(.+), subnet', value, re.M)
             for address in addresses:
                 addr = address.strip()
@@ -142,34 +137,9 @@ class IosNetwork(Network):
         resp = self.connection.get(command)
         if '% This is an unconverted command' in resp:
             raise ValueError('unconverted command: %s' % command)
-        return self.transform(self.module.from_json(resp))
-
-    def convert(self, name):
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower().replace('-', '_')
-
-    def transform(self, output):
-        obj = {}
-        for key, val in iteritems(output):
-            key = self.convert(key)
-            if isinstance(val, dict):
-                obj[key] = self.transform(val)
-            elif isinstance(val, list):
-                items = list()
-                for item in val:
-                    if isinstance(val, dict):
-                        items.append(self.transform(item))
-                    else:
-                        items = val
-                obj[key] = items
-            else:
-                obj[key] = val
-        return obj
-
+        return resp
 
 class IosNetworkCollector(NetworkCollector):
     _platform = 'ios'
     _fact_class = IosNetwork
-    q(_platform)
     required_facts = set(['platform'])
-    q(required_facts)

@@ -4,7 +4,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# (c) 2017 Red Hat Inc.
+# (c) 2018 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -36,7 +36,7 @@ from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.network.base import NetworkCollector
 from ansible.module_utils.facts.network.eos import EosNetworkCollector
 from ansible.module_utils.facts.network.ios import IosNetworkCollector
-import q
+
 # these should always be first due to most other facts depending on them
 _base = [
     PlatformFactCollector,
@@ -61,4 +61,3 @@ _extra_facts = [
 
 # TODO: make config driven
 collectors = _base + _general + _network + _extra_facts
-q(collectors)
