@@ -8,8 +8,8 @@
         vcenter_username: "{{ lookup('env','VCENTER_USERNAME') }}"
         vcenter_password: "{{ lookup('env','VCENTER_PASSWORD') }}"
         validate_certs: false
-        cluster_name: sto1
-        datacenter: sto1
+        cluster_name: test
+        datacenter: testf
 
     - name: "Gather DRS group facts about given Cluster"
       vmware_drs_group_facts:
@@ -26,80 +26,80 @@
       debug:
         msg: '{{ drs_group_facts }}'
 
-    - name: Gather DRS rule facts about given Cluster
-      vmware_drs_rule_facts:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: "{{ validate_certs }}"
-        cluster_name: "{{ cluster_name }}"
-        datacenter: "{{ datacenter }}"
-      delegate_to: localhost
-      register: drs_rule_facts
-
-    - name: Dump drs_rule_facts
-      debug:
-        msg: '{{ drs_rule_facts }}'
-
-    - name: Create DRS VM group
-      vmware_drs_group:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: "{{ validate_certs }}"
-        cluster_name: "{{ cluster_name }}"
-        datacenter: "{{ datacenter }}"
-        group_name: TEST_S1_VM01
-        vms:
-          - sto1-test-node01
-          - sto1-test-node02
-        state: present
-      register: drs_vm_group_results
-
-    - name: Dump drs_vm_group_results
-      debug:
-        msg: '{{ drs_vm_group_results }}'
-
-    - name: Create DRS Host group
-      vmware_drs_group:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: "{{ validate_certs }}"
-        cluster_name: "{{ cluster_name }}"
-        datacenter: "{{ datacenter }}"
-        group_name: TEST_S1_HOST01
-        hosts:
-          - vm-sto1-01.sto1.privatedns.zone
-          - vm-sto1-02.sto1.privatedns.zone
-          - vm-sto1-04.sto1.privatedns.zone
-        state: present
-      register: drs_host_group_results
-
-    - name: Dump drs_host_group_results
-      debug:
-        msg: '{{ drs_host_group_results }}'
-
-    - name: Create DRS Affinity Rule for VM-HOST
-      vmware_vm_host_drs_rule:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
-        validate_certs: "{{ validate_certs }}"
-        cluster_name: "{{ cluster_name }}"
-        vm_group_name: TEST_S1_VM01
-        host_group_name: TEST_S1_HOST01
-        drs_rule_name: STO1_RULE_AFF_001
-        enabled: true
-        mandatory: true
-        affinity_rule: true
-        state: present
-      delegate_to: localhost
-      register: drs_rule_aff_001
-
-    - name: Dump drs_rule_aff_001
-      debug:
-        msg: '{{ drs_rule_aff_001 }}'
+    # - name: Gather DRS rule facts about given Cluster
+    #   vmware_drs_rule_facts:
+    #     hostname: "{{ vcenter_hostname }}"
+    #     username: "{{ vcenter_username }}"
+    #     password: "{{ vcenter_password }}"
+    #     validate_certs: "{{ validate_certs }}"
+    #     cluster_name: "{{ cluster_name }}"
+    #     datacenter: "{{ datacenter }}"
+    #   delegate_to: localhost
+    #   register: drs_rule_facts
+    #
+    # - name: Dump drs_rule_facts
+    #   debug:
+    #     msg: '{{ drs_rule_facts }}'
+    #
+    # - name: Create DRS VM group
+    #   vmware_drs_group:
+    #     hostname: "{{ vcenter_hostname }}"
+    #     username: "{{ vcenter_username }}"
+    #     password: "{{ vcenter_password }}"
+    #     validate_certs: "{{ validate_certs }}"
+    #     cluster_name: "{{ cluster_name }}"
+    #     datacenter: "{{ datacenter }}"
+    #     group_name: TEST_S1_VM01
+    #     vms:
+    #       - sto1-test-node01
+    #       - sto1-test-node02
+    #     state: present
+    #   register: drs_vm_group_results
+    #
+    # - name: Dump drs_vm_group_results
+    #   debug:
+    #     msg: '{{ drs_vm_group_results }}'
+    #
+    # - name: Create DRS Host group
+    #   vmware_drs_group:
+    #     hostname: "{{ vcenter_hostname }}"
+    #     username: "{{ vcenter_username }}"
+    #     password: "{{ vcenter_password }}"
+    #     validate_certs: "{{ validate_certs }}"
+    #     cluster_name: "{{ cluster_name }}"
+    #     datacenter: "{{ datacenter }}"
+    #     group_name: TEST_S1_HOST01
+    #     hosts:
+    #       - vm-sto1-01.sto1.privatedns.zone
+    #       - vm-sto1-02.sto1.privatedns.zone
+    #       - vm-sto1-04.sto1.privatedns.zone
+    #     state: present
+    #   register: drs_host_group_results
+    #
+    # - name: Dump drs_host_group_results
+    #   debug:
+    #     msg: '{{ drs_host_group_results }}'
+    #
+    # - name: Create DRS Affinity Rule for VM-HOST
+    #   vmware_vm_host_drs_rule:
+    #     hostname: "{{ vcenter_hostname }}"
+    #     username: "{{ vcenter_username }}"
+    #     password: "{{ vcenter_password }}"
+    #     validate_certs: "{{ validate_certs }}"
+    #     cluster_name: "{{ cluster_name }}"
+    #     vm_group_name: TEST_S1_VM01
+    #     host_group_name: TEST_S1_HOST01
+    #     drs_rule_name: STO1_RULE_AFF_001
+    #     enabled: true
+    #     mandatory: true
+    #     affinity_rule: true
+    #     state: present
+    #   delegate_to: localhost
+    #   register: drs_rule_aff_001
+    #
+    # - name: Dump drs_rule_aff_001
+    #   debug:
+    #     msg: '{{ drs_rule_aff_001 }}'
 
     #
     # - name: Create DRS Affinity Rule for VM-HOST
