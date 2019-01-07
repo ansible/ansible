@@ -1101,6 +1101,35 @@ class PyVmomi(object):
 
         return host_obj_list
 
+    def host_version_at_least(self, version=None, vm_obj=None, host_name=None):
+        """
+        Check that the ESXi Host is at least a specific version number
+        Args:
+            vm_obj: virtual machine object, required one of vm_obj, host_name
+            host_name (string): ESXi host name
+            version (tuple): a version tuple, for example (6, 7, 0)
+        Returns: bool
+        """
+        if vm_obj:
+            host_system = vm_obj.summary.runtime.host
+        elif host_name:
+            host_system = self.find_hostsystem_by_name(host_name=host_name)
+        else:
+            self.module.fail_json(msg='VM object or ESXi host name must be set one.')
+        if host_system and version:
+            host_version = host_system.summary.config.product.version
+            if int(host_version.split('.')[0]) < version[0]:
+                return False
+            elif int(host_version.split('.')[0]) == version[0]:
+                if int(host_version.split('.')[1]) < version[1]:
+                    return False
+                elif int(host_version.split('.')[1]) == version[1]:
+                    if int(host_version.split('.')[2]) < version[2]:
+                        return False
+            return True
+        else:
+            self.module.fail_json(msg='Can not get the ESXi host, or the passed ESXi version is None.')
+
     # Network related functions
     @staticmethod
     def find_host_portgroup_by_name(host, portgroup_name):
