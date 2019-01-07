@@ -106,7 +106,6 @@ from ansible.module_utils.netapp_module import NetAppModule
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
-
 class NetAppOntapSubnet(object):
     """
     Create, Modifies and Destroys a subnet
@@ -170,10 +169,14 @@ class NetAppOntapSubnet(object):
             subnet_attributes = result.get_child_by_name('attributes-list').get_child_by_name('net-subnet-info')
             broadcast_domain = subnet_attributes.get_child_content('broadcast-domain')
             gateway = subnet_attributes.get_child_content('gateway')
-            ip_ranges = subnet_attributes.get_child_content('ip-ranges')
             ipspace = subnet_attributes.get_child_content('ipspace')
             subnet = subnet_attributes.get_child_content('subnet')
             name = subnet_attributes.get_child_content('subnet-name')
+
+            ip_ranges = []
+            range_obj = subnet_attributes.get_child_by_name('ip-ranges').get_children()
+            for elem in range_obj:
+                ip_ranges.append(elem.get_content())
 
             return_value = {
                 'name': name,
@@ -249,7 +252,7 @@ class NetAppOntapSubnet(object):
         try:
             self.server.invoke_successfully(subnet_modify, True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error deleting subnet %s: %s' % (self.parameters.get('name'), to_native(error)),
+            self.module.fail_json(msg='Error modifying subnet %s: %s' % (self.parameters.get('name'), to_native(error)),
                                   exception=traceback.format_exc())
 
     def rename_subnet(self):
@@ -278,7 +281,7 @@ class NetAppOntapSubnet(object):
 
         if self.parameters.get('from_name'):
             rename = self.na_helper.is_rename_action(self.get_subnet(self.parameters.get('from_name')), current)
-            if rename is None:
+            if rename is False:
                 self.module.fail_json(msg="Error renaming: subnet %s does not exist" %
                                       self.parameters.get('from_name'))
         else:
@@ -286,8 +289,8 @@ class NetAppOntapSubnet(object):
 
         modify = self.na_helper.get_modified_attributes(current, self.parameters)
         for attribute in modify:
-            if attribute in ['braodcast_domain']:
-                self.module.fail_json(msg='Error modifying subnet %s: can not modify %s.' % (self.parameters.get('name'), attribute))
+            if attribute in ['broadcast_domain']:
+                self.module.fail_json(msg='Error modifying subnet %s: can not modify broadcast_domain parameter.' % self.parameters.get('name'))
 
         if self.na_helper.changed:
             if self.module.check_mode:
