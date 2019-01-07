@@ -311,4 +311,4 @@ def add_vault_options(parser):
     base_group.add_argument('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
     base_group.add_argument('--vault-password-file', default=[], dest='vault_password_files',
-                            help="vault password file", type=unfrack_path)
+                            help="vault password file", type=unfrack_path, action='append')
