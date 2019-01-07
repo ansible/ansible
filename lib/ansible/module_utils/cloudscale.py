@@ -42,7 +42,7 @@ class AnsibleCloudscaleBase(object):
             self._module.fail_json(msg='Failure while calling the cloudscale.ch API with GET for '
                                        '"%s".' % api_call, fetch_url_info=info)
 
-    def _post(self, api_call, data=None):
+    def _post_or_patch(self, api_call, method, data):
         headers = self._auth_header.copy()
         if data is not None:
             data = self._module.jsonify(data)
@@ -51,7 +51,7 @@ class AnsibleCloudscaleBase(object):
         resp, info = fetch_url(self._module,
                                API_URL + api_call,
                                headers=headers,
-                               method='POST',
+                               method=method,
                                data=data,
                                timeout=self._module.params['api_timeout'])
 
@@ -60,8 +60,14 @@ class AnsibleCloudscaleBase(object):
         elif info['status'] == 204:
             return None
         else:
-            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with POST for '
-                                       '"%s".' % api_call, fetch_url_info=info)
+            self._module.fail_json(msg='Failure while calling the cloudscale.ch API with %s for '
+                                       '"%s".' % (method, api_call), fetch_url_info=info)
+
+    def _post(self, api_call, data=None):
+        return self._post_or_patch(api_call, 'POST', data)
+
+    def _patch(self, api_call, data=None):
+        return self._post_or_patch(api_call, 'PATCH', data)
 
     def _delete(self, api_call):
         resp, info = fetch_url(self._module,
