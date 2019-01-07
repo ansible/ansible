@@ -239,13 +239,13 @@ def main():
         if old_value == new_value:
             module.exit_json(changed=False, msg="")
 
-    if unset:
-        args.insert(len(args) - 1, "--" + unset)
-        new_value = ''  # No new value when unset
-
     if not module.check_mode:
-        new_value_quoted = shlex_quote(new_value)
-        cmd = ' '.join(args + [new_value_quoted])
+        if unset:
+            args.insert(len(args) - 1, "--" + unset)
+            cmd = ' '.join(args)
+        else:
+            new_value_quoted = shlex_quote(new_value)
+            cmd = ' '.join(args + [new_value_quoted])
         (rc, out, err) = module.run_command(cmd, cwd=dir)
         if err:
             module.fail_json(rc=rc, msg=err, cmd=cmd)
@@ -256,7 +256,7 @@ def main():
             before_header=' '.join(args),
             before=old_value + "\n",
             after_header=' '.join(args),
-            after=new_value + "\n"
+            after=(new_value if new_value else '') + "\n"
         ),
         changed=True
     )
