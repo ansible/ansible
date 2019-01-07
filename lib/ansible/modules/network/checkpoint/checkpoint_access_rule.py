@@ -74,6 +74,29 @@ options:
     default: present
 """
 
+EXAMPLES = """
+- name: Create access rule
+  checkpoint_access_rule:
+    layer: Network
+    name: "Drop attacker"
+    position: top
+    source: attacker
+    destination: Any
+    action: Drop
+
+- name: Delete access rule
+    layer: Network
+    name: "Drop attacker"
+"""
+
+RETURN = """
+checkpoint_access_rules:
+  description: The checkpoint access rule object created or updated. 
+  returned: always, except when deleting the access rule.
+  type: list
+"""
+
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.checkpoint.checkpoint import publish, install_policy
