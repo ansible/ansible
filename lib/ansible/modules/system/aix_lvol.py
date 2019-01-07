@@ -216,7 +216,7 @@ def main():
             lv_type=dict(type='str', default='jfs2'),
             size=dict(type='str'),
             opts=dict(type='str', default=''),
-            copies=dict(type='int', default=1),
+            copies=dict(type='str', default=1),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             policy=dict(type='str', default='maximum', choices=['maximum', 'minimum']),
             pvs=dict(type='list', default=list())
