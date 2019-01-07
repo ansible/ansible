@@ -103,7 +103,7 @@ def main():
     )
 
     if args.branch:
-        data['branch'] = args.branch
+        data['branchName'] = args.branch
     elif args.run:
         data['runId'] = args.run
 
