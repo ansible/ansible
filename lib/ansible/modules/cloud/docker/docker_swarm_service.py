@@ -540,7 +540,7 @@ class DockerService(DockerBaseClass):
         self.mode = "replicated"
         self.user = "root"
         self.mounts = []
-        self.configs = None
+        self.configs = []
         self.secrets = []
         self.constraints = []
         self.networks = []
