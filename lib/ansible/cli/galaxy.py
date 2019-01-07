@@ -48,8 +48,9 @@ class GalaxyCLI(CLI):
         )
 
         # common
-        self.parser.add_argument('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
-        self.parser.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
+        common = opt_help.argparse.ArgumentParser(add_help=False)
+        common.add_argument('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
+        common.add_argument('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
                                  help='Ignore SSL certificate validation errors.')
 
         # options that apply to more than one action
@@ -68,26 +69,29 @@ class GalaxyCLI(CLI):
         force = opt_help.argparse.ArgumentParser(add_help=False)
         force.add_argument('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
-        subparsers = self.parser.add_subparsers(dest='action', required=True)
+        subparsers = self.parser.add_subparsers(dest='action')
+        subparsers.required = True
 
-        delete_parser = subparsers.add_parser('delete', parents=[user_repo, roles_path],
+        delete_parser = subparsers.add_parser('delete', parents=[user_repo, common],
                                               help='Removes the role from Galaxy. It does not remove or alter the actual GitHub repository.')
         delete_parser.set_defaults(func=self.execute_delete)
 
-        import_parser = subparsers.add_parser('import', help='Import a role', parents=[user_repo, roles_path])
+        import_parser = subparsers.add_parser('import', help='Import a role', parents=[user_repo, common])
         import_parser.set_defaults(func=self.execute_import)
-        import_parser.add_argument('--no-wait', dest='wait', action='store_false', default=True, help='Don\'t wait for import results.')
+        import_parser.add_argument('--no-wait', dest='wait', action='store_false', default=True, help="Don't wait for import results.")
         import_parser.add_argument('--branch', dest='reference',
                                    help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
         import_parser.add_argument('--role-name', dest='role_name', help='The name the role should have, if different than the repo name')
         import_parser.add_argument('--status', dest='check_status', action='store_true', default=False,
                                    help='Check the status of the most recent import request for given github_user/github_repo.')
 
-        info_parser = subparsers.add_parser('info', help='View more details about a specific role.', parents=[offline])
+        info_parser = subparsers.add_parser('info', help='View more details about a specific role.',
+                                            parents=[offline, common, roles_path])
         info_parser.set_defaults(func=self.execute_info)
         info_parser.add_argument('args', nargs='+', help='role', metavar='role_name[,version]')
 
-        init_parser = subparsers.add_parser('init', help='Initialize new role with the base structure of a role.', parents=[offline, roles_path, force])
+        init_parser = subparsers.add_parser('init', help='Initialize new role with the base structure of a role.',
+                                            parents=[offline, force, common])
         init_parser.set_defaults(func=self.execute_init)
         init_parser.add_argument('--init-path', dest='init_path', default="./",
                                  help='The path in which the skeleton role will be created. The default is the current working directory.')
@@ -97,7 +101,8 @@ class GalaxyCLI(CLI):
                                  help='The path to a role skeleton that the new role should be based upon.')
         init_parser.add_argument('role_name', help='Role name')
 
-        install_parser = subparsers.add_parser('install', help='Install Roles from file(s), URL(s) or tar file(s)', parents=[force])
+        install_parser = subparsers.add_parser('install', help='Install Roles from file(s), URL(s) or tar file(s)',
+                                               parents=[force, common, roles_path])
         install_parser.set_defaults(func=self.execute_install)
         install_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                     help='Ignore errors and continue with the next specified role.')
@@ -107,28 +112,31 @@ class GalaxyCLI(CLI):
                                     default=False, help='Use tar instead of the scm archive option when packaging the role')
         install_parser.add_argument('args', help='Role name, URL or tar file', metavar='role', nargs='*')
 
-        remove_parser = subparsers.add_parser('remove', help='Delete roles from roles_path.')
+        remove_parser = subparsers.add_parser('remove', help='Delete roles from roles_path.', parents=[common, roles_path])
         remove_parser.set_defaults(func=self.execute_remove)
         remove_parser.add_argument('args', help='Role(s)', metavar='role', nargs='+')
 
-        list_parser = subparsers.add_parser('list', help='Show the name and version of each role installed in the roles_path.')
+        list_parser = subparsers.add_parser('list', help='Show the name and version of each role installed in the roles_path.',
+                                            parents=[common, roles_path])
         list_parser.set_defaults(func=self.execute_list)
         list_parser.add_argument('role', help='Role', nargs='?', metavar='role')
 
-        login_parser = subparsers.add_parser('login', parents=[roles_path],
+        login_parser = subparsers.add_parser('login', parents=[common],
                                              help="Login to api.github.com server in order to use ansible-galaxy sub "
                                                   "command such as 'import', 'delete' and 'setup'")
         login_parser.set_defaults(func=self.execute_login)
         login_parser.add_argument('--github-token', dest='token', default=None, help='Identify with github token rather than username and password.')
 
-        search_parser = subparsers.add_parser('search', help='Search the Galaxy database by tags, platforms, author and multiple keywords.')
+        search_parser = subparsers.add_parser('search', help='Search the Galaxy database by tags, platforms, author and multiple keywords.',
+                                              parents=[common])
         search_parser.set_defaults(func=self.execute_search)
         search_parser.add_argument('--platforms', dest='platforms', help='list of OS platforms to filter by')
         search_parser.add_argument('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
         search_parser.add_argument('--author', dest='author', help='GitHub username')
         search_parser.add_argument('args', help='Search terms', metavar='searchterm', nargs='*')
 
-        setup_parser = subparsers.add_parser('setup', help='Manage the integration between Galaxy and the given source.', parents=[roles_path])
+        setup_parser = subparsers.add_parser('setup', help='Manage the integration between Galaxy and the given source.',
+                                             parents=[roles_path, common])
         setup_parser.set_defaults(func=self.execute_setup)
         setup_parser.add_argument('--remove', dest='remove_id', default=None,
                                   help='Remove the integration matching the provided ID value. Use --list to see ID values.')

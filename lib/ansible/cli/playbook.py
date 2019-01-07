@@ -60,7 +60,7 @@ class PlaybookCLI(CLI):
         options = super(PlaybookCLI, self).post_process_args(options)
 
         display.verbosity = options.verbosity
-        self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
+        self.validate_conflicts(options, runas_opts=True, fork_opts=True)
 
         return options
 

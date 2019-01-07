@@ -39,7 +39,8 @@ class ConfigCLI(CLI):
         self.parser.add_argument('-c', '--config', dest='config_file',
                                  help="path to configuration file, defaults to first file found in precedence.")
 
-        subparsers = self.parser.add_subparsers(dest='action', required=True)
+        subparsers = self.parser.add_subparsers(dest='action')
+        subparsers.required = True
 
         list_parser = subparsers.add_parser('list', help='Print all config options')
         list_parser.set_defaults(func=self.execute_list)

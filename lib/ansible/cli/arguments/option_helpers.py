@@ -305,17 +305,10 @@ def add_subset_options(parser):
 
 def add_vault_options(parser):
     """Add options for loading vault files"""
-    parser.add_argument('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
-                        help='ask for vault password')
-    parser.add_argument('--vault-password-file', default=[], dest='vault_password_files',
-                        help="vault password file", type=unfrack_path)
     parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
                         help='the vault identity to use')
-
-
-def add_vault_rekey_options(parser):
-    """Add options for commands which can edit/rekey a vault file"""
-    parser.add_argument('--new-vault-password-file', default=None, dest='new_vault_password_file',
-                        help="new vault password file for rekey", type=unfrack_path)
-    parser.add_argument('--new-vault-id', default=None, dest='new_vault_id', type=str,
-                        help='the new vault identity to use for rekey')
+    base_group = parser.add_mutually_exclusive_group()
+    base_group.add_argument('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
+                            help='ask for vault password')
+    base_group.add_argument('--vault-password-file', default=[], dest='vault_password_files',
+                            help="vault password file", type=unfrack_path)

@@ -98,7 +98,7 @@ class InventoryCLI(CLI):
         options = super(InventoryCLI, self).post_process_args(options)
 
         display.verbosity = options.verbosity
-        self.validate_conflicts(options, vault_opts=True)
+        self.validate_conflicts(options)
 
         # there can be only one! and, at least, one!
         used = 0

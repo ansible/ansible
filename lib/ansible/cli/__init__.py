@@ -245,17 +245,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         return (sshpass, becomepass)
 
-    def validate_conflicts(self, op, vault_opts=False, runas_opts=False, fork_opts=False, vault_rekey_opts=False):
+    def validate_conflicts(self, op, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
-
-        if vault_opts:
-            # Check for vault related conflicts
-            if op.ask_vault_pass and op.vault_password_files:
-                self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
-
-        if vault_rekey_opts:
-            if op.new_vault_id and op.new_vault_password_file:
-                self.parser.error("--new-vault-password-file and --new-vault-id are mutually exclusive")
 
         if fork_opts:
             if op.forks < 1:
@@ -345,7 +336,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         are called from this function before and after parsing the arguments.
         """
         self.init_parser()
-        options = self.parser.parse_args()
+        options = self.parser.parse_args(self.args[1:])
         options = self.post_process_args(options)
         context._init_global_context(options)
 

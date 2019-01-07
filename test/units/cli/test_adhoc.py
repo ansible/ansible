@@ -22,18 +22,10 @@ def test_parse():
 def test_with_command():
     """ Test simple adhoc command"""
     module_name = 'command'
-    adhoc_cli = AdHocCLI(args=['-m', module_name, '-vv'])
+    adhoc_cli = AdHocCLI(args=['ansible', '-m', module_name, '-vv', 'localhost'])
     adhoc_cli.parse()
     assert context.CLIARGS['module_name'] == module_name
     assert display.verbosity == 2
-
-
-def test_with_extra_parameters():
-    """ Test extra parameters"""
-    adhoc_cli = AdHocCLI(args=['-m', 'command', 'extra_parameters'])
-    with pytest.raises(AnsibleOptionsError) as exec_info:
-        adhoc_cli.parse()
-    assert "Extraneous options or arguments" == str(exec_info.value)
 
 
 def test_simple_command():

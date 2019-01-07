@@ -144,7 +144,7 @@ class PullCLI(CLI):
             raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
 
         display.verbosity = options.verbosity
-        self.validate_conflicts(options, vault_opts=True)
+        self.validate_conflicts(options)
 
         return options
 
