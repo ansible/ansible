@@ -58,11 +58,6 @@ class AdHocCLI(CLI):
 
         options = super(AdHocCLI, self).post_process_args(options)
 
-        if len(options.args) < 1:
-            raise AnsibleOptionsError("Missing target hosts")
-        elif len(options.args) > 1:
-            raise AnsibleOptionsError("Extraneous options or arguments")
-
         display.verbosity = options.verbosity
         self.validate_conflicts(options, runas_opts=True, fork_opts=True)
 
@@ -90,7 +85,7 @@ class AdHocCLI(CLI):
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
-        pattern = to_text(context.CLIARGS['args'][0], errors='surrogate_or_strict')
+        pattern = to_text(context.CLIARGS['args'], errors='surrogate_or_strict')
 
         sshpass = None
         becomepass = None

@@ -14,9 +14,8 @@ from ansible.errors import AnsibleOptionsError
 def test_parse():
     """ Test adhoc parse"""
     adhoc_cli = AdHocCLI([])
-    with pytest.raises(AnsibleOptionsError) as exec_info:
+    with pytest.raises(SystemExit) as exec_info:
         adhoc_cli.parse()
-    assert "Missing target hosts" == str(exec_info.value)
 
 
 def test_with_command():
