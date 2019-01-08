@@ -465,7 +465,7 @@ def main():
     """
     element_spec = dict(
         name=dict(type='str', aliases=['interface']),
-        mode=dict(choices=['access', 'trunk']),
+        mode=dict(choices=['access', 'trunk'], default='access'),
         access_vlan=dict(type='str'),
         native_vlan=dict(type='str'),
         trunk_vlans=dict(type='str'),
