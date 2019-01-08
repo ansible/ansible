@@ -231,17 +231,15 @@
       - become_system.output == become_test_user_result.sid
 
   always:
+  - name: ensure test user profile is deleted
+    win_user_profile:
+      username: '{{ become_test_username }}'
+      state: absent
+
   - name: ensure test user is deleted
     win_user:
       name: "{{ become_test_username }}"
       state: absent
-
-  - name: ensure test user profile is deleted
-    # NB: have to work around powershell limitation of long filenames until win_file fixes it
-    win_shell: rmdir /S /Q {{ profile_dir_out.stdout_lines[0] }}
-    args:
-      executable: cmd.exe
-    when: become_test_username in profile_dir_out.stdout_lines[0]
 
 - name: test common functions in exec
   test_common_functions:
