@@ -117,15 +117,16 @@ options:
             operator:
                 description:
                     - Condition operator.
+                    - When I(type) is set to C(time_period), the choices are C(in), C(not in).
                 choices:
                     - '='
                     - '<>'
                     - 'like'
                     - 'not like'
-                    - 'in (used when I(type) is set to C(time_period))'
+                    - 'in'
                     - '>='
                     - '<='
-                    - 'not in (used when I(type) is set to C(time_period))'
+                    - 'not in'
             formulaid:
                 description:
                     - Arbitrary unique ID that is used to reference the condition from a custom expression.
