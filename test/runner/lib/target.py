@@ -343,6 +343,8 @@ def analyze_integration_target_dependencies(integration_targets):
     :type integration_targets: list[IntegrationTarget]
     :rtype: dict[str,set[str]]
     """
+    real_target_root = os.path.realpath('test/integration/targets') + '/'
+
     role_targets = [t for t in integration_targets if t.type == 'role']
     hidden_role_target_names = set(t.name for t in role_targets if 'hidden/' in t.aliases)
 
@@ -352,6 +354,28 @@ def analyze_integration_target_dependencies(integration_targets):
     for target in integration_targets:
         for setup_target_name in target.setup_always + target.setup_once:
             dependencies[setup_target_name].add(target.name)
+
+    # handle symlink dependencies between targets
+    # this use case is supported, but discouraged
+    for target in integration_targets:
+        for root, _dummy, file_names in os.walk(target.path):
+            for name in file_names:
+                path = os.path.join(root, name)
+
+                if not os.path.islink(path):
+                    continue
+
+                real_link_path = os.path.realpath(path)
+
+                if not real_link_path.startswith(real_target_root):
+                    continue
+
+                link_target = real_link_path[len(real_target_root):].split('/')[0]
+
+                if link_target == target.name:
+                    continue
+
+                dependencies[link_target].add(target.name)
 
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
     for role_target in role_targets:
