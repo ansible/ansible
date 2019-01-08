@@ -59,6 +59,7 @@ aireos_config_exclusions = [
     'config ap group-name',
 ]
 
+
 def sanitize(resp):
     # Takes response from device and strips whitespace from all lines
     # Aireos adds in extra preceding whitespace which netcfg parses as children/parents, which Aireos does not do
