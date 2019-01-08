@@ -137,6 +137,9 @@ namespace:
                 A unique string that identifies the request and that allows failed requests to be
                 retried without the risk of executing an operation twice.
 
+'''
+
+RETURN = '''
 
 operation_id:
     description: operation id of the non-waited namespace create request
@@ -319,13 +322,18 @@ def main():
                 module.exit_json(changed=False, namespace=camel_dict_to_snake_dict(namespace))
 
             if (not existing):
+                # namespace might be either the namespace object or 
+                # the operation ID depending on wait
                 namespace = sd_mgr.create_namespace(module.params['name'],
                                                     module.params['type'],
                                                     module.params['description'],
                                                     module.params['creator_request_id'],
                                                     module.params['vpc_id'],
                                                     module.params['wait'])
-                module.exit_json(changed=True, namespace=camel_dict_to_snake_dict(namespace))
+                if module.params['wait']:
+                    module.exit_json(changed=True, namespace=camel_dict_to_snake_dict(namespace))
+                else:
+                    module.exit_json(changed=True, operation_id=namespace['OperationId'])
 
         except Exception as e:
             module.fail_json(msg="Exception '" + module.params['name'] + "': " + str(e))

@@ -21,6 +21,22 @@
           name: '{{ resource_prefix }}_ecs_cluster'
         <<: *aws_connection_info
       register: setup_vpc
+      
+    - name: create private service discovery namespace without wait
+      service_discovery_namespace:
+        name: "private-{{ namespace_name}}-nowait"
+        state: present
+        type: DNS_PRIVATE
+        vpc_id: "{{ setup_vpc.vpc.id }}"
+        wait: false
+        <<: *aws_connection_info
+      register: service_discovery_private_namespace_nowait
+
+    - name: check that service_discovery_private_namespace_nowait returns an OperationId
+      assert:
+        that:
+          - service_discovery_private_namespace_nowait.operation_id is defined
+
 
     - name: create private service discovery namespace
       service_discovery_namespace:
@@ -50,6 +66,13 @@
     - name: remove private service_discovery_namespace
       service_discovery_namespace:
         name: "private-{{ namespace_name }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+    # ignore errors so that test repeats are more reliable
+    - name: remove private service_discovery_namespace
+      service_discovery_namespace:
+        name: "private-{{ namespace_name }}-nowait"
         state: absent
         <<: *aws_connection_info
       ignore_errors: yes
