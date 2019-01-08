@@ -173,9 +173,9 @@ def delete_access_rule(module, connection):
 def needs_update(module, access_rule):
     res = False
 
-    if module.params['source'] != access_rule['source'][0]['name']:
+    if module.params['source'] and module.params['source'] != access_rule['source'][0]['name']:
         res = True
-    if module.params['destination'] != access_rule['destination'][0]['name']:
+    if module.params['destination'] and module.params['destination'] != access_rule['destination'][0]['name']:
         res = True
     if module.params['action'] != access_rule['action']['name']:
         res = True
@@ -188,16 +188,17 @@ def needs_update(module, access_rule):
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        layer=dict(type='str', required=True),
-        position=dict(type='str', required=True),
+        layer=dict(type='str'),
+        position=dict(type='str'),
         source=dict(type='str'),
         destination=dict(type='str'),
-        action=dict(type='str'),
+        action=dict(type='str', default='drop'),
         enabled=dict(type='bool', default=True),
         state=dict(type='str', default='present')
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    required_if = [('state', 'present', ('layer', 'position'))]
+    module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
     connection = Connection(module._socket_path)
     code, response = get_access_rule(module, connection)
     result = {'changed': False}
@@ -212,7 +213,7 @@ def main():
                 result['checkpoint_access_rules'] = response
             else:
                 pass
-        else:
+        elif code == 404:
             code, response = create_access_rule(module, connection)
             publish(module, connection)
             install_policy(module, connection)
