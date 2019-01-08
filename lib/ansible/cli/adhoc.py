@@ -51,7 +51,7 @@ class AdHocCLI(CLI):
         self.parser.add_argument('-m', '--module-name', dest='module_name',
                                  help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                  default=C.DEFAULT_MODULE_NAME)
-        self.parser.add_argument('args', metavar='pattern', help='host pattern', nargs='*')
+        self.parser.add_argument('args', metavar='pattern', help='host pattern')
 
     def post_process_args(self, options):
         '''Post process and validate options for bin/ansible '''
