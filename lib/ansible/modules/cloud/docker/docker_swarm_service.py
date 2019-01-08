@@ -713,7 +713,7 @@ class DockerService(DockerBaseClass):
             differences.add('mode', parameter=self.mode, active=os.mode)
         if self.mounts != os.mounts:
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if self.configs != os.configs:
+        if self.configs is not None and self.configs != os.configs:
             differences.add('configs', parameter=self.configs, active=os.configs)
         if self.secrets != os.secrets:
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
