@@ -100,6 +100,10 @@ options:
     description:
       - tag dict to apply to the function (requires botocore 1.5.40 or above).
     version_added: "2.5"
+  concurrency:
+    description:
+      - number of reserved executions. Set to -1 to remove the concurrency limit.
+    default: -1
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -148,6 +152,12 @@ EXAMPLES = '''
     role: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
     handler: 'hello_python.my_handler'
     tags: {}
+
+# To throttle a function (i.e. block its invocation):
+- name: Throttle Lambda function HelloWorld
+  lambda:
+    name: HelloWorld
+    concurrency: 0
 
 # Basic Lambda function deletion
 - name: Delete Lambda functions HelloWorld and ByeBye
@@ -327,6 +337,7 @@ def main():
         vpc_security_group_ids=dict(type='list'),
         environment_variables=dict(type='dict'),
         dead_letter_arn=dict(),
+        concurrency=dict(type='int'),
         tags=dict(type='dict'),
     )
 
@@ -361,6 +372,7 @@ def main():
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
     dead_letter_arn = module.params.get('dead_letter_arn')
+    concurrency = module.params.get('concurrency')
     tags = module.params.get('tags')
 
     check_mode = module.check_mode
@@ -454,6 +466,19 @@ def main():
                 changed = True
             except (ParamValidationError, ClientError) as e:
                 module.fail_json_aws(e, msg="Trying to update lambda configuration")
+
+        # Update concurrency
+        current_concurrency = current_function.get('Concurrency', {}).get('ReservedConcurrentExecutions', -1)
+        if concurrency is not None and current_concurrency != concurrency:
+            try:
+                if not check_mode:
+                    if concurrency != -1:
+                        client.put_function_concurrency(FunctionName=name, ReservedConcurrentExecutions=concurrency)
+                    else:
+                        client.delete_function_concurrency(FunctionName=name)
+                changed = True
+            except(ParamValidationError, ClientError) as e:
+                module.fail_json_aws(e, msg='Trying to update lambda concurrency')
 
         # Update code configuration
         code_kwargs = {'FunctionName': name, 'Publish': True}
@@ -563,6 +588,13 @@ def main():
             changed = True
         except (ParamValidationError, ClientError) as e:
             module.fail_json_aws(e, msg="Trying to create function")
+
+        if concurrency is not None and concurrency != -1:
+            try:
+                if not check_mode:
+                    client.put_function_concurrency(FunctionName=name, ReservedConcurrentExecutions=concurrency)
+            except(ParamValidationError, ClientError) as e:
+                module.fail_json_aws(e, msg='Trying to set lambda concurrency')
 
         # Tag Function
         if tags is not None:
