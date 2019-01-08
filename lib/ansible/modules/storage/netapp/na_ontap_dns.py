@@ -43,7 +43,7 @@ options:
   skip_validation:
     type: bool
     description:
-    - If set to 'true', this option bypass the DNS check on the Ontap.
+    - If set to 'true', this option bypass the DNS check on the ONTAP.
     version_added: '2.8'
 '''
 
