@@ -9,7 +9,6 @@
     auth_key: 15435A030726242723273C21181319000A
     auth: true
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - debug:
