@@ -70,7 +70,11 @@ options:
     mtu:
         description:
             - "Maximum transmission unit (MTU) of the network."
+<<<<<<< HEAD
             - "To set oVirt default MTU, use 0 as value"
+=======
+            - "To set oVirt default MTU, use "0" as value"
+>>>>>>> Update ovirt_network.py
     clusters:
         description:
             - "List of dictionaries describing how the network is managed in specific cluster."
