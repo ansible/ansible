@@ -1,0 +1,9 @@
+PING 10.10.10.20 (10.10.10.20) 56(84) bytes of data.
+From 10.10.10.20 icmp_seq=1 Destination Host Unreachable
+From 10.10.10.20 icmp_seq=2 Destination Host Unreachable
+From 10.10.10.20 icmp_seq=3 Destination Host Unreachable
+From 10.10.10.20 icmp_seq=4 Destination Host Unreachable
+
+--- 10.10.10.20 ping statistics ---
+4 packets transmitted, 0 received, +4 errors, 100% packet loss, time 3053ms
+pipe 3
