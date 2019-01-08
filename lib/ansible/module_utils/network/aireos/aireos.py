@@ -54,6 +54,10 @@ aireos_top_spec = {
 }
 aireos_argument_spec.update(aireos_top_spec)
 
+aireos_config_exclusions = [
+    'config ap reset',
+    'config ap group-name',
+]
 
 def sanitize(resp):
     # Takes response from device and strips whitespace from all lines

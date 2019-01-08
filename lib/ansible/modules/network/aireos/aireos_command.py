@@ -116,6 +116,7 @@ import time
 
 from ansible.module_utils.network.aireos.aireos import run_commands
 from ansible.module_utils.network.aireos.aireos import aireos_argument_spec, check_args
+from ansible.module_utils.network.aireos.aireos import aireos_config_exclusions
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
@@ -143,10 +144,14 @@ def parse_commands(module, warnings):
                 'executing `%s`' % item['command']
             )
         elif item['command'].startswith('conf'):
-            module.fail_json(
-                msg='aireos_command does not support running config mode '
-                    'commands.  Please use aireos_config instead'
-            )
+            for exclusion in aireos_config_exclusions:
+                if item['command'].startswith(exclusion):
+                    break
+            else:
+                module.fail_json(
+                    msg='aireos_command does not support running config mode '
+                        'commands.  Please use aireos_config instead'
+                )
     return commands
 
 
