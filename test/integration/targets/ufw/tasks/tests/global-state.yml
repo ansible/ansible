@@ -1,0 +1,88 @@
+---
+- name: Enable ufw
+  ufw:
+    state: enabled
+
+# ############################################
+- name: Logging (check mode)
+  ufw:
+    logging: yes
+  check_mode: yes
+  register: logging_check
+- name: Logging
+  ufw:
+    logging: yes
+  register: logging
+- name: Get logging
+  shell: |
+    ufw status verbose | grep "^Logging:"
+  register: ufw_logging
+- name: Logging (idempotency)
+  ufw:
+    logging: yes
+  register: logging_idem
+- name: Logging (idempotency, check mode)
+  ufw:
+    logging: yes
+  check_mode: yes
+  register: logging_idem_check
+- assert:
+    that:
+    - logging_check is not changed  # NOT as expected!
+    - logging is not changed  # NOT as expected!
+    - "ufw_logging.stdout == 'Logging: on (low)'"
+    - logging_idem is not changed
+    - logging_idem_check is not changed
+
+# ############################################
+- name: Default (check mode)
+  ufw:
+    default: reject
+    direction: incoming
+  check_mode: yes
+  register: default_check
+- name: Default
+  ufw:
+    default: reject
+    direction: incoming
+  register: default
+- name: Get defaults
+  shell: |
+    ufw status verbose | grep "^Default:"
+  register: ufw_defaults
+- name: Default (idempotency)
+  ufw:
+    default: reject
+    direction: incoming
+  register: default_idem
+- name: Default (idempotency, check mode)
+  ufw:
+    default: reject
+    direction: incoming
+  check_mode: yes
+  register: default_idem_check
+- name: Default (change, check mode)
+  ufw:
+    default: allow
+    direction: incoming
+  check_mode: yes
+  register: default_change_check
+- name: Default (change)
+  ufw:
+    default: allow
+    direction: incoming
+  register: default_change
+- name: Get defaults
+  shell: |
+    ufw status verbose | grep "^Default:"
+  register: ufw_defaults_change
+- assert:
+    that:
+    # FIXME - default_check is changed
+    - default is changed
+    - "'reject (incoming)' in ufw_defaults.stdout"
+    - default_idem is not changed
+    - default_idem_check is not changed
+    # FIXME - default_change_check is changed
+    - default_change is changed
+    - "'allow (incoming)' in ufw_defaults_change.stdout"
