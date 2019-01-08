@@ -164,7 +164,7 @@ To facilitate this there are a few of helper functions used in the example below
 
             # this method will parse 'common format' inventory sources and
             # update any options declared in DOCUMENTATION as needed
-            config = self._read_config_data(self, path)
+            config = self._read_config_data(path)
 
             # if NOT using _read_config_data you should call set_options directly,
             # to process any defined configuration for this plugin,
