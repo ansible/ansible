@@ -80,7 +80,6 @@ options:
         description:
             - Idle timeout in minutes.
         type: int
-        default: 4
         version_added: 2.8
     version:
         description:
@@ -188,7 +187,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             domain_name=dict(type='str', aliases=['domain_name_label']),
             sku=dict(type='str', choices=['Basic', 'Standard', 'basic', 'standard']),
             ip_tags=dict(type='list', elements='dict', options=ip_tag_spec),
-            idle_timeout=dict(type='int', default=4)
+            idle_timeout=dict(type='int')
         )
 
         self.resource_group = None
@@ -257,7 +256,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                     changed = True
                     results['public_ip_address_version'] = self.version
 
-                if self.idle_timeout != results['idle_timeout_in_minutes']:
+                if self.idle_timeout and self.idle_timeout != results['idle_timeout_in_minutes']:
                     self.log("CHANGED: idle_timeout")
                     changed = True
                     results['idle_timeout_in_minutes'] = self.idle_timeout
