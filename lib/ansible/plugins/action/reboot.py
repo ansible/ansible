@@ -46,6 +46,7 @@ class ActionModule(ActionBase):
         'solaris': 'who -b',
         'sunos': 'who -b',
         'vmkernel': 'grep booted /var/log/vmksummary.log | tail -n 1',
+        'aix': 'who -b',
     }
 
     SHUTDOWN_COMMANDS = {
@@ -62,6 +63,7 @@ class ActionModule(ActionBase):
         'solaris': '-y -g {delay_sec} -i 6 "{message}"',
         'sunos': '-y -g {delay_sec} -i 6 "{message}"',
         'vmkernel': '-d {delay_sec}',
+        'aix': '-Fr',
     }
 
     TEST_COMMANDS = {
