@@ -1036,8 +1036,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 .. [1] Tasks in each role will see their own role's defaults. Tasks defined outside of a role will see the last role's defaults.
 .. [2] Variables defined in inventory file or provided by dynamic inventory.
 .. [3] Includes vars added by 'vars plugins' as well as host_vars and group_vars which are added by the default vars plugin shipped with Ansible.
-.. [4] When created with set_facts's cacheable option, variables will have the high precedence in the play,
-       but will be the same as a host facts precedence when they come from the cache.
+.. [4] When created with set_facts's cacheable option.
 
 .. note:: Within any section, redefining a var will overwrite the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
