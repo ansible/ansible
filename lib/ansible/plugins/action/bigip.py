@@ -94,5 +94,5 @@ class ActionModule(ActionNetworkModule):
                 conn.send_command('exit')
                 out = conn.get_prompt()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result
