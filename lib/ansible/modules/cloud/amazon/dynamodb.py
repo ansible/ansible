@@ -188,7 +188,7 @@ EXAMPLES = '''
 
 RETURN = '''
 returned_items:
-    description: Item when you peform a 'get' action.
+    description: item when you peform a 'get' action
     returned: success
     type: list
     sample:
@@ -205,22 +205,23 @@ returned_items:
                 }
             }
         ]
-last_evaluated_key:
-    description: Last evaluated key when you peform a 'get' action (scans a table)
+scanned_count:
+    description: the number of total items evaluated when you peform a 'get' action
+    returned: success
+    type: int
+    sample: 9589
+consumed_capacity:
+    description: the capacity units when you peform a 'get' action
     returned: success
     type: dict
-    sample:
-        {
-            "bank": {
-                "s": "hsbc"
-            },
-            "quantity": {
-                "n": "1000"
-            }
-        }
+count:
+    description: the number of items in the response when you perform a 'get' action
+    returned: success
+    type: int
+    sample: 13
 response_metadata:
-  description: response metadata about the snapshot
-  returned: always
+  description: aws response metadata
+  returned: success
   type: dict
   sample:
     http_headers:
@@ -235,7 +236,7 @@ response_metadata:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 
 
 try:
@@ -244,22 +245,27 @@ except ImportError:
     pass    # Handled by AnsibleAWSModule
 
 
+@AWSRetry.exponential_backoff(retries=5, delay=5)
+def get_with_backoff(connection, **kwargs):
+    paginator = connection.get_paginator('scan')
+    return paginator.paginate(**kwargs).build_full_result()
+
+
 def get(connection, table, filter_expression, expression_attribute_names,
         expression_attribute_values):
 
     if expression_attribute_names:
-        response = connection.scan(
-            TableName=table,
-            FilterExpression=filter_expression,
-            ExpressionAttributeValues=expression_attribute_values,
-            ExpressionAttributeNames=expression_attribute_names
-        )
+        kwargs = {"TableName": table,
+                  "FilterExpression": filter_expression,
+                  "ExpressionAttributeValues": expression_attribute_values,
+                  "ExpressionAttributeNames": expression_attribute_names}
+
     else:
-        response = connection.scan(
-            TableName=table,
-            ExpressionAttributeValues=expression_attribute_values,
-            FilterExpression=filter_expression
-        )
+        kwargs = {"TableName": table,
+                  "FilterExpression": filter_expression,
+                  "ExpressionAttributeValues": expression_attribute_values}
+
+    response = get_with_backoff(connection, **kwargs)
 
     changed = False
 
