@@ -169,7 +169,8 @@
 - assert:
     that:
       - azure_virtualnetworks | length == 1
-      - "azure_virtualnetworks[0].subnets | length == 1"
+      - virtualnetworks | length == 1
+      - "virtualnetworks[0].subnets | length == 1"
 
 - name: Delete virtual network
   azure_rm_virtualnetwork:
