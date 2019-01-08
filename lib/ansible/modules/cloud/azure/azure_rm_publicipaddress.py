@@ -294,7 +294,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
                         public_ip_address_version=self.version,
                         public_ip_allocation_method=self.allocation_method if self.version == 'IPv4' else None,
                         sku=self.network_models.PublicIPAddressSku(name=self.sku) if self.sku else None,
-                        idle_timeout_in_minutes=self.idle_timeout if self.idle_timeout > 0 else None
+                        idle_timeout_in_minutes=self.idle_timeout if self.idle_timeout and self.idle_timeout > 0 else None
                     )
                     if self.ip_tags:
                         pip.ip_tags = [self.network_models.IpTag(ip_tag_type=x.type, tag=x.value) for x in self.ip_tags]
