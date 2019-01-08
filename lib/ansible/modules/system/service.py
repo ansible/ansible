@@ -68,6 +68,7 @@ options:
         default: auto
         version_added: 2.2
 notes:
+    - For AIX group subsystem names can be used.
     - For Windows targets, use the M(win_service) module instead.
 seealso:
 - module: win_service
@@ -1484,19 +1485,64 @@ class AIX(Service):
             self.running = False
 
     def get_aix_src_status(self):
+        # Check subsystem status
         rc, stdout, stderr = self.execute_command("%s -s %s" % (self.lssrc_cmd, self.name))
+        if rc == 1:
+            # If check for subsystem is not ok, check if service name is a
+            # group subsystem
+            rc, stdout, stderr = self.execute_command("%s -g %s" % (self.lssrc_cmd, self.name))
+            if rc == 1:
+                if stderr:
+                    self.module.fail_json(msg=stderr)
+                else:
+                    self.module.fail_json(msg=stdout)
+            else:
+                # Check all subsystem status, if one subsystem is not active
+                # the group is considered not active.
+                lines = stdout.splitlines()
+                for state in lines[1:]:
+                    if state.split()[-1].strip() != "active":
+                        status = state.split()[-1].strip()
+                        break
+                else:
+                    status = "active"
+
+                # status is one of: active, inoperative
+                return status
+        else:
+            lines = stdout.rstrip("\n").split("\n")
+            status = lines[-1].split(" ")[-1]
+
+            # status is one of: active, inoperative
+            return status
+
+    def service_control(self):
+
+        # Check if service name is a subsystem of a group subsystem
+        rc, stdout, stderr = self.execute_command("%s -a" % (self.lssrc_cmd))
         if rc == 1:
             if stderr:
                 self.module.fail_json(msg=stderr)
             else:
                 self.module.fail_json(msg=stdout)
+        else:
+            lines = stdout.splitlines()
+            subsystems = []
+            groups = []
+            for line in lines[1:]:
+                subsystem = line.split()[0].strip()
+                group = line.split()[1].strip()
+                subsystems.append(subsystem)
+                if group:
+                    groups.append(group)
 
-        lines = stdout.rstrip("\n").split("\n")
-        status = lines[-1].split(" ")[-1]
-        # status is one of: active, inoperative
-        return status
+            # Define if service name parameter:
+            # -s subsystem or -g group subsystem
+            if self.name in subsystems:
+                srccmd_parameter = "-s"
+            elif self.name in groups:
+                srccmd_parameter = "-g"
 
-    def service_control(self):
         if self.action == 'start':
             srccmd = self.startsrc_cmd
         elif self.action == 'stop':
@@ -1504,13 +1550,13 @@ class AIX(Service):
         elif self.action == 'reload':
             srccmd = self.refresh_cmd
         elif self.action == 'restart':
-            self.execute_command("%s -s %s" % (self.stopsrc_cmd, self.name))
+            self.execute_command("%s %s %s" % (self.stopsrc_cmd, srccmd_parameter, self.name))
             srccmd = self.startsrc_cmd
 
         if self.arguments and self.action == 'start':
-            return self.execute_command("%s -a \"%s\" -s %s" % (srccmd, self.arguments, self.name))
+            return self.execute_command("%s -a \"%s\" %s %s" % (srccmd, self.arguments, srccmd_parameter, self.name))
         else:
-            return self.execute_command("%s -s %s" % (srccmd, self.name))
+            return self.execute_command("%s %s %s" % (srccmd, srccmd_parameter, self.name))
 
 
 # ===========================================
