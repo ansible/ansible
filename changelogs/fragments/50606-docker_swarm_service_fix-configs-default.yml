@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_swarm_service - fix problem with ``configs`` which prevented using that option."
