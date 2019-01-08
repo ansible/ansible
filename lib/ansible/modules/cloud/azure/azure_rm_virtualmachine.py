@@ -1844,14 +1844,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         pip = None
         if self.public_ip_allocation_method != 'Disabled':
             self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
-<<<<<<< HEAD
             sku = self.network_models.PublicIPAddressSku(name="Standard") if self.zones else None
             pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method, sku=sku)
             pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid, sku=sku)
-=======
-            pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method,, {'owning_vm': self.name})
-            pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid)
->>>>>>> tagging resources created by vm
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name + '01', self.os_type,
