@@ -30,14 +30,19 @@ class TestIosNtpModule(TestIosModule):
     def setUp(self):
         super(TestIosNtpModule, self).setUp()
 
+        self.mock_get_config = patch('ansible.modules.network.ios.ios_ntp.get_config')
+        self.get_config = self.mock_get_config.start()
+
         self.mock_load_config = patch('ansible.modules.network.ios.ios_ntp.load_config')
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
         super(TestIosNtpModule, self).tearDown()
+        self.mock_get_config.stop()
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None):
+        self.get_config.return_value = (0, load_fixture('ios_ntp_config.cfg').strip(), None)
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_ios_ntp_config(self):
