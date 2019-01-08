@@ -1119,7 +1119,7 @@ class DockerServiceManager():
 
 def _detect_publish_mode_usage(client):
     for publish_def in client.module.params['publish']:
-        return 'mode' in publish_def.keys()
+        return 'mode' in publish_def
 
 
 def main():
