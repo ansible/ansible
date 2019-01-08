@@ -103,6 +103,7 @@ options:
   concurrency:
     description:
       - number of reserved executions. Set to -1 to remove the concurrency limit.
+    version_added: "2.8"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
