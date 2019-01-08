@@ -163,8 +163,6 @@ azure_rm_networkinterfaces:
             description:
                 - Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
             type: bool
-            version_added: 2.6
-            default: True
         security_group:
             description:
                 - A security group resource ID with which to associate the network interface.
