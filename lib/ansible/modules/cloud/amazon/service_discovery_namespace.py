@@ -90,22 +90,22 @@ namespace:
         id:
             description: Identifier of service discovery namespace
             returned: always
-            type: string
+            type: str
         arn:
             description: arn of namespace
             returned: always
-            type: string
+            type: str
         name:
             description: name of service discovery service
             returned: always
-            type: string
+            type: str
         type:
             description: The type of the namespace. Valid values are DNS_PUBLIC and DNS_PRIVATE .
-            type: string
+            type: str
             returned: always
         description:
             description: Description of namespace
-            type: string
+            type: str
             returned: always
         service_count:
             description: The number of services that are associated with the namespace.
@@ -123,7 +123,7 @@ namespace:
                                  when you create a namespace.
                     contains:
                         hosted_zone_id:
-                            type: string
+                            type: str
                             returned: always
                             description: The ID for the hosted zone that Route 53 creates when you create a namespace.
         create_date:
@@ -131,7 +131,7 @@ namespace:
             returned: always
             description: datetime of creation
         creator_request_id:
-            type: string
+            type: str
             returned: always
             description:
                 A unique string that identifies the request and that allows failed requests to be
@@ -143,7 +143,7 @@ RETURN = '''
 
 operation_id:
     description: operation id of the non-waited namespace create request
-    type: string
+    type: str
     returned: when creating and wait=false
 
 '''
@@ -295,6 +295,7 @@ class ServiceDiscoveryNamespace:
                     e['createdAt'] = str(e['createdAt'])
         return service
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -322,7 +323,7 @@ def main():
                 module.exit_json(changed=False, namespace=camel_dict_to_snake_dict(namespace))
 
             if (not existing):
-                # namespace might be either the namespace object or 
+                # namespace might be either the namespace object or
                 # the operation ID depending on wait
                 namespace = sd_mgr.create_namespace(module.params['name'],
                                                     module.params['type'],
