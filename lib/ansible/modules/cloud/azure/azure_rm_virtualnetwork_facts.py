@@ -142,6 +142,7 @@ virtualnetworks:
                         sample: Successed
                     address_prefix:
                         description:
+                            - The address prefix for the subnet.
                     network_security_group:
                         description:
                             - Existing security group id with which to associate the subnet.
