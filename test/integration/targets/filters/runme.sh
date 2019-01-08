@@ -6,4 +6,4 @@ set -eux
 # because plugins and requirements are loaded before the task runs
 pip install jmespath
 
-ANSIBLE_ROLES_PATH=../ ansible-playbook filters.yml -i inventory -e @../../integration_config.yml "$@"
+ANSIBLE_ROLES_PATH=../ ansible-playbook filters.yml -i ../../inventory -e @../../integration_config.yml "$@"
