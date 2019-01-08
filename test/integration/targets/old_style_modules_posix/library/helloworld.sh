@@ -17,7 +17,7 @@
 if [ -f "$1" ]; then
     . "$1"
 else
-    echo '{"msg": "No argument file provided", "failed": True}'
+    echo '{"msg": "No argument file provided", "failed": true}'
     exit 1
 fi
 

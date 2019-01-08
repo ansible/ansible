@@ -26,3 +26,14 @@
 - assert:
     that:
       - 'goodbye_ansible.msg == "Goodbye, Ansible!"'
+
+- name: Execute module directly
+  command: '/bin/sh {{ role_path }}/library/helloworld.sh'
+  register: direct
+  ignore_errors: true
+
+- assert:
+    that:
+      - direct is failed
+      - |
+        direct.stdout == '{"msg": "No argument file provided", "failed": true}'
