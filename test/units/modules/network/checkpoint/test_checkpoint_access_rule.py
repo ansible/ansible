@@ -29,6 +29,7 @@ OBJECT = {'layer': 'foo', 'position': 'bar', 'name': 'baz',
           'action': {'name': 'drop'}, 'enabled': True}
 PAYLOAD = {'layer': 'foo', 'position': 'bar', 'name': 'baz'}
 
+
 class TestCheckpointAccessRule(object):
     module = checkpoint_access_rule
 
@@ -57,14 +58,14 @@ class TestCheckpointAccessRule(object):
         connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(PAYLOAD)
 
-        assert result['changed'] == True
+        assert result['changed']
         assert 'checkpoint_access_rules' in result
 
     def test_create_idempotent(self, get_access_rule_200, connection_mock):
         connection_mock.send_request.return_value = (200, PAYLOAD)
         result = self._run_module(PAYLOAD)
 
-        assert result['changed'] == False
+        assert not result['changed']
 
     def test_update(self, get_access_rule_200, connection_mock):
         payload_for_update = {'enabled': False}
@@ -73,7 +74,7 @@ class TestCheckpointAccessRule(object):
         result = self._run_module(payload_for_update)
 
         assert result['changed'] == True
-        assert result['checkpoint_access_rules']['enabled'] == False
+        assert not result['checkpoint_access_rules']['enabled']
 
     def test_delete(self, get_access_rule_200, connection_mock):
         connection_mock.send_request.return_value = (200, OBJECT)
@@ -81,14 +82,14 @@ class TestCheckpointAccessRule(object):
         payload_for_delete.update(PAYLOAD)
         result = self._run_module(payload_for_delete)
 
-        assert result['changed'] == True
+        assert result['changed']
 
     def test_delete_idempotent(self, get_access_rule_404, connection_mock):
         payload = {'name': 'baz', 'state': 'absent'}
         connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(payload)
 
-        assert result['changed'] == False
+        assert not result['changed']
 
     def _run_module(self, module_args):
         set_module_args(module_args)
