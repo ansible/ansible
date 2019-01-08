@@ -885,12 +885,8 @@ class StrategyBase:
                 if handler.action == 'meta':
                     meta_name = handler.args.get('_raw_params', None)
                     # FIXME filter others?
-                    if meta_name in ('flush_handlers'):
-                        display.error('%s not supported as a handler, skipping...' % meta_name)
-                        return_data  = {'msg': '%s not supported as a handler' % meta_name, 'skipped': True}
-                        host_result = TaskResult(host, handler, return_data)
-                        host_results.append(host_result)
-                        continue
+                    if meta_name in ('flush_handlers',):
+                        raise AnsibleError('%s not supported as a handler' % meta_name)
 
                     if meta_name not in ('noop', 'reset_connection', 'end_host'):
                         run_once = True
