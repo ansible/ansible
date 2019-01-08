@@ -79,6 +79,7 @@ def dedupe_groups(parser):
             action_groups.append(action_group)
     return action_groups
 
+
 def get_option_groups(option_parser):
     groups = []
     for action_group in dedupe_groups(option_parser)[1:]:
