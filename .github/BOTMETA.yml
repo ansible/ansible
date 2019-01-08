@@ -324,6 +324,9 @@ files:
     labels: pure_storage
   $modules/storage/glusterfs/: devyanikota
   $modules/storage/ibm/: tzurE
+  $modules/system/aix: &aix
+    labels: aix
+    maintainers: $team_aix
   $modules/system/alternatives.py:
     ignored: DavidWittman
   $modules/system/at.py: $team_ansible
@@ -529,6 +532,8 @@ files:
       - cloud
   $module_utils/facts:
     support: core
+  $module_utils/facts/hardware/aix.py: *aix
+  $module_utils/facts/network/aix.py: *aix
   $module_utils/gcp_utils.py:
     maintainers: $team_google
     supershipit: $team_google
@@ -1174,6 +1179,7 @@ files:
   test/utils/shippable/:
     notified: mattclay
   test/integration/targets/aci: *aci
+  test/integration/targets/aix: *aix
   test/integration/targets/docker: $team_docker
   test/integration/targets/gcp:
     maintainers: $team_google
@@ -1218,6 +1224,7 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers jmcgill298 schunduri
+  team_aix: dagwieers gforster kairoaraujo MorrisA
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
