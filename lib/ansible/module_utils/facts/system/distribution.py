@@ -1,17 +1,4 @@
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -456,10 +443,10 @@ class Distribution(object):
         aix_facts = {}
         rc, out, err = self.module.run_command("/usr/bin/oslevel")
         data = out.split('.')
-        aix_facts['distribution_version'] = out.strip()
+        aix_facts['distribution_version'] = data[0]
         aix_facts['distribution_major_version'] = data[0]
         aix_facts['distribution_minor_version'] = data[1]
-        aix_facts['distribution_release'] = ''
+        aix_facts['distribution_release'] = data[1]
         return aix_facts
 
     def get_distribution_HPUX(self):
