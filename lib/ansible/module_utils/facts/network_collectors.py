@@ -36,6 +36,7 @@ from ansible.module_utils.facts.system.python import PythonFactCollector
 from ansible.module_utils.facts.network.base import NetworkCollector
 from ansible.module_utils.facts.network.eos import EosNetworkCollector
 from ansible.module_utils.facts.network.ios import IosNetworkCollector
+from ansible.module_utils.facts.network.nxos import NxosNetworkCollector
 
 # these should always be first due to most other facts depending on them
 _base = [
@@ -51,6 +52,7 @@ _network = [
     NetworkCollector,
     EosNetworkCollector,
     IosNetworkCollector,
+    NxosNetworkCollector,
 ]
 
 

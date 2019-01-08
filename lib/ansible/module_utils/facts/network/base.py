@@ -44,6 +44,12 @@ class Network:
     def populate(self, collected_facts=None):
         return {}
 
+    def get(self, command):
+        resp = self.connection.get(command)
+        if '% This is an unconverted command' in resp:
+            raise ValueError('unconverted command: %s' % command)
+        return resp
+
 
 class NetworkCollector(BaseFactCollector):
     # MAYBE: we could try to build this based on the arch specific implemementation of Network() or its kin
