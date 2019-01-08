@@ -866,7 +866,7 @@ class DockerService(DockerBaseClass):
 
         ports = {}
         for port in self.publish:
-            if 'mode' in port:
+            if port.get('mode'):
                 ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'], port['mode'])
             else:
                 ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'])
