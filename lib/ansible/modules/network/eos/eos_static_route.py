@@ -162,13 +162,13 @@ def map_config_to_obj(module):
         lines = out.splitlines()
         for line in lines:
             obj = {}
-            add_match = re.search(r'ip route (\S+)', line, re.M)
+            add_match = re.search(r'ip route ([\d\./]+)', line, re.M)
             if add_match:
                 address = add_match.group(1)
                 if is_address(address):
                     obj['address'] = address
 
-                hop_match = re.search(r'ip route {0} (\S+)'.format(address), line, re.M)
+                hop_match = re.search(r'ip route {0} ([\d\./]+)'.format(address), line, re.M)
                 if hop_match:
                     hop = hop_match.group(1)
                     if is_hop(hop):
