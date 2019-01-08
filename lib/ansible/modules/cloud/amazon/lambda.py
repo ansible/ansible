@@ -103,7 +103,6 @@ options:
   concurrency:
     description:
       - number of reserved executions. Set to -1 to remove the concurrency limit.
-    default: -1
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
