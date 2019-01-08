@@ -300,10 +300,11 @@
     name: '{{ test_username }}'
     state: absent
 
+# win_file has issues with paths exceeding MAX_PATH, need to use rmdir instead
 - name: remove profile folder for user 1
-  win_file:
-    path: '{{ orphan_user1_profile.path }}'
-    state: absent
+  win_shell: rmdir /S /Q {{ orphan_user1_profile.path}}
+  args:
+    executable: cmd.exe
 
 - name: create user 2 for remove multiple user test
   win_user:
