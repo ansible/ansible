@@ -12,12 +12,15 @@
 - name: Install ufw
   package:
     name: ufw
-# Make sure ufw is not enabled
-- name: Disable ufw in case it is running
-  ufw:
-    state: disabled
+
 # Run the tests
 - block:
   - include_tasks: run-test.yml
     with_fileglob:
     - "tests/*.yml"
+
+  # Cleanup
+  always:
+  - name: Reset ufw to factory defaults and disable
+    ufw:
+      state: reset

@@ -1,5 +1,10 @@
 ---
 # ############################################
+- name: Enable (check mode)
+  ufw:
+    state: enabled
+  check_mode: yes
+  register: enable_check
 - name: Enable
   ufw:
     state: enabled
@@ -8,12 +13,26 @@
   ufw:
     state: enabled
   register: enable_idem
+- name: Enable (idempotency, check mode)
+  ufw:
+    state: enabled
+  check_mode: yes
+  register: enable_idem_check
 - assert:
     that:
+    # FIXME - enable_check is changed
     - enable is changed
     - enable_idem is not changed
+    - enable_idem_check is not changed
 
 # ############################################
+- name: ipv4 allow (check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+  check_mode: yes
+  register: ipv4_allow_check
 - name: ipv4 allow
   ufw:
     rule: allow
@@ -25,14 +44,30 @@
     rule: allow
     port: 23
     to_ip: 0.0.0.0
-  become: yes
   register: ipv4_allow_idem
+- name: ipv4 allow (idempotency, check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+  check_mode: yes
+  register: ipv4_allow_idem_check
 - assert:
     that:
+    # FIXME - ipv4_allow_check is changed
     - ipv4_allow is changed
     - ipv4_allow_idem is not changed
+    - ipv4_allow_idem_check is not changed
 
 # ############################################
+- name: delete ipv4 allow (check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+    delete: yes
+  check_mode: yes
+  register: delete_ipv4_allow_check
 - name: delete ipv4 allow
   ufw:
     rule: allow
@@ -46,14 +81,30 @@
     port: 23
     to_ip: 0.0.0.0
     delete: yes
-  become: yes
   register: delete_ipv4_allow_idem
+- name: delete ipv4 allow (idempotency, check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+    delete: yes
+  check_mode: yes
+  register: delete_ipv4_allow_idem_check
 - assert:
     that:
+    # FIXME - delete_ipv4_allow_check is changed
     - delete_ipv4_allow is changed
     - delete_ipv4_allow_idem is not changed
+    - delete_ipv4_allow_idem_check is not changed
 
 # ############################################
+- name: ipv6 allow (check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+  check_mode: yes
+  register: ipv6_allow_check
 - name: ipv6 allow
   ufw:
     rule: allow
@@ -65,14 +116,30 @@
     rule: allow
     port: 23
     to_ip: "::"
-  become: yes
   register: ipv6_allow_idem
+- name: ipv6 allow (idempotency, check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+  check_mode: yes
+  register: ipv6_allow_idem_check
 - assert:
     that:
+    # FIXME - ipv6_allow_check is changed
     - ipv6_allow is changed
     - ipv6_allow_idem is not changed
+    - ipv6_allow_idem_check is not changed
 
 # ############################################
+- name: delete ipv6 allow (check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+    delete: yes
+  check_mode: yes
+  register: delete_ipv6_allow_check
 - name: delete ipv6 allow
   ufw:
     rule: allow
@@ -86,15 +153,31 @@
     port: 23
     to_ip: "::"
     delete: yes
-  become: yes
   register: delete_ipv6_allow_idem
+- name: delete ipv6 allow (idempotency, check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+    delete: yes
+  check_mode: yes
+  register: delete_ipv6_allow_idem_check
 - assert:
     that:
+    # FIXME - delete_ipv6_allow_check is changed
     - delete_ipv6_allow is changed
     - delete_ipv6_allow_idem is not changed
+    - delete_ipv6_allow_idem_check is not changed
 
 
 # ############################################
+- name: ipv4 allow (check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+  check_mode: yes
+  register: ipv4_allow_check
 - name: ipv4 allow
   ufw:
     rule: allow
@@ -106,14 +189,30 @@
     rule: allow
     port: 23
     to_ip: 0.0.0.0
-  become: yes
   register: ipv4_allow_idem
+- name: ipv4 allow (idempotency, check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+  check_mode: yes
+  register: ipv4_allow_idem_check
 - assert:
     that:
+    # FIXME - ipv4_allow_check is changed
     - ipv4_allow is changed
     - ipv4_allow_idem is not changed
+    - ipv4_allow_idem_check is not changed
 
 # ############################################
+- name: delete ipv4 allow (check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+    delete: yes
+  check_mode: yes
+  register: delete_ipv4_allow_check
 - name: delete ipv4 allow
   ufw:
     rule: allow
@@ -127,14 +226,30 @@
     port: 23
     to_ip: 0.0.0.0
     delete: yes
-  become: yes
   register: delete_ipv4_allow_idem
+- name: delete ipv4 allow (idempotency, check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: 0.0.0.0
+    delete: yes
+  check_mode: yes
+  register: delete_ipv4_allow_idem_check
 - assert:
     that:
+    # FIXME - delete_ipv4_allow_check is changed
     - delete_ipv4_allow is changed
     - delete_ipv4_allow_idem is not changed
+    - delete_ipv4_allow_idem_check is not changed
 
 # ############################################
+- name: ipv6 allow (check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+  check_mode: yes
+  register: ipv6_allow_check
 - name: ipv6 allow
   ufw:
     rule: allow
@@ -146,14 +261,30 @@
     rule: allow
     port: 23
     to_ip: "::"
-  become: yes
   register: ipv6_allow_idem
+- name: ipv6 allow (idempotency, check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+  check_mode: yes
+  register: ipv6_allow_idem_check
 - assert:
     that:
+    # FIXME - ipv6_allow is_check changed
     - ipv6_allow is changed
     - ipv6_allow_idem is not changed
+    - ipv6_allow_idem_check is not changed
 
 # ############################################
+- name: delete ipv6 allow (check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+    delete: yes
+  check_mode: yes
+  register: delete_ipv6_allow_check
 - name: delete ipv6 allow
   ufw:
     rule: allow
@@ -167,14 +298,43 @@
     port: 23
     to_ip: "::"
     delete: yes
-  become: yes
   register: delete_ipv6_allow_idem
+- name: delete ipv6 allow (idempotency, check mode)
+  ufw:
+    rule: allow
+    port: 23
+    to_ip: "::"
+    delete: yes
+  check_mode: yes
+  register: delete_ipv6_allow_idem_check
 - assert:
     that:
+    # FIXME - delete_ipv6_allow_check is changed
     - delete_ipv6_allow is changed
     - delete_ipv6_allow_idem is not changed
+    - delete_ipv6_allow_idem_check is not changed
 
 # ############################################
+- name: Reload ufw
+  ufw:
+    state: reloaded
+  register: reload
+- name: Reload ufw (check mode)
+  ufw:
+    state: reloaded
+  check_mode: yes
+  register: reload_check
+- assert:
+    that:
+    - reload is not changed  # NOT as expected!
+    - reload_check is not changed  # NOT as expected!
+
+# ############################################
+- name: Disable (check mode)
+  ufw:
+    state: disabled
+  check_mode: yes
+  register: disable_check
 - name: Disable
   ufw:
     state: disabled
@@ -183,7 +343,57 @@
   ufw:
     state: disabled
   register: disable_idem
+- name: Disable (idempotency, check mode)
+  ufw:
+    state: disabled
+  check_mode: yes
+  register: disable_idem_check
 - assert:
     that:
+    # FIXME - disable_check is changed
     - disable is changed
     - disable_idem is not changed
+    - disable_idem_check is not changed
+
+# ############################################
+- name: Re-enable
+  ufw:
+    state: enabled
+- name: Reset (check mode)
+  ufw:
+    state: reset
+  check_mode: yes
+  register: reset_check
+- pause:
+    # Should not be needed, but since ufw is ignoring --dry-run for reset
+    # (https://bugs.launchpad.net/ufw/+bug/1810082) we have to wait here as well.
+    seconds: 1
+- name: Reset
+  ufw:
+    state: reset
+  register: reset
+- pause:
+    # ufw creates backups of the rule files with a timestamp; if reset is called
+    # twice in a row fast enough (so that both timestamps are taken in the same second),
+    # the second call will notice that the backup files are already there and fail.
+    # Waiting one second fixes this problem.
+    seconds: 1
+- name: Reset (idempotency)
+  ufw:
+    state: reset
+  register: reset_idem
+- pause:
+    # Should not be needed, but since ufw is ignoring --dry-run for reset
+    # (https://bugs.launchpad.net/ufw/+bug/1810082) we have to wait here as well.
+    seconds: 1
+- name: Reset (idempotency, check mode)
+  ufw:
+    state: reset
+  check_mode: yes
+  register: reset_idem_check
+- assert:
+    that:
+    - reset_check is not changed  # NOT as expected!
+    - reset is not changed  # NOT as expected!
+    - reset_idem is not changed
+    - reset_idem_check is not changed
