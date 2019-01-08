@@ -75,7 +75,7 @@ node_facts:
 
 '''
 
-from ansible.module_utils.docker_common import AnsibleDockerClient
+from ansible.module_utils.docker_swarm import AnsibleDockerSwarmClient
 from ansible.module_utils._text import to_native
 
 try:
@@ -103,7 +103,7 @@ def main():
         name=dict(type='str', required=True),
     )
 
-    client = AnsibleDockerClient(
+    client = AnsibleDockerSwarmClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
         min_docker_version='1.10.0',
