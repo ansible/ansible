@@ -211,6 +211,20 @@ options:
             media_type:
                 description:
                     - Media type that will be used to send the message.
+            host_groups:
+                type: list
+                description:
+                    - List of host groups host should be added to.
+                    - Required when I(type=add_to_host_group) or I(type=remove_from_host_group).
+            templates:
+                type: list
+                description:
+                    - List of templates host should be linked to.
+                    - Required when I(type=link_to_template) or I(type=unlink_from_template).
+            inventory:
+                description:
+                    - Host inventory mode.
+                    - Required when I(type=set_host_inventory_mode).
             command_type:
                 description:
                     - Type of operation command.
@@ -884,7 +898,7 @@ class Operations(object):
             operation: operation to construct the message user
 
         Returns:
-            list: constructed operation message user or None if oprtation not found
+            list: constructed operation message user or None if operation not found
         """
         if operation.get('send_to_users') is None:
             return None
@@ -1013,7 +1027,7 @@ class Operations(object):
         return {'inventory_mode': operation.get('inventory')}
 
     def construct_the_data(self, operations):
-        """Construct the oprtation data using helper methods.
+        """Construct the operation data using helper methods.
 
         Args:
             operation: operation to construct
