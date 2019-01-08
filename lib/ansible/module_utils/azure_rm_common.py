@@ -585,7 +585,7 @@ class AzureRMModuleBase(object):
 
         return self.get_poller_result(poller)
 
-    def create_default_securitygroup(self, resource_group, location, security_group_name, os_type, open_ports):
+    def create_default_securitygroup(self, resource_group, location, security_group_name, os_type, open_ports, tags):
         '''
         Create a default security group <security_group_name> to associate with a network interface. If a security group matching
         <security_group_name> exists, return it. Otherwise, create one.
@@ -614,6 +614,7 @@ class AzureRMModuleBase(object):
 
         parameters = self.network_models.NetworkSecurityGroup()
         parameters.location = location
+        parameters.tags = tags
 
         if not open_ports:
             # Open default ports based on OS type

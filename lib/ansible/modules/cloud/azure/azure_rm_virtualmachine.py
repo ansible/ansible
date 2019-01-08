@@ -1736,7 +1736,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         sku = self.storage_models.Sku(self.storage_models.SkuName.standard_lrs)
         sku.tier = self.storage_models.SkuTier.standard
         kind = self.storage_models.Kind.storage
-        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location)
+        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location, tags = {'owning_vm': self.name})
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:
@@ -1844,13 +1844,18 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         pip = None
         if self.public_ip_allocation_method != 'Disabled':
             self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
+<<<<<<< HEAD
             sku = self.network_models.PublicIPAddressSku(name="Standard") if self.zones else None
             pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method, sku=sku)
             pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid, sku=sku)
+=======
+            pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method,, {'owning_vm': self.name})
+            pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid)
+>>>>>>> tagging resources created by vm
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name + '01', self.os_type,
-                                                  self.open_ports)
+                                                  self.open_ports, {'owning_vm': self.name})
 
         parameters = self.network_models.NetworkInterface(
             location=self.location,
@@ -1858,7 +1863,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 self.network_models.NetworkInterfaceIPConfiguration(
                     private_ip_allocation_method='Dynamic',
                 )
-            ]
+            ],
+            tags={'owning_vm': self.name}
         )
         parameters.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet_id)
         parameters.ip_configurations[0].name = 'default'
