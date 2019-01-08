@@ -156,4 +156,3 @@ class TestCnosL2InterfaceModule(TestCnosModule):
                 'warnings': []
             }
         )
-
