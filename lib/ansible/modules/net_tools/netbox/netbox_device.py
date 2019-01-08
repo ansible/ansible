@@ -184,10 +184,7 @@ def netbox_create_device(nb, nb_endpoint, data):
     if norm_data.get("face"):
         norm_data["face"] = FACE_ID.get(norm_data["face"].lower(), 0)
     data = find_ids(nb, norm_data)
-    try:
-        return nb_endpoint.create([norm_data])
-    except pynetbox.RequestError as e:
-        return json.loads(e.error)
+    return nb_endpoint.create(norm_data)
 
 
 def netbox_delete_device(nb_endpoint, data):
@@ -243,13 +240,19 @@ def main():
 
     nb_endpoint = getattr(nb_app, endpoint)
     if 'present' in state:
-        response = netbox_create_device(nb, nb_endpoint, data)
-        if response[0].get('created'):
+        try:
+            response = (
+                netbox_create_device(nb, nb_endpoint, data).serialize()
+            )
             changed = True
+        except pynetbox.RequestError as e:
+            response = json.loads(e.error)
     else:
-        response = netbox_delete_device(nb_endpoint, data)
-        if 'success' in response[0]:
+        try:
+            response = netbox_delete_device(nb_endpoint, data)[0].serialize()
             changed = True
+        except pynetbox.RequestError as e:
+            response = json.loads(e.error)
     module.exit_json(changed=changed, meta=response)
 
 
