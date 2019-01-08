@@ -144,6 +144,8 @@ from ansible.module_utils._text import to_text
 
 __metaclass__ = type
 
+IGNORED_METADATA = ('id', 'version')
+
 
 class GrafanaAPIException(Exception):
     pass
@@ -209,6 +211,11 @@ def grafana_dashboard_exists(module, grafana_url, uid, headers):
         dashboard_exists = True
         try:
             dashboard = json.loads(r.read())
+            # Sanitize the dashboard from metadata Grafana is going to ignore
+            # Ensures a working comparison and idempotence
+            for metadata in IGNORED_METADATA:
+                if metadata in dashboard['dashboard']:
+                    del dashboard['dashboard'][metadata]
         except Exception as e:
             raise GrafanaAPIException(e)
     elif info['status'] == 404:
@@ -232,6 +239,12 @@ def grafana_create_dashboard(module, data):
     if 'dashboard' not in payload:
         payload = {'dashboard': payload}
 
+    # Sanitize the dashboard from metadata Grafana is going to ignore
+    # Ensures a working comparison and idempotence
+    for metadata in IGNORED_METADATA:
+        if metadata in payload['dashboard']:
+            del payload['dashboard'][metadata]
+
     # define http header
     headers = grafana_headers(module, data)
 
@@ -246,6 +259,7 @@ def grafana_create_dashboard(module, data):
     else:
         if data.get('uid'):
             uid = data['uid']
+            payload['dashboard']['uid'] = uid
         elif 'uid' in payload['dashboard']:
             uid = payload['dashboard']['uid']
         else:
@@ -256,7 +270,7 @@ def grafana_create_dashboard(module, data):
 
     result = {}
     if dashboard_exists is True:
-        if dashboard == payload:
+        if dashboard['dashboard'] == payload['dashboard']:
             # unchanged
             result['uid'] = uid
             result['msg'] = "Dashboard %s unchanged." % uid
