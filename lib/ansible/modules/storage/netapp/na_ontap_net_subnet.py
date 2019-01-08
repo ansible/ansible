@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 module: na_ontap_net_subnet
-short_description: NetApp Ontap Create, delete, modify network subnets.
+short_description: NetApp ONTAP Create, delete, modify network subnets.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.8'
@@ -113,7 +113,7 @@ class NetAppOntapSubnet(object):
     """
     def __init__(self):
         """
-        Initialize the Ontap Subnet class
+        Initialize the ONTAP Subnet class
         """
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
@@ -291,7 +291,7 @@ class NetAppOntapSubnet(object):
         modify = self.na_helper.get_modified_attributes(current, self.parameters)
         for attribute in modify:
             if attribute in ['broadcast_domain']:
-                self.module.fail_json(msg='Error modifying subnet %s: can not modify broadcast_domain parameter.' % self.parameters.get('name'))
+                self.module.fail_json(msg='Error modifying subnet %s: cannot modify broadcast_domain parameter.' % self.parameters.get('name'))
 
         if self.na_helper.changed:
             if self.module.check_mode:
@@ -314,7 +314,7 @@ class NetAppOntapSubnet(object):
 
 def main():
     """
-    Creates the NetApp Ontap Net Route object and runs the correct play task
+    Creates the NetApp ONTAP Net Route object and runs the correct play task
     """
     subnet_obj = NetAppOntapSubnet()
     subnet_obj.apply()
