@@ -37,6 +37,8 @@
 
   - include_tasks: test-add-children-elements.yml
   - include_tasks: test-add-children-from-groupvars.yml
+  - include_tasks: test-add-children-insertafter.yml
+  - include_tasks: test-add-children-insertbefore.yml
   - include_tasks: test-add-children-with-attributes.yml
   - include_tasks: test-add-element-implicitly.yml
   - include_tasks: test-count.yml

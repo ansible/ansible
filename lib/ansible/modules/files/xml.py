@@ -122,6 +122,26 @@ options:
     type: bool
     default: no
     version_added: '2.7'
+  insertbefore:
+    description:
+      - Add additional child-element(s) before the first selected element for a given C(xpath).
+      - Child elements must be given in a list and each item may be either a string
+        (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
+        or a hash where the key is an element name and the value is the element value.
+      - This parameter requires C(xpath) to be set.
+    type: bool
+    default: no
+    version_added: '2.8'
+  insertafter:
+    description:
+      - Add additional child-element(s) after the last selected element for a given C(xpath).
+      - Child elements must be given in a list and each item may be either a string
+        (eg. C(children=ansible) to add an empty C(<ansible/>) child element),
+        or a hash where the key is an element name and the value is the element value.
+      - This parameter requires C(xpath) to be set.
+    type: bool
+    default: no
+    version_added: '2.8'
 requirements:
 - lxml >= 2.3.0
 notes:
@@ -197,6 +217,16 @@ EXAMPLES = r'''
   xml:
     path: /foo/bar.xml
     xpath: /business/beers
+    add_children:
+    - beer: Old Rasputin
+    - beer: Old Motor Oil
+    - beer: Old Curmudgeon
+
+- name: Add several more beers to the 'beers' element and add them before the 'Rochefort 10' element
+  xml:
+    path: /foo/bar.xml
+    xpath: '/business/beers/beer[text()=\"Rochefort 10\"]'
+    insertbefore: yes
     add_children:
     - beer: Old Rasputin
     - beer: Old Motor Oil
@@ -446,14 +476,33 @@ def set_target_children(module, tree, xpath, namespaces, children, in_type):
     finish(module, tree, xpath, namespaces, changed=changed)
 
 
-def add_target_children(module, tree, xpath, namespaces, children, in_type):
+def add_target_children(module, tree, xpath, namespaces, children, in_type, insertbefore, insertafter):
     if is_node(tree, xpath, namespaces):
         new_kids = children_to_nodes(module, children, in_type)
-        for node in tree.xpath(xpath, namespaces=namespaces):
-            node.extend(new_kids)
+        if insertbefore or insertafter:
+            insert_target_children(tree, xpath, namespaces, new_kids, insertbefore, insertafter)
+        else:
+            for node in tree.xpath(xpath, namespaces=namespaces):
+                node.extend(new_kids)
         finish(module, tree, xpath, namespaces, changed=True)
     else:
         finish(module, tree, xpath, namespaces)
+
+
+def insert_target_children(tree, xpath, namespaces, children, insertbefore, insertafter):
+    """
+    Insert the given children before or after the given xpath. If insertbefore is True, it is inserted before the
+    first xpath hit, with insertafter, it is inserted after the last xpath hit.
+    """
+    insert_target = tree.xpath(xpath, namespaces=namespaces)
+    loc_index = 0 if insertbefore else -1
+    index_in_parent = insert_target[loc_index].getparent().index(insert_target[loc_index])
+    parent = insert_target[0].getparent()
+    if insertafter:
+        index_in_parent += 1
+    for child in children:
+        parent.insert(index_in_parent, child)
+        index_in_parent += 1
 
 
 def _extract_xpstr(g):
@@ -776,6 +825,8 @@ def main():
             input_type=dict(type='str', default='yaml', choices=['xml', 'yaml']),
             backup=dict(type='bool', default=False),
             strip_cdata_tags=dict(type='bool', default=False),
+            insertbefore=dict(type='bool', default=False),
+            insertafter=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         # TODO: Implement this as soon as #28662 (required_by functionality) is merged
@@ -790,6 +841,8 @@ def main():
             ['content', 'text', ['xpath']],
             ['count', True, ['xpath']],
             ['print_match', True, ['xpath']],
+            ['insertbefore', True, ['xpath']],
+            ['insertafter', True, ['xpath']],
         ],
         required_one_of=[
             ['path', 'xmlstring'],
@@ -798,6 +851,7 @@ def main():
         mutually_exclusive=[
             ['add_children', 'content', 'count', 'print_match', 'set_children', 'value'],
             ['path', 'xmlstring'],
+            ['insertbefore', 'insertafter'],
         ],
     )
 
@@ -817,6 +871,8 @@ def main():
     count = module.params['count']
     backup = module.params['backup']
     strip_cdata_tags = module.params['strip_cdata_tags']
+    insertbefore = module.params['insertbefore']
+    insertafter = module.params['insertafter']
 
     # Check if we have lxml 2.3.0 or newer installed
     if not HAS_LXML:
@@ -881,7 +937,7 @@ def main():
 
     # add_children set?
     if add_children:
-        add_target_children(module, doc, xpath, namespaces, add_children, input_type)
+        add_target_children(module, doc, xpath, namespaces, add_children, input_type, insertbefore, insertafter)
 
     # No?: Carry on
 
