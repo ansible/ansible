@@ -1071,15 +1071,15 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
 .. versionadded:: 2.0
 
-To escape special characters within a standard python regex, use the "regex_escape" filter::
+To escape special characters within a standard python regex, use the "regex_escape" filter (using the default re_type='python' option)::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
 
-To escape special characters within a basic regex, use the "regex_escape" filter with the re_type='basic' option::
+To escape special characters within a POSIX basic regex, use the "regex_escape" filter with the re_type='posix_basic' option::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o(\.\*)\$'
-    {{ '^f.*o(.*)$' | regex_escape('basic') }}
+    {{ '^f.*o(.*)$' | regex_escape('posix_basic') }}
 
 .. versionadded:: 2.8
 
