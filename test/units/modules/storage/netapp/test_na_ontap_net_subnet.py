@@ -152,7 +152,7 @@ class TestMyModule(unittest.TestCase):
         my_obj.server = MockONTAPConnection(kind='subnet', data=self.set_default_args())
         with pytest.raises(AnsibleFailJson) as exc:
             my_obj.apply()
-        assert 'can not modify broadcast_domain parameter' in exc.value.args[0]['msg']
+        assert 'cannot modify broadcast_domain parameter' in exc.value.args[0]['msg']
 
     @patch('ansible.modules.storage.netapp.na_ontap_net_subnet.NetAppOntapSubnet.create_subnet')
     def test_successful_create(self, create_subnet):
