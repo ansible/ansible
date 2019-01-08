@@ -38,7 +38,6 @@ options:
   name:
     description:
       - Name of the access rule.
-    required: True
     type: str
   layer:
     description:
@@ -48,7 +47,6 @@ options:
   position:
     description:
       - Position of the access rule.
-    required: True
     type: str
   source:
     description:
@@ -62,6 +60,7 @@ options:
     description:
       - Action of the access rule (accept, drop, inform, etc).
     type: str
+    default: drop
   enabled:
     description:
       - Enabled or disabled flag.

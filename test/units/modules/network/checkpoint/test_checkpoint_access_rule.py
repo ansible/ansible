@@ -73,7 +73,7 @@ class TestCheckpointAccessRule(object):
         connection_mock.send_request.return_value = (200, payload_for_update)
         result = self._run_module(payload_for_update)
 
-        assert result['changed'] == True
+        assert result['changed']
         assert not result['checkpoint_access_rules']['enabled']
 
     def test_delete(self, get_access_rule_200, connection_mock):
