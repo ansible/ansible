@@ -70,6 +70,7 @@ options:
     mtu:
         description:
             - "Maximum transmission unit (MTU) of the network."
+            - "To set oVirt default MTU, use 0 as value"
     clusters:
         description:
             - "List of dictionaries describing how the network is managed in specific cluster."
