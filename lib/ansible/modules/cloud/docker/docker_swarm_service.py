@@ -473,7 +473,6 @@ import time
 from ansible.module_utils.docker_common import (
     DockerBaseClass,
     AnsibleDockerClient,
-    docker_version,
     DifferenceTracker,
 )
 from ansible.module_utils.basic import human_to_bytes
