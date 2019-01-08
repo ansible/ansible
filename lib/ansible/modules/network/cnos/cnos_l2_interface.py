@@ -201,7 +201,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.cnos.cnos import get_config, load_config
 from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
-from ansible.module_utils.network.cnos.cnos import debugOutput, run_commands
+from ansible.module_utils.network.cnos.cnos import run_commands
 
 
 def get_interface_type(interface):
@@ -229,7 +229,6 @@ def is_switchport(name, module):
         config = run_commands(module,
                               ['show interface {0} switchport'.format(name)])[0]
         match = re.search(r'Switchport              : enabled', config)
-        debugOutput(bool(match))
         return bool(match)
     return False
 
