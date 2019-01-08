@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - grafana_dashboard - Fix a pair of unicode string handling issues with version checking (https://github.com/ansible/ansible/pull/49194)
