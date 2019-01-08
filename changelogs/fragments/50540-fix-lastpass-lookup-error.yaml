@@ -1,0 +1,2 @@
+bugfixes:
+  - "fix lastpass lookup failure on python 3 (https://github.com/ansible/ansible/issues/42062)"
