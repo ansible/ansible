@@ -133,7 +133,7 @@ class RedfishUtils(object):
             if response['ret'] is False:
                 return response
             data = response['data']
-            if data[u'Members']:
+            if data.get(u'Members'):
                 for member in data[u'Members']:
                     systems_service = member[u'@odata.id']
                     self.systems_uri = systems_service
