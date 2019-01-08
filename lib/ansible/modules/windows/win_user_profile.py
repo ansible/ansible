@@ -50,7 +50,7 @@ options:
     - Will remove the profile(s) when set to C(absent).
     - When removing a profile either I(username) must be set to a valid
       account, or I(name) is set to the profile's base name.
-    default present
+    default: present
     choices:
     - absent
     - present
