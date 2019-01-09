@@ -9,3 +9,15 @@
     that:
       - "result is changed"
       - "result.status == 'pending'"
+
+- name: Check module fails with correct msg
+  tower_job_launch:
+     job_template: "Non Existing Job Template"
+     inventory: "Test Inventory"
+     credential: "Test Credential"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Unable to launch job, job_template/Non Existing Job Template was not found: The requested object could not be found.'"

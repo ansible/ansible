@@ -9,7 +9,7 @@
 - name: Assert a meaningful error was provided for the failed Tower team creation
   assert:
     that:
-      - "'The requested object could not be found.' in result.exception"
+      - "'The requested object could not be found.' in result.msg"
 
 - name: Create a Tower team
   tower_team:
@@ -31,3 +31,15 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Check module fails with correct msg
+  tower_team:
+    name: Test Team
+    organization: Non Existing Org
+    state: present
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update team, organization not found: The requested object could not be found.'"
