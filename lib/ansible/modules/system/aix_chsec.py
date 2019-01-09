@@ -34,7 +34,8 @@ options:
         required: true
     options:
          description:
-             - comman separated key/value pairs eg. key=val,key=val
+             - A list of key/value pairs, e.g. `key=val,key=val`
+         type: list
     state:
          description:
             - If set to C(absent) the whole stanza incl. all given options will be removed.
