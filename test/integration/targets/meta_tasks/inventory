@@ -1,0 +1,3 @@
+[local]
+testhost ansible_connection=local host_var_role_name=role3
+testhost2 ansible_connection=local host_var_role_name=role2
