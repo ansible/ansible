@@ -256,9 +256,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Configures defaults using CLI options
         '''
+        _option_map = {'check': 'check_mode'}
         for flag in context.CLIARGS:
             # skip private and incorrect matches: i.e tags is really only_these_tags
-            if flag.startswith('_') or flag in ('tags', 'args'):
+            if flag.startswith('_') or flag in ('tags', 'args', 'check', 'connection', 'remote_user', 'diff'):
                 continue
 
             # use mapping when they are not named the same
@@ -635,6 +636,48 @@ class Base(FieldAttributeBase):
     _check_mode = FieldAttribute(isa='bool')
     _diff = FieldAttribute(isa='bool')
     _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
+
+    # explicitly invoke a debugger on tasks
+    _debugger = FieldAttribute(isa='string')
+
+    # param names which have been deprecated/removed
+    DEPRECATED_ATTRIBUTES = [
+        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
+        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
+    ]
+
+
+class AncestralBase(FieldAttributeBase):
+    """
+    .. warn::
+
+        "Ancestral" Means that this is the greatest ancestor in the Playbook.  Not the Ancestor in
+        the class hierarchy.  The greatest ancestor in the Playbook can have default values assigned
+        to it.  If the children had default values, then they'd always use the default values
+        instead of their parent's values.
+    """
+    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
+
+    # connection/transport
+    _connection = FieldAttribute(isa='string', default=lambda: context.CLIARGS.get('connection'))
+    _port = FieldAttribute(isa='int')
+    _remote_user = FieldAttribute(isa='string', default=lambda: context.CLIARGS.get('remote_user'))
+
+    # variables
+    _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
+
+    # module default params
+    _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+
+    # flags and misc. settings
+    _environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    _no_log = FieldAttribute(isa='bool')
+    _run_once = FieldAttribute(isa='bool')
+    _ignore_errors = FieldAttribute(isa='bool')
+    _ignore_unreachable = FieldAttribute(isa='bool')
+    _check_mode = FieldAttribute(isa='bool', default=lambda: context.CLIARGS.get('check'))
+    _diff = FieldAttribute(isa='bool', default=lambda: context.CLIARGS.get('diff'))
+    _any_errors_fatal = FieldAttribute(isa='bool')
 
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')
