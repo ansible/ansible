@@ -71,6 +71,13 @@ options:
       - The database extension state
     default: present
     choices: [ "present", "absent" ]
+  cascade:
+    description:
+      - Automatically install/remove any extensions that this extension depends on
+        that are not already installed/removed.
+    type: bool
+    default: no
+    version_added: '2.8'
 notes:
    - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
    - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
@@ -119,9 +126,13 @@ def ext_exists(cursor, ext):
     return cursor.rowcount == 1
 
 
-def ext_delete(cursor, ext):
+def ext_delete(cursor, ext, cascade):
     if ext_exists(cursor, ext):
-        query = "DROP EXTENSION \"%s\"" % ext
+        if cascade:
+            query = "DROP EXTENSION \"%s\" CASCADE" % ext
+        else:
+            query = "DROP EXTENSION \"%s\"" % ext
+
         cursor.execute(query)
         return True
     else:
@@ -155,6 +166,7 @@ def main():
             ext=dict(required=True, aliases=['name']),
             schema=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
+            cascade=dict(type='bool', default='no'),
             ssl_mode=dict(default='prefer', choices=[
                           'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None),
@@ -169,6 +181,7 @@ def main():
     ext = module.params["ext"]
     schema = module.params["schema"]
     state = module.params["state"]
+    cascade = module.params["cascade"]
     sslrootcert = module.params["ssl_rootcert"]
     changed = False
 
@@ -224,7 +237,7 @@ def main():
                 changed = ext_exists(cursor, ext)
         else:
             if state == "absent":
-                changed = ext_delete(cursor, ext)
+                changed = ext_delete(cursor, ext, cascade)
 
             elif state == "present":
                 changed = ext_create(cursor, ext, schema)
