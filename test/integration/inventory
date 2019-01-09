@@ -13,17 +13,8 @@ testhost_binary_modules ansible_host=127.0.0.1 ansible_connection=local
 [local_group]
 kube-pippin.knf.local
 
-[inven_overridehosts]
-invenoverride ansible_ssh_host=127.0.0.1 ansible_connection=local
-
 [all:vars]
-extra_var_override=FROM_INVENTORY
-inven_var=inventory_var
 unicode_host_var=CaféEñyei
-
-[inven_overridehosts:vars]
-foo=foo
-var_dir=vars
 
 [aci:vars]
 aci_hostname=your-apic-1
