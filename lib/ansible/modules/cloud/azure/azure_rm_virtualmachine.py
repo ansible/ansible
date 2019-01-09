@@ -1435,6 +1435,20 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
                     config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
                     config['properties']['publicIPAddress']['tags'] = pip_dict.get('tags')
+        # Expand network security groups to include config properties
+        for interface in result['properties']['networkProfile']['networkInterfaces']:
+            nsg = interface['properties']['networkSecurityGroup']
+            nsg_dict = azure_id_to_dict(nsg['id'])
+            try:
+                nsg_obj = self.network_client.network_security_groups.get(nsg_dict['resourceGroups'],
+                                                                          nsg_dict['networkSecurityGroups'])
+            except Exception as exc:
+                self.fail("Error fetching NSG {0} - {1}".format(nsg_dict['networkSecurityGroups'],
+                                                                str(exc)))
+            nsg_dict = self.serialize_obj(nsg_obj, 'NetworkSecurityGroup')
+            nsg['name'] = nsg_dict['name']
+            nsg['properties'] = nsg_dict['properties']
+            nsg['tags'] = nsg_dict.get('tags')
 
         self.log(result, pretty_print=True)
         if self.state != 'absent' and not result['powerstate']:
@@ -1497,6 +1511,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         managed_disk_ids = []
         nic_names = []
         pip_names = []
+        nsg_names = []
 
         if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
             # store the attached vhd info so we can nuke it after the VM is gone
@@ -1542,6 +1557,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
                 self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
+            # store each nic's attached public NSGs and delete after the NIC is gone
+            for nic in vm_dict['properties']['networkProfile']['networkInterfaces']:
+                nsg = nic['properties'].get('networkSecurityGroup')
+                if nsg:
+                    nsg_dict = azure_id_to_dict(nsg['id'])
+                    if nsg.get('tags', {}).get('owning_vm') == self.name:
+                        nsg_names.append(dict(name=nsg_dict['networkSecurityGroups'], resource_group=nsg_dict['resourceGroups']))
+                self.log('NSGs to  delete are {0}'.format(str(nsg_names)))
+                self.results['deleted_nsgs'] = nsg_names
 
         self.log("Deleting virtual machine {0}".format(self.name))
         self.results['actions'].append("Deleted virtual machine {0}".format(self.name))
@@ -1569,6 +1593,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Deleting public IPs')
             for pip_dict in pip_names:
                 self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
+
+        self.log('Deleting NSGs')
+        for nsg_dict in nsg_names:
+            self.delete_nsg(nsg_dict['resource_group'], nsg_dict['name'])
         return True
 
     def get_network_interface(self, resource_group, name):
@@ -1597,6 +1625,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting {0} - {1}".format(name, str(exc)))
         # Delete returns nada. If we get here, assume that all is well.
+        return True
+
+    def delete_nsg(self, resource_group, name):
+        self.results['actions'].append("Deleted NSG {0}".format(name))
+        try:
+            poller = self.network_client.network_security_groups.delete(resource_group, name)
+            self.get_poller_result(poller)
+        except Exception as exc:
+            self.fail("Error deleting {0} - {1}".format(name, str(exc)))
         return True
 
     def delete_managed_disks(self, managed_disk_ids):
