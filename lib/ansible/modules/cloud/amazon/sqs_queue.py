@@ -251,7 +251,7 @@ def create_or_update_sqs_queue(client, module):
 
     queue_url = get_queue_url(client, queue_name)
     if not queue_url and not module.check_mode:
-        create_attributes = {'FifoQueue': str(is_fifo)}
+        create_attributes = {'FifoQueue': 'true'} if is_fifo else {}
         queue_url = client.create_queue(QueueName=queue_name, Attributes=create_attributes)['QueueUrl']
         result['changed'] = True
 
