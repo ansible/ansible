@@ -1502,7 +1502,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         own_pip = vm.tags.get('_own_pip_') if vm.tags else None
         own_nsg = vm.tags.get('_own_nsg_') if vm.tags else None
 
-        if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
+        if self.remove_on_absent.intersection(set(['all', 'own', 'virtual_storage'])):
             # store the attached vhd info so we can nuke it after the VM is gone
             if(vm.storage_profile.os_disk.managed_disk):
                 self.log('Storing managed disk ID for deletion')
@@ -1525,35 +1525,36 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Managed disk IDs to delete: {0}".format(', '.join(managed_disk_ids)))
             self.results['deleted_managed_disk_ids'] = managed_disk_ids
 
-        if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
+        if self.remove_on_absent.intersection(set(['all', 'own', 'network_interfaces'])):
             # store the attached nic info so we can nuke them after the VM is gone
             self.log('Storing NIC names for deletion.')
             for interface in vm.network_profile.network_interfaces:
                 id_dict = azure_id_to_dict(interface.id)
-                if id_dict['networkInterfaces'] == own_nic:
+                if ('own' in self.remove_on_absent) or id_dict['networkInterfaces'] == own_nic:
                     nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
             self.log('NIC names to delete {0}'.format(str(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
-            if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
+            if self.remove_on_absent.intersection(set(['all', 'own', 'public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
                 for nic_dict in nic_names:
                     nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
                     for ipc in nic.ip_configurations:
                         if ipc.public_ip_address:
                             pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
-                            if pip_dict['publicIPAddresses'] == own_pip:
+                            if ('own' in self.remove_on_absent) or pip_dict['publicIPAddresses'] == own_pip:
                                 pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
                 self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
             # store each nic's attached public NSGs and delete after the NIC is gone
-            for nic_dict in nic_names:
-                nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
-                if nic.network_security_group:
-                    nsg_dict = azure_id_to_dict(nic.network_security_group.id)
-                    if nsg_dict['networkSecurityGroups'] == own_nsg:
-                        nsg_names.append(dict(name=nsg_dict['networkSecurityGroups'], resource_group=nsg_dict['resourceGroups']))
-                self.log('NSGs to  delete are {0}'.format(str(nsg_names)))
-                self.results['deleted_network_security_groups'] = pip_names
+            if 'own' in self.remove_on_absent:
+                for nic_dict in nic_names:
+                    nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
+                    if nic.network_security_group:
+                        nsg_dict = azure_id_to_dict(nic.network_security_group.id)
+                        if nsg_dict['networkSecurityGroups'] == own_nsg:
+                            nsg_names.append(dict(name=nsg_dict['networkSecurityGroups'], resource_group=nsg_dict['resourceGroups']))
+                    self.log('NSGs to  delete are {0}'.format(str(nsg_names)))
+                    self.results['deleted_network_security_groups'] = pip_names
 
         self.log("Deleting virtual machine {0}".format(self.name))
         self.results['actions'].append("Deleted virtual machine {0}".format(self.name))
@@ -1566,9 +1567,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
-        if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
+        if self.remove_on_absent.intersection(set(['all', 'own', 'virtual_storage'])):
             self.log('Deleting VHDs')
-            self.delete_vm_storage(vhd_uris, own_sa)
+            self.delete_vm_storage(vhd_uris, own_sa if ('own' in self.remove_on_absent) else None)
             self.log('Deleting managed disks')
             self.delete_managed_disks(managed_disk_ids)
 
@@ -1582,7 +1583,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             for pip_dict in pip_names:
                 self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
 
-        if self.remove_on_absent.intersection(set(['all', 'network_security_groups'])):
+        if 'own' in self.remove_on_absent:
             self.log('Deleting NSGs')
             for nsg_dict in nsg_names:
                 self.delete_nsg(nsg_dict['resource_group'], nsg_dict['name'])
