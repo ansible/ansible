@@ -100,6 +100,7 @@ class ActionModule(_ActionModule):
                                                                 loader=self._loader,
                                                                 templar=self._templar,
                                                                 shared_loader_obj=self._shared_loader_obj)
+
         copy_result = copy_action.run(task_vars=task_vars)
         if copy_result.get('failed'):
             result['failed'] = copy_result['failed']
@@ -109,6 +110,15 @@ class ActionModule(_ActionModule):
         result['backup_path'] = copy_result['dest']
         if copy_result.get('changed', False):
             result['changed'] = copy_result['changed']
+
+        if not backup_options or not backup_options.get('filename'):
+            result['date'] = tstamp.split('@')[0]
+            result['time'] = tstamp.split('@')[1]
+            result['shortname'] = result['backup_path'][::-1].split('.', 1)[1][::-1]
+
+        else:
+            result['date'] = time.strftime('%Y-%m-%d', time.gmtime(os.stat(result['backup_path']).st_ctime))
+            result['time'] = time.strftime('%H:%M:%S', time.gmtime(os.stat(result['backup_path']).st_ctime))
 
         # strip out any keys that have two leading and two trailing
         # underscore characters
