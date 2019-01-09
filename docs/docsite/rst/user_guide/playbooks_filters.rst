@@ -1264,7 +1264,7 @@ Also see the :ref:`zip_filter`
 Product Filters
 ```````````````
 
-The product filter returns cartesian product of the input iterables.
+The product filter returns the `cartesian product <https://docs.python.org/3/library/itertools.html#itertools.product>`_ of the input iterables.
 
 This is roughly equivalent to nested for-loops in a generator expression.
 
@@ -1278,6 +1278,7 @@ This would result in::
 
     { "msg": "foo.com,bar.com" }
 
+
 Debugging Filters
 `````````````````
 
@@ -1290,15 +1291,17 @@ type of a variable::
     {{ myvar | type_debug }}
 
 
-Computer Therory Assertions
+Computer Theory Assertions
 ```````````````````````````
 
-There are functions ``human_readable`` and ``human_to_bytes``.
+The ``human_readable`` and ``human_to_bytes`` functions let you test your 
+playbooks to make sure you are using the right size format in your tasks - that 
+you're providing Byte format to computers and human-readable format to people.
 
 Human Readable
 ``````````````
 
-This filter will assert if the given string is human readable or not.
+Asserts whether the given string is human readable or not.
 
 For example::
 
@@ -1319,7 +1322,7 @@ This would result in::
 Human to Bytes
 ``````````````
 
-This filter will return the given string in the Bytes format.
+Returns the given string in the Bytes format.
 
 For example::
 
