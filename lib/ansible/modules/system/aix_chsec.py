@@ -46,7 +46,6 @@ options:
          choices: [ absent, present ]
          default: present
 
-extends_documentation_fragment:
 
 author:
     - Christian Tremel (@flynn1973)
