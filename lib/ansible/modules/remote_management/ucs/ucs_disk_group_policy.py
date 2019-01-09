@@ -387,7 +387,7 @@ def main():
         min_drive_size=dict(type='str', default='unspecified'),
         manual_disks=dict(type='list', elements='dict', options=manual_disk),
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        virtual_drive=dict(type='dict', elements='dict', options=_virtual_drive_argument_spec()),
+        virtual_drive=dict(type='dict', options=_virtual_drive_argument_spec()),
     )
     module = AnsibleModule(
         argument_spec,
