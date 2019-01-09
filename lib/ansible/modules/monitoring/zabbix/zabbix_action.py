@@ -117,6 +117,7 @@ options:
             operator:
                 description:
                     - Condition operator.
+                    - When I(type) is set to C(time_period), the choices are C(in), C(not in).
                 choices:
                     - '='
                     - '<>'
