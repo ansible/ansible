@@ -63,11 +63,11 @@
       assert:
         that:
           - create_result.changed
-          - create_result.default_visibility_timeout == "900"
-          - create_result.delivery_delay == "900"
-          - create_result.maximum_message_size == "9009"
-          - create_result.message_retention_period == "900"
-          - create_result.receive_message_wait_time == "10"
+          - create_result.default_visibility_timeout == 900
+          - create_result.delivery_delay == 900
+          - create_result.maximum_message_size == 9009
+          - create_result.message_retention_period == 900
+          - create_result.receive_message_wait_time == 10
           - create_result.policy.Version == "2012-10-17"
           - create_result.policy.Statement.Effect == "Allow"
           - create_result.policy.Statement.Action == "*"

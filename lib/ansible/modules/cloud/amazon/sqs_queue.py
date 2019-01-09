@@ -141,8 +141,13 @@ name:
 queue_arn:
     description: The queue's Amazon resource name (ARN).
     type: str
-    returned: on successful creation or update of the queue
+    returned: on success
     sample: 'arn:aws:sqs:us-east-1:199999999999:queuename-987d2de0'
+queue_url:
+    description: URL to access the queue
+    type: str
+    returned: on success
+    sample: 'https://queue.amazonaws.com/123456789012/MyQueue'
 receive_message_wait_time:
     description: The receive message wait time in seconds.
     type: int
@@ -250,6 +255,7 @@ def create_or_update_sqs_queue(client, module):
     )
 
     queue_url = get_queue_url(client, queue_name)
+    result['queue_url'] = queue_url
     if not queue_url and not module.check_mode:
         create_attributes = {'FifoQueue': 'true'} if is_fifo else {}
         queue_url = client.create_queue(QueueName=queue_name, Attributes=create_attributes)['QueueUrl']
