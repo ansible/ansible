@@ -44,7 +44,6 @@ options:
          default: present
 
 extends_documentation_fragment:
-    - files
 
 author:
     - Christian Tremel (@flynn1973)
