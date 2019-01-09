@@ -42,7 +42,7 @@ class TestIosNtpModule(TestIosModule):
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None):
-        self.get_config.return_value = (0, load_fixture('ios_ntp_config.cfg').strip(), None)
+        self.get_config.return_value = load_fixture('ios_ntp_config.cfg').strip()
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_ios_ntp_config(self):
