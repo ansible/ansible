@@ -296,7 +296,7 @@ class TestPFSenseAliasModule(TestPFSenseModule):
         args = args_from_var(alias)
         args['state'] = 'absent'
         set_module_args(args)
-        self.execute_module(failed=True, msg="descr is invalid with state='absent'")
+        self.execute_module(failed=True, msg="address is invalid with state='absent'")
 
     def test_check_mode(self):
         """ test updating an host alias without generating result """

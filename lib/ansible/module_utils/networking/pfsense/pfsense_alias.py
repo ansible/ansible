@@ -156,7 +156,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
 
         # when deleting, only name is allowed
         if params['state'] == 'absent':
-            for param, value in params.items():
+            for param, value in sorted(params.items()):
                 if param != 'state' and param != 'name' and value is not None:
                     self.module.fail_json(msg=param + " is invalid with state='absent'")
         else:
