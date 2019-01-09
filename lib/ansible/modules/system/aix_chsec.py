@@ -20,7 +20,9 @@ short_description: Modify AIX stanza files
 version_added: '2.8'
 
 description:
-    - "adds stanzas to aix config files using the chsec command. see "man chsec" for additional infos"
+    - Modify stanzas to AIX config files using the chsec command.
+notes:
+    - See `man chsec` for additional information.
 
 options:
     path:
