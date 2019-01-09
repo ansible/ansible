@@ -187,7 +187,7 @@ EXAMPLES = '''
         cidr_ipv6: 64:ff9b::/96
         group_name: example-other
         # description to use if example-other needs to be created
-        group_desc: other example EC2 group
+        rule_desc: other example EC2 group
 
 - name: example2 ec2 group
   ec2_group:
