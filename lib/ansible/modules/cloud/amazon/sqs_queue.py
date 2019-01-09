@@ -270,7 +270,7 @@ def create_or_update_sqs_queue(client, module):
     result['tags'] = tags
 
     # provide backwards compatibility
-    for key in list(result.keys()).copy():
+    for key in list(result.keys()):
         return_name = ARGUMENT_SPEC.get(key, {}).get('return_name')
         if return_name:
             result[return_name] = result.pop(key)
