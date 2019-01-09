@@ -74,12 +74,12 @@ EXAMPLES = '''
     name:
       - ALL
 
-# Install efix IV91487s3 from the nfs_server: rn100pgpl.itc.testlab.intranet from the share: /export/nim/aix7104-03/lpp_new
+# Install efix IV91487s3 from the nfs_server: nfsserver.local  from the share: /export/nim/aix7104-03/lpp_new
 - name: Install efix IV91487s3
   aix_efix:
     name:
       - IV91487s3
-    nfs_server: rn100pgpl.itc.testlab.intranet
+    nfs_server: nfsserver.local
     nfs_share: /export/nim/aix7104-03/lpp_new
 
 # Remove efix IV91487s3
