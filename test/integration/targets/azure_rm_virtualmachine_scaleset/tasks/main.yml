@@ -237,6 +237,13 @@
     name: testVMSS{{ rpfx }}
     state: absent
     remove_on_absent: ['all']
+    vm_size: Standard_D3_v2
+    capacity: 1
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
 
 - name: Create VMSS with security group in same resource group, with accelerated networking(check mode).
   azure_rm_virtualmachine_scaleset:
@@ -342,6 +349,13 @@
     name: testVMSS{{ rpfx }}2
     state: absent
     remove_on_absent: ['all']
+    vm_size: Standard_B1s
+    capacity: 1
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
 
 - name: Create VMSS with security group in different resource group(check mode).
   azure_rm_virtualmachine_scaleset:
@@ -403,6 +417,13 @@
     name: testVMSS{{ rpfx }}3
     state: absent
     remove_on_absent: ['all']
+    vm_size: Standard_B1s
+    capacity: 1
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
 
 - name: Fail when instance type is not supported to enable accelerated networking
   azure_rm_virtualmachine_scaleset:
