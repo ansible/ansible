@@ -136,7 +136,7 @@ def map_config_to_obj(module):
     obj = []
     server_list = []
 
-    config = get_config(module, flags=['| include ntp'])
+    list(config) = get_config(module, flags=['| include ntp'])
 
     for line in config.splitlines():
         match = re.search(r'ntp (\S+)', line, re.M)
