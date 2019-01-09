@@ -46,6 +46,3 @@ msc_use_proxy=no
 
 [msc]
 localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
-
-[azure]
-localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
