@@ -1226,13 +1226,16 @@ def start_stream_encryption(client, stream_name, encryption_type='', key_id='',
         find_stream(client, stream_name, check_mode=check_mode)
     )
     if stream_found:
-        success, err_msg = (
-            stream_encryption_action(
-                client, stream_name, action='start_encryption', encryption_type=encryption_type, key_id=key_id, check_mode=check_mode
+        if current_stream.get('EncryptionType') == 'KMS':
+            success = True
+        else:
+            success, err_msg = (
+                stream_encryption_action(
+                    client, stream_name, action='start_encryption', encryption_type=encryption_type, key_id=key_id, check_mode=check_mode
+                )
             )
-        )
-        if success:
             changed = True
+        if success:
             if wait:
                 success, err_msg, results = (
                     wait_for_status(
