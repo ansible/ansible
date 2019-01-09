@@ -229,7 +229,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
             # create or update the new Zone object we created
             new_zone = self.dns_client.zones.create_or_update(self.resource_group, self.name, zone)
         except Exception as exc:
-            self.fail("Error creating or updating zone {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error creating or updating zone {0} - {1}".format(self.name, exc.message or str(exc)))
         return zone_to_dict(new_zone)
 
     def delete_zone(self):
@@ -238,7 +238,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
             poller = self.dns_client.zones.delete(self.resource_group, self.name)
             result = self.get_poller_result(poller)
         except Exception as exc:
-            self.fail("Error deleting zone {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error deleting zone {0} - {1}".format(self.name, exc.message or str(exc)))
         return result
 
     def preprocess_vn_list(self, vn_list):

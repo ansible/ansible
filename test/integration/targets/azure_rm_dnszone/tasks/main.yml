@@ -65,7 +65,6 @@
     type: private
     registration_virtual_networks:
       - name: "{{ domain_name }}registration1"
-      - name: "{{ domain_name }}registration2"
     resolution_virtual_networks:
       - name: "{{ domain_name }}resolution1"
       - name: "{{ domain_name }}resolution2"
@@ -73,7 +72,7 @@
 
 - assert:
     that:
-        - "results.state.registration_virtual_networks | length == 2"
+        - "results.state.registration_virtual_networks | length == 1"
         - "results.state.resolution_virtual_networks | length == 2"
         - results.state.type == 'private'
 
