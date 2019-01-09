@@ -32,7 +32,7 @@
     mode: "u+rwx"
 
 - name: "Running the copy of 'sleep' binary"
-  command: "{{ role_path }}/files/obtainpid.sh '{{ random_name.stdout }}' '{{ role_path }}/obtainpid.txt'"
+  command: "{{ role_path }}/files/obtainpid.sh '{{ random_name.stdout }}' '{{ role_path }}/tasks/obtainpid.txt'"
   async: 100
   poll: 0
 
@@ -43,7 +43,7 @@
     
 - name: "Reading pid from the file"
   slurp:
-    src:  "{{ role_path }}/obtainpid.txt"
+    src:  "{{ role_path }}/tasks/obtainpid.txt"
   register: newpid
 
 - name: "Verify that the Process IDs (PIDs) returned is not empty and also equal to the PIDs obtained in console"
