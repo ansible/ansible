@@ -72,7 +72,9 @@ EXAMPLES = '''
   aix_chsec:
     path: /etc/security/user
     stanza: ldapuser
-    options: SYSTEM=LDAP,registry=
+    options:
+    - SYSTEM=LDAP
+    - registry=
     state: present
 '''
 
