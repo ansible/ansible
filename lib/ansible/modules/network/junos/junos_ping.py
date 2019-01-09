@@ -133,8 +133,8 @@ rtt:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.junos.junos import junos_argument_spec
 
 
 def main():
