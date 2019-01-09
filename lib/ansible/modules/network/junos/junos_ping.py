@@ -133,8 +133,8 @@ rtt:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import Connection
-from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
 
 
 def main():
@@ -169,8 +169,9 @@ def main():
         results["warnings"] = warnings
 
     results["commands"] = build_ping(dest, count, size, interval, source, ttl, interface)
+    conn = Connection(module._socket_path)
 
-    ping_results = Connection(module._socket_path).get(results["commands"])
+    ping_results = conn.get(results["commands"])
 
     rtt_info, rate_info = None, None
     for line in ping_results.split("\n"):
