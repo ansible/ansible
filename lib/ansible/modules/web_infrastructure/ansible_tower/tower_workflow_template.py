@@ -68,7 +68,7 @@ EXAMPLES = '''
     name: Workflow Template
     description: My very first Worflow Template
     organization: My optional Organization
-    schema: "{{ lookup(file, my_workflow.json }}"
+    schema: "{{ lookup('file', 'my_workflow.json') }}"
 
 - tower_worflow_template:
     name: Workflow Template
