@@ -110,26 +110,6 @@ class TaskQueueManager:
         for i in range(num):
             self._workers.append(None)
 
-    def _initialize_notified_handlers(self, play):
-        '''
-        Clears and initializes the shared notified handlers dict with entries
-        for each handler in the play, which is an empty array that will contain
-        inventory hostnames for those hosts triggering the handler.
-        '''
-
-        def _process_block(b):
-            temp_list = []
-            for t in b.block:
-                if isinstance(t, Block):
-                    temp_list.extend(_process_block(t))
-                else:
-                    temp_list.append(t)
-            return temp_list
-
-        handler_list = []
-        for handler_block in play.handlers:
-            handler_list.extend(_process_block(handler_block))
-
     def load_callbacks(self):
         '''
         Loads all available callbacks, with the exception of those which
@@ -225,9 +205,6 @@ class TaskQueueManager:
                 callback_plugin.set_play_context(play_context)
 
         self.send_callback('v2_playbook_on_play_start', new_play)
-
-        # initialize the shared dictionary containing the notified handlers
-        self._initialize_notified_handlers(new_play)
 
         # build the iterator
         iterator = PlayIterator(

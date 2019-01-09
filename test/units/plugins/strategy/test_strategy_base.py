@@ -525,7 +525,6 @@ class TestStrategyBase(unittest.TestCase):
             forks=5,
         )
         tqm._initialize_processes(3)
-        tqm._initialize_notified_handlers(mock_play)
         tqm.hostvars = dict()
 
         try:
