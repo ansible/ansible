@@ -46,7 +46,7 @@ EXAMPLES = '''
 # Mount a NFS share
 - aix_mount:
     fs: /mnt
-    nfsserver: rn100pgpl.itc.testlab.intranet
+    nfsserver: nimserver.local
     nfsexport: /export/nim/tmp
 
 more examples will follow
