@@ -1368,7 +1368,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 # delete the VM
                 self.log("Delete virtual machine {0}".format(self.name))
                 self.results['ansible_facts']['azure_vm'] = None
-                self.delete_vm(vm)
+                self.delete_vm(vm, vm_dict)
 
         # until we sort out how we want to do this globally
         del self.results['actions']
@@ -1419,7 +1419,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     nic_dict = self.serialize_obj(nic, 'NetworkInterface')
                     interface_dict['name'] = int_dict['networkInterfaces']
                     interface_dict['properties'] = nic_dict['properties']
-
+                    interface_dict['tags'] = nic_dict.get('tags')
         # Expand public IPs to include config properties
         for interface in result['properties']['networkProfile']['networkInterfaces']:
             for config in interface['properties']['ipConfigurations']:
@@ -1434,6 +1434,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     pip_dict = self.serialize_obj(pip, 'PublicIPAddress')
                     config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
                     config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
+                    config['properties']['publicIPAddress']['tags'] = pip_dict.get('tags')
 
         self.log(result, pretty_print=True)
         if self.state != 'absent' and not result['powerstate']:
@@ -1491,7 +1492,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.fail("Error generalizing virtual machine {0} - {1}".format(self.name, str(exc)))
         return True
 
-    def delete_vm(self, vm):
+    def delete_vm(self, vm, vm_dict):
         vhd_uris = []
         managed_disk_ids = []
         nic_names = []
@@ -1523,19 +1524,22 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
             # store the attached nic info so we can nuke them after the VM is gone
             self.log('Storing NIC names for deletion.')
-            for interface in vm.network_profile.network_interfaces:
-                id_dict = azure_id_to_dict(interface.id)
-                nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
+            for interface in vm_dict['properties']['networkProfile']['networkInterfaces']:
+                # check whether NIC was created by this VM
+                if interface.get('tags', {}).get('owning_vm') == self.name:
+                    id_dict = azure_id_to_dict(interface['id'])
+                    nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
             self.log('NIC names to delete {0}'.format(str(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
             if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
-                for nic_dict in nic_names:
-                    nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
-                    for ipc in nic.ip_configurations:
-                        if ipc.public_ip_address:
-                            pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
-                            pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
+                for nic in vm_dict['properties']['networkProfile']['networkInterfaces']:
+                    for ipc in nic['properties']['ipConfigurations']:
+                        pip = ipc['properties'].get('publicIPAddress')
+                        if pip:
+                            pip_dict = azure_id_to_dict(pip['id'])
+                            if pip.get('tags', {}).get('owning_vm') == self.name:
+                                pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
                 self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
 
@@ -1736,7 +1740,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         sku = self.storage_models.Sku(self.storage_models.SkuName.standard_lrs)
         sku.tier = self.storage_models.SkuTier.standard
         kind = self.storage_models.Kind.storage
-        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location, tags = {'owning_vm': self.name})
+        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location, tags={'owning_vm': self.name})
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:
