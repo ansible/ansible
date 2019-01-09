@@ -38,9 +38,9 @@ options:
     description:
     - When I(state) is C(absent) and the value for I(name) matches multiple
       profiles the module will fail.
-    - Set this value to C(True) to force the module to delete all the profiles
+    - Set this value to C(yes) to force the module to delete all the profiles
       found.
-    default: False
+    default: no
     type: bool
   state:
     description:
@@ -100,7 +100,7 @@ EXAMPLES = r'''
   win_user_profile:
     name: ansible
     state: absent
-    remove_multiple: True
+    remove_multiple: yes
 '''
 
 RETURN = r'''

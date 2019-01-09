@@ -204,14 +204,6 @@
       - win_whoami_result.user_flags is defined
 
   always:
-  - name: ensure test user profile is deleted
-    win_user_profile:
-      username: '{{ item }}'
-      state: absent
-    with_items:
-    - '{{ become_username }}'
-    - '{{ become_username_limited }}'
-
   - name: ensure test user is deleted
     win_user:
       name: '{{item}}'
@@ -219,3 +211,15 @@
     with_items:
     - '{{become_username}}'
     - '{{become_username_limited}}'
+
+  - name: ensure test user profile is deleted
+    win_shell: rmdir /S /Q {{profile_dir_out.stdout_lines[0]}}
+    args:
+      executable: cmd.exe
+    when: become_username in profile_dir_out.stdout_lines[0]
+
+  - name: ensure limited test user profile is deleted
+    win_shell: rmdir /S /Q {{profile_dir_out_limited.stdout_lines[0]}}
+    args:
+      executable: cmd.exe
+    when: become_username_limited in profile_dir_out_limited.stdout_lines[0]

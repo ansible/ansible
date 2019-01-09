@@ -102,12 +102,13 @@
       path: '{{win_stat_dir}}'
       state: absent
 
-  - name: ensure test user profile is deleted
-    win_user_profile:
-      username: '{{ win_stat_user }}'
-      state: absent
-
   - name: ensure test user is deleted
     win_user:
       name: '{{win_stat_user}}'
       state: absent
+
+  - name: ensure test user profile is deleted
+    win_shell: rmdir /S /Q {{profile_dir_out.stdout_lines[0]}}
+    args:
+      executable: cmd.exe
+    when: win_stat_user in profile_dir_out.stdout_lines[0]
