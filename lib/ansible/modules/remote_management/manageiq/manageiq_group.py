@@ -507,13 +507,15 @@ class ManageIQgroup(object):
         return res
 
     @staticmethod
-    def normalize_user_managed_filters_to_sorted_dict(managed_filters):
+    def normalize_user_managed_filters_to_sorted_dict(managed_filters, module):
         if not managed_filters:
             return None
 
         res = {}
         for cat_key in managed_filters:
             cat_array = []
+            if not isinstance(managed_filters[cat_key], list):
+                module.fail_json(msg='Entry "{0}" of managed_filters must be a list!'.format(cat_key))
             for tags in managed_filters[cat_key]:
                 miq_managed_tag = "/managed/" + cat_key + "/" + tags
                 cat_array.append(miq_managed_tag)
@@ -571,7 +573,7 @@ def main():
         role=dict(required=False, type='str'),
         tenant_id=dict(required=False, type='int'),
         tenant=dict(required=False, type='str'),
-        managed_filters=dict(required=False, type='dict', elements='list'),
+        managed_filters=dict(required=False, type='dict'),
         managed_filters_merge_mode=dict(required=False, choices=['merge', 'replace'], default='replace'),
         belongsto_filters=dict(required=False, type='list', elements='str'),
         belongsto_filters_merge_mode=dict(required=False, choices=['merge', 'replace'], default='replace'),
@@ -615,7 +617,7 @@ def main():
 
         tenant = manageiq_group.tenant(tenant_id, tenant_name)
         role = manageiq_group.role(role_id, role_name)
-        norm_managed_filters = manageiq_group.normalize_user_managed_filters_to_sorted_dict(managed_filters)
+        norm_managed_filters = manageiq_group.normalize_user_managed_filters_to_sorted_dict(managed_filters, module)
         # if we have a group, edit it
         if group:
             res_args = manageiq_group.edit_group(group, description, role, tenant,
