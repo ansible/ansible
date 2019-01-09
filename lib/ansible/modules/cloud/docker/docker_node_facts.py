@@ -29,8 +29,19 @@ options:
   name:
     description:
       - The name of the node to inspect.
+      - The list of nodes names to inspect.
+      - If empty then return information of all nodes in Swarm cluster.
       - When identifying an existing node name may either the hostname of the node (as registered in Swarm) or node ID.
-    required: true
+      - If I(self) is C(True) then this parameter is ignored.
+    required: false
+  self:
+    description:
+      - If C(True) then query the host module run on or one specified as I(docker_host).
+      - If C(True) then I(name) is ignored.
+      - If C(False) then query depends on I(name) presence and value.
+    required: false
+    type: bool
+    default: False
 extends_documentation_fragment:
     - docker
 
@@ -52,11 +63,26 @@ requirements:
 '''
 
 EXAMPLES = '''
+- name: Get info on all nodes
+  docker_node_facts:
+  register: result
+
 - name: Get info on node
   docker_node_facts:
     name: mynode
   register: result
 
+- name: Get info on list of nodes
+  docker_node_facts:
+    name:
+      - mynode1
+      - mynode2
+  register: result
+
+- name: Get info on host if it is Swarm Manager
+  docker_node_facts:
+    self: true
+  register: result
 '''
 
 RETURN = '''
@@ -70,6 +96,8 @@ node_facts:
     description:
       - Facts representing the current state of the node. Matches the C(docker node inspect) output.
       - Will be C(None) if node does not exist.
+      - Will contain multiple entries if more than one node provided in I(name).
+      - If I(name) contains list of nodes, the output will contain information only about registered nodes.
     returned: always
     type: dict
 
@@ -85,22 +113,38 @@ except ImportError:
     pass
 
 
-def get_node_facts(client, name):
-    try:
-        return client.inspect_node(name)
-    except NotFound:
-        return None
-    except APIError as exc:
-        if exc.status_code == 503:
-            client.fail(msg="Cannot inspect node: To inspect node execute module on Swarm Manager")
-        client.fail(msg="Error while reading from Swarm manager: %s" % to_native(exc))
-    except Exception as exc:
-        client.module.fail_json(msg="Error inspecting swarm node: %s" % exc)
+def get_node_facts(client):
+
+    results = []
+
+    if client.module.params['self'] is True:
+        try:
+            self_node_id = client.get_swarm_node_id()
+        except APIError:
+            return None
+        node_info = client.get_node_inspect(node_id=self_node_id)
+        results.append(node_info)
+        return results
+
+    if client.module.params['name'] is None:
+        node_info = client.get_all_nodes_inspect()
+        return node_info
+
+    nodes = client.module.params['name']
+    if not isinstance(nodes, list):
+        nodes = [nodes]
+
+    for next_node_name in nodes:
+        next_node_info = client.get_node_inspect(node_id=next_node_name, skip_missing=True)
+        if next_node_info:
+            results.append(next_node_info)
+    return results
 
 
 def main():
     argument_spec = dict(
-        name=dict(type='str', required=True),
+        name=dict(type='list', elements='str'),
+        self=dict(type='bool', default='False'),
     )
 
     client = AnsibleDockerSwarmClient(
@@ -110,7 +154,7 @@ def main():
         min_docker_api_version='1.24',
     )
 
-    node = get_node_facts(client, client.module.params['name'])
+    node = get_node_facts(client)
 
     client.module.exit_json(
         changed=False,

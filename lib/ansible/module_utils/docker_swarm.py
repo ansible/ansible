@@ -43,7 +43,7 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
         """
         Checking if host is part of Docker Swarm. If 'node_id' is not provided it reads the Docker host
         system information looking if specific key in output exists. If 'node_id' is provided then it tries to
-        read node information assuming it is run on Swarm manager. The get_node_info() method handles exception if
+        read node information assuming it is run on Swarm manager. The get_node_inspect() method handles exception if
         it is not executed on Swarm manager
 
         :param node_id: Node identifier
@@ -65,7 +65,7 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             return False
         else:
             try:
-                node_info = self.get_node_info(node_id)
+                node_info = self.get_node_inspect(node_id=node_id)
             except APIError:
                 return
 
@@ -111,20 +111,21 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
         """
 
         if node_id is None:
-            node_info = self.get_node_info()
-        else:
-            node_info = self.get_node_info(node_id=node_id)
+            node_id = self.get_swarm_node_id()
+
+        node_info = self.get_node_inspect(node_id=node_id)
         if node_info['Status']['State'] == 'down':
             return True
         return False
 
-    def get_node_info(self, node_id=None):
+    def get_node_inspect(self, node_id=None, skip_missing=False):
         """
-        Returns Swarm node info as in 'docker node inspect' command or fail the playbook in case of errors
+        Returns Swarm node info as in 'docker node inspect' command about single node
 
+        :param skip_missing: if True then function will return None instead of failing the task
         :param node_id: node ID or name, if None then method will try to get node_id of host module run on
         :return:
-            Node information structure
+            Single node information structure
         """
 
         if node_id is None:
@@ -136,7 +137,36 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
         try:
             node_info = self.inspect_node(node_id=node_id)
         except APIError as exc:
-            raise exc
+            if exc.status_code == 503:
+                self.fail(msg="Cannot inspect node: To inspect node execute module on Swarm Manager")
+            if exc.status_code == 404:
+                if skip_missing is False:
+                    self.fail(msg="Error while reading from Swarm manager: %s" % to_native(exc))
+                else:
+                    return None
+        except Exception as exc:
+            self.module.fail_json(msg="Error inspecting swarm node: %s" % exc)
+
+        json_str = json.dumps(node_info, ensure_ascii=False)
+        node_info = json.loads(json_str)
+        return node_info
+
+    def get_all_nodes_inspect(self):
+        """
+        Returns Swarm node info as in 'docker node inspect' command about all registered nodes
+
+        :return:
+            Structure with information about all nodes
+        """
+        try:
+            node_info = self.nodes()
+        except APIError as exc:
+            if exc.status_code == 503:
+                self.fail(msg="Cannot inspect node: To inspect node execute module on Swarm Manager")
+            self.fail(msg="Error while reading from Swarm manager: %s" % to_native(exc))
+        except Exception as exc:
+            self.module.fail_json(msg="Error inspecting swarm node: %s" % exc)
+
         json_str = json.dumps(node_info, ensure_ascii=False)
         node_info = json.loads(json_str)
         return node_info
