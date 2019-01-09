@@ -1,0 +1,81 @@
+---
+- debug: msg="START connection={{ ansible_connection }} cnos_l2_interface aggregate test"
+
+- name: Setup - Ensure interfaces are switchport
+  cnos_config:
+    lines:
+      - switchport
+    parents:
+      - "interface {{ item }}"
+  loop:
+    - "{{ test_interface }}"
+    - "{{ test_interface2 }}"
+
+- name: "Setup vlans"
+  cnos_vlan:
+    aggregate:
+      - vlan_id: 6
+      - vlan_id: 15
+    provider: "{{ cli }}"
+
+- name: Setup - Remove interface aggregate before testing
+  cnos_l2_interface:
+    aggregate:
+      - { name: "{{ test_interface }}", mode: access, access_vlan: 6 }
+      - { name: "{{ test_interface2 }}", mode: access, access_vlan: 15 }
+    state: absent
+    provider: "{{ cli }}"
+
+- block:
+  - name: Configure interface for access_vlan aggregate
+    cnos_l2_interface: &conf_agg
+      aggregate:
+        - { name: "{{ test_interface }}", mode: access, access_vlan: 6 }
+        - { name: "{{ test_interface2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: Configure interface for access_vlan aggregate(Idempotence)
+    cnos_l2_interface: *conf_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: Remove interface aggregate
+    cnos_l2_interface: &rm_agg
+      aggregate:
+        - { name: "{{ test_interface }}", mode: access, access_vlan: 6 }
+        - { name: "{{ test_interface2 }}", mode: access, access_vlan: 15 }
+      provider: "{{ cli }}"
+      state: absent
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: Remove interface aggregate(Idempotence)
+    cnos_l2_interface: *rm_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: "remove vlans"
+    cnos_vlan:
+      aggregate:
+        - vlan_id: 6
+        - vlan_id: 15
+      state: absent
+      provider: "{{ cli }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} cnos_l2_interface aggregate test"
