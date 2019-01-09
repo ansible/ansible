@@ -30,7 +30,7 @@ options:
         required: true
     stanza:
         description:
-            - name of stanza
+            - Name of stanza.
         required: true
     options:
          description:
