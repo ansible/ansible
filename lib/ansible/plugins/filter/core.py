@@ -493,6 +493,37 @@ def subelements(obj, subelements, skip_missing=False):
     return results
 
 
+def probe(data, *args):
+    '''Returns a value for a sequence of given keys/indexes into a structure,
+    such as an array or hash. The first encountered undefined value or key stops
+    the probe and an object jinja2.runtime.StrictUndefined is returned.
+    For instance {{ data | probe("key1", 2, "b") | default("N/A") }} is roughly
+    equivalent to {{ data["key1"][2]["b"] | default("N/A") }}. However a standard
+    index will return an error if any parent of the final key "b" is undefined,
+    the function will just return Undefined in this case (which can be caught
+    by the default() filter).
+    >>> data = {"key1": ["foo", "bar", {"a": 1234, "b": 5678}], "key2": "foo"}
+    >>> probe(data, "key1", 2, "b")
+    5678
+    >>> import jinja2
+    >>> isinstance(probe(data, "key3", 2, "b"), jinja2.runtime.StrictUndefined)
+    True
+    '''
+    from jinja2.runtime import StrictUndefined
+    result = data
+    path = 'probed_object'
+    for i in args:
+        if isinstance(i, int):
+            path += "[{}]".format(str(i))
+        else:
+            path += "['{}']".format(str(i))
+        try:
+            result = result[i]
+        except (TypeError, IndexError, KeyError) as e:
+            return StrictUndefined(name=path)
+    return result
+
+
 def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='value'):
     ''' takes a dictionary and transforms it into a list of dictionaries,
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
@@ -640,6 +671,7 @@ class FilterModule(object):
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
+            'probe': probe,
 
             # Misc
             'random_mac': random_mac,
