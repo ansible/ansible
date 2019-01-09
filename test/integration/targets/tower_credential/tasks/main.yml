@@ -111,7 +111,7 @@
 - assert:
     that:
       - "result is failed"
-      - "'must be set when SSH key is encrypted' in result.module_stderr"
+      - "'must be set when SSH key is encrypted' in result.msg"
 
 - name: Create an invalid SSH credential (Organization not found)
   tower_credential:
@@ -126,7 +126,7 @@
 - assert:
     that:
       - "result is failed"
-      - "'The requested object could not be found' in result.module_stderr"
+      - "'The requested object could not be found' in result.msg"
 
 - name: Delete an SSH credential
   tower_credential:
@@ -522,3 +522,17 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Check module fails with correct msg
+  tower_credential:
+    name: test-credential
+    description: Credential Description
+    kind: ssh
+    organization: test-non-existing-org
+    state: present
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update credential, organization not found: The requested object could not be found.'"

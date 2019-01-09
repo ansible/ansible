@@ -13,3 +13,13 @@
 - name: Cancel the job
   tower_job_cancel:
     job_id: "{{ job.id }}"
+
+- name: Check module fails with correct msg
+  tower_job_cancel:
+    job_id: 9999999999
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Unable to cancel job_id/9999999999: The requested object could not be found.'"
