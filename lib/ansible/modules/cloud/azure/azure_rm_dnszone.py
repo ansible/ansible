@@ -53,6 +53,27 @@ options:
         choices:
             - absent
             - present
+    type:
+        description:
+            - The type of this DNS zone (public or private)
+        choices:
+            - public
+            - private
+        version_added: 2.8
+    registration_virtual_networks:
+        description:
+            - A list of references to virtual networks that register hostnames in this DNS zone.
+            - This is a only when I(type) is C(private).
+            - Each element can be the name or resource id, or a dict contains C(name), C(resource_group) information of the virtual network.
+        version_added: 2.8
+        type: list
+    resolution_virtual_networks:
+        description:
+            - A list of references to virtual networks that resolve records in this DNS zone.
+            - This is a only when I(type) is C(private).
+            - Each element can be the name or resource id, or a dict contains C(name), C(resource_group) information of the virtual network.
+        version_added: 2.8
+        type: list
 
 extends_documentation_fragment:
     - azure
@@ -92,7 +113,9 @@ state:
             "ns3-07.azure-dns.org.",
             "ns4-07.azure-dns.info."
         ],
-        "number_of_record_sets": 2
+        "number_of_record_sets": 2,
+        "type": "private",
+        "resolution_virtual_networks": ["/subscriptions/XXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/foo"]
     }
 
 '''

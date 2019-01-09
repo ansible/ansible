@@ -73,6 +73,35 @@ azure_dnszones:
                 },
                 "tags": {}
         }]
+azure_rm_dnszones:
+    description: List of zone dicts, which share the same layout as azure_rm_dnszone module parameter.
+    returned: always
+    type: list
+    contains:
+        id:
+            description:
+                - id of the DNS Zone.
+        name:
+            description:
+                - name of the DNS Zone.
+        type:
+            description:
+                - The type of this DNS zone (public or private)
+        registration_virtual_networks:
+            description:
+                - A list of references to virtual networks that register hostnames in this DNS zone.
+        resolution_virtual_networks:
+            description:
+                - A list of references to virtual networks that resolve records in this DNS zone.
+        number_of_record_sets:
+            description:
+                - The current number of record sets in this DNS zone.
+        max_number_of_record_sets:
+            description:
+                - The maximum number of record sets that can be created in this DNS zone.
+        name_servers:
+            description:
+                - The name servers for this DNS zone.
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
