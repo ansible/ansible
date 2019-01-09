@@ -139,7 +139,7 @@ def main():
     results = dict(
         changed=changed,
         msg=msg,
-        path=path
+        path=path,
     )
 
     # Mission complete
