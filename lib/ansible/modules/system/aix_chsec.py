@@ -136,7 +136,7 @@ def main():
     (changed, msg) = do_stanza(module, path, stanza, options, state)
 
 
-    results = dict(
+    result = dict(
         changed=changed,
         msg=msg,
         path=path,
