@@ -42,6 +42,7 @@ options:
             - If set to C(present) stanza incl.options will be added.
             - To remove an option from the stanza set to C(present) and set key to an empty value (key=).
             - All rules/allowed file-stanza combos/allowed files for the chsec command also applies here, so once again, read "man chsec"!
+         type: str
          choices: [ absent, present ]
          default: present
 
