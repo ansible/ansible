@@ -65,10 +65,9 @@ options:
     description:
     - The instance to create the database on.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_spanner_instance
-      task and then set this instance field to "{{ name-of-resource }}" Alternatively,
-      you can set this instance to a dictionary with the name key where the value
-      is the name of your Instance'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_spanner_instance
+      task and then set this instance field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -118,7 +117,7 @@ instance:
   description:
   - The instance to create the database on.
   returned: success
-  type: dict
+  type: str
 '''
 
 ################################################################################
@@ -141,7 +140,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
             extra_statements=dict(type='list', elements='str'),
-            instance=dict(required=True, type='dict')
+            instance=dict(required=True)
         )
     )
 

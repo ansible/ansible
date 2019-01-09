@@ -152,6 +152,7 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a http health check
   gcp_compute_http_health_check:
       name: "httphealthcheck-backendservice"
@@ -164,6 +165,7 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: healthcheck
+  ignore_errors: true
 - name: delete a instance group
   gcp_compute_instance_group:
       name: "instancegroup-backendservice"
@@ -173,3 +175,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: instancegroup
+  ignore_errors: true

@@ -84,10 +84,9 @@ options:
     description:
     - The network to which all instances in the instance group belong.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
     required: false
   region:
     description:
@@ -97,10 +96,9 @@ options:
     description:
     - The subnetwork to which all instances in the instance group belong.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-      you can set this subnetwork to a dictionary with the selfLink key where the
-      value is the selfLink of your Subnetwork'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork
+      task and then set this subnetwork field to "{{ name-of-resource }}"'
     required: false
   zone:
     description:
@@ -191,7 +189,7 @@ network:
   description:
   - The network to which all instances in the instance group belong.
   returned: success
-  type: dict
+  type: str
 region:
   description:
   - The region where the instance group is located (for regional resources).
@@ -201,7 +199,7 @@ subnetwork:
   description:
   - The subnetwork to which all instances in the instance group belong.
   returned: success
-  type: dict
+  type: str
 zone:
   description:
   - A reference to the zone where the instance group resides.
@@ -244,11 +242,11 @@ def main():
                 name=dict(type='str'),
                 port=dict(type='int')
             )),
-            network=dict(type='dict'),
+            network=dict(),
             region=dict(type='str'),
-            subnetwork=dict(type='dict'),
+            subnetwork=dict(),
             zone=dict(required=True, type='str'),
-            instances=dict(type='list', elements='dict')
+            instances=dict(type='list')
         )
     )
 
