@@ -28,8 +28,8 @@ class SortingHelpFormatter(argparse.HelpFormatter):
         super(SortingHelpFormatter, self).add_arguments(actions)
 
 
-class PrependAction(argparse.Action):
-    """A near clone of ``argparse._AppendAction``, but designed to prepend values
+class PrependListAction(argparse.Action):
+    """A near clone of ``argparse._AppendAction``, but designed to prepend list values
     instead of appending.
     """
     def __init__(self, option_strings, dest, nargs=None, const=None, default=None, type=None,
@@ -40,7 +40,7 @@ class PrependAction(argparse.Action):
                              'the append const action may be more appropriate')
         if const is not None and nargs != argparse.OPTIONAL:
             raise ValueError('nargs must be %r to supply const' % argparse.OPTIONAL)
-        super(PrependAction, self).__init__(
+        super(PrependListAction, self).__init__(
             option_strings=option_strings,
             dest=dest,
             nargs=nargs,
@@ -274,7 +274,7 @@ def add_module_options(parser):
     """Add options for commands that load modules"""
     parser.add_argument('-M', '--module-path', dest='module_path', default=None,
                         help="prepend colon-separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
-                        type=unfrack_path(pathsep=True), action=PrependAction)
+                        type=unfrack_path(pathsep=True), action=PrependListAction)
 
 
 def add_output_options(parser):

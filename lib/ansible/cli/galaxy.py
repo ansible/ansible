@@ -65,7 +65,7 @@ class GalaxyCLI(CLI):
 
         roles_path = opt_help.argparse.ArgumentParser(add_help=False)
         roles_path.add_argument('-p', '--roles-path', dest='roles_path', type=opt_help.unfrack_path(pathsep=True),
-                                default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependAction,
+                                default=C.DEFAULT_ROLES_PATH, action=opt_help.PrependListAction,
                                 help='The path to the directory containing your roles. The default is the roles_path '
                                      'configured in your ansible.cfg file (/etc/ansible/roles if not configured)')
 
