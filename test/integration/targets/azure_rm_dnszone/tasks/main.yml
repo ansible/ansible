@@ -102,6 +102,11 @@
     - "{{ domain_name }}.private"
   register: results
 
+- assert:
+    that:
+        - "not {{ item.changed }}"
+  with_items: "{{ results.results }}"
+
 #
 # azure_rm_dnsrecordset test
 #
