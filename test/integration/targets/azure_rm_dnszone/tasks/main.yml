@@ -2,6 +2,16 @@
   set_fact:
     domain_name: "{{ resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
 
+- name: Create a DNS zone (check mode)
+  azure_rm_dnszone:
+    resource_group: "{{ resource_group }}"
+    name: "{{ domain_name }}.com"
+  register: results
+  check_mode: yes
+
+- assert:
+    that: results.changed
+
 - name: Create a DNS zone
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
@@ -24,22 +34,6 @@
       - results.changed
       - results.state.tags.test == 'modified'
 
-- name: Test check_mode
-  azure_rm_dnszone:
-    resource_group: "{{ resource_group }}"
-    name: "{{ domain_name }}.com"
-    state: present
-    tags:
-      test: new_modified
-  check_mode: yes
-  register: results
-
-- assert:
-    that: 
-      - results.changed
-      - results.state.tags.test == 'modified'
-      - results.check_mode == true
-
 - name: Retrieve DNS Zone Facts
   azure_rm_dnszone_facts:
     resource_group: "{{ resource_group }}"
@@ -48,7 +42,6 @@
 - name: Assert that facts module returned result
   assert:
     that: 
-      - not results.changed
       - azure_dnszones[0].tags.test == 'modified'
       - azure_rm_dnszones[0].type == 'public'
 
@@ -56,6 +49,9 @@
   azure_rm_virtualnetwork:
     resource_group: "{{ resource_group }}"
     name: "{{ item }}"
+    address_prefixes_cidr:
+      - 10.1.0.0/16
+      - 172.100.0.0/16
   with_items:
     - "{{ domain_name }}registration1"
     - "{{ domain_name }}resolution1"

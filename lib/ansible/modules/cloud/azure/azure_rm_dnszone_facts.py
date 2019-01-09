@@ -192,7 +192,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
             name_servers=zone.name_servers,
             tags=zone.tags,
             type=zone.zone_type.value.lower(),
-            registration_virtual_network=[to_native(x.id) for x in zone.registration_virtual_network] if zone.registration_virtual_network else None,
+            registration_virtual_networks=[to_native(x.id) for x in zone.registration_virtual_networks] if zone.registration_virtual_networks else None,
             resolution_virtual_networks=[to_native(x.id) for x in zone.resolution_virtual_networks] if zone.resolution_virtual_networks else None
         )
 

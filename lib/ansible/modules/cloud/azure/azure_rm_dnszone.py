@@ -117,8 +117,8 @@ class AzureRMDNSZone(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             type=dict(type='str', choices=['private', 'public']),
-            registration_virtual_networks=dict(type='list'),
-            resolution_virtual_networks=dict(type='list')
+            registration_virtual_networks=dict(type='list', elements='raw'),
+            resolution_virtual_networks=dict(type='list', elements='raw')
         )
 
         # store the results of the module operation
@@ -146,6 +146,9 @@ class AzureRMDNSZone(AzureRMModuleBase):
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
+        self.registration_virtual_networks = self.preprocess_vn_list(self.registration_virtual_networks)
+        self.resolution_virtual_networks = self.preprocess_vn_list(self.resolution_virtual_networks)
+
         self.results['check_mode'] = self.check_mode
 
         # retrieve resource group to make sure it exists
@@ -161,10 +164,6 @@ class AzureRMDNSZone(AzureRMModuleBase):
             # serialize object into a dictionary
             results = zone_to_dict(zone)
 
-            # if the virtual networks is NONE, keep this parameter unchanged
-            self.registration_virtual_networks = self.preprocess_vn_list(self.registration_virtual_networks) or results['registration_virtual_network']
-            self.resolution_virtual_networks = self.preprocess_vn_list(self.resolution_virtual_networks) or results['resolution_virtual_networks']
-
             # don't change anything if creating an existing zone, but change if deleting it
             if self.state == 'present':
                 changed = False
@@ -175,13 +174,19 @@ class AzureRMDNSZone(AzureRMModuleBase):
                 if self.type and results['type'] != self.type:
                     changed = True
                     results['type'] = self.type
-                if self.resolution_virtual_networks and set(self.resolution_virtual_networks) != set(results['resolution_virtual_networks'] or []):
-                    changed = True
-                    results['resolution_virtual_networks'] = self.resolution_virtual_networks
-                if self.registration_virtual_networks and set(self.registration_virtual_networks) != set(results['registration_virtual_network'] or []):
-                    changed = True
-                    results['registration_virtual_network'] = self.registration_virtual_network
-
+                if self.resolution_virtual_networks:
+                    if set(self.resolution_virtual_networks) != set(results['resolution_virtual_networks'] or []):
+                        changed = True
+                        results['resolution_virtual_networks'] = self.resolution_virtual_networks
+                else:
+                    # this property should not be changed
+                    self.resolution_virtual_networks = results['resolution_virtual_networks']
+                if self.registration_virtual_networks:
+                    if set(self.registration_virtual_networks) != set(results['registration_virtual_networks'] or []):
+                        changed = True
+                        results['registration_virtual_networks'] = self.registration_virtual_networks
+                else:
+                    self.registration_virtual_networks = results['registration_virtual_networks']
             elif self.state == 'absent':
                 changed = True
 
@@ -248,7 +253,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
                                   resource_group=vn_dict.get('resource_group') or self.resource_group)
 
     def construct_subresource_list(self, raw):
-        return [self.dns_models.SubResource(x) for x in raw] if raw else None
+        return [self.dns_models.SubResource(id=x) for x in raw] if raw else None
 
 
 def zone_to_dict(zone):
@@ -260,7 +265,7 @@ def zone_to_dict(zone):
         name_servers=zone.name_servers,
         tags=zone.tags,
         type=zone.zone_type.value.lower(),
-        registration_virtual_network=[to_native(x.id) for x in zone.registration_virtual_network] if zone.registration_virtual_network else None,
+        registration_virtual_networks=[to_native(x.id) for x in zone.registration_virtual_networks] if zone.registration_virtual_networks else None,
         resolution_virtual_networks=[to_native(x.id) for x in zone.resolution_virtual_networks] if zone.resolution_virtual_networks else None
     )
     return result
