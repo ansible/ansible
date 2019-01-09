@@ -85,6 +85,17 @@ options:
     default: false
     version_added: "2.10"
     type: bool
+  tags:
+    description:
+      - Tag dict to apply to the queue (requires boto3 1.9.54 or above).
+    version_added: "2.10"
+    type: dict
+  purge_tags:
+    description:
+      - Remove tags not listed in I(tags) when tags is not None.
+    default: true
+    version_added: "2.10"
+    type: bool
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -94,11 +105,13 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Create a role with description
+- name: Create a role with description and tags
   iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
     description: This is My New Role
+    tags:
+      env: dev
 
 - name: "Create a role and attach a managed policy called 'PowerUserAccess'"
   iam_role:
@@ -178,16 +191,21 @@ iam_role:
                     'policy_name': 'PowerUserAccess'
                 }
             ]
+        tags:
+            description: role tags
+            type: dict
+            returned: always
+            sample: '{"Env": "Prod"}'
 '''
 
 import json
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, compare_policies
-from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, compare_policies
+from ansible.module_utils.ec2 import AWSRetry, ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 
 try:
-    from botocore.exceptions import ClientError, BotoCoreError
+    from botocore.exceptions import ClientError, BotoCoreError, ParamValidationError
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
@@ -397,6 +415,11 @@ def create_or_update_role(connection, module):
         role = get_role(connection, module, params['RoleName'])
         role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
 
+    # Manage tags
+    tags_changed, tags = update_role_tags(connection, module)
+    changed |= tags_changed
+    role['tags'] = tags
+
     module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
 
 
@@ -496,6 +519,37 @@ def get_attached_policy_list(connection, module, name):
         module.fail_json_aws(e, msg="Unable to list attached policies for role {0}".format(name))
 
 
+def update_role_tags(connection, module):
+    new_tags = module.params.get('tags')
+    if new_tags is None:
+        return False, {}
+
+    if not hasattr(connection, 'list_role_tags'):
+        module.fail_json(msg='You need at least boto3 1.9.46 to manage IAM role tags')
+
+    role_name = module.params.get('name')
+    purge_tags = module.params.get('purge_tags')
+
+    try:
+        existing_tags = boto3_tag_list_to_ansible_dict(connection.list_role_tags(RoleName=role_name)['Tags'])
+    except (ClientError, KeyError):
+        existing_tags = {}
+
+    tags_to_add, tags_to_remove = compare_aws_tags(existing_tags, new_tags, purge_tags=purge_tags)
+
+    if not module.check_mode:
+        try:
+            if tags_to_remove:
+                connection.untag_role(RoleName=role_name, TagKeys=tags_to_remove)
+            if tags_to_add:
+                connection.tag_role(RoleName=role_name, Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
+        except (ClientError, BotoCoreError, ParamValidationError) as e:
+            module.fail_json_aws(e, msg='Unable to set tags for role %s' % role_name)
+
+    changed = bool(tags_to_add) or bool(tags_to_remove)
+    return changed, new_tags
+
+
 def main():
 
     argument_spec = dict(
@@ -510,6 +564,8 @@ def main():
         create_instance_profile=dict(type='bool', default=True),
         delete_instance_profile=dict(type='bool', default=False),
         purge_policies=dict(type='bool', default=True),
+        tags=dict(type='dict'),
+        purge_tags=dict(type='bool', default=True),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[('state', 'present', ['assume_role_policy_document'])],
