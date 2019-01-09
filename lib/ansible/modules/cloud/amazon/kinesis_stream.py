@@ -347,21 +347,9 @@ def find_stream(client, stream_name, check_mode=False):
         'StreamName': stream_name,
     }
     results = dict()
-    has_more_shards = True
-    shards = list()
     try:
         if not check_mode:
-            while has_more_shards:
-                results = (
-                    client.describe_stream(**params)['StreamDescription']
-                )
-                shards.extend(results.pop('Shards'))
-                has_more_shards = results['HasMoreShards']
-            results['Shards'] = shards
-            num_closed_shards = len([s for s in shards if 'EndingSequenceNumber' in s['SequenceNumberRange']])
-            results['OpenShardsCount'] = len(shards) - num_closed_shards
-            results['ClosedShardsCount'] = num_closed_shards
-            results['ShardsCount'] = len(shards)
+            results = client.describe_stream_summary(**params)['StreamDescriptionSummary']
         else:
             results = {
                 'OpenShardsCount': 5,
@@ -934,7 +922,7 @@ def update(client, current_stream, stream_name, number_of_shards=1, retention_pe
             )
             return success, changed, err_msg
 
-    if current_stream['OpenShardsCount'] != number_of_shards:
+    if current_stream['OpenShardCount'] != number_of_shards:
         success, err_msg = (
             update_shard_count(client, stream_name, number_of_shards, check_mode=check_mode)
         )
@@ -1030,11 +1018,6 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                 check_mode=check_mode
             )
         )
-
-    if stream_found and not check_mode:
-        if current_stream['ShardsCount'] != number_of_shards:
-            err_msg = 'Can not change the number of shards in a Kinesis Stream'
-            return success, changed, err_msg, results
 
     if stream_found and current_stream.get('StreamStatus') != 'DELETING':
         success, changed, err_msg = update(
