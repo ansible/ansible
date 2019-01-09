@@ -1368,7 +1368,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 # delete the VM
                 self.log("Delete virtual machine {0}".format(self.name))
                 self.results['ansible_facts']['azure_vm'] = None
-                self.delete_vm(vm, vm_dict)
+                self.delete_vm(vm)
 
         # until we sort out how we want to do this globally
         del self.results['actions']
@@ -1419,7 +1419,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     nic_dict = self.serialize_obj(nic, 'NetworkInterface')
                     interface_dict['name'] = int_dict['networkInterfaces']
                     interface_dict['properties'] = nic_dict['properties']
-                    interface_dict['tags'] = nic_dict.get('tags')
         # Expand public IPs to include config properties
         for interface in result['properties']['networkProfile']['networkInterfaces']:
             for config in interface['properties']['ipConfigurations']:
@@ -1434,21 +1433,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     pip_dict = self.serialize_obj(pip, 'PublicIPAddress')
                     config['properties']['publicIPAddress']['name'] = pipid_dict['publicIPAddresses']
                     config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
-                    config['properties']['publicIPAddress']['tags'] = pip_dict.get('tags')
-        # Expand network security groups to include config properties
-        for interface in result['properties']['networkProfile']['networkInterfaces']:
-            nsg = interface['properties']['networkSecurityGroup']
-            nsg_dict = azure_id_to_dict(nsg['id'])
-            try:
-                nsg_obj = self.network_client.network_security_groups.get(nsg_dict['resourceGroups'],
-                                                                          nsg_dict['networkSecurityGroups'])
-            except Exception as exc:
-                self.fail("Error fetching NSG {0} - {1}".format(nsg_dict['networkSecurityGroups'],
-                                                                str(exc)))
-            nsg_dict = self.serialize_obj(nsg_obj, 'NetworkSecurityGroup')
-            nsg['name'] = nsg_dict['name']
-            nsg['properties'] = nsg_dict['properties']
-            nsg['tags'] = nsg_dict.get('tags')
 
         self.log(result, pretty_print=True)
         if self.state != 'absent' and not result['powerstate']:
@@ -1506,12 +1490,17 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.fail("Error generalizing virtual machine {0} - {1}".format(self.name, str(exc)))
         return True
 
-    def delete_vm(self, vm, vm_dict):
+    def delete_vm(self, vm):
         vhd_uris = []
         managed_disk_ids = []
         nic_names = []
         pip_names = []
         nsg_names = []
+
+        own_sa = vm.tags.get('_own_sa_') if vm.tags else None
+        own_nic = vm.tags.get('_own_nic_') if vm.tags else None
+        own_pip = vm.tags.get('_own_pip_') if vm.tags else None
+        own_nsg = vm.tags.get('_own_nsg_') if vm.tags else None
 
         if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
             # store the attached vhd info so we can nuke it after the VM is gone
@@ -1539,33 +1528,32 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
             # store the attached nic info so we can nuke them after the VM is gone
             self.log('Storing NIC names for deletion.')
-            for interface in vm_dict['properties']['networkProfile']['networkInterfaces']:
-                # check whether NIC was created by this VM
-                if interface.get('tags') and interface.get('tags').get('owning_vm') == self.name:
-                    id_dict = azure_id_to_dict(interface['id'])
+            for interface in vm.network_profile.network_interfaces:
+                id_dict = azure_id_to_dict(interface.id)
+                if id_dict['networkInterfaces'] == own_nic:
                     nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
             self.log('NIC names to delete {0}'.format(str(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
             if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
                 # also store each nic's attached public IPs and delete after the NIC is gone
-                for nic in vm_dict['properties']['networkProfile']['networkInterfaces']:
-                    for ipc in nic['properties']['ipConfigurations']:
-                        pip = ipc['properties'].get('publicIPAddress')
-                        if pip:
-                            pip_dict = azure_id_to_dict(pip['id'])
-                            if pip.get('tags') and pip.get('tags').get('owning_vm') == self.name:
+                for nic_dict in nic_names:
+                    nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
+                    for ipc in nic.ip_configurations:
+                        if ipc.public_ip_address:
+                            pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
+                            if pip_dict['publicIPAddresses'] == own_pip:
                                 pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
                 self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
             # store each nic's attached public NSGs and delete after the NIC is gone
-            for nic in vm_dict['properties']['networkProfile']['networkInterfaces']:
-                nsg = nic['properties'].get('networkSecurityGroup')
-                if nsg:
-                    nsg_dict = azure_id_to_dict(nsg['id'])
-                    if nsg.get('tags') and nsg.get('tags').get('owning_vm') == self.name:
+            for nic_dict in nic_names:
+                nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
+                if nic.network_security_group:
+                    nsg_dict = azure_id_to_dict(nic.network_security_group.id)
+                    if nsg_dict['networkSecurityGroups'] == own_nsg:
                         nsg_names.append(dict(name=nsg_dict['networkSecurityGroups'], resource_group=nsg_dict['resourceGroups']))
                 self.log('NSGs to  delete are {0}'.format(str(nsg_names)))
-                self.results['deleted_nsgs'] = nsg_names
+                self.results['deleted_network_security_groups'] = pip_names
 
         self.log("Deleting virtual machine {0}".format(self.name))
         self.results['actions'].append("Deleted virtual machine {0}".format(self.name))
@@ -1580,7 +1568,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         # TODO: best-effort to keep deleting other linked resources if we encounter an error
         if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
             self.log('Deleting VHDs')
-            self.delete_vm_storage(vhd_uris)
+            self.delete_vm_storage(vhd_uris, own_sa)
             self.log('Deleting managed disks')
             self.delete_managed_disks(managed_disk_ids)
 
@@ -1594,9 +1582,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             for pip_dict in pip_names:
                 self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
 
-        self.log('Deleting NSGs')
-        for nsg_dict in nsg_names:
-            self.delete_nsg(nsg_dict['resource_group'], nsg_dict['name'])
+        if self.remove_on_absent.intersection(set(['all', 'network_security_groups'])):
+            self.log('Deleting NSGs')
+            for nsg_dict in nsg_names:
+                self.delete_nsg(nsg_dict['resource_group'], nsg_dict['name'])
         return True
 
     def get_network_interface(self, resource_group, name):
@@ -1644,7 +1633,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             except Exception as exc:
                 self.fail("Error deleting managed disk {0} - {1}".format(mdi, str(exc)))
 
-    def delete_vm_storage(self, vhd_uris):
+    def delete_vm_storage(self, vhd_uris, own_sa):
         # FUTURE: figure out a cloud_env indepdendent way to delete these
         for uri in vhd_uris:
             self.log("Extracting info from blob uri '{0}'".format(uri))
@@ -1664,6 +1653,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 blob_client.delete_blob(container_name, blob_name)
             except Exception as exc:
                 self.fail("Error deleting blob {0}:{1} - {2}".format(container_name, blob_name, str(exc)))
+
+            if own_sa is not None:
+                self.log("Delete storage account {0}".format(own_sa))
+                self.results['actions'].append("Deleted storage account {0}".format(own_sa))
+                try:
+                    self.storage_client.storage_accounts.delete(self.resource_group, own_sa)
+                except Exception as exc:
+                    self.fail("Error deleting storage account {0} - {2}".format(own_sa, str(exc)))
 
     def get_marketplace_image_version(self):
         try:
@@ -1751,6 +1748,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         '''
         account = None
         valid_name = False
+        if self.tags is None:
+            self.tags = {}
 
         # Attempt to find a valid storage account name
         storage_account_name_base = re.sub('[^a-zA-Z0-9]', '', self.name[:20].lower())
@@ -1777,7 +1776,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         sku = self.storage_models.Sku(self.storage_models.SkuName.standard_lrs)
         sku.tier = self.storage_models.SkuTier.standard
         kind = self.storage_models.Kind.storage
-        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location, tags={'owning_vm': self.name})
+        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location)
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:
@@ -1785,6 +1784,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.get_poller_result(poller)
         except Exception as exc:
             self.fail("Failed to create storage account: {0} - {1}".format(storage_account_name, str(exc)))
+        self.tags['_own_sa_'] = storage_account_name
         return self.get_storage_account(storage_account_name)
 
     def check_storage_account_name(self, name):
@@ -1808,6 +1808,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         network_interface_name = self.name + '01'
         nic = None
+        if self.tags is None:
+            self.tags = {}
 
         self.log("Create default NIC {0}".format(network_interface_name))
         self.log("Check to see if NIC {0} exists".format(network_interface_name))
@@ -1888,10 +1890,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             sku = self.network_models.PublicIPAddressSku(name="Standard") if self.zones else None
             pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method, sku=sku)
             pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid, sku=sku)
+            self.tags['_own_pip_'] = self.name + '01'
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name + '01', self.os_type,
-                                                  self.open_ports, {'owning_vm': self.name})
+                                                  self.open_ports)
+        self.tags['_own_nsg_'] = self.name + '01'
 
         parameters = self.network_models.NetworkInterface(
             location=self.location,
@@ -1899,8 +1903,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 self.network_models.NetworkInterfaceIPConfiguration(
                     private_ip_allocation_method='Dynamic',
                 )
-            ],
-            tags={'owning_vm': self.name}
+            ]
         )
         parameters.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet_id)
         parameters.ip_configurations[0].name = 'default'
@@ -1917,6 +1920,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                                                              network_interface_name,
                                                                              parameters)
             new_nic = self.get_poller_result(poller)
+            self.tags['_own_nic_'] = network_interface_name
         except Exception as exc:
             self.fail("Error creating network interface {0} - {1}".format(network_interface_name, str(exc)))
         return new_nic
