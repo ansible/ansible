@@ -301,6 +301,9 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # Start at the second directory because we don't want the "vendor"
         mod_path_only = os.path.dirname(module_path[len(module_dir):])
 
+        relative_dir = mod_path_only.split('/')[1]
+        sub_category = mod_path_only[len(relative_dir)+2:]
+
         primary_category = ''
         module_categories = []
         # build up the categories that this module belongs to
@@ -312,6 +315,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
             category = category[new_cat]
 
         category['_modules'].append(module)
+
 
         # the category we will use in links (so list_of_all_plugins can point to plugins/action_plugins/*'
         if module_categories:
@@ -338,6 +342,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
                                'returndocs': returndocs,
                                'categories': module_categories,
                                'primary_category': primary_category,
+                               'sub_category': sub_category
                                }
 
     # keep module tests out of becoming module docs
@@ -575,6 +580,7 @@ def process_categories(plugin_info, categories, templates, output_dir, output_na
         category_title = category_name.title()
 
         subcategories = dict((k, v) for k, v in module_map.items() if k != '_modules')
+
         template_data = {'title': category_title,
                          'category_name': category_name,
                          'category': module_map,
@@ -630,6 +636,7 @@ effort support will be provided but is not covered under any support contracts.
 These modules are currently shipped with Ansible, but will most likely be shipped separately in the future.
                                           """},
                     }
+    subcategories = dict()
 
     # only gen support pages for modules for now, need to split and namespace templates and generated docs
     if plugin_type == 'plugins':
@@ -649,6 +656,19 @@ These modules are currently shipped with Ansible, but will most likely be shippe
             supported_by['Ansible Community']['modules'].append(module)
         else:
             raise AnsibleError('Unknown supported_by value: %s' % info['metadata']['supported_by'])
+
+
+        # build up the categories that this module belongs to
+        new_cat = info['sub_category']
+        if new_cat not in subcategories:
+            display.warning('subcategory is %s' % new_cat)
+            subcategories[new_cat] = dict()
+            subcategories[new_cat]['_modules'] = []
+            subcategories[new_cat]['_modules'] = new_cat
+
+        subcategories[new_cat]['_modules'].append(module)
+
+        display.warning('subcategories is %s' % subcategories)
 
     # Render the module lists
     for maintainers, data in supported_by.items():
