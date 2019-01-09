@@ -733,16 +733,17 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.sku.capacity = self.capacity
 
                     data_disks = []
-                    for data_disk in self.data_disks:
-                        data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
-                            lun=data_disk['lun'],
-                            caching=data_disk['caching'],
-                            create_option=self.compute_models.DiskCreateOptionTypes.empty,
-                            disk_size_gb=data_disk['disk_size_gb'],
-                            managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
-                                storage_account_type=data_disk['managed_disk_type']
-                            ),
-                        ))
+                    if self.data_disks:
+                        for data_disk in self.data_disks:
+                            data_disks.append(self.compute_models.VirtualMachineScaleSetDataDisk(
+                                lun=data_disk['lun'],
+                                caching=data_disk['caching'],
+                                create_option=self.compute_models.DiskCreateOptionTypes.empty,
+                                disk_size_gb=data_disk['disk_size_gb'],
+                                managed_disk=self.compute_models.VirtualMachineScaleSetManagedDiskParameters(
+                                    storage_account_type=data_disk['managed_disk_type']
+                                ),
+                            ))
                     vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
 
                     if image_reference is not None:
