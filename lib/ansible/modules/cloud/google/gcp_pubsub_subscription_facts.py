@@ -67,7 +67,7 @@ items:
       description:
       - A reference to a Topic resource.
       returned: success
-      type: dict
+      type: str
     pushConfig:
       description:
       - If push delivery is used with this subscription, this field is used to configure

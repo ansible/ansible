@@ -181,7 +181,7 @@ items:
         preemptible:
           description:
           - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-            for more inforamtion about preemptible VM instances.'
+            for more information about preemptible VM instances.'
           returned: success
           type: bool
     masterAuth:
