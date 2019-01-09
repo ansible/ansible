@@ -316,6 +316,9 @@ def allocate_address(ec2, domain, reuse_existing_ip_allowed):
         if unassociated_addresses:
             return unassociated_addresses[0], False
 
+    if not domain:
+        domain = 'standard'
+
     response = ec2.allocate_address(Domain=domain)
     changed = True
 

@@ -1,0 +1,42 @@
+- hosts: localhost
+  connection: local
+  # vars:
+  #    resource_prefix: 'ansible-testing'
+
+  tasks:
+    - block:
+        - name: set up aws connection info
+          set_fact:
+            aws_connection_info: &aws_connection_info
+              aws_access_key: "{{ aws_access_key }}"
+              aws_secret_key: "{{ aws_secret_key }}"
+              security_token: "{{ security_token }}"
+              region: "{{ aws_region }}"
+          no_log: True
+
+        - ec2_ami_facts:
+            <<: *aws_connection_info
+            filters:
+              architecture: x86_64
+              virtualization-type: hvm
+              root-device-type: ebs
+              name: "amzn-ami-hvm-2018.*"
+          register: amis
+
+        - name: create t2.micro with cpu options (fails gracefully)
+          ec2_instance:
+            name: '{{resource_prefix}}_instance_fail'
+            image_id: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
+            instance_type: t2.micro
+            cpu_options:
+                core_count: 1
+                threads_per_core: 1
+            <<: *aws_connection_info
+          register: test_instance
+          ignore_errors: yes
+
+        - name: check that graceful error message is returned when creation with cpu_options and old botocore
+          assert:
+            that:
+              - test_instance.failed
+              - 'test_instance.msg == "cpu_options is only supported with botocore >= 1.10.16"'

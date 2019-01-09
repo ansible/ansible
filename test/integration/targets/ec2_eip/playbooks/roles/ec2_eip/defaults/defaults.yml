@@ -1,0 +1,3 @@
+---
+# defaults file for test_ec2_eip
+resource_prefix: ansible_ec2_eip_test

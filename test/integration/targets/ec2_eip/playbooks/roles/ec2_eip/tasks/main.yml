@@ -29,9 +29,9 @@
       ec2_vpc_net:
         cidr_block: 19.41.53.0/24
         state: present
-        name: '{{ resource_prefix }}_ansible_ec2_eip_test'
+        name: '{{ resource_prefix }}_'
         tags:
-          'Name': '{{ resource_prefix }}_ansible_ec2_eip_test'
+          'Name': '{{ resource_prefix }}_vpc'
         <<: *aws_connection_info
       register: test_vpc
 
@@ -39,7 +39,7 @@
       ec2_vpc_subnet:
         az: '{{ aws_region }}a'
         tags:
-          'Name': '{{ resource_prefix }}_ansible_ec2_eip_test'
+          'Name': '{{ resource_prefix }}_subnet'
         vpc_id: '{{ test_vpc.vpc.id }}'
         cidr: 19.41.53.0/24
         state: present
@@ -47,25 +47,19 @@
       register: test_subnet
 
     - name: provision ec2 instance INSIDE VPC to associate eip
-      ec2:
+      ec2_instance:
         instance_type: t2.micro
-        state: present
-        image: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
-        wait: yes
-        instance_tags:
-          'Name': '{{resource_prefix}}_ansible_ec2_eip_test'
+        image_id: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
+        name: '{{resource_prefix}}_instance_vpc'
         vpc_subnet_id: '{{ test_subnet.subnet.id }}'
         <<: *aws_connection_info
       register: test_vpc_instance
 
     - name: provision ec2 instance OUTSIDE VPC to associate eip
-      ec2:
+      ec2_instance:
         instance_type: t2.micro
-        state: present
-        image: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
-        wait: yes
-        instance_tags:
-          'Name': '{{resource_prefix}}_ansible_ec2_eip_test'
+        image_id: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
+        name: '{{resource_prefix}}_instance_no_vpc'
         <<: *aws_connection_info
       register: test_instance
 
@@ -87,7 +81,7 @@
 
     - name:  associate it with the VPC instance
       ec2_eip:
-        device_id: '{{ test_vpc_instance.instances[0].id }}'
+        device_id: '{{ test_vpc_instance.instances[0].instance_id }}'
         public_ip: '{{ allocated_vpc_eip.public_ip }}'
         in_vpc: yes
         <<: *aws_connection_info
@@ -100,7 +94,7 @@
 
     - name:  disassociate it from the VPC instance and release
       ec2_eip:
-        device_id: '{{ test_vpc_instance.instances[0].id }}'
+        device_id: '{{ test_vpc_instance.instances[0].instance_id }}'
         public_ip: '{{ allocated_vpc_eip.public_ip }}'
         in_vpc: yes
         state: absent
@@ -130,7 +124,7 @@
 
     - name:  associate it with the instance
       ec2_eip:
-        device_id: '{{ test_instance.instances[0].id }}'
+        device_id: '{{ test_instance.instances[0].instance_id }}'
         public_ip: '{{ allocated_eip.public_ip }}'
         <<: *aws_connection_info
       register: result
@@ -142,7 +136,7 @@
 
     - name:  disassociate it from the instance and release
       ec2_eip:
-        device_id: '{{ test_instance.instances[0].id }}'
+        device_id: '{{ test_instance.instances[0].instance_id }}'
         public_ip: '{{ allocated_eip.public_ip }}'
         state: absent
         release_on_disassociation: yes
@@ -173,20 +167,19 @@
 
 
     - name: remove test ec2 instances
-      ec2:
+      ec2_instance:
         instance_ids: '{{ item }}'
         state: absent
-        wait: yes
         <<: *aws_connection_info
       loop:
-        - '{{ test_vpc_instance.instances[0].id }}'
-        - '{{ test_instance.instances[0].id }}'
+        - '{{ test_vpc_instance.instances[0].instance_id }}'
+        - '{{ test_instance.instances[0].instance_id }}'
 
     - name: remove test subnet
       ec2_vpc_subnet:
         az: '{{ aws_region }}a'
         tags:
-          'Name': '{{resource_prefix}}_ansible_ec2_eip_test'
+          'Name': '{{resource_prefix}}_subnet'
         vpc_id: '{{ test_subnet.subnet.vpc_id }}'
         cidr: 19.41.53.0/24
         state: absent
@@ -196,7 +189,7 @@
       ec2_vpc_net:
         cidr_block: 19.41.53.0/24
         state: absent
-        name: '{{ resource_prefix }}_ansible_ec2_eip_test'
+        name: '{{ resource_prefix }}_vpc'
         tags:
           'Name': '{{ resource_prefix }}_ansible_ec2_eip_test'
         <<: *aws_connection_info
