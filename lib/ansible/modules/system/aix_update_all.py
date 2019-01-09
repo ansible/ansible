@@ -37,10 +37,10 @@ EXAMPLES = '''
 - name: Install All rpms
   aix_update_all:
 
-# Install latest bash rpm from the nfs_server: rn100pgpl.itc.testlab.intranet from the share: /export/nim/aix7104-03/lpp_new
+# Install latest bash rpm from the nfs_server: nimserver.local from the share: /export/nim/aix7104-03/lpp_new
 - name: Install rpm bash
   aix_update_all:
-    nfs_server: rn100pgpl.itc.testlab.intranet
+    nfs_server: nimserver.local
     nfs_share: /export/nim/aix7104-03/lpp_new
 '''
 
