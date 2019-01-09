@@ -52,7 +52,7 @@ author:
 '''
 
 EXAMPLES = '''
-- name: add ldap user stanza
+- name: Add an LDAP user stanza
   aix_chsec:
     path: /etc/security/user
     stanza: ldapuser
