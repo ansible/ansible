@@ -44,6 +44,11 @@ options:
     description:
       - IP address of the host object.
     type: str
+  state:
+    description:
+      - State of the access rule (present or absent). Defaults to present.
+    type: str
+    default: present
 """
 
 EXAMPLES = """
