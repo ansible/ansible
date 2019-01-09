@@ -1133,6 +1133,11 @@ files:
 ##############################
 # other lib
 
+  lib/ansible/executor/powershell:
+    labels:
+    - windows
+    maintainers: $team_windows_core
+    support: core
   lib/ansible/template:
     keywords:
       - jinja
