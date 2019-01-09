@@ -74,7 +74,7 @@ options:
   cascade:
     description:
       - Automatically install/remove any extensions that this extension depends on
-        that are not already installed/removed.
+        that are not already installed/removed (supported since PostgreSQL 9.6).
     type: bool
     default: no
     version_added: '2.8'
@@ -96,6 +96,12 @@ EXAMPLES = '''
     name: postgis
     db: acme
     schema: extensions
+
+# Adds earthdistance to the database "template1"
+- postgresql_ext:
+    name: earthdistance
+    db: template1
+    cascade: true
 '''
 import traceback
 
@@ -128,22 +134,22 @@ def ext_exists(cursor, ext):
 
 def ext_delete(cursor, ext, cascade):
     if ext_exists(cursor, ext):
+        query = "DROP EXTENSION \"%s\"" % ext
         if cascade:
-            query = "DROP EXTENSION \"%s\" CASCADE" % ext
-        else:
-            query = "DROP EXTENSION \"%s\"" % ext
-
+            query += " CASCADE"
         cursor.execute(query)
         return True
     else:
         return False
 
 
-def ext_create(cursor, ext, schema):
+def ext_create(cursor, ext, schema, cascade):
     if not ext_exists(cursor, ext):
-        query = 'CREATE EXTENSION "%s"' % ext
+        query = "CREATE EXTENSION \"%s\"" % ext
         if schema:
-            query += ' WITH SCHEMA "%s"' % schema
+            query += " WITH SCHEMA \"%s\"" % schema
+        if cascade:
+            query += " CASCADE"
         cursor.execute(query)
         return True
     else:
@@ -166,7 +172,7 @@ def main():
             ext=dict(required=True, aliases=['name']),
             schema=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
-            cascade=dict(type='bool', default='no'),
+            cascade=dict(type='bool', default=False),
             ssl_mode=dict(default='prefer', choices=[
                           'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None),
@@ -240,7 +246,7 @@ def main():
                 changed = ext_delete(cursor, ext, cascade)
 
             elif state == "present":
-                changed = ext_create(cursor, ext, schema)
+                changed = ext_create(cursor, ext, schema, cascade)
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except Exception as e:
