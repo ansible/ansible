@@ -136,6 +136,11 @@ cmd:
     returned: always
     type: string
     sample: psexec.exe -nobanner \\remote_server -u "DOMAIN\Administrator" -p "some_password" -accepteula E:\setup.exe
+pid:
+    description: The PID of the async process created by PsExec.
+    returned: when C(wait=False)
+    type: int
+    sample: 1532
 rc:
     description: The return code for the command
     returned: always
