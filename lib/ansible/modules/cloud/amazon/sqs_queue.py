@@ -81,9 +81,16 @@ options:
     type: bool
     description: Enables content-based deduplication. Used for FIFOs only.
     version_added: "2.8"
+    default: False
   tags:
     description:
       - Tag dict to apply to the queue (requires botocore 1.5.40 or above).
+    version_added: "2.8"
+  purge_tags:
+    description:
+      - Remove tags not listed in C(tags)
+    type: bool
+    default: True
     version_added: "2.8"
 extends_documentation_fragment:
     - aws
@@ -325,7 +332,6 @@ def update_tags(client, queue_url, module):
         existing_tags = client.list_queue_tags(QueueUrl=queue_url)['Tags']
     except (ClientError, KeyError) as e:
         existing_tags = {}
-        pass
 
     tags_to_add, tags_to_remove = compare_aws_tags(existing_tags, new_tags, purge_tags=purge_tags)
 
