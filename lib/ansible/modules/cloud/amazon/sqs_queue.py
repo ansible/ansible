@@ -255,7 +255,11 @@ def create_or_update_sqs_queue(client, module):
         queue_url = client.create_queue(QueueName=queue_name, Attributes=create_attributes)['QueueUrl']
         result['changed'] = True
 
-    new_attributes = {k: module.params.get(k) for k in ARGUMENT_SPEC.keys() if k not in NON_ATTRIBUTES}
+    new_attributes = {}
+    for key in ARGUMENT_SPEC.keys():  # can't use comprehensions because of python 2.6 support
+        if key not in NON_ATTRIBUTES:
+            new_attributes[key] = module.params.get(key)
+
     changed, arn = update_sqs_queue(client, queue_url, new_attributes, module.check_mode)
     result['changed'] |= changed
     result.update(new_attributes)
@@ -276,8 +280,8 @@ def create_or_update_sqs_queue(client, module):
 
 def update_sqs_queue(client, queue_url, new_attributes, check_mode):
     changed = False
-    existing_attributes = camel_dict_to_snake_dict(
-       client.get_queue_attributes(QueueUrl=queue_url, AttributeNames=['All'])['Attributes'])
+    existing_attributes = client.get_queue_attributes(QueueUrl=queue_url, AttributeNames=['All'])['Attributes']
+    existing_attributes = camel_dict_to_snake_dict(existing_attributes)
     attributes_to_set = {}
 
     for attribute, new_value in new_attributes.items():
