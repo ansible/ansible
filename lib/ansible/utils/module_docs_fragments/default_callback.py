@@ -28,8 +28,8 @@ class ModuleDocFragment(object):
         type: boolean
         version_added: '2.7'
       display_failed_stderr:
-        name: Use STDERR for failed tasks
-        description: "Toggle to control whether failed tasks are displayed to STDERR (vs. STDOUT)"
+        name: Use STDERR for failed and unreachable tasks
+        description: "Toggle to control whether failed and unreachable tasks are displayed to STDERR (vs. STDOUT)"
         default: False
         env:
           - name: ANSIBLE_DISPLAY_FAILED_STDERR
