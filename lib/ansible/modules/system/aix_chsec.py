@@ -59,7 +59,7 @@ EXAMPLES = '''
     stanza: ldapuser
     options: SYSTEM=LDAP,registry=LDAP
     state: present
-    mode: 0644
+    mode: '0644'
 
 - name: Change login times for user
   aix_chsec:
