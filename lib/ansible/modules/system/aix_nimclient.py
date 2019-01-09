@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 # -*- coding: utf-8 -*-
 
 # (c) 2017, Joris Weijters <joris.weijters@gmail.com>
@@ -75,7 +76,7 @@ notes:
   - The changes are persistent across reboots.
   - You need root rights to install or remove software
   - tested on AIX 6.1 and 7.1.
-requirements: [ 'itertools', 're']
+requirements: [ 're' ]
 '''
 
 EXAMPLES = '''
@@ -139,9 +140,9 @@ RETURN = '''
 '''
 
 # Import necessary libraries
-import itertools
 import re
 from ansible.module_utils.basic import AnsibleModule
+from distutils.version import LooseVersion
 
 # end import modules
 # start defining the functions
@@ -205,13 +206,6 @@ def _check_fileset_type(module, filesetname):
         module.fail_json(
             msg=msg, err=err, rc=rc)
     return filesettype
-
-
-def _versiontuple(v):
-    filled = []
-    for point in v.split("."):
-        filled.append(point.zfill(8))
-    return tuple(filled)
 
 # functions
 
@@ -397,7 +391,7 @@ def install(module):
                             if filesettype == "R":
                                 fs = re.split('-[0-9]+', fs)[0]  # remove the version number from the filesetname
                             if fs in fsversion_in_lppsource.keys():
-                                if _versiontuple(ver) > _versiontuple(
+                                if LooseVersion(ver) > LooseVersion(
                                         fsversion_in_lppsource[fs]):
                                     fsversion_in_lppsource[fs] = ver
                             else:
@@ -427,11 +421,11 @@ def install(module):
             # if no requested version: install latest version
             # if installed version => requested version: Do nothing
             if not requested_version == '':
-                if _versiontuple(fileset_version_installed) < _versiontuple(
+                if LooseVersion(fileset_version_installed) < LooseVersion(
                         requested_version):
                     list_filesets_to_install.append(fileset)
             else:
-                if _versiontuple(fileset_version_installed) < _versiontuple(
+                if LooseVersion(fileset_version_installed) < LooseVersion(
                         fsversion_in_lppsource[fileset]):
                     list_filesets_to_install.append(fileset)
         else:
