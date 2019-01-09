@@ -275,8 +275,9 @@ options:
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources
-            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
+            - "It can be 'all' or 'own' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
             - Any other input will be ignored
+            - Please note that this option will be deprecated in 2.10 when 'own' will become default.
         default: ['all']
     plan:
         description:
@@ -1530,7 +1531,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Storing NIC names for deletion.')
             for interface in vm.network_profile.network_interfaces:
                 id_dict = azure_id_to_dict(interface.id)
-                if ('own' in self.remove_on_absent) or id_dict['networkInterfaces'] == own_nic:
+                if ('own' not in self.remove_on_absent) or id_dict['networkInterfaces'] == own_nic:
                     nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
             self.log('NIC names to delete {0}'.format(str(nic_names)))
             self.results['deleted_network_interfaces'] = nic_names
@@ -1541,20 +1542,21 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     for ipc in nic.ip_configurations:
                         if ipc.public_ip_address:
                             pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
-                            if ('own' in self.remove_on_absent) or pip_dict['publicIPAddresses'] == own_pip:
+                            if ('own' not in self.remove_on_absent) or pip_dict['publicIPAddresses'] == own_pip:
                                 pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
                 self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
             # store each nic's attached public NSGs and delete after the NIC is gone
             if 'own' in self.remove_on_absent:
+                self.results['x-rm-nsg'] = 'yes'
                 for nic_dict in nic_names:
                     nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
                     if nic.network_security_group:
                         nsg_dict = azure_id_to_dict(nic.network_security_group.id)
                         if nsg_dict['networkSecurityGroups'] == own_nsg:
                             nsg_names.append(dict(name=nsg_dict['networkSecurityGroups'], resource_group=nsg_dict['resourceGroups']))
-                    self.log('NSGs to  delete are {0}'.format(str(nsg_names)))
-                    self.results['deleted_network_security_groups'] = pip_names
+                self.log('NSGs to  delete are {0}'.format(str(nsg_names)))
+                self.results['deleted_network_security_groups'] = pip_names
 
         self.log("Deleting virtual machine {0}".format(self.name))
         self.results['actions'].append("Deleted virtual machine {0}".format(self.name))
@@ -1573,12 +1575,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Deleting managed disks')
             self.delete_managed_disks(managed_disk_ids)
 
-        if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
+        if self.remove_on_absent.intersection(set(['all', 'own', 'network_interfaces'])):
             self.log('Deleting network interfaces')
             for nic_dict in nic_names:
                 self.delete_nic(nic_dict['resource_group'], nic_dict['name'])
 
-        if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
+        if self.remove_on_absent.intersection(set(['all', 'own', 'public_ips'])):
             self.log('Deleting public IPs')
             for pip_dict in pip_names:
                 self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
