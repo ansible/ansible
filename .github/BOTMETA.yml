@@ -1229,7 +1229,7 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers jmcgill298 schunduri
-  team_aix: dagwieers gforster kairoaraujo MorrisA
+  team_aix: dagwieers flynn1973 gforster kairoaraujo molekuul MorrisA
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
