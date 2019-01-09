@@ -25,8 +25,8 @@ from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.base import Base
-from ansible.playbook.become import Become
+from ansible.playbook.base import AncestralBase, Base
+from ansible.playbook.become import AnscestralBecome, Become
 from ansible.playbook.block import Block
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
@@ -40,7 +40,7 @@ display = Display()
 __all__ = ['Play']
 
 
-class Play(Base, Taggable, Become):
+class Play(AncestralBase, Taggable, AncestralBecome):
 
     """
     A play is a language feature that represents a list of roles and/or
@@ -354,14 +354,14 @@ class Play(Base, Taggable, Become):
         #  general flags that match keyword name
         for flag in context.CLIARGS:
             # exclude private and mismatched names
-            if flag.startswith('_') or flag in ('tags', 'args'):
+            if flag.startswith('_') or flag in ('tags', 'args', 'connection', 'remote_user', 'diff', 'become', 'become_method', 'become_user'):
                 continue
             if hasattr(self, flag):
                 attribute = context.CLIARGS.get(flag, False)
                 setattr(self, flag, attribute)
 
         # flags that are named differently or might not be set
-        self.check_mode = boolean(context.CLIARGS.get('check', False), strict=False)
+        #self.check_mode = boolean(context.CLIARGS.get('check', False), strict=False)
 
         # get the tag info from options. We check to see if the options have
         # the attribute, as it is not always added via the CLI

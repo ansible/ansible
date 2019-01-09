@@ -169,8 +169,34 @@ class PlayContext(Base):
         if context.CLIARGS:
             self.set_attributes_from_cli()
 
+        self.play = play
         if play:
             self.set_attributes_from_play(play)
+
+    def copy(self):
+        '''
+        Create a copy of this object and return it.
+        '''
+
+        from copy import copy as shallowcopy
+        new_me = self.__class__(play=self.play)
+
+        for name in self._valid_attrs.keys():
+            if name in self._alias_attrs:
+                continue
+            new_me._attributes[name] = shallowcopy(self._attributes[name])
+
+        new_me._loader = self._loader
+        new_me._variable_manager = self._variable_manager
+        new_me._validated = self._validated
+        new_me._finalized = self._finalized
+        new_me._uuid = self._uuid
+
+        # if the ds value was set on the object, copy it to the new copy too
+        if hasattr(self, '_ds'):
+            new_me._ds = self._ds
+
+        return new_me
 
     def set_attributes_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
