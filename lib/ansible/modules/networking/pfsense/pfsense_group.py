@@ -65,7 +65,7 @@ RETURN = """
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pfsense.pfsense import PFSenseModule
+from ansible.module_utils.networking.pfsense.pfsense import PFSenseModule
 
 
 class pfSenseGroup(object):
@@ -87,19 +87,18 @@ class pfSenseGroup(object):
         return (found, i)
 
     def add(self, group):
-        groupEl, i = self._find_group(group['name'])
+        group_elt, i = self._find_group(group['name'])
         changed = False
-        rc = 0
-        if groupEl is None:
+        if group_elt is None:
             changed = True
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
-            groupEl = self.pfsense.new_element('group')
-            self.pfsense.copy_dict_to_element(group, groupEl)
-            self.system.insert(i + 1, groupEl)
+            group_elt = self.pfsense.new_element('group')
+            self.pfsense.copy_dict_to_element(group, group_elt)
+            self.system.insert(i + 1, group_elt)
             self.pfsense.write_config(descr='ansible pfsense_group added %s' % (group['name']))
         else:
-            changed = self.pfsense.copy_dict_to_element(group, groupEl)
+            changed = self.pfsense.copy_dict_to_element(group, group_elt)
             if self.module.check_mode:
                 self.module.exit_json(changed=changed)
             if changed:
@@ -107,13 +106,12 @@ class pfSenseGroup(object):
         self.module.exit_json(changed=changed)
 
     def remove(self, group):
-        groupEl, i = self._find_group(group['name'])
+        group_elt, _ = self._find_group(group['name'])
         changed = False
-        rc = 0
-        if groupEl is not None:
+        if group_elt is not None:
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
-            self.groups.remove(groupEl)
+            self.groups.remove(group_elt)
             changed = True
             self.pfsense.write_config(descr='ansible pfsense_group removed "%s"' % (group['name']))
         self.module.exit_json(changed=changed)

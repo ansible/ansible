@@ -22,9 +22,12 @@ class PFSenseModule(object):
         self.root = self.tree.getroot()
         self.aliases = self.get_element('aliases')
         self.interfaces = self.get_element('interfaces')
+        self.shapers = self.get_element('shaper')
+        self.dnshapers = self.get_element('dnshaper')
         self.debug = open('/tmp/pfsense.debug', 'w')
 
-    def addr_normalize(self, addr):
+    @staticmethod
+    def addr_normalize(addr):
         """ return address element formatted like module argument """
         address = ''
         if 'address' in addr:
@@ -153,10 +156,10 @@ class PFSenseModule(object):
         return changed
 
     @staticmethod
-    def element_to_dict(src):
-        """ Create XML elt from src """
+    def element_to_dict(src_elt):
+        """ Create dict from XML src_elt """
         res = {}
-        for elt in list(src):
+        for elt in list(src_elt):
             res[elt.tag] = elt.text if elt.text is not None else ''
         return res
 
@@ -190,7 +193,10 @@ class PFSenseModule(object):
     def is_ip_or_alias(self, address):
         """ return True if address is an ip or an alias """
         # Is it an alias?
-        if self.find_alias(address, 'host') is not None or self.find_alias(address, 'network') is not None or self.find_alias(address, 'urltable') is not None:
+        if (self.find_alias(address, 'host') is not None
+                or self.find_alias(address, 'network') is not None
+                or self.find_alias(address, 'urltable') is not None
+                or self.find_alias(address, 'urltable_ports') is not None):
             return True
 
         # Is it an IP address?
@@ -220,6 +226,55 @@ class PFSenseModule(object):
         except ValueError:
             pass
         return False
+
+    def find_queue(self, name, interface=None, enabled=False):
+        """ return QOS queue if found """
+
+        # iterate each interface
+        for shaper_elt in self.shapers:
+            if interface is not None:
+                interface_elt = shaper_elt.find('interface')
+                if interface_elt is None or interface_elt.text != interface:
+                    continue
+
+            if enabled:
+                enabled_elt = shaper_elt.find('enabled')
+                if enabled_elt is None or enabled_elt.text != 'on':
+                    continue
+
+            # iterate each queue
+            for queue_elt in shaper_elt.findall('queue'):
+                name_elt = queue_elt.find('name')
+                if name_elt is None or name_elt.text != name:
+                    continue
+
+                if enabled:
+                    enabled_elt = queue_elt.find('enabled')
+                    if enabled_elt is None or enabled_elt.text != 'on':
+                        continue
+
+                # found it
+                return queue_elt
+
+        return None
+
+    def find_limiter(self, name, enabled=False):
+        """ return QOS limiter if found """
+
+        # iterate each queue
+        for queue_elt in self.dnshapers:
+            if enabled:
+                enabled_elt = queue_elt.find('enabled')
+                if enabled_elt is None or enabled_elt.text != 'on':
+                    continue
+
+            name_elt = queue_elt.find('name')
+            if name_elt is None or name_elt.text != name:
+                continue
+
+            return queue_elt
+
+        return None
 
     @staticmethod
     def uniqid(prefix=''):

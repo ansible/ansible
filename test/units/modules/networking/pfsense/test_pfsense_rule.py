@@ -12,7 +12,7 @@ if sys.version_info < (2, 7):
 
 from xml.etree.ElementTree import fromstring, ElementTree
 from units.compat.mock import patch
-from ansible.modules.pfsense import pfsense_rule
+from ansible.modules.networking.pfsense import pfsense_rule
 from .pfsense_module import TestPFSenseModule, load_fixture
 
 
@@ -21,7 +21,7 @@ def args_from_var(var, state='present', **kwargs):
     args = {}
     fields = ['name', 'source', 'destination', 'descr', 'interface', 'action']
     fields.extend(['log', 'disabled', 'floating', 'direction', 'ipprotocol'])
-    fields.extend(['protocol', 'statetype', 'after', 'before'])
+    fields.extend(['protocol', 'statetype', 'after', 'before', 'queue', 'ackqueue', 'in_queue', 'out_queue'])
     for field in fields:
         if field in var:
             args[field] = var[field]
@@ -105,6 +105,15 @@ class TestPFSenseRuleModule(TestPFSenseModule):
         if 'not' not in addr_dict:
             self.assert_not_find_xml_elt(addr_elt, 'not')
 
+    def check_rule_option_equal_or_not_find(self, rule, rule_elt, option, xml_option=None):
+        """ check if option is defined that it has the right value, otherwise that it does not exist in XML """
+        if xml_option is None:
+            xml_option = option
+        if option in rule:
+            self.assert_xml_elt_equal(rule_elt, xml_option, rule[option])
+        else:
+            self.assert_not_find_xml_elt(rule_elt, xml_option)
+
     def check_rule_elt(self, rule):
         """ test the xml definition of rule """
         rule['interface'] = self.unalias_interface(rule['interface'])
@@ -139,10 +148,17 @@ class TestPFSenseRuleModule(TestPFSenseModule):
             self.assert_not_find_xml_elt(rule_elt, 'floating')
 
         # checking direction option
-        if 'direction' in rule:
-            self.assert_xml_elt_equal(rule_elt, 'direction', rule['direction'])
-        else:
-            self.assert_not_find_xml_elt(rule_elt, 'direction')
+        self.check_rule_option_equal_or_not_find(rule, rule_elt, 'direction')
+
+        # checking default queue option
+        self.check_rule_option_equal_or_not_find(rule, rule_elt, 'queue', 'defaultqueue')
+
+        # checking acknowledge queue option
+        self.check_rule_option_equal_or_not_find(rule, rule_elt, 'ackqueue')
+
+        # limiters
+        self.check_rule_option_equal_or_not_find(rule, rule_elt, 'in_queue', 'dnpipe')
+        self.check_rule_option_equal_or_not_find(rule, rule_elt, 'out_queue', 'pdnpipe')
 
         # checking ipprotocol option
         if 'ipprotocol' in rule:

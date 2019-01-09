@@ -55,7 +55,7 @@ RETURN = """
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pfsense.pfsense import PFSenseModule
+from ansible.module_utils.networking.pfsense.pfsense import PFSenseModule
 
 
 class pfSenseCA(object):
@@ -87,68 +87,66 @@ class pfSenseCA(object):
         return (found, i)
 
     def add(self, ca):
-        caEl, i = self._find_ca(ca['descr'])
+        ca_elt, i = self._find_ca(ca['descr'])
         changed = False
-        rc = 0
         crl = {}
         diff = {}
         if 'crl' in ca:
             crl['method'] = 'existing'
             crl['text'] = ca.pop('crl')
-        if caEl is None:
+        if ca_elt is None:
             diff['before'] = ''
             changed = True
-            caEl = self.pfsense.new_element('ca')
+            ca_elt = self.pfsense.new_element('ca')
             ca['refid'] = self.pfsense.uniqid()
             if 'text' in crl:
-                crlEl = self.pfsense.new_element('crl')
+                crl_elt = self.pfsense.new_element('crl')
                 crl['refid'] = self.pfsense.uniqid()
                 crl['descr'] = ca['descr'] + ' CRL'
                 crl['caref'] = ca['refid']
-                self.pfsense.copy_dict_to_element(crl, crlEl)
-                self.pfsense.root.insert(i + 1, crlEl)
-            self.pfsense.copy_dict_to_element(ca, caEl)
-            self.pfsense.root.insert(i + 1, caEl)
+                self.pfsense.copy_dict_to_element(crl, crl_elt)
+                self.pfsense.root.insert(i + 1, crl_elt)
+            self.pfsense.copy_dict_to_element(ca, ca_elt)
+            self.pfsense.root.insert(i + 1, ca_elt)
             descr = 'ansible pfsense_ca added %s' % (ca['descr'])
         else:
-            diff['before'] = self.pfsense.element_to_dict(caEl)
+            diff['before'] = self.pfsense.element_to_dict(ca_elt)
             if 'text' in crl:
-                crlEl, crlIndex = self._find_crl(caEl.find('refid').text)
-                if crlEl is None:
+                crl_elt, crl_index = self._find_crl(ca_elt.find('refid').text)
+                if crl_elt is None:
                     changed = True
-                    crlEl = self.pfsense.new_element('crl')
+                    crl_elt = self.pfsense.new_element('crl')
                     crl['refid'] = self.pfsense.uniqid()
                     crl['descr'] = ca['descr'] + ' CRL'
-                    crl['caref'] = caEl.find('refid').text
-                    self.pfsense.copy_dict_to_element(crl, crlEl)
-                    self.pfsense.root.insert(crlIndex + 1, crlEl)
+                    crl['caref'] = ca_elt.find('refid').text
+                    self.pfsense.copy_dict_to_element(crl, crl_elt)
+                    self.pfsense.root.insert(crl_index + 1, crl_elt)
                 else:
-                    diff['before']['crl'] = crlEl.find('text').text
-                    changed = self.pfsense.copy_dict_to_element(crl, crlEl)
-            if self.pfsense.copy_dict_to_element(ca, caEl):
+                    diff['before']['crl'] = crl_elt.find('text').text
+                    changed = self.pfsense.copy_dict_to_element(crl, crl_elt)
+            if self.pfsense.copy_dict_to_element(ca, ca_elt):
                 changed = True
             descr = 'ansible pfsense_ca updated "%s"' % (ca['descr'])
         if changed and not self.module.check_mode:
             self.pfsense.write_config(descr=descr)
-        diff['after'] = self.pfsense.element_to_dict(caEl)
+        diff['after'] = self.pfsense.element_to_dict(ca_elt)
         if 'text' in crl:
             diff['after']['crl'] = crl['text']
         self.module.exit_json(changed=changed, diff=diff)
 
     def remove(self, ca):
-        caEl, i = self._find_ca(ca['descr'])
+        ca_elt, _ = self._find_ca(ca['descr'])
         changed = False
-        rc = 0
         diff = {}
         diff['after'] = {}
-        if caEl is not None:
+        if ca_elt is not None:
             changed = True
-            diff['before'] = self.pfsense.element_to_dict(caEl)
-            crlEl, crlIndex = self._find_crl(caEl.find('refid').text)
-            self.cas.remove(caEl)
-            if crlEl is not None:
-                diff['before']['crl'] = crlEl.find('text').text
-                self.crls.remove(crlEl)
+            diff['before'] = self.pfsense.element_to_dict(ca_elt)
+            crl_elt, _ = self._find_crl(ca_elt.find('refid').text)
+            self.cas.remove(ca_elt)
+            if crl_elt is not None:
+                diff['before']['crl'] = crl_elt.find('text').text
+                self.crls.remove(crl_elt)
         else:
             diff['before'] = {}
         if changed and not self.module.check_mode:

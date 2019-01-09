@@ -343,6 +343,108 @@
 				<time>1545574416</time>
 			</updated>
 			<protocol>tcp</protocol>
+			<descr>test_lan_100_2</descr>
+			<created>
+				<username></username>
+				<time>1545574416</time>
+			</created>
+			<destination>
+				<any></any>
+			</destination>
+			<statetype>keep state</statetype>
+			<source>
+				<any></any>
+			</source>
+			<tracker>1545574416</tracker>
+			<interface>opt3</interface>
+			<ipprotocol>inet</ipprotocol>
+			<type>pass</type>
+			<id></id>
+			<defaultqueue>one_queue</defaultqueue>
+			<ackqueue>another_queue</ackqueue>
+		</rule>
+		<rule>
+			<updated>
+				<username></username>
+				<time>1545574416</time>
+			</updated>
+			<protocol>tcp</protocol>
+			<descr>test_lan_100_3</descr>
+			<created>
+				<username></username>
+				<time>1545574416</time>
+			</created>
+			<destination>
+				<any></any>
+			</destination>
+			<statetype>keep state</statetype>
+			<source>
+				<any></any>
+			</source>
+			<tracker>1545574416</tracker>
+			<interface>opt3</interface>
+			<ipprotocol>inet</ipprotocol>
+			<type>pass</type>
+			<id></id>
+			<defaultqueue>one_queue</defaultqueue>
+		</rule>
+		<rule>
+			<updated>
+				<username></username>
+				<time>1545574416</time>
+			</updated>
+			<protocol>tcp</protocol>
+			<descr>test_lan_100_4</descr>
+			<created>
+				<username></username>
+				<time>1545574416</time>
+			</created>
+			<destination>
+				<any></any>
+			</destination>
+			<statetype>keep state</statetype>
+			<source>
+				<any></any>
+			</source>
+			<tracker>1545574416</tracker>
+			<interface>opt3</interface>
+			<ipprotocol>inet</ipprotocol>
+			<type>pass</type>
+			<id></id>
+			<dnpipe>one_limiter</dnpipe>
+			<pdnpipe>another_limiter</pdnpipe>
+		</rule>
+		<rule>
+			<updated>
+				<username></username>
+				<time>1545574416</time>
+			</updated>
+			<protocol>tcp</protocol>
+			<descr>test_lan_100_5</descr>
+			<created>
+				<username></username>
+				<time>1545574416</time>
+			</created>
+			<destination>
+				<any></any>
+			</destination>
+			<statetype>keep state</statetype>
+			<source>
+				<any></any>
+			</source>
+			<tracker>1545574416</tracker>
+			<interface>opt3</interface>
+			<ipprotocol>inet</ipprotocol>
+			<type>pass</type>
+			<id></id>
+			<dnpipe>one_limiter</dnpipe>
+		</rule>
+		<rule>
+			<updated>
+				<username></username>
+				<time>1545574416</time>
+			</updated>
+			<protocol>tcp</protocol>
 			<descr>test_rule_3</descr>
 			<created>
 				<username></username>
@@ -1494,7 +1596,34 @@
 							</created>
 			</rule>
 		</filter>
-	<shaper></shaper>
+	<shaper>
+		<queue>
+						<interface>opt2</interface>
+						<name>opt2</name>
+						<scheduler>CBQ</scheduler>
+						<bandwidth>100</bandwidth>
+						<bandwidthtype>Mb</bandwidthtype>
+						<queue>
+										<interface>opt2</interface>
+										<qlimit>10000</qlimit>
+										<priority>0</priority>
+										<name>one_queue</name>
+										<bandwidth>50</bandwidth>
+										<bandwidthtype>Mb</bandwidthtype>
+										<enabled>on</enabled>
+						</queue>
+						<queue>
+										<interface>opt2</interface>
+										<qlimit>1000</qlimit>
+										<priority>1</priority>
+										<name>another_queue</name>
+										<bandwidth>50</bandwidth>
+										<bandwidthtype>Mb</bandwidthtype>
+										<enabled>on</enabled>
+						</queue>
+						<enabled>on</enabled>
+		</queue>
+	</shaper>
 	<ipsec></ipsec>
 	<aliases>
 		<alias>
@@ -1764,7 +1893,80 @@
 		<period>10</period>
 	</widgets>
 	<openvpn></openvpn>
-	<dnshaper></dnshaper>
+	<dnshaper>
+		<queue>
+						<name>one_limiter</name>
+						<number>1</number>
+						<qlimit></qlimit>
+						<plr></plr>
+						<description></description>
+						<bandwidth>
+										<item>
+														<bw>100</bw>
+														<burst></burst>
+														<bwscale>Mb</bwscale>
+														<bwsched>none</bwsched>
+										</item>
+						</bandwidth>
+						<enabled>on</enabled>
+						<buckets></buckets>
+						<mask>none</mask>
+						<maskbits></maskbits>
+						<maskbitsv6></maskbitsv6>
+						<delay>0</delay>
+						<sched>wf2q+</sched>
+						<aqm>droptail</aqm>
+						<ecn></ecn>
+		</queue>
+		<queue>
+						<name>another_limiter</name>
+						<number>2</number>
+						<qlimit></qlimit>
+						<plr></plr>
+						<description></description>
+						<bandwidth>
+										<item>
+														<bw>1</bw>
+														<burst></burst>
+														<bwscale>Mb</bwscale>
+														<bwsched>none</bwsched>
+										</item>
+						</bandwidth>
+						<enabled>on</enabled>
+						<buckets></buckets>
+						<mask>none</mask>
+						<maskbits></maskbits>
+						<maskbitsv6></maskbitsv6>
+						<delay>0</delay>
+						<sched>wf2q+</sched>
+						<aqm>droptail</aqm>
+						<ecn></ecn>
+		</queue>
+		<queue>
+						<name>disabled_limiter</name>
+						<number>3</number>
+						<qlimit></qlimit>
+						<plr></plr>
+						<description></description>
+						<bandwidth>
+										<item>
+														<bw>1</bw>
+														<burst></burst>
+														<bwscale>Kb</bwscale>
+														<bwsched>none</bwsched>
+										</item>
+						</bandwidth>
+						<enabled></enabled>
+						<buckets></buckets>
+						<mask>none</mask>
+						<maskbits></maskbits>
+						<maskbitsv6></maskbitsv6>
+						<delay>0</delay>
+						<sched>wf2q+</sched>
+						<aqm>droptail</aqm>
+						<ecn></ecn>
+		</queue>
+	</dnshaper>
 	<unbound>
 		<enable></enable>
 		<dnssec></dnssec>

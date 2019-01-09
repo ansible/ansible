@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Orion Poplawski <orion@nwra.com>
+# Copyright: (c) 2018, Frederic Bor <frederic.bor@wanadoo.fr>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,19 +10,22 @@ __metaclass__ = type
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pfsense.pfsense import PFSenseModule
+from ansible.module_utils.networking.pfsense.pfsense import PFSenseModule
 
 ALIASES_ARGUMENT_SPEC = dict(
     name=dict(required=True, type='str'),
     state=dict(default='present', choices=['present', 'absent']),
-    type=dict(default=None, required=False, choices=['host', 'network', 'port', 'urltable']),
+    type=dict(default=None, required=False, choices=['host', 'network', 'port', 'urltable', 'urltable_ports']),
     address=dict(default=None, required=False, type='str'),
     descr=dict(default=None, required=False, type='str'),
     detail=dict(default=None, required=False, type='str'),
-    updatefreq=dict(default=None, required=False, type='str'),
+    updatefreq=dict(default=None, required=False, type='int'),
 )
 
-ALIASES_REQUIRED_IF = [["type", "urltable", ["updatefreq"]]]
+ALIASES_REQUIRED_IF = [
+    ["type", "urltable", ["updatefreq"]],
+    ["type", "urltable_ports", ["updatefreq"]],
+]
 
 
 class PFSenseAliasModule(object):
@@ -34,30 +38,75 @@ class PFSenseAliasModule(object):
         self.pfsense = pfsense
         self.aliases = self.pfsense.get_element('aliases')
 
-        self.changed = False
         self.change_descr = ''
 
         self.diff = {}
-
-        self.results = {}
-        self.results['added'] = []
-        self.results['deleted'] = []
-        self.results['modified'] = []
+        self.result = {}
+        self.result['changed'] = False
+        self.result['diff'] = self.diff
+        self.result['commands'] = []
 
     def _update(self):
         """ make the target pfsense reload aliases """
         return self.pfsense.phpshell('''require_once("filter.inc");
 if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
 
+    @staticmethod
+    def _format_field(alias, field, log_none=False, add_comma=True):
+        """ format field for pseudo-CLI command """
+        res = ''
+        if field in alias:
+            if log_none and alias[field] is None:
+                res = "{0}=none".format(field)
+            if alias[field] is not None:
+                res = "{0}='{1}'".format(field, alias[field].replace("'", "\\'"))
+        if add_comma and res:
+            return ', ' + res
+        return res
+
+    def _format_updated_field(self, alias, before, field, add_comma=True):
+        """ format field for pseudo-CLI update command """
+        if field in alias and field in before:
+            if alias[field] != before[field]:
+                return self._format_field(alias, field, log_none=True, add_comma=add_comma)
+        elif field in alias and field not in before or field not in alias and field in before:
+            return self._format_field(alias, field, log_none=True, add_comma=add_comma)
+        return ''
+
+    def _log_create(self, alias):
+        """ generate pseudo-CLI command to create an alias """
+        log = "create alias '{0}'".format(alias['name'])
+        log += self._format_field(alias, 'type')
+        log += self._format_field(alias, 'address')
+        log += self._format_field(alias, 'updatefreq')
+        log += self._format_field(alias, 'descr')
+        log += self._format_field(alias, 'detail')
+        self.result['commands'].append(log)
+
+    def _log_delete(self, alias):
+        """ generate pseudo-CLI command to delete an alias """
+        log = "delete alias '{0}'".format(alias['name'])
+        self.result['commands'].append(log)
+
+    def _log_update(self, alias, before):
+        """ generate pseudo-CLI command to update an alias """
+        log = "update alias '{0}'".format(alias['name'])
+        values = ''
+        values += self._format_updated_field(alias, before, 'address', add_comma=(values))
+        values += self._format_updated_field(alias, before, 'updatefreq', add_comma=(values))
+        values += self._format_updated_field(alias, before, 'descr', add_comma=(values))
+        values += self._format_updated_field(alias, before, 'detail', add_comma=(values))
+        self.result['commands'].append(log + ' set ' + values)
+
     def commit_changes(self):
         """ apply changes and exit module """
-        stdout = ''
-        stderr = ''
-        if self.changed and not self.module.check_mode:
+        self.result['stdout'] = ''
+        self.result['stderr'] = ''
+        if self.result['changed'] and not self.module.check_mode:
             self.pfsense.write_config(descr=self.change_descr)
-            (rc, stdout, stderr) = self._update()
+            (_, self.result['stdout'], self.result['stderr']) = self._update()
 
-        self.module.exit_json(stdout=stdout, stderr=stderr, changed=self.changed, diff=self.diff, result=self.results)
+        self.module.exit_json(**self.result)
 
     def add(self, alias):
         """ add or update alias """
@@ -69,25 +118,24 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
             self.aliases.append(alias_elt)
 
             changed = True
-            self.results['added'].append(alias)
             self.diff['before'] = ''
             self.change_descr = 'ansible pfsense_alias added %s type %s' % (alias['name'], alias['type'])
+            self._log_create(alias)
         else:
             self.diff['before'] = self.pfsense.element_to_dict(alias_elt)
             changed = self.pfsense.copy_dict_to_element(alias, alias_elt)
             if changed:
                 self.diff['after'] = self.pfsense.element_to_dict(alias_elt)
-                self.results['modified'].append(self.pfsense.element_to_dict(alias_elt))
                 self.change_descr = 'ansible pfsense_alias updated "%s" type %s' % (alias['name'], alias['type'])
+                self._log_update(alias, self.diff['before'])
 
         if changed:
-            self.changed = changed
+            self.result['changed'] = changed
 
     def _remove_alias_elt(self, alias_elt):
         """ delete alias_elt from xml """
         self.aliases.remove(alias_elt)
-        self.changed = True
-        self.results['deleted'] = self.pfsense.element_to_dict(alias_elt)
+        self.result['changed'] = True
         self.diff['before'] = self.pfsense.element_to_dict(alias_elt)
 
     def remove(self, alias):
@@ -96,6 +144,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
         self.diff['after'] = ''
         self.diff['before'] = ''
         if alias_elt is not None:
+            self._log_delete(alias)
             self._remove_alias_elt(alias_elt)
             self.change_descr = 'ansible pfsense_alias removed "%s"' % (alias['name'])
 
@@ -125,8 +174,8 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
                 self.module.fail_json(msg='state is present but all of the following are missing: ' + ','.join(missings))
 
             # updatefreq is for urltable only
-            if params['updatefreq'] is not None and params['type'] != 'urltable':
-                self.module.fail_json(msg='updatefreq is only valid with type urltable')
+            if params['updatefreq'] is not None and params['type'] != 'urltable' and params['type'] != 'urltable_ports':
+                self.module.fail_json(msg='updatefreq is only valid with type urltable or urltable_ports')
 
             # check details count
             details = params['detail'].split('||') if params['detail'] is not None else []
@@ -150,9 +199,9 @@ if (filter_configure() == 0) { clear_subsystem_dirty('aliases'); }''')
             alias['address'] = params['address']
             alias['descr'] = params['descr']
             alias['detail'] = params['detail']
-            if alias['type'] == 'urltable':
+            if alias['type'] == 'urltable' or alias['type'] == 'urltable_ports':
                 alias['url'] = params['address']
-                alias['updatefreq'] = params['updatefreq']
+                alias['updatefreq'] = str(params['updatefreq'])
 
         return alias
 

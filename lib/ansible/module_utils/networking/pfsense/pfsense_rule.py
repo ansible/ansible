@@ -7,27 +7,34 @@
 import time
 import re
 
-from ansible.module_utils.pfsense.pfsense import PFSenseModule
+from ansible.module_utils.networking.pfsense.pfsense import PFSenseModule
 
 RULES_ARGUMENT_SPEC = dict(
     name=dict(required=True, type='str'),
     action=dict(default='pass', required=False, choices=['pass', "block", 'reject']),
-    state=dict(required=True, choices=['present', 'absent']),
+    state=dict(default='present', choices=['present', 'absent']),
     disabled=dict(default=False, required=False, type='bool'),
     interface=dict(required=True, type='str'),
-    floating=dict(required=False, choices=["yes", "no"]),
+    floating=dict(required=False, type='bool'),
     direction=dict(required=False, choices=["any", "in", "out"]),
     ipprotocol=dict(required=False, default='inet', choices=['inet', 'inet46', 'inet6']),
     protocol=dict(default='any', required=False, choices=["any", "tcp", "udp", "tcp/udp", "icmp"]),
-    source=dict(required=True, type='str'),
-    destination=dict(required=True, type='str'),
-    log=dict(required=False, choices=["no", "yes"]),
+    source=dict(required=False, type='str'),
+    destination=dict(required=False, type='str'),
+    log=dict(required=False, type='bool'),
     after=dict(required=False, type='str'),
     before=dict(required=False, type='str'),
-    statetype=dict(required=False, default='keep state', choices=['keep state', 'sloppy state', 'synproxy state', 'none'])
+    statetype=dict(required=False, default='keep state', choices=['keep state', 'sloppy state', 'synproxy state', 'none']),
+    queue=dict(required=False, type='str'),
+    ackqueue=dict(required=False, type='str'),
+    in_queue=dict(required=False, type='str'),
+    out_queue=dict(required=False, type='str'),
 )
 
-RULES_REQUIRED_IF = [["floating", "yes", ["direction"]]]
+RULES_REQUIRED_IF = [
+    ["floating", True, ["direction"]],
+    ["state", "present", ["source", "destination"]]
+]
 
 
 class PFSenseRuleModule(object):
@@ -305,6 +312,36 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
             res.append(self._parse_interface(interface))
         return ','.join(res)
 
+    def _validate_params(self, params):
+        """ do some extra checks on input parameters """
+        if params['ackqueue'] is not None and params['queue'] is None:
+            self.module.fail_json(msg='A default queue must be selected when an acknowledge queue is also selected')
+
+        if params['ackqueue'] is not None and params['ackqueue'] == params['queue']:
+            self.module.fail_json(msg='Acknowledge queue and default queue cannot be the same')
+
+        # as in pfSense 2.4, the GUI accepts any queue defined on any interface without checking, we do the same
+        if params['ackqueue'] is not None and self.pfsense.find_queue(params['ackqueue'], enabled=True) is None:
+            self.module.fail_json(msg='Failed to find enabled ackqueue=%s' % params['ackqueue'])
+
+        if params['queue'] is not None and self.pfsense.find_queue(params['queue'], enabled=True) is None:
+            self.module.fail_json(msg='Failed to find enabled queue=%s' % params['queue'])
+
+        if params['out_queue'] is not None and params['in_queue'] is None:
+            self.module.fail_json(msg='A queue must be selected for the In direction before selecting one for Out too')
+
+        if params['out_queue'] is not None and params['out_queue'] == params['in_queue']:
+            self.module.fail_json(msg='In and Out Queue cannot be the same')
+
+        if params['out_queue'] is not None and self.pfsense.find_limiter(params['out_queue'], enabled=True) is None:
+            self.module.fail_json(msg='Failed to find enabled out_queue=%s' % params['out_queue'])
+
+        if params['in_queue'] is not None and self.pfsense.find_limiter(params['in_queue'], enabled=True) is None:
+            self.module.fail_json(msg='Failed to find enabled in_queue=%s' % params['in_queue'])
+
+        if params['floating'] and params['direction'] == 'any' and (params['in_queue'] is not None or params['out_queue'] is not None):
+            self.module.fail_json(msg='Limiters can not be used in Floating rules without choosing a direction')
+
     def _remove_deleted_rule_param(self, rule_elt, param):
         """ Remove from rule a deleted rule param """
         changed = False
@@ -318,16 +355,9 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
     def _remove_deleted_rule_params(self, rule_elt):
         """ Remove from rule a few deleted rule params """
         changed = False
-        if self._remove_deleted_rule_param(rule_elt, 'log'):
-            changed = True
-        if self._remove_deleted_rule_param(rule_elt, 'floating'):
-            changed = True
-        if self._remove_deleted_rule_param(rule_elt, 'direction'):
-            changed = True
-        if self._remove_deleted_rule_param(rule_elt, 'protocol'):
-            changed = True
-        if self._remove_deleted_rule_param(rule_elt, 'disabled'):
-            changed = True
+        for param in ['log', 'protocol', 'disabled', 'defaultqueue', 'ackqueue', 'dnpipe', 'pdnpipe']:
+            if self._remove_deleted_rule_param(rule_elt, param):
+                changed = True
 
         return changed
 
@@ -374,7 +404,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
     def add(self, rule, after=None, before=None):
         """ add or update rule """
         self._set_internals(rule, after, before)
-        rule_elt, i = self._find_rule_by_descr(self._descr)
+        rule_elt, _ = self._find_rule_by_descr(self._descr)
         changed = False
         timestamp = '%d' % int(time.time())
         if rule_elt is None:
@@ -413,7 +443,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
     def remove(self, rule):
         """ delete rule """
         self._set_internals(rule)
-        rule_elt, i = self._find_rule_by_descr(self._descr)
+        rule_elt, _ = self._find_rule_by_descr(self._descr)
         if rule_elt is not None:
             self.diff['before'] = self.rule_element_to_dict(rule_elt)
             self._adjust_separators(self._get_rule_position(), add=False)
@@ -422,27 +452,46 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
 
     def params_to_rule(self, params):
         """ return a rule dict from module params """
+        self._validate_params(params)
+
         rule = dict()
+
+        def param_to_rule(param_field, rule_field):
+            """ set rule_field if param_field is defined """
+            if params[param_field] is not None:
+                rule[rule_field] = params[param_field]
+
+        def bool_to_rule(param_field, rule_field):
+            """ set rule_field if param_field is True """
+            if params[param_field]:
+                rule[rule_field] = ''
+
         rule['descr'] = params['name']
         rule['type'] = params['action']
-        if params['floating'] == 'yes':
-            rule['floating'] = params['floating']
+        rule['ipprotocol'] = params['ipprotocol']
+        rule['statetype'] = params['statetype']
+
+        if params['floating']:
+            rule['floating'] = 'yes'
             rule['interface'] = self._parse_floating_interfaces(params['interface'])
         else:
             rule['interface'] = self._parse_interface(params['interface'])
-        if params['direction'] is not None:
-            rule['direction'] = params['direction']
-        rule['ipprotocol'] = params['ipprotocol']
-        if params['protocol'] != 'any':
-            rule['protocol'] = params['protocol']
-        rule['source'] = dict()
-        rule['source'] = self._parse_address(params['source'])
-        rule['destination'] = self._parse_address(params['destination'])
-        if params['log'] == 'yes':
-            rule['log'] = ''
-        if params['disabled']:
-            rule['disabled'] = ''
-        rule['statetype'] = params['statetype']
+
+        if params['state'] == 'present':
+            rule['source'] = self._parse_address(params['source'])
+            rule['destination'] = self._parse_address(params['destination'])
+
+            if params['protocol'] != 'any':
+                rule['protocol'] = params['protocol']
+
+            bool_to_rule('disabled', 'disabled')
+            bool_to_rule('log', 'log')
+
+            param_to_rule('direction', 'direction')
+            param_to_rule('queue', 'defaultqueue')
+            param_to_rule('ackqueue', 'ackqueue')
+            param_to_rule('in_queue', 'dnpipe')
+            param_to_rule('out_queue', 'pdnpipe')
 
         return rule
 
@@ -452,7 +501,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         stderr = ''
         if self.changed and not self.module.check_mode:
             self.pfsense.write_config(descr=self.change_descr)
-            (rc, stdout, stderr) = self._update()
+            (_, stdout, stderr) = self._update()
 
         self.module.exit_json(stdout=stdout, stderr=stderr, changed=self.changed, diff=self.diff)
 

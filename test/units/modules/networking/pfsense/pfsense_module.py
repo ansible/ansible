@@ -47,17 +47,17 @@ class TestPFSenseModule(ModuleTestCase):
         """ mocking up """
         super(TestPFSenseModule, self).setUp()
 
-        self.mock_parse = patch('ansible.module_utils.pfsense.pfsense.ET.parse')
+        self.mock_parse = patch('ansible.module_utils.networking.pfsense.pfsense.ET.parse')
         self.parse = self.mock_parse.start()
 
-        self.mock_shutil_move = patch('ansible.module_utils.pfsense.pfsense.shutil.move')
+        self.mock_shutil_move = patch('ansible.module_utils.networking.pfsense.pfsense.shutil.move')
         self.shutil_move = self.mock_shutil_move.start()
 
-        self.mock_phpshell = patch('ansible.module_utils.pfsense.pfsense.PFSenseModule.phpshell')
+        self.mock_phpshell = patch('ansible.module_utils.networking.pfsense.pfsense.PFSenseModule.phpshell')
         self.phpshell = self.mock_phpshell.start()
         self.phpshell.return_value = (0, '', '')
 
-        self.mock_mkstemp = patch('ansible.module_utils.pfsense.pfsense.mkstemp')
+        self.mock_mkstemp = patch('ansible.module_utils.networking.pfsense.pfsense.mkstemp')
         self.mkstemp = self.mock_mkstemp.start()
         self.mkstemp.return_value = mkstemp()
         self.tmp_file = self.mkstemp.return_value[1]
@@ -80,7 +80,7 @@ class TestPFSenseModule(ModuleTestCase):
             if exception.errno != errno.ENOENT:
                 raise
 
-    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
+    def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False, msg=''):
         self.load_fixtures(commands)
 
         if failed:
@@ -89,9 +89,10 @@ class TestPFSenseModule(ModuleTestCase):
         else:
             result = self.changed(changed)
 
-        # TODO: set changed status even if there is a module failure
         if not failed:
             self.assertEqual(result['changed'], changed, result)
+        else:
+            self.assertEqual(result['msg'], msg)
 
         if commands is not None:
             if sort:

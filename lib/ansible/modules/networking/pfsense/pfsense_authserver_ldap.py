@@ -100,7 +100,7 @@ RETURN = """
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pfsense.pfsense import PFSenseModule
+from ansible.module_utils.networking.pfsense.pfsense import PFSenseModule
 
 
 class PFSenseAuthserverLDAP(object):
@@ -122,25 +122,25 @@ class PFSenseAuthserverLDAP(object):
         return (found, i)
 
     def add(self, authserver):
-        authserverEl, i = self._find_authserver_ldap(authserver['name'])
+        authserver_elt, i = self._find_authserver_ldap(authserver['name'])
         changed = False
-        rc = 0
+
         # Replace the text CA name with the caref id
         authserver['ldap_caref'] = self.pfsense.get_caref(authserver['ca'])
         if authserver['ldap_caref'] is None:
             self.module.fail_json(msg="could not find CA '%s'" % (authserver['ca']))
         del authserver['ca']
-        if authserverEl is None:
+        if authserver_elt is None:
             changed = True
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
-            authserverEl = self.pfsense.new_element('authserver')
+            authserver_elt = self.pfsense.new_element('authserver')
             authserver['refid'] = self.pfsense.uniqid()
-            self.pfsense.copy_dict_to_element(authserver, authserverEl)
-            self.system.insert(i + 1, authserverEl)
+            self.pfsense.copy_dict_to_element(authserver, authserver_elt)
+            self.system.insert(i + 1, authserver_elt)
             self.pfsense.write_config(descr='ansible pfsense_authserver_ldap added %s' % (authserver['name']))
         else:
-            changed = self.pfsense.copy_dict_to_element(authserver, authserverEl)
+            changed = self.pfsense.copy_dict_to_element(authserver, authserver_elt)
             if self.module.check_mode:
                 self.module.exit_json(changed=changed)
             if changed:
@@ -148,13 +148,12 @@ class PFSenseAuthserverLDAP(object):
         self.module.exit_json(changed=changed)
 
     def remove(self, authserver):
-        authserverEl, i = self._find_authserver_ldap(authserver['name'])
+        authserver_elt, _ = self._find_authserver_ldap(authserver['name'])
         changed = False
-        rc = 0
-        if authserverEl is not None:
+        if authserver_elt is not None:
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
-            self.authservers.remove(authserverEl)
+            self.authservers.remove(authserver_elt)
             changed = True
             self.pfsense.write_config(descr='ansible pfsense_authserver_ldap removed "%s"' % (authserver['name']))
         self.module.exit_json(changed=changed)

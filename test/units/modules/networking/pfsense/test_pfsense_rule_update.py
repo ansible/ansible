@@ -17,12 +17,12 @@ from .test_pfsense_rule import TestPFSenseRuleModule, args_from_var
 
 class TestPFSenseRuleUpdateModule(TestPFSenseRuleModule):
 
-    def do_rule_update_test(self, rule, failed=False, **kwargs):
+    def do_rule_update_test(self, rule, failed=False, msg='', **kwargs):
         """ test updating field of an host alias """
         target = copy(rule)
         target.update(kwargs)
         set_module_args(args_from_var(target))
-        self.execute_module(changed=True, failed=failed)
+        self.execute_module(changed=True, failed=failed, msg=msg)
         if failed:
             self.assertFalse(self.load_xml_result())
         else:
@@ -159,12 +159,12 @@ class TestPFSenseRuleUpdateModule(TestPFSenseRuleModule):
     def test_rule_update_after_self(self):
         """ test updating position of a rule to after same rule """
         rule = dict(name='test_rule_3', source='any', destination='any', interface='wan', protocol='tcp', after='test_rule_3')
-        self.do_rule_update_test(rule, failed=True)
+        self.do_rule_update_test(rule, failed=True, msg='Cannot specify the current rule in after')
 
     def test_rule_update_before_self(self):
         """ test updating position of a rule to before same rule """
         rule = dict(name='test_rule_3', source='any', destination='any', interface='wan', protocol='tcp', before='test_rule_3')
-        self.do_rule_update_test(rule, failed=True)
+        self.do_rule_update_test(rule, failed=True, msg='Cannot specify the current rule in before')
 
     def test_rule_update_after_top(self):
         """ test updating position of a rule to top """
@@ -203,3 +203,43 @@ class TestPFSenseRuleUpdateModule(TestPFSenseRuleModule):
         self.check_rule_idx(rule, 2)
         self.check_separator_idx(rule['interface'], 'test_sep1', 0)
         self.check_separator_idx(rule['interface'], 'test_sep2', 3)
+
+    def test_rule_update_queue_set(self):
+        """ test updating queue of a rule """
+        rule = dict(name='test_rule', source='any', destination='any', interface='wan', queue='one_queue', protocol='tcp')
+        self.do_rule_update_test(rule)
+
+    def test_rule_update_queue_set_ack(self):
+        """ test updating queue and ackqueue of a rule """
+        rule = dict(name='test_rule', source='any', destination='any', interface='wan', queue='one_queue', ackqueue='another_queue', protocol='tcp')
+        self.do_rule_update_test(rule)
+
+    def test_rule_update_queue_unset_ack(self):
+        """ test updating ackqueue of a rule """
+        rule = dict(name='test_lan_100_2', source='any', destination='any', interface='lan_100', queue='one_queue', protocol='tcp')
+        self.do_rule_update_test(rule)
+
+    def test_rule_update_queue_unset(self):
+        """ test updating queue of a rule """
+        rule = dict(name='test_lan_100_3', source='any', destination='any', interface='lan_100', protocol='tcp')
+        self.do_rule_update_test(rule)
+
+    def test_rule_update_limiter_set(self):
+        """ test updating limiter of a rule """
+        rule = dict(name='test_rule', source='any', destination='any', interface='wan', in_queue='one_limiter', protocol='tcp')
+        self.do_rule_update_test(rule)
+
+    def test_rule_update_limiter_set_out(self):
+        """ test updating limiter in and out of a rule """
+        rule = dict(name='test_rule', source='any', destination='any', interface='wan', in_queue='one_limiter', out_queue='another_limiter', protocol='tcp')
+        self.do_rule_update_test(rule)
+
+    def test_rule_update_limiter_unset_out(self):
+        """ test updating limiter out of a rule """
+        rule = dict(name='test_lan_100_4', source='any', destination='any', interface='lan_100', in_queue='one_limiter', protocol='tcp')
+        self.do_rule_update_test(rule)
+
+    def test_rule_update_limiter_unset(self):
+        """ test updating limiter of a rule """
+        rule = dict(name='test_lan_100_5', source='any', destination='any', interface='lan_100', protocol='tcp')
+        self.do_rule_update_test(rule)

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Orion Poplawski <orion@nwra.com>
+# Copyright: (c) 2018, Frederic Bor <frederic.bor@wanadoo.fr>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,14 +16,14 @@ DOCUMENTATION = """
 ---
 module: pfsense_alias
 version_added: "2.8"
-author: Orion Poplawski (@opoplawski)
+author: Orion Poplawski (@opoplawski), Frederic Bor (@f-bor)
 short_description: Manage pfSense aliases
 description:
   - Manage pfSense aliases
 notes:
 options:
   name:
-    description: The name the alias
+    description: The name of the alias
     required: true
   state:
     description: State in which to leave the alias
@@ -31,16 +32,16 @@ options:
     default: present
   type:
     description: The type of the alias
-    choices: [ "host", "network", "port", "urltable" ]
+    choices: [ "host", "network", "port", "urltable", "urltable_ports" ]
     default: null
   address:
-    description: The address of the alias. Use a space separator for multiple values.
+    description: The address of the alias. Use a space separator for multiple values
     default: null
   descr:
-    description: Description
+    description: The description of the alias
     default: null
   detail:
-    description: Details for items. Use || separator between items.
+    description: The descriptions of the items. Use || separator between items
     default: null
   updatefreq:
     description: Update frequency in days for urltable
@@ -61,25 +62,20 @@ EXAMPLES = """
 """
 
 RETURN = """
-added:
-    description: aliases that were added
+commands:
+    description: the set of commands that would be pushed to the remote device (if pfSense had a CLI)
     returned: always
     type: list
-    sample: []
-deleted:
-    description: aliases that were removed
+    sample: ["create alias 'adservers', type='host', address='10.0.0.1 10.0.0.2'", "update alias 'one_host' set address='10.9.8.7'", "delete alias 'one_alias'"]
+diff:
+    description: a pair of dicts, before and after, with alias settings before and after task run
     returned: always
-    type: list
-    sample: []
-modified:
-    description: aliases that were modified
-    returned: always
-    type: list
-    sample: []
+    type: dict
+    sample: {}
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pfsense.pfsense_alias import PFSenseAliasModule, ALIASES_ARGUMENT_SPEC, ALIASES_REQUIRED_IF
+from ansible.module_utils.networking.pfsense.pfsense_alias import PFSenseAliasModule, ALIASES_ARGUMENT_SPEC, ALIASES_REQUIRED_IF
 
 
 def main():

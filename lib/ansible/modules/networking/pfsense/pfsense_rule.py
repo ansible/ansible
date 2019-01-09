@@ -16,8 +16,7 @@ DOCUMENTATION = """
 ---
 module: pfsense_rule
 version_added: "2.8"
-author: Orion Poplawski (@opoplawski)
-        Frederic Bor (@-fbor)
+author: Orion Poplawski (@opoplawski), Frederic Bor (@f-bor)
 short_description: Manage pfSense rules
 description:
   - Manage pfSense rules
@@ -34,7 +33,7 @@ options:
     choices: [ "pass", "block", "reject" ]
   state:
     description: State in which to leave the rule
-    required: true
+    default: present
     choices: [ "present", "absent" ]
   disabled:
     description: Is the rule disabled
@@ -45,7 +44,7 @@ options:
     required: true
   floating:
     description: Is the rule floating
-    choices: [ "yes", "no" ]
+    type: bool
   direction:
     description: Direction floating rule applies to
     choices: [ "any", "in", "out" ]
@@ -67,7 +66,7 @@ options:
     default: null
   log:
     description: Log packets matched by rule
-    choices: [ "no", "yes" ]
+    type: bool
   after:
     description: Rule to go after, or "top"
   before:
@@ -76,6 +75,14 @@ options:
     description: State type
     default: keep state
     choices: ["keep state", "sloppy state", "synproxy state", "none"]
+  queue:
+    description: QOS default queue
+  ackqueue:
+    description: QOS acknowledge queue
+  in_queue:
+    description: Limiter queue for traffic coming into the chosen interface
+  out_queue:
+    description: Limiter queue for traffic leaving the chosen interface
 """
 
 EXAMPLES = """
@@ -97,7 +104,7 @@ RETURN = """
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pfsense.pfsense_rule import PFSenseRuleModule, RULES_ARGUMENT_SPEC, RULES_REQUIRED_IF
+from ansible.module_utils.networking.pfsense.pfsense_rule import PFSenseRuleModule, RULES_ARGUMENT_SPEC, RULES_REQUIRED_IF
 
 
 def main():

@@ -16,10 +16,10 @@ from .test_pfsense_rule import TestPFSenseRuleModule, args_from_var
 
 class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
 
-    def do_rule_creation_test(self, rule, failed=False):
+    def do_rule_creation_test(self, rule, msg='', failed=False):
         """ test creation of a new rule """
         set_module_args(args_from_var(rule))
-        self.execute_module(changed=True, failed=failed)
+        self.execute_module(changed=True, failed=failed, msg=msg)
         if failed:
             self.assertFalse(self.load_xml_result())
         else:
@@ -137,7 +137,7 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
     def test_rule_create_state_invalid(self):
         """ test creation of a new rule with invalid state """
         rule = dict(name='one_rule', source='any', destination='any', interface='lan', statetype='acme state')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='value of statetype must be one of: keep state, sloppy state, synproxy state, none, got: acme state')
 
     def test_rule_create_after(self):
         """ test creation of a new rule after another """
@@ -154,7 +154,7 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
     def test_rule_create_after_invalid(self):
         """ test creation of a new rule after an invalid rule """
         rule = dict(name='one_rule', source='any', destination='any', interface='lan', after='admin_bypass')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Failed to insert after rule=admin_bypass interface=lan')
 
     def test_rule_create_before(self):
         """ test creation of a new rule before another """
@@ -177,7 +177,7 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
     def test_rule_create_before_invalid(self):
         """ test creation of a new rule before an invalid rule """
         rule = dict(name='one_rule', source='any', destination='any', interface='lan', before='admin_bypass')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Failed to insert before rule=admin_bypass interface=lan')
 
     def test_rule_create_source_alias(self):
         """ test creation of a new rule with a valid source alias """
@@ -187,17 +187,17 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
     def test_rule_create_source_alias_invalid(self):
         """ test creation of a new rule with an invalid source alias """
         rule = dict(name='one_rule', source='acme', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse address acme, not IP or alias')
 
     def test_rule_create_source_ip_invalid(self):
         """ test creation of a new rule with an invalid source ip """
         rule = dict(name='one_rule', source='192.193.194.195.196', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse address 192.193.194.195.196, not IP or alias')
 
     def test_rule_create_source_net_invalid(self):
         """ test creation of a new rule with an invalid source network """
         rule = dict(name='one_rule', source='192.193.194.195/256', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse address 192.193.194.195/256, not IP or alias')
 
     def test_rule_create_destination_alias(self):
         """ test creation of a new rule with a valid source alias """
@@ -207,17 +207,17 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
     def test_rule_create_destination_alias_invalid(self):
         """ test creation of a new rule with an invalid destination alias """
         rule = dict(name='one_rule', source='any', destination='acme', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse address acme, not IP or alias')
 
     def test_rule_create_destination_ip_invalid(self):
         """ test creation of a new rule with an invalid destination ip """
         rule = dict(name='one_rule', source='any', destination='192.193.194.195.196', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse address 192.193.194.195.196, not IP or alias')
 
     def test_rule_create_destination_net_invalid(self):
         """ test creation of a new rule with an invalid destination network """
         rule = dict(name='one_rule', source='any', destination='192.193.194.195/256', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse address 192.193.194.195/256, not IP or alias')
 
     def test_rule_create_source_self_lan(self):
         """ test creation of a new rule with self"""
@@ -242,7 +242,7 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
     def test_rule_create_net_interface_invalid(self):
         """ test creation of a new rule with invalid interface """
         rule = dict(name='one_rule', source='NET:invalid_lan', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='invalid_lan is not a valid interface')
 
     def test_rule_create_ip_interface(self):
         """ test creation of a new rule with valid interface """
@@ -252,7 +252,7 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
     def test_rule_create_ip_interface_invalid(self):
         """ test creation of a new rule with invalid interface """
         rule = dict(name='one_rule', source='IP:invalid_lan', destination='any', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='invalid_lan is not a valid interface')
 
     def test_rule_create_interface(self):
         """ test creation of a new rule with valid interface """
@@ -282,27 +282,27 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
     def test_rule_create_port_alias_range_invalid_1(self):
         """ test creation of a new rule with range of invalid alias ports """
         rule = dict(name='one_rule', source='10.10.1.1:port_ssh-openvpn_port', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse port openvpn_port, not port number or alias')
 
     def test_rule_create_port_alias_range_invalid_2(self):
         """ test creation of a new rule with range of invalid alias ports """
         rule = dict(name='one_rule', source='10.10.1.1:-openvpn_port', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse address 10.10.1.1:-openvpn_port')
 
     def test_rule_create_port_alias_range_invalid_3(self):
         """ test creation of a new rule with range of invalid alias ports """
         rule = dict(name='one_rule', source='10.10.1.1:port_ssh-65537', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse port 65537, not port number or alias')
 
     def test_rule_create_port_number_invalid(self):
         """ test creation of a new rule with invalid port number """
         rule = dict(name='one_rule', source='10.10.1.1:65536', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse port 65536, not port number or alias')
 
     def test_rule_create_port_alias_invalid(self):
         """ test creation of a new rule with invalid port alias """
         rule = dict(name='one_rule', source='10.10.1.1:openvpn_port', destination='10.10.10.1', interface='lan')
-        self.do_rule_creation_test(rule, failed=True)
+        self.do_rule_creation_test(rule, failed=True, msg='Cannot parse port openvpn_port, not port number or alias')
 
     def test_rule_create_negate_source(self):
         """ test creation of a new rule with a not source """
@@ -345,3 +345,73 @@ class TestPFSenseRuleCreateModule(TestPFSenseRuleModule):
         self.check_rule_idx(rule, 3)
         self.check_separator_idx(rule['interface'], 'test_sep1', 0)
         self.check_separator_idx(rule['interface'], 'test_sep2', 4)
+
+    def test_rule_create_queue(self):
+        """ test creation of a new rule with default queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', queue='one_queue')
+        self.do_rule_creation_test(rule)
+
+    def test_rule_create_queue_ack(self):
+        """ test creation of a new rule with default queue and ack queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', queue='one_queue', ackqueue='another_queue')
+        self.do_rule_creation_test(rule)
+
+    def test_rule_create_queue_ack_without_default(self):
+        """ test creation of a new rule with ack queue and without default queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', ackqueue='another_queue')
+        self.do_rule_creation_test(rule, failed=True, msg='A default queue must be selected when an acknowledge queue is also selected')
+
+    def test_rule_create_queue_same(self):
+        """ test creation of a new rule with same default queue and ack queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', queue='one_queue', ackqueue='one_queue')
+        self.do_rule_creation_test(rule, failed=True, msg='Acknowledge queue and default queue cannot be the same')
+
+    def test_rule_create_queue_invalid(self):
+        """ test creation of a new rule with invalid default queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', queue='acme_queue')
+        self.do_rule_creation_test(rule, failed=True, msg='Failed to find enabled queue=acme_queue')
+
+    def test_rule_create_queue_invalid_ack(self):
+        """ test creation of a new rule with default queue and invalid ack queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', queue='one_queue', ackqueue='acme_queue')
+        self.do_rule_creation_test(rule, failed=True, msg='Failed to find enabled ackqueue=acme_queue')
+
+    def test_rule_create_limiter(self):
+        """ test creation of a new rule with in_queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', in_queue='one_limiter')
+        self.do_rule_creation_test(rule)
+
+    def test_rule_create_limiter_out(self):
+        """ test creation of a new rule with in_queue and out_queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', in_queue='one_limiter', out_queue='another_limiter')
+        self.do_rule_creation_test(rule)
+
+    def test_rule_create_limiter_disabled(self):
+        """ test creation of a new rule with disabled in_queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', in_queue='disabled_limiter')
+        self.do_rule_creation_test(rule, failed=True, msg='Failed to find enabled in_queue=disabled_limiter')
+
+    def test_rule_create_limiter_out_without_in(self):
+        """ test creation of a new rule with out_queue and without in_queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', out_queue='another_limiter')
+        self.do_rule_creation_test(rule, failed=True, msg='A queue must be selected for the In direction before selecting one for Out too')
+
+    def test_rule_create_limiter_same(self):
+        """ test creation of a new rule with same in_queue and out_queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', in_queue='one_limiter', out_queue='one_limiter')
+        self.do_rule_creation_test(rule, failed=True, msg='In and Out Queue cannot be the same')
+
+    def test_rule_create_limiter_invalid(self):
+        """ test creation of a new rule with invalid in_queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', in_queue='acme_queue')
+        self.do_rule_creation_test(rule, failed=True, msg='Failed to find enabled in_queue=acme_queue')
+
+    def test_rule_create_limiter_invalid_out(self):
+        """ test creation of a new rule with in_queue and invalid out_queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', in_queue='one_limiter', out_queue='acme_queue')
+        self.do_rule_creation_test(rule, failed=True, msg='Failed to find enabled out_queue=acme_queue')
+
+    def test_rule_create_limiter_floating_any(self):
+        """ test creation of a new rule with in_queue and invalid out_queue """
+        rule = dict(name='one_rule', source='any', destination='any', interface='lan', in_queue='one_limiter', floating='yes', direction='any')
+        self.do_rule_creation_test(rule, failed=True, msg='Limiters can not be used in Floating rules without choosing a direction')
