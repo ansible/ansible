@@ -504,7 +504,7 @@ def get_attached_policy_list(connection, module, name):
 def update_role_tags(connection, module):
     new_tags = module.params.get('tags')
     if new_tags is None:
-        return False
+        return False, {}
 
     if not hasattr(connection, 'list_role_tags'):
         module.fail_json(msg='You need at least boto3 1.9.54 to manage IAM role tags')
