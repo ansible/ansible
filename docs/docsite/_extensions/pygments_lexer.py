@@ -502,7 +502,7 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
 
         # represents a simple terminal value
         'simplevalue': [
-            (r'(true|false|null)\b', token.Keyword.Constant),
+            (r'(true|false|null|yes|no)\b', token.Keyword.Constant),  # NOTE: We added yes/no for Ansible
             (('%(int_part)s(%(frac_part)s%(exp_part)s|'
               '%(exp_part)s|%(frac_part)s)') % vars(),
              token.Number.Float),
