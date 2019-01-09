@@ -255,6 +255,14 @@ class AzureRMRecordSet(AzureRMModuleBase):
             changed=False
         )
 
+        super(AzureRMRecordSet, self).__init__(self.module_arg_spec, required_if=required_if, supports_check_mode=True, skip_exec=True)
+
+        # look up the right subspec and metadata
+        record_subspec = RECORD_ARGSPECS.get(self.module.params['record_type'])
+
+        # patch the right record shape onto the argspec
+        self.module_arg_spec['records']['options'] = record_subspec
+
         self.resource_group = None
         self.relative_name = None
         self.zone_name = None
