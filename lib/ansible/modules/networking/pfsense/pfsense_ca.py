@@ -135,14 +135,14 @@ class pfSenseCA(object):
         self.module.exit_json(changed=changed, diff=diff)
 
     def remove(self, ca):
-        ca_elt, _ = self._find_ca(ca['descr'])
+        ca_elt, dummy = self._find_ca(ca['descr'])
         changed = False
         diff = {}
         diff['after'] = {}
         if ca_elt is not None:
             changed = True
             diff['before'] = self.pfsense.element_to_dict(ca_elt)
-            crl_elt, _ = self._find_crl(ca_elt.find('refid').text)
+            crl_elt, dummy = self._find_crl(ca_elt.find('refid').text)
             self.cas.remove(ca_elt)
             if crl_elt is not None:
                 diff['before']['crl'] = crl_elt.find('text').text

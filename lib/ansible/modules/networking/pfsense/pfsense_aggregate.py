@@ -181,7 +181,7 @@ class PFSenseModuleAggregate(object):
         changed = self.pfsense_aliases.result['changed'] or self.pfsense_rules.changed
         if changed and not self.module.check_mode:
             self.pfsense.write_config(descr='aggregated change')
-            (_, stdout, stderr) = self._update()
+            (dummy, stdout, stderr) = self._update()
 
         result = {}
         result['result_aliases'] = self.pfsense_aliases.result['commands']

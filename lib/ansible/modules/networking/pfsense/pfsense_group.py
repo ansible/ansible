@@ -106,7 +106,7 @@ class pfSenseGroup(object):
         self.module.exit_json(changed=changed)
 
     def remove(self, group):
-        group_elt, _ = self._find_group(group['name'])
+        group_elt, dummy = self._find_group(group['name'])
         changed = False
         if group_elt is not None:
             if self.module.check_mode:

@@ -148,7 +148,7 @@ class PFSenseAuthserverLDAP(object):
         self.module.exit_json(changed=changed)
 
     def remove(self, authserver):
-        authserver_elt, _ = self._find_authserver_ldap(authserver['name'])
+        authserver_elt, dummy = self._find_authserver_ldap(authserver['name'])
         changed = False
         if authserver_elt is not None:
             if self.module.check_mode:
