@@ -25,7 +25,8 @@ description:
 options:
     path:
         description:
-            - Path to the stanza file
+            - Path to the stanza file.
+        type: path
         required: true
     stanza:
         description:
