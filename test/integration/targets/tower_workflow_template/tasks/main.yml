@@ -91,3 +91,15 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Check module fails with correct msg
+  tower_workflow_template:
+    name: my-workflow
+    organization: Non Existing Organization
+    schema: '[{"success": [{"job_template": "my-job-1"}], "job_template": "my-job-2"}]'
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update organization source,organization not found: The requested object could not be found.'"

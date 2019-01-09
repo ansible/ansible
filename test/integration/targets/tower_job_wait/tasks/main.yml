@@ -14,3 +14,13 @@
   tower_job_wait:
     job_id: "{{ job.id }}"
     timeout: 60
+
+- name: Check module fails with correct msg
+  tower_job_wait:
+    job_id: "99999999"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Unable to wait, no job_id 99999999 found: The requested object could not be found.'"
