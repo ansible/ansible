@@ -375,16 +375,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         while True:
             batch_requests = []
             batch_item_index = 0
-            batch_response_handlers = []
+            batch_response_handlers = dict()
             try:
-                while batch_item_index < 500:
+                while batch_item_index < 100:
                     item = self._request_queue.get_nowait()
 
+                    name = str(uuid.uuid4())
                     query_parameters = {'api-version': item.api_version}
                     req = self._client.get(item.url, query_parameters)
-
-                    batch_requests.append(dict(httpMethod="GET", url=req.url, name=str(uuid.uuid4())))
-                    batch_response_handlers.append(item)
+                    batch_requests.append(dict(httpMethod="GET", url=req.url, name=name))
+                    batch_response_handlers[name] = item
                     batch_item_index += 1
             except Empty:
                 pass
@@ -402,12 +402,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
             for idx, r in enumerate(batch_resp[key_name]):
                 status_code = r.get('httpStatusCode')
+                returned_name = r['name']
+                result = batch_response_handlers[returned_name]
                 if status_code != 200:
                     # FUTURE: error-tolerant operation mode (eg, permissions)
-                    raise AnsibleError("a batched request failed with status code {0}, url {1}".format(status_code, batch_requests[idx].get('url')))
-                item = batch_response_handlers[idx]
+                    raise AnsibleError("a batched request failed with status code {0}, url {1}".format(status_code, result.url))
                 # FUTURE: store/handle errors from individual handlers
-                item.handler(r['content'], **item.handler_args)
+                result.handler(r['content'], **result.handler_args)
 
     def _send_batch(self, batched_requests):
         url = '/batch'
@@ -417,7 +418,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         body_content = self._serializer.body(body_obj, 'object')
 
-        header = {'x-ms-client-request-id': str(uuid.uuid4())}
+        header = { 'x-ms-client-request-id': str(uuid.uuid4())}
         header.update(self._default_header_parameters)
 
         request = self._client.post(url, query_parameters)
