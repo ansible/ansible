@@ -34,6 +34,11 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
+    plan: 
+        description:
+            - "It can be resource id of existing app service plan. eg.,
+              /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
+        required: false            
     storage_account:
         description:
             - Name of the storage account to use.
@@ -145,6 +150,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
+            plan=dict(type='str', required=False),
             storage_account=dict(
                 type='str',
                 aliases=['storage', 'storage_account_name']
@@ -160,6 +166,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.state = None
+        self.plan = None
         self.location = None
         self.storage_account = None
         self.app_settings = None
@@ -218,7 +225,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                     site_config=SiteConfig(
                         app_settings=self.aggregated_app_settings(),
                         scm_type='LocalGit'
-                    )
+                    ),
+                    server_farm_id=self.plan
                 )
                 self.results['changed'] = True
             else:
