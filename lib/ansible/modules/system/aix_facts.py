@@ -1,23 +1,7 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
+#
+#
 
-# (c) 2017, Joris Weijters <joris.weijters@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -25,19 +9,19 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: aix_facts
-version_added: "2.3"
-short_description: Gathers AIX/ING specific facts
+version_added: "2.2"
+short_description: Gathers AIX specific facts
 description:
-    - This module gathers AIX/ING specific facts
+    - This module gathers AIX specific facts
     - It delivers the folowing ansible_facts
       oslevel, build(ING specific), lpps, filesystems, mounts, vgs, lssrc,
-    - niminfo, uname, drmode(ING specific)
-author: "InfraNL/SE/AIX"
+    - niminfo, uname 
+author: "Joris.weijters"
 options:
   options:
     description:
     - name of the fact you want to recieve, default you will recieve the folowing facts
-      'oslevel','build','filesystems','mounts','vgs','lssrc','niminfo','lparstat','uname','drmode','ipfilt'
+      'oslevel','build','filesystems','mounts','vgs','lssrc','niminfo','lparstat','uname','drmode'
       the option all will give the folowing facts
       'oslevel','build','lpps','filesystems','mounts','vgs','lssrc','niminfo','lparstat','uname','drmode','ipfilt'
 
@@ -151,11 +135,11 @@ ansible_facts: {
             "Minimum_Memory": "1024",
             "Minimum_Virtual_CPUs": "1",
             "Mode": "Uncapped",
-            "Node_Name": "rn99054",
+            "Node_Name": "nimclient",
             "Online_Memory": "6144",
             "Online_Virtual_CPUs": "2",
             "Partition_Group-ID": "32781",
-            "Partition_Name": "rn99054",
+            "Partition_Name": "nimclient",
             "Partition_Number": "13",
             "Physical_CPU_Percentage": "25.00",
             "Physical_Memory_in_the_Pool": "-",
@@ -256,13 +240,13 @@ ansible_facts: {
         "NIM_BOS_IMAGE": "/SPOT/usr/sys/inst.images/installp/ppc/bos",
         "NIM_CONFIGURATION": "standalone",
         "NIM_FIPS_MODE": "0",
-        "NIM_HOSTNAME": "rn9905fpl.itc.intranet",
-        "NIM_HOSTS": "127.0.0.1:loopback:localhost  172.27.201.62:rn9905fpl.itc.intranet  172.27.4.14:rn1206zpl.itc.intranet",
-        "NIM_MASTERID": "00F7C48B4C00",
-        "NIM_MASTER_HOSTNAME": "rn1206zpl.itc.intranet",
+        "NIM_HOSTNAME": "nimclient.local",
+        "NIM_HOSTS": "127.0.0.1:loopback:localhost  1.2.3.4:nimclient.local  1.2.3.5:nimserver.local",
+        "NIM_MASTERID": "00F7C1234567",
+        "NIM_MASTER_HOSTNAME": "nimserver.local",
         "NIM_MASTER_PORT": "1058",
         "NIM_MOUNTS": "",
-        "NIM_NAME": "rn9905fpl",
+        "NIM_NAME": "nimclient",
         "NIM_REGISTRATION_PORT": "1059",
         "NIM_SHELL": "nimsh",
         "ROUTES": "default:0:172.27.200.1"
@@ -276,20 +260,20 @@ ansible_facts: {
     },
     "uname": {
         "architecture": "powerpc",
-        "id": "0009E5ABD400",
+        "id": "000123456780",
         "lannumber": "166046676",
         "lparid": "11",
-        "lparname": "rn9905f",
+        "lparname": "nimclient",
         "model": "8406-71Y",
-        "name": "rn9905f",
+        "name": "nimclient",
         "os": "AIX",
         "release": "1",
-        "serial": "03109E5AB",
-        "systemid": "041AC090F0BB4300",
+        "serial": "012345678",
+        "systemid": "041AC01234567890",
         "version": "7"
     },
     "vgs": {
-        "midwarevg": [
+        "vgname": [
             {
                 "free_pps": "346",
                 "pp_size": "128 megabyte(s)",
@@ -579,10 +563,10 @@ def get_niminfo(module):
             #------------------ Network Install Manager ---------------
             # warning - this file contains NIM configuration information
             #       and should only be updated by NIM
-            export NIM_NAME=rn12402pl
-            export NIM_HOSTNAME=rn12402pl.itc.testlab.intranet
+            export NIM_NAME=nimclient
+            export NIM_HOSTNAME=nimclient.local
             export NIM_CONFIGURATION=standalone
-            export NIM_MASTER_HOSTNAME=rn100pgpl.itc.testlab.intranet
+            export NIM_MASTER_HOSTNAME=nimserver.local
             export NIM_MASTER_PORT=1058
             export NIM_REGISTRATION_PORT=1059
             export NIM_SHELL="nimsh"
@@ -591,10 +575,10 @@ def get_niminfo(module):
             export NIM_BOS_IMAGE=/SPOT/usr/sys/inst.images/installp/ppc/bos
             export NIM_BOS_FORMAT=rte
             export NIM_HOSTS=" 127.0.0.1:loopback:localhost
-                               172.27.8.43:rn12402pl.itc.testlab.intranet
-                               172.27.8.18:rn100pgpl.itc.testlab.intranet "
+                               1.2.3.4:nimclient.local
+                               1.2.3.5:nimserver.local"
             export NIM_MOUNTS=""
-            export ROUTES=" default:0:172.27.8.1 "
+            export ROUTES=" default:0:1.2.3.1 "
 
             The next line will do 3 things
             It opens the file and reads all lines string with 'export'
@@ -759,8 +743,7 @@ def main():
         'niminfo',
         'lparstat',
         'uname',
-        'drmode',
-        'ipfilt']
+        'drmode']
     module = AnsibleModule(
         argument_spec=dict(
             options=dict(type='list', default=['default'])
