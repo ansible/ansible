@@ -47,10 +47,10 @@ from ansible.module_utils.six.moves import StringIO
 
 
 _group = 'vagrant'  # a default group
-_ssh_to_ansible = [('user', 'ansible_ssh_user'),
-                   ('hostname', 'ansible_ssh_host'),
+_ssh_to_ansible = [('user', 'ansible_user'),
+                   ('hostname', 'ansible_host'),
                    ('identityfile', 'ansible_ssh_private_key_file'),
-                   ('port', 'ansible_ssh_port')]
+                   ('port', 'ansible_port')]
 
 # Options
 # ------------------------------
