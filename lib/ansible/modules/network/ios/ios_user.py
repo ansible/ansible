@@ -456,7 +456,7 @@ def main():
         name=dict(),
 
         configured_password=dict(no_log=True),
-        hashed_password=dict(no_log=True, elements='dict', options=hashed_password_spec),
+        hashed_password=dict(no_log=True, type='dict', options=hashed_password_spec),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
         password_type=dict(default='secret', choices=['secret', 'password']),
