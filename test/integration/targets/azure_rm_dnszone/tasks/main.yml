@@ -6,7 +6,6 @@
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
     name: "{{ domain_name }}.com"
-    state: present
   register: results
 
 - assert:
@@ -16,7 +15,6 @@
   azure_rm_dnszone:
     resource_group: "{{ resource_group }}"
     name: "{{ domain_name }}.com"
-    state: present
     tags:
       test: modified
   register: results
@@ -39,20 +37,75 @@
 - assert:
     that: 
       - results.changed
-      - results.state.tags.test == 'new_modified'
+      - results.state.tags.test == 'modified'
       - results.check_mode == true
 
 - name: Retrieve DNS Zone Facts
   azure_rm_dnszone_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ domain_name }}.com"
-  register: results
 
 - name: Assert that facts module returned result
   assert:
     that: 
       - not results.changed
-      - results.ansible_facts.azure_dnszones[0].tags.test == 'modified'
+      - azure_dnszones[0].tags.test == 'modified'
+      - azure_rm_dnszones[0].type == 'public'
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ item }}"
+  with_items:
+    - "{{ domain_name }}registration1"
+    - "{{ domain_name }}resolution1"
+    - "{{ domain_name }}registration2"
+    - "{{ domain_name }}resolution2"
+
+- name: Create private dns zone
+  azure_rm_dnszone:
+    name: "{{ domain_name }}.private"
+    resource_group: "{{ resource_group }}"
+    type: private
+    registration_virtual_networks:
+      - name: "{{ domain_name }}registration1"
+      - name: "{{ domain_name }}registration2"
+    resolution_virtual_networks:
+      - name: "{{ domain_name }}resolution1"
+      - name: "{{ domain_name }}resolution2"
+  register: results
+
+- assert:
+    that:
+        - "results.state.registration_virtual_networks | length == 2"
+        - "results.state.resolution_virtual_networks | length == 2"
+        - results.state.type == 'private'
+
+- name: Update private dns zone
+  azure_rm_dnszone:
+    name: "{{ domain_name }}.private"
+    resource_group: "{{ resource_group }}"
+    type: private
+    registration_virtual_networks:
+      - name: "{{ domain_name }}registration1"
+    resolution_virtual_networks:
+      - name: "{{ domain_name }}resolution1"
+  register: results
+
+- assert:
+    that:
+        - "results.state.registration_virtual_networks | length == 1"
+        - "results.state.resolution_virtual_networks | length == 1"
+        - results.state.type == 'private'
+
+- name: Test idempotent
+  azure_rm_dnszone:
+    name: "{{ item }}"
+    resource_group: "{{ resource_group }}"
+  with_items:
+    - "{{ domain_name }}.com"
+    - "{{ domain_name }}.private"
+  register: results
 
 #
 # azure_rm_dnsrecordset test

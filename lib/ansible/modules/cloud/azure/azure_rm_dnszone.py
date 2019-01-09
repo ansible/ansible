@@ -97,11 +97,11 @@ state:
 
 '''
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
+from ansible.module_utils._text import to_native
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.dns.models import Zone
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -115,7 +115,10 @@ class AzureRMDNSZone(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
-            state=dict(choices=['present', 'absent'], default='present', type='str')
+            state=dict(choices=['present', 'absent'], default='present', type='str'),
+            type=dict(type='str', choices=['private', 'public']),
+            registration_virtual_networks=dict(type='list'),
+            resolution_virtual_networks=dict(type='list')
         )
 
         # store the results of the module operation
@@ -128,6 +131,9 @@ class AzureRMDNSZone(AzureRMModuleBase):
         self.name = None
         self.state = None
         self.tags = None
+        self.type = None
+        self.registration_virtual_networks = None
+        self.resolution_virtual_networks = None
 
         super(AzureRMDNSZone, self).__init__(self.module_arg_spec,
                                              supports_check_mode=True,
@@ -155,6 +161,10 @@ class AzureRMDNSZone(AzureRMModuleBase):
             # serialize object into a dictionary
             results = zone_to_dict(zone)
 
+            # if the virtual networks is NONE, keep this parameter unchanged
+            self.registration_virtual_networks = self.preprocess_vn_list(self.registration_virtual_networks) or results['registration_virtual_network']
+            self.resolution_virtual_networks = self.preprocess_vn_list(self.resolution_virtual_networks) or results['resolution_virtual_networks']
+
             # don't change anything if creating an existing zone, but change if deleting it
             if self.state == 'present':
                 changed = False
@@ -162,6 +172,15 @@ class AzureRMDNSZone(AzureRMModuleBase):
                 update_tags, results['tags'] = self.update_tags(results['tags'])
                 if update_tags:
                     changed = True
+                if self.type and results['type'] != self.type:
+                    changed = True
+                    results['type'] = self.type
+                if self.resolution_virtual_networks and set(self.resolution_virtual_networks) != set(results['resolution_virtual_networks'] or []):
+                    changed = True
+                    results['resolution_virtual_networks'] = self.resolution_virtual_networks
+                if self.registration_virtual_networks and set(self.registration_virtual_networks) != set(results['registration_virtual_network'] or []):
+                    changed = True
+                    results['registration_virtual_network'] = self.registration_virtual_network
 
             elif self.state == 'absent':
                 changed = True
@@ -183,16 +202,13 @@ class AzureRMDNSZone(AzureRMModuleBase):
 
         if changed:
             if self.state == 'present':
-                if not zone:
-                    # create new zone
-                    self.log('Creating zone {0}'.format(self.name))
-                    zone = Zone(location='global', tags=self.tags)
-                else:
-                    # update zone
-                    zone = Zone(
-                        location='global',
-                        tags=results['tags']
-                    )
+                zone = self.dns_models.Zone(zone_type=str.capitalize(self.type) if self.type else None,
+                                            tags=self.tags,
+                                            location='global')
+                if self.resolution_virtual_networks:
+                    zone.resolution_virtual_networks = self.construct_subresource_list(self.resolution_virtual_networks)
+                if self.registration_virtual_networks:
+                    zone.registration_virtual_networks = self.construct_subresource_list(self.registration_virtual_networks)
                 self.results['state'] = self.create_or_update_zone(zone)
             elif self.state == 'absent':
                 # delete zone
@@ -220,6 +236,20 @@ class AzureRMDNSZone(AzureRMModuleBase):
             self.fail("Error deleting zone {0} - {1}".format(self.name, str(exc)))
         return result
 
+    def preprocess_vn_list(self, vn_list):
+        return [self.parse_vn_id(x) for x in vn_list] if vn_list else None
+
+    def parse_vn_id(self, vn):
+        vn_dict = self.parse_resource_to_dict(vn) if not isinstance(vn, dict) else vn
+        return format_resource_id(val=vn_dict['name'],
+                                  subscription_id=vn_dict.get('subscription') or self.subscription_id,
+                                  namespace='Microsoft.Network',
+                                  types='virtualNetworks',
+                                  resource_group=vn_dict.get('resource_group') or self.resource_group)
+
+    def construct_subresource_list(self, raw):
+        return [self.dns_models.SubResource(x) for x in raw] if raw else None
+
 
 def zone_to_dict(zone):
     # turn Zone object into a dictionary (serialization)
@@ -228,7 +258,10 @@ def zone_to_dict(zone):
         name=zone.name,
         number_of_record_sets=zone.number_of_record_sets,
         name_servers=zone.name_servers,
-        tags=zone.tags
+        tags=zone.tags,
+        type=zone.zone_type.value.lower(),
+        registration_virtual_network=[to_native(x.id) for x in zone.registration_virtual_network] if zone.registration_virtual_network else None,
+        resolution_virtual_networks=[to_native(x.id) for x in zone.resolution_virtual_networks] if zone.resolution_virtual_networks else None
     )
     return result
 

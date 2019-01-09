@@ -76,6 +76,7 @@ azure_dnszones:
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils._text import to_native
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -118,17 +119,20 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         if self.name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name.")
 
+        results = []
         # list the conditions and what to return based on user input
-
         if self.name is not None:
             # if there is a name, facts about that specific zone
-            self.results['ansible_facts']['azure_dnszones'] = self.get_item()
+            results = self.get_item()
         elif self.resource_group:
             # all the zones listed in that specific resource group
-            self.results['ansible_facts']['azure_dnszones'] = self.list_resource_group()
+            results = self.list_resource_group()
         else:
             # all the zones in a subscription
-            self.results['ansible_facts']['azure_dnszones'] = self.list_items()
+            results = self.list_items()
+
+        self.results['ansible_facts']['azure_dnszones'] = self.serialize_items(results)
+        self.results['ansible_facts']['azure_rm_dnszones'] = self.curated_items(results)
 
         return self.results
 
@@ -144,7 +148,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
 
         # serialize result
         if item and self.has_tags(item.tags, self.tags):
-            results = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
+            results = [item]
         return results
 
     def list_resource_group(self):
@@ -157,7 +161,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                results.append(item)
         return results
 
     def list_items(self):
@@ -170,8 +174,27 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                results.append(item)
         return results
+
+    def serialize_items(self, raws):
+        return [self.serialize_obj(item, AZURE_OBJECT_CLASS) for item in raws] if raws else []
+
+    def curated_items(self, raws):
+        return [self.zone_to_dict(item) for item in raws] if raws else []
+
+    def zone_to_dict(self, zone):
+        return dict(
+            id=zone.id,
+            name=zone.name,
+            number_of_record_sets=zone.number_of_record_sets,
+            max_number_of_record_sets=zone.max_number_of_record_sets,
+            name_servers=zone.name_servers,
+            tags=zone.tags,
+            type=zone.zone_type.value.lower(),
+            registration_virtual_network=[to_native(x.id) for x in zone.registration_virtual_network] if zone.registration_virtual_network else None,
+            resolution_virtual_networks=[to_native(x.id) for x in zone.resolution_virtual_networks] if zone.resolution_virtual_networks else None
+        )
 
 
 def main():
