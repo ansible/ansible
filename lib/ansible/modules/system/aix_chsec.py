@@ -143,7 +143,7 @@ def main():
     )
 
     # Mission complete
-    module.exit_json(**results)
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()
