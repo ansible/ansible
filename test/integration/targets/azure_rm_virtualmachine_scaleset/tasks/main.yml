@@ -258,6 +258,50 @@
   assert:
     that: not results.changed
 
+- name: Install VMSS Extension
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    publisher: Microsoft.Azure.Extensions
+    type: CustomScript
+    type_handler_version: 2.0
+    auto_upgrade_minor_version: true
+    settings: {"commandToExecute": "sudo apt-get -y install apache2"}
+  register: results
+
+- name: Assert that something was changed
+  assert:
+    that: results.changed
+
+- name: Install Again VMSS Extension - again
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    publisher: Microsoft.Azure.Extensions
+    type: CustomScript
+    type_handler_version: 2.0
+    auto_upgrade_minor_version: true
+    settings: {"commandToExecute": "sudo apt-get -y install apache2"}
+  register: results
+
+- name: Assert that nothing was changed
+  assert:
+    that: not results.changed
+
+- name: Delete VMSS Extension
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    state: absent
+  register: results
+
+- name: Assert that change was reported
+  assert:
+    that: results.changed
+
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
