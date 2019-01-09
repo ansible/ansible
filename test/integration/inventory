@@ -10,9 +10,6 @@ facthost[0:25] ansible_host=127.0.0.1 ansible_connection=local
 [binary_modules]
 testhost_binary_modules ansible_host=127.0.0.1 ansible_connection=local
 
-[local_group]
-kube-pippin.knf.local
-
 [aci:vars]
 aci_hostname=your-apic-1
 aci_username=admin
