@@ -143,7 +143,6 @@ exclude_host_filters:
 import hashlib
 import json
 import re
-import random
 import uuid
 
 try:
