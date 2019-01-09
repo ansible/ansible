@@ -256,20 +256,6 @@ class AzureRMRecordSet(AzureRMModuleBase):
             changed=False
         )
 
-        # first-pass arg validation so we can get the record type- skip exec_module
-        super(AzureRMRecordSet, self).__init__(self.module_arg_spec, required_if=required_if, supports_check_mode=True, skip_exec=True)
-
-        # look up the right subspec and metadata
-        record_subspec = RECORD_ARGSPECS.get(self.module.params['record_type'])
-        self.record_type_metadata = RECORDSET_VALUE_MAP.get(self.module.params['record_type'])
-
-        # patch the right record shape onto the argspec
-        self.module_arg_spec['records']['options'] = record_subspec
-
-        # monkeypatch __hash__ on SDK model objects so we can safely use them in sets
-        for rvm in RECORDSET_VALUE_MAP.values():
-            rvm['classobj'].__hash__ = gethash
-
         # rerun validation and actually run the module this time
         super(AzureRMRecordSet, self).__init__(self.module_arg_spec, required_if=required_if, supports_check_mode=True)
 
@@ -294,7 +280,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
         if self.state == 'present':
             # convert the input records to SDK objects
-            self.input_sdk_records = self.create_sdk_records(self.records)
+            self.input_sdk_records = self.create_sdk_records(self.records, self.record_type)
 
             if not record_set:
                 changed = True
@@ -352,10 +338,12 @@ class AzureRMRecordSet(AzureRMModuleBase):
             self.fail("Error deleting record set {0} - {1}".format(self.relative_name, str(exc)))
         return None
 
-    def create_sdk_records(self, input_records):
-        record_sdk_class = self.record_type_metadata['classobj']
-        record_argspec = inspect.getargspec(record_sdk_class.__init__)
-        return [record_sdk_class(**dict([(k, v) for k, v in iteritems(x) if k in record_argspec.args])) for x in input_records]
+    def create_sdk_records(self, input_records, record_type):
+        record = RECORDSET_VALUE_MAP.get(record_type)
+        if not record:
+            self.fail('record type {0} is not supported now'.format(record_type))
+        record_sdk_class = getattr(self.dns_models, record.get('classobj'))
+        return [record_sdk_class(**x) for x in input_records]
 
     def records_changed(self, input_records, server_records):
         # ensure we're always comparing a list, even for the single-valued types
@@ -370,19 +358,6 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
         # non-append mode; any difference in the sets is a change
         return input_set != server_set
-
-
-# Quick 'n dirty hash impl suitable for monkeypatching onto SDK model objects (so we can use set comparisons)
-def gethash(self):
-    if not getattr(self, '_cachedhash', None):
-        spec = inspect.getargspec(self.__init__)
-        valuetuple = tuple(
-            map(lambda v: v if not isinstance(v, list) else str(v), [
-                getattr(self, x, None) for x in spec.args if x != 'self'
-            ])
-        )
-        self._cachedhash = hash(valuetuple)
-    return self._cachedhash
 
 
 def main():
