@@ -51,7 +51,10 @@ options:
     default: 5
   source:
     description:
-      - The source interface or IP Address to use while sending the ping packet(s).
+      - The IP Address to use while sending the ping packet(s).
+  interface:
+    description:
+      - The source interface to use while sending the ping packet(s).
   ttl:
     description:
       - The time-to-live value for the ICMP packet(s).
@@ -72,8 +75,7 @@ options:
 notes:
   - For a general purpose network module, see the M(net_ping) module.
   - For Windows targets, use the M(win_ping) module instead.
-  - For targets running Python, use the M(ping) module instead.
-extends_documentation_fragment: vyos
+  - For targets running Python, use the M(ping) module instead. 
 """
 
 EXAMPLES = """
@@ -81,10 +83,10 @@ EXAMPLES = """
   junos_ping:
     dest: 10.10.10.10
 
-- name: Test reachability to 10.20.20.20 using source and ttl set
+- name: Test reachability to 10.20.20.20 using source and size set
   junos_ping:
     dest: 10.20.20.20
-    source: eth0
+    size: 1024
     ttl: 128
 
 - name: Test unreachability to 10.30.30.30 using interval
@@ -93,10 +95,10 @@ EXAMPLES = """
     interval: 3
     state: absent
 
-- name: Test reachability to 10.40.40.40 setting count and source
+- name: Test reachability to 10.40.40.40 setting count and interface
   junos_ping:
     dest: 10.40.40.40
-    source: eth1
+    interface: fxp0
     count: 20
     size: 512
 """
@@ -130,11 +132,9 @@ rtt:
 """
 
 import re
-from socket import inet_aton
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.junos.junos import junos_argument_spec
-
 
 
 def main():
@@ -169,6 +169,7 @@ def main():
         results["warnings"] = warnings
 
     results["commands"] = build_ping(dest, count, size, interval, source, ttl, interface)
+
     ping_results = Connection(module._socket_path).get(results["commands"])
 
     rtt_info, rate_info = None, None
@@ -182,8 +183,9 @@ def main():
         rtt = parse_rtt(rtt_info)
         for k, v in rtt.items():
             if rtt[k] is not None:
-                rtt[k] = int(v)
+                rtt[k] = float(v)
         results["rtt"] = rtt
+
     pkt_loss, rx, tx = parse_rate(rate_info)
     results["packet_loss"] = str(pkt_loss) + "%"
     results["packets_rx"] = int(rx)
@@ -198,15 +200,7 @@ def build_ping(dest, count, size=None, interval=None, source=None, ttl=None, int
     cmd = "ping {0} count {1}".format(dest, str(count))
 
     if source:
-        #To-DO: This just supports IPv4 address validation.
-        #       IPy module supports both IPv4 and IPv6.
-        #       IPy needs to be pip installed
-        #       socket module has security issues - bugzilla.redhat.com/show_bug.cgi?id=1347549
-        try:
-            inet_aton(source)
-            cmd += " source {0}".format(source)
-        except ValueError:
-            cmd += " interface {0}".format(source)
+        cmd += " source {0}".format(source)
 
     if interface:
         cmd += " interface {0}".format(interface)
