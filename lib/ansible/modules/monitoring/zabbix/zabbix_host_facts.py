@@ -30,7 +30,7 @@ description:
    - This module allows you to search for Zabbix host entries.
 version_added: "2.7"
 author:
-    - "Michael Miko (@redwhitemiko)"
+    - "Michael Miko (@RedWhiteMiko)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
