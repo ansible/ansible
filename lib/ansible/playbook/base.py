@@ -20,17 +20,23 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
-from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
+from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
 
 
 def _generic_g(prop_name, self):
     try:
-        return self._attributes[prop_name]
+        value = self._attributes[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+    if value is Sentinel:
+        value = self._attr_defaults[prop_name]
+
+    return value
 
 
 def _generic_g_method(prop_name, self):
@@ -49,11 +55,16 @@ def _generic_g_parent(prop_name, self):
             value = self._attributes[prop_name]
         else:
             try:
+                # Note: _get_parent_attributes(prop_name) should never return Sentinel.  It is
+                # responsible for turning Sentinel into the parent's default prior to returning.
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
                 value = self._attributes[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+    if value is Sentinel:
+        value = self._attr_defaults[prop_name]
 
     return value
 
@@ -105,7 +116,8 @@ class BaseMeta(type):
 
                     dst_dict[attr_name] = property(getter, setter, deleter)
                     dst_dict['_valid_attrs'][attr_name] = value
-                    dst_dict['_attributes'][attr_name] = value.default
+                    dst_dict['_attributes'][attr_name] = Sentinel
+                    dst_dict['_attr_defaults'] = value.default
 
                     if value.alias is not None:
                         dst_dict[value.alias] = property(getter, setter, deleter)
@@ -125,9 +137,10 @@ class BaseMeta(type):
                     _process_parents(parent.__bases__, new_dst_dict)
 
         # create some additional class attributes
-        dct['_attributes'] = dict()
-        dct['_valid_attrs'] = dict()
-        dct['_alias_attrs'] = dict()
+        dct['_attributes'] = {}
+        dct['_attr_defaults'] = {}
+        dct['_valid_attrs'] = {}
+        dct['_alias_attrs'] = {}
 
         # now create the attributes based on the FieldAttributes
         # available, including from parent (and grandparent) objects
