@@ -222,7 +222,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
             module.fail_json(msg=to_native(exc))
 
         if self.ca_certificates:
-            ca_certs = [crypto_utils.load_certificate(ca_cert) for ca_cert
+            ca_certs = [crypto_utils.load_certificate(os.path.expanduser(os.path.expandvars(ca_cert))) for ca_cert
                         in self.ca_certificates]
             self.pkcs12.set_ca_certificates(ca_certs)
 
