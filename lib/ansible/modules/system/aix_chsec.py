@@ -68,7 +68,7 @@ EXAMPLES = '''
     options: logintimes=:0800-1700
     state: present
 
-- name: remove registry option from stanza 
+- name: Remove registry option from stanza 
   aix_chsec:
     path: /etc/security/user
     stanza: ldapuser
