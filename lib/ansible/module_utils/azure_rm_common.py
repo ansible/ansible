@@ -581,7 +581,7 @@ class AzureRMModuleBase(object):
         try:
             poller = self.network_client.public_ip_addresses.create_or_update(resource_group, public_ip_name, params)
         except Exception as exc:
-            self.fail("Error creating A {0} - {1}".format(public_ip_name, str(exc)))
+            self.fail("Error creating {0} - {1}".format(public_ip_name, str(exc)))
 
         return self.get_poller_result(poller)
 
