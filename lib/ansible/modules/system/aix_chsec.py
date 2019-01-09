@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: aix_chsec
 
-short_description: modify aix stanza files
+short_description: Modify AIX stanza files
 
 version_added: "0.1"
 
