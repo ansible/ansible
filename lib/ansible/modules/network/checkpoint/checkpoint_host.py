@@ -154,7 +154,7 @@ def main():
                 result['checkpoint_hosts'] = response
             else:
                 pass
-        else:
+        elif code == 404:
             code, response = create_host(module, connection)
             publish(module, connection)
             install_policy(module, connection)
