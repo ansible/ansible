@@ -283,12 +283,12 @@ date:
   description: The date extracted from the backup file name
   returned: when backup is yes
   type: str
-  sample: 2016-07-16
+  sample: "2016-07-16"
 time:
   description: The time extracted from the backup file name
   returned: when backup is yes
   type: str
-  sample: 22:28:34
+  sample: "22:28:34"
 """
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
