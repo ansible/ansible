@@ -593,7 +593,7 @@ def process_categories(plugin_info, categories, templates, output_dir, output_na
         write_data(text, output_dir, category_filename)
 
 
-def process_support_levels(plugin_info, templates, output_dir, plugin_type):
+def process_support_levels(plugin_info, categories, templates, output_dir, plugin_type):
     supported_by = {'Ansible Core Team': {'slug': 'core_supported',
                                           'modules': [],
                                           'output': 'core_maintained.rst',
@@ -636,7 +636,6 @@ effort support will be provided but is not covered under any support contracts.
 These modules are currently shipped with Ansible, but will most likely be shipped separately in the future.
                                           """},
                     }
-    subcategories = dict()
 
     # only gen support pages for modules for now, need to split and namespace templates and generated docs
     if plugin_type == 'plugins':
@@ -659,19 +658,34 @@ These modules are currently shipped with Ansible, but will most likely be shippe
 
 
         # build up the categories that this module belongs to
-        new_cat = info['sub_category']
-        if new_cat not in subcategories:
-            display.warning('subcategory is %s' % new_cat)
-            subcategories[new_cat] = dict()
-            subcategories[new_cat]['_modules'] = []
-            subcategories[new_cat]['_modules'] = new_cat
+    #    new_cat = info['sub_category']
+    #    if new_cat not in subcategories:
+    #        display.warning('subcategory is %s' % new_cat)
+    #        subcategories[new_cat] = dict()
+    #        subcategories[new_cat]['_modules'] = dict()
+    #        subcategories[new_cat]['_modules'] = new_cat
 
-        subcategories[new_cat]['_modules'].append(module)
+#        subcategories[new_cat]['_modules'].append(module)
 
-        display.warning('subcategories is %s' % subcategories)
+#    for category in sorted(categories.keys()):
+#        module_map = categories[category]
+#        subcategories = dict((k, v) for k, v in module_map.items() if k != '_modules')
+#        display.warning('subcategories is %s' % subcategories)
 
     # Render the module lists
     for maintainers, data in supported_by.items():
+        subcategories = dict()
+        for module in data['modules']:
+            new_cat = plugin_info[module]['sub_category']
+            if new_cat not in subcategories:
+                subcategories[new_cat] = dict()
+                subcategories[new_cat]['_modules'] = []
+    #            subcategories[new_cat]['_modules'] = new_cat
+
+            subcategories[new_cat]['_modules'].append(module)
+
+        display.warning('maint is %s subcat is %s and  subcat modules are %s' % (maintainers, new_cat, subcategories[new_cat]))
+
         template_data = {'maintainers': maintainers,
                          'modules': data['modules'],
                          'slug': data['slug'],
@@ -767,7 +781,7 @@ def main():
         process_categories(plugin_info, categories, templates, output_dir, category_list_name_template, plugin_type)
 
         # Render all the categories for modules
-        process_support_levels(plugin_info, templates, output_dir, plugin_type)
+        process_support_levels(plugin_info, categories, templates, output_dir, plugin_type)
 
 
 if __name__ == '__main__':
