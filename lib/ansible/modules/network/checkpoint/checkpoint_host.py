@@ -134,7 +134,7 @@ def needs_update(module, host):
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        ip_address=dict(type='str', required=True),
+        ip_address=dict(type='str'),
         state=dict(type='str', default='present')
     )
 
