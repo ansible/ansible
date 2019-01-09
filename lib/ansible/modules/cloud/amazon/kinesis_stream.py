@@ -1251,7 +1251,7 @@ def start_stream_encryption(client, stream_name, encryption_type='', key_id='',
                     'Kinesis Stream {0} is in the process of starting encryption.'.format(stream_name)
                 )
     else:
-        success = True
+        success = False
         changed = False
         err_msg = 'Kinesis Stream {0} does not exist'.format(stream_name)
 
