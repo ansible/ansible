@@ -1541,7 +1541,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log('Storing NIC names for deletion.')
             for interface in vm_dict['properties']['networkProfile']['networkInterfaces']:
                 # check whether NIC was created by this VM
-                if interface.get('tags', {}).get('owning_vm') == self.name:
+                if interface.get('tags') and interface.get('tags').get('owning_vm') == self.name:
                     id_dict = azure_id_to_dict(interface['id'])
                     nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
             self.log('NIC names to delete {0}'.format(str(nic_names)))
@@ -1553,7 +1553,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         pip = ipc['properties'].get('publicIPAddress')
                         if pip:
                             pip_dict = azure_id_to_dict(pip['id'])
-                            if pip.get('tags', {}).get('owning_vm') == self.name:
+                            if pip.get('tags') and pip.get('tags').get('owning_vm') == self.name:
                                 pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
                 self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
                 self.results['deleted_public_ips'] = pip_names
@@ -1562,7 +1562,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 nsg = nic['properties'].get('networkSecurityGroup')
                 if nsg:
                     nsg_dict = azure_id_to_dict(nsg['id'])
-                    if nsg.get('tags', {}).get('owning_vm') == self.name:
+                    if nsg.get('tags') and nsg.get('tags').get('owning_vm') == self.name:
                         nsg_names.append(dict(name=nsg_dict['networkSecurityGroups'], resource_group=nsg_dict['resourceGroups']))
                 self.log('NSGs to  delete are {0}'.format(str(nsg_names)))
                 self.results['deleted_nsgs'] = nsg_names
