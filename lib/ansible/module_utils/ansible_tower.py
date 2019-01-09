@@ -89,7 +89,7 @@ class TowerModule(AnsibleModule):
             tower_host=dict(),
             tower_username=dict(),
             tower_password=dict(no_log=True),
-            tower_verify_ssl=dict(type='bool', default=True),
+            tower_verify_ssl=dict(type='bool'),
             tower_config_file=dict(type='path'),
         )
         args.update(argument_spec)
