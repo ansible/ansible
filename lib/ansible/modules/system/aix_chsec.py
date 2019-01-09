@@ -61,7 +61,7 @@ EXAMPLES = '''
     state: present
     mode: 0644
 
-- name: change login times for user
+- name: Change login times for user
   aix_chsec:
     path: /etc/security/user
     stanza: ldapuser
