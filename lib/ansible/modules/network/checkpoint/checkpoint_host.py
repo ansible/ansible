@@ -138,7 +138,7 @@ def main():
         state=dict(type='str', default='present')
     )
 
-    required_if = [('state', 'present', 'ip_address'))]
+    required_if = [('state', 'present', 'ip_address')]
     module = AnsibleModule(argument_spec=argument_spec)
     connection = Connection(module._socket_path)
     code, response = get_host(module, connection)
