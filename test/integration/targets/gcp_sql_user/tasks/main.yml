@@ -15,7 +15,7 @@
 # Pre-test setup
 - name: create a instance
   gcp_sql_instance:
-      name: "instance-user"
+      name: "{{resource_name}}-1"
       settings:
         ip_configuration:
           authorized_networks:
@@ -57,8 +57,6 @@
       - "result.kind == 'sql#user'"
 - name: verify that user was created
   gcp_sql_user_facts:
-      filters:
-         - name = test-user
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -69,7 +67,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - "'test-user' in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a user that already exists
   gcp_sql_user:
@@ -106,8 +104,6 @@
       - result.has_key('kind') == False
 - name: verify that user was deleted
   gcp_sql_user_facts:
-      filters:
-         - name = test-user
       instance: "{{ instance }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -118,7 +114,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - "'test-user' not in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a user that does not exist
   gcp_sql_user:
@@ -138,9 +134,10 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a instance
   gcp_sql_instance:
-      name: "instance-user"
+      name: "{{resource_name}}-1"
       settings:
         ip_configuration:
           authorized_networks:
@@ -153,3 +150,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: instance
+  ignore_errors: true

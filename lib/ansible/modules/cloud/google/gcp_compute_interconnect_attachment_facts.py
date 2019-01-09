@@ -119,7 +119,7 @@ items:
         will automatically connect the Interconnect to the network & region within
         which the Cloud Router is configured.
       returned: success
-      type: dict
+      type: str
     creationTimestamp:
       description:
       - Creation timestamp in RFC3339 text format.

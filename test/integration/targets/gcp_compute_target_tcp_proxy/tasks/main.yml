@@ -154,6 +154,7 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a backend service
   gcp_compute_backend_service:
       name: "backendservice-targettcpproxy"
@@ -167,6 +168,7 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: backendservice
+  ignore_errors: true
 - name: delete a health check
   gcp_compute_health_check:
       name: "healthcheck-targettcpproxy"
@@ -183,6 +185,7 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: healthcheck
+  ignore_errors: true
 - name: delete a instance group
   gcp_compute_instance_group:
       name: "instancegroup-targettcpproxy"
@@ -192,3 +195,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: instancegroup
+  ignore_errors: true

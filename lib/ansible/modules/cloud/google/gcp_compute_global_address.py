@@ -49,6 +49,11 @@ options:
     - present
     - absent
     default: present
+  address:
+    description:
+    - The static external IP address represented by this resource.
+    required: false
+    version_added: 2.8
   description:
     description:
     - An optional description of this resource.
@@ -170,6 +175,7 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
+            address=dict(type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
@@ -225,6 +231,7 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'compute#address',
+        u'address': module.params.get('address'),
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'ipVersion': module.params.get('ip_version'),
