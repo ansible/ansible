@@ -19,6 +19,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
+import ast
 import os
 
 
@@ -60,10 +61,18 @@ def replace_resource_dict(item, value):
     else:
         if not item:
             return item
-        return item.get(value)
+        if isinstance(item, dict):
+            return item.get(value)
+
+        # Item could be a string or a string representing a dictionary.
+        try:
+            new_item = ast.literal_eval(item)
+            return replace_resource_dict(new_item, value)
+        except ValueError:
+            return new_item
 
 
-# Handles all authentication and HTTP sessions for GCP API calls.
+# Handles all authentation and HTTP sessions for GCP API calls.
 class GcpSession(object):
     def __init__(self, module, product):
         self.module = module
@@ -77,9 +86,25 @@ class GcpSession(object):
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
-    def post(self, url, body=None):
+    def post(self, url, body=None, headers=None, **kwargs):
+        if headers:
+            headers = self.merge_dictionaries(headers, self._headers())
+        else:
+            headers = self._headers()
+
         try:
-            return self.session().post(url, json=body, headers=self._headers())
+            return self.session().post(url, json=body, headers=headers)
+        except getattr(requests.exceptions, 'RequestException') as inst:
+            self.module.fail_json(msg=inst.message)
+
+    def post_contents(self, url, file_contents=None, headers=None, **kwargs):
+        if headers:
+            headers = self.merge_dictionaries(headers, self._headers())
+        else:
+            headers = self._headers()
+
+        try:
+            return self.session().post(url, data=file_contents, headers=headers)
         except getattr(requests.exceptions, 'RequestException') as inst:
             self.module.fail_json(msg=inst.message)
 
@@ -103,7 +128,8 @@ class GcpSession(object):
             self.module.fail_json(msg=inst.message)
 
     def session(self):
-        return AuthorizedSession(self._credentials())
+        return AuthorizedSession(
+            self._credentials())
 
     def _validate(self):
         if not HAS_REQUESTS:
@@ -114,12 +140,12 @@ class GcpSession(object):
 
         if self.module.params.get('service_account_email') is not None and self.module.params['auth_kind'] != 'machineaccount':
             self.module.fail_json(
-                msg="Service Account Email only works with Machine Account-based authentication"
+                msg="Service Acccount Email only works with Machine Account-based authentication"
             )
 
         if self.module.params.get('service_account_file') is not None and self.module.params['auth_kind'] != 'serviceaccount':
             self.module.fail_json(
-                msg="Service Account File only works with Service Account-based authentication"
+                msg="Service Acccount File only works with Service Account-based authentication"
             )
 
     def _credentials(self):
@@ -134,12 +160,17 @@ class GcpSession(object):
             return google.auth.compute_engine.Credentials(
                 self.module.params['service_account_email'])
         else:
-            self.module.fail_json(msg="Credential type '%s' not implemented" % cred_type)
+            self.module.fail_json(msg="Credential type '%s' not implmented" % cred_type)
 
     def _headers(self):
         return {
             'User-Agent': "Google-Ansible-MM-{0}".format(self.product)
         }
+
+    def _merge_dictionaries(self, a, b):
+        new = a.copy()
+        new.update(b)
+        return new
 
 
 class GcpModule(AnsibleModule):
