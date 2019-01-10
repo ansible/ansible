@@ -53,7 +53,7 @@
   register: output_nsg
 
 - name: Query PIP
-  azure_rm_networksecuritygroup_facts:
+  azure_rm_publicipaddress_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name1 }}01"
   register: output_nsg
