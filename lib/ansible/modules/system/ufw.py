@@ -314,36 +314,37 @@ def main():
 
     # Execute commands
     for (command, value) in commands.items():
+
         cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
 
         if command == 'state':
             states = {'enabled': 'enable', 'disabled': 'disable',
                       'reloaded': 'reload', 'reset': 'reset'}
+
             if module.check_mode:
-                if value in ['reloaded', 'reset']:
+                ufw_enabled = pre_state.find("active") != -1
+                if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and not ufw_enabled):
                     changed = True
-                else:
-                    ufw_enabled = pre_state.find("active") != -1
-                    if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and not ufw_enabled):
-                        changed = True
             else:
                 execute(cmd + [['-f'], [states[value]]])
 
-        elif command == 'logging':
-            if module.check_mode:
-                extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', pre_state)
-                if extract:
-                    current_level = extract.group(2)
-                    current_on_off_value = extract.group(1)
-                    if value != "off":
-                        if value != "on" and value != current_level:
-                            changed = True
-                    elif current_on_off_value != "off":
-                        changed = True
-                else:
-                    changed = True
+            if value in ['reloaded', 'reset']:
+                changed = True
 
+        elif command == 'logging':
+            extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', pre_state)
+            if extract:
+                current_level = extract.group(2)
+                current_on_off_value = extract.group(1)
+                if value != "off":
+                    if value != "on" and (value != current_level or current_on_off_value == "off"):
+                        changed = True
+                elif current_on_off_value != "off":
+                    changed = True
             else:
+                changed = True
+
+            if not module.check_mode:
                 execute(cmd + [[command], [value]])
 
         elif command == 'default':
