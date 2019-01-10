@@ -73,6 +73,43 @@ azure_managed_disk:
     description: List of managed disk dicts.
     returned: always
     type: list
+    contains:
+        id:
+            description:
+                - Resource id.
+        name:
+            description:
+                - Name of the managed disk.
+        location:
+            description:
+                - Valid Azure location.
+        storage_account_type:
+            description:
+                - Type of storage for the managed disk
+            sample: Standard_LRS
+            type: str
+        create_option:
+            description:
+                - Create option of the disk
+            sample: copy
+            type: str
+        source_uri:
+            description:
+                - URI to a valid VHD file to be used or the resource ID of the managed disk to copy.
+        os_type:
+            description:
+                - "Type of Operating System: C(linux) or C(windows)."
+        disk_size_gb:
+            description:
+                - Size in GB of the managed disk to be created.
+        managed_by:
+            description:
+                - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
+        tags:
+            description:
+                - Tags to assign to the managed disk.
+            sample: { "tag": "value" }
+            type: dict
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -93,8 +130,7 @@ def managed_disk_to_dict(managed_disk):
         location=managed_disk.location,
         tags=managed_disk.tags,
         create_option=create_data.create_option.value.lower(),
-        source_uri=create_data.source_uri,
-        source_resource_uri=create_data.source_resource_id,
+        source_uri=create_data.source_uri or create_data.source_resource_id,
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=managed_disk.os_type.value if managed_disk.os_type else None,
         storage_account_type=managed_disk.sku.name.value if managed_disk.sku else None,
