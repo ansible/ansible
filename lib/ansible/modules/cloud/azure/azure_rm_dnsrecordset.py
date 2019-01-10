@@ -213,6 +213,20 @@ RECORD_ARGSPECS = dict(
     TXT=dict(
         value=dict(type='list', required=True, aliases=['entry'])
     ),
+    SOA=dict(
+        host=dict(type='str', aliases=['entry']),
+        email=dict(type='str'),
+        serial_number=dict(type='long'),
+        refresh_time=dict(type='long'),
+        retry_time=dict(type='long'),
+        expire_time=dict(type='long'),
+        minimum_ttl=dict(type='long')
+    ),
+    CAA=dict(
+        value=dict(type='str', aliases=['entry']),
+        flags=dict(type='int'),
+        tag=dict(type='str')
+    )
     # FUTURE: ensure all record types are supported (see https://github.com/Azure/azure-sdk-for-python/tree/master/azure-mgmt-dns/azure/mgmt/dns/models)
 )
 
@@ -225,6 +239,8 @@ RECORDSET_VALUE_MAP = dict(
     PTR=dict(attrname='ptr_records', classobj='PtrRecord', is_list=True),
     SRV=dict(attrname='srv_records', classobj='SrvRecord', is_list=True),
     TXT=dict(attrname='txt_records', classobj='TxtRecord', is_list=True),
+    SOA=dict(attrname='soa_record', classobj='SoaRecord', is_list=False),
+    CAA=dict(attrname='caa_records', classobj='CaaRecord', is_list=True)
     # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
 ) if HAS_AZURE else {}
 
