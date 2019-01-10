@@ -229,11 +229,12 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
 
     def record_to_dict(self, record):
         record_type=record.type.strip('Microsoft.Network/dnszones/')
+        attribute_connector = '_' if len(record_type) > 1 else ''
         return dict(
             id=record.id,
             relative_name=record.name,
             record_type=record_type,
-            records=[x.to_dict() for x in getattr(record, record_type.lower() + '_records')],
+            records=[x.to_dict() for x in getattr(record, record_type.lower() + attribute_connector + 'records')],
             time_to_live=record.ttl,
             fqdn=record.fqdn,
             provisioning_state=record.provisioning_state
