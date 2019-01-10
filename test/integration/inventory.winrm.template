@@ -23,6 +23,6 @@ ansible_winrm_server_cert_validation=ignore
 [winrm:children]
 windows
 
-# support winrm binary module tests (temporary solution)
-[testhost_binary_modules:children]
+# support tests that target testhost
+[testhost:children]
 windows
