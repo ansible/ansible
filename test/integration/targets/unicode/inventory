@@ -1,0 +1,5 @@
+[local]
+testhost ansible_connection=local
+
+[all:vars]
+unicode_host_var=CaféEñyei

@@ -161,13 +161,6 @@ class AzureCloudEnvironment(CloudEnvironment):
             display.notice('If %s failed due to permissions, the test policy may need to be updated. '
                            'For help, consult @mattclay or @gundalow on GitHub or #ansible-devel on IRC.' % target.name)
 
-    @property
-    def inventory_hosts(self):
-        """
-        :rtype: str | None
-        """
-        return 'azure'
-
 
 def get_config(config_path):
     """
