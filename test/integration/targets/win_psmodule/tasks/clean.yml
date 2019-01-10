@@ -12,11 +12,16 @@
     - "powershell-yaml"
     - "Pester"
     - "PowerShellCookbook"
-    - "Format-Pester"
+    - "xActiveDirectory"
 
 - name: unregister the custom repo
-  win_shell: 'Unregister-PSRepository {{ custom_repo_name }} -ErrorAction Ignore'
+  win_shell: 'Unregister-PSRepository {{ item | quote }} -ErrorAction Ignore'
+  changed_when: false
+  with_items:
+    - "{{ custom_repo_name }}"
+    - "{{ myget_repository_name }}"
 
 - name: remove the custom repo folder
   win_shell: 'Remove-Item {{ custom_repo_path }} -Recurse -Force -ErrorAction Ignore'
+  changed_when: false
   ignore_errors: yes

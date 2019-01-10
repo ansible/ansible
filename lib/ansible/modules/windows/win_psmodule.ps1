@@ -16,6 +16,7 @@ $required_version = Get-AnsibleParam -obj $params -name "required_version" -type
 $minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "str"
 $maximum_version = Get-AnsibleParam -obj $params -name "maximum_version" -type "str"
 $repo = Get-AnsibleParam -obj $params -name "repository" -type "str"
+$url = Get-AnsibleParam -obj $params -name "url" -type str
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent", "latest"
 $allow_clobber = Get-AnsibleParam -obj $params -name "allow_clobber" -type "bool" -default $false
 $skip_publisher_check = Get-AnsibleParam -obj $params -name "skip_publisher_check" -type "bool" -default $false
@@ -143,7 +144,6 @@ Function Get-PsModule {
 }
 
 Function Add-DefinedParameter {
-
     Param (
         [Parameter(Mandatory=$true)]
         [Hashtable]$Hashtable,
@@ -296,12 +296,15 @@ Function Find-LatestPsModule {
 
 Function Install-Repository {
     Param(
-    [Parameter(Mandatory=$true)]
-    [string]$Name,
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-    [bool]$CheckMode
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [string]$Url,
+        [bool]$CheckMode
     )
+    # Install NuGet provider if needed.
+    Install-NugetProvider -CheckMode $CheckMode
+
     $Repo = (Get-PSRepository).SourceLocation
 
     # If repository isn't already present, try to register it as trusted.
@@ -322,12 +325,12 @@ Function Install-Repository {
 
 Function Remove-Repository{
     Param(
-    [Parameter(Mandatory=$true)]
-    [string]$Name,
-    [bool]$CheckMode
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [bool]$CheckMode
     )
 
-    $Repo = (Get-PSRepository).SourceLocation
+    $Repo = (Get-PSRepository).Name
 
     # Try to remove the repository
     if ($Repo -contains $Name){
@@ -376,7 +379,7 @@ if ( ($state -eq "latest") -and
         Fail-Json $result $ErrorMessage
 }
 
-if ( $repo ) {
+if ( $repo -and (-not $url) ) {
     $RepositoryExists = Get-PSRepository -Name $repo -ErrorAction Ignore
     if ( $null -eq $RepositoryExists) {
         $ErrorMessage = "The repository $repo doesn't exist."

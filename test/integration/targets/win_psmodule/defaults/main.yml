@@ -21,3 +21,7 @@ powershell_module_2_minimum_maximum_version_result: 3.2.0
 
 allow_prerelease_module: Pester
 allow_prerelease_version: 4.4.0-beta2
+
+myget_powershell_module: xActiveDirectory
+myget_repository_name: My Get
+myget_repository_url: https://www.myget.org/F/powershellgetdemo/api/v2

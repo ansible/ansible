@@ -78,7 +78,7 @@
     }
 
     if ( -not $nuget_exists -or $nuget_outdated ) {
-      Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+      Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force
     }
 
 - name: perform cleanup - 1

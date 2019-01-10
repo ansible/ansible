@@ -459,6 +459,58 @@
     that:
       - "fake_repo_fail is failed"
 
+- name: check installing module from the My Get repository and registering that repository at the same time
+  win_psmodule:
+    name: "{{ myget_powershell_module }}"
+    repository: "{{ myget_repository_name }}"
+    url: "{{ myget_repository_url }}"
+    state: present
+  register: adding_repository
+
+- name: get installing module from the My Get repository and registering that repository at the same time
+  win_shell: |
+    $repo = Get-PSRepository -Name {{ myget_repository_name | quote }} -ErrorAction Ignore
+    $module = Get-Module -Name {{ myget_powershell_module }} -ListAvailable
+    ($repo | Measure-Object).Count
+    $repo.SourceLocation
+    $repo.InstallationPolicy
+    ($module | Measure-Object).Count
+    $module.RepositorySourceLocation.AbsoluteUri
+  register: result_adding_repository
+
+- name: test installing module from the My Get repository and registering that repository at the same time
+  assert:
+    that:
+    - adding_repository is changed
+    - result_adding_repository.stdout_lines[0] == '1'
+    - result_adding_repository.stdout_lines[1] == myget_repository_url
+    - result_adding_repository.stdout_lines[2] == 'Trusted'
+    - result_adding_repository.stdout_lines[3] == '1'
+    - result_adding_repository.stdout_lines[4] == myget_repository_url
+
+- name: check uninstalling module from the My Get repository and unregistering that repository at the same time
+  win_psmodule:
+    name: "{{ myget_powershell_module }}"
+    repository: "{{ myget_repository_name }}"
+    state: absent
+  register: removing_repository
+
+- name: get uninstalling module from the My Get repository and registering that repository at the same time
+  win_shell: |
+    $repo = Get-PSRepository -Name {{ myget_repository_name | quote }} -ErrorAction Ignore
+    $module = Get-Module -Name {{ myget_powershell_module }} -ListAvailable
+    ($repo | Measure-Object).Count
+    ($module | Measure-Object).Count
+  register: result_removing_repository
+
+- name: test uninstalling module from the My Get repository and registering that repository at the same time
+  assert:
+    that:
+    - removing_repository is changed
+    - result_removing_repository.stdout_lines[0] == '0'
+    - result_removing_repository.stdout_lines[1] == '0'
+
+
 # I don't know why Publish-Module doesn't work correctly under Ansible and PowerShell 3.0
 - name: check operations related to the custom repository
   when: powershell_major_version.stdout | int == 5
@@ -497,7 +549,7 @@
     - name: "test sample module in custom repo - check mode: false"
       assert:
         that:
-          - "'{{ powershell_module }}' in (saved_package.stdout_lines | last)"
+          - "'{{ powershell_module }}' | lower in ((saved_package.stdout_lines | last) | lower)"
 
     - name: "get the latest version of module in custom repo - check mode: false"
       win_shell: "((Find-Module -Name {{ powershell_module }} -Repository {{custom_repo_name}}).Version).ToString()"
