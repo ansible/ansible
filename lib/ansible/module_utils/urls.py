@@ -89,7 +89,7 @@ except ImportError:
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
 try:
-    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
+    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, urlsplit, unquote
     HAS_URLPARSE = True
 except Exception:
     HAS_URLPARSE = False
@@ -753,6 +753,21 @@ def generic_urlparse(parts):
 def extract_pem_certs(b_data):
     for match in b_PEM_CERT_RE.finditer(b_data):
         yield match.group(0)
+
+
+def get_response_filename(response):
+    url = response.geturl()
+    path = urlsplit(url)[2]
+    filename = os.path.basename(path.rstrip('/')) or None
+    if filename:
+        filename = unquote(filename)
+    
+    content_disposition = response.headers.get('content-disposition')
+    if content_disposition:
+        mime_type, params = cgi.parse_header(content_disposition)
+        filename = params.get('filename') or filename
+    
+    return filename
 
 
 class RequestWithMethod(urllib_request.Request):
