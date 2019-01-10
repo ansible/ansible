@@ -56,7 +56,7 @@ options:
     required: true
   description:
     description:
-    - An optional description of this resource. .
+    - An optional description of this resource.
     required: false
   router:
     description:
@@ -120,7 +120,7 @@ interconnect:
   type: str
 description:
   description:
-  - An optional description of this resource. .
+  - An optional description of this resource.
   returned: success
   type: str
 privateInterconnectInfo:

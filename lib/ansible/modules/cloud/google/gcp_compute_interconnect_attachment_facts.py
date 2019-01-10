@@ -90,7 +90,7 @@ items:
       type: str
     description:
       description:
-      - An optional description of this resource. .
+      - An optional description of this resource.
       returned: success
       type: str
     privateInterconnectInfo:
