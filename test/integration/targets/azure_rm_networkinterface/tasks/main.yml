@@ -87,29 +87,30 @@
   azure_rm_networkinterface_facts:
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
+  register: facts
 
 - assert:
     that:
-      - "azure_rm_networkinterfaces | length == 1"
-      - azure_rm_networkinterfaces[0].id == output.state.id
-      - "azure_rm_networkinterfaces[0].ip_configurations | length == 1"
-      - not azure_rm_networkinterfaces[0].security_group
-      - not azure_rm_networkinterfaces[0].ip_configurations[0].public_ip_address
-      - not azure_rm_networkinterfaces[0].enable_ip_forwarding
-      - not azure_rm_networkinterfaces[0].enable_accelerated_networking
+      - "facts.networkinterfaces | length == 1"
+      - facts.networkinterfaces[0].id == output.state.id
+      - "facts.networkinterfaces[0].ip_configurations | length == 1"
+      - not facts.networkinterfaces[0].security_group
+      - not facts.networkinterfaces[0].ip_configurations[0].public_ip_address
+      - not facts.networkinterfaces[0].enable_ip_forwarding
+      - not facts.networkinterfaces[0].enable_accelerated_networking
 
 - name: Create most simple NIC with ip configurations (idempotent)
   azure_rm_networkinterface:
-      resource_group: "{{ azure_rm_networkinterfaces[0].resource_group }}"
-      name: "{{ azure_rm_networkinterfaces[0].name }}"
-      virtual_network: "{{ azure_rm_networkinterfaces[0].virtual_network }}"
+      resource_group: "{{ facts.networkinterfaces[0].resource_group }}"
+      name: "{{ facts.networkinterfaces[0].name }}"
+      virtual_network: "{{ facts.networkinterfaces[0].virtual_network }}"
       create_with_security_group: False
       ip_configurations:
-          - name: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].name }}"
-            private_ip_address: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].private_ip_address }}"
-            private_ip_allocation_method: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].private_ip_allocation_method }}"
-            primary: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].primary }}"
-      subnet: "{{ azure_rm_networkinterfaces[0].subnet }}"
+          - name: "{{ facts.networkinterfaces[0].ip_configurations[0].name }}"
+            private_ip_address: "{{ facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}"
+            private_ip_allocation_method: "{{ facts.networkinterfaces[0].ip_configurations[0].private_ip_allocation_method }}"
+            primary: "{{ facts.networkinterfaces[0].ip_configurations[0].primary }}"
+      subnet: "{{ facts.networkinterfaces[0].subnet }}"
   register: output
 
 - assert:
@@ -223,10 +224,10 @@
         - 8.9.10.11
         - 7.8.9.10
       ip_configurations:
-          - name: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].name }}"
-            private_ip_address: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].private_ip_address }}"
-            private_ip_allocation_method: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].private_ip_allocation_method }}"
-            primary: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].primary }}"
+          - name: "{{ facts.networkinterfaces[0].ip_configurations[0].name }}"
+            private_ip_address: "{{ facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}"
+            private_ip_allocation_method: "{{ facts.networkinterfaces[0].ip_configurations[0].private_ip_allocation_method }}"
+            primary: "{{ facts.networkinterfaces[0].ip_configurations[0].primary }}"
           - name: ipconfig1
             public_ip_name: "tn{{ rpfx }}"
             load_balancer_backend_address_pools:
@@ -256,10 +257,10 @@
         - 8.9.10.11
         - 7.8.9.10
       ip_configurations:
-          - name: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].name }}"
-            private_ip_address: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].private_ip_address }}"
-            private_ip_allocation_method: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].private_ip_allocation_method }}"
-            primary: "{{ azure_rm_networkinterfaces[0].ip_configurations[0].primary }}"
+          - name: "{{ facts.networkinterfaces[0].ip_configurations[0].name }}"
+            private_ip_address: "{{ facts.networkinterfaces[0].ip_configurations[0].private_ip_address }}"
+            private_ip_allocation_method: "{{ facts.networkinterfaces[0].ip_configurations[0].private_ip_allocation_method }}"
+            primary: "{{ facts.networkinterfaces[0].ip_configurations[0].primary }}"
           - name: ipconfig1
             public_ip_name: "tn{{ rpfx }}"
             load_balancer_backend_address_pools:
@@ -276,15 +277,16 @@
   azure_rm_networkinterface_facts:
     resource_group: "{{ resource_group }}"
     name: "tn{{ rpfx }}"
+  register:  facts
 
 - assert:
     that:
-      - "azure_rm_networkinterfaces | length == 1"
-      - azure_rm_networkinterfaces[0].id == output.state.id
-      - "azure_rm_networkinterfaces[0].ip_configurations | length == 2"
-      - 'azure_rm_networkinterfaces[0].security_group.endswith("tn{{ rpfx }}sg")'
-      - azure_rm_networkinterfaces[0].enable_accelerated_networking
-      - azure_rm_networkinterfaces[0].enable_ip_forwarding
+      - "facts.networkinterfaces | length == 1"
+      - facts.networkinterfaces[0].id == output.state.id
+      - "facts.networkinterfaces[0].ip_configurations | length == 2"
+      - 'facts.networkinterfaces[0].security_group.endswith("tn{{ rpfx }}sg")'
+      - facts.networkinterfaces[0].enable_accelerated_networking
+      - facts.networkinterfaces[0].enable_ip_forwarding
 
 - name: Remove one dns server and ip configuration
   azure_rm_networkinterface:

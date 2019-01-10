@@ -292,7 +292,7 @@ class AzureRMNetworkInterfaceFacts(AzureRMModuleBase):
             results = self.list_all()
 
         self.results['ansible_facts']['azure_networkinterfaces'] = self.serialize_nics(results)
-        self.results['ansible_facts']['azure_rm_networkinterfaces'] = self.to_dict_list(results)
+        self.results['networkinterfaces'] = self.to_dict_list(results)
         return self.results
 
     def get_item(self):
