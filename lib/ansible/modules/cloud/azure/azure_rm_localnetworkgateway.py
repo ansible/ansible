@@ -124,7 +124,7 @@ class AzureRMLocalNetworkGateway(AzureRMModuleBase):
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
             local_address_prefixes=dict(type='list', default=[]),
-            gateway_ip_address=dict(),
+            gateway_ip_address=dict(type='str'),
             bgp_settings=dict(type='dict', options=bgp_spec),
         )
 
