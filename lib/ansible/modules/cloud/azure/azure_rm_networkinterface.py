@@ -46,11 +46,9 @@ options:
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        required: false
     virtual_network:
         description:
             - An existing virtual network with which the network interface will be associated. Required
