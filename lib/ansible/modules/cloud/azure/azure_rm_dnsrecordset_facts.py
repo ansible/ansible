@@ -228,7 +228,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         return [self.record_to_dict(item) for item in raws] if raws else []
 
     def record_to_dict(self, record):
-        record_type=record.type.strip('Microsoft.Network/dnszones/')
+        record_type=record.type[len('Microsoft.Network/dnszones/'):]
         attribute_connector = '_' if len(record_type) > 1 else ''
         return dict(
             id=record.id,
