@@ -1,6 +1,8 @@
-[local]
-testhost ansible_ssh_host=127.0.0.1 ansible_connection=local host_var_role_name=role3
-testhost2 ansible_ssh_host=127.0.0.1 ansible_connection=local host_var_role_name=role2
+# Do not put test specific entries in this inventory file.
+# For script based test targets (using runme.sh) put the inventory file in the test's directory instead.
+
+[testgroup]
+testhost ansible_connection=local
 
 [aci:vars]
 aci_hostname=your-apic-1
