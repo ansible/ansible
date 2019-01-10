@@ -31,7 +31,7 @@
       publisher: Canonical
       sku: 16.04-LTS
       version: latest
-    register: vm_output
+  register: vm_output
 
 - name: Delete VM
   azure_rm_virtualmachine:
