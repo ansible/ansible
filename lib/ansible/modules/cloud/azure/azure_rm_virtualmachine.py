@@ -1517,6 +1517,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             
 
     def delete_vm(self, vm):
+        vhd_uris = []
+        managed_disk_ids = []
+        nic_names = []
+        pip_names = []
 
         if not self.remove_autocreated:
             if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
