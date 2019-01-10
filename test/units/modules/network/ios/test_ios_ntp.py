@@ -87,3 +87,4 @@ class TestIosNtpModule(TestIosModule):
             'no ntp trusted-key 10',
             'no ntp authentication-key 10 md5 15435A030726242723273C21181319000A 7'
         ]
+        self.execute_module(changed=True, commands=commands)
