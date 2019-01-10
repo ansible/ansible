@@ -50,6 +50,7 @@ options:
     description:
       - Whether to create or delete the IAM policy.
     choices: [ "present", "absent"]
+    default: present
   skip_duplicates:
     description:
       - By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with
