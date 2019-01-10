@@ -298,7 +298,9 @@ class NoSSLError(SSLValidationError):
 
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
 # against openssl and thus do not have any HTTPS support.
-CustomHTTPSConnection = CustomHTTPSHandler = None
+CustomHTTPSConnection = None
+CustomHTTPSHandler = None
+HTTPSClientAuthHandler = None
 if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
@@ -342,32 +344,31 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
 
         https_request = AbstractHTTPHandler.do_request_
 
+    class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
+        '''Handles client authentication via cert/key
 
-class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
-    '''Handles client authentication via cert/key
+        This is a fairly lightweight extension on HTTPSHandler, and can be used
+        in place of HTTPSHandler
+        '''
 
-    This is a fairly lightweight extension on HTTPSHandler, and can be used
-    in place of HTTPSHandler
-    '''
+        def __init__(self, client_cert=None, client_key=None, **kwargs):
+            urllib_request.HTTPSHandler.__init__(self, **kwargs)
+            self.client_cert = client_cert
+            self.client_key = client_key
 
-    def __init__(self, client_cert=None, client_key=None, **kwargs):
-        urllib_request.HTTPSHandler.__init__(self, **kwargs)
-        self.client_cert = client_cert
-        self.client_key = client_key
+        def https_open(self, req):
+            return self.do_open(self._build_https_connection, req)
 
-    def https_open(self, req):
-        return self.do_open(self._build_https_connection, req)
-
-    def _build_https_connection(self, host, **kwargs):
-        kwargs.update({
-            'cert_file': self.client_cert,
-            'key_file': self.client_key,
-        })
-        try:
-            kwargs['context'] = self._context
-        except AttributeError:
-            pass
-        return httplib.HTTPSConnection(host, **kwargs)
+        def _build_https_connection(self, host, **kwargs):
+            kwargs.update({
+                'cert_file': self.client_cert,
+                'key_file': self.client_key,
+            })
+            try:
+                kwargs['context'] = self._context
+            except AttributeError:
+                pass
+            return httplib.HTTPSConnection(host, **kwargs)
 
 
 class ParseResultDottedDict(dict):
