@@ -37,6 +37,7 @@ __metaclass__ = type
 
 import atexit
 import base64
+import cgi
 import email.mime.multipart
 import email.mime.nonmultipart
 import email.mime.application
