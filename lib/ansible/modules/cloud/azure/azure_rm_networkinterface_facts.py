@@ -104,7 +104,7 @@ azure_networkinterfaces:
         "tags": {},
         "type": "Microsoft.Network/networkInterfaces"
     }]
-azure_rm_networkinterfaces:
+networkinterfaces:
     description: List of network interface dict, the dict contains parameters can be passed to C(azure_rm_networkinterface) module.
     type: list
     returned: always
