@@ -502,7 +502,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                             self.fail("Linux web app only supports tomcat container.")
 
                         if self.frameworks[0].get('settings', {}) and self.frameworks[0]['settings'].get('java_container', None) and \
-                           self.frameworks[0].['settings']['java_container'].lower() == 'tomcat':
+                           self.frameworks[0]['settings']['java_container'].lower() == 'tomcat':
                             self.site_config['linux_fx_version'] = 'TOMCAT|' + self.frameworks[0]['settings']['java_container_version'] + '-jre8'
                         else:
                             self.site_config['linux_fx_version'] = 'JAVA|8-jre8'
