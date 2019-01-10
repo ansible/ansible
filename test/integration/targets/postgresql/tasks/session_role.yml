@@ -19,7 +19,6 @@
   postgresql_user:
     name: "{{ db_session_role1 }}"
     state: "present"
-    encrypted: 'no'
     password: "password"
     role_attr_flags: "CREATEDB,LOGIN,CREATEROLE"
     login_user: "{{ pg_user }}"
@@ -31,7 +30,6 @@
   postgresql_user:
     name: "{{ db_session_role2 }}"
     state: "present"
-    encrypted: 'no'
     password: "password"
     role_attr_flags: "LOGIN"
     login_user: "{{ pg_user }}"
