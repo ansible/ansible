@@ -23,6 +23,7 @@ def main():
         'lib/ansible/modules/web_infrastructure/jenkins_plugin.py',
         'lib/ansible/modules/cloud/vmware/vmware_deploy_ovf.py',
         'lib/ansible/modules/crypto/certificate_complete_chain.py',  # would need something like type=list(path)
+        'lib/ansible/modules/crypto/openssl_pkcs12.py',  # would need something like type=list(path)
         # fix uses of expanduser in the following modules and remove them from the following list
         'lib/ansible/modules/cloud/rackspace/rax.py',
         'lib/ansible/modules/cloud/rackspace/rax_scaling_group.py',

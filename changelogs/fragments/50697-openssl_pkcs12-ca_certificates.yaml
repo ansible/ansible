@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_pkcs12 - now does proper path expansion for ``ca_certificates``."
