@@ -53,7 +53,7 @@ options:
     type: bool
   host_group_name:
     description:
-      - "Name of Host group to use with rule"
+      - "Name of Host group to use with rule."
       - "Effective only if C(state) is set to C(present)."
     required: true
   mandatory:
