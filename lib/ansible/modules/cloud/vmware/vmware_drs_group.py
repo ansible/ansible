@@ -19,7 +19,7 @@ DOCUMENTATION = r'''
 author:
   - "Karsten Kaj Jakobsen (@karstenjakobsen)"
 description:
-  - "This module can be used to create VM/Host groups in a given cluster. Creates a vm group if C(vms) is set. Creates host group if C(hosts) is set"
+  - "This module can be used to create VM/Host groups in a given cluster. Creates a vm group if C(vms) is set. Creates a host group if C(hosts) is set."
 extends_documentation_fragment: vmware.documentation
 module: vmware_drs_group
 notes:
@@ -27,22 +27,22 @@ notes:
 options:
   cluster_name:
     description:
-      - "Cluster to create vm/host group"
+      - "Cluster to create vm/host group."
     required: true
   datacenter:
     aliases:
       - datacenter_name
     description:
-      - "Datacenter to search for given cluster. If not set, we use first cluster we encounter with C(cluster_name)"
+      - "Datacenter to search for given cluster. If not set, we use first cluster we encounter with C(cluster_name)."
     required: false
   group_name:
     description:
-      - "The name of the group to create or remove"
+      - "The name of the group to create or remove."
     required: true
   hosts:
     description:
-      - "List of hosts to create in group"
-      - "Required only if C(vms) is not set"
+      - "List of hosts to create in group."
+      - "Required only if C(vms) is not set."
     required: false
   state:
     choices:
@@ -55,13 +55,13 @@ options:
     required: true
   vms:
     description:
-      - "List of vms to create in group"
-      - "Required only if C(hosts) is not set"
+      - "List of vms to create in group."
+      - "Required only if C(hosts) is not set."
     required: false
 requirements:
   - "python >= 2.6"
   - PyVmomi
-short_description: "Creates vm/host group in a given cluster"
+short_description: "Creates vm/host group in a given cluster."
 version_added: "2.8"
 '''
 
@@ -95,6 +95,18 @@ EXAMPLES = r'''
       - DC0_C0_H0
       - DC0_C0_H1
       - DC0_C0_H2
+
+- name: "Delete DRS Host group"
+  delegate_to: localhost
+  state: absent
+  vmware_drs_group:
+    hostname: "{{ vcenter_hostname }}"
+    password: "{{ vcenter_password }}"
+    username: "{{ vcenter_username }}"
+    cluster_name: DC0_C0
+    datacenter_name: DC0
+    group_name: TEST_HOST_01
+
 '''
 
 RETURN = r'''
@@ -136,7 +148,7 @@ from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec,
 
 class VmwareDrsGroupManager(PyVmomi):
     """
-    Docstring
+    Class to manage DRS groups
     """
 
     def __init__(self, module, cluster_name, group_name, state,
@@ -187,19 +199,25 @@ class VmwareDrsGroupManager(PyVmomi):
 
     def get_msg(self):
         """
-        Docstring
+        Returns message for Ansible result
+        Args: none
+
+        Returns: string
         """
         return self.__msg
 
     def get_result(self):
         """
-        Docstring
+        Returns result for Ansible
+        Args: none
+
+        Returns: dict
         """
         return self.__result
 
     def __set_result(self, group_obj):
         """
-        Creates result for sucessfull run
+        Creates result for successfull run
         Args:
             group_obj: group pbject
 
@@ -214,7 +232,10 @@ class VmwareDrsGroupManager(PyVmomi):
 
     def get_changed(self):
         """
-        Docstring
+        Returns if anything changed
+        Args: none
+
+        Returns: boolean
         """
         return self.__changed
 
@@ -393,6 +414,7 @@ class VmwareDrsGroupManager(PyVmomi):
         # Check if group exists
         if self.__group_exists():
             operation = 'edit'
+            existing_group_obj = self.__get_group_by_name()
         else:
             operation = 'add'
 
@@ -413,13 +435,18 @@ class VmwareDrsGroupManager(PyVmomi):
             self.__set_result(group)
             self.__changed = True
 
-        self.__msg = "Created host group %s successfully" % (self.__group_name)
+        if operation == 'edit':
+            self.__set_result(existing_group_obj)
+            self.__msg = "Updated host group %s successfully" % (self.__group_name)
+        else:
+            self.__msg = "Created host group %s successfully" % (self.__group_name)
 
     def __create_vm_group(self):
 
         # Check if group exists
         if self.__group_exists():
             operation = 'edit'
+            existing_group_obj = self.__get_group_by_name()
         else:
             operation = 'add'
 
@@ -442,7 +469,11 @@ class VmwareDrsGroupManager(PyVmomi):
             self.__set_result(group)
             self.__changed = True
 
-        self.__msg = "Created vm group %s successfully" % (self.__group_name)
+        if operation == 'edit':
+            self.__set_result(existing_group_obj)
+            self.__msg = "Updated vm group %s successfully" % (self.__group_name)
+        else:
+            self.__msg = "Created vm group %s successfully" % (self.__group_name)
 
     def __normalize_group_data(self, group_obj):
         """
@@ -504,7 +535,10 @@ class VmwareDrsGroupManager(PyVmomi):
                 wait_for_task(task)
 
         # Dont throw error if group does not exist. Simply set changed = False
-        self.__msg = "Delete group %s successfully" % (self.__group_name)
+        if self.__changed:
+            self.__msg = "Delete group `%s` successfully" % (self.__group_name)
+        else:
+            self.__msg = "DRS group `%s` does not exists or already deleted" % (self.__group_name)
 
 
 def main():
