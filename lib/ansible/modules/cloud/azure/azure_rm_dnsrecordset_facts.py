@@ -126,6 +126,20 @@ except Exception:
 AZURE_OBJECT_CLASS = 'RecordSet'
 
 
+
+RECORDSET_VALUE_MAP = dict(
+    A='arecords',
+    AAAA='aaaa_records',
+    CNAME='cname_record',
+    MX='mx_records',
+    NS='ns_records',
+    PTR='ptr_records',
+    SRV='srv_records',
+    TXT='txt_records',
+    # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
+)
+
+
 class AzureRMRecordSetFacts(AzureRMModuleBase):
 
     def __init__(self):
@@ -229,12 +243,11 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
 
     def record_to_dict(self, record):
         record_type=record.type[len('Microsoft.Network/dnszones/'):]
-        attribute_connector = '_' if len(record_type) > 1 else ''
         return dict(
             id=record.id,
             relative_name=record.name,
             record_type=record_type,
-            records=[x.as_dict() for x in getattr(record, record_type.lower() + attribute_connector + 'records')],
+            records=[x.as_dict() for x in getattr(record, RECORDSET_VALUE_MAP.get(record_type))],
             time_to_live=record.ttl,
             fqdn=record.fqdn,
             provisioning_state=record.provisioning_state
