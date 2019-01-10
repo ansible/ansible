@@ -118,7 +118,7 @@ from ansible.module_utils.vmware import (PyVmomi, vmware_argument_spec, wait_for
 
 class VmwareVmHostRuleDrs(PyVmomi):
     """
-    Doctring
+    Class to manage VM HOST DRS Rules
     """
 
     def __init__(self, module, cluster_name, drs_rule_name, enabled, mandatory, affinity_rule, state,
