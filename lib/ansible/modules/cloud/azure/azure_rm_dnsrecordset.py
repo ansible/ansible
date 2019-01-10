@@ -386,7 +386,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
         return input_set != server_set
 
     def recordset_to_dict(self, recordset):
-        result = recordset.to_dict()
+        result = recordset.as_dict()
         result['type'] = result['type'].strip('Microsoft.Network/dnszones/')
         return result
 
