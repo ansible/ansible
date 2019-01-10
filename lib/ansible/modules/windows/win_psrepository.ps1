@@ -1,7 +1,7 @@
 #!powershell
 
-# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -18,9 +18,14 @@ $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" 
 
 $result = @{"changed" = $false}
 
+$PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
+if ($null -eq $PackageProvider) {
+    Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force | Out-Null
+}
+
 $Repo = Get-PSRepository -Name $name -ErrorAction Ignore
 if ($state -eq "present") {
-    if ($null -eq $Repo){
+    if ($null -eq $Repo) {
         if ($null -eq $installationpolicy) {
             $installationpolicy = "trusted"
         }
