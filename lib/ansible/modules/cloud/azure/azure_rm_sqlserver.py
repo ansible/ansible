@@ -132,29 +132,23 @@ class AzureRMServers(AzureRMModuleBase):
                 required=True
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             admin_username=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             admin_password=dict(
                 type='str',
-                no_log=True,
-                required=False
+                no_log=True
             ),
             version=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             identity=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             )
