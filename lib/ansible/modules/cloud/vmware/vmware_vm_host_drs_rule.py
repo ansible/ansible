@@ -73,7 +73,7 @@ options:
     required: true
   vm_group_name:
     description:
-      - "Name of VM group to use with rule"
+      - "Name of VM group to use with rule."
       - "Effective only if C(state) is set to C(present)."
     required: true
 requirements:
