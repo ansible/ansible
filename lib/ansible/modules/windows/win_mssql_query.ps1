@@ -1,13 +1,31 @@
+#!powershell
+
 # Copyright: (c) 2018, Daniele Lazzari  <lazzari@mailup.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
-$ErrorActionPreference = "Stop"
-$result = @{
-    'changed' = $False;
-    'output'  = @()
+$spec = @{
+    options             = @{
+        query                    = @{ type = "str"; required = $true }
+        database                 = @{ type = "str"; default = "master" }
+        query_timeout            = @{ type = "int"; default = 60 }
+        server_instance          = @{ type = "str"; default = $env:COMPUTERNAME }
+        server_instance_user     = @{ type = "str"; default = $NULL }
+        server_instance_password = @{ type = "str"; default = $NULL }
+    }
+    supports_check_mode = $true
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$query = $module.Params.query
+$queryTimeout = $module.Params.query_timeout
+$database = $module.Params.database
+$serverInstance = $module.Params.server_instance
+$serverInstanceUser = $module.Params.server_instance_user
+$serverInstancePassword = $module.Params.server_instance_password
+
 Function Invoke-Query {
     Param(
         [string]$Query,
@@ -15,7 +33,7 @@ Function Invoke-Query {
         [string]$Database,
         [string]$ServerInstance,
         [string]$ServerInstanceUser,
-        [Security.SecureString]$ServerInstancePassword,
+        [string]$ServerInstancePassword,
         [bool]$CheckMode
     )
     $output = @()
@@ -23,50 +41,37 @@ Function Invoke-Query {
         if (!($CheckMode)) {
             $sql_params = @{
                 ServerInstance = $ServerInstance
-                Database = $Database
-                Query = $Query
-                QueryTimeout = $QueryTimeout
+                Database       = $Database
+                Query          = $Query
+                QueryTimeout   = $QueryTimeout
             }
             if ($ServerInstanceUser -and $ServerInstancePassword) {
-                $SQLCredentials = New-Object -TypeName System.Management.Automation.PSCredential ($ServerInstanceUser, $ServerInstancePassword)
-                $sql_params["Credential"] = $SQLCredential
+                $sql_params["Username"] = $ServerInstanceUser
+                $sql_params["Password"] = $ServerInstancePassword
             }
             $res = Invoke-SqlCmd @sql_params
 
         }
     }
     catch {
-        $result.query = $Query
-        $result.database = $Database
-        Fail-Json -obj $result -message "Error: $($_.exception.message)"
+        $module.Result.query = $Query
+        $module.Result.database = $Database
+        $module.FailJson("Error: $($_.exception.message)")
     }
     if ($res) {
-        if ($res -is [Array]){
-            $Columns = $res[0].Table.Columns.Caption
+        if ($res -is [Array]) {
+            $columns = $res[0].Table.Columns.Caption
         } 
         else {
-            $Columns = $res.Table.Columns.Caption
+            $columns = $res.Table.Columns.Caption
         }
-        $output = @($res |Select-Object -Property $Columns)
+        $output = @($res |Select-Object -Property $columns)
     }
-    $result.output = $output
-    $result.changed = $true
-    Exit-Json $result
+    $module.Result.output = $output
+    $module.Result.changed = $true
+    $module.ExitJson()
 }
 
-$params = Parse-Args $args -supports_check_mode $true
-
-$query = Get-AnsibleParam -obj $params -name "query" -type "str" -failifempty $true
-$queryTimeout = Get-AnsibleParam -obj $params -name "query_timeout" -type "int" -default 60
-$database = Get-AnsibleParam -obj $params -name "database" -type "string" -default 'master'
-$serverInstance = Get-AnsibleParam -obj $params -name "server_instance" -type "str" -default $env:COMPUTERNAME
-$serverInstanceUser = Get-AnsibleParam -obj $params -name "server_instance_user" -type "str" -default $NULL
-$serverInstancePassword = Get-AnsibleParam -obj $params -name "server_instance_password" -type "str" -default $NULL
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-
-if ($serverInstancePassword){
-    $serverInstancePassword = ConvertTo-SecureString $serverInstancePassword -AsPlainText -Force
-}
 
 Invoke-Query -Query $query `
     -QueryTimeout $queryTimeout `
@@ -74,4 +79,4 @@ Invoke-Query -Query $query `
     -ServerInstance $serverInstance `
     -ServerInstanceUser $serverInstanceUser `
     -ServerInstancePassword $serverInstancePassword `
-    -CheckMode $check_mode
+    -CheckMode $module.CheckMode

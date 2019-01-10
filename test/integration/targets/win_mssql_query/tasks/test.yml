@@ -1,10 +1,10 @@
 ---
 
-- name: get database master database
+- name: get database master
   win_mssql_query:
     query: "SELECT name FROM sys.databases WHERE name='master'"
     server_instance: "{{ ansible_hostname }}"
-    server_instance_use: sa
+    server_instance_user: sa
     server_instance_password: "{{ sa }}"
   register: res
 
@@ -18,7 +18,7 @@
   win_mssql_query:
     query: "SELECT name FROM sys.databases @WHERE name='master'"
     server_instance: "{{ ansible_hostname }}"
-    server_instance_use: sa
+    server_instance_user: sa
     server_instance_password: "{{ sa }}"
   register: res
   ignore_errors: yes
@@ -34,7 +34,7 @@
   win_mssql_query:
     query: "CREATE database myDb"
     server_instance: "{{ ansible_hostname }}"
-    server_instance_use: sa
+    server_instance_user: sa
     server_instance_password: "{{ sa }}"
   register: res
   check_mode: yes
@@ -43,7 +43,7 @@
   win_mssql_query:
     query: "SELECT COUNT(name) as result FROM sys.databases WHERE name='myDb'"
     server_instance: "{{ ansible_hostname }}"
-    server_instance_use: sa
+    server_instance_user: sa
     server_instance_password: "{{ sa }}"
   register: res
 
