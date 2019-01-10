@@ -92,7 +92,7 @@ azure_dnsrecordset:
             }
         ]
 dnsrecordsets:
-    description: List of record set dicts, which shares the same hierarchy as azure_rm—_dnsrecordset module's parameter.
+    description: List of record set dicts, which shares the same hierarchy as azure_rm_dnsrecordset module's parameter.
     returned: always
     type: list
     contains:
@@ -233,7 +233,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
             id=record.id,
             relative_name=record.name,
             record_type=record_type,
-            records=[x.to_dict() for x in getattr(record, record_type.lower())],
+            records=[x.to_dict() for x in getattr(record, record_type.lower() + '_records')],
             time_to_live=record.ttl,
             fqdn=record.fqdn,
             provisioning_state=record.provisioning_state
