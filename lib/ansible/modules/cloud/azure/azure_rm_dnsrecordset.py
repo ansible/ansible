@@ -48,6 +48,8 @@ options:
             - SRV
             - TXT
             - PTR
+            - CAA
+            - SOA
         required: true
     record_mode:
         description:
@@ -405,6 +407,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
         result = recordset.as_dict()
         result['type'] = result['type'].strip('Microsoft.Network/dnszones/')
         return result
+
 
 def main():
     AzureRMRecordSet()

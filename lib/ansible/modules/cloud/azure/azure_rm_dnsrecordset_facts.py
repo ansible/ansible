@@ -126,7 +126,6 @@ except Exception:
 AZURE_OBJECT_CLASS = 'RecordSet'
 
 
-
 RECORDSET_VALUE_MAP = dict(
     A='arecords',
     AAAA='aaaa_records',
@@ -244,7 +243,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         return [self.record_to_dict(item) for item in raws] if raws else []
 
     def record_to_dict(self, record):
-        record_type=record.type[len('Microsoft.Network/dnszones/'):]
+        record_type = record.type[len('Microsoft.Network/dnszones/'):]
         records = getattr(record, RECORDSET_VALUE_MAP.get(record_type))
         if not isinstance(records, list):
             records = [records]

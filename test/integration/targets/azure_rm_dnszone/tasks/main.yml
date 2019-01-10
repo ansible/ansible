@@ -318,7 +318,7 @@
 - name: Assert all record set deleted
   assert:
     that:
-       - "{{ item.relative_name }} == '@'"
+       - "{{ item.relative_name }} == @"
   with_items: "{{ facts.dnsrecordsets }}"
 
 - name: (idempotence test) re-run record set absent
