@@ -106,7 +106,7 @@ RETURN = r'''
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
@@ -167,19 +167,28 @@ class VmwareVmHostRuleDrs(PyVmomi):
 
     def get_msg(self):
         """
-        Docstring
+        Returns message for Ansible result
+        Args: none
+
+        Returns: string
         """
         return self.__msg
 
     def get_result(self):
         """
-        Docstring
+        Returns result for Ansible
+        Args: none
+
+        Returns: dict
         """
         return self.__result
 
     def get_changed(self):
         """
-        Docstring
+        Returns if anything changed
+        Args: none
+
+        Returns: boolean
         """
         return self.__changed
 
@@ -295,6 +304,9 @@ class VmwareVmHostRuleDrs(PyVmomi):
         return obj_name_list
 
     def __check_rule_has_changed(self, rule_obj, cluster_obj=None):
+        """
+        Function to check if the rule being edited has changed
+        """
 
         if cluster_obj is None:
             cluster_obj = self.__cluster_obj
@@ -361,7 +373,10 @@ class VmwareVmHostRuleDrs(PyVmomi):
         rule_obj = self.__get_rule_key_by_name(rule_name=self.__rule_name)
         self.__result = self.__normalize_vm_host_rule_spec(rule_obj)
 
-        self.__msg = "Created DRS rule %s successfully" % (self.__rule_name)
+        if self.__changed:
+            self.__msg = "Updated DRS rule `%s` successfully" % (self.__rule_name)
+        else:
+            self.__msg = "Created DRS rule `%s` successfully" % (self.__rule_name)
 
     # Delete
     def delete(self, rule_name=None):
@@ -388,7 +403,10 @@ class VmwareVmHostRuleDrs(PyVmomi):
 
             self.__changed = True
 
-        self.__msg = "Deleted DRS rule `%s` successfully" % (self.__rule_name)
+        if self.__changed:
+            self.__msg = "Deleted DRS rule `%s` successfully" % (self.__rule_name)
+        else:
+            self.__msg = "DRS Rule `%s` does not exists or already deleted" % (self.__rule_name)
 
 
 def main():
@@ -440,7 +458,7 @@ def main():
                        result=vm_host_drs.get_result())
 
     except Exception as error:
-        results = dict(failed=True, msg="Error: %s" % error)
+        results = dict(failed=True, msg="Error: `%s`" % error)
 
     if results['failed']:
         module.fail_json(**results)
