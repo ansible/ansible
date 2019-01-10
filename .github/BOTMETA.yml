@@ -246,7 +246,6 @@ files:
   $modules/network/netconf/netconf_rpc.py: $team_networking
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
-    maintainers: rajaspachipulusu17
   $modules/network/nos/: $team_extreme
   $modules/network/nuage/: pdellaert
   $modules/network/nxos/: $team_nxos
