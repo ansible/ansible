@@ -55,6 +55,7 @@ class ActionModule(_ActionModule):
         except ValueError as exc:
             return dict(failed=True, msg=to_text(exc))
 
+<<<<<<< HEAD
     def _handle_backup_option(self, result, task_vars):
 
         filename = None
