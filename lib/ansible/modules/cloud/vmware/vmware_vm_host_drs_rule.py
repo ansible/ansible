@@ -373,7 +373,7 @@ class VmwareVmHostRuleDrs(PyVmomi):
         rule_obj = self.__get_rule_key_by_name(rule_name=self.__rule_name)
         self.__result = self.__normalize_vm_host_rule_spec(rule_obj)
 
-        if self.__changed:
+        if operation == 'edit':
             self.__msg = "Updated DRS rule `%s` successfully" % (self.__rule_name)
         else:
             self.__msg = "Created DRS rule `%s` successfully" % (self.__rule_name)
