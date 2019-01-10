@@ -39,7 +39,7 @@ options:
     required: false
   cluster_name:
     description:
-      - "Cluster to create VM-Host rule"
+      - "Cluster to create VM-Host rule."
     required: true
   drs_rule_name:
     description:
