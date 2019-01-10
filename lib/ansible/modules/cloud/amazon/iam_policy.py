@@ -315,7 +315,7 @@ def main():
         elif iam_type == 'role':
             policy = RolePolicy(**args)
         elif iam_type == 'group':
-            policy = RolePolicy(**args)
+            policy = GroupPolicy(**args)
 
         module.exit_json(**(policy.run()))
     except (BotoCoreError, ClientError, ParamValidationError) as e:
