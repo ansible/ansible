@@ -148,7 +148,7 @@ def set_state(module, state):
 
 
 def set_config_policy(module, policy, configfile):
-    if not os.path.exists(configfile):):
+    if not os.path.exists(configfile):
         module.fail_json(msg='Specified policy file %s does not exist' % configfile)
 
     # edit config file with state value
