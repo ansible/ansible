@@ -30,7 +30,7 @@ DOCUMENTATION = """
 module: checkpoint_host
 short_description: Manages host objects on Checkpoint over Web Services API
 description:
-  - Manages host objects on Checkpoint devices including creating, updating, removing access rules objects,
+  - Manages host objects on Checkpoint devices including creating, updating, removing access rules objects.
     All operations are performed over Web Services API.
 version_added: "2.8"
 author: "Ansible by Red Hat (@rcarrillocruz)"
