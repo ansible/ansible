@@ -293,7 +293,7 @@
 #
 # azure_rm_dnsrecordset cleanup
 #
-- name: delete all record sets
+- name: delete all record sets  except for @
   azure_rm_dnsrecordset:
     resource_group: "{{ resource_group }}"
     relative_name: "{{ item.relative_name }}"
@@ -301,6 +301,8 @@
     record_type: "{{ item.record_type }}"
     state: absent
   with_items: "{{ facts.dnsrecordsets }}"
+  when:
+    - item.relative_name != '@'
   register: results
 
 - name: Assert that record set deleted
@@ -315,7 +317,9 @@
 
 - name: Assert all record set deleted
   assert:
-    that: 'facts.dnsrecordsets | length == 0'
+    that:
+       - "{{ item.relative_name }} == '@'"
+  with_items: "{{ facts.dnsrecordsets }}"
 
 - name: (idempotence test) re-run record set absent
   azure_rm_dnsrecordset:

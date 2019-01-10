@@ -377,7 +377,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
             # delete the record set
             self.dns_client.record_sets.delete(self.resource_group, self.zone_name, self.relative_name, self.record_type)
         except Exception as exc:
-            self.fail("Error deleting record set {0} - {1}".format(self.relative_name, str(exc)))
+            self.fail("Error deleting record set {0} - {1}".format(self.relative_name, exc.message or str(exc)))
         return None
 
     def create_sdk_records(self, input_records, record_type):
