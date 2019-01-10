@@ -437,7 +437,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
-from ansible.module_utils.six import PY2, iteritems, string_types
+from ansible.module_utils.six import PY2, binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
@@ -458,12 +458,15 @@ def format_message(err, resp):
     return err + (' %s' % msg if msg else '')
 
 
-def write_file(module, url, dest, content, resp):
+def write_file(module, dest, content, resp):
     # create a tempfile with some test content
     fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
-    f = open(tmpsrc, 'wb')
+    f = os.fdopen(fd, 'wb')
     try:
-        f.write(content)
+        if isinstance(content, binary_type):
+            f.write(content)
+        else:
+            shutil.copyfileobj(content, f)
     except Exception as e:
         os.remove(tmpsrc)
         msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
@@ -570,9 +573,7 @@ def form_urlencoded(body):
 def uri(module, url, dest, body, body_format, method, headers, socket_timeout, ca_path, unredirected_headers):
     # is dest is set and is a directory, let's check if we get redirected and
     # set the filename from that url
-    redirected = False
-    redir_info = {}
-    r = {}
+
     src = module.params['src']
     if src:
         try:
@@ -586,26 +587,14 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
         data = body
 
     kwargs = {}
-    if dest is not None:
+    if dest is not None and os.path.isfile(dest):
         # if destination file already exist, only download if file newer
-        if os.path.exists(dest):
-            kwargs['last_mod_time'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
+        kwargs['last_mod_time'] = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
                            **kwargs)
-
-    if dest is not None and os.path.isdir(dest):
-        filename = get_response_filename(resp) or 'index.html'
-        dest = os.path.join(dest, filename)
-
-    try:
-        content = resp.read()
-    except AttributeError:
-        # there was no content, but the error read()
-        # may have been stored in the info as 'body'
-        content = info.pop('body', '')
 
     if src:
         # Try to close the open file handle
@@ -614,11 +603,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
         except Exception:
             pass
 
-    r['redirected'] = redirected or info['url'] != url
-    r.update(redir_info)
-    r.update(info)
-
-    return r, content, dest
+    return resp, info
 
 
 def main():
@@ -704,14 +689,42 @@ def main():
 
     # Make the request
     start = datetime.datetime.utcnow()
-    resp, content, dest = uri(module, url, dest, body, body_format, method,
-                              dict_headers, socket_timeout, ca_path, unredirected_headers)
+    r, info = uri(module, url, dest, body, body_format, method,
+                  dict_headers, socket_timeout, ca_path, unredirected_headers)
+
+    if r and dest is not None and os.path.isdir(dest):
+        filename = get_response_filename(r) or 'index.html'
+        dest = os.path.join(dest, filename)
+
+    content_type = info.get('content-type')
+    content_encoding = 'utf-8'
+    if content_type:
+        content_type, params = cgi.parse_header(content_type)
+        content_encoding = params.get('charset') or content_encoding
+
+    maybe_json = content_type and any(candidate in content_type for candidate in JSON_CANDIDATES)
+    maybe_output = maybe_json or return_content or info['status'] not in status_code
+
+    resp = {}
+    resp['redirected'] = info['url'] != url
+    resp.update(info)
+
     resp['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     resp['status'] = int(resp['status'])
     resp['changed'] = False
 
+    if maybe_output:
+        try:
+            content = r.read()
+        except AttributeError:
+            # there was no content, but the error read()
+            # may have been stored in the info as 'body'
+            content = info.pop('body', '')
+    elif r:
+        content = r
+
     # Write the file out if requested
-    if dest is not None:
+    if r and dest is not None:
         if resp['status'] in status_code and resp['status'] != 304:
             write_file(module, url, dest, content, resp)
             # allow file attribute changes
@@ -734,42 +747,20 @@ def main():
         uresp['location'] = absolute_location(url, uresp['location'])
 
     # Default content_encoding to try
-    content_encoding = 'utf-8'
-    if 'content_type' in uresp:
-        # Handle multiple Content-Type headers
-        charsets = []
-        content_types = []
-        for value in uresp['content_type'].split(','):
-            ct, params = cgi.parse_header(value)
-            if ct not in content_types:
-                content_types.append(ct)
-            if 'charset' in params:
-                if params['charset'] not in charsets:
-                    charsets.append(params['charset'])
-
-        if content_types:
-            content_type = content_types[0]
-            if len(content_types) > 1:
-                module.warn(
-                    'Received multiple conflicting Content-Type values (%s), using %s' % (', '.join(content_types), content_type)
-                )
-        if charsets:
-            content_encoding = charsets[0]
-            if len(charsets) > 1:
-                module.warn(
-                    'Received multiple conflicting charset values (%s), using %s' % (', '.join(charsets), content_encoding)
-                )
-
-        u_content = to_text(content, encoding=content_encoding)
-        if any(candidate in content_type for candidate in JSON_CANDIDATES):
-            try:
-                js = json.loads(u_content)
-                uresp['json'] = js
-            except Exception:
-                if PY2:
-                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+    if maybe_output:
+        if content_type:
+            u_content = to_text(content, encoding=content_encoding)
+            if maybe_json:
+                try:
+                    js = json.loads(u_content)
+                    uresp['json'] = js
+                except Exception:
+                    if PY2:
+                        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+        else:
+            u_content = to_text(content, encoding=content_encoding)
     else:
-        u_content = to_text(content, encoding=content_encoding)
+        u_content = None
 
     if module.no_log_values:
         uresp = sanitize_keys(uresp, module.no_log_values, NO_MODIFY_KEYS)
