@@ -1650,7 +1650,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting storage account {0} - {2}".format(name, str(exc)))
 
-    def delete_vm_storage(self, vhd_uris, own_sa):
+    def delete_vm_storage(self, vhd_uris):
         # FUTURE: figure out a cloud_env indepdendent way to delete these
         for uri in vhd_uris:
             self.log("Extracting info from blob uri '{0}'".format(uri))
