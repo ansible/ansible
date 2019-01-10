@@ -171,7 +171,7 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
         node_info = json.loads(json_str)
         return node_info
 
-    def get_all_nodes(self, output='short'):
+    def get_all_nodes_list(self, output='short'):
         """
         Returns list of nodes registered in Swarm
 

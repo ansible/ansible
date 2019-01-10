@@ -171,7 +171,6 @@ class SwarmNodeManager(DockerBaseClass):
 
     def __call__(self):
         choice_map = {
-            "list": self.node_list,
             "update": self.node_update,
         }
 
@@ -225,27 +224,10 @@ class SwarmNodeManager(DockerBaseClass):
         self.results['actions'].append("Node updated")
         self.results['changed'] = True
 
-    def node_list(self):
-        if not (self.client.check_if_swarm_manager()):
-            self.client.fail(msg="This node is not a manager.")
-
-        try:
-            nodes = self.client.nodes()
-        except APIError as exc:
-            self.client.fail(msg="Failed to get nodes list : %s" % to_native(exc))
-
-        swarm_nodes = []
-
-        for node in nodes:
-            swarm_nodes.append(node['Description']['Hostname'])
-
-        self.results['nodes'] = swarm_nodes
-        self.results['changed'] = False
-
 
 def main():
     argument_spec = dict(
-        state=dict(type='str', choices=['list', 'update'], default='list'),
+        state=dict(type='str', choices=['update'], required=True),
         name=dict(type='str'),
         labels=dict(type='dict'),
         labels_remove=dict(type='bool', default=False),
