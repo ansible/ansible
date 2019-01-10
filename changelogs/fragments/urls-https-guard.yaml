@@ -1,0 +1,2 @@
+bugfixes:
+- Guard ``HTTPSClientAuthHandler`` under HTTPS checks, to avoid tracebacks when python is compiled without SSL support (https://github.com/ansible/ansible/issues/50339)
