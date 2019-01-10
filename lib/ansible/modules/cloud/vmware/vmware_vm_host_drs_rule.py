@@ -35,7 +35,7 @@ options:
     aliases:
       - datacenter_name
     description:
-      - "Datacenter to search for given cluster. If not set, we use first cluster we encounter with C(cluster_name)"
+      - "Datacenter to search for given cluster. If not set, we use first cluster we encounter with C(cluster_name)."
     required: false
   cluster_name:
     description:
