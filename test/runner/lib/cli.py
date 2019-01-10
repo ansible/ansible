@@ -292,6 +292,14 @@ def parse_args():
                              action='store_true',
                              help='list matching targets instead of running tests')
 
+    integration.add_argument('--no-temp-workdir',
+                             action='store_true',
+                             help='do not run tests from a temporary directory (use only for verifying broken tests)')
+
+    integration.add_argument('--no-temp-unicode',
+                             action='store_true',
+                             help='avoid unicode characters in temporary directory (use only for verifying broken tests)')
+
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 
