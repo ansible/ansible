@@ -51,17 +51,17 @@ options:
             - Premium_LRS
     create_option:
         description:
-            - "Allowed values: empty, import, copy. C(import) from a VHD file in I(source_uri) and C(copy) from previous managed disk I(source_resource_uri)."
+            - "Allowed values: empty, import, copy.
+            - C(import) from a VHD file in I(source_uri) and C(copy) from previous managed disk I(source_uri)."
         choices:
             - empty
             - import
             - copy
     source_uri:
         description:
-            - URI to a valid VHD file to be used when I(create_option) is C(import).
-    source_resource_uri:
-        description:
-            - The resource ID of the managed disk to copy when I(create_option) is C(copy).
+            - URI to a valid VHD file to be used or the resource ID of the managed disk to copy.
+        aliases:
+            - source_resource_uri
     os_type:
         description:
             - "Type of Operating System: C(linux) or C(windows). Used when I(create_option) is either C(copy) or C(import) and the source is an OS disk."
@@ -74,7 +74,8 @@ options:
     managed_by:
         description:
             - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
-            - To detach a disk from a vm, keep undefined.
+            - To detach a disk from a vm, explicitly set to ''.
+            - If this option is unset, the value will not be changed.
         version_added: 2.5
     tags:
         description:
@@ -154,8 +155,7 @@ def managed_disk_to_dict(managed_disk):
         location=managed_disk.location,
         tags=managed_disk.tags,
         create_option=create_data.create_option.value.lower(),
-        source_uri=create_data.source_uri,
-        source_resource_uri=create_data.source_resource_id,
+        source_uri=create_data.source_uri or create_data.source_resource_id,
         disk_size_gb=managed_disk.disk_size_gb,
         os_type=managed_disk.os_type.value if managed_disk.os_type else None,
         storage_account_type=managed_disk.sku.name.value if managed_disk.sku else None,
@@ -193,10 +193,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                 choices=['empty', 'import', 'copy']
             ),
             source_uri=dict(
-                type='str'
-            ),
-            source_resource_uri=dict(
-                type='str'
+                type='str',
+                aliases=['source_resource_uri']
             ),
             os_type=dict(
                 type='str',
@@ -211,7 +209,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         )
         required_if = [
             ('create_option', 'import', ['source_uri']),
-            ('create_option', 'copy', ['source_resource_uri']),
+            ('create_option', 'copy', ['source_uri']),
             ('create_option', 'empty', ['disk_size_gb'])
         ]
         self.results = dict(
@@ -224,7 +222,6 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         self.storage_account_type = None
         self.create_option = None
         self.source_uri = None
-        self.source_resource_uri = None
         self.os_type = None
         self.disk_size_gb = None
         self.tags = None
@@ -261,15 +258,17 @@ class AzureRMManagedDisk(AzureRMModuleBase):
                     result = True
 
         # unmount from the old virtual machine and mount to the new virtual machine
-        vm_name = parse_resource_id(disk_instance.get('managed_by', '')).get('name') if disk_instance else None
-        if self.managed_by != vm_name:
-            changed = True
-            if not self.check_mode:
-                if vm_name:
-                    self.detach(vm_name, result)
-                if self.managed_by:
-                    self.attach(self.managed_by, result)
-                result = self.get_managed_disk()
+        if self.managed_by or self.managed_by == '':
+            vm_name = parse_resource_id(disk_instance.get('managed_by', '')).get('name') if disk_instance else None
+            vm_name = vm_name or ''
+            if self.managed_by != vm_name:
+                changed = True
+                if not self.check_mode:
+                    if vm_name:
+                        self.detach(vm_name, result)
+                    if self.managed_by:
+                        self.attach(self.managed_by, result)
+                    result = self.get_managed_disk()
 
         if self.state == 'absent' and disk_instance:
             changed = True
@@ -331,7 +330,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             creation_data['source_uri'] = self.source_uri
         elif self.create_option == 'copy':
             creation_data['create_option'] = self.compute_models.DiskCreateOption.copy
-            creation_data['source_resource_id'] = self.source_resource_uri
+            creation_data['source_resource_id'] = self.source_uri
         disk_params['creation_data'] = creation_data
         return disk_params
 
