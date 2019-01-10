@@ -144,8 +144,7 @@ class AzureRMResource(AzureRMModuleBase):
         # define user inputs into argument
         self.module_arg_spec = dict(
             url=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             provider=dict(
                 type='str',

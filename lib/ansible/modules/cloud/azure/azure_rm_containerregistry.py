@@ -218,22 +218,18 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             admin_user_enabled=dict(
                 type='bool',
-                required=False,
                 default=False
             ),
             sku=dict(
                 type='str',
-                required=False,
                 default='Standard',
                 choices=['Basic', 'Standard', 'Premium']
             )

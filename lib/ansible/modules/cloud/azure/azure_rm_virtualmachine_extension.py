@@ -41,39 +41,30 @@ options:
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        required: false
     virtual_machine_name:
         description:
             - The name of the virtual machine where the extension should be create or updated.
-        required: false
     publisher:
         description:
             - The name of the extension handler publisher.
-        required: false
     virtual_machine_extension_type:
         description:
             - The type of the extension handler.
-        required: false
     type_handler_version:
         description:
             - The type version of the extension handler.
-        required: false
     settings:
         description:
             - Json formatted public settings for the extension.
-        required: false
     protected_settings:
         description:
             - Json formatted protected settings for the extension.
-        required: false
     auto_upgrade_minor_version:
         description:
             - Whether the extension handler should be automatically upgraded across minor versions.
-        required: false
         type: bool
 
 extends_documentation_fragment:
@@ -159,41 +150,32 @@ class AzureRMVMExtension(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             virtual_machine_name=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             publisher=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             virtual_machine_extension_type=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             type_handler_version=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             auto_upgrade_minor_version=dict(
-                type='bool',
-                required=False
+                type='bool'
             ),
             settings=dict(
-                type='dict',
-                required=False
+                type='dict'
             ),
             protected_settings=dict(
-                type='dict',
-                required=False
+                type='dict'
             )
         )
 
