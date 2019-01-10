@@ -616,7 +616,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 backend_address_pool = nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('loadBalancerBackendAddressPools', [])
                 if (len(nicConfigs) != 1 or len(backend_address_pool) != 1):
                     support_lb_change = False  # Currently not support for the vmss contains more than one loadbalancer
-                    self.module.warn('Not support to update loadbalancer for the vmss contains more than one loadbalancers.')
+                    self.module.warn('Updating more than one load balancer on VMSS is currently not supported')
                 else:
                     load_balancer_id = "{0}/".format(load_balancer.id) if load_balancer else None
                     backend_address_pool_id = backend_address_pool[0].get('id')
