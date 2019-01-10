@@ -18,7 +18,7 @@
     - emptypids.pids == [] 
 
 - name: "Picking a random process name"
-  command: echo "some_long_random_process_name{{ 99999999 | random }}"
+  command: echo "some_long-random-process-name"
   register: random_name
 
 - name: "finding the 'sleep' binary"
