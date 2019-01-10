@@ -245,7 +245,7 @@ class SwarmNodeManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
-        state=dict(type='str', choices=['present', 'leave'], default='list'),
+        state=dict(type='str', choices=['list', 'update'], default='list'),
         name=dict(type='str'),
         labels=dict(type='dict'),
         labels_remove=dict(type='bool', default=False),
