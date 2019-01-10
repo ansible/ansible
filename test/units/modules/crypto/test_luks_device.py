@@ -65,6 +65,8 @@ LUKS_CREATE_DATA = (
     (None, "key", "present", False, False),
     ("dummy", None, "present", False, False),
     ("dummy", "key", "absent", False, False),
+    ("dummy", "key", "opened", True, False),
+    ("dummy", "key", "closed", True, False),
     ("dummy", "key", "present", True, False))
 
 # device, state, is_luks, expected
@@ -74,24 +76,26 @@ LUKS_REMOVE_DATA = (
     ("dummy", "present", True, False),
     ("dummy", "absent", False, False))
 
-# device, key, state, open, name, name_by_dev, expected
+# device, key, state, name, name_by_dev, expected
 LUKS_OPEN_DATA = (
-    ("dummy", "key", "present", True, "name", None, True),
-    (None, "key", "present", True, "name", None, False),
-    ("dummy", None, "present", True, "name", None, False),
-    ("dummy", "key", "present", False, "name", None, False),
-    ("dummy", "key", "absent", True, "name", None, "exception"),
-    ("dummy", "key", "present", True, "name", "name", False),
-    ("dummy", "key", "present", True, "beer", "name", "exception"))
+    ("dummy", "key", "present", "name", None, False),
+    ("dummy", "key", "absent", "name", None, False),
+    ("dummy", "key", "closed", "name", None, False),
+    ("dummy", "key", "opened", "name", None, True),
+    (None, "key", "opened", "name", None, False),
+    ("dummy", None, "opened", "name", None, False),
+    ("dummy", "key", "opened", "name", "name", False),
+    ("dummy", "key", "opened", "beer", "name", "exception"))
 
-# device, dev_by_name, name, name_by_dev, state, open, expected
+# device, dev_by_name, name, name_by_dev, state, expected
 LUKS_CLOSE_DATA = (
-    ("dummy", "dummy", "name", "name", "present", False, True),
-    (None, "dummy", "name", "name", "present", False, True),
-    ("dummy", "dummy", None, "name", "present", False, True),
-    (None, "dummy", None, "name", "present", False, False),
-    ("dummy", "dummy", "name", "name", "present", True, False),
-    ("dummy", "dummy", "name", "name", "absent", False, False))
+    ("dummy", "dummy", "name", "name", "present", False),
+    ("dummy", "dummy", "name", "name", "absent", False),
+    ("dummy", "dummy", "name", "name", "opened", False),
+    ("dummy", "dummy", "name", "name", "closed", True),
+    (None, "dummy", "name", "name", "closed", True),
+    ("dummy", "dummy", None, "name", "closed", True),
+    (None, "dummy", None, "name", "closed", False))
 
 # device, key, new_key, state, expected
 LUKS_ADD_KEY_DATA = (
@@ -142,16 +146,15 @@ def test_luks_remove(device, state, is_luks, expected, monkeypatch):
     assert conditions.luks_remove() == expected
 
 
-@pytest.mark.parametrize("device, keyfile, state, open, name, "
+@pytest.mark.parametrize("device, keyfile, state, name, "
                          "name_by_dev, expected",
-                         ((d[0], d[1], d[2], d[3], d[4], d[5], d[6])
+                         ((d[0], d[1], d[2], d[3], d[4], d[5])
                           for d in LUKS_OPEN_DATA))
-def test_luks_open(device, keyfile, state, open, name, name_by_dev,
+def test_luks_open(device, keyfile, state, name, name_by_dev,
                    expected, monkeypatch):
     module = DummyModule()
     module.params["device"] = device
     module.params["keyfile"] = keyfile
-    module.params["open"] = open
     module.params["state"] = state
     module.params["name"] = name
 
@@ -167,16 +170,15 @@ def test_luks_open(device, keyfile, state, open, name, name_by_dev,
 
 
 @pytest.mark.parametrize("device, dev_by_name, name, name_by_dev, "
-                         "state, open, expected",
-                         ((d[0], d[1], d[2], d[3], d[4], d[5], d[6])
+                         "state, expected",
+                         ((d[0], d[1], d[2], d[3], d[4], d[5])
                           for d in LUKS_CLOSE_DATA))
 def test_luks_close(device, dev_by_name, name, name_by_dev, state,
-                    open, expected, monkeypatch):
+                    expected, monkeypatch):
     module = DummyModule()
     module.params["device"] = device
     module.params["name"] = name
     module.params["state"] = state
-    module.params["open"] = open
 
     monkeypatch.setattr(luks_device.CryptHandler,
                         "get_container_name_by_device",

@@ -26,31 +26,35 @@ options:
     device:
         description:
             - "Device to work with (e.g. C(/dev/sda1)). Needed in most cases.
-              Can be omitted only when I(open=false) and I(name) is provided."
+              Can be omitted only when I(state=closed) together with I(name)
+              is provided."
         type: str
     state:
         description:
-            - "Based on its value creates or destroys the LUKS container on
-              a given device. Container creation requires I(device) and
-              I(keyfile) options to be provided. Removal requires
-              I(device) or I(name)."
+            - "Desired state of the LUKS container. Based on its value creates,
+              destroys, opens or closes the LUKS container on a given device."
+            - "I(present) will create LUKS container unless already present.
+              Requires I(device) and I(keyfile) options to be provided."
+            - "I(absent) will remove existing LUKS container if it exists.
+              Requires I(device) or I(name) to be specified."
+            - "I(opened) will unlock the LUKS container. If it does not exist
+              it will be created first.
+              Requires I(device) and I(keyfile) to be specified. Use
+              the I(name) option to set the name of the opened container.
+              Otherwise the name will be generated automatically and returned
+              as a part of the result."
+            - "I(closed) will lock the LUKS container. However if the container
+              does not exist it will be created.
+              Requires I(device) and I(keyfile) options to be provided. If
+              container does already exist I(device) or I(name) will suffice."
         default: present
-        choices: ['absent', 'present']
+        choices: [present, absent, opened, closed]
         type: str
-    open:
-        description:
-            - "Based on its value unlocks or locks an existing LUKS container
-              on a given I(device). Use the I(name) option to set the name of
-              the opened container. Otherwise the name will be generated
-              automatically and returned in the result. Unlocking the container
-              requires I(keyfile) to be set."
-        default: false
-        type: bool
     name:
         description:
-            - "Sets container name when I(open=true). Can be used
-              instead of I(device) when closing the container
-              (i.e. when I(open=false))."
+            - "Sets container name when I(state=opened). Can be used
+              instead of I(device) when closing the existing container
+              (i.e. when I(state=closed))."
         type: str
     keyfile:
         description:
@@ -71,10 +75,12 @@ options:
         type: path
     remove_keyfile:
         description:
-            - "Removes given key from the container on I(device).
+            - "Removes given key from the container on I(device). Does not
+              remove the keyfile from filesystem.
               Parameter value is the path to the keyfile with the passphrase."
             - "BEWARE that it is possible to remove even the last key from the
-              container. Data in there will be irreversibly lost."
+              container. Data in there will be irreversibly lost
+              without a warning."
             - "BEWARE that working with keyfiles in plaintext is dangerous.
               Make sure that they are protected."
         type: path
@@ -96,22 +102,41 @@ author:
 '''
 
 EXAMPLES = '''
-- name: create and open the LUKS container
+
+- name: create LUKS container (remains unchanged if it already exists)
   luks_device:
     device: "/dev/loop0"
     state: "present"
-    open: true
     keyfile: "/vault/keyfile"
 
-- name: close the LUKS container "mycrypt"
+- name: (create and) open the LUKS container; name it "mycrypt"
   luks_device:
-    open: false
+    device: "/dev/loop0"
+    state: "opened"
+    name: "mycrypt"
+    keyfile: "/vault/keyfile"
+
+- name: close the existing LUKS container "mycrypt"
+  luks_device:
+    state: "closed"
     name: "mycrypt"
 
-- name: add new key to the LUKS container
+- name: make sure LUKS container exists and is closed
+  luks_device:
+    device: "/dev/loop0"
+    state: "closed"
+    keyfile: "/vault/keyfile"
+
+- name: create container if it does not exist and add new key to it
   luks_device:
     device: "/dev/loop0"
     state: "present"
+    keyfile: "/vault/keyfile"
+    new_keyfile: "/vault/keyfile2"
+
+- name: add new key to the LUKS container (container has to exist)
+  luks_device:
+    device: "/dev/loop0"
     keyfile: "/vault/keyfile"
     new_keyfile: "/vault/keyfile2"
 
@@ -129,7 +154,7 @@ EXAMPLES = '''
 RETURN = '''
 name:
     description:
-        When I(open) option is used returns (generated or given) name
+        When I(state=opened) returns (generated or given) name
         of LUKS container. Returns None if no name is supplied.
     returned: success
     type: str
@@ -194,7 +219,7 @@ class CryptHandler(Handler):
 
         try:
             name = m.group(1)
-        except AttributeError as e:
+        except AttributeError:
             name = None
         return name
 
@@ -279,41 +304,58 @@ class ConditionsHandler(Handler):
     def luks_create(self):
         return (self._module.params['device'] is not None and
                 self._module.params['keyfile'] is not None and
-                self._module.params['state'] == 'present' and
+                self._module.params['state'] in ('present',
+                                                 'opened',
+                                                 'closed') and
                 not self._crypthandler.is_luks(self._module.params['device']))
 
-    def luks_open(self):
-        if (self._module.params['device'] is None or
-                self._module.params['keyfile'] is None or
-                self._module.params['open'] is False):
-            # conditions for open not fulfilled
-            return False
-
-        if self._module.params['state'] == 'absent':
-            # better warn the user to recheck the configuration
-            self._module.fail_json(msg="Contradiction in setup: LUKS set "
-                                   "to be 'absent' and 'open'.")
+    def opened_luks_name(self):
+        ''' If luks is already opened, return its name.
+            If 'name' parameter is specified and differs
+            from obtained value, fail.
+            Return None otherwise
+        '''
+        if self._module.params['state'] != 'opened':
+            return None
 
         # try to obtain luks name - it may be already opened
         name = self._crypthandler.get_container_name_by_device(
             self._module.params['device'])
-        if name is not None:
-            if name != self._module.params['name']:
-                # the container is already open but with different name:
-                # suspicious. back off
-                self._module.fail_json(msg="LUKS container is already opened "
-                                       "under different name '%s'." % name)
-            else:
-                # the container of this name is already open. nothing to do
-                return False
-        # container is not open
-        return True
+
+        if name is None:
+            # container is not open
+            return None
+
+        if (self._module.params['name'] is None):
+            # container is already opened
+            return name
+
+        if (name != self._module.params['name']):
+            # the container is already open but with different name:
+            # suspicious. back off
+            self._module.fail_json(msg="LUKS container is already opened "
+                                   "under different name '%s'." % name)
+
+        # container is opened and the names match
+        return name
+
+    def luks_open(self):
+        if (self._module.params['device'] is None or
+                self._module.params['keyfile'] is None or
+                self._module.params['state'] != 'opened'):
+            # conditions for open not fulfilled
+            return False
+
+        name = self.opened_luks_name()
+
+        if name is None:
+            return True
+        return False
 
     def luks_close(self):
         if ((self._module.params['name'] is None and
                 self._module.params['device'] is None) or
-                self._module.params['open'] or
-                self._module.params['state'] == 'absent'):
+                self._module.params['state'] != 'closed'):
             # conditions for close not fulfilled
             return False
 
@@ -365,9 +407,11 @@ class ConditionsHandler(Handler):
 def run_module():
     # available arguments/parameters that a user can pass
     module_args = dict(
-        state=dict(type='str', choices=['present', 'absent'], required=False, default='present'),
+        state=dict(type='str',
+                   choices=['present', 'absent', 'opened', 'closed'],
+                   required=False,
+                   default='present'),
         device=dict(type='str', required=False),
-        open=dict(type='bool', required=False, default=False),
         name=dict(type='str', required=False),
         keyfile=dict(type='path', required=False),
         new_keyfile=dict(type='path', required=False),
@@ -399,6 +443,11 @@ def run_module():
         result['changed'] = True
 
     # luks open
+
+    name = conditions.opened_luks_name()
+    if name is not None:
+        result['name'] = name
+
     if conditions.luks_open():
         name = module.params['name']
         if name is None:
@@ -418,10 +467,17 @@ def run_module():
     # luks close
     if conditions.luks_close():
         if module.params['device'] is not None:
-            name = crypt.get_container_name_by_device(module.params['device'])
+            try:
+                name = crypt.get_container_name_by_device(
+                    module.params['device'])
+            except ValueError as e:
+                module.fail_json(msg="luks_device error: %s" % e)
         else:
             name = module.params['name']
-        crypt.run_luks_close(name)
+        try:
+            crypt.run_luks_close(name)
+        except ValueError as e:
+            module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
 
     # luks add key
@@ -445,7 +501,10 @@ def run_module():
 
     # luks remove
     if conditions.luks_remove():
-        crypt.run_luks_remove(module.params['device'])
+        try:
+            crypt.run_luks_remove(module.params['device'])
+        except ValueError as e:
+            module.fail_json(msg="luks_device error: %s" % e)
         result['changed'] = True
 
     # Success - return result
