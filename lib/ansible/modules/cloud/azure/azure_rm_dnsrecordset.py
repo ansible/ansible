@@ -374,8 +374,8 @@ class AzureRMRecordSet(AzureRMModuleBase):
         if not isinstance(server_records, list):
             server_records = [server_records]
 
-        input_set = set(input_records)
-        server_set = set(server_records)
+        input_set = set([str(x.as_dict()) for x in input_records])
+        server_set = set([str(x.as_dict()) for x in server_records])
 
         if self.record_mode == 'append':  # only a difference if the server set is missing something from the input set
             return len(input_set.difference(server_set)) > 0
