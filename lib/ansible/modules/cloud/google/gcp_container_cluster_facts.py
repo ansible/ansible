@@ -240,8 +240,6 @@ items:
       description:
       - The name of the Google Compute Engine network to which the cluster is connected.
         If left unspecified, the default network will be used.
-      - To ensure it exists and it is operations, configure the network using 'gcompute_network'
-        resource.
       returned: success
       type: str
     clusterIpv4Cidr:

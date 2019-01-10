@@ -155,8 +155,9 @@ options:
         required: true
   source_disk:
     description:
-    - Refers to a gcompute_disk object You must provide either this property or the
-      rawDisk.source property but not both to create an image.
+    - The source disk to create this image based on.
+    - You must provide either this property or the rawDisk.source property but not
+      both to create an image.
     - 'This field represents a link to a Disk resource in GCP. It can be specified
       in two ways. First, you can place in the selfLink of the resource here as a
       string Alternatively, you can add `register: name-of-resource` to a gcp_compute_disk
@@ -390,8 +391,9 @@ rawDisk:
       type: str
 sourceDisk:
   description:
-  - Refers to a gcompute_disk object You must provide either this property or the
-    rawDisk.source property but not both to create an image.
+  - The source disk to create this image based on.
+  - You must provide either this property or the rawDisk.source property but not both
+    to create an image.
   returned: success
   type: str
 sourceDiskEncryptionKey:

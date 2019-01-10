@@ -240,8 +240,9 @@ items:
           type: str
     sourceDisk:
       description:
-      - Refers to a gcompute_disk object You must provide either this property or
-        the rawDisk.source property but not both to create an image.
+      - The source disk to create this image based on.
+      - You must provide either this property or the rawDisk.source property but not
+        both to create an image.
       returned: success
       type: str
     sourceDiskEncryptionKey:
