@@ -17,7 +17,7 @@ from ansible.modules.storage.netapp.na_ontap_software_update \
     import NetAppONTAPSoftwareUpdate as my_module  # module under test
 
 if not netapp_utils.has_netapp_lib():
-    pytestmark = pytest.skip('skipping as missing required netapp_lib')
+    pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 
 
 def set_module_args(args):
@@ -102,10 +102,10 @@ class TestMyModule(unittest.TestCase):
 
     def set_default_args(self):
         if self.use_vsim:
-            hostname = '10.193.77.37'
+            hostname = '10.10.10.10'
             username = 'admin'
-            password = 'netapp1!'
-            node = 'garchana-vsim1'
+            password = 'admin'
+            node = 'vsim1'
             package_version = 'Fattire__9.3.0'
             package_url = 'abc.com'
         else:
