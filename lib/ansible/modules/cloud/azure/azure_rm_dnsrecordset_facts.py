@@ -38,7 +38,7 @@ options:
     top:
         description:
             - Limit the maximum number of record sets to return
-        default: 100
+        type: int
 
 extends_documentation_fragment:
     - azure
@@ -91,6 +91,27 @@ azure_dnsrecordset:
                 "type": "Microsoft.Network/dnszones/A"
             }
         ]
+dnsrecordsets:
+    description: List of record set dicts, which shares the same hierarchy as azure_rm—_dnsrecordset module's parameter.
+    returned: always
+    type: list
+    contains:
+        id:
+            description: ID of the dns recordset.
+        relative_name:
+            description: Name of the dns recordset.
+        record_type:
+            description:
+                - The type of the record set.
+                - Can be C(A), C(AAAA), C(CNAME), C(MX), C(NS), C(SRV), C(TXT), C(PTR).
+        time_to_live:
+            description: Time to live of the record set in seconds.
+        records:
+            description: List of records depending on the type of recordset.
+        provisioning_state:
+            description: Provision state of the resource.
+        fqdn:
+            description: Fully qualified domain name of the record set.
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -115,7 +136,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
             resource_group=dict(type='str'),
             zone_name=dict(type='str'),
             record_type=dict(type='str'),
-            top=dict(type='str', default='100')
+            top=dict(type='int')
         )
 
         # store the results of the module operation
@@ -137,22 +158,29 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
+        if not self.top or self.top <= 0:
+            self.top = None
+
         # create conditionals to catch errors when calling record facts
         if self.relative_name and not self.resource_group:
             self.fail("Parameter error: resource group required when filtering by name or record type.")
         if self.relative_name and not self.zone_name:
             self.fail("Parameter error: DNS Zone required when filtering by name or record type.")
 
+        results = []
         # list the conditions for what to return based on input
         if self.relative_name is not None:
             # if there is a name listed, they want only facts about that specific Record Set itself
-            self.results['ansible_facts']['azure_dnsrecordset'] = self.get_item()
+            results = self.get_item()
         elif self.record_type:
             # else, they just want all the record sets of a specific type
-            self.results['ansible_facts']['azure_dnsrecordset'] = self.list_type()
+            results = self.list_type()
         elif self.zone_name:
             # if there is a zone name listed, then they want all the record sets in a zone
-            self.results['ansible_facts']['azure_dnsrecordset'] = self.list_zone()
+            results = self.list_zone()
+
+        self.results['ansible_facts']['azure_dnsrecordset'] = self.serialize_list(results)
+        self.results['dnsrecordsets'] = self.curated_list(results)
         return self.results
 
     def get_item(self):
@@ -166,32 +194,50 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
         except CloudError:
             pass
 
-        results = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
+        results = [item]
         return results
 
     def list_type(self):
         self.log('Lists the record sets of a specified type in a DNS zone')
         try:
-            response = self.dns_client.record_sets.list_by_type(self.resource_group, self.zone_name, self.record_type, top=int(self.top))
+            response = self.dns_client.record_sets.list_by_type(self.resource_group, self.zone_name, self.record_type, top=self.top)
         except AzureHttpError as exc:
             self.fail("Failed to list for record type {0} - {1}".format(self.record_type, str(exc)))
 
         results = []
         for item in response:
-            results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+            results.append(item)
         return results
 
     def list_zone(self):
         self.log('Lists all record sets in a DNS zone')
         try:
-            response = self.dns_client.record_sets.list_by_dns_zone(self.resource_group, self.zone_name, top=int(self.top))
+            response = self.dns_client.record_sets.list_by_dns_zone(self.resource_group, self.zone_name, top=self.top)
         except AzureHttpError as exc:
             self.fail("Failed to list for zone {0} - {1}".format(self.zone_name, str(exc)))
 
         results = []
         for item in response:
-            results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+            results.append(item)
         return results
+
+    def serialize_list(self, raws):
+        return [self.serialize_obj(item, AZURE_OBJECT_CLASS) for item in raws] if raws else []
+
+    def curated_list(self, raws):
+        return [self.record_to_dict(item) for item in raws] if raws else []
+
+    def record_to_dict(self, record):
+        record_type=record.type.strip('Microsoft.Network/dnszones/')
+        return dict(
+            id=record.id,
+            relative_name=record.name,
+            record_type=record_type,
+            records=[x.to_dict() for x in getattr(record, record_type.lower())],
+            time_to_live=record.ttl,
+            fqdn=record.fqdn,
+            provisioning_state=record.provisioning_state
+        )
 
 
 def main():

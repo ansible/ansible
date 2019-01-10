@@ -288,6 +288,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
         try:
             self.log('Fetching Record Set {0}'.format(self.relative_name))
             record_set = self.dns_client.record_sets.get(self.resource_group, self.zone_name, self.relative_name, self.record_type)
+            self.results['state'] = self.recordset_to_dict(record_set)
         except CloudError:
             record_set = None
             # FUTURE: fail on anything other than ResourceNotFound
@@ -350,7 +351,8 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
     def create_or_update(self, record_set):
         try:
-            self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set)
+            record_set = self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set)
+            return self.recordset_to_dict(record_set)
         except Exception as exc:
             self.fail("Error creating or updating dns record {0} - {1}".format(self.relative_name, exc.message or str(exc)))
 
@@ -383,6 +385,10 @@ class AzureRMRecordSet(AzureRMModuleBase):
         # non-append mode; any difference in the sets is a change
         return input_set != server_set
 
+    def recordset_to_dict(self, recordset):
+        result = recordset.to_dict()
+        result['type'] = result['type'].strip('Microsoft.Network/dnszones/')
+        return result
 
 def main():
     AzureRMRecordSet()

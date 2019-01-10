@@ -73,7 +73,7 @@ azure_dnszones:
                 },
                 "tags": {}
         }]
-azure_rm_dnszones:
+dnszones:
     description: List of zone dicts, which share the same layout as azure_rm_dnszone module parameter.
     returned: always
     type: list
@@ -161,7 +161,7 @@ class AzureRMDNSZoneFacts(AzureRMModuleBase):
             results = self.list_items()
 
         self.results['ansible_facts']['azure_dnszones'] = self.serialize_items(results)
-        self.results['ansible_facts']['azure_rm_dnszones'] = self.curated_items(results)
+        self.results['dnszones'] = self.curated_items(results)
 
         return self.results
 
