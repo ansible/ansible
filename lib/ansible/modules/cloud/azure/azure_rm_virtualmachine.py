@@ -272,6 +272,10 @@ options:
             - If the subnet is in another resource group, specific resource group by C(virtual_network_resource_group).
         aliases:
             - subnet
+    remove_autocreated:
+        description:
+            - Should all autocreated resources be removed when VM is being destroyed?
+        type: bool
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources
@@ -743,6 +747,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces'], elements='raw'),
+            remove_autocreated=dict(type='bool', default=False),
             remove_on_absent=dict(type='list', default=['all']),
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
@@ -779,6 +784,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.managed_disk_type = None
         self.os_disk_name = None
         self.network_interface_names = None
+        self.remove_autocreated = None
         self.remove_on_absent = set()
         self.tags = None
         self.force = None
@@ -818,7 +824,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         # convert elements to ints
         self.zones = [int(i) for i in self.zones] if self.zones else None
 
-        if self.state == 'absent' and 'all_autocreated' not in self.remove_on_absent:
+        if self.state == 'absent' and self.remove_on_absent:
             self.deprecate("Option 'remove_on_absent' will be deprecated and 'all_autocreated' will become default behaviour.", version='2.10')
 
         changed = False
@@ -1494,72 +1500,66 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.fail("Error generalizing virtual machine {0} - {1}".format(self.name, str(exc)))
         return True
 
+    def remove_autocreated_resources(self, tags):
+        if tags:
+            sa_name = tags.get('_own_sa_')
+            nic_name = tags.get('_own_nic_')
+            pip_name = tags.get('_own_pip_')
+            nsg_name = tags.get('_own_nsg_')
+            if tags.get('_own_sa_'):
+                self.delete_stoage_account(self.resource_group, nsg_name)
+            if tags.get('_own_nic_'):
+                self.delete_nic(self.resource_group, nic_name)
+            if tags.get('_own_pip_'):
+                self.delete_pip(self.resource_group, pip_name)
+            if nsg_name:
+                self.delete_nsg(self.resource_group, nsg_name)
+            
+
     def delete_vm(self, vm):
-        vhd_uris = []
-        managed_disk_ids = []
-        nic_names = []
-        pip_names = []
-        nsg_names = []
 
-        own_sa = vm.tags.get('_own_sa_') if vm.tags else None
-        own_nic = vm.tags.get('_own_nic_') if vm.tags else None
-        own_pip = vm.tags.get('_own_pip_') if vm.tags else None
-        own_nsg = vm.tags.get('_own_nsg_') if vm.tags else None
+        if not self.remove_autocreated:
+            if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
+                # store the attached vhd info so we can nuke it after the VM is gone
+                if(vm.storage_profile.os_disk.managed_disk):
+                    self.log('Storing managed disk ID for deletion')
+                    managed_disk_ids.append(vm.storage_profile.os_disk.managed_disk.id)
+                elif(vm.storage_profile.os_disk.vhd):
+                    self.log('Storing VHD URI for deletion')
+                    vhd_uris.append(vm.storage_profile.os_disk.vhd.uri)
 
-        if self.remove_on_absent.intersection(set(['all', 'all_autocreated', 'virtual_storage'])):
-            # store the attached vhd info so we can nuke it after the VM is gone
-            if(vm.storage_profile.os_disk.managed_disk):
-                self.log('Storing managed disk ID for deletion')
-                managed_disk_ids.append(vm.storage_profile.os_disk.managed_disk.id)
-            elif(vm.storage_profile.os_disk.vhd):
-                self.log('Storing VHD URI for deletion')
-                vhd_uris.append(vm.storage_profile.os_disk.vhd.uri)
+                data_disks = vm.storage_profile.data_disks
+                for data_disk in data_disks:
+                    if data_disk is not None:
+                        if(data_disk.vhd):
+                            vhd_uris.append(data_disk.vhd.uri)
+                        elif(data_disk.managed_disk):
+                            managed_disk_ids.append(data_disk.managed_disk.id)
 
-            data_disks = vm.storage_profile.data_disks
-            for data_disk in data_disks:
-                if data_disk is not None:
-                    if(data_disk.vhd):
-                        vhd_uris.append(data_disk.vhd.uri)
-                    elif(data_disk.managed_disk):
-                        managed_disk_ids.append(data_disk.managed_disk.id)
+                # FUTURE enable diff mode, move these there...
+                self.log("VHD URIs to delete: {0}".format(', '.join(vhd_uris)))
+                self.results['deleted_vhd_uris'] = vhd_uris
+                self.log("Managed disk IDs to delete: {0}".format(', '.join(managed_disk_ids)))
+                self.results['deleted_managed_disk_ids'] = managed_disk_ids
 
-            # FUTURE enable diff mode, move these there...
-            self.log("VHD URIs to delete: {0}".format(', '.join(vhd_uris)))
-            self.results['deleted_vhd_uris'] = vhd_uris
-            self.log("Managed disk IDs to delete: {0}".format(', '.join(managed_disk_ids)))
-            self.results['deleted_managed_disk_ids'] = managed_disk_ids
-
-        if self.remove_on_absent.intersection(set(['all', 'all_autocreated', 'network_interfaces'])):
-            # store the attached nic info so we can nuke them after the VM is gone
-            self.log('Storing NIC names for deletion.')
-            for interface in vm.network_profile.network_interfaces:
-                id_dict = azure_id_to_dict(interface.id)
-                if ('all_autocreated' not in self.remove_on_absent) or id_dict['networkInterfaces'] == own_nic:
+            if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
+                # store the attached nic info so we can nuke them after the VM is gone
+                self.log('Storing NIC names for deletion.')
+                for interface in vm.network_profile.network_interfaces:
+                    id_dict = azure_id_to_dict(interface.id)
                     nic_names.append(dict(name=id_dict['networkInterfaces'], resource_group=id_dict['resourceGroups']))
-            self.log('NIC names to delete {0}'.format(str(nic_names)))
-            self.results['deleted_network_interfaces'] = nic_names
-            if self.remove_on_absent.intersection(set(['all', 'all_autocreated', 'public_ips'])):
-                # also store each nic's attached public IPs and delete after the NIC is gone
-                for nic_dict in nic_names:
-                    nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
-                    for ipc in nic.ip_configurations:
-                        if ipc.public_ip_address:
-                            pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
-                            if ('all_autocreated' not in self.remove_on_absent) or pip_dict['publicIPAddresses'] == own_pip:
+                self.log('NIC names to delete {0}'.format(str(nic_names)))
+                self.results['deleted_network_interfaces'] = nic_names
+                if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
+                    # also store each nic's attached public IPs and delete after the NIC is gone
+                    for nic_dict in nic_names:
+                        nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
+                        for ipc in nic.ip_configurations:
+                            if ipc.public_ip_address:
+                                pip_dict = azure_id_to_dict(ipc.public_ip_address.id)
                                 pip_names.append(dict(name=pip_dict['publicIPAddresses'], resource_group=pip_dict['resourceGroups']))
-                self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
-                self.results['deleted_public_ips'] = pip_names
-            # store each nic's attached public NSGs and delete after the NIC is gone
-            if 'all_autocreated' in self.remove_on_absent:
-                self.results['x-rm-nsg'] = 'yes'
-                for nic_dict in nic_names:
-                    nic = self.get_network_interface(nic_dict['resource_group'], nic_dict['name'])
-                    if nic.network_security_group:
-                        nsg_dict = azure_id_to_dict(nic.network_security_group.id)
-                        if nsg_dict['networkSecurityGroups'] == own_nsg:
-                            nsg_names.append(dict(name=nsg_dict['networkSecurityGroups'], resource_group=nsg_dict['resourceGroups']))
-                self.log('NSGs to  delete are {0}'.format(str(nsg_names)))
-                self.results['deleted_network_security_groups'] = pip_names
+                    self.log('Public IPs to  delete are {0}'.format(str(pip_names)))
+                    self.results['deleted_public_ips'] = pip_names
 
         self.log("Deleting virtual machine {0}".format(self.name))
         self.results['actions'].append("Deleted virtual machine {0}".format(self.name))
@@ -1570,28 +1570,27 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting virtual machine {0} - {1}".format(self.name, str(exc)))
 
-        # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
-        # TODO: best-effort to keep deleting other linked resources if we encounter an error
-        if self.remove_on_absent.intersection(set(['all', 'all_autocreated', 'virtual_storage'])):
-            self.log('Deleting VHDs')
-            self.delete_vm_storage(vhd_uris, own_sa if ('all_autocreated' in self.remove_on_absent) else None)
-            self.log('Deleting managed disks')
-            self.delete_managed_disks(managed_disk_ids)
+        if self.remove_autocreated:
+            self.remove_autocreated_resources()
+        else:
+            # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
+            # TODO: best-effort to keep deleting other linked resources if we encounter an error
+            if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
+                self.log('Deleting VHDs')
+                self.delete_vm_storage(vhd_uris)
+                self.log('Deleting managed disks')
+                self.delete_managed_disks(managed_disk_ids)
 
-        if self.remove_on_absent.intersection(set(['all', 'all_autocreated', 'network_interfaces'])):
-            self.log('Deleting network interfaces')
-            for nic_dict in nic_names:
-                self.delete_nic(nic_dict['resource_group'], nic_dict['name'])
+            if self.remove_on_absent.intersection(set(['all', 'network_interfaces'])):
+                self.log('Deleting network interfaces')
+                for nic_dict in nic_names:
+                    self.delete_nic(nic_dict['resource_group'], nic_dict['name'])
 
-        if self.remove_on_absent.intersection(set(['all', 'all_autocreated', 'public_ips'])):
-            self.log('Deleting public IPs')
-            for pip_dict in pip_names:
-                self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
+            if self.remove_on_absent.intersection(set(['all', 'public_ips'])):
+                self.log('Deleting public IPs')
+                for pip_dict in pip_names:
+                    self.delete_pip(pip_dict['resource_group'], pip_dict['name'])
 
-        if 'all_autocreated' in self.remove_on_absent:
-            self.log('Deleting NSGs')
-            for nsg_dict in nsg_names:
-                self.delete_nsg(nsg_dict['resource_group'], nsg_dict['name'])
         return True
 
     def get_network_interface(self, resource_group, name):
@@ -1639,6 +1638,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             except Exception as exc:
                 self.fail("Error deleting managed disk {0} - {1}".format(mdi, str(exc)))
 
+    def delete_storage_account(self, resource_group, name):
+        self.log("Delete storage account {0}".format(name))
+        self.results['actions'].append("Deleted storage account {0}".format(own_sa))
+        try:
+            self.storage_client.storage_accounts.delete(self.resource_group, own_sa)
+        except Exception as exc:
+            self.fail("Error deleting storage account {0} - {2}".format(own_sa, str(exc)))
+
     def delete_vm_storage(self, vhd_uris, own_sa):
         # FUTURE: figure out a cloud_env indepdendent way to delete these
         for uri in vhd_uris:
@@ -1659,14 +1666,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 blob_client.delete_blob(container_name, blob_name)
             except Exception as exc:
                 self.fail("Error deleting blob {0}:{1} - {2}".format(container_name, blob_name, str(exc)))
-
-            if own_sa is not None:
-                self.log("Delete storage account {0}".format(own_sa))
-                self.results['actions'].append("Deleted storage account {0}".format(own_sa))
-                try:
-                    self.storage_client.storage_accounts.delete(self.resource_group, own_sa)
-                except Exception as exc:
-                    self.fail("Error deleting storage account {0} - {2}".format(own_sa, str(exc)))
 
     def get_marketplace_image_version(self):
         try:
