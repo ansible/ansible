@@ -1,0 +1,5 @@
+[local]
+testhost ansible_connection=local
+testhost2 ansible_connection=local
+testhost3 ansible_ssh_host=127.0.0.3
+testhost4 ansible_ssh_host=127.0.0.4
