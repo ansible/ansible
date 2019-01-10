@@ -336,6 +336,7 @@ files:
   $modules/system/gconftool2.py: Akasurde
   $modules/system/group.py: $team_ansible
   $modules/system/interfaces_file.py: obourdon
+  $modules/system/mksysb.py: *aix
   $modules/system/modprobe.py:
     ignored: stygstra
   $modules/system/mount.py:
