@@ -54,7 +54,7 @@
     name: "{{ vnetname }}"
     tags:
       - testing
-    register: facts
+  register: facts
 
 - assert:
     that:
