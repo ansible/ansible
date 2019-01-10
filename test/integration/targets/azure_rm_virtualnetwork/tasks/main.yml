@@ -41,15 +41,28 @@
       - "output.state.tags.delete == 'on-exit'"
       - "output.state.tags | length == 2"
 
+- name: Attach a subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vnetname }}"
+    virtual_network_name: "{{ vnetname }}"
+    address_prefix_cidr: "10.1.0.0/24"
+
 - name: Gather facts by name, tags
   azure_rm_virtualnetwork_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vnetname }}"
     tags:
       - testing
+  register: facts
 
 - assert:
-    that: "azure_virtualnetworks | length == 1"
+    that:
+      - "azure_virtualnetworks | length == 1"
+      - "facts.virtualnetworks | length == 1"
+      - "facts.virtualnetworks[0].dns_servers | length == 2"
+      - "facts.virtualnetworks[0].address_prefixes | length == 2"
+      - "facts.virtualnetworks[0].subnets | length == 1"
 
 - name: Gather facts by resource group, tags
   azure_rm_virtualnetwork_facts:
@@ -153,9 +166,13 @@
   azure_rm_virtualnetwork_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vnetname }}"
+  register: facts
 
 - assert:
-    that: "azure_virtualnetworks | length == 1"
+    that:
+      - azure_virtualnetworks | length == 1
+      - facts.virtualnetworks | length == 1
+      - "facts.virtualnetworks[0].subnets | length == 1"
 
 - name: Delete virtual network
   azure_rm_virtualnetwork:
