@@ -1,0 +1,3 @@
+---
+bugfixes:
+- Moved error in netconf connection plugin from at import to on connection.
