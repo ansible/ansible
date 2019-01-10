@@ -1,0 +1,72 @@
+- name: Create random names
+  set_fact:
+    storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+    vm_name1: "vm1{{ resource_group | hash('md5') | truncate(5, True, '') }}"
+    vm_name2: "vm2{{ resource_group | hash('md5') | truncate(5, True, '') }}"
+    abs_name1: "avbs1{{ resource_group | hash('md5') | truncate(3, True, '') }}"
+    abs_name2: "avbs2{{ resource_group | hash('md5') | truncate(3, True, '') }}"
+
+- name: Create virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}"
+    address_prefixes: "10.10.0.0/16"
+
+- name: Add subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}"
+    address_prefix: "10.10.0.0/24"
+    virtual_network: "{{ vm_name1 }}"
+
+- name: Create minimal VM with defaults
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}"
+    admin_username: "testuser"
+    admin_password: "Pass123$$$abx!"
+    vm_size: Standard_B1ms
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+    register: vm_output
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}"
+    remove_autocreated: yes
+    state: absent
+
+- name: Query NIC
+  azure_rm_networkinterface_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}01"
+  register: output_nic
+      
+- name: Query NSG
+  azure_rm_securitygroup_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}01"
+  register: output_nsg
+
+- name: Query PIP
+  azure_rm_networksecuritygroup_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}01"
+  register: output_nsg
+
+- name: Assert that facts module returned the second vm
+  assert:
+    that: 
+      - output_nic.ansible_facts.azure_networkinterfaces | length == 0
+      - output_nsg.ansible_facts.azure_securitygroups | length == 0
+      - output_pip.ansible_facts.azure_publicipaddresses | length == 0
+
+- name: Delete virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name1 }}"
+    state: absent
