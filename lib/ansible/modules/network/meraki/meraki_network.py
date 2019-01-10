@@ -237,6 +237,14 @@ def main():
         org_id = meraki.get_org_id(meraki.params['org_name'])
     nets = meraki.get_nets(org_id=org_id)
 
+    # check if network is created
+    net_id = None
+    if meraki.params['net_name']:
+        if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
+            net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+    elif meraki.params['net_id']:
+        net_id = meraki.params['net_id']
+
     if meraki.params['state'] == 'query':
         if not meraki.params['net_name'] and not meraki.params['net_id']:
             meraki.result['data'] = nets
@@ -246,30 +254,29 @@ def main():
                                                    data=nets
                                                    )
     elif meraki.params['state'] == 'present':
-        if meraki.params['net_name']:  # FIXME: Idempotency check is ugly here, improve
-            if is_net_valid(meraki, meraki.params['net_name'], nets) is False:
-                path = meraki.construct_path('create',
-                                             org_id=org_id
+        if net_id is None:
+            path = meraki.construct_path('create',
+                                         org_id=org_id
+                                         )
+            r = meraki.request(path,
+                               method='POST',
+                               payload=json.dumps(payload)
+                               )
+            if meraki.status == 201:
+                meraki.result['data'] = r
+                meraki.result['changed'] = True
+        else:
+            net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
+            if meraki.is_update_required(net, payload):
+                path = meraki.construct_path('update',
+                                             net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
                                              )
                 r = meraki.request(path,
-                                   method='POST',
-                                   payload=json.dumps(payload)
-                                   )
-                if meraki.status == 201:
+                                   method='PUT',
+                                   payload=json.dumps(payload))
+                if meraki.status == 200:
                     meraki.result['data'] = r
                     meraki.result['changed'] = True
-            else:
-                net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
-                if meraki.is_update_required(net, payload):
-                    path = meraki.construct_path('update',
-                                                 net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
-                                                 )
-                    r = meraki.request(path,
-                                       method='PUT',
-                                       payload=json.dumps(payload))
-                    if meraki.status == 200:
-                        meraki.result['data'] = r
-                        meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
             net_id = meraki.get_net_id(net_name=meraki.params['net_name'],
