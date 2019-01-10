@@ -61,8 +61,8 @@ options:
   schema:
     description:
       - Schema that contains the database objects specified via I(objs).
-      - May only be provided if I(type) is C(table), C(sequence) or
-        C(function). Defaults to  C(public) in these cases.
+      - May only be provided if I(type) is C(table), C(sequence), C(function)
+        or C(default_privs). Defaults to  C(public) in these cases.
   roles:
     description:
       - Comma separated list of role (user/group) names to set permissions for.
