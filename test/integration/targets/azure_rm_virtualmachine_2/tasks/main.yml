@@ -56,7 +56,7 @@
   azure_rm_publicipaddress_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name1 }}01"
-  register: output_nsg
+  register: output_pip
 
 - name: Assert that facts module returned the second vm
   assert:
