@@ -17,7 +17,7 @@ short_description: NetApp Ontap modify network interface group
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
 - Create, modify ports, destroy the network interface group
 options:
@@ -47,12 +47,14 @@ options:
     required: true
 
   ports:
+    aliases:
+    - port
     description:
     - List of expected ports to be present in the interface group.
     - If a port is present in this list, but not on the target, it will be added.
     - If a port is not in the list, but present on the target, it will be removed.
     - Make sure the list contains all ports you want to see on the target.
-
+    version_added: '2.8'
 """
 
 EXAMPLES = """
@@ -117,7 +119,7 @@ class NetAppOntapIfGrp(object):
             name=dict(required=True, type='str'),
             mode=dict(required=False, type='str'),
             node=dict(required=True, type='str'),
-            ports=dict(required=False, type='list'),
+            ports=dict(required=False, type='list', aliases=["port"]),
         ))
 
         self.module = AnsibleModule(
