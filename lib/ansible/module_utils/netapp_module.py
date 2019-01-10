@@ -28,6 +28,8 @@
 
 ''' Support class for NetApp ansible modules '''
 
+import ansible.module_utils.netapp as netapp_utils
+
 
 def cmp(a, b):
     """
@@ -36,6 +38,18 @@ def cmp(a, b):
     :param b: second object to check
     :return:
     """
+    # convert to lower case for string comparison.
+    if a is None:
+        return -1
+    if type(a) is str and type(b) is str:
+        a = a.lower()
+        b = b.lower()
+    # if list has string element, convert string to lower case.
+    if type(a) is list and type(b) is list:
+        a = [x.lower() if type(x) is str else x for x in a]
+        b = [x.lower() if type(x) is str else x for x in b]
+        a.sort()
+        b.sort()
     return (a > b) - (a < b)
 
 
@@ -50,6 +64,11 @@ class NetAppModule(object):
         self.log = list()
         self.changed = False
         self.parameters = {'name': 'not intialized'}
+        self.zapi_string_keys = dict()
+        self.zapi_bool_keys = dict()
+        self.zapi_list_keys = dict()
+        self.zapi_int_keys = dict()
+        self.zapi_required = dict()
 
     def set_parameters(self, ansible_params):
         self.parameters = dict()
@@ -57,6 +76,64 @@ class NetAppModule(object):
             if ansible_params[param] is not None:
                 self.parameters[param] = ansible_params[param]
         return self.parameters
+
+    def get_value_for_bool(self, from_zapi, value):
+        """
+        Convert boolean values to string or vice-versa
+        If from_zapi = True, value is converted from string (as it appears in ZAPI) to boolean
+        If from_zapi = False, value is converted from boolean to string
+        For get() method, from_zapi = True
+        For modify(), create(), from_zapi = False
+        :param from_zapi: convert the value from ZAPI or to ZAPI acceptable type
+        :param value: value of the boolean attribute
+        :return: string or boolean
+        """
+        if value is None:
+            return None
+        if from_zapi:
+            return True if value == 'true' else False
+        else:
+            return 'true' if value else 'false'
+
+    def get_value_for_int(self, from_zapi, value):
+        """
+        Convert integer values to string or vice-versa
+        If from_zapi = True, value is converted from string (as it appears in ZAPI) to integer
+        If from_zapi = False, value is converted from integer to string
+        For get() method, from_zapi = True
+        For modify(), create(), from_zapi = False
+        :param from_zapi: convert the value from ZAPI or to ZAPI acceptable type
+        :param value: value of the integer attribute
+        :return: string or integer
+        """
+        if value is None:
+            return None
+        if from_zapi:
+            return int(value)
+        else:
+            return str(value)
+
+    def get_value_for_list(self, from_zapi, zapi_parent, zapi_child=None, data=None):
+        """
+        Convert a python list() to NaElement or vice-versa
+        If from_zapi = True, value is converted from NaElement (parent-children structure) to list()
+        If from_zapi = False, value is converted from list() to NaElement
+        :param zapi_parent: ZAPI parent key or the ZAPI parent NaElement
+        :param zapi_child: ZAPI child key
+        :param data: list() to be converted to NaElement parent-children object
+        :param from_zapi: convert the value from ZAPI or to ZAPI acceptable type
+        :return: list() or NaElement
+        """
+        if from_zapi:
+            if zapi_parent is None:
+                return []
+            else:
+                return [zapi_child.get_content() for zapi_child in zapi_parent.get_children()]
+        else:
+            zapi_parent = netapp_utils.zapi.NaElement(zapi_parent)
+            for item in data:
+                zapi_parent.add_new_child(zapi_child, item)
+            return zapi_parent
 
     def get_cd_action(self, current, desired):
         ''' takes a desired state and a current state, and return an action:
@@ -91,11 +168,16 @@ class NetAppModule(object):
         '''
         pass
 
-    def get_modified_attributes(self, current, desired):
-        ''' takes two lists of attributes and return a list of attributes that are
-            not in the desired state
+    def get_modified_attributes(self, current, desired, get_list_diff=False):
+        ''' takes two dicts of attributes and return a dict of attributes that are
+            not in the current state
             It is expected that all attributes of interest are listed in current and
             desired.
+            :param: current: current attributes in ONTAP
+            :param: desired: attributes from playbook
+            :param: get_list_diff: specifies whether to have a diff of desired list w.r.t current list for an attribute
+            :return: dict of attributes to be modified
+            :rtype: dict
 
             NOTE: depending on the attribute, the caller may need to do a modify or a
             different operation (eg move volume if the modified attribute is an
@@ -116,7 +198,10 @@ class NetAppModule(object):
                     value.sort()
                     desired[key].sort()
                 if cmp(value, desired[key]) != 0:
-                    modified[key] = desired[key]
+                    if not get_list_diff:
+                        modified[key] = desired[key]
+                    else:
+                        modified[key] = [item for item in desired[key] if item not in value]
         if modified:
             self.changed = True
         return modified
