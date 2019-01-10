@@ -18,7 +18,7 @@ run_test() {
 
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
 	# STDERR separately while still displaying both to the console
-	{ ansible-playbook -i ../../inventory test.yml \
+	{ ansible-playbook -i inventory test.yml \
 		> >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
 		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
@@ -122,7 +122,7 @@ export ANSIBLE_DISPLAY_FAILED_STDERR=1
 
 # Check if UNREACHBLE is available in stderr
 set +e
-ansible-playbook -i ../../inventory test_2.yml > >(set +x; tee "${BASEFILE}.unreachable.stdout";) 2> >(set +x; tee "${BASEFILE}.unreachable.stderr" >&2) || true
+ansible-playbook -i inventory test_2.yml > >(set +x; tee "${BASEFILE}.unreachable.stdout";) 2> >(set +x; tee "${BASEFILE}.unreachable.stderr" >&2) || true
 set -e
 if test "$(grep -c 'UNREACHABLE' "${BASEFILE}.unreachable.stderr")" -ne 1; then
     echo "Test failed"
