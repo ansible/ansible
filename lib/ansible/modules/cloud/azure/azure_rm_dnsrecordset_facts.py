@@ -234,7 +234,7 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
             id=record.id,
             relative_name=record.name,
             record_type=record_type,
-            records=[x.to_dict() for x in getattr(record, record_type.lower() + attribute_connector + 'records')],
+            records=[x.as_dict() for x in getattr(record, record_type.lower() + attribute_connector + 'records')],
             time_to_live=record.ttl,
             fqdn=record.fqdn,
             provisioning_state=record.provisioning_state
