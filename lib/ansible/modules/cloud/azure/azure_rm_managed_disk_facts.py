@@ -108,16 +108,13 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
     def __init__(self):
         self.module_arg_spec = dict(
             resource_group=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             name=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             tags=dict(
-                type='str',
-                required=False
+                type='str'
             ),
         )
         self.results = dict(
