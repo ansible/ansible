@@ -279,9 +279,9 @@ options:
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources
-            - "It can be 'all' or 'all_autocreated' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
+            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
             - Any other input will be ignored
-            - Please note that this option will be deprecated in 2.10 when 'all_autocreated' will become default.
+            - Please note that this option will be deprecated in 2.10 when 'remove_autocreated' will be enabled by default.
         default: ['all']
     plan:
         description:
