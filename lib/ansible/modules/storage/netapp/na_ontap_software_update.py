@@ -27,6 +27,7 @@ options:
   nodes:
     description:
       - List of nodes to be updated, the nodes have to be a part of a HA Pair.
+    version_added: "2.8"
   package_version:
     required: true
     description:
