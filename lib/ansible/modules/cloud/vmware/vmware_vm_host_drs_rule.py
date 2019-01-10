@@ -43,7 +43,7 @@ options:
     required: true
   drs_rule_name:
     description:
-      - "Name of rule to create or remove"
+      - "Name of rule to create or remove."
     required: true
   enabled:
     default: false
