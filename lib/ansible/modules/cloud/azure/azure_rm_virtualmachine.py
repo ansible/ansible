@@ -276,12 +276,13 @@ options:
         description:
             - Should all autocreated resources be removed when VM is being destroyed?
         type: bool
+        version_added: "2.8"
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources
-            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
+            - "It can be 'all' or 'all_autocreated' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
             - Any other input will be ignored
-            - Please note that this option will be deprecated in 2.10 when 'remove_autocreated' will be enabled by default.
+            - Please note that this option will be deprecated in 2.10 when 'all_autocreated' will become default.
         default: ['all']
     plan:
         description:
@@ -1218,7 +1219,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                        "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
-                    self.create_or_update_vm(vm_resource)
+                    self.create_or_update_vm(vm_resource, True)
 
                 elif self.differences and len(self.differences) > 0:
                     # Update the VM based on detected config differences
@@ -1350,7 +1351,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vm_resource.storage_profile.data_disks = data_disks
 
                     self.log("Update virtual machine with parameters:")
-                    self.create_or_update_vm(vm_resource)
+                    self.create_or_update_vm(vm_resource, False)
 
                 # Make sure we leave the machine in requested power state
                 if (powerstate_change == 'poweron' and
@@ -1506,14 +1507,15 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             nic_name = tags.get('_own_nic_')
             pip_name = tags.get('_own_pip_')
             nsg_name = tags.get('_own_nsg_')
-            if tags.get('_own_sa_'):
-                self.delete_stoage_account(self.resource_group, nsg_name)
-            if tags.get('_own_nic_'):
+            if sa_name:
+                self.delete_storage_account(self.resource_group, sa_name)
+            if nic_name:
                 self.delete_nic(self.resource_group, nic_name)
-            if tags.get('_own_pip_'):
+            if pip_name:
                 self.delete_pip(self.resource_group, pip_name)
             if nsg_name:
                 self.delete_nsg(self.resource_group, nsg_name)
+            
 
     def delete_vm(self, vm):
         vhd_uris = []
@@ -1574,7 +1576,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.fail("Error deleting virtual machine {0} - {1}".format(self.name, str(exc)))
 
         if self.remove_autocreated:
-            self.remove_autocreated_resources()
+            self.remove_autocreated_resources(vm.tags)
         else:
             # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting
             # TODO: best-effort to keep deleting other linked resources if we encounter an error
@@ -1643,11 +1645,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
     def delete_storage_account(self, resource_group, name):
         self.log("Delete storage account {0}".format(name))
-        self.results['actions'].append("Deleted storage account {0}".format(own_sa))
+        self.results['actions'].append("Deleted storage account {0}".format(name))
         try:
-            self.storage_client.storage_accounts.delete(self.resource_group, own_sa)
+            self.storage_client.storage_accounts.delete(self.resource_group, name)
         except Exception as exc:
-            self.fail("Error deleting storage account {0} - {2}".format(own_sa, str(exc)))
+            self.fail("Error deleting storage account {0} - {2}".format(name, str(exc)))
 
     def delete_vm_storage(self, vhd_uris, own_sa):
         # FUTURE: figure out a cloud_env indepdendent way to delete these
@@ -1725,11 +1727,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error fetching storage account {0} - {1}".format(name, str(exc)))
 
-    def create_or_update_vm(self, params):
+    def create_or_update_vm(self, params, new):
         try:
             poller = self.compute_client.virtual_machines.create_or_update(self.resource_group, self.name, params)
             self.get_poller_result(poller)
         except Exception as exc:
+            if new:
+                self.remove_autocreated_resources(params.tags)
             self.fail("Error creating or updating virtual machine {0} - {1}".format(self.name, str(exc)))
 
     def vm_size_is_valid(self):
