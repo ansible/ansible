@@ -142,6 +142,25 @@ Function Get-PsModule {
     $ExistingModule
 }
 
+Function Add-DefinedParameter {
+
+    Param (
+        [Parameter(Mandatory=$true)]
+        [Hashtable]$Hashtable,
+        [Parameter(Mandatory=$true)]
+        [String[]]$ParametersNames
+    )
+
+    ForEach ($ParameterName in $ParametersNames) {
+        $ParameterVariable = Get-Variable -Name $ParameterName -ErrorAction Ignore
+        if ( $ParameterVariable.Value -and $Hashtable.Keys -notcontains $ParameterName ){
+                $Hashtable.Add($ParameterName,$ParameterVariable.Value)
+        }
+    }
+
+    $Hashtable
+}
+
 Function Install-PsModule {
     Param(
         [Parameter(Mandatory=$true)]
@@ -169,31 +188,9 @@ Function Install-PsModule {
                 'Force' = $true
             }
 
-            [String[]]$VersionParameters = @("RequiredVersion","MinimumVersion","MaximumVersion")
+            [String[]]$ParametersNames = @("RequiredVersion","MinimumVersion","MaximumVersion","AllowPrerelease","AllowClobber","SkipPublisherCheck","Repository")
 
-            ForEach ($VersionParameterString in $VersionParameters) {
-                $VersionParameterVariable = Get-Variable -Name $VersionParameterString
-                if ( $VersionParameterVariable.Value ){
-                        $ht.Add($VersionParameterString,$VersionParameterVariable.Value)
-                }
-            }
-
-            if ( $AllowPrerelease ) {
-                $ht.Add("AllowPrerelease",$AllowPrerelease)
-            }
-
-            if ( $AllowClobber ) {
-                $ht.Add("AllowClobber",$AllowClobber)
-            }
-
-            if ( $SkipPublisherCheck ) {
-                $ht.Add("SkipPublisherCheck", $SkipPublisherCheck)
-            }
-
-            # If specified, use repository name to select module source.
-            if ( $Repository ) {
-                $ht.Add("Repository", "$Repository")
-            }
+            $ht = Add-DefinedParameter -Hashtable $ht -ParametersNames $ParametersNames
 
             Install-Module @ht -ErrorVariable ErrorDetails | out-null
 
@@ -241,14 +238,9 @@ Function Remove-PsModule {
 
             $ExistingModuleBefore = Get-PsModule -Name $Name -RequiredVersion $RequiredVersion -MinimumVersion $MinimumVersion -MaximumVersion $MaximumVersion
 
-            [String[]]$VersionParameters = @("RequiredVersion","MinimumVersion","MaximumVersion")
+            [String[]]$ParametersNames = @("RequiredVersion","MinimumVersion","MaximumVersion")
 
-            ForEach ($VersionParameterString in $VersionParameters) {
-                $VersionParameterVariable = Get-Variable -Name $VersionParameterString
-                if ( $VersionParameterVariable.Value ){
-                        $ht.Add($VersionParameterString,$VersionParameterVariable.Value)
-                }
-            }
+            $ht = Add-DefinedParameter -Hashtable $ht -ParametersNames $ParametersNames
 
             if ( -not ( $RequiredVersion -or $MinimumVersion -or $MaximumVersion ) ) {
                 $ht.Add("AllVersions", $true)
@@ -287,14 +279,9 @@ Function Find-LatestPsModule {
             Name = $Name
         }
 
-        if ( $AllowPrerelease ) {
-            $ht.Add("AllowPrerelease",$AllowPrerelease)
-        }
+        [String[]]$ParametersNames = @("AllowPrerelease","Repository")
 
-        # If specified, use repository name to select module source.
-        if ( $Repository ) {
-            $ht.Add("Repository", "$Repository")
-        }
+        $ht = Add-DefinedParameter -Hashtable $ht -ParametersNames $ParametersNames
 
         $LatestModule = Find-Module @ht
         $LatestModuleVersion = $LatestModule.Version
