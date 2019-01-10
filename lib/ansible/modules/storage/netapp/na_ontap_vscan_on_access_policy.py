@@ -280,9 +280,7 @@ class NetAppOntapVscanOnAccessPolicy(object):
                 return True
         if self.file_ext_to_exclude:
             # if no file-ext-to-exclude are given at creation, XML will not have a file-ext-to-exclude
-            try:
-                policy_obj.get_child_by_name('file-ext-to-exclude')
-            except:
+            if policy_obj.get_child_by_name('file-ext-to-exclude') is None:
                 return True
             current_to_exclude = []
             for each in policy_obj.get_child_by_name('file-ext-to-exclude').get_children():
@@ -293,9 +291,7 @@ class NetAppOntapVscanOnAccessPolicy(object):
                 return True
         if self.file_ext_to_include:
             # if no file-ext-to-include are given at creation, XML will not have a file-ext-to-include
-            try:
-                policy_obj.get_child_by_name('file-ext-to-include')
-            except:
+            if policy_obj.get_child_by_name('file-ext-to-include') is None:
                 return True
             current_to_include = []
             for each in policy_obj.get_child_by_name('file-ext-to-include').get_children():
@@ -305,9 +301,7 @@ class NetAppOntapVscanOnAccessPolicy(object):
             if k:
                 return True
         if self.filters:
-            try:
-                policy_obj.get_child_by_name('filters')
-            except:
+            if policy_obj.get_child_by_name('filters') is None:
                 return True
             current_filters = []
             for each in policy_obj.get_child_by_name('filters').get_children():
@@ -317,9 +311,7 @@ class NetAppOntapVscanOnAccessPolicy(object):
             if k:
                 return True
         if self.paths_to_exclude:
-            try:
-                policy_obj.get_child_by_name('paths-to-exclude')
-            except:
+            if policy_obj.get_child_by_name('paths-to-exclude') is None:
                 return True
             current_paths_to_exlude = []
             for each in policy_obj.get_child_by_name('paths-to-exclude').get_children():
