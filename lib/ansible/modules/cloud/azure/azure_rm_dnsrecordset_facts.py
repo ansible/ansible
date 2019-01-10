@@ -136,6 +136,8 @@ RECORDSET_VALUE_MAP = dict(
     PTR='ptr_records',
     SRV='srv_records',
     TXT='txt_records',
+    SOA='soa_record',
+    CAA='caa_records'
     # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
 )
 
@@ -243,11 +245,14 @@ class AzureRMRecordSetFacts(AzureRMModuleBase):
 
     def record_to_dict(self, record):
         record_type=record.type[len('Microsoft.Network/dnszones/'):]
+        records = getattr(record, RECORDSET_VALUE_MAP.get(record_type))
+        if not isinstance(records, list):
+            records = [records]
         return dict(
             id=record.id,
             relative_name=record.name,
             record_type=record_type,
-            records=[x.as_dict() for x in getattr(record, RECORDSET_VALUE_MAP.get(record_type))],
+            records=[x.as_dict() for x in records],
             time_to_live=record.ttl,
             fqdn=record.fqdn,
             provisioning_state=record.provisioning_state
