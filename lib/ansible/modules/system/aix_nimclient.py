@@ -23,7 +23,7 @@ options:
   name:
     description:
     - Name of the fileset to install or update_all to update all filesets to latest level
-    aliases: 
+    aliases:
       - filesets
     type: list
   state:
@@ -410,7 +410,7 @@ def install(module):
             # if installed version < requested version:  install requested version if requested version is available
             # if no requested version: install latest version
             # if installed version => requested version: Do nothing
-            if not requested_version == '':
+            if  requested_version != '':
                 if LooseVersion(fileset_version_installed) < LooseVersion(
                         requested_version):
                     list_filesets_to_install.append(fileset)
