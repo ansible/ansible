@@ -594,6 +594,7 @@ def process_categories(plugin_info, categories, templates, output_dir, output_na
 
 
 def process_support_levels(plugin_info, categories, templates, output_dir, plugin_type):
+    plugin_info = deepcopy(plugin_info)
     supported_by = {'Ansible Core Team': {'slug': 'core_supported',
                                           'modules': [],
                                           'output': 'core_maintained.rst',
@@ -687,6 +688,7 @@ These modules are currently shipped with Ansible, but will most likely be shippe
         display.warning('maint is %s subcat is %s and  subcat modules are %s' % (maintainers, new_cat, subcategories[new_cat]))
 
         template_data = {'maintainers': maintainers,
+                         'subcategories': subcategories,
                          'modules': data['modules'],
                          'slug': data['slug'],
                          'module_info': plugin_info,
