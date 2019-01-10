@@ -352,15 +352,13 @@ def find_stream(client, stream_name, check_mode=False):
             results = client.describe_stream_summary(**params)['StreamDescriptionSummary']
         else:
             results = {
-                'OpenShardsCount': 5,
-                'ClosedShardsCount': 0,
-                'ShardsCount': 5,
-                'HasMoreShards': True,
-                'RetentionPeriodHours': 24,
                 'StreamName': stream_name,
                 'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/{0}'.format(stream_name),
                 'StreamStatus': 'ACTIVE',
-                'EncryptionType': 'NONE'
+                'RetentionPeriodHours': 24,
+                'EncryptionType': 'NONE',
+                'OpenShardCount': 5,
+                'ConsumerCount': 0
             }
         success = True
     except botocore.exceptions.ClientError as e:

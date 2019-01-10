@@ -98,15 +98,13 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             kinesis_stream.find_stream(client, 'test', check_mode=True)
         )
         should_return = {
-            'OpenShardsCount': 5,
-            'ClosedShardsCount': 0,
-            'ShardsCount': 5,
-            'HasMoreShards': True,
-            'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
             'StreamStatus': 'ACTIVE',
-            'EncryptionType': 'NONE'
+            'RetentionPeriodHours': 24,
+            'EncryptionType': 'NONE',
+            'OpenShardCount': 5,
+            'ConsumerCount': 0
         }
         self.assertTrue(success)
         self.assertEqual(stream, should_return)
@@ -119,15 +117,13 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             )
         )
         should_return = {
-            'OpenShardsCount': 5,
-            'ClosedShardsCount': 0,
-            'ShardsCount': 5,
-            'HasMoreShards': True,
-            'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
             'StreamStatus': 'ACTIVE',
-            'EncryptionType': 'NONE'
+            'RetentionPeriodHours': 24,
+            'EncryptionType': 'NONE',
+            'OpenShardCount': 5,
+            'ConsumerCount': 0
         }
         self.assertTrue(success)
         self.assertEqual(stream, should_return)
@@ -250,15 +246,13 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
     def test_update(self):
         client = boto3.client('kinesis', region_name=aws_region)
         current_stream = {
-            'OpenShardsCount': 5,
-            'ClosedShardsCount': 0,
-            'ShardsCount': 1,
-            'HasMoreShards': True,
-            'RetentionPeriodHours': 24,
             'StreamName': 'test',
             'StreamARN': 'arn:aws:kinesis:east-side:123456789:stream/test',
             'StreamStatus': 'ACTIVE',
-            'EncryptionType': 'NONE'
+            'RetentionPeriodHours': 24,
+            'EncryptionType': 'NONE',
+            'OpenShardCount': 5,
+            'ConsumerCount': 0
         }
         tags = {
             'env': 'development',
@@ -287,15 +281,13 @@ class AnsibleKinesisStreamFunctions(unittest.TestCase):
             )
         )
         should_return = {
-            'open_shards_count': 5,
-            'closed_shards_count': 0,
-            'shards_count': 5,
-            'has_more_shards': True,
-            'retention_period_hours': 24,
             'stream_name': 'test',
             'stream_arn': 'arn:aws:kinesis:east-side:123456789:stream/test',
             'stream_status': 'ACTIVE',
+            'retention_period_hours': 24,
             'encryption_type': 'NONE',
+            'open_shard_count': 5,
+            'consumer_count': 0,
             'tags': tags,
         }
         self.assertTrue(success)
