@@ -57,6 +57,7 @@ NIOS_TXT_RECORD = 'record:txt'
 NIOS_NSGROUP = 'nsgroup'
 NIOS_IPV4_FIXED_ADDRESS = 'fixedaddress'
 NIOS_IPV6_FIXED_ADDRESS = 'ipv6fixedaddress'
+NIOS_NEXT_AVAILABLE_IP = 'func:nextavailableip'
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(),
@@ -248,6 +249,10 @@ class WapiModule(WapiBase):
         modified = not self.compare_objects(current_object, proposed_object)
         if 'extattrs' in proposed_object:
             proposed_object['extattrs'] = normalize_extattrs(proposed_object['extattrs'])
+
+        # Checks if nios_next_ip param is passed in ipv4addrs/ipv4addr args
+        proposed_object = self.check_if_nios_next_ip_exists(proposed_object)
+
         if state == 'present':
             if ref is None:
                 if not self.module.check_mode:
@@ -295,6 +300,23 @@ class WapiModule(WapiBase):
 
             if obj_host_name == ref_host_name and current_ip_addr != proposed_ip_addr:
                 self.create_object(ib_obj_type, proposed_object)
+
+    def check_if_nios_next_ip_exists(self, proposed_object):
+        ''' Check if nios_next_ip argument is passed in ipaddr while creating
+            host record, if yes then format proposed object ipv4addrs and pass
+            func:nextavailableip and ipaddr range to create hostrecord with next
+             available ip in one call to avoid any race condition '''
+
+        if 'ipv4addrs' in proposed_object:
+            if 'nios_next_ip' in proposed_object['ipv4addrs'][0]['ipv4addr']:
+                ip_range = self.module._check_type_dict(proposed_object['ipv4addrs'][0]['ipv4addr'])['nios_next_ip']
+                proposed_object['ipv4addrs'][0]['ipv4addr'] = NIOS_NEXT_AVAILABLE_IP + ':' + ip_range
+        elif 'ipv4addr' in proposed_object:
+            if 'nios_next_ip' in proposed_object['ipv4addr']:
+                ip_range = self.module._check_type_dict(proposed_object['ipv4addr'])['nios_next_ip']
+                proposed_object['ipv4addr'] = NIOS_NEXT_AVAILABLE_IP + ':' + ip_range
+
+        return proposed_object
 
     def issubset(self, item, objects):
         ''' Checks if item is a subset of objects
