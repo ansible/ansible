@@ -98,7 +98,7 @@ items:
       description:
       - A reference to the network to which this router belongs.
       returned: success
-      type: dict
+      type: str
     bgp:
       description:
       - BGP information specific to this router.
