@@ -52,7 +52,7 @@ options:
             action:
                 description:
                     - Swap types.
-                    - preview is to apply target slot settings on source source slot first.
+                    - preview is to apply target slot settings on source slot first.
                     - swap is to complete swapping.
                     - reset is to reset the swap.
                 choices:
@@ -496,10 +496,13 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                     if self.frameworks[0]['name'] == 'java':
                         if self.frameworks[0]['version'] != '8':
                             self.fail("Linux web app only supports java 8.")
-                        if self.frameworks[0]['settings'] and self.frameworks[0]['settings']['java_container'].lower() != 'tomcat':
+
+                        if self.frameworks[0].get('settings', {}) and self.frameworks[0]['settings'].get('java_container', None) and \
+                           self.frameworks[0]['settings']['java_container'].lower() != 'tomcat':
                             self.fail("Linux web app only supports tomcat container.")
 
-                        if self.frameworks[0]['settings'] and self.frameworks[0]['settings']['java_container'].lower() == 'tomcat':
+                        if self.frameworks[0].get('settings', {}) and self.frameworks[0]['settings'].get('java_container', None) and \
+                           self.frameworks[0].['settings']['java_container'].lower() == 'tomcat':
                             self.site_config['linux_fx_version'] = 'TOMCAT|' + self.frameworks[0]['settings']['java_container_version'] + '-jre8'
                         else:
                             self.site_config['linux_fx_version'] = 'JAVA|8-jre8'
