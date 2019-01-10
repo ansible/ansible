@@ -54,14 +54,15 @@
     name: "{{ vnetname }}"
     tags:
       - testing
+    register: facts
 
 - assert:
     that:
       - "azure_virtualnetworks | length == 1"
-      - "virtualnetworks | length == 1"
-      - "virtualnetworks[0].dns_servers | length == 2"
-      - "virtualnetworks[0].address_prefixes | length == 2"
-      - "virtualnetworks[0].subnets | length == 1"
+      - "facts.virtualnetworks | length == 1"
+      - "facts.virtualnetworks[0].dns_servers | length == 2"
+      - "facts.virtualnetworks[0].address_prefixes | length == 2"
+      - "facts.virtualnetworks[0].subnets | length == 1"
 
 - name: Gather facts by resource group, tags
   azure_rm_virtualnetwork_facts:
@@ -165,12 +166,13 @@
   azure_rm_virtualnetwork_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ vnetname }}"
+  register: facts
 
 - assert:
     that:
       - azure_virtualnetworks | length == 1
-      - virtualnetworks | length == 1
-      - "virtualnetworks[0].subnets | length == 1"
+      - facts.virtualnetworks | length == 1
+      - "facts.virtualnetworks[0].subnets | length == 1"
 
 - name: Delete virtual network
   azure_rm_virtualnetwork:
