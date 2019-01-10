@@ -326,7 +326,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
                 server_records = getattr(record_set, record_type_metadata.get('attrname'))
 
                 # compare the input records to the server records
-                changed = self.records_changed(self.input_sdk_records, server_records)
+                self.input_sdk_records, changed = self.records_changed(self.input_sdk_records, server_records)
 
                 # also check top-level recordset properties
                 changed |= record_set.ttl != self.time_to_live
@@ -348,14 +348,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
                     ttl=self.time_to_live
                 )
 
-                if not record_type_metadata['is_list']:
-                    records_to_create_or_update = self.input_sdk_records[0]
-                elif self.record_mode == 'append' and record_set:  # append mode, merge with existing values before update
-                    records_to_create_or_update = set(self.input_sdk_records).union(set(server_records))
-                else:
-                    records_to_create_or_update = self.input_sdk_records
-
-                record_set_args[record_type_metadata['attrname']] = records_to_create_or_update
+                record_set_args[record_type_metadata['attrname']] = self.input_sdk_records if record_type_metadata['is_list'] else self.input_sdk_records[0]
 
                 record_set = self.dns_models.RecordSet(**record_set_args)
 
@@ -394,14 +387,17 @@ class AzureRMRecordSet(AzureRMModuleBase):
         if not isinstance(server_records, list):
             server_records = [server_records]
 
-        input_set = set([str(x.as_dict()) for x in input_records])
-        server_set = set([str(x.as_dict()) for x in server_records])
+        input_set = set([self.module.jsonify(x.as_dict()) for x in input_records])
+        server_set = set([self.module.jsonify(x.as_dict()) for x in server_records])
 
         if self.record_mode == 'append':  # only a difference if the server set is missing something from the input set
-            return len(input_set.difference(server_set)) > 0
+            input_set = server_set.union(input_set)
 
         # non-append mode; any difference in the sets is a change
-        return input_set != server_set
+        changed = input_set != server_set
+
+        records = [self.module.from_json(x) for x in input_set]
+        return self.create_sdk_records(records, self.record_type), changed
 
     def recordset_to_dict(self, recordset):
         result = recordset.as_dict()
