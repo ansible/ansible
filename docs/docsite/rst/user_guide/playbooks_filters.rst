@@ -1076,12 +1076,12 @@ To escape special characters within a standard python regex, use the "regex_esca
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
 
+.. versionadded:: 2.8
+
 To escape special characters within a POSIX basic regex, use the "regex_escape" filter with the re_type='posix_basic' option::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o(\.\*)\$'
     {{ '^f.*o(.*)$' | regex_escape('posix_basic') }}
-
-.. versionadded:: 2.8
 
 
 Kubernetes Filters
