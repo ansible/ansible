@@ -28,7 +28,6 @@ options:
     type: list
     - Name of the fileset to install or update_all to update all filesets to latest level
     aliases: [ filesets ]
-      - filesets
     type: list
   state:
     description:
