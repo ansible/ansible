@@ -249,7 +249,7 @@ class DockerVolumeManager(object):
             differences = self.has_different_config()
 
         self.diff_tracker.add('exists', parameter=True, active=self.existing_volume is not None)
-        if not differences.empty or self.parameters.force:
+        if not differences.empty and self.parameters.force:
             self.remove_volume()
             self.existing_volume = None
 
