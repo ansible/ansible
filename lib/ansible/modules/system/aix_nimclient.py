@@ -95,7 +95,7 @@ EXAMPLES = r'''
     state: commit
 
 # Install all filesets to latest level f.i. install a TL or ML
-- name: update all filesets to latest level from lpp_source lppsource_aix6109-06
+- name: Update all filesets to latest level from lpp_source lppsource_aix6109-06
   aix_nimclient:
     name:
       - update_all
