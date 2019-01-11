@@ -101,7 +101,7 @@ EXAMPLES = r'''
       - update_all
     lpp_source: lppsource_aix6109-06
 
-- name: allocate spot and lpp_source to the nimclient
+- name: Allocate spot and lpp_source to the nimclient
   aix_nimclient:
     lpp_source: lppsource_aix6109-06
     spot: spot_aix6109-06
