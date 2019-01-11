@@ -1,0 +1,31 @@
+---
+- name: Create a new tag
+  digital_ocean_tag:
+    oauth_token: '{{do_api_key}}'
+    name: integration-test
+    state: present
+
+- name: Create another new tag
+  digital_ocean_tag:
+    oauth_token: '{{do_api_key}}'
+    name: integration-test2
+    state: present
+
+- name: Query all tags
+  digital_ocean_tag_facts:
+    oauth_token: '{{do_api_key}}'
+  register: query_all
+
+- assert:
+    that:
+      - query_all.data | length >= 2
+
+# - name: Query one tag
+#   digital_ocean_tag_facts:
+#     oauth_token: '{{do_api_key}}'
+#     tag_name: integration-test
+#   register: query_one
+
+# - assert:
+#     that:
+#       - query_one.data.name == 'integration-test'
