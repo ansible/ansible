@@ -82,7 +82,7 @@ EXAMPLES = r'''
       - OpenGL.OpenGL_X.rte.soft 6.1.9.30
     lpp_source: lppsource_aix6109-06
 
-- name: remove fileset OpenGL.OpenGL_X.rte.soft
+- name: Remove fileset OpenGL.OpenGL_X.rte.soft
   aix_nimclient:
     name:
       - OpenGL.OpenGL_X.rte.soft
