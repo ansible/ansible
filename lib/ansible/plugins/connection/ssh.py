@@ -280,7 +280,12 @@ import time
 
 from functools import wraps
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import (
+    AnsibleError,
+    AnsibleConnectionFailure,
+    AnsibleAuthenticationFailure,
+    AnsibleFileNotFound,
+)
 from ansible.errors import AnsibleOptionsError
 from ansible.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
@@ -307,14 +312,11 @@ class AnsibleControlPersistBrokenPipeError(AnsibleError):
     pass
 
 
-class AnsiblePasswordAuthenticationFailure(AnsibleError):
-    pass
-
-
 def _handle_error(remaining_retries, command, return_tuple, no_log, host, display=display):
 
     # sshpass errors
     if command == b'sshpass':
+        # Error 5 is invalid/incorrect password. Raise an exception to prevent retries from locking the account.
         if return_tuple[0] == 5:
             msg = 'Invalid/incorrect password. Skipping remaining {0} retries to prevent account lockout:'.format(remaining_retries)
             if remaining_retries <= 0:
@@ -323,15 +325,16 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
                 msg = '{0} {1}'.format(msg, to_native(return_tuple[2].rstrip()))
-            raise AnsiblePasswordAuthenticationFailure(msg)
+            raise AnsibleAuthenticationFailure(msg)
+
         # sshpass returns codes are 1-6. We handle 5 previously, so this catches other scenarios.
+        # No exception is raised, so the connection is retried.
         elif return_tuple[0] in [1, 2, 3, 4, 6]:
             msg = 'sshpass error:'
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
                 msg = '{0} {1}'.format(msg, to_native(return_tuple[2].rstrip()))
-            raise AnsibleConnectionFailure(msg)
 
     if return_tuple[0] == 255:
         SSH_ERROR = True
@@ -349,7 +352,7 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
             raise AnsibleConnectionFailure(msg)
 
     # For other errors, no execption is raised so the connection is retried and we only log the messages
-    if return_tuple[0] in range(1, 254):
+    if 1 <= return_tuple[0] <= 254:
         msg = "Failed to connect to the host via ssh:"
         if no_log:
             msg = '{0} <error censored due to no log>'.format(msg)
@@ -407,9 +410,9 @@ def _ssh_retry(func):
                 break
 
             # 5 = Invalid/incorrect password from sshpass
-            except AnsiblePasswordAuthenticationFailure as e:
-                # Raise AnsibleConnectionFailer so it is captured and handled properly by TaskExecutor._execute()
-                raise AnsibleConnectionFailure(e)
+            except AnsibleAuthenticationFailure as e:
+                # Raising this exception, which is subclassed from AnsibleConnectionFailure, prevents further retries
+                raise
 
             except (AnsibleConnectionFailure, Exception) as e:
 
