@@ -107,7 +107,7 @@ options:
       - Specifies an IP address or network from which the virtual server accepts traffic.
       - The virtual server accepts clients only from one of these IP addresses.
       - For this setting to function effectively, specify a value other than 0.0.0.0/0 or ::/0
-        (that is, any/0, any6/0). 
+        (that is, any/0, any6/0).
       - In case you want to use a source of 0.0.0.0/0 or ::0 please refrain from setting this param. (It will be set automatically)
       - In order to maximize utility of this setting, specify the most specific address
         prefixes covering all customer addresses and no others.
