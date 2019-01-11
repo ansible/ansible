@@ -31,7 +31,8 @@ options:
     type: list
   state:
     description:
-    - State of the fileset or nimclient to be
+    - The state of the fileset or nimclient to be.
+    type: str
     choices: [
               commit,
               present,
