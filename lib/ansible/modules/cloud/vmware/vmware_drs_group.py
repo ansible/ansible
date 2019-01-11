@@ -69,7 +69,8 @@ EXAMPLES = r'''
 ---
 - name: "Create DRS VM group"
   delegate_to: localhost
-  state: present
+  vmware_drs_group:
+      state: present
   vmware_drs_group:
     hostname: "{{ vcenter_hostname }}"
     password: "{{ vcenter_password }}"
