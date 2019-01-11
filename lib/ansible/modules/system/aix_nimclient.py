@@ -76,7 +76,7 @@ EXAMPLES = r'''
     lpp_source: lppsource_aix6109-06
     commit: no
 
-- name: install version 6.1.9.30 of OpenGL.OpenGL_X.rte.soft from lpp_source lppsource_aix6109-06
+- name: Install version 6.1.9.30 of OpenGL.OpenGL_X.rte.soft from lpp_source lppsource_aix6109-06
   aix_nimclient:
     name:
       - OpenGL.OpenGL_X.rte.soft 6.1.9.30
