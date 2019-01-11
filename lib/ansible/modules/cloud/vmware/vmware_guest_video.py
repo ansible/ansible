@@ -58,14 +58,16 @@ options:
      - The datacenter name to which virtual machine belongs to.
      - This parameter is case sensitive.
    gather_video_facts:
-     default: False
      description:
      - If set to True, return settings of the video card, other attributes are ignored.
      - If set to False, will do reconfiguration and return video card settings.
+     type: bool
+     default: 'no'
    use_auto_detect:
      description:
      - 'If set to True, applies common video settings to the guest operating system, attributes C(display_number) and C(video_memory_mb) are ignored.'
      - 'If set to False, the number of display and the total video memory will be reconfigured using C(display_number) and C(video_memory_mb).'
+     type: bool
    display_number:
      description:
      - The number of display. Valid value from 1 to 10. The maximum display number is 4 on vCenter 6.0, 6.5 web UI.
@@ -76,6 +78,7 @@ options:
    enable_3D:
      description:
      - Enable 3D for guest operating systems on which VMware supports 3D.
+     type: bool
    renderer_3D:
      description:
      - 'If set to C(automatic), selects the appropriate option (software or hardware) for this virtual machine automatically.'
@@ -297,7 +300,7 @@ def main():
         display_number=dict(type='int'),
         video_memory_mb=dict(type='int'),
         enable_3D=dict(type='bool'),
-        renderer_3D=dict(type='str'),
+        renderer_3D=dict(type='str', choices=['automatic', 'software', 'hardware']),
         memory_3D_mb=dict(type='int'),
     )
     module = AnsibleModule(argument_spec=argument_spec,
