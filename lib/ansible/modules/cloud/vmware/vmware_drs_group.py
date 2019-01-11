@@ -400,7 +400,7 @@ class VmwareDrsGroupManager(PyVmomi):
         if cluster_obj is None:
             cluster_obj = self.__cluster_obj
 
-        list_a = self.__vm_list if host_group is False else self.__host_list
+        list_a = self.__host_list if host_group else self.__vm_list
         list_b = self.__populate_vm_host_list(host_group=host_group)
 
         # By casting lists as a set, you remove duplicates and order doesn't count. Comparing sets is also much faster and more efficient than comparing lists.
