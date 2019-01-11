@@ -466,7 +466,7 @@ def main():
             ], default='present'),
             lpp_source=dict(type='str'),
             spot=dict(type='str'),
-            commit=dict(type='bool', default='True'),
+            commit=dict(type='bool', default=True),
             installp_flags=dict(type='str', default='acgwXY'),
         ),
     )
