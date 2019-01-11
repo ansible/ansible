@@ -42,7 +42,7 @@ options:
     type: str
   spot:
     description:
-    - Name of the Spot at the nimserver
+    - Name of the Spot at the C(nimserver).
     type: str
   commit:
     description:
