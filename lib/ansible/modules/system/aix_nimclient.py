@@ -88,7 +88,7 @@ EXAMPLES = r'''
       - OpenGL.OpenGL_X.rte.soft
     state: absent
 
-- name: commit fileset OpenGL.OpenGL_X.rte.soft
+- name: Commit fileset OpenGL.OpenGL_X.rte.soft
   aix_nimclient:
     name:
       - OpenGL.OpenGL_X.rte.soft
