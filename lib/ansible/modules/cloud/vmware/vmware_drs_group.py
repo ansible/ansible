@@ -70,8 +70,6 @@ EXAMPLES = r'''
 - name: "Create DRS VM group"
   delegate_to: localhost
   vmware_drs_group:
-      state: present
-  vmware_drs_group:
     hostname: "{{ vcenter_hostname }}"
     password: "{{ vcenter_password }}"
     username: "{{ vcenter_username }}"
@@ -81,10 +79,10 @@ EXAMPLES = r'''
     vms:
       - DC0_C0_RP0_VM0
       - DC0_C0_RP0_VM1
+    state: present
 
 - name: "Create DRS Host group"
   delegate_to: localhost
-  state: present
   vmware_drs_group:
     hostname: "{{ vcenter_hostname }}"
     password: "{{ vcenter_password }}"
@@ -96,11 +94,10 @@ EXAMPLES = r'''
       - DC0_C0_H0
       - DC0_C0_H1
       - DC0_C0_H2
+    state: absent
 
 - name: "Delete DRS Host group"
   delegate_to: localhost
-  vmware_drs_group:
-      state: absent
   vmware_drs_group:
     hostname: "{{ vcenter_hostname }}"
     password: "{{ vcenter_password }}"
@@ -108,6 +105,7 @@ EXAMPLES = r'''
     cluster_name: DC0_C0
     datacenter_name: DC0
     group_name: TEST_HOST_01
+    state: absent
 
 '''
 
