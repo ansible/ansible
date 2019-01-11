@@ -51,7 +51,7 @@ options:
     default: yes
   installp_flags:
     description:
-    - installp flags
+    - Additional C(installp) flags to use.
     type: str
     default: 'acgwXY'
 
