@@ -98,20 +98,34 @@ dnsrecordsets:
     contains:
         id:
             description: ID of the dns recordset.
+            sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Network/dnszones/newzone.com/A/servera"
         relative_name:
             description: Name of the dns recordset.
+            sample: servera
         record_type:
             description:
                 - The type of the record set.
                 - Can be C(A), C(AAAA), C(CNAME), C(MX), C(NS), C(SRV), C(TXT), C(PTR).
+            sample: A
         time_to_live:
             description: Time to live of the record set in seconds.
+            sample: 12900
         records:
             description: List of records depending on the type of recordset.
+            sample: [
+                        {
+                            "ipv4Address": "10.4.5.7"
+                        },
+                        {
+                            "ipv4Address": "2.4.5.8"
+                        }
+                    ]
         provisioning_state:
             description: Provision state of the resource.
+            sample: Successed
         fqdn:
             description: Fully qualified domain name of the record set.
+            sample: www.newzone.com
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

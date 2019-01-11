@@ -81,27 +81,40 @@ dnszones:
         id:
             description:
                 - id of the DNS Zone.
+            sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Network/dnszones/azure.com"
         name:
             description:
                 - name of the DNS Zone.
+            sample: azure.com
         type:
             description:
                 - The type of this DNS zone (public or private)
+            sample: private
         registration_virtual_networks:
             description:
                 - A list of references to virtual networks that register hostnames in this DNS zone.
+            sample:  ["/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Network/virtualNetworks/bar"]
         resolution_virtual_networks:
             description:
                 - A list of references to virtual networks that resolve records in this DNS zone.
+            sample:  ["/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Network/virtualNetworks/deadbeef"]
         number_of_record_sets:
             description:
                 - The current number of record sets in this DNS zone.
+            sample: 2
         max_number_of_record_sets:
             description:
                 - The maximum number of record sets that can be created in this DNS zone.
+            sample: 5000
         name_servers:
             description:
                 - The name servers for this DNS zone.
+            sample:  [
+                "ns1-03.azure-dns.com.",
+                "ns2-03.azure-dns.net.",
+                "ns3-03.azure-dns.org.",
+                "ns4-03.azure-dns.info."
+            ]
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
