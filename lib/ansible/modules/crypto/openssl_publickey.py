@@ -170,7 +170,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
         if not self.check(module, perms_required=False) or self.force:
             try:
                 if self.format == 'OpenSSH':
-                    privatekey_content = open(self.privatekey_path, 'rb').read()
+                    with open(self.privatekey_path, 'rb') as private_key_fh:
+                        privatekey_content = private_key_fh.read()
                     key = crypto_serialization.load_pem_private_key(privatekey_content,
                                                                     password=self.privatekey_passphrase,
                                                                     backend=default_backend())
@@ -212,7 +213,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 return False
 
             try:
-                publickey_content = open(self.path, 'rb').read()
+                with open(self.path, 'rb') as public_key_fh:
+                    publickey_content = public_key_fh.read()
                 if self.format == 'OpenSSH':
                     current_publickey = crypto_serialization.load_ssh_public_key(publickey_content, backend=default_backend())
                     publickey_content = current_publickey.public_bytes(crypto_serialization.Encoding.PEM,

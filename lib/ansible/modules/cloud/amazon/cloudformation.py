@@ -623,7 +623,8 @@ def main():
     stack_params['StackName'] = module.params['stack_name']
 
     if module.params['template'] is not None:
-        stack_params['TemplateBody'] = open(module.params['template'], 'r').read()
+        with open(module.params['template'], 'r') as template_fh:
+            stack_params['TemplateBody'] = template_fh.read()
     elif module.params['template_body'] is not None:
         stack_params['TemplateBody'] = module.params['template_body']
     elif module.params['template_url'] is not None:
@@ -636,7 +637,8 @@ def main():
 
     # can't check the policy when verifying.
     if module.params['stack_policy'] is not None and not module.check_mode and not module.params['create_changeset']:
-        stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
+        with open(module.params['stack_policy'], 'r') as stack_policy_fh:
+            stack_params['StackPolicyBody'] = stack_policy_fh.read()
 
     template_parameters = module.params['template_parameters']
 

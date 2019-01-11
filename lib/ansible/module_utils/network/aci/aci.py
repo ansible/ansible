@@ -231,7 +231,9 @@ class ACIModule(object):
             self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
 
         try:
-            sig_key = load_privatekey(FILETYPE_PEM, open(self.params['private_key'], 'r').read())
+            with open(self.params['private_key'], 'r') as priv_key_fh:
+                private_key_content = priv_key_fh.read()
+            sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
         except Exception:
             self.module.fail_json(msg='Cannot load private key %s' % self.params['private_key'])
 
