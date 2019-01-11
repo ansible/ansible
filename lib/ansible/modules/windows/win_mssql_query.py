@@ -27,23 +27,29 @@ options:
     description:
       - Name of the sql server instance to query.
         If not specified, the remote host will be used.
+    type: str
   server_instance_user:
     description:
       - Name of a sql user with sufficient privileges.
+    type: str
   server_instance_password:
     description:
       - Password for I(server_instance_user)
+    type: str
   query:
     description:
       - Query to invoke.
+    type: str
     required: yes
   query_timeout:
     description:
       - Specifies the number of seconds before the queries time out.
     default: 60
+    type: int
   database:
     description:
       - database where the query has to be executed
+    type: str
     default: master
 author:
   - Daniele Lazzari (@dlazz)
@@ -89,10 +95,10 @@ query:
   description: the invoked query
   returned: fail
   sample: "SELECT name from sys.satabases"
-  type: string
+  type: str
 database:
   description: the queried database
   returned: fail
   sample: "master"
-  type: string
+  type: str
 '''
