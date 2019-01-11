@@ -64,13 +64,18 @@ options:
             - source_resource_uri
     os_type:
         description:
-            - "Type of Operating System: C(linux) or C(windows). Used when I(create_option) is either C(copy) or C(import) and the source is an OS disk."
+            - "Type of Operating System: C(linux) or C(windows)."
+            - "Used when I(create_option) is either C(copy) or C(import) and the source is an OS disk."
+            - "If omitted during creation, no value is set."
+            - "If omitted during an update, no change is made."
+            - "Once set, this value cannot be cleared."
         choices:
             - linux
             - windows
     disk_size_gb:
         description:
-            - Size in GB of the managed disk to be created. If I(create_option) is C(copy) then the value must be greater than or equal to the source's size.
+            - "Size in GB of the managed disk to be created."
+            - "If I(create_option) is C(copy) then the value must be greater than or equal to the source's size."
     managed_by:
         description:
             - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
@@ -95,6 +100,16 @@ EXAMPLES = '''
         location: eastus
         resource_group: Testing
         disk_size_gb: 4
+
+    - name: Create managed operating system disk from page blob
+      azure_rm_managed_disk:
+        name: mymanageddisk
+        location: eastus2
+        resource_group: Testing
+        create_option: import
+        source_uri: https://storageaccountname.blob.core.windows.net/containername/blob-name.vhd
+        os_type: windows
+        storage_account_type: Premium_LRS
 
     - name: Mount the managed disk to VM
       azure_rm_managed_disk:
@@ -157,7 +172,7 @@ def managed_disk_to_dict(managed_disk):
         create_option=create_data.create_option.value.lower(),
         source_uri=create_data.source_uri or create_data.source_resource_id,
         disk_size_gb=managed_disk.disk_size_gb,
-        os_type=managed_disk.os_type.value if managed_disk.os_type else None,
+        os_type=managed_disk.os_type.value.lower() if managed_disk.os_type else None,
         storage_account_type=managed_disk.sku.name.value if managed_disk.sku else None,
         managed_by=managed_disk.managed_by
     )
@@ -315,6 +330,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             self.fail("Error getting virtual machine {0} - {1}".format(name, str(exc)))
 
     def generate_managed_disk_property(self):
+        # TODO: Add support for EncryptionSettings, DiskIOPSReadWrite, DiskMBpsReadWrite, Zones
         disk_params = {}
         creation_data = {}
         disk_params['location'] = self.location
@@ -323,7 +339,6 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             storage_account_type = self.compute_models.DiskSku(name=self.storage_account_type)
             disk_params['sku'] = storage_account_type
         disk_params['disk_size_gb'] = self.disk_size_gb
-        # TODO: Add support for EncryptionSettings
         creation_data['create_option'] = self.compute_models.DiskCreateOption.empty
         if self.create_option == 'import':
             creation_data['create_option'] = self.compute_models.DiskCreateOption.import_enum
@@ -331,6 +346,14 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         elif self.create_option == 'copy':
             creation_data['create_option'] = self.compute_models.DiskCreateOption.copy
             creation_data['source_resource_id'] = self.source_uri
+        if self.os_type:
+            typecon = {
+                'linux': self.compute_models.OperatingSystemTypes.linux,
+                'windows': self.compute_models.OperatingSystemTypes.windows
+            }
+            disk_params['os_type'] = typecon[self.os_type]
+        else:
+            disk_params['os_type'] = None
         disk_params['creation_data'] = creation_data
         return disk_params
 
@@ -351,6 +374,9 @@ class AzureRMManagedDisk(AzureRMModuleBase):
         resp = False
         if new_disk.get('disk_size_gb'):
             if not found_disk['disk_size_gb'] == new_disk['disk_size_gb']:
+                resp = True
+        if new_disk.get('os_type'):
+            if not found_disk['os_type'] == new_disk['os_type']:
                 resp = True
         if new_disk.get('sku'):
             if not found_disk['storage_account_type'] == new_disk['sku'].name:

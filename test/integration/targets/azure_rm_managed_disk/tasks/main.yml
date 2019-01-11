@@ -7,9 +7,10 @@
  - name: Clearing (if) previous disks were created
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{item }}"
+       name: "{{ item }}"
        state: absent
    with_items:
+     - "md{{ rpfx }}os"
      - "md{{ rpfx }}2"
      - "md{{ rpfx }}1"
 
@@ -17,6 +18,7 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
+       storage_account_type: "Standard_LRS"
        disk_size_gb: 1
        tags:
            testing: testing
@@ -59,6 +61,45 @@
      that:
        - output.changed
        - output.state.id is defined
+       - output.state.os_type == None
+
+ - name: Change the operating system type of the managed disk to linux
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}1"
+       disk_size_gb: 1
+       os_type: linux
+       storage_account_type: "Standard_LRS"
+       tags:
+           testing: testing
+           delete: never
+   register: output
+
+ - assert:
+     that:
+       - output.changed
+       - output.state.os_type == 'linux'
+
+ - name: Create new managed disk with an os_type specified at creation
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}os"
+       storage_account_type: "Standard_LRS"
+       disk_size_gb: 1
+       os_type: windows
+   register: win
+
+ - name: Assert status of os_type specified at creation
+   assert:
+     that:
+       - win.changed
+       - win.state.os_type == 'windows'
+
+ - name: Clean up managed disk created with os_type
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}os"
+       state: absent
 
  - name: Copy disk to a new managed disk
    azure_rm_managed_disk:
@@ -181,6 +222,7 @@
            - "azure_managed_disk | length == 1"
            - azure_managed_disk[0].storage_account_type == "Premium_LRS"
            - azure_managed_disk[0].disk_size_gb == 2
+           - "azure_managed_disk[0].os_type == 'linux'"
 
  - name: Gather facts
    azure_rm_managed_disk_facts:
