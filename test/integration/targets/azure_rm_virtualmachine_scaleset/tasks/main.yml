@@ -28,6 +28,18 @@
     name: testLB
     public_ip_address_name: testPublicIP
 
+- name: Create public IP address 1
+  azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Static
+    name: testPublicIP1
+
+- name: Create load balancer 1
+  azure_rm_loadbalancer:
+    resource_group: "{{ resource_group }}"
+    name: testLB1
+    public_ip_address_name: testPublicIP1
+
 - name: Create network security group within same resource group of VMSS.
   azure_rm_securitygroup:
     resource_group: "{{ resource_group }}"
@@ -136,6 +148,7 @@
     virtual_network_name: testVnet
     subnet_name: testSubnet
     upgrade_policy: Manual
+    load_balancer: testLB
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
@@ -155,7 +168,7 @@
   assert:
     that: results.changed
 
-- name: Create VMSS -- test upgrade_policy idempotence
+- name: Create VMSS -- test upgrade_policy idempotence and load balancer
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}
@@ -167,6 +180,7 @@
     virtual_network_name: testVnet
     subnet_name: testSubnet
     upgrade_policy: Automatic
+    load_balancer: testLB1
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
@@ -180,7 +194,6 @@
         disk_size_gb: 64
         caching: ReadWrite
         managed_disk_type: Standard_LRS
-  check_mode: yes
   register: results
 
 - name: Assert that VMSS was created
@@ -193,6 +206,10 @@
     name: testVMSS{{ rpfx }}
     format: curated
   register: output_scaleset
+
+- assert:
+    that:
+        - output_scaleset.vmss[0].load_balancer == "testLB1"
 
 - name: Retrieve scaleset VMs facts
   azure_rm_virtualmachinescalesetinstance_facts:
@@ -228,6 +245,7 @@
     virtual_network_name: "{{ body.virtual_network_name }}"
     subnet_name: "{{ body.subnet_name }}"
     upgrade_policy: "{{ body.upgrade_policy }}"
+    load_balancer: "{{ body.load_balancer }}"
     tier: "{{ body.tier }}"
     managed_disk_type: "{{ body.managed_disk_type }}"
     os_disk_caching: "{{ body.os_disk_caching }}"
