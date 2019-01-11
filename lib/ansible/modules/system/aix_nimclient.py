@@ -48,7 +48,7 @@ options:
     description:
     - Whether to commit the fileset during install or not.
     type: bool
-    default: True
+    default: yes
   installp_flags:
     description:
     - installp flags
