@@ -133,10 +133,14 @@ class RedfishUtils(object):
             if response['ret'] is False:
                 return response
             data = response['data']
-            for member in data[u'Members']:
-                systems_service = member[u'@odata.id']
-            self.systems_uri = systems_service
-            return {'ret': True}
+            if data.get(u'Members'):
+                for member in data[u'Members']:
+                    systems_service = member[u'@odata.id']
+                    self.systems_uri = systems_service
+                    return {'ret': True}
+            else:
+                return {'ret': False,
+                        'msg': "ComputerSystem's Members array is either empty or missing"}
 
     def _find_updateservice_resource(self, uri):
         response = self.get_request(self.root_uri + uri)
