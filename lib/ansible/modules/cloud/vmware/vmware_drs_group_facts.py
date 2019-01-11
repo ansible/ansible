@@ -243,7 +243,7 @@ def main():
     argument_spec = vmware_argument_spec()
 
     argument_spec.update(
-        datacenter=dict(type='str', required=True, aliases=['datacenter_name']),
+        datacenter=dict(type='str', required=False, aliases=['datacenter_name']),
         cluster_name=dict(type='str', required=False),
     )
 
