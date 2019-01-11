@@ -46,7 +46,7 @@ options:
     type: str
   commit:
     description:
-    - boolean for committing the fileset during install or not
+    - Whether to commit the fileset during install or not.
     type: bool
     default: True
   installp_flags:
