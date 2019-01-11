@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch
+from units.compat.mock import patch, MagicMock
 from ansible.modules.network.junos import junos_ping
 from units.modules.utils import set_module_args
 from .junos_module import TestJunosModule, load_fixture
-
 
 class TestJunosPingModule(TestJunosModule):
 
@@ -32,27 +31,35 @@ class TestJunosPingModule(TestJunosModule):
     def setUp(self):
         super(TestJunosPingModule, self).setUp()
 
-        self.mock_conn = patch('ansible.module_utils.connection.Connection')
+        self.mock_conn = patch('ansible.modules.network.junos.junos_ping.Connection')
         self.conn = self.mock_conn.start()
-        
+
 
     def tearDown(self):
         super(TestJunosPingModule, self).tearDown()
         self.mock_conn.stop()
 
-    def load_fixtures(self, commands=None, format='text', changed=False):
+
+    def load_fixtures(self, commands=None, format=None, changed=None):
         def load_from_file(*args, **kwargs):
-            commands = kwargs['commands']
+            print('Here4')
+            command = kwargs['commands']
             output = list()
 
-            for command in commands:
-                filename = str(command).split(' | ')[0].replace(' ', '_')
-                output.append(load_fixture('junos_ping_%s' % filename))
+            filename = str(command).replace(' ', '_')
+            output.append(load_fixture('junos_ping_%s' % filename))
             return output
 
+        print('Here1')
         self.conn.side_effect = load_from_file
+        # self.conn.get.side_effect = load_from_file
 
+    '''
     def test_junos_ping_expected_success(self):
-        ''' Test for successful pings when destination should be reachable '''
-        set_module_args(dict(count=2, dest="10.10.10.10"))
+        # self.conn.get.return_value = load_fixture('junos_ping_ping_10.8.38.39_count_2', content='str')
+        # print(self.conn.get.return_value)
+        # self.conn.get = MagicMock(return_value=load_fixture('junos_ping_ping_10.8.38.39_count_2', content='str'))
+        # print(self.conn.get.return_value)
+        set_module_args(dict(count=2, dest="10.8.38.39"))
         self.execute_module()
+    '''
