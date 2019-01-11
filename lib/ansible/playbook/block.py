@@ -372,6 +372,7 @@ class Block(Base, Become, Conditional, Taggable):
         Creates a new block, with task lists filtered based on the tags contained
         within the play_context object.
         '''
+        INCLUDE_IMPORT_TASKS = frozenset(('include', 'include_role', 'include_tasks', 'import_role', 'import_tasks'))
 
         def evaluate_and_append_task(target):
             tmp_list = []
@@ -379,7 +380,7 @@ class Block(Base, Become, Conditional, Taggable):
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
                 elif (task.action == 'meta' or
-                        (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) or
+                        (task.action in INCLUDE_IMPORT_TASKS and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) or
                         task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list

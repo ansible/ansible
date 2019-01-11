@@ -1,0 +1,2 @@
+bugfixes:
+  - Filter tags properly for all include_* and import_* tasks
