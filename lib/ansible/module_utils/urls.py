@@ -90,7 +90,7 @@ except ImportError:
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
 try:
-    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, urlsplit, unquote
+    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, unquote
     HAS_URLPARSE = True
 except Exception:
     HAS_URLPARSE = False
@@ -758,7 +758,7 @@ def extract_pem_certs(b_data):
 
 def get_response_filename(response):
     url = response.geturl()
-    path = urlsplit(url)[2]
+    path = urlparse(url)[2]
     filename = os.path.basename(path.rstrip('/')) or None
     if filename:
         filename = unquote(filename)
