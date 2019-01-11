@@ -199,6 +199,8 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
                 node_property.update({'Status': node['Status']['State']})
                 node_property.update({'Availability': node['Spec']['Availability']})
                 if 'ManagerStatus' in node:
+                    if node['ManagerStatus']['Leader'] is True:
+                        node_property.update({'Leader': True})
                     node_property.update({'ManagerStatus': node['ManagerStatus']['Reachability']})
                 node_property.update({'EngineVersion': node['Description']['Engine']['EngineVersion']})
 
