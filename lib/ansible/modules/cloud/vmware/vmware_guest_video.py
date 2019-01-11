@@ -57,27 +57,34 @@ options:
      description:
      - The datacenter name to which virtual machine belongs to.
      - This parameter is case sensitive.
-   video_card:
+   gather_video_facts:
+     default: False
      description:
-     - Dict of video card configurations.
-     - 'Valid attributes are:'
-     - ' - C(gather_video_facts) (boolean): If set to true, return settings of video card, other attributes are ignored.'
-     - '   If set to false, will do reconfiguration not just gather video card facts.'
-     - ' - C(use_auto_detect) (boolean): If set to true, applies common video settings to the guest operating system,'
-     - '   below attributes C(display_number) and C(video_memory_mb) will not be set. If set to false, you can select the'
-     - '   number of displays and the total video memory using C(display_number), C(video_memory_mb) attributes.'
-     - ' - C(display_number) (integer): Set the number of displays. Valid value from 1 to 10. But the maximum display'
-     - '   number is 4 on vCenter 6.0, 6.5 web UI.'
-     - ' - C(video_memory_mb) (integer): Valid total video memory range of virtual machine is from 1.172 MB to 256 MB'
-     - '   on ESXi 6.7, from 1.172 MB to 128 MB on ESXi 6.5 and 6.0. For specific guest OS, supported minimum and maximum'
-     - '   video memory are different, please be careful on setting this.'
-     - ' - C(enable_3D) (boolean): Enable 3D for guest operating systems on which VMware supports 3D.'
-     - ' - C(renderer_3D) (string): Specify 3D renderer, Valid values are:'
-     - '     - C(Automatic) Selects the appropriate option (software or hardware) for this virtual machine automatically.'
-     - '     - C(Software) Uses normal CPU processing for 3D calculations.'
-     - '     - C(Hardware) Requires graphics hardware (GPU) for faster 3D calculations.'
-     - '     Default: C(Automatic) select software or hardware automatically.'
-     - ' - C(memory_3D_mb) (integer): the value of 3D Memory must be power of 2 and from 32 MB to 2048 MB.'
+     - If set to True, return settings of the video card, other attributes are ignored.
+     - If set to False, will do reconfiguration and return video card settings.
+   use_auto_detect:
+     description:
+     - 'If set to True, applies common video settings to the guest operating system, attributes C(display_number) and C(video_memory_mb) are ignored.'
+     - 'If set to False, the number of display and the total video memory will be reconfigured using C(display_number) and C(video_memory_mb).'
+   display_number:
+     description:
+     - The number of display. Valid value from 1 to 10. The maximum display number is 4 on vCenter 6.0, 6.5 web UI.
+   video_memory_mb:
+     description:
+     - Valid total video memory range of virtual machine is from 1.172 MB to 256 MB on ESXi 6.7, from 1.172 MB to 128 MB on ESXi 6.5 and 6.0.
+     - For specific guest OS, supported minimum and maximum video memory are different, please be careful on setting this.
+   enable_3D:
+     description:
+     - Enable 3D for guest operating systems on which VMware supports 3D.
+   renderer_3D:
+     description:
+     - 'If set to C(automatic), selects the appropriate option (software or hardware) for this virtual machine automatically.'
+     - 'If set to C(software), uses normal CPU processing for 3D calculations.'
+     - 'If set to C(hardware), requires graphics hardware (GPU) for faster 3D calculations.'
+     choices: [ automatic, software, hardware ]
+   memory_3D_mb:
+     description:
+     - The value of 3D Memory must be power of 2 and valid value is from 32 MB to 2048 MB.
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -90,20 +97,19 @@ EXAMPLES = '''
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
     name: test-vm
-    video_card:
-      gather_video_facts: false
-      use_auto_detect: false
-      display_number: 2
-      video_memory_mb: 8
-      enable_3D: true
-      renderer_3D: automatic
-      memory_3D_mb: 512
+    gather_video_facts: false
+    use_auto_detect: false
+    display_number: 2
+    video_memory_mb: 8
+    enable_3D: true
+    renderer_3D: automatic
+    memory_3D_mb: 512
   delegate_to: localhost
   register: video_facts
 '''
 
 RETURN = """
-disk_status:
+video_status:
     description: metadata about the virtual machine's video card after managing them
     returned: always
     type: dict
@@ -179,17 +185,16 @@ class PyVmomiHelper(PyVmomi):
         auto_detect = False
         enabled_3d = False
 
-        if 'gather_video_facts' in self.params['video_card'] and isinstance(self.params['video_card']['gather_video_facts'], bool)\
-                and self.params['video_card']['gather_video_facts']:
+        if self.params['gather_video_facts']:
             return None
-        if 'use_auto_detect' in self.params['video_card']:
-            if video_card_facts['auto_detect'] and self.params['video_card']['use_auto_detect']:
+        if self.params['use_auto_detect'] is not None:
+            if video_card_facts['auto_detect'] and self.params['use_auto_detect']:
                 auto_detect = True
-            elif not video_card_facts['auto_detect'] and self.params['video_card']['use_auto_detect']:
+            elif not video_card_facts['auto_detect'] and self.params['use_auto_detect']:
                 video_spec.device.useAutoDetect = True
                 self.change_detected = True
                 auto_detect = True
-            elif video_card_facts['auto_detect'] and not self.params['video_card']['use_auto_detect']:
+            elif video_card_facts['auto_detect'] and not self.params['use_auto_detect']:
                 video_spec.device.useAutoDetect = False
                 self.change_detected = True
         else:
@@ -197,40 +202,29 @@ class PyVmomiHelper(PyVmomi):
                 auto_detect = True
         # useAutoDetect set to False then display number and video memory config can be changed
         if not auto_detect:
-            if 'display_number' in self.params['video_card']:
-                try:
-                    display_num = int(self.params['video_card'].get('display_number'))
-                except ValueError as e:
-                    self.module.fail_json(msg="video_card.display_number attribute should be an integer value(1-10).")
-                if display_num < 1:
-                    self.module.fail_json(msg="video_card.display_number attribute valid value: 1-10.")
-                if display_num != video_card_facts['display_number']:
-                    video_spec.device.numDisplays = display_num
+            if self.params['display_number'] is not None:
+                if self.params['display_number'] < 1:
+                    self.module.fail_json(msg="display_number attribute valid value: 1-10.")
+                if self.params['display_number'] != video_card_facts['display_number']:
+                    video_spec.device.numDisplays = self.params['display_number']
                     self.change_detected = True
 
-            if 'video_memory_mb' in self.params['video_card']:
-                video_mem = self.params['video_card'].get('video_memory_mb')
-                if (isinstance(video_mem, int) and video_mem < 2) or (isinstance(video_mem, float) and video_mem < 1.172):
-                    self.module.fail_json(msg="video_card.video_memory_mb attribute valid value: ESXi 6.7(1.172-256 MB),"
+            if self.params['video_memory_mb'] is not None:
+                if self.params['video_memory_mb'] < 2:
+                    self.module.fail_json(msg="video_memory_mb attribute valid value: ESXi 6.7(1.172-256 MB),"
                                               "ESXi 6.5/6.0(1.17-128 MB).")
-                if not isinstance(video_mem, int) and not isinstance(video_mem, float):
-                    self.module.fail_json(msg="video_card.video_memory_mb attribute should be an integer or "
-                                              "decimal value ESXi 6.7(1.172-256 MB), ESXi 6.5/6.0(1.17-128 MB).")
-                if int(video_mem * 1024) != video_card_facts['video_memory']:
-                    video_spec.device.videoRamSizeInKB = int(video_mem * 1024)
+                if self.params['video_memory_mb'] * 1024 != video_card_facts['video_memory']:
+                    video_spec.device.videoRamSizeInKB = self.params['video_memory_mb'] * 1024
                     self.change_detected = True
         else:
-            if 'display_number' in self.params['video_card'] or 'video_memory_mb' in self.params['video_card']:
-                self.module.fail_json(msg="video_card.display_number and video_card.video_memory_mb can not be changed "
-                                          "if video_card.use_auto_detect is true.")
+            if self.params['display_number'] is not None or self.params['video_memory_mb'] is not None:
+                self.module.fail_json(msg="display_number and video_memory_mb can not be changed if use_auto_detect is true.")
         # useAutoDetect value not control 3D config
-        if 'enable_3D' in self.params['video_card']:
-            if not isinstance(self.params['video_card']['enable_3D'], bool):
-                self.module.fail_json(msg='video_card.enable_3D attribute should be a boolean.')
-            if self.params['video_card']['enable_3D'] != video_card_facts['enable_3D_support']:
-                video_spec.device.enable3DSupport = self.params['video_card']['enable_3D']
+        if self.params['enable_3D'] is not None:
+            if self.params['enable_3D'] != video_card_facts['enable_3D_support']:
+                video_spec.device.enable3DSupport = self.params['enable_3D']
                 self.change_detected = True
-                if self.params['video_card']['enable_3D']:
+                if self.params['enable_3D']:
                     enabled_3d = True
             else:
                 if video_card_facts['enable_3D_support']:
@@ -240,28 +234,25 @@ class PyVmomiHelper(PyVmomi):
                 enabled_3d = True
         # 3D is enabled then 3D memory and renderer method can be set
         if enabled_3d:
-            if 'renderer_3D' in self.params['video_card']:
-                renderer = self.params['video_card'].get('renderer_3D').lower()
+            if self.params['renderer_3D'] is not None:
+                renderer = self.params['renderer_3D'].lower()
                 if renderer not in ['automatic', 'software', 'hardware']:
-                    self.module.fail_json(msg="video_card.renderer_3D attribute valid value: automatic, software, hardware.")
+                    self.module.fail_json(msg="renderer_3D attribute valid value: automatic, software, hardware.")
                 if renderer != video_card_facts['renderer_3D']:
                     video_spec.device.use3dRenderer = renderer
                     self.change_detected = True
-            if 'memory_3D_mb' in self.params['video_card']:
-                try:
-                    memory_3d = int(self.params['video_card'].get('memory_3D_mb'))
-                except ValueError as e:
-                    self.module.fail_json(msg="video_card.memory_3D_mb attribute should be an integer value and power of 2(32-2048).")
+            if self.params['memory_3D_mb'] is not None:
+                memory_3d = self.params['memory_3D_mb']
                 if not self.is_power_of_2(memory_3d):
-                    self.module.fail_json(msg="video_card.memory_3D_mb attribute should be an integer value and power of 2(32-2048).")
+                    self.module.fail_json(msg="memory_3D_mb attribute should be an integer value and power of 2(32-2048).")
                 else:
                     if memory_3d < 32 or memory_3d > 2048:
-                        self.module.fail_json(msg="video_card.memory_3D_mb attribute should be an integer value and power of 2(32-2048).")
+                        self.module.fail_json(msg="memory_3D_mb attribute should be an integer value and power of 2(32-2048).")
                 if memory_3d * 1024 != video_card_facts['memory_3D']:
                     video_spec.device.graphicsMemorySizeInKB = memory_3d * 1024
                     self.change_detected = True
         else:
-            if 'renderer_3D' in self.params['video_card'] or 'memory_3D_mb' in self.params['video_card']:
+            if self.params['renderer_3D'] is not None or self.params['memory_3D_mb'] is not None:
                 self.module.fail_json(msg='3D renderer or 3D memory can not be configured if 3D is not enabled.')
         if not self.change_detected:
             return None
@@ -301,14 +292,20 @@ def main():
         uuid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str', default='ha-datacenter'),
-        video_card=dict(type='dict', default={}),
+        gather_video_facts=dict(type='bool', default=False),
+        use_auto_detect=dict(type='bool'),
+        display_number=dict(type='int'),
+        video_memory_mb=dict(type='int'),
+        enable_3D=dict(type='bool'),
+        renderer_3D=dict(type='str'),
+        memory_3D_mb=dict(type='int'),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=[['name', 'uuid']])
     pyv = PyVmomiHelper(module)
     vm = pyv.get_vm()
     if not vm:
-        module.fail_json(msg='Not find the specified virtual machine : %s' % (module.params.get('uuid') or module.params.get('name')))
+        module.fail_json(msg='Unable to find the specified virtual machine : %s' % (module.params.get('uuid') or module.params.get('name')))
 
     vm_facts = pyv.gather_facts(vm)
     vm_power_state = vm_facts['hw_power_status'].lower()
