@@ -463,7 +463,6 @@ def main():
         argument_spec=dict(
             name=dict(type='list', aliases=['filesets']),
             state=dict(type='list', default='present', choices=['absent', 'allocate', 'commit', 'deallocate', 'installed', 'present', 'removed', 'reset']),
-            ], default='present'),
             lpp_source=dict(type='str'),
             spot=dict(type='str'),
             commit=dict(type='bool', default=True),
