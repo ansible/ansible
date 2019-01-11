@@ -462,7 +462,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='list', aliases=['filesets']),
-            state=dict(choices=[
+            state=dict(type='list', default='present', choices=['absent', 'allocate', 'commit', 'deallocate', 'installed', 'present', 'removed', 'reset']),
                 'present',
                 'commit',
                 'absent',
