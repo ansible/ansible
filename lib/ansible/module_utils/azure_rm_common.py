@@ -220,7 +220,7 @@ AZURE_PKG_VERSIONS = {
     },
     'DnsManagementClient': {
         'package_name': 'dns',
-        'expected_version': '1.2.0'
+        'expected_version': '2.1.0'
     },
     'WebSiteManagementClient': {
         'package_name': 'web',
@@ -839,8 +839,14 @@ class AzureRMModuleBase(object):
         self.log('Getting dns client')
         if not self._dns_client:
             self._dns_client = self.get_mgmt_svc_client(DnsManagementClient,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+                                                        base_url=self._cloud_environment.endpoints.resource_manager,
+                                                        api_version='2018-05-01')
         return self._dns_client
+
+    @property
+    def dns_models(self):
+        self.log("Getting dns models...")
+        return DnsManagementClient.models('2018-05-01')
 
     @property
     def web_client(self):
