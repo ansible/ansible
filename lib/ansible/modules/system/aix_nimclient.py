@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 author:
 - Joris Weijters (@molekuul)
 module: aix_nimclient
-short_description: installs software using the nimclient, and removes software
+short_description: Manage software using the nimclient
 description:
     - installs software at the nimclient using nimclient command and removes software using local commands also updates ALL to latest version
 version_added: "2.8"
