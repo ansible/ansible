@@ -29,6 +29,7 @@ options:
     description:
       - "Cluster to search for VM/Host groups."
       - "If set, facts of DRS groups belonging this cluster will be returned."
+      - "Not needed if C(datacenter) is set."
     required: false
   datacenter:
     aliases:
