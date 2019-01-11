@@ -71,8 +71,24 @@ options:
     description:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
     type: bool
-    default: 'no'
-    version_added: "2.0"
+    default: no
+    version_added: '2.0'
+
+  use_nfsv4_acls:
+    description:
+      - Use NFSv4 ACLs instead of POSIX ACLs.
+    type: bool
+    default: no
+    version_added: '2.2'
+
+  recalculate_mask:
+    description:
+    - Select if and when to recalculate the effective right masks of the files.
+    - See C(setfacl) documentation for more info.
+    - Incompatible with C(state=query).
+    choices: [ default, mask, no_mask ]
+    default: default
+    version_added: '2.7'
 author:
     - Brian Coca (@bcoca)
     - Jérémie Astori (@astorije)

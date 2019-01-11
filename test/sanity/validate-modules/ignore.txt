@@ -589,8 +589,6 @@ lib/ansible/modules/database/vertica/vertica_role.py E322
 lib/ansible/modules/database/vertica/vertica_schema.py E322
 lib/ansible/modules/database/vertica/vertica_user.py E322
 lib/ansible/modules/database/vertica/vertica_user.py E325
-lib/ansible/modules/files/acl.py E322
-lib/ansible/modules/files/acl.py E325
 lib/ansible/modules/files/assemble.py E323
 lib/ansible/modules/files/assemble.py E324
 lib/ansible/modules/files/blockinfile.py E324
