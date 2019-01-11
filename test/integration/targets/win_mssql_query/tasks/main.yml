@@ -1,0 +1,78 @@
+# test code for the win_psmodule module when using winrm connection
+# (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+- name: get facts
+  setup:
+
+- name: check sql server is installed
+  win_shell: Get-WmiObject win32_service|?{$_.name -like "MSSQL*"}
+  register: service
+
+- name: run tests
+  when: service.stdout != ''
+  block:
+
+    - name: install SqlServer powershell module
+      win_psmodule:
+        name: SqlServer
+        state: present
+        allow_clobber: yes
+      when: ansible_powershell_version >= 5
+
+    - name: install sql feature pack
+      when: ansible_powershell_version < 5
+      block: 
+
+        - name: create dir
+          win_file:
+            path: 'c:\temp'
+            state: directory
+
+        - name: download CLR types
+          win_get_url:
+            url: http://go.microsoft.com/fwlink/?LinkID=239644&clcid=0x409
+            dest: 'c:\temp\clr.msi'
+
+        - name: download smo
+          win_get_url:
+            url: http://go.microsoft.com/fwlink/?LinkID=239659&clcid=0x409
+            dest: 'c:\temp\smo.msi'
+
+        - name: download powershell tools
+          win_get_url: 
+            url: http://go.microsoft.com/fwlink/?LinkID=239656&clcid=0x409
+            dest: 'c:\temp\spt.msi'
+        
+        - name: install CLR Types
+          win_package:
+            path: 'c:\temp\clr.msi'
+            state: present
+
+        - name: install smo
+          win_package:
+            path: 'c:\temp\smo.msi'
+            state: present
+
+        - name: install pack
+          win_package:
+            path: 'c:\temp\spt.msi'
+            state: present
+
+    - name: run all tests
+      import_tasks: test.yml
