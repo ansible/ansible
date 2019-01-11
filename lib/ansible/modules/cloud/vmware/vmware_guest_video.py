@@ -73,7 +73,8 @@ options:
      - The number of display. Valid value from 1 to 10. The maximum display number is 4 on vCenter 6.0, 6.5 web UI.
    video_memory_mb:
      description:
-     - Valid total video memory range of virtual machine is from 1.172 MB to 256 MB on ESXi 6.7, from 1.172 MB to 128 MB on ESXi 6.5 and 6.0.
+     - 'Valid total MB of video memory range of virtual machine is from 1.172 MB to 256 MB on ESXi 6.7U1,
+        from 1.172 MB to 128 MB on ESXi 6.7 and previous versions.'
      - For specific guest OS, supported minimum and maximum video memory are different, please be careful on setting this.
    enable_3D:
      description:
@@ -103,7 +104,7 @@ EXAMPLES = '''
     gather_video_facts: false
     use_auto_detect: false
     display_number: 2
-    video_memory_mb: 8
+    video_memory_mb: 8.0
     enable_3D: true
     renderer_3D: automatic
     memory_3D_mb: 512
@@ -213,11 +214,11 @@ class PyVmomiHelper(PyVmomi):
                     self.change_detected = True
 
             if self.params['video_memory_mb'] is not None:
-                if self.params['video_memory_mb'] < 2:
-                    self.module.fail_json(msg="video_memory_mb attribute valid value: ESXi 6.7(1.172-256 MB),"
-                                              "ESXi 6.5/6.0(1.17-128 MB).")
-                if self.params['video_memory_mb'] * 1024 != video_card_facts['video_memory']:
-                    video_spec.device.videoRamSizeInKB = self.params['video_memory_mb'] * 1024
+                if self.params['video_memory_mb'] < 1.172:
+                    self.module.fail_json(msg="video_memory_mb attribute valid value: ESXi 6.7U1(1.172-256 MB),"
+                                              "ESXi 6.7/6.5/6.0(1.172-128 MB).")
+                if int(self.params['video_memory_mb'] * 1024) != video_card_facts['video_memory']:
+                    video_spec.device.videoRamSizeInKB = int(self.params['video_memory_mb'] * 1024)
                     self.change_detected = True
         else:
             if self.params['display_number'] is not None or self.params['video_memory_mb'] is not None:
@@ -298,7 +299,7 @@ def main():
         gather_video_facts=dict(type='bool', default=False),
         use_auto_detect=dict(type='bool'),
         display_number=dict(type='int'),
-        video_memory_mb=dict(type='int'),
+        video_memory_mb=dict(type='float'),
         enable_3D=dict(type='bool'),
         renderer_3D=dict(type='str', choices=['automatic', 'software', 'hardware']),
         memory_3D_mb=dict(type='int'),
