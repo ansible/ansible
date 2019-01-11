@@ -42,7 +42,7 @@
     that:
     - create_1 is changed
     - create_2 is not changed
-    - create_3 is changed
+    - create_3 is not changed
     - absent_1 is changed
     - absent_2 is not changed
 
@@ -80,6 +80,17 @@
       o: size=200m,uid=1000
   register: driver_options_3
 
+- name: Create a volume with options (changed, force)
+  docker_volume:
+    name: "{{ vname }}"
+    driver: local
+    driver_options:
+      type: tempfs
+      device: tmpfs
+      o: size=200m,uid=1000
+    force: yes
+  register: driver_options_4
+
 - name: Cleanup
   docker_volume:
     name: "{{ vname }}"
@@ -89,7 +100,8 @@
     that:
     - driver_options_1 is changed
     - driver_options_2 is not changed
-    - driver_options_3 is changed
+    - driver_options_3 is not changed
+    - driver_options_4 is changed
 
 ####################################################################
 ## labels ##########################################################
@@ -118,13 +130,30 @@
       ansible.test.1: hello
   register: driver_labels_3
 
+- name: Create a volume with labels (less, force)
+  docker_volume:
+    name: "{{ vname }}"
+    labels:
+      ansible.test.1: hello
+    force: yes
+  register: driver_labels_4
+
 - name: Create a volume with labels (more)
   docker_volume:
     name: "{{ vname }}"
     labels:
       ansible.test.1: hello
       ansible.test.3: ansible
-  register: driver_labels_4
+  register: driver_labels_5
+
+- name: Create a volume with labels (more, force)
+  docker_volume:
+    name: "{{ vname }}"
+    labels:
+      ansible.test.1: hello
+      ansible.test.3: ansible
+    force: yes
+  register: driver_labels_6
 
 - name: Cleanup
   docker_volume:
@@ -136,4 +165,6 @@
     - driver_labels_1 is changed
     - driver_labels_2 is not changed
     - driver_labels_3 is not changed
-    - driver_labels_4 is changed
+    - driver_labels_4 is not changed
+    - driver_labels_5 is not changed
+    - driver_labels_6 is changed
