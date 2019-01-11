@@ -87,11 +87,10 @@
 - name: run tests
   include: tests.yml
 
-- name: peform backwarld compatibility tests - only for PowerShell 5.0
+- name: peform backward compatibility tests
   when: powershell_major_version.stdout | int == 5
   block:
-      # The second cleanup is performed inside of the tests.yml :-)
-    - name: perform cleanup - 3
+    - name: perform cleanup - 2
       include: clean.yml
 
     - name: run old tests
