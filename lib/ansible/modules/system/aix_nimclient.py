@@ -18,7 +18,7 @@ author:
 module: aix_nimclient
 short_description: Manage software using the nimclient
 description:
-    - installs software at the nimclient using nimclient command and removes software using local commands also updates ALL to latest version
+    - The module installs software using nimclient command, removes software using local commands, and updates all software to latest available version.
 version_added: "2.8"
 options:
   name:
