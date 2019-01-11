@@ -485,6 +485,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         subnet = None
         image_reference = None
         custom_image = False
+        load_balancer_backend_address_pools = None
+        load_balancer_inbound_nat_pools = None
+        load_balancer = None
+        support_lb_change = True
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -538,6 +542,15 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
 
             disable_ssh_password = not self.ssh_password_enabled
+
+            if self.load_balancer:
+                load_balancer = self.get_load_balancer(self.load_balancer)
+                load_balancer_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
+                                                        for resource in load_balancer.backend_address_pools]
+                                                       if load_balancer.backend_address_pools else None)
+                load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(id=resource.id)
+                                                    for resource in load_balancer.inbound_nat_pools]
+                                                   if load_balancer.inbound_nat_pools else None)
 
         try:
             self.log("Fetching virtual machine scale set {0}".format(self.name))
@@ -599,6 +612,18 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     changed = True
                     vmss_dict['zones'] = self.zones
 
+                nicConfigs = vmss_dict['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations']
+                backend_address_pool = nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('loadBalancerBackendAddressPools', [])
+                if (len(nicConfigs) != 1 or len(backend_address_pool) != 1):
+                    support_lb_change = False  # Currently not support for the vmss contains more than one loadbalancer
+                    self.module.warn('Updating more than one load balancer on VMSS is currently not supported')
+                else:
+                    load_balancer_id = "{0}/".format(load_balancer.id) if load_balancer else None
+                    backend_address_pool_id = backend_address_pool[0].get('id')
+                    if bool(load_balancer_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(load_balancer_id):
+                        differences.append('load_balancer')
+                        changed = True
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -640,17 +665,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                     if self.subnet_name:
                         subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
-
-                    load_balancer_backend_address_pools = None
-                    load_balancer_inbound_nat_pools = None
-                    if self.load_balancer:
-                        load_balancer = self.get_load_balancer(self.load_balancer)
-                        load_balancer_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
-                                                                for resource in load_balancer.backend_address_pools]
-                                                               if load_balancer.backend_address_pools else None)
-                        load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(id=resource.id)
-                                                            for resource in load_balancer.inbound_nat_pools]
-                                                           if load_balancer.inbound_nat_pools else None)
 
                     if not self.short_hostname:
                         self.short_hostname = self.name
@@ -763,6 +777,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
                     vmss_resource.overprovision = self.overprovision
+
+                    if support_lb_change:
+                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                            .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
+                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                            .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
 
                     if self.data_disks is not None:
                         data_disks = []
