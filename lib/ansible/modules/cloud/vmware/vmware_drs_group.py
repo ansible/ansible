@@ -415,6 +415,8 @@ class VmwareDrsGroupManager(PyVmomi):
         if self.__group_exists():
             operation = 'edit'
             existing_group_obj = self.__get_group_by_name()
+            # Set result here. If nothing is to be updated, result is already set
+            self.__set_result(existing_group_obj)
         else:
             operation = 'add'
 
@@ -432,11 +434,11 @@ class VmwareDrsGroupManager(PyVmomi):
                 task = self.__cluster_obj.ReconfigureEx(config_spec, modify=True)
                 wait_for_task(task)
 
+            # Set new result since something changed
             self.__set_result(group)
             self.__changed = True
 
         if operation == 'edit':
-            self.__set_result(existing_group_obj)
             self.__msg = "Updated host group %s successfully" % (self.__group_name)
         else:
             self.__msg = "Created host group %s successfully" % (self.__group_name)
@@ -447,6 +449,8 @@ class VmwareDrsGroupManager(PyVmomi):
         if self.__group_exists():
             operation = 'edit'
             existing_group_obj = self.__get_group_by_name()
+            # Set result here. If nothing is to be updated, result is already set
+            self.__set_result(existing_group_obj)
         else:
             operation = 'add'
 
@@ -470,7 +474,6 @@ class VmwareDrsGroupManager(PyVmomi):
             self.__changed = True
 
         if operation == 'edit':
-            self.__set_result(existing_group_obj)
             self.__msg = "Updated vm group %s successfully" % (self.__group_name)
         else:
             self.__msg = "Created vm group %s successfully" % (self.__group_name)
