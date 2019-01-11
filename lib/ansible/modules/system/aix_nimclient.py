@@ -111,7 +111,7 @@ EXAMPLES = r'''
   aix_nimclient:
     state: deallocate
 
-- name: reset the nimclient
+- name: Reset the nimclient
   aix_nimclient:
     state: reset
 '''
