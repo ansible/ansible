@@ -107,7 +107,7 @@ EXAMPLES = r'''
     spot: spot_aix6109-06
     state: allocate
 
-- name: deallocate all resources from the nimclient
+- name: Deallocate all resources from the nimclient
   aix_nimclient:
     state: deallocate
 
