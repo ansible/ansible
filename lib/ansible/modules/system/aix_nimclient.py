@@ -13,7 +13,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-author: "Joris Weijters (@molekuul)"
+author:
+- Joris Weijters (@molekuul)
 module: aix_nimclient
 short_description: installs software using the nimclient, and removes software
 description:
