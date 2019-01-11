@@ -155,7 +155,7 @@ Or, using the newer syntax::
           app_port: 5000
       ...
 
-You can conditionally import a role and execute it's tasks::
+You can conditionally import a role and execute its tasks::
 
     ---
 

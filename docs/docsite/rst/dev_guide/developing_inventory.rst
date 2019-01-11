@@ -198,7 +198,7 @@ Inventory source common format
 ------------------------------
 
 To simplify development, most plugins use a mostly standard configuration file as the inventory source, YAML based and with just one required field ``plugin`` which should contain the name of the plugin that is expected to consume the file.
-Depending on other common features used, other fields might be needed, but each plugin can also add it's own custom options as needed.
+Depending on other common features used, other fields might be needed, but each plugin can also add its own custom options as needed.
 For example, if you use the integrated caching, ``cache_plugin``, ``cache_timeout`` and other cache related fields could be present.
 
 .. _inventory_development_auto:
