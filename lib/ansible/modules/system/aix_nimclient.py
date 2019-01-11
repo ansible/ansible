@@ -38,7 +38,7 @@ options:
     type: str
   lpp_source:
     description:
-    - Name of the lpp_source at the nimserver to be used for installation
+    - Name of the C(lpp_source) at the C(nimserver) to be used for installation.
     type: str
   spot:
     description:
