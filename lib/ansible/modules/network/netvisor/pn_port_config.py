@@ -140,7 +140,7 @@ options:
     choices: ['1000base-x', 'sgmii', 'disabled', 'GMII']
   pn_fabric_guard:
     description:
-      - Fabric guard contfiguration.
+      - Fabric guard configuration.
     required: False
     type: bool
   pn_local_switching:
@@ -184,7 +184,7 @@ EXAMPLES = """
     pn_cliswitch: "sw01"
     state: "update"
     pn_port: "all"
-    pn_host_enable: True
+    pn_host_enable: true
 """
 
 RETURN = """
