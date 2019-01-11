@@ -36,7 +36,6 @@
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     cluster_name: DC0_C0
-    datacenter: DC0
     validate_certs: False
   register: drs_group_0001_results
 
