@@ -203,6 +203,11 @@ options:
         type: bool
         default: True
         version_added: "2.8"
+    zones:
+        description:
+            - A list of Availability Zones for your virtual machine scale set
+        type: list
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -410,7 +415,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             remove_on_absent=dict(type='list', default=['all']),
             enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name']),
-            overprovision=dict(type='bool', default=True)
+            overprovision=dict(type='bool', default=True),
+            zones=dict(type='list')
         )
 
         self.resource_group = None
@@ -440,6 +446,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.enable_accelerated_networking = None
         self.security_group = None
         self.overprovision = None
+        self.zones = None
 
         self.results = dict(
             changed=False,
@@ -461,6 +468,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         # make sure options are lower case
         self.remove_on_absent = set([resource.lower() for resource in self.remove_on_absent])
+
+        # convert elements to ints
+        self.zones = [int(i) for i in self.zones] if self.zones else None
 
         # default virtual_network_resource_group to resource_group
         if not self.virtual_network_resource_group:
@@ -582,6 +592,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     differences.append('overprovision')
                     changed = True
 
+                vmss_dict['zones'] = [int(i) for i in vmss_dict['zones']] if 'zones' in vmss_dict and vmss_dict['zones'] else None
+                if self.zones != vmss_dict['zones']:
+                    self.log("CHANGED: virtual machine scale sets {0} zones".format(self.name))
+                    differences.append('Zones')
+                    changed = True
+                    vmss_dict['zones'] = self.zones
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -694,7 +711,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                     )
                                 ]
                             )
-                        )
+                        ),
+                        zones=self.zones
                     )
 
                     if self.admin_password:
