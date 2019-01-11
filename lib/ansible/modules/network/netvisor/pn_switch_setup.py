@@ -29,6 +29,8 @@ options:
     description:
       - State the action to perform. Use C(update) to modify the switch-setup.
     required: true
+    type: str
+    choices: ['update']
   pn_force:
     description:
       - Force analytics-store change even if it involves removing data.
@@ -227,7 +229,7 @@ changed:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pn_nvos import pn_cli, booleanArgs, run_cli
+from ansible.module_utils.network.netvisor.pn_nvos import pn_cli, booleanArgs, run_cli
 
 
 def main():

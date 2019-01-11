@@ -38,14 +38,16 @@ class TestSwitchSetupModule(TestNvosModule):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_timezone': 'America/New_York',
                          'pn_in_band_ip': '20.20.1.1', 'pn_in_band_netmask': '24', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 switch-setup-modify  timezone America/New_York in-band-netmask 24 in-band-ip 20.20.1.1'
+        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 switch-setup-modify  timezone America/New_York '
+        expected_cmd += 'in-band-netmask 24 in-band-ip 20.20.1.1'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_pn_switch_setup_modify_t2(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_in_band_ip6': '2001:0db8:85a3::8a2e:0370:7334',
                          'pn_in_band_netmask_ip6': '127', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 switch-setup-modify  in-band-ip6 2001:0db8:85a3::8a2e:0370:7334 in-band-netmask-ip6 127'
+        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 switch-setup-modify  in-band-ip6 2001:0db8:85a3::8a2e:0370:7334 '
+        expected_cmd += 'in-band-netmask-ip6 127'
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_pn_switch_setup_modify_t3(self):
