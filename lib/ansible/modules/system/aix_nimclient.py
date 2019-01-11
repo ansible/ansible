@@ -34,7 +34,6 @@ options:
     type: str
     choices: [ absent, allocate, commit, deallocate, installed, present, removed, reset ]
     default : present
-    type: str
   lpp_source:
     description:
     - Name of the C(lpp_source) at the C(nimserver) to be used for installation.
