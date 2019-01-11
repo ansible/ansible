@@ -28,13 +28,14 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import sys
 
 try:
     import pymysql as mysql_driver
+    _mysql_cursor_param = 'cursor'
 except ImportError:
     try:
         import MySQLdb as mysql_driver
+        _mysql_cursor_param = 'cursorclass'
     except ImportError:
         mysql_driver = None
 
@@ -76,9 +77,6 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
 
     db_connection = mysql_driver.connect(**config)
     if cursor_class is not None:
-        if mysql_driver is sys.modules['pymysql']:
-            return db_connection.cursor(cursor=mysql_driver.cursors.DictCursor)
-        else:
-            return db_connection.cursor(cursorclass=mysql_driver.cursors.DictCursor)
+        return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor})
     else:
         return db_connection.cursor()
