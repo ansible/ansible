@@ -27,7 +27,7 @@ options:
     - Use C(update_all) to update all filesets to latest level.
     type: list
     - Name of the fileset to install or update_all to update all filesets to latest level
-    aliases:
+    aliases: [ filesets ]
       - filesets
     type: list
   state:
