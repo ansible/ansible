@@ -249,6 +249,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[['cluster_name', 'datacenter']],
+        mutually_exclusive=[['cluster_name', 'datacenter']],
     )
 
     try:
