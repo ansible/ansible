@@ -44,7 +44,7 @@ options:
 """
 
 EXAMPLES = """
-- name: Get task facts 
+- name: Get task facts
   checkpoint_task_facts:
     task_id: 2eec70e5-78a8-4bdb-9a76-cfb5601d0bcb
 """
