@@ -98,7 +98,8 @@ EXAMPLES = r'''
 
 - name: "Delete DRS Host group"
   delegate_to: localhost
-  state: absent
+  vmware_drs_group:
+      state: absent
   vmware_drs_group:
     hostname: "{{ vcenter_hostname }}"
     password: "{{ vcenter_password }}"
