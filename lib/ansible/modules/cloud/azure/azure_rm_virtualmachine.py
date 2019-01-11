@@ -274,14 +274,14 @@ options:
             - subnet
     remove_autocreated:
         description:
-            - Set this option when removing a VM using state 'absent' to trigger automatic deletion of all autocreated resources.
-            - Use this option during creation of a VM to make sure all the resources are removed in case of VM creation failure.
-            - Following resources will be removed: network interface, network security group, public IP address, storage account.
+            - "Set this option when removing a VM using state 'absent' to trigger automatic deletion of all autocreated resources."
+            - "Use this option during creation of a VM to make sure all the resources are removed in case of VM creation failure."
+            - "Following resources will be removed: network interface, network security group, public IP address, storage account."
         type: bool
         version_added: "2.8"
     remove_on_absent:
         description:
-            - When removing a VM using state 'absent', also remove associated resources
+            - "When removing a VM using state 'absent', also remove associated resources
             - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
             - Any other input will be ignored
             - Please note that this option will be deprecated in 2.10 and 'remove_autocreated' will be enabled by default.
