@@ -27,6 +27,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 class LSBFactCollector(BaseFactCollector):
     name = 'lsb'
     _fact_ids = set()
+    STRIP_QUOTES = r'\'\"\\'
 
     def _lsb_release_bin(self, lsb_path, module):
         lsb_facts = {}
@@ -96,6 +97,10 @@ class LSBFactCollector(BaseFactCollector):
 
         if lsb_facts and 'release' in lsb_facts:
             lsb_facts['major_release'] = lsb_facts['release'].split('.')[0]
+
+        for k, v in lsb_facts.items():
+            if v:
+                lsb_facts[k] = v.strip(LSBFactCollector.STRIP_QUOTES)
 
         facts_dict['lsb'] = lsb_facts
         return facts_dict
