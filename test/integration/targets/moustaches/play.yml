@@ -1,0 +1,12 @@
+- name: ensure varable is templated
+  hosts: localhost
+  gather_facts: False
+  vars:
+    testvar: lola
+    oldtemplate: '{{ testvar }}'
+    newtemplate: !j2 testvar
+  tasks:
+    - name: ensure moustache:{{oldtemplate}} is teh same as nomoustache:{{newtemplate}}
+      assert:
+        that:
+            - oldtemplate == newtemplate
