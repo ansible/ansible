@@ -21,28 +21,31 @@ description:
     - Change node role
     - Change node availability
     - Change or remove node labels
-    - List Swarm nodes
 options:
     state:
         description:
-            - Set to C(list) to display swarm nodes names lists.
             - Set to C(update) to update node labels, availability and role
         required: true
-        default: list
         choices:
-          - list
           - update
     name:
         description:
             - Swarm name of the node.
             - Used with I(state=update).
     labels:
+        description: User-defined key/value metadata.
+    labels_state:
         description:
-            - User-defined key/value metadata. Provided labels will replace existing ones
-    labels_remove:
-        description: If C(True) then labels are removed from mode, the I(label) is ignored
-        type: bool
-        default: 'False'
+            - Defines the operation on the lables assigned to node.
+            - Set to C(merge) to merge provided labels with already assigned ones. It will update existing keys.
+              The I(labels) must be specified.
+            - Set to C(replace) to replace assigned labels with provided ones. The I(labels) must be specified.
+            - Set to C(remove) to remove all labels assigned to node.
+        choices:
+          - merge
+          - replace
+          - remove
+        default: 'merge'
     availability:
         description: Node availability status to assign
         choices:
@@ -91,18 +94,34 @@ EXAMPLES = '''
     name: mynode
     availability: drain
 
-- name: Set node labels
+- name: Replace node labels with new labels
+  docker_node:
+    state: update
+    name: mynode
+    labels:
+      key: value
+    labels_state: replace
+
+- name: Merge node labels and new labels
   docker_node:
     state: update
     name: mynode
     labels:
       key: value
 
+- name: Merge node labels and new labels
+  docker_node:
+    state: update
+    name: mynode
+    labels:
+      key: value
+    labels_state: merge
+
 - name: Remove node labels
   docker_node:
     state: update
     name: mynode
-    labels_remove: true
+    labels_state: remove
 '''
 
 RETURN = '''
@@ -110,11 +129,6 @@ node_facts:
   description: Information about node after 'update' operation
   returned: success
   type: dict
-nodes:
-  description: List nodes names of swarm cluster.
-  returned: success
-  type: list
-  example: "[ 'node-1', 'node-2', 'node-3']"
 actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
@@ -147,7 +161,7 @@ class TaskParameters(DockerBaseClass):
         # Spec
         self.name = None
         self.labels = None
-        self.labels_remove = None
+        self.labels_state = None
 
         # Node
         self.availability = None
@@ -205,9 +219,15 @@ class SwarmNodeManager(DockerBaseClass):
 
         if self.parameters.labels is None:
             self.parameters.labels = node_info['Spec']['Labels']
-
-        if self.parameters.labels_remove is True:
-            self.parameters.labels = {}
+        else:
+            if self.parameters.labels_state == 'remove':
+                self.parameters.labels = {}
+            if self.parameters.labels_state == 'replace':
+                pass
+            if self.parameters.labels_state == 'merge':
+                for next_key in node_info['Spec']['Labels']:
+                    if next_key not in self.parameters.labels:
+                        self.parameters.labels.update({next_key: node_info['Spec']['Labels'][next_key]})
 
         node_spec = dict(
             Availability=self.parameters.availability,
@@ -230,13 +250,15 @@ def main():
         state=dict(type='str', choices=['update'], required=True),
         name=dict(type='str'),
         labels=dict(type='dict'),
-        labels_remove=dict(type='bool', default=False),
+        labels_state=dict(type='str', choices=['merge', 'replace', 'remove'], default='merge'),
         availability=dict(type='str', choices=['active', 'pause', 'drain']),
         role=dict(type='str', choices=['worker', 'manager']),
     )
 
     required_if = [
         ('state', 'update', ['name']),
+        ('labels_state', 'merge', ['name', 'labels']),
+        ('labels_state', 'replace', ['name', 'labels']),
     ]
 
     option_minimal_versions = dict(
