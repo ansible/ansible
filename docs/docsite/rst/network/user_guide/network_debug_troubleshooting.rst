@@ -312,7 +312,7 @@ For example:
 
 Suggestions to resolve:
 
-* If you are using the ``provider:`` options ensure that it's suboption ``host:`` is set correctly.
+* If you are using the ``provider:`` options ensure that its suboption ``host:`` is set correctly.
 * If you are not using ``provider:`` nor top-level arguments ensure your inventory file is correct.
 
 

@@ -10,7 +10,7 @@ Filters in Ansible are from Jinja2, and are used for transforming data inside a 
 
 Take into account that templating happens on the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
 
-In addition the ones provided by Jinja2, Ansible ships with it's own and allows users to add their own custom filters.
+In addition the ones provided by Jinja2, Ansible ships with its own and allows users to add their own custom filters.
 
 .. _filters_for_formatting_data:
 
