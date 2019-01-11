@@ -273,6 +273,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
             changed=False
         )
 
+        # first-pass arg validation so we can get the record type- skip exec_module
         super(AzureRMRecordSet, self).__init__(self.module_arg_spec, required_if=required_if, supports_check_mode=True, skip_exec=True)
 
         # look up the right subspec and metadata
@@ -362,7 +363,11 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
     def create_or_update(self, record_set):
         try:
-            record_set = self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set)
+            record_set = self.dns_client.record_sets.create_or_update(resource_group_name=self.resource_group,
+                                                                      zone_name=self.zone_name,
+                                                                      relative_record_set_name=self.relative_name,
+                                                                      record_type=self.record_type,
+                                                                      parameters=record_set)
             return self.recordset_to_dict(record_set)
         except Exception as exc:
             self.fail("Error creating or updating dns record {0} - {1}".format(self.relative_name, exc.message or str(exc)))
@@ -370,7 +375,10 @@ class AzureRMRecordSet(AzureRMModuleBase):
     def delete_record_set(self):
         try:
             # delete the record set
-            self.dns_client.record_sets.delete(self.resource_group, self.zone_name, self.relative_name, self.record_type)
+            self.dns_client.record_sets.delete(resource_group_name=self.resource_group,
+                                               zone_name=self.zone_name,
+                                               relative_record_set_name=self.relative_name,
+                                               record_type=self.record_type)
         except Exception as exc:
             self.fail("Error deleting record set {0} - {1}".format(self.relative_name, exc.message or str(exc)))
         return None
