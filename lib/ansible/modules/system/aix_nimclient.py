@@ -28,7 +28,6 @@ options:
     type: list
     - Name of the fileset to install or update_all to update all filesets to latest level
     aliases: [ filesets ]
-    type: list
   state:
     description:
     - The state of the fileset or nimclient to be.
