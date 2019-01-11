@@ -69,7 +69,7 @@ EXAMPLES = r'''
       - OpenGL.OpenGL_X.rte.soft
     lpp_source: lppsource_aix6109-06
 
-- name: install latest version of OpenGL.OpenGL_X.rte.soft from lpp_source lppsource_aix6109-06 and apply only
+- name: Install latest version of OpenGL.OpenGL_X.rte.soft from lpp_source lppsource_aix6109-06 and apply only
   aix_nimclient:
     name:
       - OpenGL.OpenGL_X.rte.soft
