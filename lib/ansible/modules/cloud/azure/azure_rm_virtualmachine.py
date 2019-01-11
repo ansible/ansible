@@ -280,9 +280,9 @@ options:
     remove_on_absent:
         description:
             - When removing a VM using state 'absent', also remove associated resources
-            - "It can be 'all' or 'all_autocreated' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
+            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
             - Any other input will be ignored
-            - Please note that this option will be deprecated in 2.10 when 'all_autocreated' will become default.
+            - Please note that this option will be deprecated in 2.10 and 'remove_autocreated' will be enabled by default.
         default: ['all']
     plan:
         description:
@@ -826,7 +826,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.zones = [int(i) for i in self.zones] if self.zones else None
 
         if self.state == 'absent' and self.remove_on_absent:
-            self.deprecate("Option 'remove_on_absent' will be deprecated and 'all_autocreated' will become default behaviour.", version='2.10')
+            self.deprecate("Option 'remove_on_absent' will be deprecated and 'remove_autocreated' will be enabled by default", version='2.10')
 
         changed = False
         powerstate_change = None
