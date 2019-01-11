@@ -274,7 +274,9 @@ options:
             - subnet
     remove_autocreated:
         description:
-            - Should all autocreated resources be removed when VM is being destroyed?
+            - Set this option when removing a VM using state 'absent' to trigger automatic deletion of all autocreated resources.
+            - Use this option during creation of a VM to make sure all the resources are removed in case of VM creation failure.
+            - Following resources will be removed: network interface, network security group, public IP address, storage account.
         type: bool
         version_added: "2.8"
     remove_on_absent:
@@ -501,15 +503,6 @@ EXAMPLES = '''
     name: testvm002
     restarted: yes
 
-- name: remove vm and all resources except public ips
-  azure_rm_virtualmachine:
-    resource_group: Testing
-    name: testvm002
-    state: absent
-    remove_on_absent:
-        - network_interfaces
-        - virtual_storage
-
 - name: Create a VM with an Availability Zone
   azure_rm_virtualmachine:
     resource_group: Testing
@@ -519,6 +512,13 @@ EXAMPLES = '''
     admin_password: password01
     image: customimage001
     zones: [1]
+
+- name: Remove a VM and all resources that were autocreated
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm002
+    remove_autocreated: yes
+    state: absent
 '''
 
 RETURN = '''
@@ -1219,7 +1219,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                        "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
-                    self.create_or_update_vm(vm_resource, True)
+                    self.create_or_update_vm(vm_resource, self.remove_autocreated)
 
                 elif self.differences and len(self.differences) > 0:
                     # Update the VM based on detected config differences
@@ -1726,12 +1726,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error fetching storage account {0} - {1}".format(name, str(exc)))
 
-    def create_or_update_vm(self, params, new):
+    def create_or_update_vm(self, params, remove_autocreated_on_failure):
         try:
             poller = self.compute_client.virtual_machines.create_or_update(self.resource_group, self.name, params)
             self.get_poller_result(poller)
         except Exception as exc:
-            if new:
+            if remove_autocreated_on_failure:
                 self.remove_autocreated_resources(params.tags)
             self.fail("Error creating or updating virtual machine {0} - {1}".format(self.name, str(exc)))
 
