@@ -34,7 +34,6 @@ options:
     - The state of the fileset or nimclient to be.
     type: str
     choices: [ absent, allocate, commit, deallocate, installed, present, removed, reset ]
-              present,
               absent,
               installed,
               removed,
