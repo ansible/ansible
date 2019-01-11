@@ -79,7 +79,9 @@ def main():
     if not os.access(source, os.R_OK):
         module.fail_json(msg="file is not readable: %s" % source)
 
-    data = base64.b64encode(open(source, 'rb').read())
+    with open(source, 'rb') as source_fh:
+        source_content = source_fh.read()
+    data = base64.b64encode(source_content)
 
     module.exit_json(content=data, source=source, encoding='base64')
 

@@ -255,8 +255,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         try:
             self.remove()
-
-            p12 = crypto.load_pkcs12(open(self.src, 'rb').read(),
+            with open(self.src, 'rb') as pkcs12_fh:
+                pkcs12_content = pkcs12_fh.read()
+            p12 = crypto.load_pkcs12(pkcs12_content,
                                      self.passphrase)
             pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM,
                                           p12.get_privatekey())

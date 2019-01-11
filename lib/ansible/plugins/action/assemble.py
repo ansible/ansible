@@ -52,7 +52,8 @@ class ActionModule(ActionBase):
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
 
-            fragment_content = open(self._loader.get_real_file(fragment, decrypt=decrypt), 'rb').read()
+            with open(self._loader.get_real_file(fragment, decrypt=decrypt), 'rb') as fragment_fh:
+                fragment_content = fragment_fh.read()
 
             # always put a newline between fragments if the previous fragment didn't end with a newline.
             if add_newline:
