@@ -17,7 +17,6 @@ short_description: Initialises a MongoDB replicaset before authentication has be
 description:
     - Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
     - Validation confirms the replicaset set name only.
-    - This may change in the future to involve adding and removing members.
 author: Rhys Campbell (@rhysmeister)
 version_added: "2.8"
 options:
