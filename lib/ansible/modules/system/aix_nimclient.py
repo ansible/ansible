@@ -116,7 +116,7 @@ EXAMPLES = r'''
     state: reset
 '''
 
-RETURN = '''
+RETURN = r'''
 
 
 
