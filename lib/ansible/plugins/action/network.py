@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
+import os, q
 import time
 import glob
 import re
@@ -55,7 +55,6 @@ class ActionModule(_ActionModule):
         except ValueError as exc:
             return dict(failed=True, msg=to_text(exc))
 
-<<<<<<< HEAD
     def _handle_backup_option(self, result, task_vars):
 
         filename = None
