@@ -35,5 +35,4 @@
 - assert:
     that:
       - direct is failed
-      - |
-        direct.stdout == '{"msg": "No argument file provided", "failed": true}'
+      - 'direct.stdout | from_json == {"msg": "No argument file provided", "failed": true}'
