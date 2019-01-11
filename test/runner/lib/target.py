@@ -355,6 +355,11 @@ def analyze_integration_target_dependencies(integration_targets):
         for setup_target_name in target.setup_always + target.setup_once:
             dependencies[setup_target_name].add(target.name)
 
+    # handle target dependencies
+    for target in integration_targets:
+        for need_target in target.needs_target:
+            dependencies[need_target].add(target.name)
+
     # handle symlink dependencies between targets
     # this use case is supported, but discouraged
     for target in integration_targets:
@@ -645,6 +650,7 @@ class IntegrationTarget(CompletionTarget):
 
         self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
         self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
+        self.needs_target = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('needs/target/'))))
 
 
 class TargetPatternsNotMatched(ApplicationError):
