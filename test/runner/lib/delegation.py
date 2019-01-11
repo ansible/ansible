@@ -432,6 +432,13 @@ def generate_command(args, path, options, exclude, require):
     options['--color'] = 1
 
     cmd = [path]
+
+    # Force the encoding used during delegation.
+    # This is only needed because ansible-test relies on Python's file system encoding.
+    # Environments that do not have the locale configured are thus unable to work with unicode file paths.
+    # Examples include FreeBSD and some Linux containers.
+    cmd = ['/usr/bin/env', 'LC_ALL=en_US.UTF-8'] + cmd
+
     cmd += list(filter_options(args, sys.argv[1:], options, exclude, require))
     cmd += ['--color', 'yes' if args.color else 'no']
 
