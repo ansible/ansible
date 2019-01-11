@@ -18,6 +18,7 @@ To get started, please select one of the following topics.
    vmware_concepts
    vmware_requirements
    vmware_getting_started
+   vmware_inventory
    vmware_scenarios
    vmware_module_reference
    vmware_troubleshooting
