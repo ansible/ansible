@@ -108,7 +108,8 @@ def get_matching_jobs(module, at_cmd, script_file):
         return matching_jobs
 
     # Read script_file into a string.
-    script_file_string = open(script_file).read().strip()
+    with open(script_file) as script_fh:
+        script_file_string = script_fh.read().strip()
 
     # Loop through the jobs.
     #   If the script text is contained in a job add job number to list.

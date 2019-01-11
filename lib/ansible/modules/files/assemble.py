@@ -128,7 +128,8 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
         fragment = os.path.join(src_path, f)
         if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
-        fragment_content = open(fragment, 'rb').read()
+        with open(fragment, 'rb') as fragment_fh:
+            fragment_content = fragment_fh.read()
 
         # always put a newline between fragments if the previous fragment didn't end with a newline.
         if add_newline:

@@ -748,7 +748,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                 # the write lock.  Go ahead and read the data from disk
                 # instead of re-creating it.
                 try:
-                    zipdata = open(cached_module_filename, 'rb').read()
+                    with open(cached_module_filename, 'rb') as f:
+                        zipdata = f.read()
                 except IOError:
                     raise AnsibleError('A different worker process failed to create module file. '
                                        'Look at traceback for that process for debugging information.')

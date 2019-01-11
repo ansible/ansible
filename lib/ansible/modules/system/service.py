@@ -686,12 +686,15 @@ class LinuxService(Service):
             override_file_name = "%s/%s.override" % (initpath, self.name)
 
             # Check to see if files contain the manual line in .conf and fail if True
-            if manreg.search(open(conf_file_name).read()):
+            with open(conf_file_name) as conf_file_fh:
+                conf_file_content = conf_file_fh.read()
+            if manreg.search(conf_file_content):
                 self.module.fail_json(msg="manual stanza not supported in a .conf file")
 
             self.changed = False
             if os.path.exists(override_file_name):
-                override_file_contents = open(override_file_name).read()
+                with open(override_file_name) as override_fh:
+                    override_file_contents = override_fh.read()
                 # Remove manual stanza if present and service enabled
                 if self.enable and manreg.search(override_file_contents):
                     self.changed = True

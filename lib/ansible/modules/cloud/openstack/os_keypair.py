@@ -115,8 +115,8 @@ def main():
     public_key = module.params['public_key']
 
     if module.params['public_key_file']:
-        public_key = open(module.params['public_key_file']).read()
-        public_key = public_key.rstrip()
+        with open(module.params['public_key_file']) as public_key_fh:
+            public_key = public_key_fh.read().rstrip()
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:

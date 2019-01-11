@@ -170,7 +170,9 @@ ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
 
 def crc32(path):
     ''' Return a CRC32 checksum of a file '''
-    return binascii.crc32(open(path, 'rb').read()) & 0xffffffff
+    with open(path, 'rb') as f:
+        file_content = f.read()
+    return binascii.crc32(file_content) & 0xffffffff
 
 
 def shell_escape(string):

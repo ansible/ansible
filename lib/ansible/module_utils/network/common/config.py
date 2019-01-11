@@ -203,7 +203,8 @@ class NetworkConfig(object):
         self._items = self.parse(s)
 
     def loadfp(self, fp):
-        return self.load(open(fp).read())
+        with open(fp) as f:
+            return self.load(f.read())
 
     def parse(self, lines, comment_tokens=None):
         toplevel = re.compile(r'\S')

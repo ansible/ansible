@@ -195,7 +195,9 @@ class LinuxVirtual(Virtual):
                     # Check whether this is a RHEV hypervisor (is vdsm running ?)
                     for f in glob.glob('/proc/[0-9]*/comm'):
                         try:
-                            if open(f).read().rstrip() == 'vdsm':
+                            with open(f) as virt_fh:
+                                comm_content = virt_fh.read().rstrip()
+                            if comm_content == 'vdsm':
                                 virtual_facts['virtualization_type'] = 'RHEV'
                                 break
                         except Exception:
