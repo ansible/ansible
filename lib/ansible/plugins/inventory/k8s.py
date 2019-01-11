@@ -165,7 +165,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
             self.fetch_objects(connections)
 
     def fetch_objects(self, connections):
-        client = self.get_api_client()
 
         if connections:
             if not isinstance(connections, list):
@@ -184,6 +183,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
                     self.get_pods_for_namespace(client, name, namespace)
                     self.get_services_for_namespace(client, name, namespace)
         else:
+            client = self.get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
             for namespace in namespaces:
