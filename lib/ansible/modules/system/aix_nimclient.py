@@ -58,7 +58,7 @@ options:
 notes:
   - The changes are persistent across reboots.
   - You need root rights to install or remove software
-  - tested on AIX 6.1 and 7.1.
+  - Tested on AIX 6.1 and 7.1.
 requirements: [ 're' ]
 '''
 
