@@ -12,6 +12,8 @@ DOCUMENTATION = '''
     plugin_type: inventory
     short_description: VMware Guest inventory source
     version_added: "2.6"
+    author:
+      - Abhijeet Kasurde (@Akasurde)
     description:
         - Get virtual machines as inventory hosts from VMware environment.
         - Uses any file which ends with vmware.yml or vmware.yaml as a YAML configuration file.
@@ -62,7 +64,7 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-    # Sample configuration file for VMware Guest dynamic inventory
+# Sample configuration file for VMware Guest dynamic inventory
     plugin: vmware_vm_inventory
     strict: False
     hostname: 10.65.223.31
@@ -303,6 +305,17 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             for host in hostvars:
                 self.inventory.add_host(host)
 
+    @staticmethod
+    def _get_vm_prop(vm, attributes):
+        """Safely get a property or return None"""
+        result = vm
+        for attribute in attributes:
+            try:
+                result = getattr(result, attribute)
+            except (AttributeError, IndexError):
+                return None
+        return result
+
     def _populate_from_source(self, source_data, using_current_cache):
         """
         Populate inventory data from direct source
@@ -339,7 +352,29 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 if current_host not in hostvars:
                     hostvars[current_host] = {}
                     self.inventory.add_host(current_host)
+                    host_ip = temp_vm_object.obj.guest.ipAddress
+                    if host_ip:
+                        self.inventory.set_variable(current_host, 'ansible_host', host_ip)
 
+                    # Load VM properties in host_vars
+                    vm_properties = [
+                        'name',
+                        'config.cpuHotAddEnabled',
+                        'config.cpuHotRemoveEnabled',
+                        'config.instanceUuid',
+                        'config.hardware.numCPU',
+                        'config.template',
+                        'config.name',
+                        'guest.hostName',
+                        'guest.ipAddress',
+                        'guest.guestId',
+                        'guest.guestState',
+                        'runtime.maxMemoryUsage',
+                        'customValue',
+                    ]
+                    for vm_prop in vm_properties:
+                        vm_value = self._get_vm_prop(temp_vm_object.obj, vm_prop.split("."))
+                        self.inventory.set_variable(current_host, vm_prop, vm_value)
                     # Only gather facts related to tag if vCloud and vSphere is installed.
                     if HAS_VCLOUD and HAS_VSPHERE and self.with_tags:
                         # Add virtual machine to appropriate tag group
