@@ -73,7 +73,12 @@ options:
     type: bool
     default: 'no'
     version_added: "2.0"
-
+  use_nfsv4_acls:
+    description:
+      - Use NFSv4 ACLs instead of POSIX ACLs.
+    type: bool
+    default: no
+    version_added: '2.2'
   recalculate_mask:
     description:
       - Select if and when to recalculate the effective right masks of the files, see setfacl documentation for more info. Incompatible with C(state=query).
