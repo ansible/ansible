@@ -181,7 +181,7 @@ RETURN = '''
 mongodb_replicaset:
     description: The name of the replicaset that has been created.
     returned: success
-    type: string
+    type: str
 '''
 
 from copy import deepcopy
