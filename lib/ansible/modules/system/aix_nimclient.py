@@ -62,7 +62,7 @@ notes:
 requirements: [ 're' ]
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: install latest version of OpenGL.OpenGL_X.rte.soft from lpp_source lppsource_aix6109-06
   aix_nimclient:
     name:
