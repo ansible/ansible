@@ -1603,6 +1603,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             return nic
         except Exception as exc:
             self.fail("Error fetching network interface {0} - {1}".format(name, str(exc)))
+        return True
 
     def delete_nic(self, resource_group, name):
         self.log("Deleting network interface {0}".format(name))
@@ -1641,6 +1642,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 self.get_poller_result(poller)
             except Exception as exc:
                 self.fail("Error deleting managed disk {0} - {1}".format(mdi, str(exc)))
+        return True
 
     def delete_storage_account(self, resource_group, name):
         self.log("Delete storage account {0}".format(name))
@@ -1649,6 +1651,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.storage_client.storage_accounts.delete(self.resource_group, name)
         except Exception as exc:
             self.fail("Error deleting storage account {0} - {2}".format(name, str(exc)))
+        return True
 
     def delete_vm_storage(self, vhd_uris):
         # FUTURE: figure out a cloud_env indepdendent way to delete these
@@ -1670,6 +1673,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                 blob_client.delete_blob(container_name, blob_name)
             except Exception as exc:
                 self.fail("Error deleting blob {0}:{1} - {2}".format(container_name, blob_name, str(exc)))
+        return True
 
     def get_marketplace_image_version(self):
         try:
