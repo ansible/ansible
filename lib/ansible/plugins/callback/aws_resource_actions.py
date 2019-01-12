@@ -25,25 +25,22 @@ example: >
     callback_whitelist = aws_resource_actions
 sample output: >
 #
-# AWS ACTIONS: [u's3:PutBucketAcl', u's3:HeadObject', u's3:DeleteObject', u's3:PutObjectAcl', u's3:CreateMultipartUpload',
-#               u's3:DeleteBucket', u's3:GetObject', u's3:DeleteObjects', u's3:CreateBucket', u's3:CompleteMultipartUpload',
-#               u's3:ListObjectsV2', u's3:HeadBucket', u's3:UploadPart', u's3:PutObject']
+# AWS ACTIONS: ['s3:PutBucketAcl', 's3:HeadObject', 's3:DeleteObject', 's3:PutObjectAcl', 's3:CreateMultipartUpload',
+#               's3:DeleteBucket', 's3:GetObject', 's3:DeleteObjects', 's3:CreateBucket', 's3:CompleteMultipartUpload',
+#               's3:ListObjectsV2', 's3:HeadBucket', 's3:UploadPart', 's3:PutObject']
 #
 sample output: >
 #
-# AWS ACTIONS: [u'ec2:DescribeVpcAttribute', u'ec2:DescribeVpcClassicLink', u'ec2:ModifyVpcAttribute', u'ec2:CreateTags',
-#               u'sts:GetCallerIdentity', u'ec2:DescribeSecurityGroups', u'ec2:DescribeTags', u'ec2:DescribeVpcs', u'ec2:CreateVpc']
+# AWS ACTIONS: ['ec2:DescribeVpcAttribute', 'ec2:DescribeVpcClassicLink', 'ec2:ModifyVpcAttribute', 'ec2:CreateTags',
+#               'sts:GetCallerIdentity', 'ec2:DescribeSecurityGroups', 'ec2:DescribeTags', 'ec2:DescribeVpcs', 'ec2:CreateVpc']
 #
 '''
 
 from ansible.plugins.callback import CallbackBase
+from ansible.module_utils._text import to_native
 
 
 class CallbackModule(CallbackBase):
-    """
-    This callback module provides per-task timing, ongoing playbook elapsed time
-    and ordered list of top 20 longest running tasks at end.
-    """
     CALLBACK_VERSION = 2.8
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'aws_resource_actions'
@@ -71,5 +68,5 @@ class CallbackModule(CallbackBase):
 
     def playbook_on_stats(self, stats):
         if self.aws_resource_actions:
-            self.aws_resource_actions = sorted(list(set(self.aws_resource_actions)))
+            self.aws_resource_actions = sorted(list(to_native(action) for action in set(self.aws_resource_actions)))
             self._display.display("AWS ACTIONS: {0}".format(self.aws_resource_actions))

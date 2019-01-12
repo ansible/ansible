@@ -148,7 +148,7 @@ class AnsibleAWSModule(object):
             found_operational_request = re.search(r"OperationModel\(name=.*?\)", ln)
             if found_operational_request:
                 operation_request = found_operational_request.group(0)[20:-1]
-                resource = re.search("https://.*?\.", ln).group(0)[8:-1]
+                resource = re.search(r"https://.*?\.", ln).group(0)[8:-1]
                 actions.append("{0}:{1}".format(resource, operation_request))
         return list(set(actions))
 

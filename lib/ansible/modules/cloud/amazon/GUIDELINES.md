@@ -645,39 +645,65 @@ integration builds, so the tests will initially fail when you submit a pull requ
 Once you're certain the failure is only due to the missing permissions, add a comment with the `ready_for_review`
 tag and explain that it's due to missing permissions.
 
-If your pull request is failing due to missing permissions, you can help with the process of getting your pull request
-into a mergeable state by collecting the minimum IAM permissions required to run the tests. The permissions used by CI
-are more restrictive than those in `hacking/aws_config/testing_policies`.
+Your pull request will not be able to be merged until the tests are passing. If your pull request is failing due to missing permissions
+you can help with the process of getting your pull request into a mergeable state by collecting the minimum IAM permissions required to
+run the tests. The permissions used by CI are more restrictive than those in `hacking/aws_config/testing_policies` so this process is to create
+the most restrictive policy for the given tests.
 
-Iterative approach to determine the minimum permissions needed to run your tests:
-1) Set up an IAM user or role without any IAM permissions at all
-2) Run the integration tests
-    a) If the error message is informative about the action and resource ARN used in the request, add the action to your policy and limit it to that resource
-    b) If the error message is not informative, usually the CamelCase of the method used is the action performed - e.g. ec2_client.describe_security_groups is `ec2:DescribeSecurityGroups`
-    c) If the error message did not indicate a resource ARN to add in your policy examine the AWS and https://iam.cloudonaut.io documentation
-3) Run the tests again with the updated policy attached to your user or role
-    a) If the tests are displaying the same error
-        - You may need to wait a few minutes for your policy to update
-        - Use the policy simulator to check if it should allow the action that's failing [policy simulator](https://policysim.aws.amazon.com/)
-        - If you've given it a little time and the policy simulator passes AWS may be using additional resources under the hood which you
-          will need to be guessed (examine the AWS FullAccess policy for the service for clues, re-read the docs, and use a search engine).
-        - Remove the permission if it is incorrect and replace it with the correct one
-4) Repeat step 2 and 3 until the tests complete, and share the minimum policy in a comment
+When constructing the policy the [AWS documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html)
+for the given service should be used. The [cloudonaut](https://iam.cloudonaut.io) documentation is sometimes a helpful cross-reference when troubleshooting.
 
-Alternative process by collecting all the actions performed:
-1) Run your tests using the `hacking/aws_config/testing_policies` with the `debug_botocore_endpoint_logs` module option set to True
-   (this only collects actions for AnsibleAWSModule so boto/non AnsibleAWSModule modules will need to use the iterative approach above)
+The simplest way is to run the tests using ample permissions with the `debug_botocore_endpoint_logs` module option for AnsibleAWSModule modules.
+After the `PLAY RECAP` of the completed tests the list of AWS actions that need to be allowed will be displayed.
+1) Ensure you set the `debug_botocore_endpoint_logs` module option set to True in your tests.
 ```
 - module_defaults:
     group/aws:
       debug_botocore_endpoint_logs: True
 ```
-2) Create a policy allowing those actions
-3) Inspect the documentation and add resource restriction to account, region, and and prefix where possible
-4) Use the [policy simulator](https://policysim.aws.amazon.com/) to check that the actions listed succeed and return to step 2 if not
-5) Remove the `hacking/aws_config/testing_policy` from your user and run the tests with the new policy
-    a) If they fail, AWS may be using additional resources (the FullAccess policy for the service for clues) - troubleshoot and return to step 2
-6) Share the minimum policy in a comment
+2) Run your tests. There should be a list of `AWS ACTIONS` at the end with all the permissions used.
+  [Create a policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html#access_policies_create-start) that allows those actions.
+3) Inspect the documentation and add resource restriction to account, region, and and prefix where possible.
+4) Run the tests with a user or role that only allows the new policy.
+    a) If the tests are failing you will need to troubleshoot.
+        - Is a boto/AnsibleModule module being used? If so, use the iterative approach for the failure outlined below.
+        - You may need to wait a few minutes for your policy to update before rerunning the tests.
+        - Use the [policy simulator](https://policysim.aws.amazon.com/) to verify that each action (limited by resource when applicable) is allowed.
+        - If you're restricting actions to certain resources, replace resources temporarily with `*` to determine whether the resources are the issue.
+          If the test succeeds with wildcard resources, there is a problem with the resource.
+    b) If the initial troubleshooting above doesn't provide any more insight, AWS may be using additional undisclosed resources and actions.
+        - Examine the AWS FullAccess policy for the service for clues.
+        - Re-read the docs.
+        - Use a search engine.
+        - Ask in the Ansible IRC channel #ansible-aws.
+    c) Modify the policy if it is incorrect and repeat step 4 until the tests complete.
+6) Share the minimum policy in a comment.
+
+If your tests are using boto/AnsibleModule modules an iterative approach over each failure will need to be used for that portion of the tests.
+1) Run the integration tests with the policy created above (or without any IAM permissions at all if the `debug_botocore_endpoint_logs` process was not used).
+2) Examine the error when the tests reach a failure.
+    a) If the error message is informative about the action used in the request, add the action to your policy.
+    b) If the error message is not informative about the action used in the request
+        - Usually the CamelCase of the method used is the action performed - e.g. for an ec2 client the method describe_security_groups correlates to
+          `ec2:DescribeSecurityGroups`.
+        - Refer to the documentation to identify the action.
+    c) If the error message indicates the resource ARN used in the request, limit the action to that resource.
+    d) If the error message is not informative about the resource ARN used
+        - Determine if the action can be restricted to a resource by examining the documentation.
+        - If the action can be restricted, use the documentation to construct the ARN and add it to the policy.
+3) Run the tests again with the updated policy attached to your user or role.
+    a) If the tests are failing at the same place with the same error you will need to troubleshoot.
+        - You may need to wait a few minutes for your policy to update.
+        - Use the [policy simulator](https://policysim.aws.amazon.com/) to check if it allow the action (limited by resource when applicable) that's failing.
+        - If you're restricting actions to certain resources, replace resources temporarily with `*` to determine whether they are the issue.
+          If the test succeeds with wildcard resources, there is a problem with the resource.
+    b) If the initial troubleshooting above doesn't provide any more insight, AWS may be using additional undisclosed resources and actions.
+        - Examine the AWS FullAccess policy for the service for clues.
+        - Re-read the docs.
+        - Use a search engine.
+        - Ask in the Ansible IRC channel #ansible-aws.
+    c) Remove the permission/resource if it is incorrect and replace it with the correct one.
+4) Run the tests and repeat step 2 until the tests complete, and share the minimum policy in a comment.
 
 Some cases where tests should be marked as unsupported:
 1) The tests take longer than 10 or 15 minutes to complete
