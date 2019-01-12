@@ -2,5 +2,5 @@ shippable/posix/group3
 skip/rhel7.6
 skip/rhel8.0
 skip/freebsd11.1
-skip/linuxcentos6
+skip/centos6
 
