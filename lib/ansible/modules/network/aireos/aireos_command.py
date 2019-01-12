@@ -22,8 +22,9 @@ description:
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-  - This module does not support running commands in configuration mode.
-    Please use M(aireos_config) to configure WLC devices.
+  - This module only supports a limited number of configuration commands
+    that utilize prompts (commands listed below). Please use M(aireos_config)
+    for all other commands.
 extends_documentation_fragment: aireos
 options:
   commands:
@@ -32,7 +33,13 @@ options:
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
-        the number of retries has expired.
+        the number of retries has expired. Supported config commands:
+        C(config 802.11b 11gSupport), C(config ap bridgegroupname),
+        C(config ap group-name), C(config ap reset), C(config ap role),
+        C(config auto-configure voice), C(config ipv6 capwap udplite),
+        C(config lag), C(config mesh client-access), C(config mesh linktest),
+        C(config mesh public-safety), C(config mesh security lsc-only-auth),
+        C(config mesh range)
     required: true
   wait_for:
     description:
@@ -149,8 +156,10 @@ def parse_commands(module, warnings):
                     break
             else:
                 module.fail_json(
-                    msg='aireos_command does not support running config mode '
-                        'commands.  Please use aireos_config instead'
+                    msg='aireos_command only supports a limited number of '
+                        'config mode commands(`%s`). See documentation for '
+                        'more details. Please use aireos_config instead'
+                        % '`, `'.join(aireos_config_exclusions)
                 )
     return commands
 

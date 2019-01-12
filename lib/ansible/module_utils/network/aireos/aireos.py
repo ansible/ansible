@@ -54,9 +54,22 @@ aireos_top_spec = {
 }
 aireos_argument_spec.update(aireos_top_spec)
 
+# Modify aireos_command documentation when you update this list
+# Be as specific as necessary to not exclude other commands
 aireos_config_exclusions = [
-    'config ap reset',
+    'config 802.11b 11gSupport',
+    'config ap bridgegroupname',
     'config ap group-name',
+    'config ap reset',
+    'config ap role',
+    'config auto-configure voice',
+    'config ipv6 capwap udplite',
+    'config lag',
+    'config mesh client-access',
+    'config mesh linktest',
+    'config mesh public-safety',
+    'config mesh security lsc-only-auth',
+    'config mesh range',
 ]
 
 
