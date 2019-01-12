@@ -584,6 +584,7 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
             (r'([^ ]+)( +)(:)',
                 bygroups(token.Name, token.Text, token.Punctuation),
                 'host-result'),
+            (r'(\tto retry, use: )(.*)(\n)', bygroups(token.Text, token.Literal.String, token.Text)),
             (r'.*\n', token.Other),
         ],
     }
