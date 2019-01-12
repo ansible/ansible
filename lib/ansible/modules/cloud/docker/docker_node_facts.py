@@ -31,17 +31,17 @@ options:
       - The name of the node to inspect.
       - The list of nodes names to inspect.
       - If empty then return information of all nodes in Swarm cluster.
-      - When identifying an existing node name may either the hostname of the node (as registered in Swarm) or node ID.
-      - If I(self) is C(True) then this parameter is ignored.
+      - When identifying the node use either the hostname of the node (as registered in Swarm) or node ID.
+      - If I(self) is C(true) then this parameter is ignored.
     required: false
   self:
     description:
-      - If C(True) then query the host module run on or one specified as I(docker_host).
-      - If C(True) then I(name) is ignored.
-      - If C(False) then query depends on I(name) presence and value.
+      - If C(true), queries the node (i.e. the docker daemon) the module communicates with.
+      - If C(true) then I(name) is ignored.
+      - If C(false) then query depends on I(name) presence and value.
     required: false
     type: bool
-    default: False
+    default: false
 extends_documentation_fragment:
     - docker
 
@@ -86,25 +86,17 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-exists:
+nodes_facts:
     description:
-      - Returns whether the node exists in docker swarm cluster.
-    type: bool
-    returned: always
-    sample: true
-node_facts:
-    description:
-      - Facts representing the current state of the node. Matches the C(docker node inspect) output.
-      - Will be C(None) if node does not exist.
+      - Facts representing the current state of the nodes. Matches the C(docker node inspect) output.
+      - Will be C(none) if node does not exist.
       - Will contain multiple entries if more than one node provided in I(name).
       - If I(name) contains list of nodes, the output will contain information only about registered nodes.
     returned: always
-    type: dict
-
+    type: list
 '''
 
 from ansible.module_utils.docker_swarm import AnsibleDockerSwarmClient
-from ansible.module_utils._text import to_native
 
 try:
     from docker.errors import APIError, NotFound
@@ -158,8 +150,7 @@ def main():
 
     client.module.exit_json(
         changed=False,
-        exists=(True if node else False),
-        node_facts=node,
+        nodes_facts=node,
     )
 
 
