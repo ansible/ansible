@@ -12,6 +12,7 @@ import sys
 
 from lib.util import (
     ApplicationError,
+    display,
     read_lines_without_comments,
 )
 
@@ -392,6 +393,17 @@ def analyze_integration_target_dependencies(integration_targets):
 
         if not changes:
             break
+
+    for target_name in sorted(dependencies):
+        consumers = dependencies[target_name]
+
+        if not consumers:
+            continue
+
+        display.info('%s:' % target_name, verbosity=4)
+
+        for consumer in sorted(consumers):
+            display.info('  %s' % consumer, verbosity=4)
 
     return dependencies
 
