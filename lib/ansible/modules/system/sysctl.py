@@ -242,7 +242,7 @@ class SysctlModule(object):
             thiscmd = "%s %s=%s" % (self.sysctl_cmd, token, value)
         elif self.platform == 'freebsd':
             ignore_missing = ''
-            if self.args['gnore_unknown_keys']:
+            if self.args['ignore_unknown_keys']:
                 ignore_missing = '-i'
             # freebsd doesn't accept -w, but since it's not needed, just drop it
             thiscmd = "%s %s %s=%s" % (self.sysctl_cmd, ignore_missing, token, value)
