@@ -255,7 +255,7 @@ class AnsibleYamlLexer(ExtendedRegexLexer):
             # whitespaces separating tokens
             (r'[ ]+', token.Text),
             # key with colon
-            (r'([^,:?\[\]{}\n]+)(:)(?=[ ]|$)',
+            (r'''([^,:?\[\]{}"'\n]+)(:)(?=[ ]|$)''',
              bygroups(token.Name.Tag, set_indent(token.Punctuation, implicit=True))),
             # tags, anchors and aliases,
             include('descriptors'),
@@ -334,7 +334,7 @@ class AnsibleYamlLexer(ExtendedRegexLexer):
         # a flow mapping indicated by '{' and '}'
         'flow-mapping': [
             # key with colon
-            (r'([^,:?\[\]{}\n]+)(:)(?=[ ]|$)',
+            (r'''([^,:?\[\]{}"'\n]+)(:)(?=[ ]|$)''',
              bygroups(token.Name.Tag, token.Punctuation)),
             # include flow collection rules
             include('flow-collection'),
