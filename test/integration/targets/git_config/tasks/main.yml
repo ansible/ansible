@@ -1,147 +1,21 @@
 ---
-# ------
-# testing parameters exclusion : state and list_all
-- import_tasks: set_up_without_value.yml
+# test code for the git_config module
 
-- name: testing exclusion between state and list_all parameters
-  git_config:
-    list_all: true
-    state: absent
-  register: result
-  ignore_errors: yes
+- name: setup
+  import_tasks: setup.yml
 
-- name: assert git_config failed
-  assert:
-    that:
-      - result is failed
-      - "result.msg == 'parameters are mutually exclusive: list_all, state'"
-
-# ------
-# testing get/set option without state
-- import_tasks: set_up_without_value.yml
-
-- name: setting value without state
-  git_config:
-    name: "{{ option_name }}"
-    value: "{{ option_value }}"
-    scope: "{{ option_scope }}"
-  register: set_result
-
-- name: getting value without state
-  git_config:
-    name: "{{ option_name }}"
-    scope: "{{ option_scope }}"
-  register: get_result
-
-- name: assert set changed and value is correct
-  assert:
-    that:
-      - set_result.changed == true
-      - set_result.diff.before == "\n"
-      - set_result.diff.after == option_value + "\n"
-      - get_result.changed == false
-      - get_result.config_value == option_value
-
-# ------
-# testing get/set option with state=present
-- import_tasks: set_up_without_value.yml
-
-- name: setting value with state=present
-  git_config:
-    name: "{{ option_name }}"
-    value: "{{ option_value }}"
-    scope: "{{ option_scope }}"
-    state: present
-  register: result
-
-- name: getting value with state=present
-  git_config:
-    name: "{{ option_name }}"
-    scope: "{{ option_scope }}"
-    state: present
-  register: get_result
-
-- name: assert set changed and value is correct with state=present
-  assert:
-    that:
-      - set_result.changed == true
-      - set_result.diff.before == "\n"
-      - set_result.diff.after == option_value + "\n"
-      - get_result.changed == false
-      - get_result.config_value == option_value
-
-# ------
-# testing state=absent without value to delete
-- import_tasks: set_up_without_value.yml
-
-- name: unsetting value
-  git_config:
-    name: "{{ option_name }}"
-    scope: "{{ option_scope }}"
-    state: absent
-  register: unset_result
-
-- name: getting value
-  git_config:
-    name: "{{ option_name }}"
-    scope: "{{ option_scope }}"
-  register: get_result
-
-- name: assert unsetting didn't change
-  assert:
-    that:
-      - unset_result.changed == false
-      - unset_result.msg == 'no setting to unset'
-      - get_result.config_value == ''
-
-# ------
-# testing state=absent with value to delete
-- import_tasks: set_up_with_value.yml
-
-- name: unsetting value
-  git_config:
-    name: "{{ option_name }}"
-    scope: "{{ option_scope }}"
-    state: absent
-  register: unset_result
-
-- name: getting value
-  git_config:
-    name: "{{ option_name }}"
-    scope: "{{ option_scope }}"
-  register: get_result
-
-- name: assert unset changed and deleted value
-  assert:
-    that:
-      - unset_result.changed == true
-      - unset_result.diff.before == option_value + "\n"
-      - unset_result.diff.after == "\n"
-      - get_result.config_value == ''
-
-# ------
-# testing state=absent with check mode
-- import_tasks: set_up_with_value.yml
-
-- name: unsetting value with check mode
-  git_config:
-    name: "{{ option_name }}"
-    scope: "{{ option_scope }}"
-    state: absent
-  check_mode: yes
-  register: unset_result
-
-- name: getting value
-  git_config:
-    name: "{{ option_name }}"
-    scope: "{{ option_scope }}"
-  register: get_result
-
-- name: assert unset changed but dit not delete value
-  assert:
-    that:
-      - unset_result.changed == true
-      - unset_result.diff.before == option_value + "\n"
-      - unset_result.diff.after == "\n"
-      - get_result.config_value == option_value
+- block:
+    # testing parameters exclusion: state and list_all
+    - import_tasks: exclusion_state_list-all.yml
+    # testing get/set option without state
+    - import_tasks: get_set_no_state.yml
+    # testing get/set option with state=present
+    - import_tasks: get_set_state_present.yml
+    # testing state=absent without value to delete
+    - import_tasks: unset_no_value.yml
+    # testing state=absent with value to delete
+    - import_tasks: unset_value.yml
+    # testing state=absent with check mode
+    - import_tasks: unset_check_mode.yml
+  when: git_installed is succeeded and git_version.stdout is version(git_version_supporting_includes, ">=")
 ...
