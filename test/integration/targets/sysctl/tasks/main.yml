@@ -35,11 +35,11 @@
   ignore_errors: yes
 
 - set_fact:
-    reload_supported: yes
+    sysctl_cmd_supported: yes
   when: sysctl_command_test.rc == 0
 
 - set_fact:
-    reload_supported: no
+    sysctl_cmd_supported: no
   when: sysctl_command_test.rc != 0
 
 
@@ -139,15 +139,18 @@
     value: 1
     sysctl_set: yes
     reload: no
+  when: sysctl_cmd_supported 
   register: sysctl_test3
 
 - name: check with sysctl command
   shell: sysctl net.ipv4.ip_forward
+  when: sysctl_cmd_supported
   register: sysctl_check3
 
 - debug:
     var: item
     verbosity: 1
+  when: sysctl_cmd_supported
   with_items:
     - "{{ sysctl_test3 }}"
     - "{{ sysctl_check3 }}"
@@ -157,6 +160,7 @@
     that:
       - sysctl_test3 is changed
       - 'sysctl_check3.stdout_lines == ["net.ipv4.ip_forward = 1"]'
+  when: sysctl_cmd_supported
 
 - name: Try sysctl with no name
   sysctl:
@@ -164,6 +168,7 @@
     value: 1
     sysctl_set: yes
   ignore_errors: True
+  when: sysctl_cmd_supported
   register: sysctl_no_name
 
 - name: validate nameless results
@@ -171,6 +176,7 @@
     that:
       - sysctl_no_name is failed
       - "sysctl_no_name.msg == 'name cannot be None'"
+  when: sysctl_cmd_supported
 
 - name: Try sysctl with no value
   sysctl:
@@ -178,6 +184,7 @@
     value:
     sysctl_set: yes
   ignore_errors: True
+  when: sysctl_cmd_supported
   register: sysctl_no_value
 
 - name: validate nameless results
@@ -185,6 +192,7 @@
     that:
       - sysctl_no_value is failed
       - "sysctl_no_value.msg == 'value cannot be None'"
+  when: sysctl_cmd_supported
 
 ## 
 ## sysctl - sysctl_set with ignore_errors and ignoreerrors (to ensure backward compatibility) 
@@ -195,7 +203,7 @@
     name: k.doesnotexist
     value: 1 
     ignore_unknown_keys: yes
-    reload: "{{ reload_supported }}"
+    reload: "{{ sysctl_cmd_supported }}"
   register: sysctl_ignore_unknown_keys0
   
 - debug:
@@ -212,7 +220,7 @@
     name: k.doesnotexist
     value: 1 
     ignoreerrors: yes
-    reload: "{{ reload_supported }}"
+    reload: "{{ sysctl_cmd_supported }}"
   register: sysctl_ignoreerrors0
   
 - debug:
