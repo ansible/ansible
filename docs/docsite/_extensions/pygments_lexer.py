@@ -579,6 +579,8 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
             (r'(fatal|ok|changed|skipping)(:)( )',
                 bygroups(token.Keyword, token.Punctuation, token.Text),
                 'host-name'),
+            (r'(\[)(WARNING)(\]:)([^\n]+)',
+                bygroups(token.Punctuation, token.Keyword, token.Punctuation, token.Text)),
             (r'([^ ]+)( +)(:)',
                 bygroups(token.Name, token.Text, token.Punctuation),
                 'host-result'),
