@@ -555,8 +555,8 @@ class AnsibleOutputPrimaryLexer(RegexLexer):
         ],
 
         'host-error': [
-            (r'(?:( )(UNREACHABLE|FAILED)(!))?',
-                bygroups(token.Text, token.Keyword, token.Punctuation),
+            (r'(?:(:)( )(UNREACHABLE|FAILED)(!))?',
+                bygroups(token.Punctuation, token.Text, token.Keyword, token.Punctuation),
                 'host-postfix'),
             (r'', token.Text, 'host-postfix'),
         ],
