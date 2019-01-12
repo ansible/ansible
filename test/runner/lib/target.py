@@ -378,8 +378,9 @@ def analyze_integration_target_dependencies(integration_targets):
                 dependencies[link_target].add(target.name)
 
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
-    for role_target in role_targets:
-        meta_dir = os.path.join(role_target.path, 'meta')
+    # script based targets are scanned as they may execute a playbook with role dependencies
+    for target in integration_targets:
+        meta_dir = os.path.join(target.path, 'meta')
 
         if not os.path.isdir(meta_dir):
             continue
@@ -400,7 +401,7 @@ def analyze_integration_target_dependencies(integration_targets):
 
                     for hidden_target_name in hidden_role_target_names:
                         if hidden_target_name in meta_line:
-                            dependencies[hidden_target_name].add(role_target.name)
+                            dependencies[hidden_target_name].add(target.name)
 
     while True:
         changes = 0
