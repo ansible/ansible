@@ -25,8 +25,10 @@ options:
             - The hostname or ID of node as registered in Swarm.
             - If more than one node is registered using the same hostname the ID must be used,
               otherwise task will fail.
+        required: true
+        type: str
     labels:
-        description: User-defined key/value metadata.
+        description: User-defined key/value metadata. If not provided then labels assigned to node remains unchanged.
         type: dict
     labels_state:
         description:
@@ -45,17 +47,23 @@ options:
           - replace
           - remove
         default: 'merge'
+        required: false
+        type: str
     availability:
-        description: Node availability status to assign.
+        description: Node availability to assign. If not provided then node availability remains unchanged.
         choices:
           - active
           - pause
           - drain
+        required: false
+        type: str
     role:
-        description: Node role to assign.
+        description: Node role to assign. If not provided then node role remains unchanged.
         choices:
           - manager
           - worker
+        required: false
+        type: str
 extends_documentation_fragment:
     - docker
 requirements:
@@ -262,7 +270,7 @@ class SwarmNodeManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
-        hostname=dict(type='str'),
+        hostname=dict(type='str', required=True),
         labels=dict(type='dict'),
         labels_state=dict(type='str', choices=['merge', 'replace', 'remove'], default='merge'),
         availability=dict(type='str', choices=['active', 'pause', 'drain']),
