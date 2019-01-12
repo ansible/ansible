@@ -130,7 +130,7 @@ class AnsibleAWSModule(object):
 
         self._botocore_endpoint_log_stream = StringIO()
         self.logger = None
-        if self.params['debug_botocore_endpoint_logs']:
+        if self.params.get('debug_botocore_endpoint_logs'):
             self.logger = logging.getLogger('botocore.endpoint')
             self.logger.setLevel(logging.DEBUG)
             self.logger.addHandler(logging.StreamHandler(self._botocore_endpoint_log_stream))
@@ -153,12 +153,12 @@ class AnsibleAWSModule(object):
         return list(set(actions))
 
     def exit_json(self, *args, **kwargs):
-        if self.params['debug_botocore_endpoint_logs']:
+        if self.params.get('debug_botocore_endpoint_logs'):
             kwargs['resource_actions'] = self._get_resource_action_list()
         return self._module.exit_json(*args, **kwargs)
 
     def fail_json(self, *args, **kwargs):
-        if self.params['debug_botocore_endpoint_logs']:
+        if self.params.get('debug_botocore_endpoint_logs'):
             kwargs['resource_actions'] = self._get_resource_action_list()
         return self._module.fail_json(*args, **kwargs)
 
@@ -221,7 +221,7 @@ class AnsibleAWSModule(object):
 
         if response is not None:
             failure.update(**camel_dict_to_snake_dict(response))
-        if self.params['debug_botocore_endpoint_logs']:
+        if self.params.get('debug_botocore_endpoint_logs'):
             failure.update({'resource_actions': self._get_resource_action_list()})
 
         self._module.fail_json(**failure)
