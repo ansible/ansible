@@ -205,6 +205,9 @@
 ## 
 ## sysctl - sysctl_set with ignore_unknown_keys and ignoreerrors (to ensure backward compatibility) 
 ## 
+- debug: 
+    var: ansible_os_family 
+    verbosity: 1
 
 - name: set value for fictional key with ignore_unknown_keys
   sysctl: 
