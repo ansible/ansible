@@ -203,7 +203,7 @@
   when: sysctl_cmd_supported
 
 ## 
-## sysctl - sysctl_set with ignore_errors and ignoreerrors (to ensure backward compatibility) 
+## sysctl - sysctl_set with ignore_unknown_keys and ignoreerrors (to ensure backward compatibility) 
 ## 
 
 - name: set value for fictional key with ignore_unknown_keys
@@ -213,15 +213,18 @@
     ignore_unknown_keys: yes
     reload: "{{ sysctl_cmd_supported }}"
   register: sysctl_ignore_unknown_keys0
+  when: ansible_os_family != 'RedHat'
   
 - debug:
     var: sysctl_ignore_unknown_keys0
     verbosity: 1
+  when: sysctl_cmd_supported and ansible_os_family != 'RedHat'
 
 - name: validate success of set operation with ignore_unknown_keys
   assert: 
     that: 
       - sysctl_ignore_unknown_keys0 is success
+  when: sysctl_cmd_supported and ansible_os_family != 'RedHat'
 
 - name: set value for fictional key with ignoreerrors
   sysctl: 
@@ -230,12 +233,15 @@
     ignoreerrors: yes
     reload: "{{ sysctl_cmd_supported }}"
   register: sysctl_ignoreerrors0
+  when: ansible_os_family != 'RedHat'
   
 - debug:
     var: sysctl_ignoreerrors0
     verbosity: 1
+  when: sysctl_cmd_supported and ansible_os_family != 'RedHat'
 
 - name: validate success of set operation with ignoreerrors
   assert: 
     that: 
       - sysctl_ignoreerrors0 is success
+  when: sysctl_cmd_supported and ansible_os_family != 'RedHat'
