@@ -33,13 +33,14 @@ options:
         configured provider. The resulting output from the command
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
-        the number of retries has expired. Supported config commands:
+        the number of retries has expired.
+      - Supported config commands = (
         C(config 802.11b 11gSupport), C(config ap bridgegroupname),
         C(config ap group-name), C(config ap reset), C(config ap role),
         C(config auto-configure voice), C(config ipv6 capwap udplite),
         C(config lag), C(config mesh client-access), C(config mesh linktest),
         C(config mesh public-safety), C(config mesh security lsc-only-auth),
-        C(config mesh range)
+        C(config mesh range) )
     required: true
   wait_for:
     description:
