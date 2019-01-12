@@ -34,6 +34,10 @@
   register: sysctl_command_test
   ignore_errors: yes
 
+- debug:
+    var: sysctl_command_test
+    verbosity: 1
+
 - set_fact:
     sysctl_cmd_supported: yes
   when: sysctl_command_test.rc == 0
@@ -41,6 +45,10 @@
 - set_fact:
     sysctl_cmd_supported: no
   when: sysctl_command_test.rc != 0
+
+- debug:
+    var: sysctl_cmd_supported
+    verbosity: 1
 
 
 ##
@@ -139,7 +147,7 @@
     value: 1
     sysctl_set: yes
     reload: no
-  when: sysctl_cmd_supported 
+  when: sysctl_cmd_supported
   register: sysctl_test3
 
 - name: check with sysctl command
