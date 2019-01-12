@@ -30,7 +30,7 @@
     state: directory
 
 - name: check if sysctl command is available
-  shell: command -v sysctl
+  shell: sysctl -w net.ipv4.ip_forward=0
   register: sysctl_command_test
   ignore_errors: yes
 
