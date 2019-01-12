@@ -1,0 +1,6 @@
+---
+# ------
+# set up : deleting git option {{ option_name }}
+- name: set up with value
+  command: "git config --{{ option_scope }} {{ option_name }} {{ option_value }}"
+...

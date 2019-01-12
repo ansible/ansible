@@ -256,7 +256,7 @@ def main():
             before_header=' '.join(args),
             before=old_value + "\n",
             after_header=' '.join(args),
-            after=(new_value if new_value else '') + "\n"
+            after=(new_value or '') + "\n"
         ),
         changed=True
     )

@@ -1,0 +1,5 @@
+---
+option_name: http.proxy
+option_value: 'foo'
+option_scope: global
+...

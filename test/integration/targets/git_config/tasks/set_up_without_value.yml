@@ -1,0 +1,8 @@
+---
+# ------
+# set up : deleting git option {{ option_name }}
+- name: set up without value
+  command: "git config --{{ option_scope }} --unset {{ option_name }}"
+  register: result
+  failed_when: result.rc != 0 and result.rc != 5
+...
