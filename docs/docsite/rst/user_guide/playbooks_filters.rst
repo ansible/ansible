@@ -904,7 +904,9 @@ style. For example the following::
 
     {{ "Plain style (default)" | comment }}
 
-will produce this output::
+will produce this output:
+
+.. code-block:: text
 
     #
     # Plain style (default)
@@ -923,7 +925,9 @@ above, you can customize it with::
 
   {{ "My Special Case" | comment(decoration="! ") }}
 
-producing::
+producing:
+
+.. code-block:: text
 
   !
   ! My Special Case
@@ -935,7 +939,7 @@ It is also possible to fully customize the comment style::
 
 That will create the following output:
 
-.. code-block:: sh
+.. code-block:: text
 
     #######
     #

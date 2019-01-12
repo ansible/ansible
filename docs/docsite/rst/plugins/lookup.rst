@@ -41,24 +41,20 @@ Using lookup plugins
 
 Lookup plugins can be used anywhere you can use templating in Ansible: in a play, in variables file, or in a Jinja2 template for the :ref:`template <template_module>` module.
 
-.. code-block:: yaml
+.. code-block:: YAML+Jinja
 
   vars:
     file_contents: "{{lookup('file', 'path/to/file.txt')}}"
 
 Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup.
-This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup:
-
-.. code-block:: yaml
+This is also the reason most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::
 
   tasks:
     - name: count to 3
       debug: msg={{item}}
       with_items: [1, 2, 3]
 
-You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` and even each other to do some complex data generation and manipulation. For example:
-
-.. code-block:: yaml
+You can combine lookups with :ref:`playbooks_filters`, :ref:`playbooks_tests` and even each other to do some complex data generation and manipulation. For example::
 
   tasks:
     - name: valid but useless and over complicated chained lookups and filters
@@ -77,6 +73,8 @@ To ignore errors::
     - name: file doesnt exist, but i dont care .. file plugin itself warns anyways ...
       debug: msg="{{ lookup('file', '/idontexist', errors='ignore') }}"
 
+.. code-block:: ansible-output
+
     [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
 
     ok: [localhost] => {
@@ -88,6 +86,8 @@ To get a warning instead of a failure::
 
     - name: file doesnt exist, let me know, but continue
       debug: msg="{{ lookup('file', '/idontexist', errors='warn') }}"
+
+.. code-block:: ansible-output
 
     [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
 
@@ -102,6 +102,8 @@ Fatal error (the default)::
 
     - name: file doesnt exist, FAIL (this is the default)
       debug: msg="{{ lookup('file', '/idontexist', errors='strict') }}"
+
+.. code-block:: ansible-output
 
     [WARNING]: Unable to find '/idontexist' in expected paths (use -vvvvv to see paths)
 
@@ -120,7 +122,9 @@ The default behavior of ``lookup`` is to return a string of comma separated valu
 
 This was done primarily to provide an easier and more consistent interface for interacting with the new ``loop`` keyword, while maintaining backwards compatibility with other uses of ``lookup``.
 
-The following examples are equivalent::
+The following examples are equivalent:
+
+.. code-block:: jinja
 
     lookup('dict', dict_variable, wantlist=True)
 
@@ -128,7 +132,9 @@ The following examples are equivalent::
 
 As demonstrated above the behavior of ``wantlist=True`` is implicit when using ``query``.
 
-Additionally, ``q`` was introduced as a shortform of ``query``::
+Additionally, ``q`` was introduced as a shortform of ``query``:
+
+.. code-block:: jinja
 
     q('dict', dict_variable)
 
