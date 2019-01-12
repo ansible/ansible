@@ -196,7 +196,49 @@ class PathMapper(object):
         self.powershell_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
         self.csharp_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
 
+        self.paths_to_dependent_targets = {}
+
+        for target in self.integration_targets:
+            for path in target.needs_file:
+                if path not in self.paths_to_dependent_targets:
+                    self.paths_to_dependent_targets[path] = set()
+
+                self.paths_to_dependent_targets[path].add(target)
+
     def get_dependent_paths(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        unprocessed_paths = set(self.get_dependent_paths_non_recursive(path))
+        paths = set()
+
+        while unprocessed_paths:
+            queued_paths = list(unprocessed_paths)
+            paths |= unprocessed_paths
+            unprocessed_paths = set()
+
+            for queued_path in queued_paths:
+                new_paths = self.get_dependent_paths_non_recursive(queued_path)
+
+                for new_path in new_paths:
+                    if new_path not in paths:
+                        unprocessed_paths.add(new_path)
+
+        return sorted(paths)
+
+    def get_dependent_paths_non_recursive(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        paths = self.get_dependent_paths_internal(path)
+        paths += [t.path + '/' for t in self.paths_to_dependent_targets.get(path, set())]
+        paths = sorted(set(paths))
+
+        return paths
+
+    def get_dependent_paths_internal(self, path):
         """
         :type path: str
         :rtype: list[str]

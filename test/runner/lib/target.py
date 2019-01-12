@@ -626,6 +626,11 @@ class IntegrationTarget(CompletionTarget):
         if self.type not in ('script', 'role'):
             groups.append('hidden')
 
+        # Collect file paths before group expansion to avoid including the directories.
+        # Ignore references to test targets, as those must be defined using `needs/target/*` or other target references.
+        self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if
+                                           g.startswith('needs/file/') and not g.startswith('needs/file/test/integration/targets/'))))
+
         for group in itertools.islice(groups, 0, len(groups)):
             if '/' in group:
                 parts = group.split('/')
