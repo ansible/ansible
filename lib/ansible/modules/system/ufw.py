@@ -322,7 +322,8 @@ def main():
                       'reloaded': 'reload', 'reset': 'reset'}
 
             if module.check_mode:
-                ufw_enabled = pre_state.find("active") != -1
+                # "active" would also match "inactive", hence the space
+                ufw_enabled = pre_state.find(" active") != -1
                 if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and not ufw_enabled):
                     changed = True
             else:
@@ -349,7 +350,7 @@ def main():
 
         elif command == 'default':
             if module.check_mode:
-                extract = re.search(r'Default: (deny|allow) \(incoming\), (deny|allow) \(outgoing\), (deny|allow) \(routed\)', pre_state)
+                extract = re.search(r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject) \(routed\)', pre_state)
                 if extract:
                     current_default_values = {}
                     current_default_values["incoming"] = extract.group(1)
@@ -404,8 +405,9 @@ def main():
         return module.exit_json(changed=changed, commands=cmds)
     else:
         post_state = execute([[ufw_bin], ['status'], ['verbose']])
-        post_rules = get_current_rules()
-        changed = (pre_state != post_state) or (pre_rules != post_rules)
+        if not changed:
+            post_rules = get_current_rules()
+            changed = (pre_state != post_state) or (pre_rules != post_rules)
         return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
 
 
