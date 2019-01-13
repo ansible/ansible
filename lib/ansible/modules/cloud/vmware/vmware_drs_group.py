@@ -164,6 +164,8 @@ class VmwareDrsGroupManager(PyVmomi):
         self.__cluster_name = cluster_name
         self.__cluster_obj = None
         self.__group_name = group_name
+        self.__group_obj = None
+        self.__operation = None
         self.__vm_list = vm_list
         self.__vm_obj_list = []
         self.__host_list = host_list
@@ -185,17 +187,30 @@ class VmwareDrsGroupManager(PyVmomi):
                                                   datacenter=self.__datacenter_obj)
 
         # Throw error if cluster does not exist
-        if self.__cluster_obj is None and module.check_mode is False:
-            raise Exception("Cluster '%s' not found" % self.__cluster_name)
+        if self.__cluster_obj is None:
+            if module.check_mode is False
+                raise Exception("Cluster '%s' not found" % self.__cluster_name)
+        else:
+            # get group
+            self.__group_obj = self.__get_group_by_name()
+            # Set result here. If nothing is to be updated, result is already set
+            self.__set_result(self.__group_obj)
 
         # Dont populate lists if we are deleting group
         if state == 'present':
+
+            if self.__group_obj:
+                self.__operation = 'edit'
+            else:
+                self.__operation = 'add'
 
             if self.__vm_list is not None:
                 self.__set_vm_obj_list(vm_list=self.__vm_list)
 
             if self.__host_list is not None:
                 self.__set_host_obj_list(host_list=self.__host_list)
+        else:
+            self.__operation = 'remove'
 
     def get_msg(self):
         """
@@ -326,30 +341,6 @@ class VmwareDrsGroupManager(PyVmomi):
         # No group found
         return None
 
-    def __group_exists(self, group_name=None, cluster_obj=None):
-        """
-        Function to check if group already exists
-        Args:
-            group_name: Name of group
-            cluster_obj: vim Cluster object
-
-        Returns: Bool
-
-        """
-
-        if group_name is None:
-            group_name = self.__group_name
-
-        if cluster_obj is None:
-            cluster_obj = self.__cluster_obj
-
-        group = self.__get_group_by_name(group_name=group_name, cluster_obj=cluster_obj)
-
-        if group is None:
-            return False
-        else:
-            return True
-
     def __populate_vm_host_list(self, group_name=None, cluster_obj=None, host_group=False):
         """
         Return all VM/Host names using given group name
@@ -372,7 +363,7 @@ class VmwareDrsGroupManager(PyVmomi):
         if not all([group_name, cluster_obj]):
             return obj_name_list
 
-        group = self.__get_group_by_name()
+        group = self.__group_obj
 
         if not host_group and isinstance(group, vim.cluster.VmGroup):
             obj_name_list = [vm.name for vm in group.vm]
@@ -411,23 +402,14 @@ class VmwareDrsGroupManager(PyVmomi):
 
     def __create_host_group(self):
 
-        # Check if group exists
-        if self.__group_exists():
-            operation = 'edit'
-            existing_group_obj = self.__get_group_by_name()
-            # Set result here. If nothing is to be updated, result is already set
-            self.__set_result(existing_group_obj)
-        else:
-            operation = 'add'
-
         # Check if anything has changed when editing
-        if operation == 'add' or (operation == 'edit' and self.__check_if_vms_hosts_changed(host_group=True)):
+        if self.__operation == 'add' or (self.__operation == 'edit' and self.__check_if_vms_hosts_changed(host_group=True)):
 
             group = vim.cluster.HostGroup()
             group.name = self.__group_name
             group.host = self.__host_obj_list
 
-            group_spec = vim.cluster.GroupSpec(info=group, operation=operation)
+            group_spec = vim.cluster.GroupSpec(info=group, operation=self.__operation)
             config_spec = vim.cluster.ConfigSpecEx(groupSpec=[group_spec])
 
             if not self.module.check_mode:
@@ -438,31 +420,22 @@ class VmwareDrsGroupManager(PyVmomi):
             self.__set_result(group)
             self.__changed = True
 
-        if operation == 'edit':
+        if self.__operation == 'edit':
             self.__msg = "Updated host group %s successfully" % (self.__group_name)
         else:
             self.__msg = "Created host group %s successfully" % (self.__group_name)
 
     def __create_vm_group(self):
 
-        # Check if group exists
-        if self.__group_exists():
-            operation = 'edit'
-            existing_group_obj = self.__get_group_by_name()
-            # Set result here. If nothing is to be updated, result is already set
-            self.__set_result(existing_group_obj)
-        else:
-            operation = 'add'
-
         # Check if anything has changed when editing
-        if operation == 'add' or (operation == 'edit' and self.__check_if_vms_hosts_changed()):
+        if self.__operation == 'add' or (self.__operation == 'edit' and self.__check_if_vms_hosts_changed()):
 
             group = vim.cluster.VmGroup()
 
             group.name = self.__group_name
             group.vm = self.__vm_obj_list
 
-            group_spec = vim.cluster.GroupSpec(info=group, operation=operation)
+            group_spec = vim.cluster.GroupSpec(info=group, operation=self.__operation)
             config_spec = vim.cluster.ConfigSpecEx(groupSpec=[group_spec])
 
             # Check if dry run
@@ -473,7 +446,7 @@ class VmwareDrsGroupManager(PyVmomi):
             self.__set_result(group)
             self.__changed = True
 
-        if operation == 'edit':
+        if self.__operation == 'edit':
             self.__msg = "Updated vm group %s successfully" % (self.__group_name)
         else:
             self.__msg = "Created vm group %s successfully" % (self.__group_name)
@@ -521,17 +494,14 @@ class VmwareDrsGroupManager(PyVmomi):
         Function to delete a DRS host/vm group
         """
 
-        group = self.__get_group_by_name()
-        operation = 'remove'
-
-        if group is not None:
+        if self.__group_obj is not None:
 
             self.__changed = True
 
             # Check if dry run
             if not self.module.check_mode:
 
-                group_spec = vim.cluster.GroupSpec(removeKey=self.__group_name, operation=operation)
+                group_spec = vim.cluster.GroupSpec(removeKey=self.__group_name, operation=self.__operation)
                 config_spec = vim.cluster.ConfigSpecEx(groupSpec=[group_spec])
 
                 task = self.__cluster_obj.ReconfigureEx(config_spec, modify=True)
