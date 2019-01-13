@@ -321,6 +321,9 @@ def main():
             states = {'enabled': 'enable', 'disabled': 'disable',
                       'reloaded': 'reload', 'reset': 'reset'}
 
+            if value in ['reloaded', 'reset']:
+                changed = True
+
             if module.check_mode:
                 # "active" would also match "inactive", hence the space
                 ufw_enabled = pre_state.find(" active") != -1
@@ -328,9 +331,6 @@ def main():
                     changed = True
             else:
                 execute(cmd + [['-f'], [states[value]]])
-
-            if value in ['reloaded', 'reset']:
-                changed = True
 
         elif command == 'logging':
             extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', pre_state)

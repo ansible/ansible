@@ -163,7 +163,7 @@ class TestUFW(unittest.TestCase):
     def test_default_not_changed(self):
         set_module_args({
             'default': 'deny',
-            "direction": "incoming",
+            "direction": "routed",
             '_ansible_check_mode': True
         })
         self.assertFalse(self.__getResult().exception.args[0]['changed'])
