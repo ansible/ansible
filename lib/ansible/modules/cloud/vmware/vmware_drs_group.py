@@ -188,7 +188,7 @@ class VmwareDrsGroupManager(PyVmomi):
 
         # Throw error if cluster does not exist
         if self.__cluster_obj is None:
-            if module.check_mode is False
+            if module.check_mode is False:
                 raise Exception("Cluster '%s' not found" % self.__cluster_name)
         else:
             # get group
@@ -509,7 +509,7 @@ class VmwareDrsGroupManager(PyVmomi):
 
         # Dont throw error if group does not exist. Simply set changed = False
         if self.__changed:
-            self.__msg = "Delete group `%s` successfully" % (self.__group_name)
+            self.__msg = "Deleted group `%s` successfully" % (self.__group_name)
         else:
             self.__msg = "DRS group `%s` does not exists or already deleted" % (self.__group_name)
 
@@ -530,11 +530,16 @@ def main():
         hosts=dict(type='list')
     )
 
+    required_if = [
+        ['state', 'absent', ['group_name']]
+    ]
+
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_if=required_if,
         supports_check_mode=True,
         mutually_exclusive=[['vms', 'hosts']],
-        required_one_of=[['vms', 'hosts']],
+        required_one_of=[['vms', 'hosts']]
     )
 
     try:
