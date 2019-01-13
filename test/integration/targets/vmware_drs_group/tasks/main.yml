@@ -76,3 +76,24 @@
 - assert:
     that:
       - "drs_host_group_01_results.changed"
+
+- name: "Delete DRS Host group"
+  vmware_drs_group:
+    # Login creds
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: False
+    # Options
+    cluster_name: DC0_C0
+    datacenter_name: DC0
+    group_name: TEST_HOST_01
+    hosts: []
+    state: absent
+  register: drs_host_group_01_delete_results
+
+- debug: var=drs_host_group_01_delete_results
+
+- assert:
+    that:
+      - "drs_host_group_01_delete_results.changed"
