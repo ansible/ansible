@@ -20,6 +20,8 @@
   shell: |
     ufw status verbose | grep "^Logging:"
   register: ufw_logging
+  environment:
+    LC_ALL: C
 - name: Logging (idempotency)
   ufw:
     logging: yes
@@ -42,6 +44,8 @@
   shell: |
     ufw status verbose | grep "^Logging:"
   register: ufw_logging_change
+  environment:
+    LC_ALL: C
 - assert:
     that:
     - logging_check is changed
@@ -69,6 +73,8 @@
   shell: |
     ufw status verbose | grep "^Default:"
   register: ufw_defaults
+  environment:
+    LC_ALL: C
 - name: Default (idempotency)
   ufw:
     default: reject
@@ -95,6 +101,8 @@
   shell: |
     ufw status verbose | grep "^Default:"
   register: ufw_defaults_change
+  environment:
+    LC_ALL: C
 - assert:
     that:
     - default_check is changed
