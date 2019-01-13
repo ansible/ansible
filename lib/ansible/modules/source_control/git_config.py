@@ -53,7 +53,9 @@ options:
     choices: [ "local", "global", "system" ]
   state:
     description:
-      - Indicates the setting should be set/unset.
+      - "Indicates the setting should be set/unset.
+        This parameter has higher precedence than I(value) parameter:
+        when I(state)=absent and I(value) is defined, I(value) is discarded."
     choices: [ 'present', 'absent' ]
     default: 'present'
     version_added: '2.8'
@@ -190,6 +192,7 @@ def main():
 
     if params['state'] == 'absent':
         unset = 'unset'
+        params['value'] = None
     else:
         unset = None
 
