@@ -350,7 +350,8 @@ def main():
 
         elif command == 'default':
             if module.check_mode:
-                extract = re.search(r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject) \(routed\)', pre_state)
+                regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
+                extract = re.search(regexp, pre_state)
                 if extract:
                     current_default_values = {}
                     current_default_values["incoming"] = extract.group(1)
