@@ -99,6 +99,7 @@
   - "/bin/grep -h '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules"
   - "/sbin/ufw --version"
   - "/sbin/ufw --dry-run delete allow from any to 0.0.0.0 port 23"
+  - "/sbin/ufw version"
 - assert:
     that:
     - delete_ipv4_allow_check is changed
