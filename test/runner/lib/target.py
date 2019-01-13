@@ -389,7 +389,6 @@ def analyze_integration_target_dependencies(integration_targets):
                         if new_target_name not in dependent_target_names:
                             dependent_target_names.add(new_target_name)
                             changes += 1
-                    dependent_target_names.remove(dependent_target_name)
 
         if not changes:
             break
