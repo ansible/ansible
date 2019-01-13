@@ -257,7 +257,9 @@ def main():
         user_rules_files = ["/lib/ufw/user.rules",
                             "/lib/ufw/user6.rules",
                             "/etc/ufw/user.rules",
-                            "/etc/ufw/user6.rules"]
+                            "/etc/ufw/user6.rules",
+                            "/var/lib/ufw/user.rules",
+                            "/var/lib/ufw/user6.rules"]
 
         cmd = [[grep_bin], ["-h"], ["'^### tuple'"]]
 
