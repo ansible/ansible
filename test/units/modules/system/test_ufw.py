@@ -34,7 +34,7 @@ dry_mode_cmd = {
     "ufw --dry-run allow from any to any port 7000 proto tcp": skippg_adding_existing_rules,
     "ufw --dry-run delete allow from any to any port 7000 proto tcp": "",
     "ufw --dry-run delete allow from any to any port 7001 proto tcp": user_rules_with_port_7000,
-    "grep -h '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules": user_rules_with_port_7000
+    "grep -h '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules /var/lib/ufw/user.rules /var/lib/ufw/user6.rules": user_rules_with_port_7000
 }
 
 
