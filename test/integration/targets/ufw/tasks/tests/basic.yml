@@ -100,6 +100,8 @@
   - "/sbin/ufw --version"
   - "/sbin/ufw --dry-run delete allow from any to 0.0.0.0 port 23"
   - "/sbin/ufw version"
+  - "/sbin/ufw -f reset"
+  ignore_errors: yes
 - assert:
     that:
     - delete_ipv4_allow_check is changed
