@@ -1,0 +1,11 @@
+- name: Testing the module without pyodbc
+  odbc:
+    dsn: "Test"
+    query: "SELECT * FROM nothing"
+  ignore_errors: True
+  register: results
+
+- assert:
+    that:
+      - results is failed
+      - results.msg == 'pyodbc python module must be installed to use this module'

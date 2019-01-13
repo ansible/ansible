@@ -1,0 +1,7 @@
+- name: "Install {{ ansible_os_family }} Libraries"
+  package:
+    name: "{{ packages[ansible_os_family] }}"
+
+- name: "Install pyodbc"
+  pip:
+    name: pyodbc

@@ -1,0 +1,146 @@
+#
+# Test for proper failures without pyodbc
+#
+# The FreeBSD docker image appears to already have pyodbc installed on it
+- include_tasks: no_pyodbc.yml
+  when: ansible_os_family != 'FreeBSD' and ansible_os_family != 'Suse' and ansible_os_family != 'Debian'
+
+#
+# Get pyodbc installed
+#
+- include_tasks: install_pyodbc.yml
+
+#
+# Test missing parameters & invalid DSN
+#
+- include_tasks: negative_tests.yml
+
+#
+# Setup DSN per env
+#
+- name: Changing DNS for Suse
+  set_fact:
+    dsn: "DRIVER={PSQL};Server=localhost;Port=5432;Database=postgres;Uid={{ my_user }};Pwd={{ my_pass_decrypted }};UseUnicode=True"
+  when: ansible_os_family == 'Suse'
+
+- name: Changing DNS for Debian
+  set_fact:
+    dsn: "DRIVER={PostgreSQL Unicode};Server=localhost;Port=5432;Database=postgres;Uid={{ my_user }};Pwd={{ my_pass_decrypted }};UseUnicode=True"
+  when: ansible_os_family == 'Debian'
+
+#
+# Name setup database
+#
+- name: Create a user to run the tests with
+  postgresql_user:
+    name: "{{ my_user }}"
+    password: "{{ my_pass }}"
+    encrypted: 'yes'
+    role_attr_flags: "SUPERUSER"
+    db: postgres
+  become_user: "{{ pg_user }}"
+  become: True
+
+- name: Create a table
+  odbc:
+    dsn: "{{ dsn }}"
+    query: |
+        CREATE TABLE films (
+            code        char(5) CONSTRAINT firstkey PRIMARY KEY,
+            title       varchar(40) NOT NULL,
+            did         integer NOT NULL,
+            date_prod   date,
+            kind        varchar(10),
+            len         interval hour to minute
+        );
+  become_user: "{{ pg_user }}"
+  become: True
+  register: results
+
+- debug:
+    var: results
+
+- assert:
+    that:
+      - results is changed
+
+#
+# Insert records
+#
+- name: Insert a record without params
+  odbc:
+    dsn: "{{ dsn }}"
+    query: "INSERT INTO films (code, title, did, date_prod, kind, len) VALUES ('asdfg', 'My First Movie', 1, '2019-01-12', 'SyFi', '02:00')"
+  become_user: "{{ pg_user }}"
+  become: True
+  register: results
+
+- assert:
+    that:
+      - results is changed
+
+- name: Insert a record with params
+  odbc:
+    dsn: "{{ dsn }}"
+    query: "INSERT INTO films (code, title, did, date_prod, kind, len) VALUES (?, ?, ?, ?, ?, ?)"
+    params:
+      - 'qwert'
+      - 'My Second Movie'
+      - 2
+      - '2019-01-12'
+      - 'Comedy'
+      - '01:30'
+  become_user: "{{ pg_user }}"
+  become: True
+  register: results
+
+- assert:
+    that:
+      - results is changed
+
+#
+# Select data
+#
+- name: Perform select single row without params
+  odbc:
+    dsn: "{{ dsn }}"
+    query: "SELECT * FROM films WHERE code='asdfg'"
+  register: results
+
+- debug:
+    var: results
+
+- assert:
+    that:
+      - results is successful
+      - results.row_count == 1
+
+- name: Perform select multiple rows with params
+  odbc:
+    dsn: "{{ dsn }}"
+    query: 'SELECT * FROM films WHERE code=? or code=?'
+    params:
+      - 'asdfg'
+      - 'qwert'
+  register: results
+
+- debug:
+    var: results
+
+- assert:
+    that:
+      - results is successful
+      - results.row_count == 2
+
+- name: Drop the table
+  odbc:
+    dsn: "{{ dsn }}"
+    query: "DROP TABLE films"
+  register: results
+
+- debug:
+    var: results
+
+- assert:
+    that:
+      - results is successful

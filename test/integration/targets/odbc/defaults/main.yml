@@ -1,0 +1,27 @@
+---
+# defaults file for test_postgresql_db
+my_user: 'ansible_user'
+my_pass: 'md5d5e044ccd9b4b8adc89e8fed2eb0db8a'
+my_pass_decrypted: '6EjMk<hcX3<5(Yp?Xi5aQ8eS`a#Ni'
+dsn: "DRIVER={PostgreSQL};Server=localhost;Port=5432;Database=postgres;Uid={{ my_user }};Pwd={{ my_pass_decrypted }};UseUnicode=True"
+packages:
+  RedHat:
+    - postgresql-odbc
+    - unixODBC
+    - unixODBC-devel
+    - gcc 
+    - gcc-c++
+  Debian:
+    - odbc-postgresql
+    - unixodbc
+    - unixodbc-dev
+    - gcc 
+    - g++ 
+  Suse:
+    - psqlODBC
+    - unixODBC
+    - unixODBC-devel
+    - gcc
+    - gcc-c++
+  FreeBSD:
+    - unixODBC

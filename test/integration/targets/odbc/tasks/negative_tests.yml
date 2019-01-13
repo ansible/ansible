@@ -1,0 +1,19 @@
+#
+# Missing params for the module
+# There is nothing you need to do here because the params are required
+#
+
+#
+# Invalid DSN in the module
+#
+- name: "Test with an invalid DSN"
+  odbc:
+    dsn: "t1"
+    query: "SELECT * FROM nothing"
+  register: results
+  ignore_errors: True
+
+- assert:
+    that:
+      - results is failed
+      - "'Failed to connect to DSN' in results.msg"
