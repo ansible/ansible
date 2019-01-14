@@ -27,12 +27,15 @@ description:
     whatever the number of Skydive agents you will start.
   - While starting the capture, user can specify the capture name,
     capture description and capture type optionally.
+requirements:
+  - skydive-client
+extends_documentation_fragment: skydive
 options:
   name:
     description:
       - To define flow capture name
     required: true
-  type:
+  capture_type:
     description:
       - To define flow capture type
     required: false
@@ -40,22 +43,25 @@ options:
     description:
       - Configures a text string to be associated with the instance
         of this object.
-      default: ''
   extra_tcp_metric:
     description:
       - To define flow capture ExtraTCPMetric
+    type: bool
     default: false
   ip_defrag:
     description:
       - To define flow capture IPDefrag
+    type: bool
     default: false
   reassemble_tcp:
     description:
       - To define flow capture ReassembleTCP
+    type: bool
     default: false
   state:
     description:
-      - To configure flow capture on to the interface.
+      - State of the flow capture. If value is I(present) flow capture
+        will be created else if it is I(absent) it will be deleted.
     default: present
     choices:
       - present
@@ -94,13 +100,14 @@ def main():
     ib_spec = dict(
         name=dict(required=True, ib_req=True),
         capture_type=dict(required=False, ib_req=True),
-        description=dict(required=False, ib_req=True),
-        extra_tcp_metric=dict(required=False, ib_req=True, default=False),
-        ip_defrag=dict(required=False, ib_req=True, default=False),
-        reassemble_tcp=dict(required=False, ib_req=True, default=False)
+        description=dict(),
+        extra_tcp_metric=dict(type='bool', required=False, ib_req=True, default=False),
+        ip_defrag=dict(type='bool', required=False, ib_req=True, default=False),
+        reassemble_tcp=dict(type='bool', required=False, ib_req=True, default=False)
     )
 
     argument_spec = dict(
+        provider=dict(required=True),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
