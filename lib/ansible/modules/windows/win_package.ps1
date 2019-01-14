@@ -7,6 +7,9 @@
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.CommandUtil
 #Requires -Module Ansible.ModuleUtils.ArgvParser
+#Requires -Module appx
+#Requires -Module dism
+#Requires -Module PackageManagement
 
 $ErrorActionPreference = 'Stop'
 
@@ -26,6 +29,7 @@ $creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
 $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
 $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
 $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
+#$package_scope = Get-AnsibleParam -obj $params -name "package_scope" -type "str" -default "AllUsers" -validateset "CurrentUser","AllUsers" -aliases "scope"
 
 $result = @{
     changed = $false
@@ -157,6 +161,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
         product_id = $null
         location_type = $null
         msi = $false
+        uwa = $false # .msix or .appx
         uninstall_string = $null
         path_error = $null
     }
@@ -165,6 +170,11 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
     if ($null -ne $path) {
         if ($path.EndsWith(".msi", [System.StringComparison]::CurrentCultureIgnoreCase)) {
             $metadata.msi = $true
+        } elseif(
+            $path.EndsWith(".msix", [System.StringComparison]::CurrentcultureIgnoreCase) -or
+            $path.EndsWith(".appx", [System.StringComparison]::CurrentcultureIgnoreCase)
+            ) {
+            $metadata.uwa = $true
         } else {
             $metadata.msi = $false
         }
@@ -268,6 +278,10 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
         $service_exists = $null -ne $existing_service
         $metadata.installed = $service_exists
     }
+    if ($metadata.uwa) {
+        $package = Get-Package -Name $product_id -PackageManagementProvider -Scope AllUsers -ErrorAction SilentlyContinue
+        $metadata.installed = [bool]$package
+    }
 
 
     # finally throw error if path is not valid unless we want to uninstall the package and it already is
@@ -341,12 +355,16 @@ if ($state -eq "absent") {
                 }
 
                 $uninstall_arguments = @("$env:windir\system32\msiexec.exe", "/x", $id, "/L*V", $log_path, "/qn", "/norestart")
+            } elseif ($program_metadata.uwa) {
+                # We're uninstalling an uwa app
+                # Remove-Package -Name $program_metadata.product_id -Force -WhatIf:$check_mode
+                Remove-AppxProvisionedPackage -Online -Name $program_metadata.product_id -WhatIf:$check_mode
             } else {
                 $log_path = $null
                 $uninstall_arguments = @($local_path)
             }
 
-            if (-not $check_mode) {
+            if (-not $check_mode -and -not $program_metadata.uwa) {
                 $command_args = @{
                     command = Argv-ToString -arguments $uninstall_arguments
                 }
@@ -429,12 +447,26 @@ if ($state -eq "absent") {
                 }
 
                 $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
+            } elseif ($program_metadata.uwa) {
+                $SideloadRegPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"
+                $oldValue = "1"
+                if (Test-Path -Path $SideloadRegPath) {
+                    $oldValue = Get-ItemProperty -Path $SideloadRegPath -Name "AllowAllTrustedApps"
+                    Set-ItemProperty -Path $SideloadRegPath -Name "AllowAllTrustedApps" -Value "1" -Force -WhatIf:$check_mode
+                } else {
+                    New-ItemProperty -Path $SideloadRegPath -Name "AllowAllTrustedApps" -Value "1" -PropertyType DWORD -Force -WhatIf:$check_mode
+                }
+                # TODO: Add Ansible parameter for untrusted and unsigned packages (AllowDevelopmentWithoutDevLicense = 1)
+                # TODO: If scope currentuser only: Add-AppxPackage -Path $local_path -WhatIf:$check_mode
+                Add-AppxProvisionedPackage -Online -PackagePath $local_path -SkipLicense -WhatIf:$check_mode
+                # TODO: Add -DependencyPath and -LicensePath, until the later is implemented, use -SkipLicense
+                Set-ItemProperty -Path $SideloadRegPath -Name "AllowAllTrustedApps" -Value $oldValue -Force -WhatIf:$check_mode
             } else {
                 $log_path = $null
                 $install_arguments = @($local_path)
             }
 
-            if (-not $check_mode) {
+            if (-not $check_mode -and -not $program_metadata.uwa) {
                 $command_args = @{
                     command = Argv-ToString -arguments $install_arguments
                 }
