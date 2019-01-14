@@ -141,7 +141,9 @@ def main():
         if nick:  # sending to room instead of user, need to join
             msg.setType('groupchat')
             msg.setTag('x', namespace='http://jabber.org/protocol/muc#user')
-            conn.send(xmpp.Presence(to=module.params['to']))
+            join = xmpp.Presence(to=module.params['to'])
+            join.setTag('x', namespace='http://jabber.org/protocol/muc')
+            conn.send(join)
             time.sleep(1)
         else:
             msg.setType('chat')
