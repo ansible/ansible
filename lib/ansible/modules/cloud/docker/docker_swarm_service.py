@@ -53,7 +53,7 @@ options:
     description:
     - Container hostname
     - Maps docker service --hostname option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   tty:
     required: false
     type: bool
@@ -61,28 +61,28 @@ options:
     description:
     - Allocate a pseudo-TTY
     - Maps docker service --tty option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   dns:
     required: false
     default: []
     description:
     - List of custom DNS servers.
     - Maps docker service --dns option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   dns_search:
     required: false
     default: []
     description:
     - List of custom DNS search domains.
     - Maps docker service --dns-search option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   dns_options:
     required: false
     default: []
     description:
     - List of custom DNS options.
     - Maps docker service --dns-option option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   force_update:
     required: false
     type: bool
@@ -90,7 +90,7 @@ options:
     description:
     - Force update even if no changes require it.
     - Maps to docker service update --force option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   labels:
     required: false
     type: dict
@@ -175,7 +175,7 @@ options:
     - List of dictionaries describing the service secrets.
     - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
     - Maps docker service --secret option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
     default: []
   configs:
     required: false
@@ -183,7 +183,7 @@ options:
     - List of dictionaries describing the service configs.
     - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
     - Maps docker service --config option.
-    - Requires api_version >= 1.30
+    - Requires API version >= 1.30
     default: null
   networks:
     required: false
@@ -198,7 +198,7 @@ options:
     - List of dictionaries describing the service published ports.
     - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp')
     - Only used with api_version >= 1.25
-    - If api_version >= 1.32 and docker python library >= 3.0.0 attribute 'mode' can be set to 'ingress' or 'host' (default 'ingress').
+    - If API version >= 1.32 and docker python library >= 3.0.0 attribute 'mode' can be set to 'ingress' or 'host' (default 'ingress').
   replicas:
     required: false
     default: -1
@@ -274,7 +274,7 @@ options:
     description:
     - Specifies the order of operations when rolling out an updated task.
     - Maps to docker service --update-order
-    - Requires docker api version >= 1.29
+    - Requires API version >= 1.29
   user:
     required: false
     default: root
