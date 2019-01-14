@@ -108,6 +108,7 @@ files:
   $modules/cloud/docker/:
     ignored: ThomasSteinbach
     maintainers: $team_docker
+    supershipit: felixfontein
   $modules/cloud/docker/docker_network.py: olsaki
   $modules/cloud/google/:
     supershipit: $team_google
@@ -403,7 +404,9 @@ files:
     labels:
       - cloud
     support: community
-  contrib/inventory/docker: $team_docker
+  contrib/inventory/docker:
+    maintainers: $team_docker
+    supershipit: felixfontein
   contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
@@ -526,6 +529,7 @@ files:
       - windows
   $module_utils/docker_common.py:
     maintainers: $team_docker
+    supershipit: felixfontein
   $module_utils/ec2.py:
     support: core
     labels:
@@ -930,6 +934,7 @@ files:
   $plugins/connection/docker.py:
     support: community
     maintainers: $team_docker
+    supershipit: felixfontein
   $plugins/connection/httpapi.py:
     support: network
     maintainers: $team_networking
@@ -1150,6 +1155,7 @@ files:
   lib/ansible/utils/module_docs_fragments/docker.py:
     support: community
     maintainers: $team_docker
+    supershipit: felixfontein
   lib/ansible/utils/module_docs_fragments/xenserver.py:
     maintainers: bvitnik
   test/sanity/validate-modules:
@@ -1186,7 +1192,9 @@ files:
     notified: mattclay
   test/integration/targets/aci: *aci
   test/integration/targets/aix: *aix
-  test/integration/targets/docker: $team_docker
+  test/integration/targets/docker:
+    maintainers: $team_docker
+    supershipit: felixfontein
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
@@ -1209,7 +1217,9 @@ files:
   test/legacy/scaleway:
     <<: *scaleway
     support: community
-  test/units/modules/cloud/docker: $team_docker
+  test/units/modules/cloud/docker:
+    maintainers: $team_docker
+    supershipit: felixfontein
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
