@@ -875,7 +875,16 @@ class DockerServiceManager():
         return [{'name': n['Name'], 'id': n['Id']} for n in self.client.networks()]
 
     def get_service(self, name):
-        raw_data = self.client.services(filters={'name': name})
+        # The Docker API allows filtering services by name but the filter looks
+        # for a substring match, not an exact match. (Filtering for "foo" would
+        # return information for services "foobar" and "foobuzz" even if the
+        # service "foo" doesn't exist.) Avoid incorrectly determining that a
+        # service is present by filtering the list of services returned from the
+        # Docker API so that the name must be an exact match.
+        raw_data = [
+            service for service in self.client.services(filters={'name': name})
+            if service['Spec']['Name'] == name
+        ]
         if len(raw_data) == 0:
             return None
 
