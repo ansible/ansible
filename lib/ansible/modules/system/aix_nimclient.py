@@ -359,6 +359,7 @@ def install(module):
             # I:xlsmp.rte 3.1.0.6
             # I:xlsmp.rte 4.1.2.0
             # R:cdrecord-1.9-9 1.9-9
+            #
             # if the fileset is an RPM ( starts with an R )
             # then stip the version name of the filesetname
 
