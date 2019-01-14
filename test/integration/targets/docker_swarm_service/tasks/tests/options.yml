@@ -976,8 +976,8 @@
         published_port: 60001
         target_port: 60001
       - protocol: udp
-        published_port: 60001
-        target_port: 60001
+        published_port: 60002
+        target_port: 60002
   register: publish_1
 
 #- name: publish (idempotency)
@@ -1011,6 +1011,12 @@
       - publish_1 is changed
 #      - publish_2 is not changed
 #      - publish_3 is changed
+  when: docker_api_version is version('1.25', '>=')
+- assert:
+    that:
+    - publish_1 is failed
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in publish_1.msg"
+  when: docker_api_version is version('1.25', '<')
 
 ###################################################################
 # replicas ########################################################
