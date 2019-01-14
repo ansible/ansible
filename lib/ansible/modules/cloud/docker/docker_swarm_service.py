@@ -94,12 +94,12 @@ options:
   labels:
     required: false
     description:
-    - List of the service labels.
+    - Dictionary of key value pairs.
     - Maps docker service --label option.
   container_labels:
     required: false
     description:
-    - List of the service containers labels.
+    - Dictionary of key value pairs.
     - Maps docker service --container-label option.
     default: []
   endpoint_mode:
