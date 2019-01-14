@@ -52,7 +52,7 @@ options:
 """
 
 EXAMPLES = """
-- name: Create access rule
+- name: Get access rule facts
   checkpoint_access_rule_facts:
     layer: Network
     name: "Drop attacker"
