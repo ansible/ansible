@@ -470,7 +470,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
         webapp_response = self.get_webapp()
 
         if not webapp_response:
-            self.fail("Web app {0} does not exist in resource grouop {1}.".format(self.webapp_name, self.resource_group))
+            self.fail("Web app {0} does not exist in resource group {1}.".format(self.webapp_name, self.resource_group))
 
         # get slot
         old_response = self.get_slot()
