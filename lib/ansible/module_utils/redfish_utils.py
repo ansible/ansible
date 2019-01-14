@@ -133,11 +133,17 @@ class RedfishUtils(object):
             if response['ret'] is False:
                 return response
             data = response['data']
-            if data.get(u'Members'):
+            if data.get(u'Members@odata.count') == 1:
                 for member in data[u'Members']:
                     systems_service = member[u'@odata.id']
                     self.systems_uri = systems_service
                     return {'ret': True}
+            if data.get(u'Members@odata.count') > 1:
+                systems_service = []
+                for member in data[u'Members']:
+                    systems_service.append = member[u'@odata.id']
+                self.systems_uri = systems_service
+                return {'ret': True}
             else:
                 return {'ret': False,
                         'msg': "ComputerSystem's Members array is either empty or missing"}
