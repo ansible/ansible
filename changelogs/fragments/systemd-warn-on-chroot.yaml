@@ -1,0 +1,2 @@
+bugfixes:
+  - systemd - warn when exeuting in a chroot environment rather than failing (https://github.com/ansible/ansible/pull/43904)
