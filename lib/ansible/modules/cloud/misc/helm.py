@@ -128,7 +128,11 @@ def install(module, tserver):
                  if x.name == name and x.namespace == namespace)
     installed_release = next(r_matches, None)
     if installed_release:
-        if installed_release.chart.metadata.version != chart['version']:
+        installed_version = installed_release.chart.metadata.version
+        # Either compare with the version given by the user or with the version
+        # from the latest release.
+        if installed_version != chart.get('version', installed_version) or \
+                installed_version != chartb.get_metadata().version:
             tserver.update_release(chartb.get_helm_chart(), False,
                                    namespace, name=name, values=values)
             changed = True
