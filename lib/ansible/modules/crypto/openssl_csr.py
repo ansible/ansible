@@ -970,19 +970,11 @@ def main():
         can_use_cryptography = CRYPTOGRAPHY_FOUND and CRYPTOGRAPHY_VERSION >= LooseVersion(MINIMAL_CRYPTOGRAPHY_VERSION)
         can_use_pyopenssl = PYOPENSSL_FOUND and PYOPENSSL_VERSION >= LooseVersion(MINIMAL_PYOPENSSL_VERSION)
 
-        # Decision
-        if module.params['cipher'] and module.params['passphrase'] and module.params['cipher'] != 'auto':
-            # First try pyOpenSSL, then cryptography
-            if can_use_pyopenssl:
-                backend = 'pyopenssl'
-            elif can_use_cryptography:
-                backend = 'cryptography'
-        else:
-            # First try cryptography, then pyOpenSSL
-            if can_use_cryptography:
-                backend = 'cryptography'
-            elif can_use_pyopenssl:
-                backend = 'pyopenssl'
+        # First try cryptography, then pyOpenSSL
+        if can_use_cryptography:
+            backend = 'cryptography'
+        elif can_use_pyopenssl:
+            backend = 'pyopenssl'
 
         # Success?
         if backend == 'auto':
