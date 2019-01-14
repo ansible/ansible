@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# Copyright 2019, Saranya Sridharan
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -51,20 +52,21 @@ except ImportError:
     HAS_PSUTIL = False
 
 
-def get_pid(name, module):
-    return [int(p.info['pid']) for p in psutil.process_iter(attrs=['pid', 'name']) if name in p.info['name']]
+def get_pid(name):
+    return [p.info['pid'] for p in psutil.process_iter(attrs=['pid', 'name']) if name in p.info['name']]
 
 
 def main():
     module = AnsibleModule(
-        argument_spec={
-            "name": {"required": True, "type": "str"}
-        }
+        argument_spec=dict(
+            name=dict(required= True, type= "str"),
+        ),
+		supports_check_mode=True,
     )
     if not HAS_PSUTIL:
         module.fail_json(msg="Missing required 'psutil' python module. Try installing it with: pip install psutil")
     name = module.params["name"]
-    response = dict(pids=get_pid(name, module))
+    response = dict(pids=get_pid(name))
     module.exit_json(**response)
 
 
