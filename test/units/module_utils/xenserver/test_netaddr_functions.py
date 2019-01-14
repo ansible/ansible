@@ -7,15 +7,17 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import sys
-import importlib
 import pytest
 
-sys.modules['XenAPI'] = importlib.import_module('units.module_utils.xenserver.FakeXenAPI')
-
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from .common import *
-from ansible.module_utils.xenserver import *
+from ansible.module_utils.xenserver import (is_valid_mac_addr,
+                                            is_valid_ip_addr,
+                                            is_valid_ip_netmask,
+                                            is_valid_ip_prefix,
+                                            ip_prefix_to_netmask,
+                                            ip_netmask_to_prefix,
+                                            is_valid_ip6_addr,
+                                            is_valid_ip6_prefix)
 
 
 testcase_is_valid_mac_addr = [

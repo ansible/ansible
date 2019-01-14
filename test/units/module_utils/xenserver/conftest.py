@@ -8,13 +8,15 @@ __metaclass__ = type
 
 
 import sys
-import os
 import importlib
+import os
 import json
 import pytest
 
+sys.modules['XenAPI'] = importlib.import_module('units.module_utils.xenserver.FakeXenAPI')
+import XenAPI
+
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from . import FakeXenAPI as XenAPI
 from ansible.module_utils import six
 from mock import MagicMock
 
@@ -49,7 +51,7 @@ def mock_xenapi_failure(mocker):
     # same side_effect as its parent mock object.
     class MagicMockSideEffect(MagicMock):
         def _get_child_mock(self, **kw):
-            child_mock = super(MagicMock, self)._get_child_mock(**kw)
+            child_mock = super(MagicMockSideEffect, self)._get_child_mock(**kw)
             child_mock.side_effect = self.side_effect
             return child_mock
 

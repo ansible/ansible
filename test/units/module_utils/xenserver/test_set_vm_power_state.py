@@ -7,15 +7,12 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import sys
-import importlib
 import pytest
-
-sys.modules['XenAPI'] = importlib.import_module('units.module_utils.xenserver.FakeXenAPI')
+import XenAPI
 
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from .common import *
-from ansible.module_utils.xenserver import *
+from .common import fake_xenapi_refs, testcase_bad_xenapi_refs
+from ansible.module_utils.xenserver import set_vm_power_state
 
 
 testcase_set_vm_power_state_bad_transitions = {

@@ -7,16 +7,13 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import sys
-import importlib
 import pytest
-
-sys.modules['XenAPI'] = importlib.import_module('units.module_utils.xenserver.FakeXenAPI')
+import atexit
+import XenAPI
 
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from .common import *
 from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
-from ansible.module_utils.xenserver import *
+from ansible.module_utils.xenserver import XAPI
 
 
 testcase_module_local_conn = {

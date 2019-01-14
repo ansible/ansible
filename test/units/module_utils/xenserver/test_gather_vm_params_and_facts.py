@@ -7,15 +7,12 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import sys
-import importlib
 import pytest
-
-sys.modules['XenAPI'] = importlib.import_module('units.module_utils.xenserver.FakeXenAPI')
+import XenAPI
 
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from .common import *
-from ansible.module_utils.xenserver import *
+from .common import testcase_bad_xenapi_refs
+from ansible.module_utils.xenserver import gather_vm_params, gather_vm_facts
 
 
 testcase_gather_vm_params_and_facts = {
@@ -52,12 +49,12 @@ def test_gather_vm_params_and_facts(mocker, fake_ansible_module, fixture_data_fr
     """Tests proper parsing of VM parameters and facts."""
     mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
 
-    if "params" in fixture_data_from_file.keys()[0]:
-        params_file = fixture_data_from_file.keys()[0]
-        facts_file = fixture_data_from_file.keys()[1]
+    if "params" in list(fixture_data_from_file.keys())[0]:
+        params_file = list(fixture_data_from_file.keys())[0]
+        facts_file = list(fixture_data_from_file.keys())[1]
     else:
-        params_file = fixture_data_from_file.keys()[1]
-        facts_file = fixture_data_from_file.keys()[0]
+        params_file = list(fixture_data_from_file.keys())[1]
+        facts_file = list(fixture_data_from_file.keys())[0]
 
     mocked_returns = {
         "VM.get_record.side_effect": lambda obj_ref: fixture_data_from_file[params_file]['VM'][obj_ref],
@@ -75,6 +72,6 @@ def test_gather_vm_params_and_facts(mocker, fake_ansible_module, fixture_data_fr
 
     mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=['7', '2'])
 
-    vm_ref = fixture_data_from_file[params_file]['VM'].keys()[0]
+    vm_ref = list(fixture_data_from_file[params_file]['VM'].keys())[0]
 
     assert gather_vm_facts(fake_ansible_module, gather_vm_params(fake_ansible_module, vm_ref)) == fixture_data_from_file[facts_file]

@@ -19,7 +19,7 @@ class FailJsonException(AnsibleModuleException):
 
 
 class FakeAnsibleModule:
-    def __init__(self, params={}, check_mode=False):
+    def __init__(self, params=None, check_mode=False):
         self.params = params
         self.check_mode = check_mode
 

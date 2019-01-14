@@ -48,7 +48,6 @@ class Session(object):
             return None
         else:
             # Should be patched with mocker.patch().
-            # raise Failure("Fake error!")
             return None
 
     def __getattr__(self, name):
@@ -56,12 +55,11 @@ class Session(object):
             return self._session
         elif name == 'xenapi':
             # Should be patched with mocker.patch().
-            # raise Failure("Fake error!")
             return None
         elif name.startswith('login') or name.startswith('slave_local'):
             return lambda *params: self._login(name, params)
         elif name == 'logout':
-            self._logout()
+            return self._logout
 
 
 def xapi_local():

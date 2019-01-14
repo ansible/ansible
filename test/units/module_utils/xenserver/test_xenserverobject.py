@@ -7,15 +7,12 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import sys
-import importlib
 import pytest
-
-sys.modules['XenAPI'] = importlib.import_module('units.module_utils.xenserver.FakeXenAPI')
+import XenAPI
 
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from .common import *
-from ansible.module_utils.xenserver import *
+from .common import fake_xenapi_refs
+from ansible.module_utils.xenserver import XenServerObject
 
 
 def test_xenserverobject_xenapi_lib_detection(mocker, fake_ansible_module):
