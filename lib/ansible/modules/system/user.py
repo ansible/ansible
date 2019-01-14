@@ -421,6 +421,7 @@ class User(object):
     distribution = None
     SHADOWFILE = '/etc/shadow'
     SHADOWFILE_EXPIRE_INDEX = 7
+    LOGIN_DEFS = '/etc/login.defs'
     DATE_FORMAT = '%Y-%m-%d'
 
     def __new__(cls, *args, **kwargs):
@@ -854,10 +855,11 @@ class User(object):
         elif self.SHADOWFILE:
             # Read shadow file for user's encrypted password string
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
-                for line in open(self.SHADOWFILE).readlines():
-                    if line.startswith('%s:' % self.name):
-                        passwd = line.split(':')[1]
-                        expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
+                with open(self.SHADOWFILE, 'r') as f:
+                    for line in f:
+                        if line.startswith('%s:' % self.name):
+                            passwd = line.split(':')[1]
+                            expires = line.split(':')[self.SHADOWFILE_EXPIRE_INDEX] or -1
         return passwd, expires
 
     def get_ssh_key_path(self):
@@ -970,9 +972,8 @@ class User(object):
     def get_ssh_public_key(self):
         ssh_public_key_file = '%s.pub' % self.get_ssh_key_path()
         try:
-            f = open(ssh_public_key_file)
-            ssh_public_key = f.read().strip()
-            f.close()
+            with open(ssh_public_key_file, 'r') as f:
+                ssh_public_key = f.read().strip()
         except IOError:
             return None
         return ssh_public_key
@@ -1001,11 +1002,23 @@ class User(object):
                     shutil.copytree(skeleton, path, symlinks=True)
                 except OSError as e:
                     self.module.exit_json(failed=True, msg="%s" % to_native(e))
-        else:
-            try:
-                os.makedirs(path)
-            except OSError as e:
-                self.module.exit_json(failed=True, msg="%s" % to_native(e))
+            else:
+                try:
+                    os.makedirs(path)
+                except OSError as e:
+                    self.module.exit_json(failed=True, msg="%s" % to_native(e))
+            # get umask from /etc/login.defs and set correct home mode
+            if os.path.exists(self.LOGIN_DEFS):
+                with open(self.LOGIN_DEFS, 'r') as f:
+                    for line in f:
+                        m = re.match(r'^UMASK\s+(\d+)$', line)
+                        if m:
+                            umask = int(m.group(1), 8)
+                            mode = 0o777 & ~umask
+                            try:
+                                os.chmod(path, mode)
+                            except OSError as e:
+                                self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def chown_homedir(self, uid, gid, path):
         try:
@@ -1173,9 +1186,10 @@ class FreeBsdUser(User):
             # find current login class
             user_login_class = None
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
-                for line in open(self.SHADOWFILE).readlines():
-                    if line.startswith('%s:' % self.name):
-                        user_login_class = line.split(':')[4]
+                with open(self.SHADOWFILE, 'r') as f:
+                    for line in f:
+                        if line.startswith('%s:' % self.name):
+                            user_login_class = line.split(':')[4]
 
             # act only if login_class change
             if self.login_class != user_login_class:
@@ -1632,20 +1646,21 @@ class SunOS(User):
             minweeks = ''
             maxweeks = ''
             warnweeks = ''
-            for line in open("/etc/default/passwd", 'r'):
-                line = line.strip()
-                if (line.startswith('#') or line == ''):
-                    continue
-                m = re.match(r'^([^#]*)#(.*)$', line)
-                if m:  # The line contains a hash / comment
-                    line = m.group(1)
-                key, value = line.split('=')
-                if key == "MINWEEKS":
-                    minweeks = value.rstrip('\n')
-                elif key == "MAXWEEKS":
-                    maxweeks = value.rstrip('\n')
-                elif key == "WARNWEEKS":
-                    warnweeks = value.rstrip('\n')
+            with open("/etc/default/passwd", 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if (line.startswith('#') or line == ''):
+                        continue
+                    m = re.match(r'^([^#]*)#(.*)$', line)
+                    if m:  # The line contains a hash / comment
+                        line = m.group(1)
+                    key, value = line.split('=')
+                    if key == "MINWEEKS":
+                        minweeks = value.rstrip('\n')
+                    elif key == "MAXWEEKS":
+                        maxweeks = value.rstrip('\n')
+                    elif key == "WARNWEEKS":
+                        warnweeks = value.rstrip('\n')
         except Exception as err:
             self.module.fail_json(msg="failed to read /etc/default/passwd: %s" % to_native(err))
 
@@ -1724,35 +1739,37 @@ class SunOS(User):
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
                 try:
                     lines = []
-                    for line in open(self.SHADOWFILE, 'rb').readlines():
-                        line = to_native(line, errors='surrogate_or_strict')
-                        fields = line.strip().split(':')
-                        if not fields[0] == self.name:
-                            lines.append(line)
-                            continue
-                        fields[1] = self.password
-                        fields[2] = str(int(time.time() // 86400))
-                        if minweeks:
-                            try:
-                                fields[3] = str(int(minweeks) * 7)
-                            except ValueError:
-                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
-                                pass
-                        if maxweeks:
-                            try:
-                                fields[4] = str(int(maxweeks) * 7)
-                            except ValueError:
-                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
-                                pass
-                        if warnweeks:
-                            try:
-                                fields[5] = str(int(warnweeks) * 7)
-                            except ValueError:
-                                # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
-                                pass
-                        line = ':'.join(fields)
-                        lines.append('%s\n' % line)
-                    open(self.SHADOWFILE, 'w+').writelines(lines)
+                    with open(self.SHADOWFILE, 'rb') as f:
+                        for line in f:
+                            line = to_native(line, errors='surrogate_or_strict')
+                            fields = line.strip().split(':')
+                            if not fields[0] == self.name:
+                                lines.append(line)
+                                continue
+                            fields[1] = self.password
+                            fields[2] = str(int(time.time() // 86400))
+                            if minweeks:
+                                try:
+                                    fields[3] = str(int(minweeks) * 7)
+                                except ValueError:
+                                    # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                    pass
+                            if maxweeks:
+                                try:
+                                    fields[4] = str(int(maxweeks) * 7)
+                                except ValueError:
+                                    # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                    pass
+                            if warnweeks:
+                                try:
+                                    fields[5] = str(int(warnweeks) * 7)
+                                except ValueError:
+                                    # mirror solaris, which allows for any value in this field, and ignores anything that is not an int.
+                                    pass
+                            line = ':'.join(fields)
+                            lines.append('%s\n' % line)
+                    with open(self.SHADOWFILE, 'w+') as f:
+                        f.writelines(lines)
                 except Exception as err:
                     self.module.fail_json(msg="failed to update users password: %s" % to_native(err))
 
@@ -1843,23 +1860,25 @@ class SunOS(User):
                 minweeks, maxweeks, warnweeks = self.get_password_defaults()
                 try:
                     lines = []
-                    for line in open(self.SHADOWFILE, 'rb').readlines():
-                        line = to_native(line, errors='surrogate_or_strict')
-                        fields = line.strip().split(':')
-                        if not fields[0] == self.name:
-                            lines.append(line)
-                            continue
-                        fields[1] = self.password
-                        fields[2] = str(int(time.time() // 86400))
-                        if minweeks:
-                            fields[3] = str(int(minweeks) * 7)
-                        if maxweeks:
-                            fields[4] = str(int(maxweeks) * 7)
-                        if warnweeks:
-                            fields[5] = str(int(warnweeks) * 7)
-                        line = ':'.join(fields)
-                        lines.append('%s\n' % line)
-                    open(self.SHADOWFILE, 'w+').writelines(lines)
+                    with open(self.SHADOWFILE, 'rb') as f:
+                        for line in f:
+                            line = to_native(line, errors='surrogate_or_strict')
+                            fields = line.strip().split(':')
+                            if not fields[0] == self.name:
+                                lines.append(line)
+                                continue
+                            fields[1] = self.password
+                            fields[2] = str(int(time.time() // 86400))
+                            if minweeks:
+                                fields[3] = str(int(minweeks) * 7)
+                            if maxweeks:
+                                fields[4] = str(int(maxweeks) * 7)
+                            if warnweeks:
+                                fields[5] = str(int(warnweeks) * 7)
+                            line = ':'.join(fields)
+                            lines.append('%s\n' % line)
+                    with open(self.SHADOWFILE, 'w+'):
+                        f.writelines(lines)
                     rc = 0
                 except Exception as err:
                     self.module.fail_json(msg="failed to update users password: %s" % to_native(err))
@@ -2638,7 +2657,7 @@ def main():
     if err:
         result['stderr'] = err
 
-    if user.user_exists():
+    if user.user_exists() and user.state == 'present':
         info = user.user_info()
         if info is False:
             result['msg'] = "failed to look up user name: %s" % user.name
