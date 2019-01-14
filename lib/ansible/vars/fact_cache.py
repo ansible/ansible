@@ -21,9 +21,10 @@ class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
 
-        self._plugin = cache_loader.get(C.CACHE_PLUGIN)
-        if not self._plugin:
+        _plugin = cache_loader.get(C.CACHE_PLUGIN, class_only=True)
+        if not _plugin:
             raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
+        self._plugin = _plugin()
 
         super(FactCache, self).__init__(*args, **kwargs)
 
