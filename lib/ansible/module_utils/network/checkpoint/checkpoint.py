@@ -27,12 +27,11 @@
 #
 
 
-checkpoint_argument_spec = dict(
-        auto_publish_session=dict(type='bool', default=True),
-        policy_package=dict(type='str', default='standard'),
-        auto_install_policy=dict(type='bool', default=True),
-        targets=dict(type='str', default=None)
-    )
+checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=True),
+                                policy_package=dict(type='str', default='standard'),
+                                auto_install_policy=dict(type='bool', default=True),
+                                targets=dict(type='str', default=None)
+                                )
 
 
 def publish(connection, uid=None):
