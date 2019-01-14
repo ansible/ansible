@@ -403,7 +403,7 @@ class DistributionFiles:
 
     def parse_distribution_file_ClearLinux(self, name, data, path, collected_facts):
         clear_facts = {}
-        if "clearlinux" not in name.lower():
+        if "clearlinux" not in data.lower():
             return False, clear_facts
 
         pname = re.search('NAME="(.*)"', data)
