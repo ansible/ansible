@@ -71,23 +71,23 @@ RETURN = '''
 net_hostname:
     description: Hostname of the local node.
     returned: When C(system) is specified in C(gather_subset).
-    type: string
+    type: str
 net_serial:
     description: Serial number of the local node.
     returned: When C(system) is specified in C(gather_subset).
-    type: string
+    type: str
 net_model:
     description: Device model of the local node.
     returned: When C(system) is specified in C(gather_subset).
-    type: string
+    type: str
 net_version:
     description: PanOS version of the local node.
     returned: When C(system) is specified in C(gather_subset).
-    type: string
+    type: str
 net_uptime:
     description: Uptime of the local node.
     returned: When C(system) is specified in C(gather_subset).
-    type: string
+    type: str
     sample: 469 days, 19:30:16
 net_full_commit_required:
     description: Specifies whether full commit is required to apply changes.
@@ -100,7 +100,7 @@ net_uncommitted_changes:
 net_multivsys:
     description: Specifies whether multivsys mode is enabled on local node.
     returned: When C(system) is specified in C(gather_subset).
-    type: string
+    type: str
     sample: on
 net_session_usage:
     description: Current number of active sessions on local node
@@ -125,17 +125,17 @@ net_ha_enabled:
 net_ha_localmode:
     description: Specifies the HA mode on local node.
     returned: When C(ha) is specified in C(gather_subset).
-    type: string
+    type: str
     sample: Active-Passive
 net_ha_localstate:
     description: Specifies the HA state on local node.
     returned: When C(ha) is specified in C(gather_subset).
-    type: string
+    type: str
     sample: active
 net_config:
     description: Device confiration in XML format.
     returned: When C(config) is specified in C(gather_subset).
-    type: string
+    type: str
 net_interfaces:
     description: Network interface information.
     returned: When C(interface) is specified in C(gather_subset).
@@ -167,10 +167,10 @@ net_virtual-routers:
     contains:
         vr_name:
             description: Name of the virtual router.
-            type: string
+            type: str
         vr_routerid:
             description: BGP router ID.
-            type: string
+            type: str
             sample: 192.0.2.1
         vr_asn:
             description: BGP autonomous system number.
