@@ -1,2 +1,2 @@
 minor_changes:
-    - if product_name is set to "To be filled by O.E.M." read board_name instead
+    - Off-the-shelf motherboards may have product_name set to "To be filled by O.E.M.". Add board_name to linux hardware facts as an alternative.

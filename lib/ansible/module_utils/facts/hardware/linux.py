@@ -284,6 +284,7 @@ class LinuxHardware(Hardware):
                 'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
                 'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
                 'product_name': '/sys/devices/virtual/dmi/id/product_name',
+                'board_name': '/sys/devices/virtual/dmi/id/board_name',
                 'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
                 'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
                 'product_version': '/sys/devices/virtual/dmi/id/product_version',
@@ -298,8 +299,6 @@ class LinuxHardware(Hardware):
                             dmi_facts['form_factor'] = FORM_FACTOR[int(data)]
                         except IndexError:
                             dmi_facts['form_factor'] = 'unknown (%s)' % data
-                    elif key == 'product_name' and 'To be filled by O.E.M.' in data:
-                        dmi_facts[key] = get_file_content(path.replace('product', 'board'))
                     else:
                         dmi_facts[key] = data
                 else:
@@ -313,6 +312,7 @@ class LinuxHardware(Hardware):
                 'bios_version': 'bios-version',
                 'form_factor': 'chassis-type',
                 'product_name': 'system-product-name',
+                'board_name': 'baseboard-product-name',
                 'product_serial': 'system-serial-number',
                 'product_uuid': 'system-uuid',
                 'product_version': 'system-version',
