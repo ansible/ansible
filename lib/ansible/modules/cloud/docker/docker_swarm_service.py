@@ -173,6 +173,7 @@ options:
     - List of dictionaries describing the service secrets.
     - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
     - Maps docker service --secret option.
+    - Requires api_version >= 1.25
     default: []
   configs:
     required: false
@@ -180,6 +181,7 @@ options:
     - List of dictionaries describing the service configs.
     - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
     - Maps docker service --config option.
+    - Requires api_version >= 1.30
     default: null
   networks:
     required: false
