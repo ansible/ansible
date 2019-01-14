@@ -137,6 +137,9 @@ options:
             public_ip_address_name:
                 description:
                     - Name of the public ip address. None for disable ip address.
+                aliases:
+                    - public_ip_address
+                    - public_ip_name
             public_ip_allocation_method:
                 description:
                     - public ip allocation method.
