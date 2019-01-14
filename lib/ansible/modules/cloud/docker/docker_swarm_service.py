@@ -146,7 +146,7 @@ options:
     description:
     - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
       Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
-      C(T) (tebibyte), or C(P) (pebibyte). Minimum is C(4M)."
+      C(T) (tebibyte), or C(P) (pebibyte)."
     - 0 equals no limit.
     - Omitting the unit defaults to bytes.
     - Maps docker service --limit-memory option.
