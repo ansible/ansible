@@ -53,7 +53,7 @@ def discard(connection, uid=None):
     connection.send_request('/web_api/discard', payload)
 
 
-def install_policy(connection, policy_package, targets=None):
+def install_policy(connection, policy_package, targets):
     payload = {'policy-package': policy_package,
                'targets': targets}
 
