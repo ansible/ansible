@@ -37,6 +37,7 @@ from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
 __all__ = ['Task']
 
@@ -438,13 +439,13 @@ class Task(Base, Conditional, Taggable, Become):
             else:
                 _parent = self._parent._parent
 
-            if _parent and (value is None or extend):
+            if _parent and (value is Sentinel or extend):
                 if getattr(_parent, 'statically_loaded', True):
                     # vars are always inheritable, other attributes might not be for the parent but still should be for other ancestors
                     if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
                         parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = _parent._attributes.get(attr, None)
+                        parent_value = _parent._attributes.get(attr, Sentinel)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
