@@ -27,10 +27,17 @@
 #
 
 
+checkpoint_argument_spec = dict(
+        auto_publish_session=dict(type='bool', default=True),
+        policy_package=dict(type='str', default='standard'),
+        auto_install_policy=dict(type='bool', default=True)
+    )
+
+
 def publish(module, connection):
     connection.send_request('/web_api/publish', None)
 
 
 def install_policy(module, connection):
-    payload = {'policy-package': 'standard'}
+    payload = {'policy-package': module.params['policy_package']}
     connection.send_request('/web_api/install-policy', payload)

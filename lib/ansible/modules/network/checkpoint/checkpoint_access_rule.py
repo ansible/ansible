@@ -99,7 +99,7 @@ checkpoint_access_rules:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
-from ansible.module_utils.network.checkpoint.checkpoint import publish, install_policy
+from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, publish, install_policy
 import json
 
 
@@ -195,6 +195,7 @@ def main():
         enabled=dict(type='bool', default=True),
         state=dict(type='str', default='present')
     )
+    argument_spec.update(checkpoint_argument_spec)
 
     required_if = [('state', 'present', ('layer', 'position'))]
     module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
@@ -206,28 +207,42 @@ def main():
         if code == 200:
             if needs_update(module, response):
                 code, response = update_access_rule(module, connection)
-                publish(module, connection)
-                install_policy(module, connection)
+                if module.params['auto_publish_session']:
+                    publish(module, connection)
+
+                    if module.params['auto_install_policy']:
+                        install_policy(module, connection)
+
                 result['changed'] = True
                 result['checkpoint_access_rules'] = response
             else:
                 pass
         elif code == 404:
             code, response = create_access_rule(module, connection)
-            publish(module, connection)
-            install_policy(module, connection)
+
+            if module.params['auto_publish_session']:
+                publish(module, connection)
+
+                if module.params['auto_install_policy']:
+                    install_policy(module, connection)
+
             result['changed'] = True
             result['checkpoint_access_rules'] = response
     else:
         if code == 200:
-            # Handle deletion
             code, response = delete_access_rule(module, connection)
-            publish(module, connection)
-            install_policy(module, connection)
+
+            if module.params['auto_publish_session']:
+                publish(module, connection)
+
+                if module.params['auto_install_policy']:
+                    install_policy(module, connection)
+
             result['changed'] = True
         elif code == 404:
             pass
 
+    result['checkpoint_sid'] = connection.get_sid()
     module.exit_json(**result)
 
 
