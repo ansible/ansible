@@ -1,7 +1,10 @@
 {% if ansible_os_family == "Debian" %}
 
-{% if ansible_distribution_version == "14.04" %}
-{# Ubuntu 14.04 conflicts with existing port 80 so we can't include the default #}
+{# On Ubuntu 16.04 we can include the default config, other versions require explicit config #}
+{% if ansible_distribution_version == "16.04" %}
+Include /etc/apache2/apache2.conf
+
+{% else %}
 Timeout 300
 KeepAlive On
 MaxKeepAliveRequests 100
@@ -25,8 +28,6 @@ IncludeOptional sites-enabled/*conf
     Require all denied
 </FilesMatch>
 
-{% else %}
-Include /etc/apache2/apache2.conf
 {% endif %}
 
 {% elif ansible_os_family == "FreeBSD" %}
