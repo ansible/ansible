@@ -282,9 +282,9 @@ class LinuxHardware(Hardware):
             DMI_DICT = {
                 'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
                 'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
+                'board_name': '/sys/devices/virtual/dmi/id/board_name',
                 'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
                 'product_name': '/sys/devices/virtual/dmi/id/product_name',
-                'board_name': '/sys/devices/virtual/dmi/id/board_name',
                 'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
                 'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
                 'product_version': '/sys/devices/virtual/dmi/id/product_version',
@@ -310,9 +310,9 @@ class LinuxHardware(Hardware):
             DMI_DICT = {
                 'bios_date': 'bios-release-date',
                 'bios_version': 'bios-version',
+                'board_name': 'baseboard-product-name',
                 'form_factor': 'chassis-type',
                 'product_name': 'system-product-name',
-                'board_name': 'baseboard-product-name',
                 'product_serial': 'system-serial-number',
                 'product_uuid': 'system-uuid',
                 'product_version': 'system-version',
