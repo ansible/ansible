@@ -615,7 +615,7 @@ def main():
         )),
         enable_ipv6=dict(type='bool'),
         internal=dict(type='bool'),
-        labels=dict(type='dict', default={})
+        labels=dict(type='dict', default={}),
         debug=dict(type='bool', default=False),
         scope=dict(type='str', choices=['local', 'global', 'swarm']),
         attachable=dict(type='bool'),
