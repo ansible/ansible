@@ -93,11 +93,13 @@ options:
     - Requires api_version >= 1.25
   labels:
     required: false
+    type: dict
     description:
     - Dictionary of key value pairs.
     - Maps docker service --label option.
   container_labels:
     required: false
+    type: dict
     description:
     - Dictionary of key value pairs.
     - Maps docker service --container-label option.
