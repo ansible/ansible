@@ -88,19 +88,23 @@ Extending the previous YAMl inventory to include what, when, and where would loo
           two.example.com:
           three.example.com:
       east:
-        foo.example.com:
-        two.example.com:
-        three.example.com:
+        hosts:
+          foo.example.com:
+          two.example.com:
+          three.example.com:
       west:
-        bar.example.com:
-        one.example.com:
+        hosts:
+          bar.example.com:
+          one.example.com:
       prod:
-        foo.example.com:
-        one.example.com:
-        two.example.com:
+        hosts:
+          foo.example.com:
+          one.example.com:
+          two.example.com:
       test:
-        bar.example.com:
-        three.example.com:
+        hosts:
+          bar.example.com:
+          three.example.com:
 
 You can see that ``one.example.com`` exists in the ``dbservers``, ``west``, and ``prod`` groups.
 
