@@ -34,10 +34,20 @@ checkpoint_argument_spec = dict(
     )
 
 
-def publish(module, connection):
-    connection.send_request('/web_api/publish', None)
+def publish(connection, uid=None):
+    uid = uid if uid else connection.get_sid()
+    payload = {'uid': uid}
 
+    connection.send_request('/web_api/publish', payload)
 
-def install_policy(module, connection):
-    payload = {'policy-package': module.params['policy_package']}
+def discard(connection, uid=None):
+    uid = uid if uid else connection.get_sid()
+    payload = {'uid': uid}
+
+    connection.send_request('/web_api/discard', payload)
+
+def install_policy(connection, policy_package, targets=None):
+    payload = {'policy-package': policy_package,
+               'targets': targets}
+
     connection.send_request('/web_api/install-policy', payload)

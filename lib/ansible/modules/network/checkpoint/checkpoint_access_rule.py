@@ -208,7 +208,7 @@ def main():
             if needs_update(module, response):
                 code, response = update_access_rule(module, connection)
                 if module.params['auto_publish_session']:
-                    publish(module, connection)
+                    publish(connection)
 
                     if module.params['auto_install_policy']:
                         install_policy(module, connection)
@@ -221,7 +221,7 @@ def main():
             code, response = create_access_rule(module, connection)
 
             if module.params['auto_publish_session']:
-                publish(module, connection)
+                publish(connection)
 
                 if module.params['auto_install_policy']:
                     install_policy(module, connection)
@@ -233,10 +233,10 @@ def main():
             code, response = delete_access_rule(module, connection)
 
             if module.params['auto_publish_session']:
-                publish(module, connection)
+                publish(connection)
 
                 if module.params['auto_install_policy']:
-                    install_policy(module, connection)
+                    install_policy(connection)
 
             result['changed'] = True
         elif code == 404:

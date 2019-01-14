@@ -151,10 +151,10 @@ def main():
                 code, response = update_host(module, connection)
 
                 if module.params['auto_publish_session']:
-                    publish(module, connection)
+                    publish(connection)
 
                     if module.params['auto_install_policy']:
-                        install_policy(module, connection)
+                        install_policy(connection)
 
                 result['changed'] = True
                 result['checkpoint_hosts'] = response
@@ -164,10 +164,10 @@ def main():
             code, response = create_host(module, connection)
 
             if module.params['auto_publish_session']:
-                publish(module, connection)
+                publish(connection)
 
                 if module.params['auto_install_policy']:
-                    install_policy(module, connection)
+                    install_policy(connection)
 
             result['changed'] = True
             result['checkpoint_hosts'] = response
@@ -177,10 +177,10 @@ def main():
             code, response = delete_host(module, connection)
 
             if module.params['auto_publish_session']:
-                publish(module, connection)
+                publish(connection)
 
                 if module.params['auto_install_policy']:
-                    install_policy(module, connection)
+                    install_policy(connection)
 
             result['changed'] = True
         elif code == 404:
