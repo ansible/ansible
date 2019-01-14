@@ -53,7 +53,7 @@ options:
     description:
     - Container hostname
     - Maps docker service --hostname option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   tty:
     required: false
     type: bool
@@ -61,28 +61,28 @@ options:
     description:
     - Allocate a pseudo-TTY
     - Maps docker service --tty option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   dns:
     required: false
     default: []
     description:
     - List of custom DNS servers.
     - Maps docker service --dns option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   dns_search:
     required: false
     default: []
     description:
     - List of custom DNS search domains.
     - Maps docker service --dns-search option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   dns_options:
     required: false
     default: []
     description:
     - List of custom DNS options.
     - Maps docker service --dns-option option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   force_update:
     required: false
     type: bool
@@ -90,18 +90,19 @@ options:
     description:
     - Force update even if no changes require it.
     - Maps to docker service update --force option.
-    - Requires api_version >= 1.25
+    - Requires API version >= 1.25
   labels:
     required: false
+    type: dict
     description:
-    - List of the service labels.
+    - Dictionary of key value pairs.
     - Maps docker service --label option.
   container_labels:
     required: false
+    type: dict
     description:
-    - List of the service containers labels.
+    - Dictionary of key value pairs.
     - Maps docker service --container-label option.
-    default: []
   endpoint_mode:
     required: false
     description:
@@ -143,13 +144,21 @@ options:
     required: false
     default: 0
     description:
-    - Service memory limit in MB. 0 equals no limit.
+    - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+      C(T) (tebibyte), or C(P) (pebibyte)."
+    - 0 equals no limit.
+    - Omitting the unit defaults to bytes.
     - Maps docker service --limit-memory option.
   reserve_memory:
     required: false
     default: 0
     description:
-    - Service memory reservation in MB. 0 equals no reservation.
+    - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+      Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+      C(T) (tebibyte), or C(P) (pebibyte)."
+    - 0 equals no reservation.
+    - Omitting the unit defaults to bytes.
     - Maps docker service --reserve-memory option.
   mode:
     required: false
@@ -170,6 +179,7 @@ options:
     - List of dictionaries describing the service secrets.
     - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
     - Maps docker service --secret option.
+    - Requires API version >= 1.25
     default: []
   configs:
     required: false
@@ -177,6 +187,7 @@ options:
     - List of dictionaries describing the service configs.
     - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
     - Maps docker service --config option.
+    - Requires API version >= 1.30
     default: null
   networks:
     required: false
@@ -191,7 +202,7 @@ options:
     - List of dictionaries describing the service published ports.
     - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp')
     - Only used with api_version >= 1.25
-    - If api_version >= 1.32 and docker python library >= 3.0.0 attribute 'mode' can be set to 'ingress' or 'host' (default 'ingress').
+    - If API version >= 1.32 and docker python library >= 3.0.0 attribute 'mode' can be set to 'ingress' or 'host' (default 'ingress').
   replicas:
     required: false
     default: -1
@@ -267,7 +278,7 @@ options:
     description:
     - Specifies the order of operations when rolling out an updated task.
     - Maps to docker service --update-order
-    - Requires docker api version >= 1.29
+    - Requires API version >= 1.29
   user:
     required: false
     default: root
