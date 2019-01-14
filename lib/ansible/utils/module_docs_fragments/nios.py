@@ -70,7 +70,8 @@ options:
           - Specifies the version of WAPI to use
           - Value can also be specified using C(INFOBLOX_WAP_VERSION) environment
             variable.
-        default: 1.4
+          - Until ansible 2.8 the default WAPI was 1.4
+        default: 2.1
       max_results:
         description:
           - Specifies the maximum number of objects to be returned,
