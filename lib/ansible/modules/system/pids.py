@@ -58,9 +58,9 @@ def get_pid(name):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dict(required= True, type= "str")
+            name=dict(required= True, type= "str"),
         ),
-		supports_check_mode=True,
+	supports_check_mode=True,
 
     )
     if not HAS_PSUTIL:
