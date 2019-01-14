@@ -152,6 +152,7 @@ options:
             - Managed OS disk type
         choices:
             - Standard_LRS
+            - StandardSSD_LRS
             - Premium_LRS
         version_added: "2.4"
     os_disk_name:
@@ -197,6 +198,7 @@ options:
                     - Managed data disk type
                 choices:
                     - Standard_LRS
+                    - StandardSSD_LRS
                     - Premium_LRS
                 version_added: "2.4"
             storage_account_name:
@@ -735,7 +737,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
                                  default='ReadOnly'),
             os_disk_size_gb=dict(type='int'),
-            managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
+            managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'Premium_LRS']),
             os_disk_name=dict(type='str'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
