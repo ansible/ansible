@@ -719,7 +719,7 @@ class DockerService(DockerBaseClass):
             differences.add('update_monitor', parameter=self.update_monitor, active=os.update_monitor)
         if self.update_max_failure_ratio != os.update_max_failure_ratio:
             differences.add('update_max_failure_ratio', parameter=self.update_max_failure_ratio, active=os.update_max_failure_ratio)
-        if self.update_order != os.update_order:
+        if self.update_order is not None and self.update_order != os.update_order:
             differences.add('update_order', parameter=self.update_order, active=os.update_order)
         if self.image != os.image.split('@')[0]:
             differences.add('image', parameter=self.image, active=os.image.split('@')[0])
