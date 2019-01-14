@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_swarm_service - fixing falsely reporting ``update_order`` as changed when option is not used."
