@@ -101,7 +101,6 @@ options:
     description:
     - Dictionary of key value pairs.
     - Maps docker service --container-label option.
-    default: []
   endpoint_mode:
     required: false
     description:
