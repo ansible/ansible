@@ -1,4 +1,3 @@
-
 # Test code for the pid module
 # Copyright 2019, Saranya Sridharan
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -18,7 +17,7 @@
     - emptypids.pids == [] 
 
 - name: "Picking a random process name"
-  command: "echo '{{ 99999999 | random }}'"
+  command: "echo 'some-random-long-name-{{ 99999999 | random }}'"
   register: random_name
 
 - name: "finding the 'sleep' binary"
@@ -29,7 +28,7 @@
   copy:
     src: "{{ find_sleep.stdout }}"
     dest: "{{ output_dir }}/{{ random_name.stdout }}"
-    mode: "777"
+    mode: "0777"
 
 - name: "Running the copy of 'sleep' binary"
   command: "sh {{ role_path }}/files/obtainpid.sh '{{ output_dir }}/{{ random_name.stdout }}' '{{ output_dir }}/obtainpid.txt'"
@@ -57,4 +56,4 @@
     that:
     - "pids.pids | join(' ')  == newpid.content | b64decode | trim"
     - "pids.pids | length > 0"
-    - "exactpidmatch.pids | length == 0"
+    - "exactpidmatch.pids == []"

@@ -52,15 +52,15 @@ except ImportError:
 
 
 def get_pid(name):
-    return [p.info['pid'] for p in psutil.process_iter(attrs=['pid', 'name']) if name in p.info['name']]
+    return [p.info['pid'] for p in psutil.process_iter(attrs=['pid', 'name']) if name == p.info['name']]
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required= True, type= "str"),
+            name=dict(required=True, type="str"),
         ),
-	supports_check_mode=True,
+        supports_check_mode=True,
     )
     if not HAS_PSUTIL:
         module.fail_json(msg="Missing required 'psutil' python module. Try installing it with: pip install psutil")
