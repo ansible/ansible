@@ -117,7 +117,7 @@ class BaseMeta(type):
                     dst_dict[attr_name] = property(getter, setter, deleter)
                     dst_dict['_valid_attrs'][attr_name] = value
                     dst_dict['_attributes'][attr_name] = Sentinel
-                    dst_dict['_attr_defaults'] = value.default
+                    dst_dict['_attr_defaults'][attr_name] = value.default
 
                     if value.alias is not None:
                         dst_dict[value.alias] = property(getter, setter, deleter)
@@ -172,9 +172,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # need a unique object here (all members contained within are
         # unique already).
         self._attributes = self._attributes.copy()
-        for key, value in self._attributes.items():
+        self._attr_defaults = self._attr_defaults.copy()
+        for key, value in self._attr_defaults.items():
             if callable(value):
-                self._attributes[key] = value()
+                self._attr_defaults[key] = value()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
@@ -325,6 +326,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if name in self._alias_attrs:
                 continue
             new_me._attributes[name] = shallowcopy(self._attributes[name])
+            new_me._attr_defaults[name] = shallowcopy(self._attr_defaults[name])
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
@@ -494,6 +496,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             value = [value]
         if not isinstance(new_value, list):
             new_value = [new_value]
+
+        value[:] = [v for v in value if v is not Sentinel]
+        new_value[:] = [v for v in new_value if v is not Sentinel]
 
         if prepend:
             combined = new_value + value
