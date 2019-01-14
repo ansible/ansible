@@ -26,6 +26,7 @@ options:
       - The name of the supervisord program or group to manage.
       - The name will be taken as group name when it ends with a colon I(:)
       - Group support is only available in Ansible version 1.6 or later.
+      - The name I(all) will match all processes
     required: true
   config:
     description:
@@ -70,6 +71,11 @@ EXAMPLES = '''
 # Manage the state of program to be in 'started' state.
 - supervisorctl:
     name: my_app
+    state: started
+
+# Manage the state of all programs to be in 'started' state.
+- supervisorctl:
+    name: all
     state: started
 
 # Manage the state of program group to be in 'started' state.
@@ -177,12 +183,12 @@ def main():
                 # If there is ':', this process must be in a group.
                 if ':' in process_name:
                     group = process_name.split(':')[0]
-                    if group != name:
+                    if group != name and name != "all":
                         continue
-                else:
+                elif name != "all":
                     continue
             else:
-                if process_name != name:
+                if process_name != name and name != "all":
                     continue
 
             matched.append((process_name, status))
