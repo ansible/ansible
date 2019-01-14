@@ -477,7 +477,7 @@ from ansible.module_utils.docker_common import (
 )
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
-
+from ansible.module_utils.six.moves import zip_longest
 
 try:
     from distutils.version import LooseVersion
@@ -710,7 +710,7 @@ class DockerService(DockerBaseClass):
             differences.add('reserve_memory', parameter=self.reserve_memory, active=os.reserve_memory)
         if self.container_labels != os.container_labels:
             differences.add('container_labels', parameter=self.container_labels, active=os.container_labels)
-        if self.publish != os.publish:
+        if self.is_publish_changed(self.publish, os.publish):
             differences.add('publish', parameter=self.publish, active=os.publish)
         if self.restart_policy != os.restart_policy:
             differences.add('restart_policy', parameter=self.restart_policy, active=os.restart_policy)
@@ -749,6 +749,23 @@ class DockerService(DockerBaseClass):
         if self.force_update:
             force_update = True
         return not differences.empty or force_update, differences, needs_rebuild, force_update
+
+    def is_publish_changed(self, publish_list, old_publish_list):
+        for publish_item, old_publish_item in zip_longest(publish_list, old_publish_list):
+            publish_item = publish_item or {}
+            old_publish_item = old_publish_item or {}
+            ignored_keys = set()
+            if not publish_item.get('mode'):
+                ignored_keys.add('mode')
+            filtered_old_publish_item = {
+                k: v for k, v in old_publish_item.items() if k not in ignored_keys
+            }
+            filtered_publish_item = {
+                k: v for k, v in publish_item.items() if k not in ignored_keys
+            }
+            if filtered_publish_item != filtered_old_publish_item:
+                return True
+        return False
 
     def __str__(self):
         return str({
