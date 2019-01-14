@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Tomi Raittinen <tomi.raittinen@gmail.com>
@@ -21,7 +21,7 @@ description:
     - Collects fact information from Palo Alto Networks firewall running PanOS.
 author:
     - Tomi Raittinen (@traittinen)
-note:
+notes:
     - Tested on PanOS 8.0.5
 requirements:
     - pan-python
@@ -70,75 +70,75 @@ EXAMPLES = '''
 RETURN = '''
 net_hostname:
     description: Hostname of the local node.
-    returned: When C(system) subset is selected.
+    returned: When C(system) is specified in C(gather_subset).
     type: string
 net_serial:
     description: Serial number of the local node.
-    returned: When C(system) subset is selected.
+    returned: When C(system) is specified in C(gather_subset).
     type: string
 net_model:
     description: Device model of the local node.
-    returned: When C(system) subset is selected.
+    returned: When C(system) is specified in C(gather_subset).
     type: string
 net_version:
     description: PanOS version of the local node.
-    returned: When C(system) subset is selected.
+    returned: When C(system) is specified in C(gather_subset).
     type: string
 net_uptime:
     description: Uptime of the local node.
-    returned: When C(system) subset is selected.
+    returned: When C(system) is specified in C(gather_subset).
     type: string
     sample: 469 days, 19:30:16
 net_full_commit_required:
     description: Specifies whether full commit is required to apply changes.
-    returned: When C(system) subset is selected.
+    returned: When C(system) is specified in C(gather_subset).
     type: bool
 net_uncommitted_changes:
     description: Specifies if commit is required to apply changes.
-    returned: When C(system) subset is selected.
+    returned: When C(system) is specified in C(gather_subset).
     type: bool
 net_multivsys:
     description: Specifies whether multivsys mode is enabled on local node.
-    returned: When C(system) subset is selected.
+    returned: When C(system) is specified in C(gather_subset).
     type: string
     sample: on
 net_session_usage:
     description: Current number of active sessions on local node
-    returned: When C(session) subset is selected.
+    returned: When C(session) is specified in C(gather_subset).
     type: int
 net_session_max:
     description: Maximum number of sessions on local node.
-    returned: When C(session) subset is selected.
+    returned: When C(session) is specified in C(gather_subset).
     type: int
 net_pps:
     description: Current packets/s throughput.
-    returned: When C(session) subset is selected.
+    returned: When C(session) is specified in C(gather_subset).
     type: int
 net_kbps:
     description: Current kb/s throughput.
-    returned: When C(session) subset is selected.
+    returned: When C(session) is specified in C(gather_subset).
     type: int
 net_ha_enabled:
     description: Specifies whether HA is enabled or not.
-    returned: When C(ha) subset is selected.
+    returned: When C(ha) is specified in C(gather_subset).
     type: bool
 net_ha_localmode:
     description: Specifies the HA mode on local node.
-    returned: When C(ha) subset is selected.
+    returned: When C(ha) is specified in C(gather_subset).
     type: string
     sample: Active-Passive
 net_ha_localstate:
     description: Specifies the HA state on local node.
-    returned: When C(ha) subset is selected.
+    returned: When C(ha) is specified in C(gather_subset).
     type: string
     sample: active
 net_config:
     description: Device confiration in XML format.
-    returned: When C(config) subset is selected.
+    returned: When C(config) is specified in C(gather_subset).
     type: string
 net_interfaces:
     description: Network interface information.
-    returned: When C(interface) subset is selected.
+    returned: When C(interface) is specified in C(gather_subset).
     type: complex
     contains:
         name:
@@ -162,7 +162,7 @@ net_interfaces:
             sample: 23
 net_virtual-routers:
     description: Virtual Router information.
-    returned: When C(vr) subset is selected.
+    returned: When C(vr) is specified in C(gather_subset).
     type: complex
     contains:
         vr_name:
@@ -184,7 +184,7 @@ net_virtual-routers:
                 - ae2.14
 net_virtual-systems:
     description: Virtual System information.
-    returned: When C(vsys) subset is selected.
+    returned: When C(vsys) is specified in C(gather_subset).
     type: complex
     contains:
         vsys_description:
