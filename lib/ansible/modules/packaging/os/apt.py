@@ -51,6 +51,12 @@ options:
   default_release:
     description:
       - Corresponds to the C(-t) option for I(apt) and sets pin priorities
+  change_held_packages:
+    description:
+      - Corresponds to the C(--allow-change-held-packages) option for I(apt). It allows you to explicitly decide to upgrade packages you set on hold.
+    type: bool
+    default: 'False'
+    version_added: "2.8"
   install_recommends:
     description:
       - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
@@ -601,7 +607,7 @@ def mark_installed_manually(m, packages):
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
-            install_recommends=None, force=False,
+            install_recommends=None, force=False, change_held_packages=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, only_upgrade=False,
             allow_unauthenticated=False):
@@ -656,10 +662,17 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             fixed = ''
 
-        if build_dep:
-            cmd = "%s -y %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, check_arg, packages)
+        if change_held_packages:
+            change_held_packages = '--allow-change-held-packages'
         else:
-            cmd = "%s -y %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
+            change_held_packages = ''
+
+        if build_dep:
+            args = " ".join([dpkg_options, only_upgrade, fixed, force_yes, check_arg])
+            cmd = "%s -y %s build-dep %s" % (APT_GET_CMD, args, packages)
+        else:
+            args = " ".join([dpkg_options, change_held_packages, only_upgrade, fixed, force_yes, autoremove, check_arg])
+            cmd = "%s -y %s install %s" % (APT_GET_CMD, args, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -791,7 +804,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
         m.exit_json(changed=changed, stdout=retvals.get('stdout', ''), stderr=retvals.get('stderr', ''), diff=retvals.get('diff', ''))
 
 
-def remove(m, pkgspec, cache, purge=False, force=False,
+def remove(m, pkgspec, cache, purge=False, force=False, change_held_packages=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
     pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -825,7 +838,12 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
+        if change_held_packages:
+            change_held_packages = '--allow-change-held-packages'
+        else:
+            change_held_packages = ''
+
+        cmd = "%s -q -y %s %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, change_held_packages, purge, force_yes, autoremove, check_arg, packages)
 
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
@@ -1010,6 +1028,7 @@ def main():
             package=dict(type='list', aliases=['pkg', 'name']),
             deb=dict(type='path'),
             default_release=dict(type='str', aliases=['default-release']),
+            change_held_packages=dict(type='bool', default=False),
             install_recommends=dict(type='bool', aliases=['install-recommends']),
             force=dict(type='bool', default=False),
             upgrade=dict(type='str', choices=['dist', 'full', 'no', 'safe', 'yes']),
@@ -1178,6 +1197,7 @@ def main():
                 default_release=p['default_release'],
                 install_recommends=install_recommends,
                 force=force_yes,
+                change_held_packages=p['change_held_packages'],
                 dpkg_options=dpkg_options,
                 build_dep=state_builddep,
                 fixed=state_fixed,
@@ -1196,7 +1216,16 @@ def main():
             else:
                 module.fail_json(**retvals)
         elif p['state'] == 'absent':
-            remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
+            remove(
+                module,
+                packages,
+                cache,
+                p['purge'],
+                force=force_yes,
+                change_held_packages=p['change_held_packages'],
+                dpkg_options=dpkg_options,
+                autoremove=autoremove
+            )
 
     except apt.cache.LockFailedException:
         module.fail_json(msg="Failed to lock apt for exclusive operation")
