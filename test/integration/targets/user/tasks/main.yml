@@ -229,6 +229,62 @@
       - '"ansibulluser" not in user_names2.stdout_lines'
 
 
+## create user without home and test fallback home dir create
+
+- block:
+    - name: create the user
+      user:
+        name: ansibulluser
+
+    - name: delete the user and home dir
+      user:
+        name: ansibulluser
+        state: absent
+        force: true
+        remove: true
+
+    - name: create the user without home
+      user:
+        name: ansibulluser
+        create_home: no
+
+    - name: create the user home dir
+      user:
+        name: ansibulluser
+      register: user_create_home_fallback
+
+    - name: stat home dir
+      stat:
+        path: '{{ user_create_home_fallback.home }}'
+      register: user_create_home_fallback_dir
+
+    - name: read UMASK from /etc/login.defs and return mode
+      shell: |
+        import re
+        import os
+        try:
+            for line in open('/etc/login.defs').readlines():
+                m = re.match(r'^UMASK\s+(\d+)$', line)
+                if m:
+                    umask = int(m.group(1), 8)
+        except:
+            umask = os.umask(0)
+        mode = oct(0o777 & ~umask)
+        print(str(mode).replace('o', ''))
+      args:
+        executable: python
+      register: user_login_defs_umask
+
+    - name: validate that user home dir is created
+      assert:
+        that:
+          - user_create_home_fallback is changed
+          - user_create_home_fallback_dir.stat.exists
+          - user_create_home_fallback_dir.stat.isdir
+          - user_create_home_fallback_dir.stat.pw_name == 'ansibulluser'
+          - user_create_home_fallback_dir.stat.mode == user_login_defs_umask.stdout
+  when: ansible_facts.system != 'Darwin'
+
 - block:
     - name: create non-system user on macOS to test the shell is set to /bin/bash
       user:
