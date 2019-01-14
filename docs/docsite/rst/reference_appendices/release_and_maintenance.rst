@@ -33,7 +33,7 @@ playbooks to run on newer versions.
 
 Release status
 ``````````````
-This table links to the release notes for each major release, which contain the dates and significant changes in each their minor releases.
+This table links to the release notes for each major release and contains the dates and significant changes in their minor releases.
 
 ==============================      =================================================
 Ansible Release                     Status
