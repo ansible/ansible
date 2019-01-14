@@ -30,20 +30,25 @@
 checkpoint_argument_spec = dict(
         auto_publish_session=dict(type='bool', default=True),
         policy_package=dict(type='str', default='standard'),
-        auto_install_policy=dict(type='bool', default=True)
+        auto_install_policy=dict(type='bool', default=True),
+        targets=dict(type='str', default=None)
     )
 
 
 def publish(connection, uid=None):
-    uid = uid if uid else connection.get_sid()
-    payload = {'uid': uid}
+    payload = None
+
+    if uid:
+        payload = {'uid': uid}
 
     connection.send_request('/web_api/publish', payload)
 
 
 def discard(connection, uid=None):
-    uid = uid if uid else connection.get_sid()
-    payload = {'uid': uid}
+    payload = None
+
+    if uid:
+        payload = {'uid': uid}
 
     connection.send_request('/web_api/discard', payload)
 

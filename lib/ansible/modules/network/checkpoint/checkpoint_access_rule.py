@@ -211,7 +211,7 @@ def main():
                     publish(connection)
 
                     if module.params['auto_install_policy']:
-                        install_policy(module, connection)
+                        install_policy(connection, module.params['policy_package'], module.params['targets'])
 
                 result['changed'] = True
                 result['checkpoint_access_rules'] = response
@@ -224,7 +224,7 @@ def main():
                 publish(connection)
 
                 if module.params['auto_install_policy']:
-                    install_policy(module, connection)
+                    install_policy(connection, module.params['policy_package'], module.params['targets'])
 
             result['changed'] = True
             result['checkpoint_access_rules'] = response
@@ -236,7 +236,7 @@ def main():
                 publish(connection)
 
                 if module.params['auto_install_policy']:
-                    install_policy(connection)
+                    install_policy(connection, module.params['policy_package'], module.params['targets'])
 
             result['changed'] = True
         elif code == 404:
