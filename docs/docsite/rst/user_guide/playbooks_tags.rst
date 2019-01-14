@@ -15,20 +15,20 @@ below), but its simplest use is with individual tasks. Here is an example
 that tags two tasks with different tags::
 
     tasks:
-        - yum:
-            name: "{{ item }}"
-            state: present
-          loop:
-             - httpd
-             - memcached
-          tags:
-             - packages
+      - yum:
+          name: "{{ item }}"
+          state: present
+        loop:
+           - httpd
+           - memcached
+        tags:
+           - packages
 
-        - template:
-            src: templates/src.j2
-            dest: /etc/foo.conf
-          tags:
-             - configuration
+      - template:
+          src: templates/src.j2
+          dest: /etc/foo.conf
+        tags:
+           - configuration
 
 If you wanted to just run the "configuration" and "packages" part of a very long playbook, you can use the ``--tags`` option on the command line::
 
@@ -154,9 +154,9 @@ Playbook file::
 
     - hosts: all
       tasks:
-      - include_role:
-          name: myrole
-        tags: mytag
+        - include_role:
+            name: myrole
+          tags: mytag
 
 Role tasks file::
 
@@ -179,16 +179,15 @@ There is a special ``always`` tag that will always run a task, unless specifical
 Example::
 
     tasks:
+      - debug:
+          msg: "Always runs"
+        tags:
+          - always
 
-        - debug:
-            msg: "Always runs"
-          tags:
-            - always
-
-        - debug:
-            msg: "runs when you use tag1"
-          tags:
-            - tag1
+      - debug:
+          msg: "runs when you use tag1"
+        tags:
+          - tag1
 
 .. versionadded:: 2.5
 
@@ -218,7 +217,3 @@ By default, Ansible runs as if ``--tags all`` had been specified.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-
-
