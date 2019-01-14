@@ -114,7 +114,7 @@ You might also want to simply specify the environment for a single task::
         PATH: '{{ rbenv_root }}/bin:{{ rbenv_root }}/shims:{{ rbenv_plugins }}/ruby-build/bin:{{ ansible_env.PATH }}'
 
 .. note::
-   ``environment:`` is not currently supported for Windows targets
+   ``environment:`` is currently experimental for Windows targets
 
 .. seealso::
 
