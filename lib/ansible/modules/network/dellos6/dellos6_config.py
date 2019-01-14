@@ -287,7 +287,7 @@ def main():
         result['changed'] = True
         if not module.check_mode:
                 cmd = {'command': 'copy running-config startup-config',
-                       'prompt': r'\(y/n\)\s?$', 'answer': 'yes'}
+                       'prompt': r'\(y/n\)\s?$', 'answer': 'y'}
                 run_commands(module, [cmd])
                 result['saved'] = True
         else:
