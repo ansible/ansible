@@ -227,8 +227,8 @@ options:
             in that case a I(backup) directory will be created in the current working directory
             and backup configuration will be copied in C(filename) within I(backup) directory.
         type: path
-  type: dict
-  version_added: "2.8"
+    type: dict
+    version_added: "2.8"
 notes:
   - Abbreviated commands are NOT idempotent, see
     L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).

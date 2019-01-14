@@ -159,8 +159,8 @@ options:
   backup_options:
     description:
       - This is a dict object containing configurable options related to backup file path.
-        The value of this option is read only when C(backup) is set to I(True), if C(backup) is set
-        to I(false) this option will be silently ignored.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
     suboptions:
       filename:
         description:
@@ -170,14 +170,14 @@ options:
       dir_path:
         description:
           - This option provides the path ending with directory name in which the backup
-            configuration file will be stored. If the directory does not exit it will be first
+            configuration file will be stored. If the directory does not exist it will be first
             created and the filename is either the value of C(filename) or default filename
             as described in C(filename) options description. If the path value is not given
             in that case a I(backup) directory will be created in the current working directory
             and backup configuration will be copied in C(filename) within I(backup) directory.
         type: path
-  type: dict
-  version_added: "2.8"
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
