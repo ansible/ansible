@@ -71,6 +71,28 @@ options:
       - State of the access rule (present or absent). Defaults to present.
     type: str
     default: present
+  auto_publish_session:
+    description:
+      - Publish the current session if changes have been performed
+        after task completes.
+    type: bool
+    default: 'yes'
+  auto_install_policy:
+    description:
+      - Install the package policy if changes have been performed
+        after the task completes.
+    type: bool
+    default: 'yes'
+  package_policy:
+    description:
+      - Package policy name to be installed.
+    type: bool
+    default: 'standard'
+  targets:
+    description:
+      - Targets to install the package policy on.
+    type: str
+    default: None
 """
 
 EXAMPLES = """
