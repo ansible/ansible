@@ -13,7 +13,7 @@ import stat
 import pytest
 
 from ansible.config.manager import find_ini_config_file
-
+from ansible.module_utils._text import to_text
 
 real_exists = os.path.exists
 real_isdir = os.path.isdir
@@ -48,7 +48,7 @@ def setup_env(request):
 @pytest.fixture
 def setup_existing_files(request, monkeypatch):
     def _os_path_exists(path):
-        if path in (request.param[0]):
+        if to_text(path) in (request.param[0]):
             return True
         else:
             return False
@@ -56,7 +56,7 @@ def setup_existing_files(request, monkeypatch):
     # Enable user and system dirs so that we know cwd takes precedence
     monkeypatch.setattr("os.path.exists", _os_path_exists)
     monkeypatch.setattr("os.getcwd", lambda: os.path.dirname(cfg_dir))
-    monkeypatch.setattr("os.path.isdir", lambda path: True if path == cfg_dir else real_isdir(path))
+    monkeypatch.setattr("os.path.isdir", lambda path: True if to_text(path) == cfg_dir else real_isdir(path))
 
 
 class TestFindIniFile:
