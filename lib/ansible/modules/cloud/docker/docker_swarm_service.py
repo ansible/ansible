@@ -1167,6 +1167,7 @@ def main():
         dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         dns_options=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+        force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
         secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
