@@ -143,13 +143,17 @@ options:
     required: false
     default: 0
     description:
-    - Service memory limit in MB. 0 equals no limit.
+    - Service memory limit. 0 equals no limit. Accepts a float value 
+      representing bytes or a string value with a units identification 
+      char (100000b, 1000k, 128m, 1g).
     - Maps docker service --limit-memory option.
   reserve_memory:
     required: false
     default: 0
     description:
-    - Service memory reservation in MB. 0 equals no reservation.
+    - Service memory reservation. 0 equals no limit. Accepts a float value 
+      representing bytes or a string value with a units identification 
+      char (100000b, 1000k, 128m, 1g).
     - Maps docker service --reserve-memory option.
   mode:
     required: false
