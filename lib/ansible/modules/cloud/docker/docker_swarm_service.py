@@ -144,17 +144,19 @@ options:
     required: false
     default: 0
     description:
-    - Service memory limit. 0 equals no limit. Accepts a float value
-      representing bytes or a string value with a units identification
-      char (100000b, 1000k, 128m, 1g).
+    - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      Unit can be C(b) (byte), C(k) (kilobytes, 1024b), C(m) (megabytes), C(g) (gigabyte)."
+    - 0 equals no limit.
+    - Omitting the unit defaults to bytes.
     - Maps docker service --limit-memory option.
   reserve_memory:
     required: false
     default: 0
     description:
-    - Service memory reservation. 0 equals no limit. Accepts a float value
-      representing bytes or a string value with a units identification
-      char (100000b, 1000k, 128m, 1g).
+    - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+      Unit can be C(b) (byte), C(k) (kilobytes, 1024b), C(m) (megabytes), C(g) (gigabyte)."
+    - 0 equals no reservation.
+    - Omitting the unit defaults to bytes.
     - Maps docker service --reserve-memory option.
   mode:
     required: false
