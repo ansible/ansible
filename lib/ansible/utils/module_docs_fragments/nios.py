@@ -70,7 +70,7 @@ options:
           - Specifies the version of WAPI to use
           - Value can also be specified using C(INFOBLOX_WAP_VERSION) environment
             variable.
-          - Default Wapi version is updated in ansible version 2.8
+          - Until ansible 2.8 the default WAPI was 1.4
         default: 2.1
       max_results:
         description:
