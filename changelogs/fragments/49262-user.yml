@@ -1,0 +1,6 @@
+bugfixes:
+- "user - fixed the fallback mechanism for creating a user home directory when
+  the directory isn't created with `useradd` command. Home directory will now
+  have a correct mode and it won't be created in a rare situation when a local
+  user is being deleted but it exists on a central user system
+  (https://github.com/ansible/ansible/pull/49262)."
