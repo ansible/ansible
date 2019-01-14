@@ -35,6 +35,8 @@ DOCUMENTATION = '''
         config_context:
             description:
                 - If True, it adds config-context in host vars.
+                - Config-context enables the association of arbitrary data to devices and virtual machines grouped by
+                  region, site, role, platform, and/or tenant. Please check official netbox docs for more info.
             default: False
             type: boolean
         token:
