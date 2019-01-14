@@ -484,6 +484,24 @@ class HomebrewCask(object):
         self.message = "You must select a cask to install."
         raise HomebrewCaskException(self.message)
 
+    # sudo_password fix ---------------------- {{{
+    def _run_command_with_sudo_password(self, cmd):
+        sudo_askpass_file = tempfile.NamedTemporaryFile()
+        sudo_askpass_file.write("#!/bin/sh\n\necho '" + self.sudo_password + "'\n")
+        os.chmod(sudo_askpass_file.name, 0o700)
+        sudo_askpass_file.file.close()
+
+        rc, out, err = self.module.run_command(
+            cmd,
+            environ_update={'SUDO_ASKPASS': sudo_askpass_file.name}
+        )
+
+        sudo_askpass_file.close()
+        self.module.add_cleanup_file(sudo_askpass_file.name)
+
+        return (rc, out, err)
+    # /sudo_password fix --------------------- }}}
+
     # updated -------------------------------- {{{
     def _update_homebrew(self):
         rc, out, err = self.module.run_command([
@@ -517,27 +535,18 @@ class HomebrewCask(object):
             self.message = 'Casks would be upgraded.'
             raise HomebrewCaskException(self.message)
 
+        opts = (
+            [self.brew_path, 'cask', 'upgrade']
+        )
+
+        cmd = [opt for opt in opts if opt]
+
         rc, out, err = '', '', ''
 
         if self.sudo_password:
-            sudo_askpass_file = tempfile.NamedTemporaryFile()
-            sudo_askpass_file.write("#!/bin/sh\n\necho '" + self.sudo_password + "'\n")
-            os.chmod(sudo_askpass_file.name, 0o700)
-            sudo_askpass_file.file.close()
-
-            rc, out, err = self.module.run_command([
-                self.brew_path,
-                'cask',
-                'upgrade',
-            ], environ_update={'SUDO_ASKPASS': sudo_askpass_file.name})
-
-            sudo_askpass_file.close()
+            rc, out, err = self._run_command_with_sudo_password(cmd)
         else:
-            rc, out, err = self.module.run_command([
-                self.brew_path,
-                'cask',
-                'upgrade',
-            ])
+            rc, out, err = self.module.run_command(cmd)
 
         if rc == 0:
             if re.search(r'==> No Casks to upgrade', out.strip(), re.IGNORECASE):
@@ -585,17 +594,7 @@ class HomebrewCask(object):
         rc, out, err = '', '', ''
 
         if self.sudo_password:
-            sudo_askpass_file = tempfile.NamedTemporaryFile()
-            sudo_askpass_file.write("#!/bin/sh\n\necho '" + self.sudo_password + "'\n")
-            os.chmod(sudo_askpass_file.name, 0o700)
-            sudo_askpass_file.file.close()
-
-            rc, out, err = self.module.run_command(
-                cmd,
-                environ_update={'SUDO_ASKPASS': sudo_askpass_file.name}
-            )
-
-            sudo_askpass_file.close()
+            rc, out, err = self._run_command_with_sudo_password(cmd)
         else:
             rc, out, err = self.module.run_command(cmd)
 
@@ -659,17 +658,7 @@ class HomebrewCask(object):
         rc, out, err = '', '', ''
 
         if self.sudo_password:
-            sudo_askpass_file = tempfile.NamedTemporaryFile()
-            sudo_askpass_file.write("#!/bin/sh\n\necho '" + self.sudo_password + "'\n")
-            os.chmod(sudo_askpass_file.name, 0o700)
-            sudo_askpass_file.file.close()
-
-            rc, out, err = self.module.run_command(
-                cmd,
-                environ_update={'SUDO_ASKPASS': sudo_askpass_file.name}
-            )
-
-            sudo_askpass_file.close()
+            rc, out, err = self._run_command_with_sudo_password(cmd)
         else:
             rc, out, err = self.module.run_command(cmd)
 
@@ -722,17 +711,7 @@ class HomebrewCask(object):
         rc, out, err = '', '', ''
 
         if self.sudo_password:
-            sudo_askpass_file = tempfile.NamedTemporaryFile()
-            sudo_askpass_file.write("#!/bin/sh\n\necho '" + self.sudo_password + "'\n")
-            os.chmod(sudo_askpass_file.name, 0o700)
-            sudo_askpass_file.file.close()
-
-            rc, out, err = self.module.run_command(
-                cmd,
-                environ_update={'SUDO_ASKPASS': sudo_askpass_file.name}
-            )
-
-            sudo_askpass_file.close()
+            rc, out, err = self._run_command_with_sudo_password(cmd)
         else:
             rc, out, err = self.module.run_command(cmd)
 
