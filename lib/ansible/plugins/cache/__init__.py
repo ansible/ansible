@@ -98,11 +98,15 @@ class BaseFileCacheModule(BaseCacheModule):
     """
     def __init__(self, *args, **kwargs):
 
-        super(BaseFileCacheModule, self).__init__(*args, **kwargs)
+        try:
+            super(BaseFileCacheModule, self).__init__(*args, **kwargs)
+            self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
+            self._timeout = float(self.get_option('_timeout'))
+        except AnsibleError:
+            self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
+            self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self.plugin_name = self.__module__.split('.')[-1]
         self._cache = {}
-        self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
-        self._timeout = float(self.get_option('_timeout'))
         self.validate_cache_connection()
 
     def _get_cache_connection(self, source):
