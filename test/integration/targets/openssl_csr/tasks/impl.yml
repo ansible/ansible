@@ -146,3 +146,11 @@
     subject:
       commonName: www.ansible.com
     select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate CSR with text common name
+  openssl_csr:
+    path: '{{ output_dir }}/csr3.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      commonName: This is for Ansible
+    select_crypto_backend: '{{ select_crypto_backend }}'
