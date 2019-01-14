@@ -1,4 +1,14 @@
 ---
+- name: Prepare private key for backend autodetection test
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_backend_selection.pem'
+- name: Run module with backend autodetection
+  openssl_csr:
+    path: '{{ output_dir }}/csr_backend_selection.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_backend_selection.pem'
+    subject:
+      commonName: www.ansible.com
+
 - block:
   - name: Running tests with pyOpenSSL backend
     include_tasks: impl.yml
