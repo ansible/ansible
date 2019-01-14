@@ -23,7 +23,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import get_all_plugin_loaders
@@ -68,7 +68,7 @@ class Playbook:
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
                 plugin_path = os.path.join(self._basedir, obj.subdir)
-                if os.path.isdir(plugin_path):
+                if os.path.isdir(to_bytes(plugin_path)):
                     obj.add_directory(plugin_path)
 
         try:

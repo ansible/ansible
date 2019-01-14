@@ -186,7 +186,7 @@ def find_ini_config_file(warnings=None):
     path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
     if path_from_env is not SENTINEL:
         path_from_env = unfrackpath(path_from_env, follow=False)
-        if os.path.isdir(path_from_env):
+        if os.path.isdir(to_bytes(path_from_env)):
             path_from_env = os.path.join(path_from_env, "ansible.cfg")
         potential_paths.append(path_from_env)
 
@@ -214,7 +214,7 @@ def find_ini_config_file(warnings=None):
     potential_paths.append("/etc/ansible/ansible.cfg")
 
     for path in potential_paths:
-        if os.path.exists(path):
+        if os.path.exists(to_bytes(path)):
             break
     else:
         path = None
@@ -254,7 +254,7 @@ class ConfigManager(object):
 
         # consume configuration
         if self._config_file:
-            if os.path.exists(self._config_file):
+            if os.path.exists(to_bytes(self._config_file)):
                 # initialize parser and read config
                 self._parse_config_file()
 
@@ -288,7 +288,7 @@ class ConfigManager(object):
         if cfile is not None:
             if ftype == 'ini':
                 self._parsers[cfile] = configparser.ConfigParser()
-                with open(cfile, 'rb') as f:
+                with open(to_bytes(cfile), 'rb') as f:
                     try:
                         cfg_text = to_text(f.read(), errors='surrogate_or_strict')
                     except UnicodeError as e:
