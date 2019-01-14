@@ -43,7 +43,7 @@ notes:
   an evaluation license only.
 - The evaluation license (00000-00000-00000-00000-00000) is not listed
   when unused.
-extends_documentation_fragment: vmware.documentation
+extends_documentation_fragment: vmware.vcenter_documentation
 '''
 
 EXAMPLES = r'''
@@ -83,24 +83,27 @@ except ImportError:
     HAS_PYVMOMI = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 
-def find_key(licenses, license):
-    for item in licenses:
-        if item.licenseKey == license:
-            return item
-    return None
+class VcenterLicenseMgr(PyVmomi):
+    def __init__(self, module):
+        super(VcenterLicenseMgr, self).__init__(module)
 
+    def find_key(self, licenses, license):
+        for item in licenses:
+            if item.licenseKey == license:
+                return item
+        return None
 
-def list_keys(licenses):
-    keys = []
-    for item in licenses:
-        # Filter out evaluation license key
-        if item.used is None:
-            continue
-        keys.append(item.licenseKey)
-    return keys
+    def list_keys(self, licenses):
+        keys = []
+        for item in licenses:
+            # Filter out evaluation license key
+            if item.used is None:
+                continue
+            keys.append(item.licenseKey)
+        return keys
 
 
 def main():
@@ -132,13 +135,14 @@ def main():
         diff=dict(),
     )
 
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+    pyv = VcenterLicenseMgr(module)
+    if not pyv.is_vcenter():
+        module.fail_json(msg="vcenter_license is meant for vCenter, hostname %s "
+                             "is not vCenter server." % module.params.get('hostname'))
 
-    content = connect_to_api(module)
-    lm = content.licenseManager
+    lm = pyv.content.licenseManager
 
-    result['licenses'] = list_keys(lm.licenses)
+    result['licenses'] = pyv.list_keys(lm.licenses)
     if module._diff:
         result['diff']['before'] = '\n'.join(result['licenses']) + '\n'
 
@@ -151,22 +155,22 @@ def main():
             lm.AddLicense(license, labels)
 
             # Automatically assign to current vCenter, if needed
-            key = find_key(lm.licenses, license)
-            if content.about.name in key.name:
+            key = pyv.find_key(lm.licenses, license)
+            if pyv.content.about.name in key.name:
                 try:
                     lam = lm.licenseAssignmentManager
-                    lam.UpdateAssignedLicense(entity=content.about.instanceUuid, licenseKey=license)
+                    lam.UpdateAssignedLicense(entity=pyv.content.about.instanceUuid, licenseKey=license)
                 except Exception:
                     module.warn('Could not assign "%s" (%s) to vCenter.' % (license, key.name))
 
-            result['licenses'] = list_keys(lm.licenses)
+            result['licenses'] = pyv.list_keys(lm.licenses)
         if module._diff:
             result['diff']['after'] = '\n'.join(result['licenses']) + '\n'
 
     elif state == 'absent' and license in result['licenses']:
 
         # Check if key is in use
-        key = find_key(lm.licenses, license)
+        key = pyv.find_key(lm.licenses, license)
         if key.used > 0:
             module.fail_json(msg='Cannot remove key "%s", still in use %s time(s).' % (license, key.used))
 
@@ -175,7 +179,7 @@ def main():
             result['licenses'].remove(license)
         else:
             lm.RemoveLicense(license)
-            result['licenses'] = list_keys(lm.licenses)
+            result['licenses'] = pyv.list_keys(lm.licenses)
         if module._diff:
             result['diff']['after'] = '\n'.join(result['licenses']) + '\n'
 
