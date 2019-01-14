@@ -757,12 +757,12 @@ class DockerService(DockerBaseClass):
             ignored_keys = set()
             if not publish_item.get('mode'):
                 ignored_keys.add('mode')
-            filtered_old_publish_item = {
-                k: v for k, v in old_publish_item.items() if k not in ignored_keys
-            }
-            filtered_publish_item = {
-                k: v for k, v in publish_item.items() if k not in ignored_keys
-            }
+            filtered_old_publish_item = dict(
+                (k, v) for k, v in old_publish_item.items() if k not in ignored_keys
+            )
+            filtered_publish_item = dict(
+                (k, v) for k, v in publish_item.items() if k not in ignored_keys
+            )
             if filtered_publish_item != filtered_old_publish_item:
                 return True
         return False
