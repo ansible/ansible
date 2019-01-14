@@ -153,4 +153,5 @@
     privatekey_path: '{{ output_dir }}/privatekey2.pem'
     subject:
       commonName: This is for Ansible
+    useCommonNameForSAN: no
     select_crypto_backend: '{{ select_crypto_backend }}'

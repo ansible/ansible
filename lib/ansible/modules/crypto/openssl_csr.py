@@ -112,12 +112,22 @@ options:
             - This can either be a 'comma separated string' or a YAML list.
             - Values should be prefixed by their options. (i.e., C(email), C(URI), C(DNS), C(RID), C(IP), C(dirName),
               C(otherName) and the ones specific to your CA)
+            - Note that if no SAN is specified, but a common name, the common
+              name will be added as a SAN except if C(useCommonNameForSAN) is
+              set to I(false).
             - More at U(https://tools.ietf.org/html/rfc5280#section-4.2.1.6)
     subject_alt_name_critical:
         required: false
         aliases: [ 'subjectAltName_critical' ]
         description:
             - Should the subjectAltName extension be considered as critical
+    useCommonNameForSAN:
+        type: bool
+        default: true
+        description:
+            - If set to I(true), the module will fill the common name in for
+              C(subject_alt_name) with C(DNS:) prefix if no SAN is specified.
+        version_added: '2.8'
     key_usage:
         required: false
         aliases: [ 'keyUsage' ]
@@ -396,7 +406,7 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
             self.subject = self.subject + crypto_utils.parse_name_field(module.params['subject'])
         self.subject = [(entry[0], entry[1]) for entry in self.subject if entry[1]]
 
-        if not self.subjectAltName:
+        if not self.subjectAltName and module.params['useCommonNameForSAN']:
             for sub in self.subject:
                 if sub[0] in ('commonName', 'CN'):
                     self.subjectAltName = ['DNS:%s' % sub[1]]
@@ -946,6 +956,7 @@ def main():
             emailAddress=dict(aliases=['E', 'email_address'], type='str'),
             subjectAltName=dict(aliases=['subject_alt_name'], type='list', elements='str'),
             subjectAltName_critical=dict(aliases=['subject_alt_name_critical'], default=False, type='bool'),
+            useCommonNameForSAN=dict(type='bool', default=True),
             keyUsage=dict(aliases=['key_usage'], type='list', elements='str'),
             keyUsage_critical=dict(aliases=['key_usage_critical'], default=False, type='bool'),
             extendedKeyUsage=dict(aliases=['extKeyUsage', 'extended_key_usage'], type='list', elements='str'),
