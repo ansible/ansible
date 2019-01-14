@@ -40,11 +40,13 @@ def publish(connection, uid=None):
 
     connection.send_request('/web_api/publish', payload)
 
+
 def discard(connection, uid=None):
     uid = uid if uid else connection.get_sid()
     payload = {'uid': uid}
 
     connection.send_request('/web_api/discard', payload)
+
 
 def install_policy(connection, policy_package, targets=None):
     payload = {'policy-package': policy_package,
