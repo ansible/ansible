@@ -3,7 +3,7 @@
 create Autosupport module to enable, disable or modify
 """
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -191,7 +191,7 @@ class NetAppONTAPasup(object):
             asup_info[item_key] = self.na_helper.get_value_for_bool(from_zapi=True,
                                                                     value=asup_attr_info[zapi_key])
         for item_key, zapi_key in self.na_helper.zapi_list_keys.items():
-            parent, _ = zapi_key
+            parent, dummy = zapi_key
             asup_info[item_key] = self.na_helper.get_value_for_list(from_zapi=True,
                                                                     zapi_parent=asup_attr_info.get_child_by_name(parent)
                                                                     )
