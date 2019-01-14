@@ -1229,8 +1229,11 @@ class TaskParameters(DockerBaseClass):
         if self.env:
             for name, value in self.env.items():
                 if not isinstance(value, string_types):
-                    self.fail("Non-string value found for env option. "
-                              "Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s" % (name, ))
+                    self.client.module.warn(
+                        "Non-string value found for env option. "
+                        "Ambiguous env options should be wrapped in quotes to avoid YAML parsing. "
+                        "This will become an error in Ansible 2.8. "
+                        "Key: %s; value will be treated as: %s" % (name, str(value)))
                 final_env[name] = str(value)
         return final_env
 
