@@ -27,7 +27,7 @@ from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.six import iteritems
 
 
-class IosNetwork(Network):
+class VyosNetwork(Network):
     """
     This is a Linux-specific subclass of Network.  It defines
     - interfaces (a list of interface names)
@@ -35,49 +35,54 @@ class IosNetwork(Network):
     - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
     - ipv4_address and ipv6_address: the first non-local address for each family.
     """
-    platform = 'ios'
+    platform = 'vyos'
 
     def populate(self, collected_facts=None):
         network_facts = {}
-        data = self.get('show interfaces')
+
+        data = self.get('show interfaces detail')
         network_facts['network_interfaces'] = {}
-
-        if data:
-            interfaces = self.parse_interfaces(data)
-            network_facts['network_interfaces'] = self.populate_interfaces(interfaces)
-
-        data = self.get('show ip interface')
         network_facts['all_ipv4_address'] = []
-
-        if data:
-            interfaces = self.parse_interfaces(data)
-            network_facts['all_ipv4_address'] = self.populate_ipv4_interfaces(interfaces)
-
-        data = self.get('show ipv6 interface')
         network_facts['all_ipv6_address'] = []
 
         if data:
             interfaces = self.parse_interfaces(data)
-            network_facts['all_ipv6_address'] = self.populate_ipv6_interfaces(interfaces)
+
+        if interfaces:
+            network_facts['network_interfaces'] = self.populate_interfaces(interfaces)
+            self.populate_address(interfaces, network_facts)
 
         return network_facts
 
     def get(self, command):
-        return super(IosNetwork, self).get(command)
+        return super(VyosNetwork, self).get(command)
 
     def parse_interfaces(self, data):
         parsed = dict()
         key = ''
-        for line in data.split('\n'):
-            if len(line) == 0:
-                continue
-            elif line[0] == ' ':
-                parsed[key] += '\n%s' % line
-            else:
-                match = re.match(r'^(\S+)', line)
-                if match:
-                    key = match.group(1)
-                    parsed[key] = line
+        lines = re.split(r'\n[eth|lo]', data)
+
+        if len(lines) > 0:
+            for line in lines:
+                if len(line) == 0:
+                    continue
+                elif line[0] == ' ':
+                    parsed[key] += '\n%s' % line
+                else:
+                    l = ''
+                    if line.lower().startswith('eth'):
+                        l = line.strip()
+                    elif line.lower().startswith('lo'):
+                        l = line.strip()
+                    elif line.lower().startswith('th'):
+                        l = 'e' + line.strip()
+                    elif line.lower().startswith('o'):
+                        l = 'l' + line.strip()
+                    if l:
+                        m = re.match(r'^(\S+)', l).group(1)
+                        key = m.strip(':')
+                        parsed[key] = l.strip(m).strip()
+
         return parsed
 
     def populate_interfaces(self, interfaces):
@@ -87,57 +92,46 @@ class IosNetwork(Network):
             intf['description'] = self.parse_description(value)
             intf['macaddress'] = self.parse_macaddress(value)
             intf['mtu'] = self.parse_mtu(value)
-            intf['enabled'] = self.parse_enabled(key, value)
+            intf['enabled'] = self.parse_enabled(value)
             facts[key] = intf
         return facts
 
-    def populate_ipv4_interfaces(self, interfaces):
-        ipv4_interfaces = list()
+    def populate_address(self, interfaces, network_facts):
         for key, value in iteritems(interfaces):
-            primary_address = addresses = []
-            primary_address = re.findall(r'Internet address is (.+)$', value, re.M)
-            addresses = re.findall(r'Secondary address (.+)$', value, re.M)
-            if len(primary_address) == 0:
-                continue
-            addresses.append(primary_address[0])
-            for address in addresses:
-                addr = address.split("/")[0].strip()
-                ipv4_interfaces.append(addr)
-        return ipv4_interfaces
-
-    def populate_ipv6_interfaces(self, interfaces):
-        ipv6_interfaces = list()
-        for key, value in iteritems(interfaces):
-            addresses = re.findall(r'\s+(.+), subnet', value, re.M)
-            for address in addresses:
-                addr = address.strip()
-                ipv6_interfaces.append(addr)
-        return ipv6_interfaces
+            ipv4_match = re.search(r'inet (\S+)', value)
+            if ipv4_match:
+                network_facts['all_ipv4_address'].append(ipv4_match.group(1).split('/')[0])
+            ipv6_match = re.search(r'inet6 (\S+)', value)
+            if ipv6_match:
+                network_facts['all_ipv6_address'].append(ipv6_match.group(1).split('/')[0])
 
     def parse_description(self, data):
-        match = re.search(r'Description: (.+)$', data, re.M)
+        match = re.search(r'Description: (.+)\n', data, re.M)
         if match:
             return match.group(1)
 
     def parse_macaddress(self, data):
-        match = re.search(r'Hardware is (?:.*), address is (\S+)', data)
+        match = re.search(r'link/(?:loopback|ether) (\S+)', data)
         if match:
             return match.group(1)
 
-    def parse_enabled(self, key, data):
-        match = re.search(r'%s is (up|down|administratively down)' % key, data)
+    def parse_enabled(self, data):
+        match = re.search(r'state (\S+)', data)
         if match:
-            if match.group(1) == 'up':
+            state = match.group(1)
+            if state.lower() == 'up':
                 return True
+            elif state.lower() == 'unknown':
+                return 'unknown'
         return False
 
     def parse_mtu(self, data):
-        match = re.search(r'MTU (\d+)', data)
+        match = re.search(r'mtu (\d+)', data)
         if match:
             return int(match.group(1))
 
 
-class IosNetworkCollector(NetworkCollector):
-    _platform = 'ios'
-    _fact_class = IosNetwork
+class VyosNetworkCollector(NetworkCollector):
+    _platform = 'vyos'
+    _fact_class = VyosNetwork
     required_facts = set(['platform'])
