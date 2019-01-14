@@ -58,10 +58,9 @@ def get_pid(name):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required= True, type= "str"),
+            name=dict(required=True, type="str"),
         ),
-	supports_check_mode=True,
-
+        supports_check_mode=True,
     )
     if not HAS_PSUTIL:
         module.fail_json(msg="Missing required 'psutil' python module. Try installing it with: pip install psutil")
@@ -72,4 +71,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
