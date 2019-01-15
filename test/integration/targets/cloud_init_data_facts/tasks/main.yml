@@ -9,7 +9,9 @@
   block:
   - name: setup install cloud-init
     package:
-      name: cloud-init
+      name:
+      - cloud-init
+      - udev
 
   - name: setup run cloud-init
     service:
