@@ -1,0 +1,2 @@
+bugfixes:
+  - archive - Fix check if archive is created in path to be removed
