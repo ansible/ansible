@@ -1000,8 +1000,8 @@
     - env_2 is not changed
     - env_3 is not changed
     - env_4 is changed
-    - env_5 is failed
-    - "('Non-string value found for env option.') in env_5.msg"
+    - '"warnings" in env_5'
+    - "'Non-string value found for env option.' in env_5.warnings[0]"
 
 ####################################################################
 ## env_file #########################################################
