@@ -229,12 +229,11 @@ class DistributionFiles:
         if 'Amazon' not in data:
             # return False  # TODO: remove   # huh?
             return False, amazon_facts  # TODO: remove
+        amazon_facts['distribution'] = "Amazon"
         if path == '/etc/os-release':
-            for line in data.splitlines():
-                amazon_facts['distribution'] = re.search("^NAME=(.*)", line)
-                amazon_facts['distribution_version'] = re.search("^VERSION=(.*)", line)
+            # amazon_facts['distribution'] = re.search("^NAME=(.*)", data))split()[0]
+            amazon_facts['distribution_version'] = re.search("^VERSION=(.*)", data)
         else:
-            amazon_facts['distribution'] = data.split()[0] + ' ' + data.split()[1]
             amazon_facts['distribution_version'] = data.split()[-1] if (data.split()[-1]).isdigit() else data.split[-2]
         return True, amazon_facts
 
