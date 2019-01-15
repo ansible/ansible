@@ -433,7 +433,7 @@ def main():
             direction=dict(type='str', choices=['INGRESS', 'EGRESS']),
             disabled=dict(type='bool'),
             name=dict(required=True, type='str'),
-            network=dict(default={'selfLink': 'global/networks/default'}),
+            network=dict(default=dict(selfLink='global/networks/default')),
             priority=dict(default=1000, type='int'),
             source_ranges=dict(type='list', elements='str'),
             source_service_accounts=dict(type='list', elements='str'),
