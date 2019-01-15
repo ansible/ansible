@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: postgresql_table
-short_description: Postgresql_table module allows to create, drop, rename, or truncate a table. Also allows to change some attributes.
+short_description: Allows to create, drop, rename, or truncate a table. Also allows to change some attributes.
 description:
    - Create or drop a PostgreSQL table.
 version_added: "2.8"
@@ -47,10 +47,10 @@ options:
     type: bool
   like:
     description:
-      - Create a table like another table (with the similar DDL).
+      - Create a table like another table (with similar DDL).
   including:
     description:
-      - Keywords that used with like parameter, may be DEFAULTS, CONSTRAINTS, INDEXES, STORAGE, COMMENTS or ALL.
+      - Keywords that are used with like parameter, may be DEFAULTS, CONSTRAINTS, INDEXES, STORAGE, COMMENTS or ALL.
   columns:
     description:
       - Columns that are needed.
@@ -225,8 +225,6 @@ from ansible.module_utils.six import iteritems
 #
 
 class Table(object):
-    """Class for PostgreSQL tables
-    """
     def __init__(self, name, module, cursor):
         self.name = name
         self.module = module
@@ -270,10 +268,10 @@ class Table(object):
                unlogged=False, owner=''):
         """
         Create table.
-        If table exists, check passed args (params, tblspace, owner)
-        and, if they different from current, change them.
+        If table exists, check passed args (params, tblspace, owner) and,
+        if they're different from current, change them.
         Arguments:
-        params - storage params (in SQL them passed by "WITH (...)"),
+        params - storage params (passed by "WITH (...)" in SQL),
             comma separated.
         tblspace - tablespace.
         owner - table owner.
@@ -331,12 +329,12 @@ class Table(object):
     def create_like(self, src_table, including='', tblspace='',
                     unlogged=False, params=''):
         """
-        Create table like another table.
+        Create table like another table (with similar DDL).
         Arguments:
         src_table - source table.
         including - corresponds to optional INCLUDING expression
             in CREATE TABLE ... LIKE statement.
-        params - storage params (in SQL them passed by "WITH (...)"),
+        params - storage params (passed by "WITH (...)" in SQL),
             comma separated.
         tblspace - tablespace.
         owner - table owner.
