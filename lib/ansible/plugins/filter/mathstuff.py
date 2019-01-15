@@ -53,7 +53,7 @@ try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 @environmentfilter
