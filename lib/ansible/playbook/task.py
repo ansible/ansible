@@ -203,7 +203,7 @@ class Task(Base, Conditional, Taggable, Become):
 
         new_ds['action'] = action
         new_ds['args'] = args
-        new_ds['delegate_to'] = delegate_to
+        new_ds['delegate_to'] = delegate_to or Sentinel
 
         # we handle any 'vars' specified in the ds here, as we may
         # be adding things to them below (special handling for includes).
@@ -453,6 +453,9 @@ class Task(Base, Conditional, Taggable, Become):
                         value = parent_value
         except KeyError:
             pass
+
+        if value is Sentinel:
+            value = self._attr_defaults[attr]
 
         return value
 

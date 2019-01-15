@@ -366,6 +366,9 @@ class Block(Base, Become, Conditional, Taggable):
         except KeyError:
             pass
 
+        if value is Sentinel:
+            value = self._attr_defaults[attr]
+
         return value
 
     def filter_tagged_tasks(self, play_context, all_vars):
