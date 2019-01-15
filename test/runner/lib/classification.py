@@ -596,6 +596,11 @@ class PathMapper(object):
                 if filename.startswith('inventory.') and filename.endswith('.template'):
                     return minimal  # ansible-test does not use these inventory templates
 
+                if filename == 'inventory':
+                    return {
+                        'integration': self.integration_all_target,
+                    }
+
                 for command in (
                         'integration',
                         'windows-integration',
