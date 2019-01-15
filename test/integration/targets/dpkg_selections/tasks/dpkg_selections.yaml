@@ -30,7 +30,7 @@
 - name: ensure hello was not upgraded
   assert:
     that:
-      - "{{ hello_version.stdout }} == {{ hello_old_version }}"
+    - hello_version.stdout == hello_old_version
 
 - name: remove version freeze
   dpkg_selections:
@@ -49,7 +49,7 @@
 - name: check that old version upgraded correctly
   assert:
     that:
-      - "{{ hello_version.stdout }}!={{ hello_old_version }}"
+    - hello_version.stdout != hello_old_version
 
 - name: set hello to deinstall
   dpkg_selections:
