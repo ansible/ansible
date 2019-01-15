@@ -1,0 +1,27 @@
+- hosts: testhost,testhost2
+  gather_facts: no
+  tasks:
+  - block:
+    - fail:
+      when: inventory_hostname == 'testhost'
+    - debug: msg="still executing in block"
+    rescue:
+    - meta: clear_host_errors
+    always:
+    - debug: msg="executing in always"
+    any_errors_fatal: yes
+
+  - debug: msg="continue executing after recovering from failure"
+
+- hosts: testhost,testhost2
+  gather_facts: no
+  tasks:
+  - block:
+    - fail:
+      when: inventory_hostname == 'testhost'
+    - debug: msg="still executing in block"
+    always:
+    - debug: msg="executing in always"
+    any_errors_fatal: yes
+
+  - debug: msg="task_after_block_should_not_run"

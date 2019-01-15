@@ -407,9 +407,12 @@ class StrategyModule(StrategyBase):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
+                    elif any_errors_fatal and res.is_failed() and not iterator.is_failed(res._host):
+                        failed_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
-                if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
+                # check TQM failed hosts in case a rescue/always was used after a failure in a block as failed_hosts may be empty
+                if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0 or len(self._tqm._failed_hosts) > 0):
                     dont_fail_states = frozenset([iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS])
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
