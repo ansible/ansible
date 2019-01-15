@@ -1,0 +1,100 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim with no folders and 2 datastores
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?dc=1&cluster=1&folder=0&ds=2
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- name: get a list of Datastores from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=D
+  register: dslist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+- debug: var=dslist
+
+- name: create new VMs
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 0gb
+          type: thin
+          datastore: "{{ dslist['json'][0] | basename }}"
+        - size: 0gb
+          type: thin
+          datastore: "{{ dslist['json'][1] | basename }}"
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0
+
+- debug: var=clone_d1_c1_f0
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "clone_d1_c1_f0.results|map(attribute='changed')|unique|list == [true]"
+
+- name: create new VMs again
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'newvm_' + item|basename }}"
+    guest_id: centos64Guest
+    datacenter: "{{ (item|basename).split('_')[0] }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 0gb
+          type: thin
+          datastore: "{{ dslist['json'][0] | basename }}"
+        - size: 0gb
+          type: thin
+          datastore: "{{ dslist['json'][1] | basename }}"
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_d1_c1_f0_recreate
+
+- debug: var=clone_d1_c1_f0_recreate
+
+- name: assert that no changes were made after re-creating
+  assert:
+    that:
+        - "clone_d1_c1_f0_recreate.results|map(attribute='changed')|unique|list == [false]"

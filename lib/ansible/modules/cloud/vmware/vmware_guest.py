@@ -1794,6 +1794,64 @@ class PyVmomiHelper(PyVmomi):
             if disk_index == 7:
                 disk_index += 1
 
+            user_specified_datastore = False
+            datastore = None
+            datastore_name = None
+
+            if expected_disk_spec.get('datastore'):
+                datastore_name = expected_disk_spec['datastore']
+                datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
+
+                if datastore is None:
+                    self.module.fail_json(msg="Unable to find datastore named %s specified "
+                                              "in disk configuration at index %s" % (datastore_name,
+                                                                                     disk_index))
+                user_specified_datastore = True
+
+            elif expected_disk_spec.get('autoselect_datastore', False):
+                # User has specified autoselect datastore option
+                datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
+                datastores = [x for x in datastores if
+                              self.cache.get_parent_datacenter(x).name == self.params.get('datacenter', None)]
+
+                if datastores is None or len(datastores) == 0:
+                    self.module.fail_json(msg="Unable to find a datastore for disk at "
+                                              "index %s when autoselecting" % disk_index)
+                datastore_freespace = 0
+                for ds in datastores:
+                    if ds.summary.freeSpace > datastore_freespace:
+                        datastore = ds
+                        datastore_name = datastore.name
+                        datastore_freespace = ds.summary.freeSpace
+
+                if datastore is None:
+                    self.module.fail_json(msg="Unable to find datastore with sufficient size while autoselecting")
+                user_specified_datastore = True
+
+            if user_specified_datastore:
+                if vm_obj is None:
+                    vm_name = self.params['name'].replace('.', '_')
+                    # VM is new
+                    path_on_ds = "[{0:s}] {1:s}".format(datastore_name, vm_name)
+                    vmdk_file_name = path_on_ds + '/' + vm_name + '_' + str(diskspec.device.unitNumber) + '.vmdk'
+
+                    diskspec.device.backing.datastore = datastore
+                    diskspec.device.backing.fileName = vmdk_file_name
+                elif vm_obj:
+                    vm_name = vm_obj.name
+                    if diskspec.device.backing.datastore.name != datastore_name:
+                        path_on_ds = "[{0:s}] {1:s}".format(datastore_name, vm_name)
+                        vmdk_file_name = path_on_ds + '/' + vm_name + '_' + str(diskspec.device.unitNumber) + '.vmdk'
+                        vmdk_file = self.find_vmdk(vmdk_file_name)
+                        if not vmdk_file:
+                            # Disk does not exists on specified datastore, create it
+                            diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+
+                        diskspec.device.backing.datastore = datastore
+                        diskspec.device.backing.fileName = vmdk_file_name
+                        disk_modified = True
+
+            # Select the disk mode after datastore selection
             if 'disk_mode' in expected_disk_spec:
                 disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
                 valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
@@ -1821,13 +1879,6 @@ class PyVmomiHelper(PyVmomi):
             elif vm_obj is None or self.params['template']:
                 # We are creating new VM or from Template
                 diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
-
-            # which datastore?
-            if expected_disk_spec.get('datastore'):
-                # TODO: This is already handled by the relocation spec,
-                # but it needs to eventually be handled for all the
-                # other disks defined
-                pass
 
             kb = self.get_configured_disk_size(expected_disk_spec)
             # VMWare doesn't allow to reduce disk sizes
