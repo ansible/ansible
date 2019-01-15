@@ -53,6 +53,41 @@
     that:
       - result is changed
       - '"OK" in result.msg'
+      - result.dest == '{{ geturl_dstfile }}'
+      - result.url == 'file://{{ source_file_copied.dest }}'
+
+- name: Test incorrect URL
+  get_url:
+    url: 'htts://{{ httpbin_host }}/get'
+    dest: "{{ geturl_dstfile }}"
+  register: result
+  ignore_errors: True
+
+- name: Assert correct output
+  assert:
+    that:
+    - result is failed
+    - '"Request failed" in result.msg'
+    - result.dest == '{{ geturl_dstfile }}'
+    - result.status == -1
+    - result.url == 'htts://{{ httpbin_host }}/get'
+
+- name: Test exception
+  get_url:
+    url: 'https://0.1.0.1:234/get'
+    dest: "{{ geturl_dstfile }}"
+  register: result
+  ignore_errors: True
+
+- name: Assert correct output
+  assert:
+    that:
+    - result is failed
+    - '"[Errno 22] Invalid argument" in result.msg'
+    - result.dest == '{{ geturl_dstfile }}'
+    - '"ConnectionError" in result.exception'
+    - result.status == -1
+    - result.url == 'https://0.1.0.1:234/get'
 
 - name: test nonexisting file fetch
   get_url:

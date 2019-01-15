@@ -353,9 +353,12 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), elapsed=elapsed)
 
-    # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
+    # NOTE: Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
     if info['status'] == -1:
-        module.fail_json(msg=info['msg'], url=url, dest=dest, elapsed=elapsed)
+        kwargs = dict()
+        if 'exception' in info:
+            kwargs['exception'] = info['exception']
+        module.fail_json(msg=info['msg'], url=url, dest=dest, elapsed=elapsed, **kwargs)
 
     if info['status'] != 200 and not url.startswith('file:/') and not (url.startswith('ftp:/') and info.get('msg', '').startswith('OK')):
         module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest, elapsed=elapsed)
