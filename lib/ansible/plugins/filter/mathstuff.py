@@ -25,6 +25,7 @@ __metaclass__ = type
 
 import itertools
 import math
+from operator import itemgetter
 
 from jinja2.filters import environmentfilter
 
@@ -123,14 +124,20 @@ def union(environment, a, b):
     return c
 
 
-def min(a):
+def min(a, attribute=None):
     _min = __builtins__.get('min')
-    return _min(a)
+    if attribute:
+        return _min(a, key=itemgetter(attribute))
+    else:
+        return _min(a)
 
 
-def max(a):
+def max(a, attribute=None):
     _max = __builtins__.get('max')
-    return _max(a)
+    if attribute:
+        return _max(a, key=itemgetter(attribute))
+    else:
+        return _max(a)
 
 
 def logarithm(x, base=math.e):
