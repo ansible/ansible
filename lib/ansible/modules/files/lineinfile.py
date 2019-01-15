@@ -295,7 +295,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     msg = ''
     changed = False
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
-    # Regexp matched a line in the file
+    # Exact line or Regexp matched a line in the file
     if index[0] != -1:
         if backrefs:
             b_new_line = m.expand(b_line)
@@ -306,9 +306,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        # If no regexp was given and a line match is found anywhere in the file,
+        # If no regexp was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and m:
+        if regexp is None and m is None:
 
             # Insert lines
             if insertafter and insertafter != 'EOF':
@@ -335,12 +335,12 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 if index[1] <= 0:
                     if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
                         b_lines.insert(index[1], b_line + b_linesep)
-                        msg = 'line replaced'
+                        msg = 'line added'
                         changed = True
 
                 elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
-                    msg = 'line replaced'
+                    msg = 'line added'
                     changed = True
 
         elif b_lines[index[0]] != b_new_line:
