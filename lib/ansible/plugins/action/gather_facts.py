@@ -45,9 +45,10 @@ class ActionModule(ActionBase):
         modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
 
-        if modules == ['smart']:
+        if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
-            modules = [connection_map.get(self._connection._load_name, 'setup')]
+            modules.append([connection_map.get(self._connection._load_name, 'setup')])
+            modules.pop('smart')
 
         failed = {}
         skipped = {}
