@@ -138,7 +138,16 @@ import os
 import re
 from subprocess import Popen, PIPE
 
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
+
+
+class AnsibleModuleError(Exception):
+    def __init__(self, results):
+        self.results = results
+
+    def __repr__(self):
+        return self.results
 
 
 class OnePasswordFacts(object):
