@@ -52,6 +52,10 @@ def issubset(subset, superset):
         return False
 
     for key, value in subset.items():
+        # Ignore empty values
+        if value is None:
+            return True
+
         # Item from subset is missing from superset
         if key not in superset:
             return False
@@ -65,7 +69,10 @@ def issubset(subset, superset):
             if not issubset(superset[key], value):
                 return False
         elif isinstance(value, list):
-            if not set(value) <= set(superset[key]):
+            # NOTE: Fails for lists of dicts
+            #if not set(value) <= set(superset[key]):
+            #    return False
+            if not cmp(value, superset[key]):
                 return False
         elif isinstance(value, set):
             if not value <= superset[key]:
@@ -266,6 +273,36 @@ class MSCModule(object):
             if 'id' not in r:
                 self.module.fail_json(msg="Role lookup failed for '%s': %s" % (role, r))
             ids.append(dict(roleId=r['id']))
+        return ids
+
+    def lookup_sites(self, sites):
+        ''' Look up sites and return their ids '''
+        if sites is None:
+            return sites
+
+        ids = []
+        for site in sites:
+            s = self.get_obj('sites', name=site)
+            if not s:
+                self.module.fail_json(msg="Site '%s' is not valid." % site)
+            if 'id' not in s:
+                self.module.fail_json(msg="Site lookup failed for '%s': %s" % (site, s))
+            ids.append(dict(siteId=s['id'], securityDomains=[]))
+        return ids
+
+    def lookup_users(self, users):
+        ''' Look up users and return their ids '''
+        if users is None:
+            return users
+
+        ids = []
+        for user in users:
+            u = self.get_obj('users', username=user)
+            if not u:
+                self.module.fail_json(msg="User '%s' is not valid." % user)
+            if 'id' not in u:
+                self.module.fail_json(msg="User lookup failed for '%s': %s" % (user, u))
+            ids.append(dict(userId=u['id']))
         return ids
 
     def create_label(self, label, label_type):
