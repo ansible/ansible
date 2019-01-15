@@ -86,7 +86,7 @@ WinRM Memory Hotfix
 When running on PowerShell v3.0, there is a bug with the WinRM service that
 limits the amount of memory available to WinRM. Without this hotfix installed,
 Ansible will fail to execute certain commands on the Windows host. These 
-hotfixes should installed as part of the system bootstapping or
+hotfixes should installed as part of the system bootstrapping or
 imaging process. The script `Install-WMF3Hotfix.ps1 <https://github.com/jborean93/ansible-windows/blob/master/scripts/Install-WMF3Hotfix.ps1>`_ can be used to install the hotfix on affected hosts.
 
 The following PowerShell command will install the hotfix:
