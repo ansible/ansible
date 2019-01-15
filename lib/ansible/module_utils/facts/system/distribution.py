@@ -14,6 +14,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import os
@@ -64,6 +65,7 @@ class DistributionFiles:
         {'path': '/etc/redhat-release', 'name': 'RedHat'},
         {'path': '/etc/vmware-release', 'name': 'VMwareESX', 'allowempty': True},
         {'path': '/etc/openwrt_release', 'name': 'OpenWrt'},
+        {'path': '/etc/os-release', 'name': 'Amazon', 'allowempty': True},
         {'path': '/etc/system-release', 'name': 'Amazon'},
         {'path': '/etc/alpine-release', 'name': 'Alpine'},
         {'path': '/etc/arch-release', 'name': 'Archlinux', 'allowempty': True},
@@ -194,7 +196,8 @@ class DistributionFiles:
                 # keep looking
                 continue
 
-            parsed_dist_file, parsed_dist_file_facts = self._parse_dist_file(name, dist_file_content, path, dist_file_facts)
+            parsed_dist_file, parsed_dist_file_facts = self._parse_dist_file(name, dist_file_content, path,
+                                                                             dist_file_facts)
 
             # finally found the right os dist file and were able to parse it
             if parsed_dist_file:
@@ -226,8 +229,13 @@ class DistributionFiles:
         if 'Amazon' not in data:
             # return False  # TODO: remove   # huh?
             return False, amazon_facts  # TODO: remove
-        amazon_facts['distribution'] = 'Amazon'
-        amazon_facts['distribution_version'] = data.split()[-1]
+        if path == '/etc/os-release':
+            for line in data.splitlines():
+                amazon_facts['distribution'] = re.search("^NAME=(.*)", line)
+                amazon_facts['distribution_version'] = re.search("^VERSION=(.*)", line)
+        else:
+            amazon_facts['distribution'] = data.split()[0] + ' ' + data.split()[1]
+            amazon_facts['distribution_version'] = data.split()[-1] if (data.split()[-1]).isdigit() else data.split[-2]
         return True, amazon_facts
 
     def parse_distribution_file_OpenWrt(self, name, data, path, collected_facts):
@@ -299,7 +307,8 @@ class DistributionFiles:
                     release = re.search('PATCHLEVEL = ([0-9]+)', line)  # SLES doesn't got funny release names
                     if release:
                         suse_facts['distribution_release'] = release.group(1)
-                        suse_facts['distribution_version'] = collected_facts['distribution_version'] + '.' + release.group(1)
+                        suse_facts['distribution_version'] = collected_facts[
+                                                                 'distribution_version'] + '.' + release.group(1)
 
         return True, suse_facts
 
@@ -527,7 +536,8 @@ class Distribution(object):
 
     def get_distribution_HPUX(self):
         hpux_facts = {}
-        rc, out, err = self.module.run_command(r"/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
+        rc, out, err = self.module.run_command(r"/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'",
+                                               use_unsafe_shell=True)
         data = re.search(r'HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
         if data:
             hpux_facts['distribution_version'] = data.groups()[0]
@@ -602,7 +612,8 @@ class Distribution(object):
         if 'SmartOS' in data:
             sunos_facts['distribution'] = 'SmartOS'
             if _file_exists('/etc/product'):
-                product_data = dict([l.split(': ', 1) for l in get_file_content('/etc/product').splitlines() if ': ' in l])
+                product_data = dict(
+                    [l.split(': ', 1) for l in get_file_content('/etc/product').splitlines() if ': ' in l])
                 if 'Image' in product_data:
                     distribution_version = product_data.get('Image').split()[-1]
         elif 'OpenIndiana' in data:

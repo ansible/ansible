@@ -1079,6 +1079,75 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
             "os_family": "Archlinux",
             "distribution_version": "NA"
         }
+    },
+    # Amazonlinux with no /etc/os-release but with a /etc/system-release with NAME=Arch Linux
+    {
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/system-release": "Amazon Linux release 2 (Karoo)",
+            "/etc/os-release": "",
+        },
+        "name": "Amazon",
+        "result": {
+            "distribution_release": "NA",
+            "distribution": "Amazon Linux",
+            "distribution_major_version": "NA",
+            "os_family": "RedHat",
+            "distribution_version": "2"
+        }
+    },
+    {
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/system-release": "Amazon Linux release 2",
+            "/etc/os-release": "",
+        },
+        "name": "Amazon",
+        "result": {
+            "distribution_release": "NA",
+            "distribution": "Amazon Linux",
+            "distribution_major_version": "NA",
+            "os_family": "RedHat",
+            "distribution_version": "2"
+        }
+    },
+    # Amazonlinux with /etc/os-release. This file should be used
+    {
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/system-release": "Amazon Linux release 2 (Karoo)",
+            "/etc/os-release": '''
+NAME="Amazon Linux"
+VERSION="3"
+ID="amzn"
+ID_LIKE="centos rhel fedora"
+VERSION_ID="2"
+PRETTY_NAME="Amazon Linux 2"
+ANSI_COLOR="0;33"
+CPE_NAME="cpe:2.3:o:amazon:amazon_linux:2"
+HOME_URL="https://amazonlinux.com/"
+''',
+        },
+        "name": "Amazon",
+        "result": {
+            "distribution_release": "NA",
+            "distribution": "Amazon Linux",
+            "distribution_major_version": "NA",
+            "os_family": "RedHat",
+            "distribution_version": "3"
+        }
     }
 ]
 
