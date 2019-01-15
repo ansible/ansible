@@ -32,8 +32,10 @@ try:
     from openshift.dynamic import DynamicClient
     from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError
     HAS_K8S_MODULE_HELPER = True
-except ImportError:
+    k8s_import_exception = None
+except ImportError as e:
     HAS_K8S_MODULE_HELPER = False
+    k8s_import_exception = e
 
 try:
     import yaml
@@ -242,7 +244,7 @@ class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
         AnsibleModule.__init__(self, *args, **kwargs)
 
         if not HAS_K8S_MODULE_HELPER:
-            self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`")
+            self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`", error=str(k8s_import_exception))
         self.openshift_version = openshift.__version__
 
         if not HAS_YAML:
