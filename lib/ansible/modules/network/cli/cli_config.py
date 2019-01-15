@@ -201,14 +201,13 @@ def validate_args(module, capabilities):
         module.fail_json(msg='diff_ignore_lines is not supported on this platform')
 
 
-def run(module, capabilities, connection, candidate, running):
+def run(module, capabilities, connection, candidate, running, rollback_id):
     result = {}
     resp = {}
     config_diff = []
     banner_diff = {}
 
     replace = module.params['replace']
-    rollback_id = module.params['rollback']
     commit_comment = module.params['commit_comment']
     multiline_delimiter = module.params['multiline_delimiter']
     diff_replace = module.params['diff_replace']
@@ -337,16 +336,19 @@ def main():
     else:
         flags = []
 
-    candidate = to_text(module.params['config'])
+    candidate = module.params['config']
+    candidate = to_text(candidate, errors='surrogate_then_replace') if candidate else None
     running = connection.get_config(flags=flags)
+    rollback_id = module.params['rollback']
 
     if module.params['backup']:
         result['__backup__'] = running
 
-    try:
-        result.update(run(module, capabilities, connection, candidate, running))
-    except Exception as exc:
-        module.fail_json(msg=to_text(exc))
+    if candidate or rollback_id:
+        try:
+            result.update(run(module, capabilities, connection, candidate, running, rollback_id))
+        except Exception as exc:
+            module.fail_json(msg=to_text(exc))
 
     module.exit_json(**result)
 
