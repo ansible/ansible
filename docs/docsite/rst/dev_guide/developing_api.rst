@@ -109,7 +109,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
 .. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.
 
 The source code for the ``ansible``
-command line tools (``lib/ansible/cli/``) is `available on Github <https://github.com/ansible/ansible/tree/devel/lib/ansible/cli>`_.
+command line tools (``lib/ansible/cli/``) is `available on GitHub <https://github.com/ansible/ansible/tree/devel/lib/ansible/cli>`_.
 
 .. seealso::
 
