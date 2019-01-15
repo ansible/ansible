@@ -12,7 +12,7 @@ You can find some example playbooks illustrating these best practices in our `an
 .. _content_organization:
 
 Content Organization
-++++++++++++++++++++++
+++++++++++++++++++++
 
 The following section shows one of many possible ways to organize playbook content.
 
@@ -28,15 +28,15 @@ Directory Layout
 
 The top level of the directory would contain files and directories like so::
 
-    production                # inventory file for production servers
-    staging                   # inventory file for staging environment
+    production.ini            # inventory ini file for production servers
+    staging.ini               # inventory ini file for staging environment
 
     group_vars/
-       group1.yml             # here we assign variables to particular groups
-       group2.yml
+      group1.yml              # here we assign variables to particular groups
+      group2.yml
     host_vars/
-       hostname1.yml          # here we assign variables to particular systems
-       hostname2.yml
+      hostname1.yml           # here we assign variables to particular systems
+      hostname2.yml
 
     library/                  # if any custom modules, put them here (optional)
     module_utils/             # if any custom module_utils to support modules, put them here (optional)
@@ -82,22 +82,22 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
 
     inventories/
        production/
-          hosts               # inventory file for production servers
+          hosts.ini           # inventory ini file for production servers
           group_vars/
-             group1.yml       # here we assign variables to particular groups
-             group2.yml
+            group1.yml        # here we assign variables to particular groups
+            group2.yml
           host_vars/
-             hostname1.yml    # here we assign variables to particular systems
-             hostname2.yml
+            hostname1.yml     # here we assign variables to particular systems
+            hostname2.yml
 
        staging/
-          hosts               # inventory file for staging environment
+          hosts.ini           # inventory ini file for staging environment
           group_vars/
-             group1.yml       # here we assign variables to particular groups
-             group2.yml
+            group1.yml        # here we assign variables to particular groups
+            group2.yml
           host_vars/
-             stagehost1.yml   # here we assign variables to particular systems
-             stagehost2.yml
+            stagehost1.yml    # here we assign variables to particular systems
+            stagehost2.yml
 
     library/
     module_utils/
@@ -130,15 +130,15 @@ in your infrastructure, usage of dynamic inventory is a great idea in general.
 How to Differentiate Staging vs Production
 ``````````````````````````````````````````
 
-If managing static inventory, it is frequently asked how to differentiate different types of environments.  The following example
-shows a good way to do this.  Similar methods of grouping could be adapted to dynamic inventory (for instance, consider applying the AWS
+If managing static inventory, it is frequently asked how to differentiate different types of environments. The following example
+shows a good way to do this. Similar methods of grouping could be adapted to dynamic inventory (for instance, consider applying the AWS
 tag "environment:production", and you'll get a group of systems automatically discovered named "ec2_tag_environment_production".
 
 Let's show a static inventory example though.  Below, the *production* file contains the inventory of all of your production hosts.
 
 It is suggested that you define groups based on purpose of the host (roles) and also geography or datacenter location (if applicable)::
 
-    # file: production
+    # file: production.ini
 
     [atlanta-webservers]
     www-atl-1.example.com
@@ -185,28 +185,28 @@ This section extends on the previous example.
 Groups are nice for organization, but that's not all groups are good for.  You can also assign variables to them!  For instance, atlanta has its own NTP servers, so when setting up ntp.conf, we should use them.  Let's set those now::
 
     ---
-    # file: group_vars/atlanta
+    # file: group_vars/atlanta.yml
     ntp: ntp-atlanta.example.com
     backup: backup-atlanta.example.com
 
 Variables aren't just for geographic information either!  Maybe the webservers have some configuration that doesn't make sense for the database servers::
 
     ---
-    # file: group_vars/webservers
+    # file: group_vars/webservers.yml
     apacheMaxRequestsPerChild: 3000
     apacheMaxClients: 900
 
 If we had any default values, or values that were universally true, we would put them in a file called group_vars/all::
 
     ---
-    # file: group_vars/all
+    # file: group_vars/all.yml
     ntp: ntp-boston.example.com
     backup: backup-boston.example.com
 
 We can define specific hardware variance in systems in a host_vars file, but avoid doing this unless you need to::
 
     ---
-    # file: host_vars/db-bos-1.example.com
+    # file: host_vars/db-bos-1.example.com.yml
     foo_agent_port: 86
     bar_agent_port: 99
 
@@ -292,39 +292,39 @@ What This Organization Enables (Examples)
 
 Above we've shared our basic organizational structure.
 
-Now what sort of use cases does this layout enable?  Lots!  If I want to reconfigure my whole infrastructure, it's just::
+Now what sort of use cases does this layout enable? Lots! If I want to reconfigure my whole infrastructure, it's just::
 
-    ansible-playbook -i production site.yml
+    ansible-playbook -i production.ini site.yml
 
 To reconfigure NTP on everything::
 
-    ansible-playbook -i production site.yml --tags ntp
+    ansible-playbook -i production.ini site.yml --tags ntp
 
 To reconfigure just my webservers::
 
-    ansible-playbook -i production webservers.yml
+    ansible-playbook -i production.ini webservers.yml
 
 For just my webservers in Boston::
 
-    ansible-playbook -i production webservers.yml --limit boston
+    ansible-playbook -i production.ini webservers.yml --limit boston
 
 For just the first 10, and then the next 10::
 
-    ansible-playbook -i production webservers.yml --limit boston[0:9]
-    ansible-playbook -i production webservers.yml --limit boston[10:19]
+    ansible-playbook -i production.ini webservers.yml --limit boston[0:9]
+    ansible-playbook -i production.ini webservers.yml --limit boston[10:19]
 
 And of course just basic ad-hoc stuff is also possible::
 
-    ansible boston -i production -m ping
-    ansible boston -i production -m command -a '/sbin/reboot'
+    ansible boston -i production.ini -m ping
+    ansible boston -i production.ini -m command -a '/sbin/reboot'
 
 And there are some useful commands to know::
 
     # confirm what task names would be run if I ran this command and said "just ntp tasks"
-    ansible-playbook -i production webservers.yml --tags ntp --list-tasks
+    ansible-playbook -i production.ini webservers.yml --tags ntp --list-tasks
 
     # confirm what hostnames might be communicated with if I said "limit to boston"
-    ansible-playbook -i production webservers.yml --limit boston --list-hosts
+    ansible-playbook -i production.ini webservers.yml --limit boston --list-hosts
 
 .. _dep_vs_config:
 
@@ -509,4 +509,3 @@ This best practice has no limit on the amount of variable and vault files or the
        Complete playbook files from the github project source
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-
