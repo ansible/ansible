@@ -182,6 +182,7 @@
 
 - name: GPG-VERIFICATION | Stop gpg-agent so we can remove any locks on the GnuPG dir
   command: gpgconf --kill gpg-agent
+  when: ansible_os_family != 'Suse'  # OpenSUSE ships with an older version of gpg-agent that doesn't support this
 
 - name: GPG-VERIFICATION | Remove GnuPG verification workdir
   file:
