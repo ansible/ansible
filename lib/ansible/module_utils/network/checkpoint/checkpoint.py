@@ -30,7 +30,7 @@
 checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=True),
                                 policy_package=dict(type='str', default='standard'),
                                 auto_install_policy=dict(type='bool', default=True),
-                                targets=dict(type='list', default=None)
+                                targets=dict(type='list')
                                 )
 
 
