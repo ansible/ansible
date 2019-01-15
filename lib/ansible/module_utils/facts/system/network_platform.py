@@ -17,12 +17,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import socket
+import platform
 
 from ansible.module_utils.facts.utils import get_file_content
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 from ansible.module_utils.connection import Connection
+
+
+# i86pc is a Solaris and derivatives-ism
+SOLARIS_I86_RE_PATTERN = r'i([3456]86|86pc)'
+solaris_i86_re = re.compile(SOLARIS_I86_RE_PATTERN)
 
 
 class PlatformFactCollector(BaseFactCollector):
