@@ -74,7 +74,6 @@ from ansible.module_utils.network.checkpoint.checkpoint import publish, discard
 import json
 
 
-
 def get_session(module, connection):
     payload = {'uid': module.params['uid']}
 
