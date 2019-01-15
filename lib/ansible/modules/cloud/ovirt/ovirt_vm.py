@@ -2075,11 +2075,16 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         vms_service = connection.system_service().vms_service()
+
         vms_module = VmsModule(
             connection=connection,
             module=module,
             service=vms_service,
         )
+
+        if not module.params['wait'] and state=='running':
+            original_wait = module.params['wait']
+            vms_module._module.params['wait'] = True
         vm = vms_module.search_entity(list_params={'all_content': True})
 
         control_state(vm, vms_service, module)
@@ -2143,7 +2148,6 @@ def main():
                         and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
-
                 if module.params['ticket']:
                     vm_service = vms_service.vm_service(ret['id'])
                     graphics_consoles_service = vm_service.graphics_consoles_service()
@@ -2152,7 +2156,8 @@ def main():
                     ticket = console_service.remote_viewer_connection_file()
                     if ticket:
                         ret['vm']['remote_vv_file'] = ticket
-
+                if original_wait != None:
+                    vms_module._module.params['wait'] = original_wait
             if state == 'next_run':
                 # Apply next run configuration, if needed:
                 vm = vms_service.vm_service(ret['id']).get()
