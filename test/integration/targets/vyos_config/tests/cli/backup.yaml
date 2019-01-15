@@ -1,14 +1,5 @@
 ---
-- debug: msg="START cli/cli_backup.yaml on connection={{ ansible_connection }}"
-
-- name: setup
-  ios_config:
-    commands:
-      - no description
-      - no shutdown
-    parents:
-      - interface Loopback999
-    match: none
+- debug: msg="START vyos/backup.yaml on connection={{ ansible_connection }}"
 
 - name: collect any backup files
   find:
@@ -23,17 +14,14 @@
     state: absent
   with_items: "{{backup_files.files|default([])}}"
 
-- name: configure device with config
-  ios_config:
-    src: basic/config.j2
+- name: take configure backup
+  vyos_config:
     backup: yes
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-# FIXME Bug https://github.com/ansible/ansible/issues/19382
-#      - "result.updates is not defined"
 
 - name: collect any backup files
   find:
@@ -55,7 +43,7 @@
     - "{{ role_path }}/backup/backup.cfg"
 
 - name: take configuration backup in custom filename and directory path
-  ios_config:
+  vyos_config:
     backup: yes
     backup_options:
       filename: backup.cfg
@@ -78,7 +66,7 @@
       - "backup_file.files is defined"
 
 - name: take configuration backup in custom filename
-  ios_config:
+  vyos_config:
     backup: yes
     backup_options:
       filename: backup.cfg
@@ -100,7 +88,7 @@
       - "backup_file.files is defined"
 
 - name: take configuration backup in custom path and default filename
-  ios_config:
+  vyos_config:
     backup: yes
     backup_options:
       dir_path: "{{ role_path }}/backup_test_dir/{{ inventory_hostname_short }}"
@@ -122,4 +110,4 @@
     that:
       - "backup_file.files is defined"
 
-- debug: msg="END cli/cli_backup.yaml on connection={{ ansible_connection }}"
+- debug: msg="END vyos/backup.yaml on connection={{ ansible_connection }}"
