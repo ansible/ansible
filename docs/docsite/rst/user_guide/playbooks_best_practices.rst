@@ -196,7 +196,7 @@ Variables aren't just for geographic information either!  Maybe the webservers h
     apacheMaxRequestsPerChild: 3000
     apacheMaxClients: 900
 
-If we had any default values, or values that were universally true, we would put them in a file called group_vars/all::
+If we had any default values, or values that were universally true, we would put them in a file called group_vars/all.yml::
 
     ---
     # file: group_vars/all.yml
@@ -413,7 +413,7 @@ This will throw all systems into a dynamic group based on the operating system n
 If group-specific settings are needed, this can also be done. For example::
 
     ---
-    # file: group_vars/all
+    # file: group_vars/all.yml
     asdf: 10
 
     ---
