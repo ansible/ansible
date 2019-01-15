@@ -536,7 +536,7 @@ class GalaxyCLI(CLI):
 
     def execute_login(self):
         """
-        verify user's identify via Github and retrieve an auth token from Ansible Galaxy.
+        verify user's identify via GitHub and retrieve an auth token from Ansible Galaxy.
         """
         # Authenticate with github and retrieve a token
         if context.CLIARGS['token'] is None:
@@ -588,7 +588,7 @@ class GalaxyCLI(CLI):
 
             if len(task) > 1:
                 # found multiple roles associated with github_user/github_repo
-                display.display("WARNING: More than one Galaxy role associated with Github repo %s/%s." % (github_user, github_repo),
+                display.display("WARNING: More than one Galaxy role associated with GitHub repo %s/%s." % (github_user, github_repo),
                                 color='yellow')
                 display.display("The following Galaxy roles are being updated:" + u'\n', color=C.COLOR_CHANGED)
                 for t in task:
@@ -620,7 +620,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_setup(self):
-        """ Setup an integration from Github or Travis for Ansible Galaxy roles"""
+        """ Setup an integration from GitHub or Travis for Ansible Galaxy roles"""
 
         if context.CLIARGS['setup_list']:
             # List existing integration secrets

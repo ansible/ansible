@@ -50,7 +50,7 @@ class GalaxyLogin(object):
             self.get_credentials()
 
     def get_credentials(self):
-        display.display(u'\n\n' + "We need your " + stringc("Github login", 'bright cyan') +
+        display.display(u'\n\n' + "We need your " + stringc("GitHub login", 'bright cyan') +
                         " to identify you.", screen_only=True)
         display.display("This information will " + stringc("not be sent to Galaxy", 'bright cyan') +
                         ", only to " + stringc("api.github.com.", "yellow"), screen_only=True)
@@ -59,7 +59,7 @@ class GalaxyLogin(object):
                         " if you do not want to enter your password." + u'\n\n', screen_only=True)
 
         try:
-            self.github_username = input("Github Username: ")
+            self.github_username = input("GitHub Username: ")
         except Exception:
             pass
 
@@ -69,7 +69,7 @@ class GalaxyLogin(object):
             pass
 
         if not self.github_username or not self.github_password:
-            raise AnsibleError("Invalid Github credentials. Username and password are required.")
+            raise AnsibleError("Invalid GitHub credentials. Username and password are required.")
 
     def remove_github_token(self):
         '''
