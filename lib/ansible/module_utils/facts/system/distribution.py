@@ -307,8 +307,7 @@ class DistributionFiles:
                     release = re.search('PATCHLEVEL = ([0-9]+)', line)  # SLES doesn't got funny release names
                     if release:
                         suse_facts['distribution_release'] = release.group(1)
-                        suse_facts['distribution_version'] = collected_facts[
-                                                                 'distribution_version'] + '.' + release.group(1)
+                        suse_facts['distribution_version'] = collected_facts['distribution_version'] + '.' + release.group(1)
 
         return True, suse_facts
 
