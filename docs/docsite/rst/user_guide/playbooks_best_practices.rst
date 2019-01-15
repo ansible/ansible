@@ -134,7 +134,7 @@ If managing static inventory, it is frequently asked how to differentiate differ
 shows a good way to do this. Similar methods of grouping could be adapted to dynamic inventory (for instance, consider applying the AWS
 tag "environment:production", and you'll get a group of systems automatically discovered named "ec2_tag_environment_production".
 
-Let's show a static inventory example though.  Below, the *production* file contains the inventory of all of your production hosts.
+Let's show a static inventory example though.  Below, the *production.ini* file contains the inventory of all of your production hosts.
 
 It is suggested that you define groups based on purpose of the host (roles) and also geography or datacenter location (if applicable)::
 
