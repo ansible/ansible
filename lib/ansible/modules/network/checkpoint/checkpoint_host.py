@@ -69,7 +69,7 @@ options:
   targets:
     description:
       - Targets to install the package policy on.
-    type: str
+    type: list
     default: None
 """
 

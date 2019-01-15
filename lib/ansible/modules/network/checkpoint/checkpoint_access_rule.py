@@ -83,7 +83,7 @@ options:
         after the task completes.
     type: bool
     default: 'yes'
-  package_policy:
+  policy_package:
     description:
       - Package policy name to be installed.
     type: bool
@@ -91,8 +91,7 @@ options:
   targets:
     description:
       - Targets to install the package policy on.
-    type: str
-    default: None
+    type: list
 """
 
 EXAMPLES = """
