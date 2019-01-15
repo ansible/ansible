@@ -171,8 +171,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # it was initialized as a class param in the meta class, so we
         # need a unique object here (all members contained within are
         # unique already).
-        self._attributes = self._attributes.copy()
-        self._attr_defaults = self._attr_defaults.copy()
+        self._attributes = self.__class__._attributes.copy()
+        self._attr_defaults = self.__class__._attr_defaults.copy()
         for key, value in self._attr_defaults.items():
             if callable(value):
                 self._attr_defaults[key] = value()
