@@ -31,15 +31,10 @@
 
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule, json
-from ansible.module_utils.six import PY3
+from ansible.module_utils.six import cmp
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urljoin
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native, to_bytes
-
-
-if PY3:
-    def cmp(a, b):
-        return (a > b) - (a < b)
 
 
 def issubset(subset, superset):

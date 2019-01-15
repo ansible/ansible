@@ -28,15 +28,7 @@
 
 ''' Support class for NetApp ansible modules '''
 
-
-def cmp(a, b):
-    """
-    Python 3 does not have a cmp function, this will do the cmp.
-    :param a: first object to check
-    :param b: second object to check
-    :return:
-    """
-    return (a > b) - (a < b)
+from ansible.module_utils.six import cmp
 
 
 class NetAppModule(object):

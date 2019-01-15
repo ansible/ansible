@@ -627,6 +627,11 @@ _add_doc(iteritems,
 _add_doc(iterlists,
          "Return an iterator over the (key, [values]) pairs of a dictionary.")
 
+if PY3:
+    def cmp(a, b):
+        return (a > b) - (a < b)
+else:
+    cmp = cmp
 
 if PY3:
     def b(s):
