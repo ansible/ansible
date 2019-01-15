@@ -40,6 +40,16 @@ options:
     description:
     - The description for this tenant.
     type: str
+  users:
+    description:
+    - A list of allowed users for this tenant.
+    - Using this property will replace any existing allowed users.
+    type: list
+  sites:
+    description:
+    - A list of allowed sites for this tenant.
+    - Using this property will replace any existing allowed sites.
+    type: list
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -106,6 +116,8 @@ def main():
         display_name=dict(type='str'),
         tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),
         tenant_id=dict(type='str', required=False),
+        users=dict(type='list'),
+        sites=dict(type='list'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -125,6 +137,10 @@ def main():
     state = module.params['state']
 
     msc = MSCModule(module)
+
+    # Convert sites and users
+    sites = msc.lookup_sites(module.params['sites'])
+    users = msc.lookup_users(module.params['users'])
 
     path = 'tenants'
 
@@ -166,8 +182,8 @@ def main():
             id=tenant_id,
             name=tenant,
             displayName=display_name,
-            siteAssociations=[],
-            userAssociations=[dict(userId="0000ffff0000000000000020")],
+            siteAssociations=sites,
+            userAssociations=users,
         )
 
         msc.sanitize(payload, collate=True)
@@ -175,6 +191,10 @@ def main():
         # Ensure displayName is not undefined
         if msc.sent.get('displayName') is None:
             msc.sent['displayName'] = tenant
+
+        # Ensure tenant has at least admin user
+        if msc.sent.get('userAssociations') is None:
+            msc.sent['userAssociations'] = [dict(userId="0000ffff0000000000000020")]
 
         if msc.existing:
             if not issubset(msc.sent, msc.existing):

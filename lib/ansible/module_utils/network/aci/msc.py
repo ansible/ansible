@@ -31,9 +31,15 @@
 
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule, json
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urljoin
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native, to_bytes
+
+
+if PY3:
+    def cmp(a, b):
+        return (a > b) - (a < b)
 
 
 def issubset(subset, superset):
@@ -52,6 +58,10 @@ def issubset(subset, superset):
         return False
 
     for key, value in subset.items():
+        # Ignore empty values
+        if value is None:
+            return True
+
         # Item from subset is missing from superset
         if key not in superset:
             return False
@@ -65,8 +75,14 @@ def issubset(subset, superset):
             if not issubset(superset[key], value):
                 return False
         elif isinstance(value, list):
-            if not set(value) <= set(superset[key]):
-                return False
+            try:
+                # NOTE: Fails for lists of dicts
+                if not set(value) <= set(superset[key]):
+                    return False
+            except TypeError:
+                # Fall back to exact comparison for lists of dicts
+                if not cmp(value, superset[key]):
+                    return False
         elif isinstance(value, set):
             if not value <= superset[key]:
                 return False
@@ -266,6 +282,36 @@ class MSCModule(object):
             if 'id' not in r:
                 self.module.fail_json(msg="Role lookup failed for '%s': %s" % (role, r))
             ids.append(dict(roleId=r['id']))
+        return ids
+
+    def lookup_sites(self, sites):
+        ''' Look up sites and return their ids '''
+        if sites is None:
+            return sites
+
+        ids = []
+        for site in sites:
+            s = self.get_obj('sites', name=site)
+            if not s:
+                self.module.fail_json(msg="Site '%s' is not valid." % site)
+            if 'id' not in s:
+                self.module.fail_json(msg="Site lookup failed for '%s': %s" % (site, s))
+            ids.append(dict(siteId=s['id'], securityDomains=[]))
+        return ids
+
+    def lookup_users(self, users):
+        ''' Look up users and return their ids '''
+        if users is None:
+            return users
+
+        ids = []
+        for user in users:
+            u = self.get_obj('users', username=user)
+            if not u:
+                self.module.fail_json(msg="User '%s' is not valid." % user)
+            if 'id' not in u:
+                self.module.fail_json(msg="User lookup failed for '%s': %s" % (user, u))
+            ids.append(dict(userId=u['id']))
         return ids
 
     def create_label(self, label, label_type):
