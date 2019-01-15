@@ -477,7 +477,6 @@ from ansible.module_utils.docker_common import (
 )
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six.moves import zip_longest
 
 try:
     from distutils.version import LooseVersion
@@ -751,9 +750,9 @@ class DockerService(DockerBaseClass):
         return not differences.empty or force_update, differences, needs_rebuild, force_update
 
     def has_publish_changed(self, old_publish):
-        for publish_item, old_publish_item in zip_longest(self.publish, old_publish):
-            publish_item = publish_item or {}
-            old_publish_item = old_publish_item or {}
+        if len(self.publish) != len(old_publish):
+            return True
+        for publish_item, old_publish_item in zip(self.publish, old_publish):
             ignored_keys = set()
             if not publish_item.get('mode'):
                 ignored_keys.add('mode')
