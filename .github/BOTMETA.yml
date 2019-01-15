@@ -99,7 +99,12 @@ files:
   $modules/cloud/azure/azure_rm_dnsrecordset.py:
     ignored: ozboms
   $modules/cloud/centurylink/: clc-runner
-  $modules/cloud/cloudstack/: $team_cloudstack
+  $modules/cloud/cloudscale/:
+    maintainers: $team_cloudscale
+    labels: cloud
+  $modules/cloud/cloudstack/:
+    maintainers: $team_cloudstack
+    labels: cloudstack
   $modules/cloud/digital_ocean/: BondAnthony
   $modules/cloud/digital_ocean/digital_ocean.py: alukovenko
   $modules/cloud/digital_ocean/digital_ocean_domain.py: alukovenko
@@ -139,7 +144,9 @@ files:
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/_vsphere_guest.py: dagwieers
-  $modules/cloud/vultr/: $team_vultr
+  $modules/cloud/vultr/:
+    maintainers: $team_vultr
+    labels: cloud
   $modules/cloud/webfaction/: quentinsf
   $modules/cloud/xenserver/xenserver_guest.py: bvitnik
   $modules/clustering/k8s/:
@@ -516,6 +523,8 @@ files:
     support: core
   $module_utils/service.py:
     support: core
+  $module_utils/cloudscale.py:
+    maintainers: $team_cloudscale
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
@@ -1158,6 +1167,12 @@ files:
     supershipit: felixfontein
   lib/ansible/utils/module_docs_fragments/xenserver.py:
     maintainers: bvitnik
+  lib/ansible/utils/module_docs_fragments/cloudstack.py:
+    maintainers: $team_cloudstack
+    labels: cloudstack
+  lib/ansible/utils/module_docs_fragments/vultr.py:
+    maintainers: $team_vultr
+    labels: cloud
   test/sanity/validate-modules:
     notified:
       - mattclay
@@ -1192,6 +1207,12 @@ files:
     notified: mattclay
   test/integration/targets/aci: *aci
   test/integration/targets/aix: *aix
+  test/integration/targets/cloudscale:
+    maintainers: $team_cloudscale
+    labels: cloud
+  test/integration/targets/cs_:
+    maintainers: $team_cloudstack
+    labels: cloudstack
   test/integration/targets/docker:
     maintainers: $team_docker
     supershipit: felixfontein
@@ -1212,6 +1233,9 @@ files:
     maintainers: $team_ucs
     labels:
       - remote_management
+  test/integration/targets/vultr:
+    maintainers: $team_vultr
+    labels: cloud
   test/legacy/:
     notified: mattclay
   test/legacy/scaleway:
@@ -1244,6 +1268,7 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
+  team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
