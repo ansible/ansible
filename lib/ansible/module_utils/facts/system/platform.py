@@ -64,7 +64,6 @@ class PlatformFactCollector(BaseFactCollector):
 
             return platform_facts
 
-
         # platform.system() can be Linux, Darwin, Java, or Windows
         platform_facts['system'] = platform.system()
         platform_facts['kernel'] = platform.release()

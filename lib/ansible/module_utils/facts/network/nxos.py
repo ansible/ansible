@@ -147,11 +147,6 @@ class NxosNetwork(Network):
                 return True
         return False
 
-    def get(self, command):
-        resp = self.connection.get(command)
-        if '% This is an unconverted command' in resp:
-            raise ValueError('unconverted command: %s' % command)
-        return resp
 
 class NxosNetworkCollector(NetworkCollector):
     _platform = 'nxos'

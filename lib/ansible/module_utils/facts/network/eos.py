@@ -62,7 +62,6 @@ class EosNetwork(Network):
                 if addr:
                     all_ipv4_addresses.append(addr)
 
-
         network_facts['all_ipv4_addresses'] = all_ipv4_addresses
         network_facts['all_ipv6_addresses'] = all_ipv6_addresses
 

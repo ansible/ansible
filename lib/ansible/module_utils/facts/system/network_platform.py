@@ -42,7 +42,7 @@ class PlatformFactCollector(BaseFactCollector):
         self.connection = Connection(module._socket_path)
         capabilities = module.from_json(self.connection.get_capabilities())
 
-        #platform_facts['network_capabilities'] = capabilities
+        # platform_facts['network_capabilities'] = capabilities
 
         capabilities.pop('network_os')
         platform_facts.update(capabilities['device_info'])
@@ -50,10 +50,7 @@ class PlatformFactCollector(BaseFactCollector):
         platform_facts['system'] = capabilities['device_info']['network_os']
         platform_facts['python_version'] = platform.python_version()
 
-
-
         return platform_facts
-
 
         # platform.system() can be Linux, Darwin, Java, or Windows
         platform_facts['system'] = platform.system()

@@ -83,7 +83,7 @@ class IosxrNetwork(Network):
             intf['description'] = self.parse_description(value)
             intf['enabled'] = self.parse_enabled(key, value)
             intf['macaddress'] = self.parse_macaddress(value)
-            intf['mtu'] = self.parse_mtu(value)            
+            intf['mtu'] = self.parse_mtu(value)
             facts[key] = intf
 
         return facts
@@ -134,6 +134,7 @@ class IosxrNetwork(Network):
             if match.group(1) == 'up':
                 return True
         return False
+
 
 class IosxrNetworkCollector(NetworkCollector):
     _platform = 'iosxr'

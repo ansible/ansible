@@ -365,7 +365,6 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
     else:
         platform_info = platform_info or {'system': platform.system()}
 
-
     gather_timeout = gather_timeout or timeout.DEFAULT_GATHER_TIMEOUT
 
     # tweak the modules GATHER_TIMEOUT
