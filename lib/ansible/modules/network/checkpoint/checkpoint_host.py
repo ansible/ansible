@@ -49,6 +49,27 @@ options:
       - State of the access rule (present or absent). Defaults to present.
     type: str
     default: present
+  auto_publish_session:
+    description:
+      - Publish the current session if changes have been performed
+        after task completes.
+    type: bool
+    default: 'yes'
+  auto_install_policy:
+    description:
+      - Install the package policy if changes have been performed
+        after the task completes.
+    type: bool
+    default: 'yes'
+  policy_package:
+    description:
+      - Package policy name to be installed.
+    type: bool
+    default: 'standard'
+  targets:
+    description:
+      - Targets to install the package policy on.
+    type: list
 """
 
 EXAMPLES = """
@@ -73,7 +94,7 @@ checkpoint_hosts:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
-from ansible.module_utils.network.checkpoint.checkpoint import publish, install_policy
+from ansible.module_utils.network.checkpoint.checkpoint import checkpoint_argument_spec, publish, install_policy
 import json
 
 
@@ -137,6 +158,7 @@ def main():
         ip_address=dict(type='str'),
         state=dict(type='str', default='present')
     )
+    argument_spec.update(checkpoint_argument_spec)
 
     required_if = [('state', 'present', 'ip_address')]
     module = AnsibleModule(argument_spec=argument_spec)
@@ -148,24 +170,39 @@ def main():
         if code == 200:
             if needs_update(module, response):
                 code, response = update_host(module, connection)
-                publish(module, connection)
-                install_policy(module, connection)
+
+                if module.params['auto_publish_session']:
+                    publish(connection)
+
+                    if module.params['auto_install_policy']:
+                        install_policy(connection, module.params['policy_package'], module.params['targets'])
+
                 result['changed'] = True
                 result['checkpoint_hosts'] = response
             else:
                 pass
         elif code == 404:
             code, response = create_host(module, connection)
-            publish(module, connection)
-            install_policy(module, connection)
+
+            if module.params['auto_publish_session']:
+                publish(connection)
+
+                if module.params['auto_install_policy']:
+                    install_policy(connection, module.params['policy_package'], module.params['targets'])
+
             result['changed'] = True
             result['checkpoint_hosts'] = response
     else:
         if code == 200:
             # Handle deletion
             code, response = delete_host(module, connection)
-            publish(module, connection)
-            install_policy(module, connection)
+
+            if module.params['auto_publish_session']:
+                publish(connection)
+
+                if module.params['auto_install_policy']:
+                    install_policy(connection, module.params['policy_package'], module.params['targets'])
+
             result['changed'] = True
         elif code == 404:
             pass
