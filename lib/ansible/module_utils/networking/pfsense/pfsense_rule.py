@@ -72,16 +72,8 @@ class PFSenseRuleModule(object):
         return self._interface
 
     def _match_interface(self, rule_elt):
-        """ check if a rule elt match the targeted interface
-            floating rules must match the floating mode instead of the interface name
-        """
-        interface_elt = rule_elt.find('interface')
-        floating_elt = rule_elt.find('floating')
-        if floating_elt is not None and floating_elt.text == 'yes':
-            return self._floating
-        elif self._floating:
-            return False
-        return interface_elt is not None and interface_elt.text == self._interface
+        """ check if a rule elt match the targeted interface """
+        return self.pfsense.rule_match_interface(rule_elt, self._interface, self._floating)
 
     def _find_rule_by_descr(self, descr):
         """ return rule descr on interface/floating with rule index """
@@ -151,28 +143,10 @@ class PFSenseRuleModule(object):
         if descr is None:
             descr = self._descr
 
-        i = 0
-        for rule_elt in self.rules:
-            if not self._match_interface(rule_elt):
-                continue
-            descr_elt = rule_elt.find('descr')
-            if descr_elt is not None and descr_elt.text == descr:
-                return i
-            i += 1
-
-        if fail:
+        res = self.pfsense.get_rule_position(descr, self._interface, self._floating)
+        if fail and res is None:
             self.module.fail_json(msg='Failed to find rule=%s interface=%s' % (descr, self._interface_name()))
-        return None
-
-    def _get_interface_rule_count(self):
-        """ get rule count in interface/floating """
-        count = 0
-        for rule_elt in self.rules:
-            if not self._match_interface(rule_elt):
-                continue
-            count += 1
-
-        return count
+        return res
 
     def _get_expected_rule_xml_index(self):
         """ get expected rule index in xml """
@@ -202,7 +176,7 @@ class PFSenseRuleModule(object):
     def _get_expected_rule_position(self):
         """ get expected rule position in interface/floating """
         if self._before == 'bottom':
-            return self._get_interface_rule_count() - 1
+            return self.pfsense.get_interface_rules_count(self._interface, self._floating) - 1
         elif self._after == 'top':
             return 0
         elif self._after is not None:
@@ -216,7 +190,7 @@ class PFSenseRuleModule(object):
             position = self._get_rule_position(self._after, fail=False)
             if position is not None:
                 return position
-            return self._get_interface_rule_count()
+            return self.pfsense.get_interface_rules_count(self._interface, self._floating)
         return -1
 
     def _insert(self, rule_elt):
@@ -270,7 +244,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
             interface = port_start
             if port_end:
                 interface += '-' + port_end
-            ret['network'] = self._parse_interface(interface)
+            ret['network'] = self.pfsense.parse_interface(interface)
             if address == 'IP':
                 ret['network'] += 'ip'
             return ret
@@ -294,53 +268,51 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
 
         return ret
 
-    def _parse_interface(self, interface):
-        """ validate param interface field """
-        if self.pfsense.is_interface_name(interface):
-            interface = self.pfsense.get_interface_pfsense_by_name(interface)
-            return interface
-        elif self.pfsense.is_interface_pfsense(interface):
-            return interface
-
-        self.module.fail_json(msg='%s is not a valid interface' % (interface))
-        return None
-
     def _parse_floating_interfaces(self, interfaces):
         """ validate param interface field when floating is true """
         res = []
         for interface in interfaces.split(','):
-            res.append(self._parse_interface(interface))
+            res.append(self.pfsense.parse_interface(interface))
         return ','.join(res)
 
     def _validate_params(self, params):
         """ do some extra checks on input parameters """
-        if params['ackqueue'] is not None and params['queue'] is None:
+        if params.get('ackqueue') is not None and params['queue'] is None:
             self.module.fail_json(msg='A default queue must be selected when an acknowledge queue is also selected')
 
-        if params['ackqueue'] is not None and params['ackqueue'] == params['queue']:
+        if params.get('ackqueue') is not None and params['ackqueue'] == params['queue']:
             self.module.fail_json(msg='Acknowledge queue and default queue cannot be the same')
 
         # as in pfSense 2.4, the GUI accepts any queue defined on any interface without checking, we do the same
-        if params['ackqueue'] is not None and self.pfsense.find_queue(params['ackqueue'], enabled=True) is None:
+        if params.get('ackqueue') is not None and self.pfsense.find_queue(params['ackqueue'], enabled=True) is None:
             self.module.fail_json(msg='Failed to find enabled ackqueue=%s' % params['ackqueue'])
 
-        if params['queue'] is not None and self.pfsense.find_queue(params['queue'], enabled=True) is None:
+        if params.get('queue') is not None and self.pfsense.find_queue(params['queue'], enabled=True) is None:
             self.module.fail_json(msg='Failed to find enabled queue=%s' % params['queue'])
 
-        if params['out_queue'] is not None and params['in_queue'] is None:
+        if params.get('out_queue') is not None and params['in_queue'] is None:
             self.module.fail_json(msg='A queue must be selected for the In direction before selecting one for Out too')
 
-        if params['out_queue'] is not None and params['out_queue'] == params['in_queue']:
+        if params.get('out_queue') is not None and params['out_queue'] == params['in_queue']:
             self.module.fail_json(msg='In and Out Queue cannot be the same')
 
-        if params['out_queue'] is not None and self.pfsense.find_limiter(params['out_queue'], enabled=True) is None:
+        if params.get('out_queue') is not None and self.pfsense.find_limiter(params['out_queue'], enabled=True) is None:
             self.module.fail_json(msg='Failed to find enabled out_queue=%s' % params['out_queue'])
 
-        if params['in_queue'] is not None and self.pfsense.find_limiter(params['in_queue'], enabled=True) is None:
+        if params.get('in_queue') is not None and self.pfsense.find_limiter(params['in_queue'], enabled=True) is None:
             self.module.fail_json(msg='Failed to find enabled in_queue=%s' % params['in_queue'])
 
-        if params['floating'] and params['direction'] == 'any' and (params['in_queue'] is not None or params['out_queue'] is not None):
+        if params.get('floating') and params.get('direction') == 'any' and (params['in_queue'] is not None or params['out_queue'] is not None):
             self.module.fail_json(msg='Limiters can not be used in Floating rules without choosing a direction')
+
+        if params.get('after') and params.get('before'):
+            self.module.fail_json(msg='Cannot specify both after and before')
+        elif params.get('after'):
+            if params['after'] == params['name']:
+                self.module.fail_json(msg='Cannot specify the current rule in after')
+        elif params.get('before'):
+            if params['before'] == params['name']:
+                self.module.fail_json(msg='Cannot specify the current rule in before')
 
     def _remove_deleted_rule_param(self, rule_elt, param):
         """ Remove from rule a deleted rule param """
@@ -365,22 +337,13 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         """ delete rule_elt from xml """
         self.rules.remove(rule_elt)
         self.changed = True
-        self.diff['before'] = self.rule_element_to_dict(rule_elt)
-        self.results['deleted'].append(self.rule_element_to_dict(rule_elt))
-
-    def _set_internals(self, rule, after=None, before=None):
-        """ set members (avoid passing those by params everywhere) """
-        self._rule = rule
-        self._descr = rule['descr']
-        self._interface = rule['interface']
-        self._floating = 'floating' in rule and rule['floating'] == 'yes'
-        self._after = after
-        self._before = before
+        self.diff['before'] = self._rule_element_to_dict(rule_elt)
+        self.results['deleted'].append(self._rule_element_to_dict(rule_elt))
 
     ##################
     # public methods
     #
-    def rule_element_to_dict(self, rule_elt):
+    def _rule_element_to_dict(self, rule_elt):
         """ convert rule_elt to dictionary like module arguments """
         rule = self.pfsense.element_to_dict(rule_elt)
 
@@ -401,9 +364,9 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
 
         return rule
 
-    def add(self, rule, after=None, before=None):
+    def _add(self):
         """ add or update rule """
-        self._set_internals(rule, after, before)
+        rule = self._rule
         rule_elt, dummy = self._find_rule_by_descr(self._descr)
         changed = False
         timestamp = '%d' % int(time.time())
@@ -416,13 +379,13 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
             rule['created']['time'] = rule['updated']['time'] = timestamp
             rule['created']['username'] = rule['updated']['username'] = self.pfsense.get_username()
             rule_elt = self.pfsense.new_element('rule')
-            self.diff['after'] = self.rule_element_to_dict(rule_elt)
+            self.diff['after'] = self._rule_element_to_dict(rule_elt)
             self.pfsense.copy_dict_to_element(rule, rule_elt)
             self._insert(rule_elt)
             self.results['added'].append(rule)
             self.change_descr = 'ansible pfsense_rule added %s' % (rule['descr'])
         else:
-            self.diff['before'] = self.rule_element_to_dict(rule_elt)
+            self.diff['before'] = self._rule_element_to_dict(rule_elt)
             changed = self.pfsense.copy_dict_to_element(rule, rule_elt)
             if self._remove_deleted_rule_params(rule_elt):
                 changed = True
@@ -433,24 +396,23 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
             if changed:
                 rule_elt.find('updated').find('time').text = timestamp
                 rule_elt.find('updated').find('username').text = self.pfsense.get_username()
-                self.diff['after'].update(self.rule_element_to_dict(rule_elt))
-                self.results['modified'].append(self.rule_element_to_dict(rule_elt))
+                self.diff['after'].update(self._rule_element_to_dict(rule_elt))
+                self.results['modified'].append(self._rule_element_to_dict(rule_elt))
                 self.change_descr = 'ansible pfsense_rule updated "%s" interface %s action %s' % (rule['descr'], rule['interface'], rule['type'])
 
         if changed:
             self.changed = True
 
-    def remove(self, rule):
+    def _remove(self):
         """ delete rule """
-        self._set_internals(rule)
         rule_elt, dummy = self._find_rule_by_descr(self._descr)
         if rule_elt is not None:
-            self.diff['before'] = self.rule_element_to_dict(rule_elt)
+            self.diff['before'] = self._rule_element_to_dict(rule_elt)
             self._adjust_separators(self._get_rule_position(), add=False)
             self._remove_rule_elt(rule_elt)
-            self.change_descr = 'ansible pfsense_rule removed "%s" interface %s' % (rule['descr'], rule['interface'])
+            self.change_descr = 'ansible pfsense_rule removed "%s" interface %s' % (self._rule['descr'], self._rule['interface'])
 
-    def params_to_rule(self, params):
+    def _params_to_rule(self, params):
         """ return a rule dict from module params """
         self._validate_params(params)
 
@@ -467,17 +429,17 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
                 rule[rule_field] = ''
 
         rule['descr'] = params['name']
-        rule['type'] = params['action']
-        rule['ipprotocol'] = params['ipprotocol']
-        rule['statetype'] = params['statetype']
 
-        if params['floating']:
+        if params.get('floating'):
             rule['floating'] = 'yes'
             rule['interface'] = self._parse_floating_interfaces(params['interface'])
         else:
-            rule['interface'] = self._parse_interface(params['interface'])
+            rule['interface'] = self.pfsense.parse_interface(params['interface'])
 
         if params['state'] == 'present':
+            rule['type'] = params['action']
+            rule['ipprotocol'] = params['ipprotocol']
+            rule['statetype'] = params['statetype']
             rule['source'] = self._parse_address(params['source'])
             rule['destination'] = self._parse_address(params['destination'])
 
@@ -507,21 +469,14 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
 
     def run(self, params):
         """ process input params to add/update/delete a rule """
-        rule = self.params_to_rule(params)
+        self._rule = self._params_to_rule(params)
+        self._descr = self._rule['descr']
+        self._interface = self._rule['interface']
+        self._floating = 'floating' in self._rule and self._rule['floating'] == 'yes'
+        self._after = params.get('after')
+        self._before = params.get('before')
 
-        state = params['state']
-        if state == 'absent':
-            self.remove(rule)
-        elif state == 'present':
-            if params['after'] and params['before']:
-                self.module.fail_json(msg='Cannot specify both after and before')
-            elif params['after']:
-                if params['after'] == rule['descr']:
-                    self.module.fail_json(msg='Cannot specify the current rule in after')
-                self.add(rule, after=params['after'])
-            elif params['before']:
-                if params['before'] == rule['descr']:
-                    self.module.fail_json(msg='Cannot specify the current rule in before')
-                self.add(rule, before=params['before'])
-            else:
-                self.add(rule)
+        if params['state'] == 'absent':
+            self._remove()
+        else:
+            self._add()

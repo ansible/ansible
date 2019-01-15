@@ -22,6 +22,7 @@ class PFSenseModule(object):
         self.root = self.tree.getroot()
         self.aliases = self.get_element('aliases')
         self.interfaces = self.get_element('interfaces')
+        self.rules = self.get_element('filter')
         self.shapers = self.get_element('shaper')
         self.dnshapers = self.get_element('dnshaper')
         self.debug = open('/tmp/pfsense.debug', 'w')
@@ -80,6 +81,53 @@ class PFSenseModule(object):
                 if descr_elt.text.strip() == name:
                     return True
         return False
+
+    def parse_interface(self, interface, fail=True):
+        """ validate param interface field """
+        if self.is_interface_name(interface):
+            return self.get_interface_pfsense_by_name(interface)
+        elif self.is_interface_pfsense(interface):
+            return interface
+
+        if fail:
+            self.module.fail_json(msg='%s is not a valid interface' % (interface))
+        return None
+
+    @staticmethod
+    def rule_match_interface(rule_elt, interface, floating):
+        """ check if a rule elt match the targeted interface
+            floating rules must match the floating mode instead of the interface name
+        """
+        interface_elt = rule_elt.find('interface')
+        floating_elt = rule_elt.find('floating')
+        if floating_elt is not None and floating_elt.text == 'yes':
+            return floating
+        elif floating:
+            return False
+        return interface_elt is not None and interface_elt.text == interface
+
+    def get_interface_rules_count(self, interface, floating):
+        """ get rules count in interface/floating """
+        count = 0
+        for rule_elt in self.rules:
+            if not self.rule_match_interface(rule_elt, interface, floating):
+                continue
+            count += 1
+
+        return count
+
+    def get_rule_position(self, descr, interface, floating):
+        """ get rule position in interface/floating """
+        i = 0
+        for rule_elt in self.rules:
+            if not self.rule_match_interface(rule_elt, interface, floating):
+                continue
+            descr_elt = rule_elt.find('descr')
+            if descr_elt is not None and descr_elt.text == descr:
+                return i
+            i += 1
+
+        return None
 
     @staticmethod
     def new_element(tag):
@@ -312,3 +360,32 @@ class PFSenseModule(object):
                 pass
             else:
                 raise
+
+
+class PFSenseModuleBase(object):
+    """ class providing base services for pfSense modules """
+
+    @staticmethod
+    def format_cli_field(alias, field, log_none=False, add_comma=True):
+        """ format field for pseudo-CLI command """
+        res = ''
+        if field in alias:
+            if log_none and alias[field] is None:
+                res = "{0}=none".format(field)
+            if alias[field] is not None:
+                if isinstance(alias[field], str):
+                    res = "{0}='{1}'".format(field, alias[field].replace("'", "\\'"))
+                else:
+                    res = "{0}={1}".format(field, alias[field])
+        if add_comma and res:
+            return ', ' + res
+        return res
+
+    def format_updated_cli_field(self, after, before, field, add_comma=True):
+        """ format field for pseudo-CLI update command """
+        if field in after and field in before:
+            if after[field] != before[field]:
+                return self.format_cli_field(after, field, log_none=True, add_comma=add_comma)
+        elif field in after and field not in before or field not in after and field in before:
+            return self.format_cli_field(after, field, log_none=True, add_comma=add_comma)
+        return ''

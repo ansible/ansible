@@ -238,7 +238,14 @@
 	</nat>
 	<filter>
 		<separator>
-			<wan></wan>
+			<wan>
+				<sep0>
+					<row>fr1</row>
+					<text>test_separator</text>
+					<color>bg-info</color>
+					<if>wan</if>
+				</sep0>
+			</wan>
 			<lan>
 				<sep0>
 					<row>fr1</row>
@@ -246,8 +253,28 @@
 					<color>bg-info</color>
 					<if>lan</if>
 				</sep0>
+				<sep1>
+					<row>fr1</row>
+					<text>another_test_separator</text>
+					<color>bg-info</color>
+					<if>lan</if>
+				</sep1>
+				<sep2>
+					<row>fr1</row>
+					<text>last_test_separator</text>
+					<color>bg-info</color>
+					<if>lan</if>
+				</sep2>
 			</lan>
 			<opt1></opt1>
+			<floatingrules>
+ 			  <sep0>
+				  <row>fr0</row>
+				  <text>test_sep_floating</text>
+				  <color>bg-info</color>
+				  <if>floatingrules</if>
+			  </sep0>
+			</floatingrules>
 		</separator>
 		<rule>
 			<updated>

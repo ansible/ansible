@@ -123,8 +123,9 @@ class TestPFSenseModule(ModuleTestCase):
 
     def load_xml_result(self):
         """ load the resulting xml if not already loaded """
-        if self.xml_result is None:
+        if self.xml_result is None and os.path.getsize(self.tmp_file) > 0:
             self.xml_result = ET.parse(self.tmp_file)
+        return self.xml_result is not None
 
     @staticmethod
     def find_xml_tag(parent_tag, elt_filter):
@@ -212,3 +213,15 @@ class TestPFSenseModule(ModuleTestCase):
         if elt.text is not None and elt.text:
             self.fail('Element <' + elt_name + '> differs. Expected: NoneType result: \'' + elt.text + '\'')
         return elt
+
+    @staticmethod
+    def unalias_interface(interface):
+        """ return real alias name if required """
+        res = []
+        interfaces = dict(lan='lan', wan='wan', vpn='opt1', vt1='opt2', lan_100='opt3')
+        for iface in interface.split(','):
+            if interface in interfaces:
+                res.append(interfaces[iface])
+            else:
+                res.append(iface)
+        return ','.join(res)

@@ -85,6 +85,46 @@ class TestPFSenseAggregateModule(TestPFSenseModule):
         if tag is not None:
             self.fail('Rule found: ' + rule)
 
+    def assert_find_rule_separator(self, separator, interface):
+        """ test if a rule separator exist on interface """
+        self.load_xml_result()
+        interface = self.unalias_interface(interface)
+        parent_tag = self.xml_result.find('filter')
+        if parent_tag is None:
+            self.fail('Unable to find tag filter')
+
+        separators_elt = parent_tag.find('separator')
+        if parent_tag is None:
+            self.fail('Unable to find tag separator')
+
+        interface_elt = separators_elt.find(interface)
+        if parent_tag is None:
+            self.fail('Unable to find tag ' + interface)
+
+        tag = self.find_xml_tag(interface_elt, dict(text=separator))
+        if tag is None:
+            self.fail('Separator not found: ' + separator)
+
+    def assert_not_find_rule_separator(self, separator, interface):
+        """ test if a rule separator dost exist on interface """
+        self.load_xml_result()
+        interface = self.unalias_interface(interface)
+        parent_tag = self.xml_result.find('filter')
+        if parent_tag is None:
+            self.fail('Unable to find tag filter')
+
+        separators_elt = parent_tag.find('separator')
+        if parent_tag is None:
+            self.fail('Unable to find tag separator')
+
+        interface_elt = separators_elt.find(interface)
+        if parent_tag is None:
+            self.fail('Unable to find tag ' + interface)
+
+        tag = self.find_xml_tag(interface_elt, dict(text=separator))
+        if tag is not None:
+            self.fail('Separator found: ' + separator)
+
     ############
     # as we rely on pfsense_alias and pfsense_rule for modifying the xml
     # we dont perform extensive checks on the xml modifications
@@ -212,3 +252,58 @@ class TestPFSenseAggregateModule(TestPFSenseModule):
         self.assert_not_find_rule('any2any_ssh', 'opt1')
         self.assert_find_rule('any2any_http', 'opt1')
         self.assert_not_find_rule('any2any_https', 'opt1')
+
+    def test_aggregate_separators(self):
+        """ test creation of a some separators """
+        args = dict(
+            purge_rule_separators=False,
+            aggregated_rule_separators=[
+                dict(name='one_separator', interface='lan'),
+                dict(name='another_separator', interface='lan_100'),
+                dict(name='another_test_separator', interface='lan', state='absent'),
+                dict(name='test_separator', interface='lan', before='bottom', color='warning'),
+            ]
+        )
+        set_module_args(args)
+        result = self.execute_module(changed=True)
+        result_separators = []
+        result_separators.append("create rule_separator 'one_separator', interface='lan', color='info'")
+        result_separators.append("create rule_separator 'another_separator', interface='lan_100', color='info'")
+        result_separators.append("delete rule_separator 'another_test_separator', interface='lan'")
+        result_separators.append("update rule_separator 'test_separator' set interface='lan', color='warning', before='bottom'")
+
+        self.assertEqual(result['result_rule_separators'], result_separators)
+        self.assert_find_rule_separator('one_separator', 'lan')
+        self.assert_find_rule_separator('another_separator', 'lan_100')
+        self.assert_not_find_rule_separator('another_test_separator', 'lan')
+        self.assert_find_rule_separator('test_separator', 'lan')
+
+    def test_aggregate_separators_purge(self):
+        """ test creation of a some separators with purge """
+        args = dict(
+            purge_rule_separators=True,
+            aggregated_rule_separators=[
+                dict(name='one_separator', interface='lan'),
+                dict(name='another_separator', interface='lan_100'),
+                dict(name='another_test_separator', interface='lan', state='absent'),
+                dict(name='test_separator', interface='lan', before='bottom', color='warning'),
+            ]
+        )
+        set_module_args(args)
+        result = self.execute_module(changed=True)
+        result_separators = []
+        result_separators.append("create rule_separator 'one_separator', interface='lan', color='info'")
+        result_separators.append("create rule_separator 'another_separator', interface='lan_100', color='info'")
+        result_separators.append("delete rule_separator 'another_test_separator', interface='lan'")
+        result_separators.append("update rule_separator 'test_separator' set interface='lan', color='warning', before='bottom'")
+        result_separators.append("delete rule_separator 'test_separator', interface='wan'")
+        result_separators.append("delete rule_separator 'last_test_separator', interface='lan'")
+        result_separators.append("delete rule_separator 'test_sep_floating', floating=True")
+
+        self.assertEqual(result['result_rule_separators'], result_separators)
+        self.assert_find_rule_separator('one_separator', 'lan')
+        self.assert_find_rule_separator('another_separator', 'lan_100')
+        self.assert_not_find_rule_separator('another_test_separator', 'lan')
+        self.assert_find_rule_separator('test_separator', 'lan')
+        self.assert_not_find_rule_separator('last_test_separator', 'lan')
+        self.assert_not_find_rule_separator('test_sep_floating', 'floatingrules')
