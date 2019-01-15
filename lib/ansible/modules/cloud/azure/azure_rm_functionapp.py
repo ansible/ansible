@@ -34,11 +34,12 @@ options:
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
-    plan: 
+    plan:
         description:
             - "It can be resource id of existing app service plan. eg.,
               /subscriptions/<subs_id>/resourceGroups/<resource_group>/providers/Microsoft.Web/serverFarms/<plan_name>"
-        required: false            
+        required: false
+        version_added: '2.8'            
     storage_account:
         description:
             - Name of the storage account to use.
