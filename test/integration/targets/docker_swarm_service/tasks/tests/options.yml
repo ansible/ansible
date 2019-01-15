@@ -20,11 +20,6 @@
     volume_names: "{{ volume_names }} + [volume_name_1, volume_name_2]"
     secret_names: "{{ secret_names }} + [secret_name_1, secret_name_2]"
 
-- name: Create a Swarm cluster
-  docker_swarm:
-    advertise_addr: "{{ ansible_default_ipv4.address }}"
-    state: present
-
 - docker_config:
     name: "{{ config_name_1 }}"
     data: "hello"
@@ -1635,11 +1630,6 @@
 ####################################################################
 ####################################################################
 ####################################################################
-
-- name: Remove the Swarm cluster
-  docker_swarm:
-    state: absent
-    force: yes
 
 - name: Delete networks
   docker_network:

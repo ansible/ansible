@@ -15,46 +15,56 @@
 
 # Run the tests
 - block:
-    - include_tasks: run-test.yml
-      with_fileglob:
-        - "tests/*.yml"
+  - name: Create a Swarm cluster
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+
+  - include_tasks: run-test.yml
+    with_fileglob:
+      - "tests/*.yml"
 
   always:
-    - name: "Make sure all services are removed"
+    - name: Make sure all services are removed
       docker_swarm_service:
         name: "{{ item }}"
         state: absent
       loop: "{{ service_names }}"
       ignore_errors: yes
-    - name: "Make sure all networks are removed"
+
+    - name: Make sure all networks are removed
       docker_network:
         name: "{{ item }}"
         state: absent
         force: yes
       loop: "{{ network_names }}"
       ignore_errors: yes
-    - name: "Make sure all configs are removed"
+
+    - name: Make sure all configs are removed
       docker_config:
         name: "{{ item }}"
         state: absent
         force: yes
       loop: "{{ config_names }}"
       ignore_errors: yes
-    - name: "Make sure all volumes are removed"
+
+    - name: Make sure all volumes are removed
       docker_volume:
         name: "{{ item }}"
         state: absent
         force: yes
       loop: "{{ volume_names }}"
       ignore_errors: yes
-    - name: "Make sure all secrets are removed"
+
+    - name: Make sure all secrets are removed
       docker_volume:
         name: "{{ item }}"
         state: absent
         force: yes
       loop: "{{ secret_names }}"
       ignore_errors: yes
-    - name: "Make sure swarm is removed"
+
+    - name: Make sure swarm is removed
       docker_swarm:
         state: absent
         force: yes
