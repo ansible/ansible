@@ -570,10 +570,15 @@ class StrategyBase:
                         else:
                             cacheable = result_item.pop('_ansible_facts_cacheable', False)
                             for target_host in host_list:
-                                if original_task.action == 'set_fact' and not cacheable:
-                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
-                                else:
+                                # so set_fact is a misnomer but 'cacheable = true' was meant to create an 'actual fact'
+                                # to avoid issues with precedence and confusion with set_fact normal operation,
+                                # we set BOTH fact and nonpersistent_facts (aka hostvar)
+                                # when fact is retrieved from cache in subsequent operations it will have the lower precedence,
+                                # but for playbook setting it the 'higher' precedence is kept
+                                if original_task.action != 'set_fact' or cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
+                                if original_task.action == 'set_fact':
+                                    self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())
 
                     if 'ansible_stats' in result_item and 'data' in result_item['ansible_stats'] and result_item['ansible_stats']['data']:
 
@@ -892,7 +897,7 @@ class StrategyBase:
                 loader=self._loader,
                 variable_manager=self._variable_manager
             )
-        except AnsibleError as e:
+        except AnsibleError:
             return False
 
         result = True
