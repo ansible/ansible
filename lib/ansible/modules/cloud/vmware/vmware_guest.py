@@ -1497,10 +1497,18 @@ class PyVmomiHelper(PyVmomi):
                 self.module.exit_json(msg="customvalues items required both 'key' and 'value fields.")
 
             # If kv is not kv fetched from facts, change it
-            if kv['key'] not in facts['customvalues'] or facts['customvalues'][kv['key']] != kv['value']:
+            valuetype = type(kv['value'])
+            if valuetype is bool or valuetype is int:
+                specifiedvalue = str(kv['value']).upper()
+                comparisonvalue = facts['customvalues'].get(kv['key'], '').upper()
+            else:
+                specifiedvalue = kv['value']
+                comparisonvalue = facts['customvalues'].get(kv['key'], '')
+
+            if (kv['key'] not in facts['customvalues'] and kv['value'] != '') or comparisonvalue != specifiedvalue:
                 option = vim.option.OptionValue()
                 option.key = kv['key']
-                option.value = kv['value']
+                option.value = specifiedvalue
 
                 vm_custom_spec.extraConfig.append(option)
                 changed = True
