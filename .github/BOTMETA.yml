@@ -87,8 +87,12 @@ files:
   $modules/cloud/amazon/iam_group.py: willthames
   $modules/cloud/amazon/iam_managed_policy.py: willthames
   $modules/cloud/amazon/iam_policy.py: $team_ansible
+  $modules/cloud/amazon/rds.py:
+    ignored: bpennypacker
   $modules/cloud/amazon/rds_param_group.py: scottanderson42
   $modules/cloud/amazon/rds_subnet_group.py: scottanderson42
+  $modules/cloud/amazon/route53.py:
+    ignored: bpennypacker
   $modules/cloud/amazon/route53_health_check.py: willthames
   $modules/cloud/amazon/sns.py: willthames
   $modules/cloud/amazon/sns_topic.py: willthames
@@ -178,6 +182,8 @@ files:
   $modules/files/file.py: $team_ansible
   $modules/files/find.py: $team_ansible
   $modules/files/lineinfile.py: $team_ansible samdoran
+  $modules/files/stat.py:
+    ignored: bpennypacker
   $modules/files/synchronize.py: $team_ansible
   $modules/files/template.py: $team_ansible
   $modules/files/unarchive.py:
@@ -198,11 +204,15 @@ files:
     maintainers: $team_ansible
   $modules/inventory/group_by.py: $team_ansible
   $modules/messaging/rabbitmq/: $team_rabbitmq
+  $modules/monitoring/airbrake_deployment.py:
+    ignored: bpennypacker
   $modules/monitoring/datadog_event.py:
     ignored: arturaz
   $modules/monitoring/logentries.py:
     ignored: ivanvanderbyl
   $modules/monitoring/monit.py: brian-brazil
+  $modules/monitoring/pagerduty.py:
+    ignored: bpennypacker
   $modules/monitoring/zabbix/: eikef D3DeFi
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
