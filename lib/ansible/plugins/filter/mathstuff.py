@@ -43,7 +43,17 @@ try:
 except ImportError:
     HAS_UNIQUE = False
 
-display = Display()
+try:
+    from jinja2.filters import do_max, do_min
+    HAS_MIN_MAX = True
+except ImportError:
+    HAS_MIN_MAX = False
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 @environmentfilter
@@ -124,19 +134,27 @@ def union(environment, a, b):
     return c
 
 
-def min(a, attribute=None):
-    _min = __builtins__.get('min')
-    if attribute:
-        return _min(a, key=itemgetter(attribute))
+@environmentfilter
+def min(environment, a, case_sensitive=False, attribute=None):
+    if HAS_MIN_MAX:
+        return do_min(environment, a, case_sensitive=case_sensitive, attribute=attribute)
     else:
+        if case_sensitive or attribute:
+            raise AnsibleFilterError("Ansible's min filter does not support case_sensitive nor attribute parameters, "
+                                     "you need a newer version of Jinja2 that provides their version of the filter.")
+        _min = __builtins__.get('min')
         return _min(a)
 
 
-def max(a, attribute=None):
-    _max = __builtins__.get('max')
-    if attribute:
-        return _max(a, key=itemgetter(attribute))
+@environmentfilter
+def max(environment, a, case_sensitive=False, attribute=None):
+    if HAS_MIN_MAX:
+        return do_max(environment, a, case_sensitive=case_sensitive, attribute=attribute)
     else:
+        if case_sensitive or attribute:
+            raise AnsibleFilterError("Ansible's max filter does not support case_sensitive nor attribute parameters, "
+                                     "you need a newer version of Jinja2 that provides their version of the filter.")
+        _max = __builtins__.get('max')
         return _max(a)
 
 
