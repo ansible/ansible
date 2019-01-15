@@ -552,7 +552,7 @@ class VMwareDeployOvf:
 
         opt = vim.option.OptionValue()
         opt.key = 'guestinfo.ovfEnv'
-        opt.value = to_native(ET.tostring(env))
+        opt.value = '<?xml version="1.0" encoding="UTF-8"?>' + to_native(ET.tostring(env))
 
         config_spec = vim.vm.ConfigSpec()
         config_spec.extraConfig = [opt]
