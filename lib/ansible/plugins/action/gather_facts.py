@@ -47,8 +47,8 @@ class ActionModule(ActionBase):
 
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
-            modules.append([connection_map.get(self._connection._load_name, 'setup')])
-            modules.pop('smart')
+            modules.extend([connection_map.get(self._connection._load_name, 'setup')])
+            modules.pop(modules.index('smart'))
 
         failed = {}
         skipped = {}
