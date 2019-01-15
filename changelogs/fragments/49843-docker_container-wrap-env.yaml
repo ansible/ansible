@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - "docker_container - warning when non-string env values are found, avoiding YAML parsing issues.
+     Will be made an error in Ansible 2.8. (https://github.com/ansible/ansible/issues/49802)"
