@@ -657,35 +657,21 @@ These modules are currently shipped with Ansible, but will most likely be shippe
         else:
             raise AnsibleError('Unknown supported_by value: %s' % info['metadata']['supported_by'])
 
-
-        # build up the categories that this module belongs to
-    #    new_cat = info['sub_category']
-    #    if new_cat not in subcategories:
-    #        display.warning('subcategory is %s' % new_cat)
-    #        subcategories[new_cat] = dict()
-    #        subcategories[new_cat]['_modules'] = dict()
-    #        subcategories[new_cat]['_modules'] = new_cat
-
-#        subcategories[new_cat]['_modules'].append(module)
-
-#    for category in sorted(categories.keys()):
-#        module_map = categories[category]
-#        subcategories = dict((k, v) for k, v in module_map.items() if k != '_modules')
-#        display.warning('subcategories is %s' % subcategories)
-
     # Render the module lists
     for maintainers, data in supported_by.items():
         subcategories = dict()
         for module in data['modules']:
             new_cat = plugin_info[module]['sub_category']
-            if new_cat not in subcategories:
-                subcategories[new_cat] = dict()
-                subcategories[new_cat]['_modules'] = []
-    #            subcategories[new_cat]['_modules'] = new_cat
+            category = plugin_info[module]['primary_category']
+            if category not in subcategories:
+                subcategories[category] = dict()
+                if new_cat not in subcategories:
+                    display.warning('cat is %s subcat is %s' % (category, new_cat))
+                    subcategories[category][new_cat] = dict()
+                    subcategories[category][new_cat]['_modules'] = []
+            subcategories[category][new_cat]['_modules'].append(module)
 
-            subcategories[new_cat]['_modules'].append(module)
-
-        display.warning('maint is %s subcat is %s and  subcat modules are %s' % (maintainers, new_cat, subcategories[new_cat]))
+        display.warning('maint is %s subcat is %s and  subcat modules are %s' % (maintainers, new_cat, subcategories[category][new_cat]))
 
         template_data = {'maintainers': maintainers,
                          'subcategories': subcategories,
