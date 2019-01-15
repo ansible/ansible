@@ -19,7 +19,7 @@ def main():
 
         with open(path, 'r') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
-                match = re.search(r'(get_exception)', text)
+                match = re.search(r'([^a-zA-Z0-9_]get_exception[^a-zA-Z0-9_])', text)
 
                 if match:
                     if path == 'lib/ansible/module_utils/basic.py' and basic_allow_once:
