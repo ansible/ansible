@@ -140,7 +140,7 @@ class DataLoader:
 
         :arg file_name: The name of the file to read.  If this is a relative
             path, it will be expanded relative to the basedir
-        :raises AnsibleFileNotFOund: if the file_name does not refer to a file
+        :raises AnsibleFileNotFound: if the file_name does not refer to a file
         :raises AnsibleParserError: if we were unable to read the file
         :return: Returns a byte string of the file contents
         '''

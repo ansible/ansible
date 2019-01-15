@@ -158,7 +158,6 @@ class Task(Base, Conditional, Taggable, Become):
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
         new_ds['loop_with'] = loop_name
         new_ds['loop'] = v
-        # FIXME: reenable afte 2.5
         # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.10")
 
     def preprocess_data(self, ds):
@@ -441,7 +440,7 @@ class Task(Base, Conditional, Taggable, Become):
 
             if _parent and (value is None or extend):
                 if getattr(_parent, 'statically_loaded', True):
-                    # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
+                    # vars are always inheritable, other attributes might not be for the parent but still should be for other ancestors
                     if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
                         parent_value = _parent._get_parent_attribute(attr)
                     else:
