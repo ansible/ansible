@@ -27,7 +27,7 @@ version_added: "1.4"
 options:
   user:
     description:
-      - Github username.
+      - GitHub username.
     required: true
   oauthkey:
     description:

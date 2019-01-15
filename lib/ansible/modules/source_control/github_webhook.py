@@ -237,7 +237,7 @@ def main():
             module.params["github_url"], to_native(err)))
     except github.UnknownObjectException as err:
         module.fail_json(
-            msg="Could not find repository %s in Github at %s: %s" % (
+            msg="Could not find repository %s in GitHub at %s: %s" % (
                 module.params["repository"], module.params["github_url"],
                 to_native(err)))
     except Exception as err:
