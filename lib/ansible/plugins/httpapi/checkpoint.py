@@ -49,6 +49,9 @@ class HttpApi(HttpApiBase):
 
         response, dummy = self.send_request(url, None)
 
+    def get_sid(self):
+        return self.connection._auth['X-chkp-sid']
+
     def send_request(self, path, body_params):
         data = json.dumps(body_params) if body_params else '{}'
 
