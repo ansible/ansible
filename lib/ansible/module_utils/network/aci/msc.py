@@ -31,9 +31,15 @@
 
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule, json
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urljoin
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native, to_bytes
+
+
+if PY3:
+    def cmp(a, b):
+        return (a > b) - (a < b)
 
 
 def issubset(subset, superset):
@@ -69,11 +75,14 @@ def issubset(subset, superset):
             if not issubset(superset[key], value):
                 return False
         elif isinstance(value, list):
-            # NOTE: Fails for lists of dicts
-            #if not set(value) <= set(superset[key]):
-            #    return False
-            if not cmp(value, superset[key]):
-                return False
+            try:
+                # NOTE: Fails for lists of dicts
+                if not set(value) <= set(superset[key]):
+                    return False
+            except TypeError:
+                # Fall back to exact comparison for lists of dicts
+                if not cmp(value, superset[key]):
+                    return False
         elif isinstance(value, set):
             if not value <= superset[key]:
                 return False
