@@ -41,14 +41,14 @@ class RedfishUtils(object):
                     'msg': 'Failed GET operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'data': data}
 
-    def post_request(self, uri, pyld, hdrs):
+    def post_request(self, uri, pyld, hdrs, timeout=10):
         try:
             resp = open_url(uri, data=json.dumps(pyld),
                             headers=hdrs, method="POST",
                             url_username=self.creds['user'],
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
-                            follow_redirects='all',
+                            follow_redirects='all', timeout=timeout,
                             use_proxy=False)
         except HTTPError as e:
             return {'ret': False, 'msg': "HTTP Error: %s" % e.code}
@@ -646,7 +646,7 @@ class RedfishUtils(object):
         data = response['data']
         reset_bios_settings_uri = data["Actions"]["#Bios.ResetBios"]["target"]
 
-        response = self.post_request(self.root_uri + reset_bios_settings_uri, {}, HEADERS)
+        response = self.post_request(self.root_uri + reset_bios_settings_uri, {}, HEADERS, timeout=60)
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
