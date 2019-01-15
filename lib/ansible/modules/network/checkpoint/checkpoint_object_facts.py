@@ -48,7 +48,7 @@ options:
   ip_only:
     description:
       - Filter only by IP address.
-    type: str
+    type: bool
     default: False
 """
 
@@ -77,7 +77,7 @@ def get_object(module, connection):
     uid = module.params['uid']
     filter_expression = module.params['filter_expression']
     ip_only = module.params['ip_only']
-    
+
     if uid:
         payload = {'uid': uid}
         code, result = connection.send_request('/web_api/show-object', payload)
