@@ -629,6 +629,13 @@ _add_doc(iterlists,
 
 if PY3:
     def cmp(a, b):
+        """
+        Replacement for built-in function cmp that was removed in Python 3
+
+        Compare the two objects a and b and return an integer according to
+        the outcome. The return value is negative if a < b, zero if a == b
+        and strictly positive if a > b.
+        """
         return (a > b) - (a < b)
 else:
     cmp = cmp
