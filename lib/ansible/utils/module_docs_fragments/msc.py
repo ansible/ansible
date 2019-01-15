@@ -10,13 +10,13 @@ class ModuleDocFragment(object):
 options:
   host:
     description:
-    - IP Address or hostname of ACI Multi-Site host.
+    - IP Address or hostname of the ACI Multi Site Orchestrator host.
     type: str
     required: yes
     aliases: [ hostname ]
   port:
     description:
-    - Port number to be used for REST connection.
+    - Port number to be used for the REST connection.
     - The default value depends on parameter `use_ssl`.
     type: int
   username:
@@ -60,6 +60,9 @@ options:
     - This should only set to C(no) when used on personally controlled sites using self-signed certificates.
     type: bool
     default: yes
+requirements:
+- Multi Site Orchestrator v2.1 or newer
 notes:
 - Please read the :ref:`aci_guide` for more detailed information on how to manage your ACI infrastructure using Ansible.
+- This module was written to support ACI Multi Site Orchestrator v2.1 or newer. Some or all functionality may not work on earlier versions.
 '''
