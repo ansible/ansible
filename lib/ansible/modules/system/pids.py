@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright 2019, Saranya Sridharan
+# Copyright: (c) 2019, Saranya Sridharan
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -11,16 +11,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: pids
 version_added: 2.8
-description: "Retrieves a list of process IDs (PIDs) of all processes of the given name. Returns an empty list if no process of the given name exists."
+description: "Retrieves a list of PIDs of given process name in Ansible controller/controlled machines.Returns an empty list if no process in that name exists."
 short_description: "Retrieves process IDs list if the process is running otherwise return empty list"
 author:
   - Saranya Sridharan (@saranyasridharan)
 requirements:
-  - psutil
+  - psutil(python module)
 options:
   name:
-    description: the name of the process you want to get PID for
+    description: the name of the process you want to get PID for.
     required: true
+    type: str
 '''
 
 EXAMPLES = '''
@@ -40,10 +41,10 @@ pids:
   description: Process IDs of the given process
   returned: list of none, one, or more process IDs
   type: list
+  sample: [100,200]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-import sys
 try:
     import psutil
     HAS_PSUTIL = True
