@@ -27,8 +27,8 @@
   - block:
       - include: 'repo.yml'
     always:
-      - apt_repository:
-          repo: "deb file:{{ repodir }} ./"
+      - file:
+          path: /etc/apt/sources.list.d/file_tmp_repo.list
           state: absent
       - file:
           name: "{{ repodir }}"
