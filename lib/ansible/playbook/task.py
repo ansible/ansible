@@ -456,14 +456,6 @@ class Task(Base, Conditional, Taggable, Become):
 
         return value
 
-    def _get_attr_any_errors_fatal(self):
-        value = self._attributes['any_errors_fatal']
-        if value is None:
-            value = self._get_parent_attribute('any_errors_fatal')
-        if value is None:
-            value = C.ANY_ERRORS_FATAL
-        return value
-
     def get_dep_chain(self):
         if self._parent:
             return self._parent.get_dep_chain()

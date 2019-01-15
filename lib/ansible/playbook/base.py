@@ -601,7 +601,7 @@ class Base(FieldAttributeBase):
     _ignore_unreachable = FieldAttribute(isa='bool')
     _check_mode = FieldAttribute(isa='bool')
     _diff = FieldAttribute(isa='bool')
-    _any_errors_fatal = FieldAttribute(isa='bool')
+    _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
 
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')
