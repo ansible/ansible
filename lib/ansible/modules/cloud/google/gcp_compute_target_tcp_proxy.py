@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -199,7 +198,7 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
-            service=dict(required=True)
+            service=dict(required=True),
         )
     )
 
@@ -240,8 +239,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -255,26 +253,16 @@ def update_fields(module, request, response):
 def proxy_header_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetTcpProxies/{name}/setProxyHeader"
-        ]).format(**module.params),
-        {
-            u'proxyHeader': module.params.get('proxy_header')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetTcpProxies/{name}/setProxyHeader"]).format(**module.params),
+        {u'proxyHeader': module.params.get('proxy_header')},
     )
 
 
 def service_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetTcpProxies/{name}/setBackendService"
-        ]).format(**module.params),
-        {
-            u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetTcpProxies/{name}/setBackendService"]).format(**module.params),
+        {u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')},
     )
 
 
@@ -289,7 +277,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'proxyHeader': module.params.get('proxy_header'),
-        u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')
+        u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -360,7 +348,7 @@ def response_to_hash(module, response):
         u'id': response.get(u'id'),
         u'name': module.params.get('name'),
         u'proxyHeader': response.get(u'proxyHeader'),
-        u'service': response.get(u'service')
+        u'service': response.get(u'service'),
     }
 
 

@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -201,7 +200,7 @@ def main():
             description=dict(type='str'),
             router=dict(required=True),
             name=dict(required=True, type='str'),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -256,7 +255,7 @@ def resource_to_request(module):
         u'interconnect': module.params.get('interconnect'),
         u'description': module.params.get('description'),
         u'router': replace_resource_dict(module.params.get(u'router', {}), 'selfLink'),
-        u'name': module.params.get('name')
+        u'name': module.params.get('name'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -331,7 +330,7 @@ def response_to_hash(module, response):
         u'router': response.get(u'router'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name')
+        u'name': response.get(u'name'),
     }
 
 
@@ -388,14 +387,10 @@ class InterconnectAttachmentPrivateinterconnectinfo(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'tag8021q': self.request.get('tag8021q')
-        })
+        return remove_nones_from_dict({u'tag8021q': self.request.get('tag8021q')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'tag8021q': self.request.get(u'tag8021q')
-        })
+        return remove_nones_from_dict({u'tag8021q': self.request.get(u'tag8021q')})
 
 
 if __name__ == '__main__':

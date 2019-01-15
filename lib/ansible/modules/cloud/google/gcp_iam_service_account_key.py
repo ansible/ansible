@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -178,7 +177,7 @@ def main():
             private_key_type=dict(type='str', choices=['TYPE_UNSPECIFIED', 'TYPE_PKCS12_FILE', 'TYPE_GOOGLE_CREDENTIALS_FILE']),
             key_algorithm=dict(type='str', choices=['KEY_ALG_UNSPECIFIED', 'KEY_ALG_RSA_1024', 'KEY_ALG_RSA_2048']),
             service_account=dict(),
-            path=dict(type='path')
+            path=dict(type='path'),
         )
     )
 
@@ -220,10 +219,7 @@ def delete(module):
 
 
 def resource_to_request(module):
-    request = {
-        u'privateKeyType': module.params.get('private_key_type'),
-        u'keyAlgorithm': module.params.get('key_algorithm')
-    }
+    request = {u'privateKeyType': module.params.get('private_key_type'), u'keyAlgorithm': module.params.get('key_algorithm')}
     return_vals = {}
     for k, v in request.items():
         if v:
@@ -252,10 +248,7 @@ def self_link_from_file(module):
 
 
 def self_link(module):
-    results = {
-        'project': module.params['project'],
-        'service_account': replace_resource_dict(module.params['service_account'], 'name')
-    }
+    results = {'project': module.params['project'], 'service_account': replace_resource_dict(module.params['service_account'], 'name')}
     return "https://iam.googleapis.com/v1/projects/{project}/serviceAccounts/{service_account}/keys".format(**results)
 
 

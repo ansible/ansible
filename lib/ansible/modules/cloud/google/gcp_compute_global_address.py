@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -179,7 +178,7 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
-            address_type=dict(default='EXTERNAL', type='str', choices=['EXTERNAL', 'INTERNAL'])
+            address_type=dict(default='EXTERNAL', type='str', choices=['EXTERNAL', 'INTERNAL']),
         )
     )
 
@@ -235,7 +234,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'ipVersion': module.params.get('ip_version'),
-        u'addressType': module.params.get('address_type')
+        u'addressType': module.params.get('address_type'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -308,7 +307,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'ipVersion': response.get(u'ipVersion'),
         u'region': response.get(u'region'),
-        u'addressType': response.get(u'addressType')
+        u'addressType': response.get(u'addressType'),
     }
 
 

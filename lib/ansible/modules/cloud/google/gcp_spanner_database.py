@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -140,7 +139,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
             extra_statements=dict(type='list', elements='str'),
-            instance=dict(required=True)
+            instance=dict(required=True),
         )
     )
 
@@ -190,10 +189,7 @@ def delete(module, link):
 
 
 def resource_to_request(module):
-    request = {
-        u'name': module.params.get('name'),
-        u'extraStatements': module.params.get('extra_statements')
-    }
+    request = {u'name': module.params.get('name'), u'extraStatements': module.params.get('extra_statements')}
     request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
@@ -209,19 +205,12 @@ def fetch_resource(module, link, allow_not_found=True):
 
 
 def self_link(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name'),
-        'name': module.params['name']
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name'), 'name': module.params['name']}
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases/{name}".format(**res)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name')
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases".format(**res)
 
 
@@ -270,10 +259,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {
-        u'name': response.get(u'name'),
-        u'extraStatements': module.params.get('extra_statements')
-    }
+    return {u'name': response.get(u'name'), u'extraStatements': module.params.get('extra_statements')}
 
 
 def decode_response(response, module):

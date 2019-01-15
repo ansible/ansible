@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -181,7 +180,7 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             network=dict(required=True),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -235,7 +234,7 @@ def resource_to_request(module):
         u'kind': 'compute#targetVpnGateway',
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
-        u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink')
+        u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -307,7 +306,7 @@ def response_to_hash(module, response):
         u'id': response.get(u'id'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'tunnels': response.get(u'tunnels'),
-        u'forwardingRules': response.get(u'forwardingRules')
+        u'forwardingRules': response.get(u'forwardingRules'),
     }
 
 

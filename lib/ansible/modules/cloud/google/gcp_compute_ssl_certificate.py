@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -176,7 +175,7 @@ def main():
             certificate=dict(required=True, type='str'),
             description=dict(type='str'),
             name=dict(type='str'),
-            private_key=dict(required=True, type='str')
+            private_key=dict(required=True, type='str'),
         )
     )
 
@@ -231,7 +230,7 @@ def resource_to_request(module):
         u'certificate': module.params.get('certificate'),
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
-        u'privateKey': module.params.get('private_key')
+        u'privateKey': module.params.get('private_key'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -302,7 +301,7 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
-        u'privateKey': module.params.get('private_key')
+        u'privateKey': module.params.get('private_key'),
     }
 
 

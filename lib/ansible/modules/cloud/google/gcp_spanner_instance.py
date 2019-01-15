@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -176,7 +175,7 @@ def main():
             config=dict(type='str'),
             display_name=dict(required=True, type='str'),
             node_count=dict(type='int'),
-            labels=dict(type='dict')
+            labels=dict(type='dict'),
         )
     )
 
@@ -231,7 +230,7 @@ def resource_to_request(module):
         u'config': module.params.get('config'),
         u'displayName': module.params.get('display_name'),
         u'nodeCount': module.params.get('node_count'),
-        u'labels': module.params.get('labels')
+        u'labels': module.params.get('labels'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -304,32 +303,22 @@ def response_to_hash(module, response):
         u'config': response.get(u'config'),
         u'displayName': response.get(u'displayName'),
         u'nodeCount': response.get(u'nodeCount'),
-        u'labels': response.get(u'labels')
+        u'labels': response.get(u'labels'),
     }
 
 
 def resource_to_create(module):
     instance = resource_to_request(module)
-    instance['name'] = "projects/{0}/instances/{1}".format(module.params['project'],
-                                                           module.params['name'])
-    instance['config'] = "projects/{0}/instanceConfigs/{1}".format(module.params['project'],
-                                                                   instance['config'])
-    return {
-        'instanceId': module.params['name'],
-        'instance': instance
-    }
+    instance['name'] = "projects/{0}/instances/{1}".format(module.params['project'], module.params['name'])
+    instance['config'] = "projects/{0}/instanceConfigs/{1}".format(module.params['project'], instance['config'])
+    return {'instanceId': module.params['name'], 'instance': instance}
 
 
 def resource_to_update(module):
     instance = resource_to_request(module)
-    instance['name'] = "projects/{0}/instances/{1}".format(module.params['project'],
-                                                           module.params['name'])
-    instance['config'] = "projects/{0}/instanceConfigs/{1}".format(module.params['project'],
-                                                                   instance['config'])
-    return {
-        'instance': instance,
-        'fieldMask': "'name' ,'config' ,'displayName' ,'nodeCount' ,'labels'"
-    }
+    instance['name'] = "projects/{0}/instances/{1}".format(module.params['project'], module.params['name'])
+    instance['config'] = "projects/{0}/instanceConfigs/{1}".format(module.params['project'], instance['config'])
+    return {'instance': instance, 'fieldMask': "'name' ,'config' ,'displayName' ,'nodeCount' ,'labels'"}
 
 
 def decode_response(response, module):

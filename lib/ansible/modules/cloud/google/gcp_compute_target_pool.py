@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -257,7 +256,7 @@ def main():
             instances=dict(type='list'),
             name=dict(required=True, type='str'),
             session_affinity=dict(type='str', choices=['NONE', 'CLIENT_IP', 'CLIENT_IP_PROTO']),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -316,7 +315,7 @@ def resource_to_request(module):
         u'healthCheck': replace_resource_dict(module.params.get(u'health_check', {}), 'selfLink'),
         u'instances': replace_resource_dict(module.params.get('instances', []), 'selfLink'),
         u'name': module.params.get('name'),
-        u'sessionAffinity': module.params.get('session_affinity')
+        u'sessionAffinity': module.params.get('session_affinity'),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -394,7 +393,7 @@ def response_to_hash(module, response):
         u'id': response.get(u'id'),
         u'instances': response.get(u'instances'),
         u'name': module.params.get('name'),
-        u'sessionAffinity': module.params.get('session_affinity')
+        u'sessionAffinity': module.params.get('session_affinity'),
     }
 
 

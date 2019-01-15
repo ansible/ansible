@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -220,7 +219,7 @@ def main():
             port=dict(type='int'),
             request_path=dict(type='str'),
             timeout_sec=dict(type='int', aliases=['timeout_seconds']),
-            unhealthy_threshold=dict(type='int')
+            unhealthy_threshold=dict(type='int'),
         )
     )
 
@@ -281,7 +280,7 @@ def resource_to_request(module):
         u'port': module.params.get('port'),
         u'requestPath': module.params.get('request_path'),
         u'timeoutSec': module.params.get('timeout_sec'),
-        u'unhealthyThreshold': module.params.get('unhealthy_threshold')
+        u'unhealthyThreshold': module.params.get('unhealthy_threshold'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -357,7 +356,7 @@ def response_to_hash(module, response):
         u'port': response.get(u'port'),
         u'requestPath': response.get(u'requestPath'),
         u'timeoutSec': response.get(u'timeoutSec'),
-        u'unhealthyThreshold': response.get(u'unhealthyThreshold')
+        u'unhealthyThreshold': response.get(u'unhealthyThreshold'),
     }
 
 

@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -221,7 +220,7 @@ def main():
             name=dict(required=True, type='str'),
             network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
             subnetwork=dict(),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -278,7 +277,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'networkTier': module.params.get('network_tier'),
-        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
+        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -352,7 +351,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'networkTier': response.get(u'networkTier'),
         u'subnetwork': response.get(u'subnetwork'),
-        u'users': response.get(u'users')
+        u'users': response.get(u'users'),
     }
 
 
