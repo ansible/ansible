@@ -40,7 +40,7 @@ EXAMPLES = '''
       http_port=8080 # all members of 'web' will inherit these
       myvar=23 # defined in a :vars section, interpreted as a string
 
-      [web:children] # child groups will automatically add their hosts to partent group
+      [web:children] # child groups will automatically add their hosts to parent group
       apache
       nginx
 

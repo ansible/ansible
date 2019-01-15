@@ -179,7 +179,7 @@ options:
     implicit_flow_enabled:
         description:
             - Enable implicit flow for this client or not (OpenID connect).
-              This is 'implictFlowEnabled' in the Keycloak REST API.
+              This is 'implicitFlowEnabled' in the Keycloak REST API.
         aliases:
             - implicitFlowEnabled
         type: bool
