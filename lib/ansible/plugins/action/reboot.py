@@ -319,7 +319,8 @@ class ActionModule(ActionBase):
                         self._connection.reset()
                     except (AnsibleError, AttributeError) as e:
                         # reset the connection to clear the custom connection timeout
-                        display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action, error=to_text(e)))
+                        display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action,
+                                                                                                                     error=to_text(e)))
 
             # finally run test command to ensure everything is working
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
