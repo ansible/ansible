@@ -86,7 +86,7 @@ def get_object(module, connection):
         payload = {'uid': uid}
         code, result = connection.send_request('/web_api/show-object', payload)
     else:
-        payload = {'filter': object_filter, 'ip-only': ip_only}
+        payload = {'filter': object_filter, 'ip-only': ip_only, 'type': object_type}
         code, result = connection.send_request('/web_api/show-objects', payload)
 
     return code, result
