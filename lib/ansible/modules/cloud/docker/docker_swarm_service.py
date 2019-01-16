@@ -753,7 +753,7 @@ class DockerService(DockerBaseClass):
     def has_publish_changed(self, old_publish):
         if len(self.publish) != len(old_publish):
             return True
-        publish_sorter = operator.itemgetter('published_port', 'target_port', 'protocol', 'mode')
+        publish_sorter = operator.itemgetter('published_port', 'target_port', 'protocol')
         publish = sorted(self.publish, key=publish_sorter)
         old_publish = sorted(old_publish, key=publish_sorter)
         for publish_item, old_publish_item in zip(publish, old_publish):
