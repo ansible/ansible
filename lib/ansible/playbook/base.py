@@ -497,6 +497,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if not isinstance(new_value, list):
             new_value = [new_value]
 
+        # Due to where _extend_value may run for some attributes
+        # it is possible to end up with Sentinel in the list of values
+        # ensure we strip them
         value[:] = [v for v in value if v is not Sentinel]
         new_value[:] = [v for v in new_value if v is not Sentinel]
 
