@@ -149,6 +149,9 @@ class Role(Base, Become, Conditional, Taggable):
                 params['from_files'] = from_files
             if role_include.vars:
                 params['vars'] = role_include.vars
+
+            params['from_include'] = from_include
+
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
