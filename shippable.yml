@@ -83,6 +83,7 @@ matrix:
     - env: T=linux/fedora29/3
     - env: T=linux/opensuse42.3/3
     - env: T=linux/ubuntu1404/3
+    - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1604py3/3
     - env: T=linux/ubuntu1804/3
 
