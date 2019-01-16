@@ -212,6 +212,28 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
+- name: add ip to host record
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      - address_add: 192.168.10.2
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: remove ip to host record
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      - address_remove: 192.168.10.1
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
@@ -252,7 +274,7 @@ def main():
     ''' Main entry point for module execution
     '''
     ipv4addr_spec = dict(
-        ipv4addr=dict(required=True, aliases=['address'], ib_req=True),
+        ipv4addr=dict(required=True, aliases=['address', 'address_add', 'address_remove'], ib_req=True),
         configure_for_dhcp=dict(type='bool', required=False, aliases=['dhcp'], ib_req=True),
         mac=dict(required=False, aliases=['mac'], ib_req=True)
     )
