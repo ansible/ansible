@@ -96,10 +96,10 @@ options:
     - This is used for internal load balancing.
     - "(not used for external load balancing) ."
     - 'This field represents a link to a BackendService resource in GCP. It can be
-      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-      task and then set this backend_service field to "{{ name-of-resource }}" Alternatively,
-      you can set this backend_service to a dictionary with the selfLink key where
-      the value is the selfLink of your BackendService'
+      specified in two ways. First, you can place in the selfLink of the resource
+      here as a string Alternatively, you can add `register: name-of-resource` to
+      a gcp_compute_backend_service task and then set this backend_service field to
+      "{{ name-of-resource }}"'
     required: false
   ip_version:
     description:
@@ -136,10 +136,9 @@ options:
       specified, the default network will be used.
     - This field is not used for external load balancing.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
     required: false
   port_range:
     description:
@@ -172,10 +171,9 @@ options:
       if the network is in custom subnet mode, a subnetwork must be specified.
     - This field is not used for external load balancing.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-      you can set this subnetwork to a dictionary with the selfLink key where the
-      value is the selfLink of your Subnetwork'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork
+      task and then set this subnetwork field to "{{ name-of-resource }}"'
     required: false
   target:
     description:
@@ -186,10 +184,9 @@ options:
       target object.
     - This field is not used for internal load balancing.
     - 'This field represents a link to a TargetPool resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_target_pool
-      task and then set this target field to "{{ name-of-resource }}" Alternatively,
-      you can set this target to a dictionary with the selfLink key where the value
-      is the selfLink of your TargetPool'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_target_pool
+      task and then set this target field to "{{ name-of-resource }}"'
     required: false
     version_added: 2.7
   network_tier:
@@ -301,7 +298,7 @@ backendService:
   - This is used for internal load balancing.
   - "(not used for external load balancing) ."
   returned: success
-  type: dict
+  type: str
 ipVersion:
   description:
   - The IP Version that will be used by this forwarding rule. Valid options are IPV4
@@ -334,7 +331,7 @@ network:
     the default network will be used.
   - This field is not used for external load balancing.
   returned: success
-  type: dict
+  type: str
 portRange:
   description:
   - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -367,7 +364,7 @@ subnetwork:
     if the network is in custom subnet mode, a subnetwork must be specified.
   - This field is not used for external load balancing.
   returned: success
-  type: dict
+  type: str
 target:
   description:
   - A reference to a TargetPool resource to receive the matched traffic.
@@ -377,7 +374,7 @@ target:
     target object.
   - This field is not used for internal load balancing.
   returned: success
-  type: dict
+  type: str
 networkTier:
   description:
   - 'The networking tier used for configuring this address. This field can take the
@@ -415,15 +412,15 @@ def main():
             description=dict(type='str'),
             ip_address=dict(type='str'),
             ip_protocol=dict(type='str', choices=['TCP', 'UDP', 'ESP', 'AH', 'SCTP', 'ICMP']),
-            backend_service=dict(type='dict'),
+            backend_service=dict(),
             ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
             load_balancing_scheme=dict(type='str', choices=['INTERNAL', 'EXTERNAL']),
             name=dict(required=True, type='str'),
-            network=dict(type='dict'),
+            network=dict(),
             port_range=dict(type='str'),
             ports=dict(type='list', elements='str'),
-            subnetwork=dict(type='dict'),
-            target=dict(type='dict'),
+            subnetwork=dict(),
+            target=dict(),
             network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
             region=dict(required=True, type='str')
         )

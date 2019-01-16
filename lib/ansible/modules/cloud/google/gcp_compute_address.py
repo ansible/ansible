@@ -102,10 +102,9 @@ options:
     - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER
       purposes.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-      you can set this subnetwork to a dictionary with the selfLink key where the
-      value is the selfLink of your Subnetwork'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork
+      task and then set this subnetwork field to "{{ name-of-resource }}"'
     required: false
     version_added: 2.7
   region:
@@ -183,7 +182,7 @@ subnetwork:
   - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER
     purposes.
   returned: success
-  type: dict
+  type: str
 users:
   description:
   - The URLs of the resources that are using this address.
@@ -221,7 +220,7 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
-            subnetwork=dict(type='dict'),
+            subnetwork=dict(),
             region=dict(required=True, type='str')
         )
     )

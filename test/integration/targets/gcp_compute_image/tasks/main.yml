@@ -120,6 +120,7 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a disk
   gcp_compute_disk:
       name: "disk-image"
@@ -129,3 +130,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: disk
+  ignore_errors: true

@@ -97,10 +97,10 @@ options:
         - When the BackendService has load balancing scheme INTERNAL, the instance
           group must be in a zone within the same region as the BackendService.
         - 'This field represents a link to a InstanceGroup resource in GCP. It can
-          be specified in two ways. You can add `register: name-of-resource` to a
-          gcp_compute_instance_group task and then set this group field to "{{ name-of-resource
-          }}" Alternatively, you can set this group to a dictionary with the selfLink
-          key where the value is the selfLink of your InstanceGroup'
+          be specified in two ways. First, you can place in the selfLink of the resource
+          here as a string Alternatively, you can add `register: name-of-resource`
+          to a gcp_compute_instance_group task and then set this group field to "{{
+          name-of-resource }}"'
         required: false
       max_connections:
         description:
@@ -387,7 +387,7 @@ backends:
       - When the BackendService has load balancing scheme INTERNAL, the instance group
         must be in a zone within the same region as the BackendService.
       returned: success
-      type: dict
+      type: str
     maxConnections:
       description:
       - The max number of simultaneous connections for the group. Can be used with
@@ -626,7 +626,7 @@ def main():
                 balancing_mode=dict(type='str', choices=['UTILIZATION', 'RATE', 'CONNECTION']),
                 capacity_scaler=dict(type='str'),
                 description=dict(type='str'),
-                group=dict(type='dict'),
+                group=dict(),
                 max_connections=dict(type='int'),
                 max_connections_per_instance=dict(type='int'),
                 max_rate=dict(type='int'),
