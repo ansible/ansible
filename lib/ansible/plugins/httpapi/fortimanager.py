@@ -160,7 +160,7 @@ class HttpApi(HttpApiBase):
             # Sending URL and Data in Unicode, per Ansible Specifications for Connection Plugins
             response, response_data = self.connection.send(path=to_text(self._url), data=to_text(data),
                                                            headers=BASE_HEADERS)
-            # Get Unicode Response -- Must convert from StringIO to unicode first so we can do a replace function below
+            # Get Unicode Response - Must convert from StringIO to unicode first so we can do a replace function below
             result = json.loads(to_text(response_data.getvalue()))
             self._update_self_from_response(result, self._url, data)
             return self._handle_response(result)
