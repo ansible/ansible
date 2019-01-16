@@ -9,7 +9,7 @@ It is quite possible that you may need to get package updates through a proxy, o
 updates through a proxy and access other packages not through a proxy.  Or maybe a script you might wish to 
 call may also need certain environment variables set to run properly.
 
-Ansible makes it easy for you to configure your environment by using the 'environment' keyword.  Here is an example::
+Ansible makes it easy for you to configure the remote execution environment by using the 'environment' keyword.  Here is an example::
 
     - hosts: all
       remote_user: root
@@ -115,6 +115,8 @@ You might also want to simply specify the environment for a single task::
 
 .. note::
    ``environment:`` is not currently supported for Windows targets
+   ``environment:`` does not affect Ansible itself, ONLY the context of the specific task action and
+                    this does not include Ansible's own configuration settings.
 
 .. seealso::
 
