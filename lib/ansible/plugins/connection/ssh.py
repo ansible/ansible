@@ -1082,6 +1082,12 @@ class Connection(ConnectionBase):
             args = (ssh_executable, self.host, cmd)
 
         cmd = self._build_command(*args)
+        if display.verbosity >= 4:
+            # for 'ssh -G', the 'cmd' is not used, so this just removes it from the
+            # ssh command we use for a cleaner msg.
+            debug_args = args[:-1]
+            self._display_ssh_config(debug_args, in_data, sudoable)
+
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
         return (returncode, stdout, stderr)
@@ -1133,3 +1139,39 @@ class Connection(ConnectionBase):
 
     def close(self):
         self._connected = False
+
+    def _display_ssh_config(self, args, in_data=None, sudoable=True):
+        # only 'ssh' (not sftp or scp) support -G. And only ~recentish versions.
+
+        debug_args = tuple(args[:] + ('-G',))
+        debug_cmd = self._build_command(*debug_args)
+
+        try:
+            (returncode, stdout, stderr) = self._run(debug_cmd, in_data, sudoable, checkrc=False)
+        except AnsibleConnectionFailure:
+            # -G failed, could be too old, not openssh, etc.
+            # The 'ssh -G' option will not attempt to connect (even versions without -G will
+            # exit with an invalid option error) so errors here should always indicate -G not being supported if
+            # we can assume the rest of the constructed cmd line is valid. ie, a user adding '--sdfadfasdfasd' to ssh_args
+            # will get this message in addition to normal ssh errors.
+            display.vvvv(u"SSH CONFIG DEBUG: {0}".format("Version of ssh doesn't support '-G'?"), host=self.host)
+            return
+
+        if returncode != 0:
+            return
+
+        display.vvvv(u"SSH CONFIG DEBUG: {0}".format(stdout), host=self.host)
+
+        version_args = tuple(args[:] + ('-V',))
+        version_cmd = self._build_command(*version_args)
+
+        try:
+            (version_returncode, version_stdout, version_stderr) = self._run(version_cmd, in_data, sudoable, checkrc=False)
+        except AnsibleConnectionFailure:
+            # -V failed, could be too old, not openssh, etc.
+            return
+
+        if version_returncode != 0:
+            return
+
+        display.vvvv(u"SSH VERSION: {0}".format(version_stderr), host=self.host)
