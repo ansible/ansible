@@ -28,9 +28,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: checkpoint_session
-short_description: Manages session objects on Checkpoint over Web Services API
+short_description: Manages session objects on Check Point over Web Services API
 description:
-  - Manages session objects on Checkpoint devices performing actions like publish and discard.
+  - Manages session objects on Check Point devices performing actions like publish and discard.
     All operations are performed over Web Services API.
 version_added: "2.8"
 author: "Ansible by Red Hat (@rcarrillocruz)"
@@ -107,7 +107,7 @@ def main():
 
         result['checkpoint_session'] = response
     else:
-        module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
+        module.fail_json(msg='Check Point device returned error {0} with message {1}'.format(code, response))
 
     module.exit_json(**result)
 
