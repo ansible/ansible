@@ -49,6 +49,7 @@ options:
     description:
       - Filter only by IP address.
     type: bool
+    default: false
   object_type:
     description:
       - Type of the object to search. Must be a valid API resource name
