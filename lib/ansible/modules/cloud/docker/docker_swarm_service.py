@@ -672,7 +672,7 @@ class DockerService(DockerBaseClass):
             s.mounts.append(service_m)
 
         s.configs = None
-        if ap['configs']:
+        if ap['configs'] is not None:
             s.configs = []
             for param_m in ap['configs']:
                 service_c = {}

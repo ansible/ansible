@@ -143,19 +143,19 @@
         filename: "/tmp/{{ config_name_2 }}.txt"
   register: configs_3
 
-#- name: configs (empty)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    configs: []
-#  register: configs_4
+- name: configs (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    configs: []
+  register: configs_4
 
 - assert:
     that:
     - configs_1 is changed
     - configs_2 is not changed
     - configs_3 is changed
-#    - configs_4 is changed
+    - configs_4 is changed
   when: docker_api_version is version('1.30', '>=')
 - assert:
     that:
