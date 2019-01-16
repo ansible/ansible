@@ -64,10 +64,9 @@ options:
     description:
     - A reference to the network to which this router belongs.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
     required: true
   bgp:
     description:
@@ -183,7 +182,7 @@ network:
   description:
   - A reference to the network to which this router belongs.
   returned: success
-  type: dict
+  type: str
 bgp:
   description:
   - BGP information specific to this router.
@@ -260,7 +259,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            network=dict(required=True, type='dict'),
+            network=dict(required=True),
             bgp=dict(type='dict', options=dict(
                 asn=dict(required=True, type='int'),
                 advertise_mode=dict(default='DEFAULT', type='str', choices=['DEFAULT', 'CUSTOM']),

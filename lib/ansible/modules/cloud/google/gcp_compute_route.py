@@ -87,10 +87,9 @@ options:
     description:
     - The network that this route applies to.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
     required: true
   priority:
     description:
@@ -118,6 +117,10 @@ options:
     - 'You can specify this as a full or partial URL. For example: * U(https://www.googleapis.com/compute/v1/projects/project/zones/zone/)
       instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
       .'
+    - 'This field represents a link to a Instance resource in GCP. It can be specified
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_instance
+      task and then set this next_hop_instance field to "{{ name-of-resource }}"'
     required: false
   next_hop_ip:
     description:
@@ -126,6 +129,10 @@ options:
   next_hop_vpn_tunnel:
     description:
     - URL to a VpnTunnel that should handle matching packets.
+    - 'This field represents a link to a VpnTunnel resource in GCP. It can be specified
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_vpn_tunnel
+      task and then set this next_hop_vpn_tunnel field to "{{ name-of-resource }}"'
     required: false
 extends_documentation_fragment: gcp
 notes:
@@ -185,7 +192,7 @@ network:
   description:
   - The network that this route applies to.
   returned: success
-  type: dict
+  type: str
 priority:
   description:
   - The priority of this route. Priority is used to break ties in cases where there
@@ -256,13 +263,13 @@ def main():
             dest_range=dict(required=True, type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True, type='dict'),
+            network=dict(required=True),
             priority=dict(type='int'),
             tags=dict(type='list', elements='str'),
             next_hop_gateway=dict(type='str'),
-            next_hop_instance=dict(type='str'),
+            next_hop_instance=dict(),
             next_hop_ip=dict(type='str'),
-            next_hop_vpn_tunnel=dict(type='str')
+            next_hop_vpn_tunnel=dict()
         )
     )
 
@@ -321,9 +328,9 @@ def resource_to_request(module):
         u'priority': module.params.get('priority'),
         u'tags': module.params.get('tags'),
         u'nextHopGateway': module.params.get('next_hop_gateway'),
-        u'nextHopInstance': module.params.get('next_hop_instance'),
+        u'nextHopInstance': replace_resource_dict(module.params.get(u'next_hop_instance', {}), 'selfLink'),
         u'nextHopIp': module.params.get('next_hop_ip'),
-        u'nextHopVpnTunnel': module.params.get('next_hop_vpn_tunnel')
+        u'nextHopVpnTunnel': replace_resource_dict(module.params.get(u'next_hop_vpn_tunnel', {}), 'selfLink')
     }
     return_vals = {}
     for k, v in request.items():
@@ -396,9 +403,9 @@ def response_to_hash(module, response):
         u'priority': module.params.get('priority'),
         u'tags': module.params.get('tags'),
         u'nextHopGateway': module.params.get('next_hop_gateway'),
-        u'nextHopInstance': module.params.get('next_hop_instance'),
+        u'nextHopInstance': replace_resource_dict(module.params.get(u'next_hop_instance', {}), 'selfLink'),
         u'nextHopIp': module.params.get('next_hop_ip'),
-        u'nextHopVpnTunnel': module.params.get('next_hop_vpn_tunnel'),
+        u'nextHopVpnTunnel': replace_resource_dict(module.params.get(u'next_hop_vpn_tunnel', {}), 'selfLink'),
         u'nextHopNetwork': response.get(u'nextHopNetwork')
     }
 
