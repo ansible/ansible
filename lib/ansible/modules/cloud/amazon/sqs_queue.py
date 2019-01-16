@@ -318,7 +318,8 @@ def update_sqs_queue(client, queue_url, new_attributes, check_mode):
 
 
 def delete_sqs_queue(client, module):
-    queue_name = get_queue_name(module)
+    is_fifo = (module.params.get('queue_type') == 'fifo')
+    queue_name = get_queue_name(module, is_fifo)
     result = dict(
         name=queue_name,
         region=module.params.get('region')
