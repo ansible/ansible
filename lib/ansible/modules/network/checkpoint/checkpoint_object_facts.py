@@ -52,6 +52,7 @@ options:
   object_type:
     description:
       - Type of the object to search. Must be a valid API resource name
+    type: str
     default: None
 """
 
