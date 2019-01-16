@@ -18,7 +18,7 @@ from collections import defaultdict
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.display import Display
@@ -351,7 +351,7 @@ class PluginLoader:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             with open(path, 'rb') as module_file:
-                module = imp.load_source(full_name, path, module_file)
+                module = imp.load_source(full_name, to_bytes(path), module_file)
         return module
 
     def _update_object(self, obj, name, path):
