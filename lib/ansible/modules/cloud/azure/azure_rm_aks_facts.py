@@ -83,7 +83,8 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.module_args = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            show_kubeconfig=dict(type='bool', default=False)
         )
 
         self.results = dict(
@@ -94,6 +95,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.name = None
         self.resource_group = None
         self.tags = None
+        self.show_kubeconfig = None
 
         super(AzureRMManagedClusterFacts, self).__init__(
             derived_arg_spec=self.module_args,
@@ -129,6 +131,8 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
 
         if item and self.has_tags(item.tags, self.tags):
             result = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
+            if self.show_kubeconfig:
+                result[0]['kubeconfig'] = self.get_aks_kubeconfig(self.resource_group, self.name)
 
         return result
 
@@ -138,17 +142,28 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.log('List all Azure Kubernetes Services')
 
         try:
-            response = self.containerservice_client.managed_clusters.list(
-                self.resource_group)
+            response = self.containerservice_client.managed_clusters.list(self.resource_group)
         except AzureHttpError as exc:
             self.fail('Failed to list all items - {0}'.format(str(exc)))
 
         results = []
         for item in response:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+                item_dict = self.serialize_obj(item, AZURE_OBJECT_CLASS)
+                if self.show_kubeconfig:
+                    item_dict['kubeconfig'] = self.get_aks_kubeconfig(self.resource_group, item.name)
+                results.append(item_dict)
 
         return results
+
+    def get_aks_kubeconfig(self, resource_group, name):
+        '''
+        Gets kubeconfig for the specified AKS instance.
+
+        :return: AKS instance kubeconfig
+        '''
+        access_profile = self.containerservice_client.managed_clusters.get_access_profile(resource_group, name, "clusterUser")
+        return access_profile.kube_config.decode('utf-8')
 
 
 def main():

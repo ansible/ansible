@@ -166,7 +166,6 @@ state:
         type: Microsoft.ContainerService/ManagedClusters
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-import base64
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -199,7 +198,7 @@ def create_aks_dict(aks):
         kube_config=aks.kube_config,
         enable_rbac=aks.enable_rbac,
         network_profile=create_network_profiles_dict(aks.network_profile),
-        aad_profile=create_aad_profiles_dict(aks.aad_prodile),
+        aad_profile=create_aad_profiles_dict(aks.aad_profile),
         addon_profiles=create_addon_dict(aks.addon_profiles),
         fqdn=aks.fqdn,
         node_resource_group=aks.node_resource_group
@@ -214,7 +213,7 @@ def create_network_profiles_dict(network):
         service_cidr=network.service_cidr,
         dns_service_ip=network.dns_service_ip,
         docker_bridge_cidr=network.docker_bridge_cidr
-    )
+    ) if network else dict()
 
 
 def create_aad_profiles_dict(aad):
@@ -223,7 +222,7 @@ def create_aad_profiles_dict(aad):
         server_app_id=aad.server_app_id,
         server_app_secret=aad.server_app_secret,
         tanant_id=aad.tanant_id
-    )
+    ) if aad else dict()
 
 
 def create_addon_dict(addon):
@@ -272,8 +271,8 @@ def create_agent_pool_profiles_dict(agentpoolprofiles):
         vm_size=profile.vm_size,
         name=profile.name,
         os_disk_size_gb=profile.os_disk_size_gb,
-        dns_prefix=profile.dns_prefix,
-        ports=profile.ports,
+        # dns_prefix=profile.dns_prefix,
+        # ports=profile.ports,
         storage_profile=profile.storage_profile,
         vnet_subnet_id=profile.vnet_subnet_id,
         os_type=profile.os_type
@@ -644,8 +643,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         :return: AKS instance kubeconfig
         '''
-        access_profile = self.containerservice_client.managed_clusters.get_access_profiles(self.resource_group, self.name, "clusterUser")
-        return base64.b64decode(access_profile.kube_config)
+        access_profile = self.containerservice_client.managed_clusters.get_access_profile(self.resource_group, self.name, "clusterUser")
+        return access_profile.kube_config.decode('utf-8')
 
     def create_agent_pool_profile_instance(self, agentpoolprofile):
         '''
