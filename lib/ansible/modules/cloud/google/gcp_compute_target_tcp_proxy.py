@@ -74,10 +74,10 @@ options:
     description:
     - A reference to the BackendService resource.
     - 'This field represents a link to a BackendService resource in GCP. It can be
-      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-      task and then set this service field to "{{ name-of-resource }}" Alternatively,
-      you can set this service to a dictionary with the selfLink key where the value
-      is the selfLink of your BackendService'
+      specified in two ways. First, you can place in the selfLink of the resource
+      here as a string Alternatively, you can add `register: name-of-resource` to
+      a gcp_compute_backend_service task and then set this service field to "{{ name-of-resource
+      }}"'
     required: true
 extends_documentation_fragment: gcp
 notes:
@@ -174,7 +174,7 @@ service:
   description:
   - A reference to the BackendService resource.
   returned: success
-  type: dict
+  type: str
 '''
 
 ################################################################################
@@ -199,7 +199,7 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
-            service=dict(required=True, type='dict')
+            service=dict(required=True)
         )
     )
 

@@ -57,10 +57,9 @@ options:
     description:
     - A reference to a Topic resource.
     - 'This field represents a link to a Topic resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_pubsub_topic
-      task and then set this topic field to "{{ name-of-resource }}" Alternatively,
-      you can set this topic to a dictionary with the name key where the value is
-      the name of your Topic'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_pubsub_topic
+      task and then set this topic field to "{{ name-of-resource }}"'
     required: false
   push_config:
     description:
@@ -108,8 +107,6 @@ EXAMPLES = '''
   gcp_pubsub_subscription:
       name: "test_object"
       topic: "{{ topic }}"
-      push_config:
-        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "test_project"
       auth_kind: "serviceaccount"
@@ -127,7 +124,7 @@ topic:
   description:
   - A reference to a Topic resource.
   returned: success
-  type: dict
+  type: str
 pushConfig:
   description:
   - If push delivery is used with this subscription, this field is used to configure
@@ -181,7 +178,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
-            topic=dict(type='dict'),
+            topic=dict(),
             push_config=dict(type='dict', options=dict(
                 push_endpoint=dict(type='str')
             )),

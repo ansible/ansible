@@ -99,16 +99,16 @@ items:
       description:
       - The network this VPN gateway is accepting traffic for.
       returned: success
-      type: dict
+      type: str
     tunnels:
       description:
-      - A list of references to VpnTunnel resources associated to this VPN gateway.
+      - A list of references to VpnTunnel resources associated with this VPN gateway.
       returned: success
       type: list
     forwardingRules:
       description:
-      - A list of references to the ForwardingRule resources associated to this VPN
-        gateway.
+      - A list of references to the ForwardingRule resources associated with this
+        VPN gateway.
       returned: success
       type: list
     region:

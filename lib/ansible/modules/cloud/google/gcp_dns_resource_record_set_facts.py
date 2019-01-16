@@ -46,10 +46,9 @@ options:
     - Identifies the managed zone addressed by this request.
     - Can be the managed zone name or id.
     - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_dns_managed_zone
-      task and then set this managed_zone field to "{{ name-of-resource }}" Alternatively,
-      you can set this managed_zone to a dictionary with the name key where the value
-      is the name of your ManagedZone'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_dns_managed_zone
+      task and then set this managed_zone field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -94,7 +93,7 @@ items:
       - Identifies the managed zone addressed by this request.
       - Can be the managed zone name or id.
       returned: success
-      type: dict
+      type: str
 '''
 
 ################################################################################
@@ -111,7 +110,7 @@ import json
 def main():
     module = GcpModule(
         argument_spec=dict(
-            managed_zone=dict(required=True, type='dict')
+            managed_zone=dict(required=True)
         )
     )
 
