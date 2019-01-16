@@ -318,7 +318,7 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
     if command == b'sshpass':
         # Error 5 is invalid/incorrect password. Raise an exception to prevent retries from locking the account.
         if return_tuple[0] == 5:
-            msg = 'Invalid/incorrect password. Skipping remaining {0} retries to prevent account lockout:'.format(remaining_retries)
+            msg = 'Invalid/incorrect username/password. Skipping remaining {0} retries to prevent account lockout:'.format(remaining_retries)
             if remaining_retries <= 0:
                 msg = 'Invalid/incorrect password:'
             if no_log:
