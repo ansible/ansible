@@ -28,13 +28,16 @@ user_rules_with_port_7000 = """### tuple ### allow tcp 7000 0.0.0.0/0 any 0.0.0.
 
 skippg_adding_existing_rules = "Skipping adding existing rule\nSkipping adding existing rule (v6)\n"
 
+grep_config_cli = "grep -h '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules "
+grep_config_cli += "/var/lib/ufw/user.rules /var/lib/ufw/user6.rules"
+
 dry_mode_cmd = {
     "ufw status verbose": ufw_status_verbose_with_port_7000,
     "ufw --version": ufw_version_35,
     "ufw --dry-run allow from any to any port 7000 proto tcp": skippg_adding_existing_rules,
     "ufw --dry-run delete allow from any to any port 7000 proto tcp": "",
     "ufw --dry-run delete allow from any to any port 7001 proto tcp": user_rules_with_port_7000,
-    "grep -h '^### tuple' /lib/ufw/user.rules /lib/ufw/user6.rules /etc/ufw/user.rules /etc/ufw/user6.rules /var/lib/ufw/user.rules /var/lib/ufw/user6.rules": user_rules_with_port_7000
+    grep_config_cli: user_rules_with_port_7000
 }
 
 
