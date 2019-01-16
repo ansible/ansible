@@ -372,15 +372,14 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
         timestamp = '%d' % int(time.time())
         if rule_elt is None:
             changed = True
-            self.diff['before'] = ''
             rule['id'] = ''
             rule['tracker'] = timestamp
             rule['created'] = rule['updated'] = dict()
             rule['created']['time'] = rule['updated']['time'] = timestamp
             rule['created']['username'] = rule['updated']['username'] = self.pfsense.get_username()
             rule_elt = self.pfsense.new_element('rule')
-            self.diff['after'] = self._rule_element_to_dict(rule_elt)
             self.pfsense.copy_dict_to_element(rule, rule_elt)
+            self.diff['after'] = self._rule_element_to_dict(rule_elt)
             self._insert(rule_elt)
             self.results['added'].append(rule)
             self.change_descr = 'ansible pfsense_rule added %s' % (rule['descr'])
