@@ -181,7 +181,7 @@ items:
         preemptible:
           description:
           - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-            for more inforamtion about preemptible VM instances.'
+            for more information about preemptible VM instances.'
           returned: success
           type: bool
     masterAuth:
@@ -240,8 +240,6 @@ items:
       description:
       - The name of the Google Compute Engine network to which the cluster is connected.
         If left unspecified, the default network will be used.
-      - To ensure it exists and it is operations, configure the network using 'gcompute_network'
-        resource.
       returned: success
       type: str
     clusterIpv4Cidr:

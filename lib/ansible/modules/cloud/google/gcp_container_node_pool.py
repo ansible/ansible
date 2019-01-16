@@ -136,7 +136,7 @@ options:
       preemptible:
         description:
         - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-          for more inforamtion about preemptible VM instances.'
+          for more information about preemptible VM instances.'
         required: false
         type: bool
   initial_node_count:
@@ -204,10 +204,9 @@ options:
     description:
     - The cluster this node pool belongs to.
     - 'This field represents a link to a Cluster resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
-      task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
-      you can set this cluster to a dictionary with the name key where the value is
-      the name of your Cluster'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_container_cluster
+      task and then set this cluster field to "{{ name-of-resource }}"'
     required: true
   zone:
     description:
@@ -336,7 +335,7 @@ config:
     preemptible:
       description:
       - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-        for more inforamtion about preemptible VM instances.'
+        for more information about preemptible VM instances.'
       returned: success
       type: bool
 initialNodeCount:
@@ -416,7 +415,7 @@ cluster:
   description:
   - The cluster this node pool belongs to.
   returned: success
-  type: dict
+  type: str
 zone:
   description:
   - The zone where the node pool is deployed.
@@ -470,7 +469,7 @@ def main():
                     description=dict(type='str')
                 ))
             )),
-            cluster=dict(required=True, type='dict'),
+            cluster=dict(required=True),
             zone=dict(required=True, type='str')
         )
     )
