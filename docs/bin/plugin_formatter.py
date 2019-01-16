@@ -665,11 +665,13 @@ These modules are currently shipped with Ansible, but will most likely be shippe
             category = plugin_info[module]['primary_category']
             if category not in subcategories:
                 subcategories[category] = dict()
-                if new_cat not in subcategories:
-                    display.warning('cat is %s subcat is %s' % (category, new_cat))
-                    subcategories[category][new_cat] = dict()
-                    subcategories[category][new_cat]['_modules'] = []
-            subcategories[category][new_cat]['_modules'].append(module)
+                subcategories[category][''] = dict()
+                subcategories[category]['']['_modules'] = []
+        display.warning('cat is %s subcat is %s' % (category, new_cat))
+        if new_cat not in subcategories:
+                subcategories[category][new_cat] = dict()
+                subcategories[category][new_cat]['_modules'] = []
+        subcategories[category][new_cat]['_modules'].append(module)
 
         display.warning('maint is %s subcat is %s and  subcat modules are %s' % (maintainers, new_cat, subcategories[category][new_cat]))
 
