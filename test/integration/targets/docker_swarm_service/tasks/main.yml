@@ -57,7 +57,7 @@
       ignore_errors: yes
 
     - name: Make sure all secrets are removed
-      docker_volume:
+      docker_secret:
         name: "{{ item }}"
         state: absent
         force: yes
