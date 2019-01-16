@@ -67,6 +67,9 @@ options:
         description:
             - run systemctl within a given service manager scope, either as the default system scope (system),
               the current user's scope (user), or the scope of all users (global).
+            - "For systemd to work with 'user', the executing user must have its own instance of dbus started (systemd requirement).
+              The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
+              Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
         choices: [ system, user, global ]
         default: 'system'
         version_added: "2.7"
@@ -253,6 +256,8 @@ status:
         }
 '''  # NOQA
 
+import os
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
@@ -326,6 +331,9 @@ def main():
     )
 
     systemctl = module.get_bin_path('systemctl', True)
+
+    if os.getenv('XDG_RUNTIME_DIR') is None:
+        os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
 
     ''' Set CLI options depending on params '''
     if module.params['user'] is not None:
