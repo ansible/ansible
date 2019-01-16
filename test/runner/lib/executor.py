@@ -318,9 +318,11 @@ def command_posix_integration(args):
     """
     :type args: PosixIntegrationConfig
     """
+    filename = 'test/integration/inventory'
+
     all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets)
-    command_integration_filtered(args, internal_targets, all_targets)
+    command_integration_filtered(args, internal_targets, all_targets, filename)
 
 
 def command_network_integration(args):
@@ -381,7 +383,7 @@ def command_network_integration(args):
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets)
+        command_integration_filtered(args, internal_targets, all_targets, filename)
         success = True
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
@@ -603,7 +605,7 @@ def command_windows_integration(args):
     success = False
 
     try:
-        command_integration_filtered(args, internal_targets, all_targets, pre_target=pre_target,
+        command_integration_filtered(args, internal_targets, all_targets, filename, pre_target=pre_target,
                                      post_target=post_target)
         success = True
     finally:
@@ -766,11 +768,12 @@ def command_integration_filter(args, targets, init_callback=None):
     return internal_targets
 
 
-def command_integration_filtered(args, targets, all_targets, pre_target=None, post_target=None):
+def command_integration_filtered(args, targets, all_targets, inventory_path, pre_target=None, post_target=None):
     """
     :type args: IntegrationConfig
     :type targets: tuple[IntegrationTarget]
     :type all_targets: tuple[IntegrationTarget]
+    :type inventory_path: str
     :type pre_target: (IntegrationTarget) -> None | None
     :type post_target: (IntegrationTarget) -> None | None
     """
@@ -848,11 +851,11 @@ def command_integration_filtered(args, targets, all_targets, pre_target=None, po
                     if cloud_environment:
                         cloud_environment.setup_once()
 
-                    run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, False)
+                    run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, inventory_path, False)
 
                     start_time = time.time()
 
-                    run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, True)
+                    run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, inventory_path, True)
 
                     if not args.explain:
                         # create a fresh test directory for each test target
@@ -864,9 +867,9 @@ def command_integration_filtered(args, targets, all_targets, pre_target=None, po
 
                     try:
                         if target.script_path:
-                            command_integration_script(args, target, test_dir)
+                            command_integration_script(args, target, test_dir, inventory_path)
                         else:
-                            command_integration_role(args, target, start_at_task, test_dir)
+                            command_integration_role(args, target, start_at_task, test_dir, inventory_path)
                             start_at_task = None
                     finally:
                         if post_target:
@@ -1070,13 +1073,14 @@ rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
         raise ApplicationError('No supported port forwarding mechanism detected.')
 
 
-def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, always):
+def run_setup_targets(args, test_dir, target_names, targets_dict, targets_executed, inventory_path, always):
     """
     :type args: IntegrationConfig
     :type test_dir: str
     :type target_names: list[str]
     :type targets_dict: dict[str, IntegrationTarget]
     :type targets_executed: set[str]
+    :type inventory_path: str
     :type always: bool
     """
     for target_name in target_names:
@@ -1091,19 +1095,20 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
             make_dirs(test_dir)
 
         if target.script_path:
-            command_integration_script(args, target, test_dir)
+            command_integration_script(args, target, test_dir, inventory_path)
         else:
-            command_integration_role(args, target, None, test_dir)
+            command_integration_role(args, target, None, test_dir, inventory_path)
 
         targets_executed.add(target_name)
 
 
-def integration_environment(args, target, cmd, test_dir):
+def integration_environment(args, target, cmd, test_dir, inventory_path):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type cmd: list[str]
     :type test_dir: str
+    :type inventory_path: str
     :rtype: dict[str, str]
     """
     env = ansible_environment(args)
@@ -1118,6 +1123,7 @@ def integration_environment(args, target, cmd, test_dir):
         ANSIBLE_CALLBACK_WHITELIST='junit',
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
         OUTPUT_DIR=test_dir,
+        INVENTORY_PATH=os.path.abspath(inventory_path),
     )
 
     if args.debug_strategy:
@@ -1139,11 +1145,12 @@ def integration_environment(args, target, cmd, test_dir):
     return env
 
 
-def command_integration_script(args, target, test_dir):
+def command_integration_script(args, target, test_dir, inventory_path):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type test_dir: str
+    :type inventory_path: str
     """
     display.info('Running %s integration test script' % target.name)
 
@@ -1152,33 +1159,31 @@ def command_integration_script(args, target, test_dir):
     if args.verbosity:
         cmd.append('-' + ('v' * args.verbosity))
 
-    env = integration_environment(args, target, cmd, test_dir)
+    env = integration_environment(args, target, cmd, test_dir, inventory_path)
     cwd = target.path
 
     intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
-def command_integration_role(args, target, start_at_task, test_dir):
+def command_integration_role(args, target, start_at_task, test_dir, inventory_path):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type start_at_task: str | None
     :type test_dir: str
+    :type inventory_path: str
     """
     display.info('Running %s integration test role' % target.name)
 
     vars_file = 'integration_config.yml'
 
     if isinstance(args, WindowsIntegrationConfig):
-        inventory = 'inventory.winrm'
         hosts = 'windows'
         gather_facts = False
     elif isinstance(args, NetworkIntegrationConfig):
-        inventory = args.inventory or 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
     else:
-        inventory = 'inventory'
         hosts = 'testhost'
         gather_facts = True
 
@@ -1193,6 +1198,11 @@ def command_integration_role(args, target, start_at_task, test_dir):
   roles:
     - { role: %s }
     ''' % (hosts, gather_facts, target.name)
+
+    inventory = os.path.relpath(inventory_path, 'test/integration')
+
+    if '/' in inventory:
+        inventory = inventory_path
 
     with tempfile.NamedTemporaryFile(dir='test/integration', prefix='%s-' % target.name, suffix='.yml') as pb_fd:
         pb_fd.write(playbook.encode('utf-8'))
@@ -1223,7 +1233,7 @@ def command_integration_role(args, target, start_at_task, test_dir):
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, cmd, test_dir)
+        env = integration_environment(args, target, cmd, test_dir, inventory_path)
         cwd = 'test/integration'
 
         env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
