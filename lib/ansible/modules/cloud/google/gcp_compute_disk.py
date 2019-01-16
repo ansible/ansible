@@ -129,6 +129,10 @@ options:
         - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
           key that protects this resource.
         required: false
+      kms_key_name:
+        description:
+        - The name of the encryption key that is stored in Google Cloud KMS.
+        required: false
   disk_encryption_key:
     description:
     - Encrypts the disk using a customer-supplied encryption key.
@@ -151,6 +155,10 @@ options:
         - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
           key that protects this resource.
         required: false
+      kms_key_name:
+        description:
+        - The name of the encryption key that is stored in Google Cloud KMS.
+        required: false
   source_snapshot:
     description:
     - The source snapshot used to create this disk. You can provide this as a partial
@@ -170,6 +178,10 @@ options:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
+        required: false
+      kms_key_name:
+        description:
+        - The name of the encryption key that is stored in Google Cloud KMS.
         required: false
       sha256:
         description:
@@ -310,6 +322,11 @@ sourceImageEncryptionKey:
         key that protects this resource.
       returned: success
       type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
+      returned: success
+      type: str
 sourceImageId:
   description:
   - The ID value of the image used to create this disk. This value identifies the
@@ -344,6 +361,11 @@ diskEncryptionKey:
         key that protects this resource.
       returned: success
       type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
+      returned: success
+      type: str
 sourceSnapshot:
   description:
   - The source snapshot used to create this disk. You can provide this as a partial
@@ -361,6 +383,11 @@ sourceSnapshotEncryptionKey:
       description:
       - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
         base64 to either encrypt or decrypt this resource.
+      returned: success
+      type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
       returned: success
       type: str
     sha256:
@@ -408,10 +435,10 @@ def main():
             type=dict(type='str'),
             source_image=dict(type='str'),
             zone=dict(required=True, type='str'),
-            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
-            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
+            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'), kms_key_name=dict(type='str'))),
+            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'), kms_key_name=dict(type='str'))),
             source_snapshot=dict(),
-            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
+            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'), sha256=dict(type='str'))),
         )
     )
 
@@ -631,10 +658,14 @@ class DiskSourceimageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
+        )
 
 
 class DiskDiskencryptionkey(object):
@@ -646,10 +677,14 @@ class DiskDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
+        )
 
 
 class DiskSourcesnapshotencryptionkey(object):
@@ -661,10 +696,14 @@ class DiskSourcesnapshotencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name'), u'sha256': self.request.get('sha256')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName'), u'sha256': self.request.get(u'sha256')}
+        )
 
 
 if __name__ == '__main__':
