@@ -351,7 +351,7 @@ def get_timestamp_for_time(formatted_time, time_format):
     if formatted_time == 'preserve':
         return None
     elif formatted_time == 'now':
-        return Sentinel()
+        return Sentinel
     else:
         try:
             struct = time.strptime(formatted_time, time_format)
