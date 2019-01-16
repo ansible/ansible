@@ -1,29 +1,29 @@
-# Test code for the MSC modules
+# Test code for the MSO modules
 # Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Test that we have an ACI MultiSite host, username and password
   fail:
-    msg: 'Please define the following variables: msc_hostname, msc_username and msc_password.'
-  when: msc_hostname is not defined or msc_username is not defined or msc_password is not defined
+    msg: 'Please define the following variables: mso_hostname, mso_username and mso_password.'
+  when: mso_hostname is not defined or mso_username is not defined or mso_password is not defined
 
 
 # CLEAN ENVIRONMENT
 - name: Remove user ansible_test2
-  msc_user: &user_absent
-    host: '{{ msc_hostname }}'
-    username: '{{ msc_username }}'
-    password: '{{ msc_password }}'
-    validate_certs: '{{ msc_validate_certs | default(false) }}'
-    use_ssl: '{{ msc_use_ssl | default(true) }}'
-    use_proxy: '{{ msc_use_proxy | default(true) }}'
-    output_level: '{{ msc_output_level | default("info") }}'
+  mso_user: &user_absent
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
     user_name: ansible_test2
     state: absent
 
 - name: Remove user ansible_test
-  msc_user:
+  mso_user:
     <<: *user_absent
     user_name: ansible_test
   register: cm_remove_user
@@ -31,14 +31,14 @@
 
 # ADD USER
 - name: Add user (check_mode)
-  msc_user: &user_present
-    host: '{{ msc_hostname }}'
-    username: '{{ msc_username }}'
-    password: '{{ msc_password }}'
-    validate_certs: '{{ msc_validate_certs | default(false) }}'
-    use_ssl: '{{ msc_use_ssl | default(true) }}'
-    use_proxy: '{{ msc_use_proxy | default(true) }}'
-    output_level: '{{ msc_output_level | default("info") }}'
+  mso_user: &user_present
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
     user_name: ansible_test
     user_password: 'S0m3!1n1t14l!p455w0rd'
     # NOTE: First name, last name, phone and email are mandatory on creation
@@ -64,7 +64,7 @@
     - cm_add_user.current.username == 'ansible_test'
 
 - name: Add user (normal mode)
-  msc_user: *user_present
+  mso_user: *user_present
   register: nm_add_user
 
 - name: nm_Verify add_user
@@ -76,7 +76,7 @@
     - nm_add_user.current.username == 'ansible_test'
 
 - name: Add user again (check_mode)
-  msc_user:
+  mso_user:
     <<: *user_present
     # NOTE: We need to modify the password for a new user
     user_password: 'S0m3!n3w!p455w0rd'
@@ -92,7 +92,7 @@
     - cm_add_user_again.current.username == 'ansible_test'
 
 - name: Add user again (normal mode)
-  msc_user:
+  mso_user:
     <<: *user_present
     # NOTE: We need to modify the password for a new user
     user_password: 'S0m3!n3w!p455w0rd'
@@ -109,7 +109,7 @@
 
 # CHANGE USER
 - name: Change user (check_mode)
-  msc_user:
+  mso_user:
     <<: *user_present
     user_id: '{{ nm_add_user.current.id }}'
     user_name: ansible_test2
@@ -125,7 +125,7 @@
     - cm_change_user.current.username == 'ansible_test2'
 
 - name: Change user (normal mode)
-  msc_user:
+  mso_user:
     <<: *user_present
     user_id: '{{ nm_add_user.current.id }}'
     user_name: ansible_test2
@@ -141,7 +141,7 @@
     - nm_change_user.current.username == 'ansible_test2'
 
 - name: Change user again (check_mode)
-  msc_user:
+  mso_user:
     <<: *user_present
     user_id: '{{ nm_add_user.current.id }}'
     user_name: ansible_test2
@@ -157,7 +157,7 @@
     - cm_change_user_again.current.username == 'ansible_test2'
 
 - name: Change user again (normal mode)
-  msc_user:
+  mso_user:
     <<: *user_present
     user_id: '{{ nm_add_user.current.id }}'
     user_name: ansible_test2
@@ -174,20 +174,20 @@
 
 # QUERY ALL USERS
 - name: Query all users (check_mode)
-  msc_user: &user_query
-    host: '{{ msc_hostname }}'
-    username: '{{ msc_username }}'
-    password: '{{ msc_password }}'
-    validate_certs: '{{ msc_validate_certs | default(false) }}'
-    use_ssl: '{{ msc_use_ssl | default(true) }}'
-    use_proxy: '{{ msc_use_proxy | default(true) }}'
-    output_level: '{{ msc_output_level | default("info") }}'
+  mso_user: &user_query
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_users
 
 - name: Query all users (normal mode)
-  msc_user: *user_query
+  mso_user: *user_query
   register: nm_query_all_users
 
 - name: Verify query_all_users
@@ -201,14 +201,14 @@
 
 # QUERY A USER
 - name: Query our user
-  msc_user:
+  mso_user:
     <<: *user_query
     user_name: ansible_test2
   check_mode: yes
   register: cm_query_user
 
 - name: Query our user
-  msc_user:
+  mso_user:
     <<: *user_query
     user_name: ansible_test2
   register: nm_query_user
@@ -227,7 +227,7 @@
 
 # REMOVE USER
 - name: Remove user (check_mode)
-  msc_user: *user_absent
+  mso_user: *user_absent
   check_mode: yes
   register: cm_remove_user
 
@@ -238,7 +238,7 @@
     - cm_remove_user.current == {}
 
 - name: Remove user (normal mode)
-  msc_user: *user_absent
+  mso_user: *user_absent
   register: nm_remove_user
 
 - name: Verify nm_remove_user
@@ -248,7 +248,7 @@
     - nm_remove_user.current == {}
 
 - name: Remove user again (check_mode)
-  msc_user: *user_absent
+  mso_user: *user_absent
   check_mode: yes
   register: cm_remove_user_again
 
@@ -259,7 +259,7 @@
     - cm_remove_user_again.current == {}
 
 - name: Remove user again (normal mode)
-  msc_user: *user_absent
+  mso_user: *user_absent
   register: nm_remove_user_again
 
 - name: Verify nm_remove_user_again
@@ -271,14 +271,14 @@
 
 # QUERY NON-EXISTING USER
 - name: Query non-existing user (check_mode)
-  msc_user:
+  mso_user:
     <<: *user_query
     user_name: ansible_test
   check_mode: yes
   register: cm_query_non_user
 
 - name: Query non-existing user (normal mode)
-  msc_user:
+  mso_user:
     <<: *user_query
     user_name: ansible_test
   register: nm_query_non_user
