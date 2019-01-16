@@ -566,7 +566,7 @@ class IntegrationTarget(CompletionTarget):
         elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
             self.type = 'role'
         else:
-            self.type = 'unknown'
+            self.type = 'role'  # ansible will consider these empty roles, so ansible-test should as well
 
         # static_aliases
 
