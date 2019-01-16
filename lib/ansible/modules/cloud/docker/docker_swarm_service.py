@@ -45,7 +45,8 @@ options:
     required: false
     description:
     - Command to execute when the container starts.
-      A command may be either a string or a list.  
+      A command may be either a string or a list.
+    version_added: 2.8
   constraints:
     required: false
     default: []
