@@ -170,68 +170,9 @@ import base64
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerservice.models import (
-        ManagedCluster, ContainerServiceServicePrincipalProfile,
-        ContainerServiceAgentPoolProfile, ContainerServiceLinuxProfile,
-        ContainerServiceSshConfiguration, ContainerServiceSshPublicKey
-    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
-
-
-def create_agent_pool_profile_instance(agentpoolprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceAgentPoolProfile
-    :param: agentpoolprofile: dict with the parameters to setup the ContainerServiceAgentPoolProfile
-    :return: ContainerServiceAgentPoolProfile
-    '''
-    return ContainerServiceAgentPoolProfile(
-        name=agentpoolprofile['name'],
-        count=agentpoolprofile['count'],
-        vm_size=agentpoolprofile['vm_size'],
-        os_disk_size_gb=agentpoolprofile['os_disk_size_gb'],
-        dns_prefix=agentpoolprofile.get('dns_prefix'),
-        ports=agentpoolprofile.get('ports'),
-        storage_profile=agentpoolprofile.get('storage_profile'),
-        vnet_subnet_id=agentpoolprofile.get('vnet_subnet_id'),
-        os_type=agentpoolprofile.get('os_type')
-    )
-
-
-def create_service_principal_profile_instance(spnprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceServicePrincipalProfile
-    :param: spnprofile: dict with the parameters to setup the ContainerServiceServicePrincipalProfile
-    :return: ContainerServiceServicePrincipalProfile
-    '''
-    return ContainerServiceServicePrincipalProfile(
-        client_id=spnprofile['client_id'],
-        secret=spnprofile['client_secret']
-    )
-
-
-def create_linux_profile_instance(linuxprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceLinuxProfile
-    :param: linuxprofile: dict with the parameters to setup the ContainerServiceLinuxProfile
-    :return: ContainerServiceLinuxProfile
-    '''
-    return ContainerServiceLinuxProfile(
-        admin_username=linuxprofile['admin_username'],
-        ssh=create_ssh_configuration_instance(linuxprofile['ssh_key'])
-    )
-
-
-def create_ssh_configuration_instance(sshconf):
-    '''
-    Helper method to serialize a dict to a ContainerServiceSshConfiguration
-    :param: sshconf: dict with the parameters to setup the ContainerServiceSshConfiguration
-    :return: ContainerServiceSshConfiguration
-    '''
-    return ContainerServiceSshConfiguration(
-        public_keys=[ContainerServiceSshPublicKey(key_data=str(sshconf))]
-    )
 
 
 def create_aks_dict(aks):
@@ -256,8 +197,44 @@ def create_aks_dict(aks):
             aks.agent_pool_profiles),
         type=aks.type,
         kube_config=aks.kube_config,
-        enable_rbac=aks.enable_rbac
+        enable_rbac=aks.enable_rbac,
+        network_profile=create_network_profiles_dict(aks.network_profile),
+        aad_profile=create_aad_profiles_dict(aks.aad_prodile),
+        addon_profiles=create_addon_dict(aks.addon_profiles),
+        fqdn=aks.fqdn,
+        node_resource_group=aks.node_resource_group
     )
+
+
+def create_network_profiles_dict(network):
+    return dict(
+        network_plugin=network.network_plugin,
+        network_policy=network.network_policy,
+        pod_cidr=network.pod_cidr,
+        service_cidr=network.service_cidr,
+        dns_service_ip=network.dns_service_ip,
+        docker_bridge_cidr=network.docker_bridge_cidr
+    )
+
+
+def create_aad_profiles_dict(aad):
+    return dict(
+        client_app_id=aad.client_app_id,
+        server_app_id=aad.server_app_id,
+        server_app_secret=aad.server_app_secret,
+        tanant_id=aad.tanant_id
+    )
+
+
+def create_addon_dict(addon):
+    result = dict()
+    addon = addon or dict()
+    for key in addon.keys():
+        result[key] = dict(
+            enable=addon[key].enable,
+            config=addon[key].config
+        )
+    return result
 
 
 def create_linux_profile_dict(linuxprofile):
@@ -329,6 +306,30 @@ agent_pool_profile_spec = dict(
 )
 
 
+network_profile_spec=dict(
+    network_plugin=dict(type='str'),
+    network_policy=dict(type='str'),
+    pod_cidr=dict(type='str'),
+    service_cidr=dict(type='str'),
+    dns_service_ip=dict(type='str'),
+    docker_bridge_cidr=dict(type='str')
+)
+
+
+aad_profile_spec=dict(
+    client_app_id=dict(type='str'),
+    server_app_id=dict(type='str'),
+    server_app_secret=dict(type='str'),
+    tenant_id=dict(type='str')
+)
+
+
+addon_spec=dict(
+    enabled=dict(type='bool', default=True),
+    config=dict(type='dict')
+)
+
+
 class AzureRMManagedCluster(AzureRMModuleBase):
     """Configuration class for an Azure RM container service (AKS) resource"""
 
@@ -372,6 +373,19 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             enable_rbac=dict(
                 type='bool',
                 default=False
+            ),
+            network_profile=dict(
+                type='dict',
+                options=network_profile_spec
+            ),
+            aad_profile=dict(
+                type='dict',
+                options=aad_profile_spec
+            ),
+            addon=dict(
+                type='dict',
+                elements='dict',
+                options=addon_spec
             )
         )
 
@@ -386,6 +400,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         self.agent_pool_profiles = None
         self.service_principal = None
         self.enable_rbac = False
+        self.network_profile = None
+        self.aad_profile = None
+        self.addon = None
 
         required_if = [
             ('state', 'present', [
@@ -407,6 +424,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         resource_group = None
         to_be_updated = False
+        update_tags =  False
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -419,8 +437,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             # For now Agent Pool cannot be more than 1, just remove this part in the future if it change
             agentpoolcount = len(self.agent_pool_profiles)
             if agentpoolcount > 1:
-                self.fail(
-                    'You cannot specify more than one agent_pool_profiles currently')
+                self.fail('You cannot specify more than one agent_pool_profiles currently')
 
             if response:
                 self.results = response
@@ -429,12 +446,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
             else:
                 self.log('Results : {0}'.format(response))
-                update_tags, response['tags'] = self.update_tags(
-                    response['tags'])
+                update_tags, response['tags'] = self.update_tags(response['tags'])
 
                 if response['provisioning_state'] == "Succeeded":
-                    if update_tags:
-                        to_be_updated = True
 
                     def is_property_changed(profile, property, ignore_case=False):
                         base = response[profile].get(property)
@@ -471,6 +485,30 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                     if response['enable_rbac'] != self.enable_rbac:
                         to_be_updated = True
 
+                    if self.network_profile:
+                        for key in self.network_profile:
+                            if self.network_profile[key].lower() != response['network_profile'].get(key).lower():
+                                to_be_updated = True
+
+                    def compare_addon(origin, patch):
+                        if not origin:
+                            return False
+                        if origin['enable'] != patch['enable']:
+                            return False
+                        origin_config = origin.get('config', {})
+                        patch_config = patch.get('config', {})
+                        if len(origin_config.keys()) != len(patch_config.keys()):
+                            return False
+                        for key in origin_config.keys():
+                            if origin_config[key].lower() != patch_config.get(key).lower():
+                                return False
+                        return True
+
+                    if self.addon:
+                        for key in self.addon:
+                            if not compare_addon(response['addon'].get(key), self.addon[key]):
+                                to_be_updated = True
+
                     for profile_result in response['agent_pool_profiles']:
                         matched = False
                         for profile_self in self.agent_pool_profiles:
@@ -482,8 +520,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                                         or profile_result['dns_prefix'] != profile_self['dns_prefix'] \
                                         or profile_result['vnet_subnet_id'] != profile_self.get('vnet_subnet_id') \
                                         or set(profile_result['ports'] or []) != set(profile_self.get('ports') or []):
-                                    self.log(
-                                        ("Agent Profile Diff - Origin {0} / Update {1}".format(str(profile_result), str(profile_self))))
+                                    self.log(("Agent Profile Diff - Origin {0} / Update {1}".format(str(profile_result), str(profile_self))))
                                     to_be_updated = True
                         if not matched:
                             self.log("Agent Pool not found")
@@ -497,7 +534,13 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                     self.log("Creation / Update done")
 
                 self.results['changed'] = True
-                return self.results
+            elif update_tags:
+                self.log("Need to Update the AKS tags")
+
+                if not self.check_mode:
+                    self.results['tags'] = self.update_aks_tags()
+                self.results['changed'] = True
+            return self.results
 
         elif self.state == 'absent' and response:
             self.log("Need to Delete the AKS instance")
@@ -523,21 +566,22 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         agentpools = []
 
         if self.agent_pool_profiles:
-            agentpools = [create_agent_pool_profile_instance(
-                profile) for profile in self.agent_pool_profiles]
+            agentpools = [self.create_agent_pool_profile_instance(profile) for profile in self.agent_pool_profiles]
 
-        service_principal_profile = create_service_principal_profile_instance(
-            self.service_principal)
+        service_principal_profile = self.create_service_principal_profile_instance(self.service_principal)
 
-        parameters = ManagedCluster(
+        parameters = self.containerservice_models.ManagedCluster(
             location=self.location,
             dns_prefix=self.dns_prefix,
             kubernetes_version=self.kubernetes_version,
             tags=self.tags,
             service_principal_profile=service_principal_profile,
             agent_pool_profiles=agentpools,
-            linux_profile=create_linux_profile_instance(self.linux_profile),
-            enable_rbac=self.enable_rbac
+            linux_profile=self.create_linux_profile_instance(self.linux_profile),
+            enable_rbac=self.enable_rbac,
+            network_profile=self.create_network_profile_instance(self.network_profile),
+            aad_profile=self.create_aad_profile_instance(self.aad_profile),
+            addon_profile=self.create_addon_profile_instance(self.addon)
         )
 
         # self.log("service_principal_profile : {0}".format(parameters.service_principal_profile))
@@ -555,6 +599,12 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             self.log('Error attempting to create the AKS instance.')
             self.fail("Error creating the AKS instance: {0}".format(exc.message))
 
+    def update_aks_tags(self):
+        try:
+            return self.containerservice_client.managed_clusters.update_tags(self.resource_group, self.name, self.tags)
+        except CloudError as exc:
+            self.fail("Error attempting to update AKS tags: {0}".format(exc.message))
+
     def delete_aks(self):
         '''
         Deletes the specified managed container service (AKS) in the specified subscription and resource group.
@@ -563,8 +613,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         '''
         self.log("Deleting the AKS instance {0}".format(self.name))
         try:
-            poller = self.containerservice_client.managed_clusters.delete(
-                self.resource_group, self.name)
+            poller = self.containerservice_client.managed_clusters.delete(self.resource_group, self.name)
             self.get_poller_result(poller)
             return True
         except CloudError as e:
@@ -578,11 +627,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         :return: deserialized AKS instance state dictionary
         '''
-        self.log(
-            "Checking if the AKS instance {0} is present".format(self.name))
+        self.log("Checking if the AKS instance {0} is present".format(self.name))
         try:
-            response = self.containerservice_client.managed_clusters.get(
-                self.resource_group, self.name)
+            response = self.containerservice_client.managed_clusters.get(self.resource_group, self.name)
             self.log("Response : {0}".format(response))
             self.log("AKS instance : {0} found".format(response.name))
             response.kube_config = self.get_aks_kubeconfig()
@@ -597,9 +644,52 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         :return: AKS instance kubeconfig
         '''
-        access_profile = self.containerservice_client.managed_clusters.get_access_profiles(
-            self.resource_group, self.name, "clusterUser")
+        access_profile = self.containerservice_client.managed_clusters.get_access_profiles(self.resource_group, self.name, "clusterUser")
         return base64.b64decode(access_profile.kube_config)
+
+    def create_agent_pool_profile_instance(self, agentpoolprofile):
+        '''
+        Helper method to serialize a dict to a ContainerServiceAgentPoolProfile
+        :param: agentpoolprofile: dict with the parameters to setup the ContainerServiceAgentPoolProfile
+        :return: ContainerServiceAgentPoolProfile
+        '''
+        return self.containerservice_models.ContainerServiceAgentPoolProfile(**agentpoolprofile)
+
+
+    def create_service_principal_profile_instance(self, spnprofile):
+        '''
+        Helper method to serialize a dict to a ContainerServiceServicePrincipalProfile
+        :param: spnprofile: dict with the parameters to setup the ContainerServiceServicePrincipalProfile
+        :return: ContainerServiceServicePrincipalProfile
+        '''
+        return self.containerservice_models.ContainerServiceServicePrincipalProfile(
+            client_id=spnprofile['client_id'],
+            secret=spnprofile['client_secret']
+        )
+
+
+    def create_linux_profile_instance(self, linuxprofile):
+        '''
+        Helper method to serialize a dict to a ContainerServiceLinuxProfile
+        :param: linuxprofile: dict with the parameters to setup the ContainerServiceLinuxProfile
+        :return: ContainerServiceLinuxProfile
+        '''
+        return self.containerservice_models.ContainerServiceLinuxProfile(
+            admin_username=linuxprofile['admin_username'],
+            ssh=self.containerservice_models.ContainerServiceSshConfiguration(key_data=str(linuxprofile['ssh_key']))
+        )
+
+    def create_network_profile_instance(self, network):
+        return self.containerservice_models.ContainerServiceNetworkProfile(**network)
+
+    def create_aad_profile_instance(self, aad):
+        return self.containerservice_models.ManagedClusterAADProfile(**aad)
+
+    def create_addon_profile_instance(self, addon):
+        result = dict()
+        for key in addon.keys():
+            result[key] = self.containerservice_models.ManagedClusterAddonProfile(**addon[key])
+        return result
 
 
 def main():
