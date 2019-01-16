@@ -147,10 +147,9 @@ options:
       networks/my-network projects/myproject/global/networks/my-network global/networks/default
       .'
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
     required: false
     default:
       selfLink: global/networks/default
@@ -343,7 +342,7 @@ network:
     networks/my-network projects/myproject/global/networks/my-network global/networks/default
     .'
   returned: success
-  type: dict
+  type: str
 priority:
   description:
   - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
@@ -441,7 +440,7 @@ def main():
             direction=dict(type='str', choices=['INGRESS', 'EGRESS']),
             disabled=dict(type='bool'),
             name=dict(required=True, type='str'),
-            network=dict(default={'selfLink': 'global/networks/default'}, type='dict'),
+            network=dict(default={'selfLink': 'global/networks/default'}),
             priority=dict(default=1000, type='int'),
             source_ranges=dict(type='list', elements='str'),
             source_service_accounts=dict(type='list', elements='str'),

@@ -115,7 +115,7 @@ items:
           - When the BackendService has load balancing scheme INTERNAL, the instance
             group must be in a zone within the same region as the BackendService.
           returned: success
-          type: dict
+          type: str
         maxConnections:
           description:
           - The max number of simultaneous connections for the group. Can be used
