@@ -15,7 +15,7 @@
 # Pre-test setup
 - name: create a bucket
   gcp_storage_bucket:
-      name: "bucket-bac"
+      name: "{{ resource_name }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -96,11 +96,13 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a bucket
   gcp_storage_bucket:
-      name: "bucket-bac"
+      name: "{{ resource_name }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: bucket
+  ignore_errors: true
