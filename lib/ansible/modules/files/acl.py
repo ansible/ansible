@@ -71,8 +71,16 @@ options:
     description:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
     type: bool
-    default: 'no'
-    version_added: "2.0"
+    default: no
+    version_added: '2.0'
+
+  use_nfsv4_acls:
+    description:
+      - Use NFSv4 ACLs instead of POSIX ACLs.
+    type: bool
+    default: no
+    version_added: '2.2'
+
 author:
     - Brian Coca (@bcoca)
     - Jérémie Astori (@astorije)
