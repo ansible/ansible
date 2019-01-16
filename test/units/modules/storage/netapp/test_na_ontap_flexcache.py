@@ -17,7 +17,7 @@ from ansible.modules.storage.netapp.na_ontap_flexcache \
     import NetAppONTAPFlexCache as my_module  # module under test
 
 if not netapp_utils.has_netapp_lib():
-    pytestmark = pytest.skip('skipping as missing required netapp_lib')
+    pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 
 
 def set_module_args(args):
@@ -85,7 +85,7 @@ class MockONTAPConnection(object):
         xml = netapp_utils.zapi.NaElement('xml')
         attributes = netapp_utils.zapi.NaElement('attributes-list')
         count = 2 if vserver == 'repeats' else 1
-        for _ in range(count):
+        for dummy in range(count):
             attributes.add_node_with_children('flexcache-info', **{
                 'vserver': vserver,
                 'origin-vserver': 'ovserver',
@@ -307,6 +307,49 @@ class TestMyModule(unittest.TestCase):
         print('Create: ' + repr(exc.value))
         assert exc.value.args[0]['changed'] is False
 
+    def test_create_flexcache_autoprovision(self):
+        ''' create flexcache with autoprovision'''
+        args = {
+            'volume': 'volume',
+            'size': '90',       # 80MB minimum
+            'size_unit': 'mb',  # 80MB minimum
+            'vserver': 'ansibleSVM',
+            'auto_provision_as': 'flexgroup',
+            'origin_volume': 'fc_vol_origin',
+            'origin_vserver': 'ansibleSVM',
+        }
+        self.delete_flexcache(args['vserver'], args['volume'])
+        args.update(self.args)
+        set_module_args(args)
+        my_obj = my_module()
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection()
+        with patch.object(my_module, 'flexcache_create', wraps=my_obj.flexcache_create) as mock_create:
+            with pytest.raises(AnsibleExitJson) as exc:
+                my_obj.apply()
+            print('Create: ' + repr(exc.value))
+            assert exc.value.args[0]['changed']
+            mock_create.assert_called_with()
+
+    def test_create_flexcache_autoprovision_idempotent(self):
+        ''' create flexcache with autoprovision - already exists '''
+        args = {
+            'volume': 'volume',
+            'vserver': 'ansibleSVM',
+            'origin_volume': 'fc_vol_origin',
+            'origin_vserver': 'ansibleSVM',
+            'auto_provision_as': 'flexgroup',
+        }
+        args.update(self.args)
+        set_module_args(args)
+        my_obj = my_module()
+        if not self.onbox:
+            my_obj.server = MockONTAPConnection('vserver')
+        with pytest.raises(AnsibleExitJson) as exc:
+            my_obj.apply()
+        print('Create: ' + repr(exc.value))
+        assert exc.value.args[0]['changed'] is False
+
     def test_create_flexcache_multiplier(self):
         ''' create flexcache with aggregate multiplier'''
         args = {
@@ -397,11 +440,11 @@ class TestMyModule(unittest.TestCase):
         if not self.onbox:
             my_obj.server = MockONTAPConnection('vserver', 'flex', api_error=error)
         with patch.object(my_module, 'flexcache_delete', wraps=my_obj.flexcache_delete) as mock_delete:
-            with self.assertRaises(AnsibleFailJson) as exc:
+            with pytest.raises(AnsibleFailJson) as exc:
                 my_obj.apply()
-            print('Delete: ' + repr(exc.exception))
+            print('Delete: ' + repr(exc.value))
             msg = 'Error deleting FlexCache : NetApp API failed. Reason - %s' % error
-            self.assertEqual(exc.exception.args[0]['msg'], msg)
+            assert exc.value.args[0]['msg'] == msg
             mock_delete.assert_called_with()
 
     def test_delete_flexcache_exists_junctionpath_with_force(self):
@@ -414,10 +457,10 @@ class TestMyModule(unittest.TestCase):
         if not self.onbox:
             my_obj.server = MockONTAPConnection('vserver', 'flex')
         with patch.object(my_module, 'flexcache_delete', wraps=my_obj.flexcache_delete) as mock_delete:
-            with self.assertRaises(AnsibleExitJson) as exc:
+            with pytest.raises(AnsibleExitJson) as exc:
                 my_obj.apply()
-            print('Delete: ' + repr(exc.exception))
-            self.assertEqual(exc.exception.args[0]['changed'], True)
+            print('Delete: ' + repr(exc.value))
+            assert exc.value.args[0]['changed']
             mock_delete.assert_called_with()
 
     def test_delete_flexcache_not_exist(self):
