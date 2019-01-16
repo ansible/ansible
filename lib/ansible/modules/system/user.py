@@ -116,26 +116,27 @@ options:
         aliases: ['createhome']
     move_home:
         description:
-            - If set to C(yes) when used with C(home=), attempt to move the user's old home
-              directory to the specified directory if it isn't there already and the old home exists.
+            - "If set to C(yes) when used with C(home: ), attempt to move the user's old home
+              directory to the specified directory if it isn't there already and the old home exists."
         type: bool
         default: "no"
     system:
         description:
-            - When creating an account C(state=present), setting this to C(yes) makes the user a system account.
-              This setting cannot be changed on existing users.
+            - "When creating an account C(state: present), setting this to C(yes) makes the user a system account.
+              This setting cannot be changed on existing users."
         type: bool
         default: "no"
     force:
         description:
-            - This only affects C(state=absent), it forces removal of the user and associated directories on supported platforms.
-              The behavior is the same as C(userdel --force), check the man page for C(userdel) on your system for details and support.
+            - "This only affects C(state: absent), it forces removal of the user and associated directories on supported platforms.
+              The behavior is the same as C(userdel --force), check the man page for C(userdel) on your system for details and support."
+            - "When used with C(generate_ssh_key: yes) this forces an existing key to be overwritten."
         type: bool
         default: "no"
     remove:
         description:
-            - This only affects C(state=absent), it attempts to remove directories associated with the user.
-              The behavior is the same as C(userdel --remove), check the man page for details and support.
+            - "This only affects C(state: absent), it attempts to remove directories associated with the user.
+              The behavior is the same as C(userdel --remove), check the man page for details and support."
         type: bool
         default: "no"
     login_class:
@@ -143,8 +144,8 @@ options:
             - Optionally sets the user's login class, a feature of most BSD OSs.
     generate_ssh_key:
         description:
-            - Whether to generate a SSH key for the user in question.
-              This will B(not) overwrite an existing SSH key.
+            - "Whether to generate a SSH key for the user in question.
+              This will not overwrite an existing SSH key unless used with C(force: yes)."
         type: bool
         default: "no"
         version_added: "0.9"
@@ -211,7 +212,7 @@ options:
             - Sets the profile of the user.
             - Does nothing when used with other platforms.
             - Can set multiple profiles using comma separation.
-            - To delete all the profiles, use profile=''
+            - "To delete all the profiles, use C(profile: '')"
             - Currently supported on Illumos/Solaris.
         version_added: "2.8"
     authorization:
@@ -219,7 +220,7 @@ options:
             - Sets the authorization of the user.
             - Does nothing when used with other platforms.
             - Can set multiple authorizations using comma separation.
-            - To delete all authorizations, use authorization=''
+            - "To delete all authorizations, use C(authorization: '')"
             - Currently supported on Illumos/Solaris.
         version_added: "2.8"
     role:
@@ -227,7 +228,7 @@ options:
             - Sets the role of the user.
             - Does nothing when used with other platforms.
             - Can set multiple roles using comma separation.
-            - To delete all roles, use role=''
+            - "To delete all roles, use C(role: '')"
             - Currently supported on Illumos/Solaris.
         version_added: "2.8"
 '''
@@ -874,6 +875,7 @@ class User(object):
 
     def ssh_key_gen(self):
         info = self.user_info()
+        overwrite = None
         try:
             ssh_key_file = self.get_ssh_key_path()
         except Exception as e:
@@ -888,7 +890,11 @@ class User(object):
             except OSError as e:
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, to_native(e)))
         if os.path.exists(ssh_key_file):
-            return (None, 'Key already exists', '')
+            if self.force:
+                # ssh-keygen doesn't support overwriting the key interactively, so send 'y' to confirm
+                overwrite = 'y'
+            else:
+                return (None, 'Key already exists, use "force: yes" to overwrite', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)
@@ -949,7 +955,7 @@ class User(object):
             cmd.append('-N')
             cmd.append('')
 
-            (rc, out, err) = self.execute_command(cmd)
+            (rc, out, err) = self.execute_command(cmd, data=overwrite)
 
         if rc == 0 and not self.module.check_mode:
             # If the keys were successfully created, we should be able
