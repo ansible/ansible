@@ -281,9 +281,9 @@ import time
 from functools import wraps
 from ansible import constants as C
 from ansible.errors import (
-    AnsibleError,
-    AnsibleConnectionFailure,
     AnsibleAuthenticationFailure,
+    AnsibleConnectionFailure,
+    AnsibleError,
     AnsibleFileNotFound,
 )
 from ansible.errors import AnsibleOptionsError
