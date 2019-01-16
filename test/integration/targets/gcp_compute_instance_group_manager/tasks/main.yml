@@ -166,6 +166,7 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a instance template
   gcp_compute_instance_template:
       name: "{{ resource_name }}"
@@ -187,6 +188,7 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: instancetemplate
+  ignore_errors: true
 - name: delete a address
   gcp_compute_address:
       name: "address-instancetemplate"
@@ -196,6 +198,7 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: address
+  ignore_errors: true
 - name: delete a network
   gcp_compute_network:
       name: "network-instancetemplate"
@@ -204,3 +207,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: network
+  ignore_errors: true

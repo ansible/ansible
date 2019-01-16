@@ -169,7 +169,7 @@ items:
               type: int
             diskType:
               description:
-              - Reference to a gcompute_disk_type resource.
+              - Reference to a disk type.
               - Specifies the disk type to use to create the instance.
               - If not specified, the default is pd-standard.
               returned: success
@@ -221,12 +221,12 @@ items:
           type: str
         source:
           description:
-          - Reference to a gcompute_disk resource. When creating a new instance, one
-            of initializeParams.sourceImage or disks.source is required.
+          - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
+            or disks.source is required.
           - If desired, you can also attach existing non-root persistent disks using
             this property. This field is only applicable for persistent disks.
           returned: success
-          type: dict
+          type: str
         type:
           description:
           - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
@@ -317,14 +317,14 @@ items:
               type: str
             natIP:
               description:
-              - Specifies the title of a gcompute_address.
+              - Reference to an address.
               - An external IP address associated with this instance.
               - Specify an unused static external IP address available to the project
                 or leave this field undefined to use an IP from a shared ephemeral
                 IP address pool. If you specify a static external IP address, it must
                 live in the same region as the zone of the instance.
               returned: success
-              type: dict
+              type: str
             type:
               description:
               - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
@@ -361,12 +361,12 @@ items:
           type: str
         network:
           description:
-          - Specifies the title of an existing gcompute_network. When creating an
-            instance, if neither the network nor the subnetwork is specified, the
-            default network global/networks/default is used; if the network is not
-            specified but the subnetwork is specified, the network is inferred.
+          - Specifies the title of an existing network. When creating an instance,
+            if neither the network nor the subnetwork is specified, the default network
+            global/networks/default is used; if the network is not specified but the
+            subnetwork is specified, the network is inferred.
           returned: success
-          type: dict
+          type: str
         networkIP:
           description:
           - An IPv4 internal network address to assign to the instance for this network
@@ -376,12 +376,12 @@ items:
           type: str
         subnetwork:
           description:
-          - Reference to a gcompute_subnetwork resource.
+          - Reference to a VPC network.
           - If the network resource is in legacy mode, do not provide this property.
             If the network is in auto subnet mode, providing the subnetwork is optional.
             If the network is in custom subnet mode, then this field should be specified.
           returned: success
-          type: dict
+          type: str
     scheduling:
       description:
       - Sets the scheduling options for this instance.
