@@ -129,6 +129,7 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a bucket
   gcp_storage_bucket:
       name: "bucket-backendbucket"
@@ -137,3 +138,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: bucket
+  ignore_errors: true

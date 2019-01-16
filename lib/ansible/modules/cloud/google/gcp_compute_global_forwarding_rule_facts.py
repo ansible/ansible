@@ -117,7 +117,7 @@ items:
       - This is used for internal load balancing.
       - "(not used for external load balancing) ."
       returned: success
-      type: dict
+      type: str
     ipVersion:
       description:
       - The IP Version that will be used by this forwarding rule. Valid options are
@@ -150,7 +150,7 @@ items:
         specified, the default network will be used.
       - This field is not used for external load balancing.
       returned: success
-      type: dict
+      type: str
     portRange:
       description:
       - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -185,7 +185,7 @@ items:
         if the network is in custom subnet mode, a subnetwork must be specified.
       - This field is not used for external load balancing.
       returned: success
-      type: dict
+      type: str
     region:
       description:
       - A reference to the region where the regional forwarding rule resides.
