@@ -38,7 +38,7 @@ options:
     choices: ['http', 'https', 'smtp']
   noteto:
     description:
-    - Specifies up to five recipients of full AutoSupport e-mail messages.
+    - Specifies up to five recipients of short AutoSupport e-mail messages.
   post_url:
     description:
     - The URL used to deliver AutoSupport messages via HTTP POST
@@ -56,12 +56,11 @@ options:
     version_added: 2.8
   partner_addresses:
     description:
-    - specify up to five e-mail addresses to receive all AutoSupport messages including periodic messages.
-    - This parameter is typically used for support partners.
+    - Specifies up to five partner vendor recipients of full AutoSupport e-mail messages.
     version_added: 2.8
   to_addresses:
     description:
-    - specify up to five e-mail addresses to receive AutoSupport messages that are most relevant for your internal organization.
+    - Specifies up to five recipients of full AutoSupport e-mail messages.
     version_added: 2.8
   proxy_url:
     description:
