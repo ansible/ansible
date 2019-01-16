@@ -115,7 +115,7 @@ items:
       - The network this subnet belongs to.
       - Only networks that are in the distributed mode can have subnetworks.
       returned: success
-      type: dict
+      type: str
     enableFlowLogs:
       description:
       - Whether to enable flow logging for this subnetwork.

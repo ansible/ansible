@@ -90,7 +90,7 @@ items:
       type: str
     description:
       description:
-      - An optional description of this resource. .
+      - An optional description of this resource.
       returned: success
       type: str
     privateInterconnectInfo:
@@ -119,7 +119,7 @@ items:
         will automatically connect the Interconnect to the network & region within
         which the Cloud Router is configured.
       returned: success
-      type: dict
+      type: str
     creationTimestamp:
       description:
       - Creation timestamp in RFC3339 text format.

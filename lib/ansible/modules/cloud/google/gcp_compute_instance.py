@@ -127,7 +127,7 @@ options:
             required: false
           disk_type:
             description:
-            - Reference to a gcompute_disk_type resource.
+            - Reference to a disk type.
             - Specifies the disk type to use to create the instance.
             - If not specified, the default is pd-standard.
             required: false
@@ -177,15 +177,14 @@ options:
         - READ_ONLY
       source:
         description:
-        - Reference to a gcompute_disk resource. When creating a new instance, one
-          of initializeParams.sourceImage or disks.source is required.
+        - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
+          or disks.source is required.
         - If desired, you can also attach existing non-root persistent disks using
           this property. This field is only applicable for persistent disks.
         - 'This field represents a link to a Disk resource in GCP. It can be specified
-          in two ways. You can add `register: name-of-resource` to a gcp_compute_disk
-          task and then set this source field to "{{ name-of-resource }}" Alternatively,
-          you can set this source to a dictionary with the selfLink key where the
-          value is the selfLink of your Disk'
+          in two ways. First, you can place in the selfLink of the resource here as
+          a string Alternatively, you can add `register: name-of-resource` to a gcp_compute_disk
+          task and then set this source field to "{{ name-of-resource }}"'
         required: false
       type:
         description:
@@ -261,17 +260,17 @@ options:
             required: true
           nat_ip:
             description:
-            - Specifies the title of a gcompute_address.
+            - Reference to an address.
             - An external IP address associated with this instance.
             - Specify an unused static external IP address available to the project
               or leave this field undefined to use an IP from a shared ephemeral IP
               address pool. If you specify a static external IP address, it must live
               in the same region as the zone of the instance.
             - 'This field represents a link to a Address resource in GCP. It can be
-              specified in two ways. You can add `register: name-of-resource` to a
-              gcp_compute_address task and then set this nat_ip field to "{{ name-of-resource
-              }}" Alternatively, you can set this nat_ip to a dictionary with the
-              address key where the value is the address of your Address'
+              specified in two ways. First, you can place in the address of the resource
+              here as a string Alternatively, you can add `register: name-of-resource`
+              to a gcp_compute_address task and then set this nat_ip field to "{{
+              name-of-resource }}"'
             required: false
           type:
             description:
@@ -306,15 +305,14 @@ options:
         required: false
       network:
         description:
-        - Specifies the title of an existing gcompute_network. When creating an instance,
-          if neither the network nor the subnetwork is specified, the default network
+        - Specifies the title of an existing network. When creating an instance, if
+          neither the network nor the subnetwork is specified, the default network
           global/networks/default is used; if the network is not specified but the
           subnetwork is specified, the network is inferred.
         - 'This field represents a link to a Network resource in GCP. It can be specified
-          in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-          task and then set this network field to "{{ name-of-resource }}" Alternatively,
-          you can set this network to a dictionary with the selfLink key where the
-          value is the selfLink of your Network'
+          in two ways. First, you can place in the selfLink of the resource here as
+          a string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+          task and then set this network field to "{{ name-of-resource }}"'
         required: false
       network_ip:
         description:
@@ -324,15 +322,15 @@ options:
         required: false
       subnetwork:
         description:
-        - Reference to a gcompute_subnetwork resource.
+        - Reference to a VPC network.
         - If the network resource is in legacy mode, do not provide this property.
           If the network is in auto subnet mode, providing the subnetwork is optional.
           If the network is in custom subnet mode, then this field should be specified.
         - 'This field represents a link to a Subnetwork resource in GCP. It can be
-          specified in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-          task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-          you can set this subnetwork to a dictionary with the selfLink key where
-          the value is the selfLink of your Subnetwork'
+          specified in two ways. First, you can place in the selfLink of the resource
+          here as a string Alternatively, you can add `register: name-of-resource`
+          to a gcp_compute_subnetwork task and then set this subnetwork field to "{{
+          name-of-resource }}"'
         required: false
   scheduling:
     description:
@@ -574,7 +572,7 @@ disks:
           type: int
         diskType:
           description:
-          - Reference to a gcompute_disk_type resource.
+          - Reference to a disk type.
           - Specifies the disk type to use to create the instance.
           - If not specified, the default is pd-standard.
           returned: success
@@ -625,12 +623,12 @@ disks:
       type: str
     source:
       description:
-      - Reference to a gcompute_disk resource. When creating a new instance, one of
-        initializeParams.sourceImage or disks.source is required.
+      - Reference to a disk. When creating a new instance, one of initializeParams.sourceImage
+        or disks.source is required.
       - If desired, you can also attach existing non-root persistent disks using this
         property. This field is only applicable for persistent disks.
       returned: success
-      type: dict
+      type: str
     type:
       description:
       - Specifies the type of the disk, either SCRATCH or PERSISTENT. If not specified,
@@ -719,14 +717,14 @@ networkInterfaces:
           type: str
         natIP:
           description:
-          - Specifies the title of a gcompute_address.
+          - Reference to an address.
           - An external IP address associated with this instance.
           - Specify an unused static external IP address available to the project
             or leave this field undefined to use an IP from a shared ephemeral IP
             address pool. If you specify a static external IP address, it must live
             in the same region as the zone of the instance.
           returned: success
-          type: dict
+          type: str
         type:
           description:
           - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
@@ -763,12 +761,12 @@ networkInterfaces:
       type: str
     network:
       description:
-      - Specifies the title of an existing gcompute_network. When creating an instance,
-        if neither the network nor the subnetwork is specified, the default network
-        global/networks/default is used; if the network is not specified but the subnetwork
-        is specified, the network is inferred.
+      - Specifies the title of an existing network. When creating an instance, if
+        neither the network nor the subnetwork is specified, the default network global/networks/default
+        is used; if the network is not specified but the subnetwork is specified,
+        the network is inferred.
       returned: success
-      type: dict
+      type: str
     networkIP:
       description:
       - An IPv4 internal network address to assign to the instance for this network
@@ -778,12 +776,12 @@ networkInterfaces:
       type: str
     subnetwork:
       description:
-      - Reference to a gcompute_subnetwork resource.
+      - Reference to a VPC network.
       - If the network resource is in legacy mode, do not provide this property. If
         the network is in auto subnet mode, providing the subnetwork is optional.
         If the network is in custom subnet mode, then this field should be specified.
       returned: success
-      type: dict
+      type: str
 scheduling:
   description:
   - Sets the scheduling options for this instance.
@@ -915,7 +913,7 @@ def main():
                 )),
                 interface=dict(type='str', choices=['SCSI', 'NVME']),
                 mode=dict(type='str', choices=['READ_WRITE', 'READ_ONLY']),
-                source=dict(type='dict'),
+                source=dict(),
                 type=dict(type='str', choices=['SCRATCH', 'PERSISTENT'])
             )),
             guest_accelerators=dict(type='list', elements='dict', options=dict(
@@ -930,7 +928,7 @@ def main():
             network_interfaces=dict(type='list', elements='dict', options=dict(
                 access_configs=dict(type='list', elements='dict', options=dict(
                     name=dict(required=True, type='str'),
-                    nat_ip=dict(type='dict'),
+                    nat_ip=dict(),
                     type=dict(required=True, type='str', choices=['ONE_TO_ONE_NAT'])
                 )),
                 alias_ip_ranges=dict(type='list', elements='dict', options=dict(
@@ -938,9 +936,9 @@ def main():
                     subnetwork_range_name=dict(type='str')
                 )),
                 name=dict(type='str'),
-                network=dict(type='dict'),
+                network=dict(),
                 network_ip=dict(type='str'),
-                subnetwork=dict(type='dict')
+                subnetwork=dict()
             )),
             scheduling=dict(type='dict', options=dict(
                 automatic_restart=dict(type='bool'),
@@ -1200,7 +1198,7 @@ def decode_response(response, module):
     return response
 
 
-# TODO(alexstephen): Implement updating metadata on exsiting resources.
+# TODO(alexstephen): Implement updating metadata on existing resources.
 
 # Expose instance 'metadata' as a simple name/value pair hash. However the API
 # defines metadata as a NestedObject with the following layout:

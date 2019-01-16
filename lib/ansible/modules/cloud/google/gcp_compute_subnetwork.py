@@ -90,10 +90,9 @@ options:
     - The network this subnet belongs to.
     - Only networks that are in the distributed mode can have subnetworks.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
     required: true
   enable_flow_logs:
     description:
@@ -208,7 +207,7 @@ network:
   - The network this subnet belongs to.
   - Only networks that are in the distributed mode can have subnetworks.
   returned: success
-  type: dict
+  type: str
 enableFlowLogs:
   description:
   - Whether to enable flow logging for this subnetwork.
@@ -278,7 +277,7 @@ def main():
             description=dict(type='str'),
             ip_cidr_range=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True, type='dict'),
+            network=dict(required=True),
             enable_flow_logs=dict(type='bool'),
             secondary_ip_ranges=dict(type='list', elements='dict', options=dict(
                 range_name=dict(required=True, type='str'),

@@ -144,6 +144,7 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a network
   gcp_compute_network:
       name: "network-route"
@@ -152,3 +153,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: network
+  ignore_errors: true
