@@ -1,3 +1,5 @@
+---
+
 service_expected_output:
   args: [sleep, '1800']
   configs: null
@@ -20,8 +22,8 @@ service_expected_output:
   mounts: []
   networks: []
   publish:
-  - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
-  - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
+    - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
+    - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
   replicas: null
   reserve_cpu: 0.0
   reserve_memory: 0
