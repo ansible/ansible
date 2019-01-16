@@ -223,7 +223,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
   register: command_2
 
-- name: command (idempotency)
+- name: command (less parameters)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
