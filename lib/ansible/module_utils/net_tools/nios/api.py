@@ -32,7 +32,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
-
+import q
 try:
     from infoblox_client.connector import Connector
     from infoblox_client.exceptions import InfobloxException
@@ -324,10 +324,15 @@ class WapiModule(WapiBase):
                 result['api_results'] = self.call_func('create_token', ref, proposed_object)
                 result['changed'] = True
             elif modified:
-                self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
+                if 'ipv4addrs' in proposed_object:
+                    if not(('address_add' or 'address_remove') in proposed_object['ipv4addrs'][0]):
+                        self.check_if_recordname_exists(obj_filter, ib_obj_ref, ib_obj_type, current_object, proposed_object)
 
                 if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
                     proposed_object = self.on_update(proposed_object, ib_spec)
+                    if 'ipv4addrs' in proposed_object:
+                        if ('address_add' or 'address_remove') in proposed_object['ipv4addrs'][0]:
+                            proposed_object = self.check_if_add_remove_ip_exists(proposed_object)
                     res = self.update_object(ref, proposed_object)
                 if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD, NIOS_PTR_RECORD, NIOS_SRV_RECORD)):
                     # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record/srv:record/ptr:record
@@ -381,6 +386,23 @@ class WapiModule(WapiBase):
                 ip_range = self.module._check_type_dict(proposed_object['ipv4addr'])['nios_next_ip']
                 proposed_object['ipv4addr'] = NIOS_NEXT_AVAILABLE_IP + ':' + ip_range
 
+        return proposed_object
+
+    def check_if_add_remove_ip_exists(self, proposed_object):
+        '''
+            This function will check if address_add/address_remove param
+            is passed in the args and if yes will update the proposed dictionary
+            to add/remove IP to existing host_record
+        '''
+
+        if 'address_add' in proposed_object['ipv4addrs'][0]:
+            proposed_object['ipv4addrs+'] = proposed_object['ipv4addrs']
+            del proposed_object['ipv4addrs']
+            del proposed_object['ipv4addrs+'][0]['address_add']
+        elif 'address_remove' in proposed_object['ipv4addrs'][0]:
+            proposed_object['ipv4addrs-'] = proposed_object['ipv4addrs']
+            del proposed_object['ipv4addrs']
+            del proposed_object['ipv4addrs-'][0]['address_remove']
         return proposed_object
 
     def issubset(self, item, objects):
