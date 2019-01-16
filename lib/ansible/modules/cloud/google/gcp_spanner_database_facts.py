@@ -69,8 +69,7 @@ items:
     name:
       description:
       - A unique identifier for the database, which cannot be changed after the instance
-        is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-        The final segment of the name must be between 6 and 30 characters in length.
+        is created. Values are of the form [a-z][-a-z0-9]*[a-z0-9].
       returned: success
       type: str
     extraStatements:
