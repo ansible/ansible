@@ -64,6 +64,12 @@ options:
     - Note that this does not apply SELinux file contexts to existing files.
     type: bool
     default: 'yes'
+  ignore_selinux_state:
+    description:
+    - Useful for scenarios (chrooted environment) that you can't get the real SELinux state.
+    type: bool
+    default: false
+    version_added: '2.8'
 notes:
 - The changes are persistent across reboots.
 - The M(sefcontext) module does not modify existing files to the new
@@ -135,6 +141,10 @@ option_to_file_type_str = dict(
     p='named pipe',
     s='socket file',
 )
+
+
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
 
 
 def semanage_fcontext_exists(sefcontext, target, ftype):
@@ -235,6 +245,7 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            ignore_selinux_state=dict(type='bool', default=False),
             target=dict(required=True, aliases=['path']),
             ftype=dict(type='str', default='a', choices=option_to_file_type_str.keys()),
             setype=dict(type='str', required=True),
@@ -251,7 +262,9 @@ def main():
     if not HAVE_SEOBJECT:
         module.fail_json(msg="This module requires policycoreutils-python")
 
-    if not selinux.is_selinux_enabled():
+    ignore_selinux_state = module.params['ignore_selinux_state']
+
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     target = module.params['target']
