@@ -53,7 +53,6 @@ options:
     description:
       - Type of the object to search. Must be a valid API resource name
     type: str
-    default: None
 """
 
 EXAMPLES = """
@@ -96,7 +95,7 @@ def get_object(module, connection):
 def main():
     argument_spec = dict(
         uid=dict(type='str', default=None),
-        object_filter=dict(type='str'),
+        object_filter=dict(type='str', default=None),
         ip_only=dict(type='bool', default=False),
         object_type=dict(type='str', default=None)
     )
