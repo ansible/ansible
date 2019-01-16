@@ -182,14 +182,13 @@ class SwarmNodeManager(DockerBaseClass):
         self.results = results
         self.check_mode = self.client.check_mode
 
+        self.client.fail_task_if_not_swarm_manager()
+
         self.parameters = TaskParameters(client)
 
         self.node_update()
 
     def node_update(self):
-        if not (self.client.check_if_swarm_manager()):
-            self.client.fail(msg="This node is not a manager.")
-
         if not (self.client.check_if_swarm_node(node_id=self.parameters.hostname)):
             self.results['actions'].append("This node is not part of a swarm.")
             return

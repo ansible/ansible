@@ -147,6 +147,8 @@ def main():
         min_docker_api_version='1.24',
     )
 
+    client.fail_task_if_not_swarm_manager()
+
     node = get_node_facts(client)
 
     client.module.exit_json(

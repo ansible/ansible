@@ -87,6 +87,13 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
         except APIError:
             return False
 
+    def fail_task_if_not_swarm_manager(self):
+        """
+        If host is not a swarm manager then Ansible task on this host should end with 'failed' state
+        """
+        if not self.check_if_swarm_manager():
+            self.client.fail(msg="This node is not a manager.")
+
     def check_if_swarm_worker(self):
         """
         Checks if node role is set as Worker in Swarm. The node is the docker host on which module action
