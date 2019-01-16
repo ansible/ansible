@@ -87,6 +87,23 @@ def unique(environment, a, case_sensitive=False, attribute=None):
 
 
 @environmentfilter
+def duplicate(environment, a):
+    if isinstance(a, Hashable):
+        c = set(a)
+    else:
+        s = {}
+        c = []
+        for x in a:
+            if x not in s:
+                s[x] = 1
+            else:
+                if s[x] == 1:
+                    c.append(x)
+                s[x] += 1
+    return c
+
+
+@environmentfilter
 def intersect(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
