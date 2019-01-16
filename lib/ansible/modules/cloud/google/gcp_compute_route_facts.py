@@ -91,7 +91,7 @@ items:
       description:
       - The network that this route applies to.
       returned: success
-      type: dict
+      type: str
     priority:
       description:
       - The priority of this route. Priority is used to break ties in cases where
