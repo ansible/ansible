@@ -20,10 +20,12 @@ class ActionModule(ActionBase):
 
         # deal with 'setup specific arguments'
         if fact_module != 'setup':
-            subset = mod_args.pop('gather_subset', None)
 
-            if subset not in ('all', ['all']):
-                self._display.warning('Ignoring subset(%s) for %s' % (subset, fact_module))
+            # network facts modules must support gather_subset
+            if self._connection.load_name not in ('network_cli', 'httpapi', 'netconf'):
+                subset = mod_args.pop('gather_subset', None)
+                if subset not in ('all', ['all']):
+                    self._display.warning('Ignoring subset(%s) for %s' % (subset, fact_module))
 
             timeout = mod_args.pop('gather_timeout', None)
             if timeout is not None:
