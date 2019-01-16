@@ -138,8 +138,8 @@ class AzureRMDevTestLab(AzureRMModuleBase):
         self.to_do = Actions.NoAction
 
         super(AzureRMDevTestLab, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                 supports_check_mode=True,
-                                                 supports_tags=True)
+                                                supports_check_mode=True,
+                                                supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -180,7 +180,8 @@ class AzureRMDevTestLab(AzureRMModuleBase):
             elif self.state == 'present':
                 if self.lab.get('storage_type') is not None and self.lab.get('storage_type').lower() != old_response.get('storage_type', '').lower():
                     self.to_do = Actions.Update
-                if self.lab.get('premium_data_disks') is not None and self.lab.get('premium_data_disks').lower() != old_response.get('premium_data_disks').lower():
+                if (self.lab.get('premium_data_disks') is not None and
+                        self.lab.get('premium_data_disks').lower() != old_response.get('premium_data_disks').lower()):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -211,7 +212,7 @@ class AzureRMDevTestLab(AzureRMModuleBase):
         if self.state == 'present':
             self.results.update({
                 'id': response.get('id', None)
-                })
+            })
         return self.results
 
     def create_update_devtestlab(self):

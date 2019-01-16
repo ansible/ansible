@@ -144,8 +144,8 @@ class AzureRMDevTestLabVirtualNetwork(AzureRMModuleBase):
         self.to_do = Actions.NoAction
 
         super(AzureRMDevTestLabVirtualNetwork, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                     supports_check_mode=True,
-                                                     supports_tags=True)
+                                                              supports_check_mode=True,
+                                                              supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -207,7 +207,7 @@ class AzureRMDevTestLabVirtualNetwork(AzureRMModuleBase):
             self.results.update({
                 'id': response.get('id', None),
                 'external_provider_resource_id': response.get('external_provider_resource_id', None)
-                })
+            })
         return self.results
 
     def create_update_virtualnetwork(self):
