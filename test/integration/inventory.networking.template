@@ -13,6 +13,27 @@
 [@OS]
 @NAME ansible_connection="local" ansible_host=@HOST ansible_network_os="@OS" ansible_user="@USER" ansible_ssh_private_key_file="@KEY_FILE"
 
+[aci:vars]
+aci_hostname=your-apic-1
+aci_username=admin
+aci_password=your-apic-password
+aci_validate_certs=no
+aci_use_ssl=yes
+aci_use_proxy=no
+
+[aci]
+localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
+
+[msc:vars]
+msc_hostname=your-msc-1
+msc_username=admin
+msc_password=your-msc-password
+msc_validate_certs=no
+msc_use_ssl=yes
+msc_use_proxy=no
+
+[msc]
+localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
 
 ###
 # Example
