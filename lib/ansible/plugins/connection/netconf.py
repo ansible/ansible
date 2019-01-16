@@ -140,6 +140,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
