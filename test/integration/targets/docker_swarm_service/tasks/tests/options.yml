@@ -206,6 +206,43 @@
       - constraints_3 is changed
 
 ####################################################################
+## command #########################################################
+####################################################################
+
+- name: command
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+  register: command_1
+
+- name: command (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+  register: command_2
+
+- name: command (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+  register: command_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - command_1 is changed
+      - command_2 is not changed
+      - command_3 is changed
+
+####################################################################
 ## container_labels ################################################
 ####################################################################
 
