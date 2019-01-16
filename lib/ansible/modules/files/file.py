@@ -292,7 +292,7 @@ def get_state(path):
 
 
 # This should be moved into the common file utilities
-def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
+def recursive_set_attributes(b_path, follow, file_args, timestamps):
     changed = False
     for b_root, b_dirs, b_files in os.walk(b_path):
         for b_fsobj in b_dirs + b_files:
@@ -301,14 +301,14 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
                 tmp_file_args = file_args.copy()
                 tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                 changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
-                changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
+                changed |= update_timestamp_for_file(tmp_file_args['path'], timestamps)
 
             else:
                 # Change perms on the link
                 tmp_file_args = file_args.copy()
                 tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                 changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
-                changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
+                changed |= update_timestamp_for_file(tmp_file_args['path'], timestamps)
 
                 if follow:
                     b_fsname = os.path.join(b_root, os.readlink(b_fsname))
@@ -316,13 +316,13 @@ def recursive_set_attributes(b_path, follow, file_args, mtime, atime):
                     if os.path.exists(b_fsname):
                         if os.path.isdir(b_fsname):
                             # Link is a directory so change perms on the directory's contents
-                            changed |= recursive_set_attributes(b_fsname, follow, file_args, mtime, atime)
+                            changed |= recursive_set_attributes(b_fsname, follow, file_args, timestamps)
 
                         # Change perms on the file pointed to by the link
                         tmp_file_args = file_args.copy()
                         tmp_file_args['path'] = to_native(b_fsname, errors='surrogate_or_strict')
                         changed |= module.set_fs_attributes_if_different(tmp_file_args, changed, expand=False)
-                        changed |= update_timestamp_for_file(tmp_file_args['path'], mtime, atime)
+                        changed |= update_timestamp_for_file(tmp_file_args['path'], timestamps)
     return changed
 
 
@@ -359,26 +359,43 @@ def get_timestamp_for_time(formatted_time, time_format):
         return struct_time
 
 
-def update_timestamp_for_file(path, mtime, atime, diff=None):
-    # If both parameters are None, nothing to do
-    if mtime is None and atime is None:
-        return False
-
+def update_timestamp_for_file(path, timestamps, diff=None):
     try:
-        previous_mtime = os.stat(path).st_mtime
-        previous_atime = os.stat(path).st_atime
+        # When mtime and atime are set to 'now', rely on utime(path, None) which does not require ownership of the file
+        # https://github.com/ansible/ansible/issues/50943
+        if timestamps['modification_time'] == 'now' and timestamps['access_time'] == 'now':
+            # It's not exact but we can't rely on os.stat(path).st_mtime after setting os.utime(path, None) as it may
+            # not be updated. Just use the current time for the diff values
+            mtime = atime = time.time()
 
-        if mtime is None:
-            mtime = previous_mtime
+            previous_mtime = os.stat(path).st_mtime
+            previous_atime = os.stat(path).st_atime
 
-        if atime is None:
-            atime = previous_atime
+            set_time = None
+        else:
+            mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
+            atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
-        # If both timestamps are already ok, nothing to do
-        if mtime == previous_mtime and atime == previous_atime:
-            return False
+            # If both parameters are None, nothing to do
+            if mtime is None and atime is None:
+                return False
 
-        os.utime(path, (atime, mtime))
+            previous_mtime = os.stat(path).st_mtime
+            previous_atime = os.stat(path).st_atime
+
+            if mtime is None:
+                mtime = previous_mtime
+
+            if atime is None:
+                atime = previous_atime
+
+            # If both timestamps are already ok, nothing to do
+            if mtime == previous_mtime and atime == previous_atime:
+                return False
+
+            set_time = (atime, mtime)
+
+        os.utime(path, set_time)
 
         if diff is not None:
             if 'before' not in diff:
@@ -456,8 +473,6 @@ def execute_touch(path, follow, timestamps):
     prev_state = get_state(b_path)
     changed = False
     result = {'dest': path}
-    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
-    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
     if not module.check_mode:
         if prev_state == 'absent':
@@ -475,7 +490,7 @@ def execute_touch(path, follow, timestamps):
         file_args = module.load_file_common_arguments(module.params)
         try:
             changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-            changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+            changed |= update_timestamp_for_file(file_args['path'], timestamps, diff)
         except SystemExit as e:
             if e.code:
                 # We take this to mean that fail_json() was called from
@@ -494,8 +509,6 @@ def ensure_file_attributes(path, follow, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
-    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
-    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
     if prev_state != 'file':
         if follow and prev_state == 'link':
@@ -512,7 +525,7 @@ def ensure_file_attributes(path, follow, timestamps):
 
     diff = initial_diff(path, 'file', prev_state)
     changed = module.set_fs_attributes_if_different(file_args, False, diff, expand=False)
-    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+    changed |= update_timestamp_for_file(file_args['path'], timestamps, diff)
     return {'path': path, 'changed': changed, 'diff': diff}
 
 
@@ -520,8 +533,6 @@ def ensure_directory(path, follow, recurse, timestamps):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
-    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
-    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
     # For followed symlinks, we need to operate on the target of the link
     if follow and prev_state == 'link':
@@ -563,7 +574,7 @@ def ensure_directory(path, follow, recurse, timestamps):
                     tmp_file_args = file_args.copy()
                     tmp_file_args['path'] = curpath
                     changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff, expand=False)
-                    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+                    changed |= update_timestamp_for_file(file_args['path'], timestamps, diff)
         except Exception as e:
             raise AnsibleModuleError(results={'msg': 'There was an issue creating %s as requested:'
                                                      ' %s' % (curpath, to_native(e)),
@@ -580,9 +591,9 @@ def ensure_directory(path, follow, recurse, timestamps):
     #
 
     changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+    changed |= update_timestamp_for_file(file_args['path'], timestamps, diff)
     if recurse:
-        changed |= recursive_set_attributes(b_path, follow, file_args, mtime, atime)
+        changed |= recursive_set_attributes(b_path, follow, file_args, timestamps)
 
     return {'path': path, 'changed': changed, 'diff': diff}
 
@@ -592,8 +603,6 @@ def ensure_symlink(path, src, follow, force, timestamps):
     b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
-    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
-    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is None:
@@ -696,7 +705,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
                     ' set to False to avoid this.')
     else:
         changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-        changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+        changed |= update_timestamp_for_file(file_args['path'], timestamps, diff)
 
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
@@ -706,8 +715,6 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     b_src = to_bytes(src, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     file_args = module.load_file_common_arguments(module.params)
-    mtime = get_timestamp_for_time(timestamps['modification_time'], timestamps['modification_time_format'])
-    atime = get_timestamp_for_time(timestamps['access_time'], timestamps['access_time_format'])
 
     # src is the source of a hardlink.  We require it if we are creating a new hardlink
     if src is None and not os.path.exists(b_path):
@@ -806,7 +813,7 @@ def ensure_hardlink(path, src, follow, force, timestamps):
         return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
     changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
-    changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
+    changed |= update_timestamp_for_file(file_args['path'], timestamps, diff)
 
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
