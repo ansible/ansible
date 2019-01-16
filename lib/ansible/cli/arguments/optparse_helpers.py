@@ -15,6 +15,7 @@ import yaml
 import ansible
 from ansible import constants as C
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
@@ -192,7 +193,7 @@ def create_base_parser(usage="", desc=None, epilog=None):
     Create an options parser for all ansible scripts
     """
     # base opts
-    parser = SortedOptParser(usage, version=version("%prog"), description=desc, epilog=epilog)
+    parser = SortedOptParser(usage, version=to_native(version("%prog")), description=desc, epilog=epilog)
     parser.remove_option('--version')
     version_help = "show program's version number, config file location, configured module search path," \
                    " module location, executable location and exit"
