@@ -25,7 +25,6 @@ __metaclass__ = type
 
 import itertools
 import math
-from operator import itemgetter
 
 from jinja2.filters import environmentfilter
 
@@ -49,11 +48,7 @@ try:
 except ImportError:
     HAS_MIN_MAX = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 @environmentfilter
