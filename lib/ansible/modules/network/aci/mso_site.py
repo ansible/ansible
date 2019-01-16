@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: msc_site
+module: mso_site
 short_description: Manage sites
 description:
 - Manage sites on Cisco ACI Multi-Site.
@@ -76,18 +76,18 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-extends_documentation_fragment: msc
+extends_documentation_fragment: mso
 '''
 
 EXAMPLES = r'''
 - name: Add a new site
-  msc_site:
-    host: msc_host
+  mso_site:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     site: north_europe
     description: North European Datacenter
-    apic_username: msc_admin
+    apic_username: mso_admin
     apic_password: AnotherSecretPassword
     apic_site_id: 12
     urls:
@@ -105,8 +105,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a site
-  msc_site:
-    host: msc_host
+  mso_site:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     site: north_europe
@@ -114,8 +114,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a site
-  msc_site:
-    host: msc_host
+  mso_site:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     site: north_europe
@@ -124,8 +124,8 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all sites
-  msc_site:
-    host: msc_host
+  mso_site:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     state: query
@@ -137,7 +137,7 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.aci.msc import MSCModule, msc_argument_spec, issubset
+from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, issubset
 
 
 def main():
@@ -146,7 +146,7 @@ def main():
         longitude=dict(type='float'),
     )
 
-    argument_spec = msc_argument_spec()
+    argument_spec = mso_argument_spec()
     argument_spec.update(
         apic_password=dict(type='str', no_log=True),
         apic_site_id=dict(type='str'),
@@ -180,27 +180,27 @@ def main():
     state = module.params['state']
     urls = module.params['urls']
 
-    msc = MSCModule(module)
+    mso = MSOModule(module)
 
     path = 'sites'
 
     # Convert labels
-    labels = msc.lookup_labels(module.params['labels'], 'site')
+    labels = mso.lookup_labels(module.params['labels'], 'site')
 
-    # Query for msc.existing object(s)
+    # Query for mso.existing object(s)
     if site_id is None and site is None:
-        msc.existing = msc.query_objs(path)
+        mso.existing = mso.query_objs(path)
     elif site_id is None:
-        msc.existing = msc.get_obj(path, name=site)
-        if msc.existing:
-            site_id = msc.existing['id']
+        mso.existing = mso.get_obj(path, name=site)
+        if mso.existing:
+            site_id = mso.existing['id']
     elif site is None:
-        msc.existing = msc.get_obj(path, id=site_id)
+        mso.existing = mso.get_obj(path, id=site_id)
     else:
-        msc.existing = msc.get_obj(path, id=site_id)
-        existing_by_name = msc.get_obj(path, name=site)
+        mso.existing = mso.get_obj(path, id=site_id)
+        existing_by_name = mso.get_obj(path, name=site)
         if existing_by_name and site_id != existing_by_name['id']:
-            msc.fail_json(msg="Provided site '{0}' with id '{1}' does not match existing id '{2}'.".format(site, site_id, existing_by_name['id']))
+            mso.fail_json(msg="Provided site '{0}' with id '{1}' does not match existing id '{2}'.".format(site, site_id, existing_by_name['id']))
 
     # If we found an existing object, continue with it
     if site_id:
@@ -210,15 +210,15 @@ def main():
         pass
 
     elif state == 'absent':
-        msc.previous = msc.existing
-        if msc.existing:
+        mso.previous = mso.existing
+        if mso.existing:
             if module.check_mode:
-                msc.existing = {}
+                mso.existing = {}
             else:
-                msc.existing = msc.request(path, method='DELETE', qs=dict(force='true'))
+                mso.existing = mso.request(path, method='DELETE', qs=dict(force='true'))
 
     elif state == 'present':
-        msc.previous = msc.existing
+        mso.previous = mso.existing
 
         payload = dict(
             apicSiteId=apic_site_id,
@@ -236,24 +236,24 @@ def main():
                 long=longitude,
             )
 
-        msc.sanitize(payload, collate=True)
+        mso.sanitize(payload, collate=True)
 
-        if msc.existing:
-            if not issubset(msc.sent, msc.existing):
+        if mso.existing:
+            if not issubset(mso.sent, mso.existing):
                 if module.check_mode:
-                    msc.existing = msc.proposed
+                    mso.existing = mso.proposed
                 else:
-                    msc.existing = msc.request(path, method='PUT', data=msc.sent)
+                    mso.existing = mso.request(path, method='PUT', data=mso.sent)
         else:
             if module.check_mode:
-                msc.existing = msc.proposed
+                mso.existing = mso.proposed
             else:
-                msc.existing = msc.request(path, method='POST', data=msc.sent)
+                mso.existing = mso.request(path, method='POST', data=mso.sent)
 
-    if 'password' in msc.existing:
-        msc.existing['password'] = '******'
+    if 'password' in mso.existing:
+        mso.existing['password'] = '******'
 
-    msc.exit_json()
+    mso.exit_json()
 
 
 if __name__ == "__main__":

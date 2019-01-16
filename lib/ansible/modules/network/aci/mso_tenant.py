@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: msc_tenant
+module: mso_tenant
 short_description: Manage tenants
 description:
 - Manage tenants on Cisco ACI Multi-Site.
@@ -43,13 +43,13 @@ options:
     type: str
   users:
     description:
-    - A list of allowed users for this tenant.
-    - Using this property will replace any existing allowed users.
+    - A list of associated users for this tenant.
+    - Using this property will replace any existing associated users.
     type: list
   sites:
     description:
-    - A list of allowed sites for this tenant.
-    - Using this property will replace any existing allowed sites.
+    - A list of associated sites for this tenant.
+    - Using this property will replace any existing associated sites.
     type: list
   state:
     description:
@@ -58,13 +58,13 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-extends_documentation_fragment: msc
+extends_documentation_fragment: mso
 '''
 
 EXAMPLES = r'''
 - name: Add a new tenant
-  msc_tenant:
-    host: msc_host
+  mso_tenant:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     tenant: north_europe
@@ -75,8 +75,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a tenant
-  msc_tenant:
-    host: msc_host
+  mso_tenant:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     tenant: north_europe
@@ -84,8 +84,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a tenant
-  msc_tenant:
-    host: msc_host
+  mso_tenant:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     tenant: north_europe
@@ -94,8 +94,8 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all tenants
-  msc_tenant:
-    host: msc_host
+  mso_tenant:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     state: query
@@ -107,11 +107,11 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.aci.msc import MSCModule, msc_argument_spec, issubset
+from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, issubset
 
 
 def main():
-    argument_spec = msc_argument_spec()
+    argument_spec = mso_argument_spec()
     argument_spec.update(
         description=dict(type='str'),
         display_name=dict(type='str'),
@@ -137,28 +137,28 @@ def main():
     tenant_id = module.params['tenant_id']
     state = module.params['state']
 
-    msc = MSCModule(module)
+    mso = MSOModule(module)
 
     # Convert sites and users
-    sites = msc.lookup_sites(module.params['sites'])
-    users = msc.lookup_users(module.params['users'])
+    sites = mso.lookup_sites(module.params['sites'])
+    users = mso.lookup_users(module.params['users'])
 
     path = 'tenants'
 
     # Query for existing object(s)
     if tenant_id is None and tenant is None:
-        msc.existing = msc.query_objs(path)
+        mso.existing = mso.query_objs(path)
     elif tenant_id is None:
-        msc.existing = msc.get_obj(path, name=tenant)
-        if msc.existing:
-            tenant_id = msc.existing['id']
+        mso.existing = mso.get_obj(path, name=tenant)
+        if mso.existing:
+            tenant_id = mso.existing['id']
     elif tenant is None:
-        msc.existing = msc.get_obj(path, id=tenant_id)
+        mso.existing = mso.get_obj(path, id=tenant_id)
     else:
-        msc.existing = msc.get_obj(path, id=tenant_id)
-        existing_by_name = msc.get_obj(path, name=tenant)
+        mso.existing = mso.get_obj(path, id=tenant_id)
+        existing_by_name = mso.get_obj(path, name=tenant)
         if existing_by_name and tenant_id != existing_by_name['id']:
-            msc.fail_json(msg="Provided tenant '{0}' with id '{1}' does not match existing id '{2}'.".format(tenant, tenant_id, existing_by_name['id']))
+            mso.fail_json(msg="Provided tenant '{0}' with id '{1}' does not match existing id '{2}'.".format(tenant, tenant_id, existing_by_name['id']))
 
     # If we found an existing object, continue with it
     if tenant_id:
@@ -168,15 +168,15 @@ def main():
         pass
 
     elif state == 'absent':
-        msc.previous = msc.existing
-        if msc.existing:
+        mso.previous = mso.existing
+        if mso.existing:
             if module.check_mode:
-                msc.existing = {}
+                mso.existing = {}
             else:
-                msc.existing = msc.request(path, method='DELETE')
+                mso.existing = mso.request(path, method='DELETE')
 
     elif state == 'present':
-        msc.previous = msc.existing
+        mso.previous = mso.existing
 
         payload = dict(
             description=description,
@@ -187,29 +187,29 @@ def main():
             userAssociations=users,
         )
 
-        msc.sanitize(payload, collate=True)
+        mso.sanitize(payload, collate=True)
 
         # Ensure displayName is not undefined
-        if msc.sent.get('displayName') is None:
-            msc.sent['displayName'] = tenant
+        if mso.sent.get('displayName') is None:
+            mso.sent['displayName'] = tenant
 
         # Ensure tenant has at least admin user
-        if msc.sent.get('userAssociations') is None:
-            msc.sent['userAssociations'] = [dict(userId="0000ffff0000000000000020")]
+        if mso.sent.get('userAssociations') is None:
+            mso.sent['userAssociations'] = [dict(userId="0000ffff0000000000000020")]
 
-        if msc.existing:
-            if not issubset(msc.sent, msc.existing):
+        if mso.existing:
+            if not issubset(mso.sent, mso.existing):
                 if module.check_mode:
-                    msc.existing = msc.proposed
+                    mso.existing = mso.proposed
                 else:
-                    msc.existing = msc.request(path, method='PUT', data=msc.sent)
+                    mso.existing = mso.request(path, method='PUT', data=mso.sent)
         else:
             if module.check_mode:
-                msc.existing = msc.proposed
+                mso.existing = mso.proposed
             else:
-                msc.existing = msc.request(path, method='POST', data=msc.sent)
+                mso.existing = mso.request(path, method='POST', data=mso.sent)
 
-    msc.exit_json()
+    mso.exit_json()
 
 
 if __name__ == "__main__":

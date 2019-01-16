@@ -1,29 +1,29 @@
-# Test code for the MSC modules
+# Test code for the MSO modules
 # Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: Test that we have an ACI MultiSite host, username and password
   fail:
-    msg: 'Please define the following variables: msc_hostname, msc_username and msc_password.'
-  when: msc_hostname is not defined or msc_username is not defined or msc_password is not defined
+    msg: 'Please define the following variables: mso_hostname, mso_username and mso_password.'
+  when: mso_hostname is not defined or mso_username is not defined or mso_password is not defined
 
 
 # CLEAN ENVIRONMENT
 - name: Remove label ansible_test2
-  msc_label: &label_absent
-    host: '{{ msc_hostname }}'
-    username: '{{ msc_username }}'
-    password: '{{ msc_password }}'
-    validate_certs: '{{ msc_validate_certs | default(false) }}'
-    use_ssl: '{{ msc_use_ssl | default(true) }}'
-    use_proxy: '{{ msc_use_proxy | default(true) }}'
-    output_level: '{{ msc_output_level | default("info") }}'
+  mso_label: &label_absent
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
     label: ansible_test2
     state: absent
 
 - name: Remove label ansible_test
-  msc_label:
+  mso_label:
     <<: *label_absent
     label: ansible_test
   register: cm_remove_label
@@ -31,14 +31,14 @@
 
 # ADD LABEL
 - name: Add label (check_mode)
-  msc_label: &label_present
-    host: '{{ msc_hostname }}'
-    username: '{{ msc_username }}'
-    password: '{{ msc_password }}'
-    validate_certs: '{{ msc_validate_certs | default(false) }}'
-    use_ssl: '{{ msc_use_ssl | default(true) }}'
-    use_proxy: '{{ msc_use_proxy | default(true) }}'
-    output_level: '{{ msc_output_level | default("info") }}'
+  mso_label: &label_present
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
     label: ansible_test
     state: present
   check_mode: yes
@@ -54,7 +54,7 @@
     - cm_add_label.current.type == 'site'
 
 - name: Add label (normal mode)
-  msc_label: *label_present
+  mso_label: *label_present
   register: nm_add_label
 
 - name: nm_Verify add_label
@@ -67,7 +67,7 @@
     - nm_add_label.current.type == 'site'
 
 - name: Add label again (check_mode)
-  msc_label: *label_present
+  mso_label: *label_present
   check_mode: yes
   register: cm_add_label_again
 
@@ -82,7 +82,7 @@
     - cm_add_label_again.current.type == 'site'
 
 - name: Add label again (normal mode)
-  msc_label: *label_present
+  mso_label: *label_present
   register: nm_add_label_again
 
 - name: Verify nm_add_label_again
@@ -98,7 +98,7 @@
 
 # CHANGE LABEL
 - name: Change label (check_mode)
-  msc_label:
+  mso_label:
     <<: *label_present
     label_id: '{{ nm_add_label.current.id }}'
     label: ansible_test2
@@ -114,7 +114,7 @@
     - cm_change_label.current.type == 'site'
 
 - name: Change label (normal mode)
-  msc_label:
+  mso_label:
     <<: *label_present
     label_id: '{{ nm_add_label.current.id }}'
     label: ansible_test2
@@ -130,7 +130,7 @@
     - nm_change_label.current.type == 'site'
 
 - name: Change label again (check_mode)
-  msc_label:
+  mso_label:
     <<: *label_present
     label_id: '{{ nm_add_label.current.id }}'
     label: ansible_test2
@@ -146,7 +146,7 @@
     - cm_change_label_again.current.type == 'site'
 
 - name: Change label again (normal mode)
-  msc_label:
+  mso_label:
     <<: *label_present
     label_id: '{{ nm_add_label.current.id }}'
     label: ansible_test2
@@ -163,20 +163,20 @@
 
 # QUERY ALL LABELS
 - name: Query all labels (check_mode)
-  msc_label: &label_query
-    host: '{{ msc_hostname }}'
-    username: '{{ msc_username }}'
-    password: '{{ msc_password }}'
-    validate_certs: '{{ msc_validate_certs | default(false) }}'
-    use_ssl: '{{ msc_use_ssl | default(true) }}'
-    use_proxy: '{{ msc_use_proxy | default(true) }}'
-    output_level: '{{ msc_output_level | default("info") }}'
+  mso_label: &label_query
+    host: '{{ mso_hostname }}'
+    username: '{{ mso_username }}'
+    password: '{{ mso_password }}'
+    validate_certs: '{{ mso_validate_certs | default(false) }}'
+    use_ssl: '{{ mso_use_ssl | default(true) }}'
+    use_proxy: '{{ mso_use_proxy | default(true) }}'
+    output_level: '{{ mso_output_level | default("info") }}'
     state: query
   check_mode: yes
   register: cm_query_all_labels
 
 - name: Query all labels (normal mode)
-  msc_label: *label_query
+  mso_label: *label_query
   register: nm_query_all_labels
 
 - name: Verify query_all_labels
@@ -190,14 +190,14 @@
 
 # QUERY A LABEL
 - name: Query our label
-  msc_label:
+  mso_label:
     <<: *label_query
     label: ansible_test2
   check_mode: yes
   register: cm_query_label
 
 - name: Query our label
-  msc_label:
+  mso_label:
     <<: *label_query
     label: ansible_test2
   register: nm_query_label
@@ -218,7 +218,7 @@
 
 # REMOVE LABEL
 - name: Remove label (check_mode)
-  msc_label: *label_absent
+  mso_label: *label_absent
   check_mode: yes
   register: cm_remove_label
 
@@ -229,7 +229,7 @@
     - cm_remove_label.current == {}
 
 - name: Remove label (normal mode)
-  msc_label: *label_absent
+  mso_label: *label_absent
   register: nm_remove_label
 
 - name: Verify nm_remove_label
@@ -239,7 +239,7 @@
     - nm_remove_label.current == {}
 
 - name: Remove label again (check_mode)
-  msc_label: *label_absent
+  mso_label: *label_absent
   check_mode: yes
   register: cm_remove_label_again
 
@@ -250,7 +250,7 @@
     - cm_remove_label_again.current == {}
 
 - name: Remove label again (normal mode)
-  msc_label: *label_absent
+  mso_label: *label_absent
   register: nm_remove_label_again
 
 - name: Verify nm_remove_label_again
@@ -262,14 +262,14 @@
 
 # QUERY NON-EXISTING LABEL
 - name: Query non-existing label (check_mode)
-  msc_label:
+  mso_label:
     <<: *label_query
     label: ansible_test
   check_mode: yes
   register: cm_query_non_label
 
 - name: Query non-existing label (normal mode)
-  msc_label:
+  mso_label:
     <<: *label_query
     label: ansible_test
   register: nm_query_non_label
