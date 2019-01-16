@@ -64,6 +64,8 @@ options:
         required: true
         aliases:
           - address
+          - address_add
+          - address_remove
       configure_for_dhcp:
         description:
           - Configure the host_record over DHCP instead of DNS, if user
