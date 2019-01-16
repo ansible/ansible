@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: msc_user
+module: mso_user
 short_description: Manage users
 description:
 - Manage users on Cisco ACI Multi-Site.
@@ -80,13 +80,13 @@ options:
 notes:
 - A default installation of ACI Multi-Site ships with admin password 'we1come!' which requires a password change on first login.
   See the examples of how to change the 'admin' password using Ansible.
-extends_documentation_fragment: msc
+extends_documentation_fragment: mso
 '''
 
 EXAMPLES = r'''
 - name: Update initial admin password
-  msc_user:
-    host: msc_host
+  mso_user:
+    host: mso_host
     username: admin
     password: we1come!
     user_name: admin
@@ -95,8 +95,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Add a new user
-  msc_user:
-    host: msc_host
+  mso_user:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     user_name: dag
@@ -109,8 +109,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a user
-  msc_user:
-    host: msc_host
+  mso_user:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     user_name: dag
@@ -118,8 +118,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a user
-  msc_user:
-    host: msc_host
+  mso_user:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     user_name: dag
@@ -128,8 +128,8 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all users
-  msc_user:
-    host: msc_host
+  mso_user:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     state: query
@@ -140,11 +140,11 @@ EXAMPLES = r'''
 RETURN = r''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.aci.msc import MSCModule, msc_argument_spec, issubset
+from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, issubset
 
 
 def main():
-    argument_spec = msc_argument_spec()
+    argument_spec = mso_argument_spec()
     argument_spec.update(
         user_id=dict(type='str', required=False),
         user=dict(type='str', required=False, aliases=['name', 'user_name']),
@@ -179,27 +179,27 @@ def main():
     account_status = module.params['account_status']
     state = module.params['state']
 
-    msc = MSCModule(module)
+    mso = MSOModule(module)
 
-    roles = msc.lookup_roles(module.params['roles'])
-    domain = msc.lookup_domain(module.params['domain'])
+    roles = mso.lookup_roles(module.params['roles'])
+    domain = mso.lookup_domain(module.params['domain'])
 
     path = 'users'
 
     # Query for existing object(s)
     if user_id is None and user_name is None:
-        msc.existing = msc.query_objs(path)
+        mso.existing = mso.query_objs(path)
     elif user_id is None:
-        msc.existing = msc.get_obj(path, username=user_name)
-        if msc.existing:
-            user_id = msc.existing['id']
+        mso.existing = mso.get_obj(path, username=user_name)
+        if mso.existing:
+            user_id = mso.existing['id']
     elif user_name is None:
-        msc.existing = msc.get_obj(path, id=user_id)
+        mso.existing = mso.get_obj(path, id=user_id)
     else:
-        msc.existing = msc.get_obj(path, id=user_id)
-        existing_by_name = msc.get_obj(path, username=user_name)
+        mso.existing = mso.get_obj(path, id=user_id)
+        existing_by_name = mso.get_obj(path, username=user_name)
         if existing_by_name and user_id != existing_by_name['id']:
-            msc.fail_json(msg="Provided user '{0}' with id '{1}' does not match existing id '{2}'.".format(user_name, user_id, existing_by_name['id']))
+            mso.fail_json(msg="Provided user '{0}' with id '{1}' does not match existing id '{2}'.".format(user_name, user_id, existing_by_name['id']))
 
     # If we found an existing object, continue with it
     if user_id:
@@ -209,15 +209,15 @@ def main():
         pass
 
     elif state == 'absent':
-        msc.previous = msc.existing
-        if msc.existing:
+        mso.previous = mso.existing
+        if mso.existing:
             if module.check_mode:
-                msc.existing = {}
+                mso.existing = {}
             else:
-                msc.existing = msc.request(path, method='DELETE')
+                mso.existing = mso.request(path, method='DELETE')
 
     elif state == 'present':
-        msc.previous = msc.existing
+        mso.previous = mso.existing
 
         payload = dict(
             id=user_id,
@@ -234,29 +234,29 @@ def main():
             # remote=True,
         )
 
-        msc.sanitize(payload, collate=True)
+        mso.sanitize(payload, collate=True)
 
-        if msc.sent.get('accountStatus') is None:
-            msc.sent['accountStatus'] = 'active'
+        if mso.sent.get('accountStatus') is None:
+            mso.sent['accountStatus'] = 'active'
 
-        if msc.existing:
-            if not issubset(msc.sent, msc.existing):
-                # NOTE: Since MSC always returns '******' as password, we need to assume a change
-                if 'password' in msc.proposed:
-                    msc.module.warn("A password change is assumed, as the MSC REST API does not return passwords we do not know.")
-                    msc.result['changed'] = True
+        if mso.existing:
+            if not issubset(mso.sent, mso.existing):
+                # NOTE: Since MSO always returns '******' as password, we need to assume a change
+                if 'password' in mso.proposed:
+                    mso.module.warn("A password change is assumed, as the MSO REST API does not return passwords we do not know.")
+                    mso.result['changed'] = True
 
                 if module.check_mode:
-                    msc.existing = msc.proposed
+                    mso.existing = mso.proposed
                 else:
-                    msc.existing = msc.request(path, method='PUT', data=msc.sent)
+                    mso.existing = mso.request(path, method='PUT', data=mso.sent)
         else:
             if module.check_mode:
-                msc.existing = msc.proposed
+                mso.existing = mso.proposed
             else:
-                msc.existing = msc.request(path, method='POST', data=msc.sent)
+                mso.existing = mso.request(path, method='POST', data=mso.sent)
 
-    msc.exit_json()
+    mso.exit_json()
 
 
 if __name__ == "__main__":
