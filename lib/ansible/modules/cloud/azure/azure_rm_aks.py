@@ -676,7 +676,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         '''
         return self.containerservice_models.ContainerServiceLinuxProfile(
             admin_username=linuxprofile['admin_username'],
-            ssh=self.containerservice_models.ContainerServiceSshConfiguration(key_data=str(linuxprofile['ssh_key']))
+            ssh=self.containerservice_models.ContainerServiceSshConfiguration(public_key=[
+                self.containerservice_models.ContainerServiceSshPublicKey(key_data=str(linuxprofile['ssh_key']))])
         )
 
     def create_network_profile_instance(self, network):
