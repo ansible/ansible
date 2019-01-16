@@ -752,7 +752,7 @@ class DockerService(DockerBaseClass):
     def has_publish_changed(self, old_publish):
         if len(self.publish) != len(old_publish):
             return True
-        for publish_item, old_publish_item in zip(self.publish, old_publish):
+        for publish_item, old_publish_item in zip(sorted(self.publish), sorted(old_publish)):
             ignored_keys = set()
             if not publish_item.get('mode'):
                 ignored_keys.add('mode')
