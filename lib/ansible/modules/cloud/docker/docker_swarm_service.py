@@ -469,6 +469,7 @@ EXAMPLES = '''
 '''
 
 import time
+import operator
 from ansible.module_utils.docker_common import (
     DockerBaseClass,
     AnsibleDockerClient,
@@ -752,7 +753,10 @@ class DockerService(DockerBaseClass):
     def has_publish_changed(self, old_publish):
         if len(self.publish) != len(old_publish):
             return True
-        for publish_item, old_publish_item in zip(sorted(self.publish), sorted(old_publish)):
+        publish_sorter = operator.itemgetter('published_port', 'target_port', 'protocol', 'mode')
+        publish = sorted(self.publish, key=publish_sorter)
+        old_publish = sorted(old_publish, key=publish_sorter)
+        for publish_item, old_publish_item in zip(publish, old_publish):
             ignored_keys = set()
             if not publish_item.get('mode'):
                 ignored_keys.add('mode')
