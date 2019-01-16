@@ -263,7 +263,7 @@ def main():
         elif code == 404:
             pass
 
-    result['checkpoint_sid'] = connection.get_sid()
+    result['checkpoint_session_uid'] = connection.get_session_uid()
     module.exit_json(**result)
 
 
