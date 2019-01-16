@@ -29,33 +29,33 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: checkpoint_object_facts
-short_description: Get object facts on Checkpoint over Web Services API
+short_description: Get object facts on Check Point over Web Services API
 description:
-  - Get object facts on Checkpoint devices.
+  - Get object facts on Check Point devices.
     All operations are performed over Web Services API.
 version_added: "2.8"
 author: "Ansible by Red Hat (@rcarrillocruz)"
 options:
   uid:
     description:
-      - UID of the object. If UID is not provided. If not provided, it will do a full search
+      - UID of the object. If UID is not provided, it will do a full search
         which can be filtered with the filter argument.
-  filter_expression:
+  object_filter:
     description:
       - Filter expression for search. It accepts AND/OR logical operators and performs a textual
-        and ip address search. To search only IP address, set ip_only argument to True.
+        and IP address search. To search only by IP address, set ip_only argument to True.
         which can be filtered with the filter argument.
   ip_only:
     description:
       - Filter only by IP address.
     type: bool
-    default: False
+    default: false
 """
 
 EXAMPLES = """
 - name: Get object facts
   checkpoint_object_facts:
-    filter: 192.168.30.30
+    object_filter: 192.168.30.30
     ip_only: yes
 """
 
@@ -75,14 +75,14 @@ import json
 
 def get_object(module, connection):
     uid = module.params['uid']
-    filter_expression = module.params['filter_expression']
+    object_filter = module.params['object_filter']
     ip_only = module.params['ip_only']
 
     if uid:
         payload = {'uid': uid}
         code, result = connection.send_request('/web_api/show-object', payload)
     else:
-        payload = {'filter': filter_expression, 'ip-only': ip_only}
+        payload = {'filter': object_filter, 'ip-only': ip_only}
         code, result = connection.send_request('/web_api/show-objects', payload)
 
     return code, result
@@ -91,7 +91,7 @@ def get_object(module, connection):
 def main():
     argument_spec = dict(
         uid=dict(type='str', default=None),
-        filter_expression=dict(type='str'),
+        object_filter=dict(type='str'),
         ip_only=dict(type='bool', default=False)
     )
 
@@ -103,7 +103,7 @@ def main():
     if code == 200:
         module.exit_json(ansible_facts=dict(checkpoint_objects=response))
     else:
-        module.fail_json(msg='Checkpoint device returned error {0} with message {1}'.format(code, response))
+        module.fail_json(msg='Check Point device returned error {0} with message {1}'.format(code, response))
 
 
 if __name__ == '__main__':
