@@ -62,10 +62,9 @@ options:
         description:
         - The name of the bucket.
         - 'This field represents a link to a Bucket resource in GCP. It can be specified
-          in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
-          task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
-          you can set this bucket to a dictionary with the name key where the value
-          is the name of your Bucket'
+          in two ways. First, you can place in the name of the resource here as a
+          string Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
+          task and then set this bucket field to "{{ name-of-resource }}"'
         required: true
       domain:
         description:
@@ -154,10 +153,9 @@ options:
         description:
         - The name of the bucket.
         - 'This field represents a link to a Bucket resource in GCP. It can be specified
-          in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
-          task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
-          you can set this bucket to a dictionary with the name key where the value
-          is the name of your Bucket'
+          in two ways. First, you can place in the name of the resource here as a
+          string Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
+          task and then set this bucket field to "{{ name-of-resource }}"'
         required: true
       domain:
         description:
@@ -415,7 +413,7 @@ acl:
       description:
       - The name of the bucket.
       returned: success
-      type: dict
+      type: str
     domain:
       description:
       - The domain associated with the entity.
@@ -509,7 +507,7 @@ defaultObjectAcl:
       description:
       - The name of the bucket.
       returned: success
-      type: dict
+      type: str
     domain:
       description:
       - The domain associated with the entity.
@@ -793,7 +791,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             acl=dict(type='list', elements='dict', options=dict(
-                bucket=dict(required=True, type='dict'),
+                bucket=dict(required=True),
                 domain=dict(type='str'),
                 email=dict(type='str'),
                 entity=dict(required=True, type='str'),
@@ -812,7 +810,7 @@ def main():
                 response_header=dict(type='list', elements='str')
             )),
             default_object_acl=dict(type='list', elements='dict', options=dict(
-                bucket=dict(required=True, type='dict'),
+                bucket=dict(required=True),
                 domain=dict(type='str'),
                 email=dict(type='str'),
                 entity=dict(required=True, type='str'),
