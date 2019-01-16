@@ -60,7 +60,9 @@ options:
         description:
           - Configures the IPv4 address for the host record. Users can dynamically
             allocate ipv4 address to host record by passing dictionary containing,
-            I(nios_next_ip) and I(CIDR network range). See example
+            I(nios_next_ip) and I(CIDR network range). If user wants to add or
+            remove the ipv4 address from existing record, I(address_add/address_remove)
+            aliases need to be used. See examples
         required: true
         aliases:
           - address
