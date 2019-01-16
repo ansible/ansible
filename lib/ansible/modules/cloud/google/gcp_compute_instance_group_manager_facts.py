@@ -162,14 +162,14 @@ items:
       description:
       - The instance group being managed.
       returned: success
-      type: dict
+      type: str
     instanceTemplate:
       description:
       - The instance template that is specified for this managed instance group. The
         group uses this template to create all new instances in the managed instance
         group.
       returned: success
-      type: dict
+      type: str
     name:
       description:
       - The name of the managed instance group. The name must be 1-63 characters long,

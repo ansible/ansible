@@ -185,7 +185,7 @@ items:
       - The source snapshot used to create this disk. You can provide this as a partial
         or full URL to the resource.
       returned: success
-      type: dict
+      type: str
     sourceSnapshotEncryptionKey:
       description:
       - The customer-supplied encryption key of the source snapshot. Required if the
