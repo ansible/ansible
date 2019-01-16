@@ -4,7 +4,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ resource_group | hash('md5') | truncate(10, True, '') }}"
-     kubernetes_version: 1.7.7
+     kubernetes_version: 1.11.4
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
          client_secret: "{{ lookup('env', 'AZURE_SECRET') }}"
@@ -34,7 +34,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ resource_group | hash('md5') | truncate(10, True, '') }}"
-     kubernetes_version: 1.7.7
+     kubernetes_version: 1.11.4
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
          client_secret: "{{ lookup('env', 'AZURE_SECRET') }}"
@@ -72,7 +72,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ resource_group | hash('md5') | truncate(10, True, '') }}"
-     kubernetes_version: 1.7.7
+     kubernetes_version: 1.11.4
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
      linux_profile:
@@ -96,7 +96,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ resource_group | hash('md5') | truncate(10, True, '') }}"
-     kubernetes_version: 1.8.1
+     kubernetes_version: 1.11.5
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
      linux_profile:
@@ -112,7 +112,7 @@
    assert:
       that:
        - output.changed
-       - output.kubernetes_version == '1.8.1'
+       - output.kubernetes_version == '1.11.5'
 
  - name: Scale the AKS instance agent count from 1 to 2
    azure_rm_aks:
@@ -120,7 +120,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ resource_group | hash('md5') | truncate(10, True, '') }}"
-     kubernetes_version: 1.8.1     
+     kubernetes_version: 1.11.5     
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
      linux_profile:

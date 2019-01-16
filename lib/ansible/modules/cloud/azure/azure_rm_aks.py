@@ -676,7 +676,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         '''
         return self.containerservice_models.ContainerServiceLinuxProfile(
             admin_username=linuxprofile['admin_username'],
-            ssh=self.containerservice_models.ContainerServiceSshConfiguration(public_key=[
+            ssh=self.containerservice_models.ContainerServiceSshConfiguration(public_keys=[
                 self.containerservice_models.ContainerServiceSshPublicKey(key_data=str(linuxprofile['ssh_key']))])
         )
 

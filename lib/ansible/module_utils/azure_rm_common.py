@@ -863,13 +863,13 @@ class AzureRMModuleBase(object):
         if not self._containerservice_client:
             self._containerservice_client = self.get_mgmt_svc_client(ContainerServiceClient,
                                                                      base_url=self._cloud_environment.endpoints.resource_manager,
-                                                                     api_version='2018-08-01-preview')
+                                                                     api_version='2018-03-31')
         return self._containerservice_client
 
     @property
     def containerservice_models(self):
         self.log("Getting container service models")
-        return ContainerServiceClient.models('2018-08-01-preview')
+        return ContainerServiceClient.models('2018-03-31')
 
     @property
     def sql_client(self):
