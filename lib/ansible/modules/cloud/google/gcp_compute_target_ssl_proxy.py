@@ -74,10 +74,10 @@ options:
     description:
     - A reference to the BackendService resource.
     - 'This field represents a link to a BackendService resource in GCP. It can be
-      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-      task and then set this service field to "{{ name-of-resource }}" Alternatively,
-      you can set this service to a dictionary with the selfLink key where the value
-      is the selfLink of your BackendService'
+      specified in two ways. First, you can place in the selfLink of the resource
+      here as a string Alternatively, you can add `register: name-of-resource` to
+      a gcp_compute_backend_service task and then set this service field to "{{ name-of-resource
+      }}"'
     required: true
   ssl_certificates:
     description:
@@ -85,6 +85,17 @@ options:
       between users and the load balancer. Currently, exactly one SSL certificate
       must be specified.
     required: true
+  ssl_policy:
+    description:
+    - A reference to the SslPolicy resource that will be associated with the TargetSslProxy
+      resource. If not set, the TargetSslProxy resource will not have any SSL policy
+      configured.
+    - 'This field represents a link to a SslPolicy resource in GCP. It can be specified
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_ssl_policy
+      task and then set this ssl_policy field to "{{ name-of-resource }}"'
+    required: false
+    version_added: 2.8
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetSslProxies)'
@@ -215,13 +226,20 @@ service:
   description:
   - A reference to the BackendService resource.
   returned: success
-  type: dict
+  type: str
 sslCertificates:
   description:
   - A list of SslCertificate resources that are used to authenticate connections between
     users and the load balancer. Currently, exactly one SSL certificate must be specified.
   returned: success
   type: list
+sslPolicy:
+  description:
+  - A reference to the SslPolicy resource that will be associated with the TargetSslProxy
+    resource. If not set, the TargetSslProxy resource will not have any SSL policy
+    configured.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -246,8 +264,9 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
-            service=dict(required=True, type='dict'),
-            ssl_certificates=dict(required=True, type='list', elements='dict')
+            service=dict(required=True),
+            ssl_certificates=dict(required=True, type='list'),
+            ssl_policy=dict()
         )
     )
 
@@ -300,6 +319,8 @@ def update_fields(module, request, response):
         service_update(module, request, response)
     if response.get('sslCertificates') != request.get('sslCertificates'):
         ssl_certificates_update(module, request, response)
+    if response.get('sslPolicy') != request.get('sslPolicy'):
+        ssl_policy_update(module, request, response)
 
 
 def proxy_header_update(module, request, response):
@@ -341,6 +362,19 @@ def ssl_certificates_update(module, request, response):
     )
 
 
+def ssl_policy_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join([
+            "https://www.googleapis.com/compute/v1/",
+            "projects/{project}/global/targetSslProxies/{name}/setSslPolicy"
+        ]).format(**module.params),
+        {
+            u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink')
+        }
+    )
+
+
 def delete(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.delete(link))
@@ -353,7 +387,8 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'proxyHeader': module.params.get('proxy_header'),
         u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink'),
-        u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')
+        u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink'),
+        u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink')
     }
     return_vals = {}
     for k, v in request.items():
@@ -425,7 +460,8 @@ def response_to_hash(module, response):
         u'name': module.params.get('name'),
         u'proxyHeader': response.get(u'proxyHeader'),
         u'service': response.get(u'service'),
-        u'sslCertificates': response.get(u'sslCertificates')
+        u'sslCertificates': response.get(u'sslCertificates'),
+        u'sslPolicy': response.get(u'sslPolicy')
     }
 
 

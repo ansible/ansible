@@ -15,7 +15,7 @@
 # Pre-test setup
 - name: create a network
   gcp_compute_network:
-      name: "network-vpn_tunnel"
+      name: "network-vpn-tunnel"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -23,7 +23,7 @@
   register: network
 - name: create a router
   gcp_compute_router:
-      name: "router-vpn_tunnel"
+      name: "router-vpn-tunnel"
       network: "{{ network }}"
       bgp:
         asn: 64514
@@ -41,7 +41,7 @@
   register: router
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "gateway-vpn_tunnel"
+      name: "gateway-vpn-tunnel"
       region: us-west1
       network: "{{ network }}"
       project: "{{ gcp_project }}"
@@ -164,9 +164,10 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "gateway-vpn_tunnel"
+      name: "gateway-vpn-tunnel"
       region: us-west1
       network: "{{ network }}"
       project: "{{ gcp_project }}"
@@ -174,9 +175,10 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: gateway
+  ignore_errors: true
 - name: delete a router
   gcp_compute_router:
-      name: "router-vpn_tunnel"
+      name: "router-vpn-tunnel"
       network: "{{ network }}"
       bgp:
         asn: 64514
@@ -192,11 +194,13 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: router
+  ignore_errors: true
 - name: delete a network
   gcp_compute_network:
-      name: "network-vpn_tunnel"
+      name: "network-vpn-tunnel"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: network
+  ignore_errors: true

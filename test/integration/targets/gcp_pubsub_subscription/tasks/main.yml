@@ -25,8 +25,6 @@
   gcp_pubsub_subscription:
       name: "{{ resource_name }}"
       topic: "{{ topic }}"
-      push_config:
-        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -37,8 +35,6 @@
   gcp_pubsub_subscription:
       name: "{{ resource_name }}"
       topic: "{{ topic }}"
-      push_config:
-        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -60,14 +56,12 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - "\"{{resource_name}}\" in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a subscription that already exists
   gcp_pubsub_subscription:
       name: "{{ resource_name }}"
       topic: "{{ topic }}"
-      push_config:
-        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -83,8 +77,6 @@
   gcp_pubsub_subscription:
       name: "{{ resource_name }}"
       topic: "{{ topic }}"
-      push_config:
-        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -106,14 +98,12 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - "\"{{resource_name}}\" not in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a subscription that does not exist
   gcp_pubsub_subscription:
       name: "{{ resource_name }}"
       topic: "{{ topic }}"
-      push_config:
-        push_endpoint: https://myapp.graphite.cloudnativeapp.com/webhook/sub1
       ack_deadline_seconds: 300
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -126,6 +116,7 @@
       - result.changed == false
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a topic
   gcp_pubsub_topic:
       name: "topic-subscription"
@@ -134,3 +125,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: topic
+  ignore_errors: true
