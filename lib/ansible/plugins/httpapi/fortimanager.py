@@ -30,49 +30,6 @@ short_description: HttpApi Plugin for Fortinet FortiManager Appliance or VM
 description:
   - This HttpApi plugin provides methods to connect to Fortinet FortiManager Appliance or VM via JSON RPC API
 version_added: "2.8"
-options:
-  host:
-    type: str
-    description:
-      - The IP Address or Hostname of the FortiManager host to be used for the connection.
-  username:
-    type: str
-    description:
-      - The username to be used for the connection
-  password:
-    type: str
-    description:
-      - The password to be used for the connection.
-  debug:
-    type: bool
-    description:
-      - Enables Debug Flag.
-    required: False
-    default: False
-  use_ssl:
-    type: bool
-    description:
-      - Enables SSL.
-    required: False
-    default: True
-  verify_ssl:
-    type: bool
-    description:
-      - Enables SSL certification verification.
-    required: False
-    default: False
-  timeout:
-    type: int
-    description:
-      - Sets the timeout in seconds.
-    required: False
-    default: 300
-  disable_request_warnings:
-    type: bool
-    description:
-      - Disables Request library warnings.
-    required: False
-    default: False
 
 """
 
@@ -91,10 +48,9 @@ from ansible.module_utils.network.fortimanager.common import FMGRCommon
 class HttpApi(HttpApiBase):
     def __init__(self, connection):
         super(HttpApi, self).__init__(connection)
-        self.connection = connection
         self._req_id = 0
         self._sid = None
-        self._url = None
+        self._url = "/jsonrpc"
         self._host = None
         self._lock_ctx = FMGLockContext(self)
         self._tools = FMGRCommon
@@ -131,8 +87,8 @@ class HttpApi(HttpApiBase):
 
         :return: Dictionary of status, if it logged in or not.
         """
-        self._url = "/jsonrpc"
-        self.execute("sys/login/user", login=True, passwd=password, user=username, )
+
+        self.execute("sys/login/user", passwd=password, user=username, )
 
         if "FortiManager object connected to FortiManager" in self.__str__():
             # If Login worked, then inspect the FortiManager for Workspace Mode, and it's system information.
@@ -169,23 +125,28 @@ class HttpApi(HttpApiBase):
                 self._lock_ctx.run_unlock()
             ret_code, response = self.execute("sys/logout")
             self.sid = None
-            self.connection = None
             return ret_code, response
 
-    def send_request(self, method, params, login=False):
+    def send_request(self, method, params):
         """
         Responsible for actual sending of data to the connection httpapi base plugin. Does some formatting as well.
         :param params: A formatted dictionary that was returned by self.common_datagram_params()
         before being called here.
         :param method: The preferred API Request method (GET, ADD, POST, etc....)
         :type method: basestring
-        :param login: Tells the function that we're attempting a login, and that the self.sid should be empty,
-        but to continue anyway. Do not use this unless being called from self.login().
 
         :return: Dictionary of status, if it logged in or not.
         """
-        if self.sid is None and not login:
-            raise FMGValidSessionException(method, params)
+        try:
+            if self.sid is None and params[0]["url"] != "sys/login/user":
+                raise FMGValidSessionException(method, params)
+        except IndexError:
+            raise FMGBaseException("An attempt was made at communicating with a FMG with "
+                                   "no valid session and an incorrectly formatted request.")
+        except Exception:
+            raise FMGBaseException("An attempt was made at communicating with a FMG with "
+                                   "no valid session and an unexpected error was discovered.")
+
         self._update_request_id()
         json_request = {
             "method": method,
@@ -195,16 +156,13 @@ class HttpApi(HttpApiBase):
             "verbose": 1
         }
         data = json.dumps(json_request, ensure_ascii=False).replace('\\\\', '\\')
-        url = str(self._url)
         try:
             # Sending URL and Data in Unicode, per Ansible Specifications for Connection Plugins
-            response, response_data = self.connection.send(path=to_text(url), data=to_text(data),
+            response, response_data = self.connection.send(path=to_text(self._url), data=to_text(data),
                                                            headers=BASE_HEADERS)
-            # Get Unicode Response
-            value = self._tools.get_response_value(response_data)
-            # Convert Unicode JSON to Dictionary, convert "null" to "None" if required.
-            result = eval(value.replace("null", "None"))
-            self._update_self_from_response(result, url, data)
+            # Get Unicode Response -- Must convert from StringIO to unicode first so we can do a replace function below
+            result = json.loads(to_text(response_data.getvalue()))
+            self._update_self_from_response(result, self._url, data)
             return self._handle_response(result)
 
         except ValueError as err:
@@ -237,8 +195,8 @@ class HttpApi(HttpApiBase):
     def clone(self, url, *args, **kwargs):
         return self.send_request("clone", self._tools.format_request("clone", url, *args, **kwargs))
 
-    def execute(self, url, login=False, *args, **kwargs):
-        return self.send_request("exec", self._tools.format_request("execute", url, *args, **kwargs), login)
+    def execute(self, url, *args, **kwargs):
+        return self.send_request("exec", self._tools.format_request("execute", url, *args, **kwargs))
 
     def move(self, url, *args, **kwargs):
         return self.send_request("move", self._tools.format_request("move", url, *args, **kwargs))

@@ -25,9 +25,6 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-
-from ansible.module_utils.basic import to_text
 
 
 # BEGIN STATIC DATA / MESSAGES
@@ -225,8 +222,8 @@ class FMGRCommon(object):
         Converts a CIDR Network string to full blown IP/Subnet format in decimal format.
         Decided not use IP Address module to keep includes to a minimum.
 
-        :param obj: String object in CIDR format to be processed
-        :type obj: str
+        :param cidr: String object in CIDR format to be processed
+        :type cidr: str
 
         :return: A string object that looks like this "x.x.x.x/y.y.y.y"
         :rtype: str
@@ -266,10 +263,6 @@ class FMGRCommon(object):
                 except BaseException:
                     raise FMGBaseException("An error occurred trying to merge custom lists for the paramgram parent")
         return paramgram
-
-    @staticmethod
-    def get_response_value(response_data):
-        return to_text(response_data.getvalue())
 
     @staticmethod
     def syslog(module, msg):

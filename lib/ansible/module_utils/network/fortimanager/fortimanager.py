@@ -69,7 +69,7 @@ class FortiManagerHandler(object):
         :rtype: dict
         """
         data = self._tools.format_request(method, url, **datagram)
-        response = self._conn.send_request(method, data, login=False,)
+        response = self._conn.send_request(method, data)
         if HAS_FMGR_DEBUG:
             try:
                 debug_dump(response, datagram, url, method)
