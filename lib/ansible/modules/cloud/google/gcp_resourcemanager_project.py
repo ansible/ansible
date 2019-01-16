@@ -329,6 +329,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['done'])
     wait_done = wait_for_completion(status, op_result, module)
+    raise_if_errors(op_result, ['error'], module)
     return navigate_hash(wait_done, ['response'])
 
 
@@ -336,7 +337,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     if not status:
-        raise_if_errors(op_result, ['error'], 'message')
+        raise_if_errors(op_result, ['error'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri)
         status = navigate_hash(op_result, ['done'])
