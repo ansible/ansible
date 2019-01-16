@@ -73,7 +73,7 @@ def update_qs(params):
     return '?' + urlencode(accepted_params)
 
 
-def msc_argument_spec():
+def mso_argument_spec():
     return dict(
         host=dict(type='str', required=True, aliases=['hostname']),
         port=dict(type='int', required=False),
@@ -87,7 +87,7 @@ def msc_argument_spec():
     )
 
 
-class MSCModule(object):
+class MSOModule(object):
 
     def __init__(self, module):
         self.module = module
@@ -131,7 +131,7 @@ class MSCModule(object):
             self.module.fail_json(msg="Parameter 'password' is required for authentication")
 
     def login(self):
-        ''' Log in to MSC '''
+        ''' Log in to MSO '''
 
         # Perform login request
         self.url = urljoin(self.baseuri, 'auth/login')
@@ -144,7 +144,7 @@ class MSCModule(object):
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'])
 
-        # Handle MSC response
+        # Handle MSO response
         if auth['status'] != 201:
             self.response = auth['msg']
             self.status = auth['status']
@@ -155,7 +155,7 @@ class MSCModule(object):
         self.headers['Authorization'] = 'Bearer {token}'.format(**payload)
 
     def request(self, path, method=None, data=None, qs=None):
-        ''' Generic HTTP method for MSC requests. '''
+        ''' Generic HTTP method for MSO requests. '''
         self.path = path
 
         if method is not None:
@@ -198,14 +198,14 @@ class MSCModule(object):
             except Exception:
                 payload = json.loads(info['body'])
             if 'code' in payload:
-                self.fail_json(msg='MSC Error {code}: {message}'.format(**payload), data=data, info=info, payload=payload)
+                self.fail_json(msg='MSO Error {code}: {message}'.format(**payload), data=data, info=info, payload=payload)
             else:
-                self.fail_json(msg='MSC Error:'.format(**payload), data=data, info=info, payload=payload)
+                self.fail_json(msg='MSO Error:'.format(**payload), data=data, info=info, payload=payload)
 
         return {}
 
     def query_objs(self, path, key=None, **kwargs):
-        ''' Query the MSC REST API for objects in a path '''
+        ''' Query the MSO REST API for objects in a path '''
         found = []
         objs = self.request(path, method='GET')
 
@@ -223,7 +223,7 @@ class MSCModule(object):
         return found
 
     def get_obj(self, path, **kwargs):
-        ''' Get a specific object from a set of MSC REST objects '''
+        ''' Get a specific object from a set of MSO REST objects '''
         objs = self.query_objs(path, **kwargs)
         if len(objs) == 0:
             return {}

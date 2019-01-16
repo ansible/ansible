@@ -1169,12 +1169,14 @@ files:
       - jinja2
   lib/ansible/utils/module_docs_fragments/:
     support: community
+  lib/ansible/utils/module_docs_fragments/aci.py: *aci
   lib/ansible/utils/module_docs_fragments/acme.py:
     maintainers: resmo felixfontein
   lib/ansible/utils/module_docs_fragments/docker.py:
     support: community
     maintainers: $team_docker
     supershipit: felixfontein
+  lib/ansible/utils/module_docs_fragments/mso.py: *aci
   lib/ansible/utils/module_docs_fragments/xenserver.py:
     maintainers: bvitnik
   lib/ansible/utils/module_docs_fragments/cloudstack.py:
@@ -1230,7 +1232,7 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   test/integration/targets/meraki: *meraki
-  test/integration/targets/msc: *aci
+  test/integration/targets/mso: *aci
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:

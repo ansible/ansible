@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: msc_label
+module: mso_label
 short_description: Manage labels
 description:
 - Manage labels on Cisco ACI Multi-Site.
@@ -45,13 +45,13 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
-extends_documentation_fragment: msc
+extends_documentation_fragment: mso
 '''
 
 EXAMPLES = r'''
 - name: Add a new label
-  msc_label:
-    host: msc_host
+  mso_label:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     label: Belgium
@@ -60,8 +60,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a label
-  msc_label:
-    host: msc_host
+  mso_label:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     label: Belgium
@@ -69,8 +69,8 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a label
-  msc_label:
-    host: msc_host
+  mso_label:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     label: Belgium
@@ -79,8 +79,8 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all labels
-  msc_label:
-    host: msc_host
+  mso_label:
+    host: mso_host
     username: admin
     password: SomeSecretPassword
     state: query
@@ -92,11 +92,11 @@ RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.aci.msc import MSCModule, msc_argument_spec, issubset
+from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, issubset
 
 
 def main():
-    argument_spec = msc_argument_spec()
+    argument_spec = mso_argument_spec()
     argument_spec.update(
         label=dict(type='str', required=False, aliases=['name', 'label_name']),
         label_id=dict(type='str', required=False),
@@ -118,24 +118,24 @@ def main():
     label_type = module.params['type']
     state = module.params['state']
 
-    msc = MSCModule(module)
+    mso = MSOModule(module)
 
     path = 'labels'
 
     # Query for existing object(s)
     if label_id is None and label is None:
-        msc.existing = msc.query_objs(path)
+        mso.existing = mso.query_objs(path)
     elif label_id is None:
-        msc.existing = msc.get_obj(path, displayName=label)
-        if msc.existing:
-            label_id = msc.existing['id']
+        mso.existing = mso.get_obj(path, displayName=label)
+        if mso.existing:
+            label_id = mso.existing['id']
     elif label is None:
-        msc.existing = msc.get_obj(path, id=label_id)
+        mso.existing = mso.get_obj(path, id=label_id)
     else:
-        msc.existing = msc.get_obj(path, id=label_id)
-        existing_by_name = msc.get_obj(path, displayName=label)
+        mso.existing = mso.get_obj(path, id=label_id)
+        existing_by_name = mso.get_obj(path, displayName=label)
         if existing_by_name and label_id != existing_by_name['id']:
-            msc.fail_json(msg="Provided label '{0}' with id '{1}' does not match existing id '{2}'.".format(label, label_id, existing_by_name['id']))
+            mso.fail_json(msg="Provided label '{0}' with id '{1}' does not match existing id '{2}'.".format(label, label_id, existing_by_name['id']))
 
     # If we found an existing object, continue with it
     if label_id:
@@ -145,15 +145,15 @@ def main():
         pass
 
     elif state == 'absent':
-        msc.previous = msc.existing
-        if msc.existing:
+        mso.previous = mso.existing
+        if mso.existing:
             if module.check_mode:
-                msc.existing = {}
+                mso.existing = {}
             else:
-                msc.existing = msc.request(path, method='DELETE')
+                mso.existing = mso.request(path, method='DELETE')
 
     elif state == 'present':
-        msc.previous = msc.existing
+        mso.previous = mso.existing
 
         payload = dict(
             id=label_id,
@@ -161,21 +161,21 @@ def main():
             type=label_type,
         )
 
-        msc.sanitize(payload, collate=True)
+        mso.sanitize(payload, collate=True)
 
-        if msc.existing:
-            if not issubset(msc.sent, msc.existing):
+        if mso.existing:
+            if not issubset(mso.sent, mso.existing):
                 if module.check_mode:
-                    msc.existing = msc.proposed
+                    mso.existing = mso.proposed
                 else:
-                    msc.existing = msc.request(path, method='PUT', data=msc.sent)
+                    mso.existing = mso.request(path, method='PUT', data=mso.sent)
         else:
             if module.check_mode:
-                msc.existing = msc.proposed
+                mso.existing = mso.proposed
             else:
-                msc.existing = msc.request(path, method='POST', data=msc.sent)
+                mso.existing = mso.request(path, method='POST', data=mso.sent)
 
-    msc.exit_json()
+    mso.exit_json()
 
 
 if __name__ == "__main__":

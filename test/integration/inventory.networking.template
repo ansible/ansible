@@ -24,15 +24,15 @@ aci_use_proxy=no
 [aci]
 localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
 
-[msc:vars]
-msc_hostname=your-msc-1
-msc_username=admin
-msc_password=your-msc-password
-msc_validate_certs=no
-msc_use_ssl=yes
-msc_use_proxy=no
+[mso:vars]
+mso_hostname=your-mso-1
+mso_username=admin
+mso_password=your-mso-password
+mso_validate_certs=no
+mso_use_ssl=yes
+mso_use_proxy=no
 
-[msc]
+[mso]
 localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
 
 ###
