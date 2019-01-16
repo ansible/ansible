@@ -49,7 +49,10 @@ options:
     description:
       - Filter only by IP address.
     type: bool
-    default: false
+  object_type:
+    description:
+      - Type of the object to search. Must be a valid API resource name
+    default: None
 """
 
 EXAMPLES = """
@@ -77,6 +80,7 @@ def get_object(module, connection):
     uid = module.params['uid']
     object_filter = module.params['object_filter']
     ip_only = module.params['ip_only']
+    object_type = module.params['object_type']
 
     if uid:
         payload = {'uid': uid}
@@ -92,7 +96,8 @@ def main():
     argument_spec = dict(
         uid=dict(type='str', default=None),
         object_filter=dict(type='str'),
-        ip_only=dict(type='bool', default=False)
+        ip_only=dict(type='bool', default=False),
+        object_type=dict(type='str', default=None)
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
