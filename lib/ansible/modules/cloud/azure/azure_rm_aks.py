@@ -649,11 +649,11 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
     def create_agent_pool_profile_instance(self, agentpoolprofile):
         '''
-        Helper method to serialize a dict to a ContainerServiceAgentPoolProfile
-        :param: agentpoolprofile: dict with the parameters to setup the ContainerServiceAgentPoolProfile
-        :return: ContainerServiceAgentPoolProfile
+        Helper method to serialize a dict to a ManagedClusterAgentPoolProfile
+        :param: agentpoolprofile: dict with the parameters to setup the ManagedClusterAgentPoolProfile
+        :return: ManagedClusterAgentPoolProfile
         '''
-        return self.containerservice_models.ContainerServiceAgentPoolProfile(**agentpoolprofile)
+        return self.containerservice_models.ManagedClusterAgentPoolProfile(**agentpoolprofile)
 
 
     def create_service_principal_profile_instance(self, spnprofile):
