@@ -32,7 +32,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
-import q
+
 try:
     from infoblox_client.connector import Connector
     from infoblox_client.exceptions import InfobloxException
