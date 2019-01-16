@@ -658,11 +658,11 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
     def create_service_principal_profile_instance(self, spnprofile):
         '''
-        Helper method to serialize a dict to a ContainerServiceServicePrincipalProfile
-        :param: spnprofile: dict with the parameters to setup the ContainerServiceServicePrincipalProfile
-        :return: ContainerServiceServicePrincipalProfile
+        Helper method to serialize a dict to a ManagedClusterServicePrincipalProfile
+        :param: spnprofile: dict with the parameters to setup the ManagedClusterServicePrincipalProfile
+        :return: ManagedClusterServicePrincipalProfile
         '''
-        return self.containerservice_models.ContainerServiceServicePrincipalProfile(
+        return self.containerservice_models.ManagedClusterServicePrincipalProfile(
             client_id=spnprofile['client_id'],
             secret=spnprofile['client_secret']
         )
