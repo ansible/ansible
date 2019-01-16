@@ -351,6 +351,7 @@ class PluginLoader:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             with open(to_bytes(path), 'rb') as module_file:
+                # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
                 module = imp.load_source(full_name, to_native(path), module_file)
         return module
 
