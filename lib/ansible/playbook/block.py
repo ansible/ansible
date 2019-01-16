@@ -327,10 +327,7 @@ class Block(Base, Become, Conditional, Taggable):
                     pass
             if self._role and (value is Sentinel or extend):
                 try:
-                    if hasattr(self._role, '_get_parent_attribute'):
-                        parent_value = self._role.get_parent_attribute(attr)
-                    else:
-                        parent_value = self._role._attributes.get(attr, Sentinel)
+                    parent_value = self._role._attributes.get(attr, Sentinel)
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:
@@ -340,10 +337,7 @@ class Block(Base, Become, Conditional, Taggable):
                     if dep_chain and (value is Sentinel or extend):
                         dep_chain.reverse()
                         for dep in dep_chain:
-                            if hasattr(dep, '_get_parent_attribute'):
-                                dep_value = dep._get_parent_attribute(attr)
-                            else:
-                                dep_value = dep._attributes.get(attr, Sentinel)
+                            dep_value = dep._attributes.get(attr, Sentinel)
                             if extend:
                                 value = self._extend_value(value, dep_value, prepend)
                             else:
@@ -365,9 +359,6 @@ class Block(Base, Become, Conditional, Taggable):
                     pass
         except KeyError:
             pass
-
-        if value is Sentinel:
-            value = self._attr_defaults[attr]
 
         return value
 
