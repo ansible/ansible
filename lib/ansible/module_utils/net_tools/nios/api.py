@@ -390,7 +390,7 @@ class WapiModule(WapiBase):
 
     def check_if_add_remove_ip_exists(self, proposed_object):
         '''
-            This function will check if address_add/address_remove param
+            This function shall check if address_add/address_remove param
             is passed in the args and if yes will update the proposed dictionary
             to add/remove IP to existing host_record
         '''
