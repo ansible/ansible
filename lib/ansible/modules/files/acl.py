@@ -81,14 +81,6 @@ options:
     default: no
     version_added: '2.2'
 
-  recalculate_mask:
-    description:
-    - Select if and when to recalculate the effective right masks of the files.
-    - See C(setfacl) documentation for more info.
-    - Incompatible with C(state=query).
-    choices: [ default, mask, no_mask ]
-    default: default
-    version_added: '2.7'
 author:
     - Brian Coca (@bcoca)
     - Jérémie Astori (@astorije)
