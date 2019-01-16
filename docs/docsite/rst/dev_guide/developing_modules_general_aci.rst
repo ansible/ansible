@@ -439,5 +439,5 @@ You can run this:
 
 .. code-block:: bash
 
-    $ ansible-test integration --python 2.7 --coverage aci_tenant
+    $ ansible-test network-integration --python 2.7 --allow-unsupported --coverage aci_tenant
     $ ansible-test coverage report
