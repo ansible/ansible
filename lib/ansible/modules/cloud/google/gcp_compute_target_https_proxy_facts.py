@@ -106,12 +106,19 @@ items:
         must be specified.
       returned: success
       type: list
+    sslPolicy:
+      description:
+      - A reference to the SslPolicy resource that will be associated with the TargetHttpsProxy
+        resource. If not set, the TargetHttpsProxy resource will not have any SSL
+        policy configured.
+      returned: success
+      type: str
     urlMap:
       description:
       - A reference to the UrlMap resource that defines the mapping from URL to the
         BackendService.
       returned: success
-      type: dict
+      type: str
 '''
 
 ################################################################################

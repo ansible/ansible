@@ -64,19 +64,18 @@ options:
     description:
     - URL of the Target VPN gateway with which this VPN tunnel is associated.
     - 'This field represents a link to a TargetVpnGateway resource in GCP. It can
-      be specified in two ways. You can add `register: name-of-resource` to a gcp_compute_target_vpn_gateway
-      task and then set this target_vpn_gateway field to "{{ name-of-resource }}"
-      Alternatively, you can set this target_vpn_gateway to a dictionary with the
-      selfLink key where the value is the selfLink of your TargetVpnGateway'
+      be specified in two ways. First, you can place in the selfLink of the resource
+      here as a string Alternatively, you can add `register: name-of-resource` to
+      a gcp_compute_target_vpn_gateway task and then set this target_vpn_gateway field
+      to "{{ name-of-resource }}"'
     required: true
   router:
     description:
     - URL of router resource to be used for dynamic routing.
     - 'This field represents a link to a Router resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_router
-      task and then set this router field to "{{ name-of-resource }}" Alternatively,
-      you can set this router to a dictionary with the selfLink key where the value
-      is the selfLink of your Router'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_router
+      task and then set this router field to "{{ name-of-resource }}"'
     required: false
   peer_ip:
     description:
@@ -125,7 +124,7 @@ notes:
 EXAMPLES = '''
 - name: create a network
   gcp_compute_network:
-      name: "network-vpn_tunnel"
+      name: "network-vpn-tunnel"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -134,7 +133,7 @@ EXAMPLES = '''
 
 - name: create a router
   gcp_compute_router:
-      name: "router-vpn_tunnel"
+      name: "router-vpn-tunnel"
       network: "{{ network }}"
       bgp:
         asn: 64514
@@ -153,7 +152,7 @@ EXAMPLES = '''
 
 - name: create a target vpn gateway
   gcp_compute_target_vpn_gateway:
-      name: "gateway-vpn_tunnel"
+      name: "gateway-vpn-tunnel"
       region: us-west1
       network: "{{ network }}"
       project: "{{ gcp_project }}"
@@ -199,12 +198,12 @@ targetVpnGateway:
   description:
   - URL of the Target VPN gateway with which this VPN tunnel is associated.
   returned: success
-  type: dict
+  type: str
 router:
   description:
   - URL of router resource to be used for dynamic routing.
   returned: success
-  type: dict
+  type: str
 peerIp:
   description:
   - IP address of the peer VPN gateway. Only IPv4 is supported.
@@ -282,8 +281,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            target_vpn_gateway=dict(required=True, type='dict'),
-            router=dict(type='dict'),
+            target_vpn_gateway=dict(required=True),
+            router=dict(),
             peer_ip=dict(required=True, type='str'),
             shared_secret=dict(required=True, type='str'),
             ike_version=dict(default=2, type='int'),
