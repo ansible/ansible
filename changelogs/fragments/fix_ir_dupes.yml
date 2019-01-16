@@ -1,0 +1,2 @@
+bugfixes:
+    - prevent import_role from inserting dupe into `roles:` execution when duplicate signature role already exists in the section.
