@@ -43,13 +43,13 @@ options:
     type: str
   users:
     description:
-    - A list of allowed users for this tenant.
-    - Using this property will replace any existing allowed users.
+    - A list of associated users for this tenant.
+    - Using this property will replace any existing associated users.
     type: list
   sites:
     description:
-    - A list of allowed sites for this tenant.
-    - Using this property will replace any existing allowed sites.
+    - A list of associated sites for this tenant.
+    - Using this property will replace any existing associated sites.
     type: list
   state:
     description:
