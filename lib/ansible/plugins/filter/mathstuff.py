@@ -254,6 +254,7 @@ class FilterModule(object):
 
             # set theory
             'unique': unique,
+            'duplicate': duplicate,
             'intersect': intersect,
             'difference': difference,
             'symmetric_difference': symmetric_difference,
