@@ -396,8 +396,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             key_name = None
             if 'responses' in batch_resp:
                 key_name = 'responses'
-            if 'value' in batch_resp:
+            elif 'value' in batch_resp:
                 key_name = 'value'
+            else:
+                raise AnsibleError("didn't find expected key responses/value in batch response")
 
             for idx, r in enumerate(batch_resp[key_name]):
                 status_code = r.get('httpStatusCode')
