@@ -78,7 +78,7 @@ class TaskQueueManager:
         self._run_tree = run_tree
         self._forks = forks or 5
 
-        self._callback_pool = None
+        self._callback_pool = multiprocessing.Pool(processes=1)
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done = False
@@ -199,7 +199,6 @@ class TaskQueueManager:
         are done with the current task).
         '''
 
-        self._callback_pool = multiprocessing.Pool(processes=1)
         if not self._callbacks_loaded:
             self.load_callbacks()
 
