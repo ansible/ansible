@@ -680,13 +680,14 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         )
 
     def create_network_profile_instance(self, network):
-        return self.containerservice_models.ContainerServiceNetworkProfile(**network)
+        return self.containerservice_models.ContainerServiceNetworkProfile(**network) if network else None
 
     def create_aad_profile_instance(self, aad):
-        return self.containerservice_models.ManagedClusterAADProfile(**aad)
+        return self.containerservice_models.ManagedClusterAADProfile(**aad) if aad else None
 
     def create_addon_profile_instance(self, addon):
         result = dict()
+        addon = addon or {}
         for key in addon.keys():
             result[key] = self.containerservice_models.ManagedClusterAddonProfile(**addon[key])
         return result
