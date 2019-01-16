@@ -244,7 +244,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     self._attributes[target_name] = ds[name]
 
         # set defaults from CLI
-        self._set_options()
+        # TODO: REMOVE
+        # self._set_options()
 
         # run early, non-critical validation
         self.validate()
@@ -256,6 +257,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Configures defaults using CLI options
         '''
+
+        attrs = []
+
         for flag in context.CLIARGS:
             # skip private and incorrect matches: i.e tags is really only_these_tags
             if flag.startswith('_') or flag in ('tags', 'args'):
@@ -270,6 +274,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             attribute = context.CLIARGS.get(attr, False)
             if attribute and hasattr(self, attr):
                 setattr(self, attr, attribute)
+                attrs.append(attr)
+
+        print('attrs.extend(%r)' % (attrs,))
 
     def get_ds(self):
         try:
@@ -616,9 +623,9 @@ class Base(FieldAttributeBase):
     _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
 
     # connection/transport
-    _connection = FieldAttribute(isa='string')
+    _connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
     _port = FieldAttribute(isa='int')
-    _remote_user = FieldAttribute(isa='string')
+    _remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
 
     # variables
     _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
@@ -632,8 +639,8 @@ class Base(FieldAttributeBase):
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
     _ignore_unreachable = FieldAttribute(isa='bool')
-    _check_mode = FieldAttribute(isa='bool')
-    _diff = FieldAttribute(isa='bool')
+    _check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
+    _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
     _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
 
     # explicitly invoke a debugger on tasks

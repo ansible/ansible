@@ -31,3 +31,24 @@ def _init_global_context(cli_args):
     """Initialize the global context objects"""
     global CLIARGS
     CLIARGS = GlobalCLIArgs.from_options(cli_args)
+
+
+def cliargs_deferred_get(key, default=None, shallowcopy=True):
+    """Closure over getting a key from CLIARGS with shallow copy functionality
+
+    Primarily used in ``FieldAttribute`` where we need to defer setting the default
+    until after the CLI arguments have been parsed
+
+    This function is not directly bound to ``CliArgs`` so that it works with
+    ``CLIARGS`` being replaced
+    """
+    def inner():
+        value = CLIARGS.get(key, default=default)
+        if not shallowcopy:
+            return value
+        elif isinstance(value, list):
+            return value[:]
+        elif isinstance(value, (dict, set)):
+            return value.copy()
+        return value
+    return inner

@@ -75,16 +75,11 @@ class Play(Base, Taggable, Become):
     _tasks = FieldAttribute(isa='list', default=list)
 
     # Flag/Setting Attributes
-    _force_handlers = FieldAttribute(isa='bool', default=C.DEFAULT_FORCE_HANDLERS, always_post_validate=True)
+    _force_handlers = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
     _serial = FieldAttribute(isa='list', default=list, always_post_validate=True)
     _strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
     _order = FieldAttribute(isa='string', always_post_validate=True)
-
-    # hidden for inheritance only for CLI options
-    _only_tags = FieldAttribute(isa='set', default=set, private=True)
-    _skip_tags = FieldAttribute(isa='set', default=set, private=True)
-    _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT, private=True)
 
     # =================================================================================
 
@@ -95,6 +90,10 @@ class Play(Base, Taggable, Become):
         self._included_path = None
         self._removed_hosts = []
         self.ROLE_CACHE = {}
+
+        self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
+        self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
+        self.timeout = int(context.CLIARGS.get('timeout', 10))
 
     def __repr__(self):
         return self.get_name()
@@ -116,9 +115,10 @@ class Play(Base, Taggable, Become):
 
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def load_data(self, data, variable_manager=None, loader=None, vars=None):
-        self._set_from_CLI_options()
-        return super(Play, self).load_data(data, variable_manager=variable_manager, loader=loader)
+    # TODO: REMOVE
+    # def load_data(self, data, variable_manager=None, loader=None, vars=None):
+    #     self._set_from_CLI_options()
+    #     return super(Play, self).load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
         '''
@@ -361,7 +361,7 @@ class Play(Base, Taggable, Become):
                 setattr(self, flag, attribute)
 
         # flags that are named differently or might not be set
-        self.check_mode = boolean(context.CLIARGS.get('check', False), strict=False)
+        # self.check_mode = boolean(context.CLIARGS.get('check', False), strict=False)
 
         # get the tag info from options. We check to see if the options have
         # the attribute, as it is not always added via the CLI
