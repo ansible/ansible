@@ -504,8 +504,8 @@ def stderr_redirector(path_name):
 
 
 def make_redirection_tempfiles():
-    _, out_redir_name = tempfile.mkstemp(prefix="ansible")
-    _, err_redir_name = tempfile.mkstemp(prefix="ansible")
+    dummy, out_redir_name = tempfile.mkstemp(prefix="ansible")
+    dummy, err_redir_name = tempfile.mkstemp(prefix="ansible")
     return (out_redir_name, err_redir_name)
 
 
