@@ -76,6 +76,12 @@ options:
         description:
             - "If I(true) network configuration will be persistent, by default they are temporarily."
         type: bool
+    sync_networks:
+        description:
+            - "If I(true) all networks will be synchronized before modification"
+        type: bool
+        default: false
+        version_added: 2.8
 extends_documentation_fragment: ovirt
 '''
 
@@ -320,6 +326,16 @@ class HostNetworksModule(BaseModule):
             self.changed = True
 
 
+def needs_sync(nics_service):
+    nics = nics_service.list()
+    for nic in nics:
+        nic_service = nics_service.nic_service(nic.id)
+        for network_attachment_service in nic_service.network_attachments_service().list():
+            if not network_attachment_service.in_sync:
+                return True
+    return False
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -333,6 +349,7 @@ def main():
         labels=dict(default=None, type='list'),
         check=dict(default=None, type='bool'),
         save=dict(default=None, type='bool'),
+        sync_networks=dict(default=False, type='bool'),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -362,8 +379,15 @@ def main():
         nics_service = host_service.nics_service()
         nic = search_by_name(nics_service, nic_name)
 
+        if module.params["sync_networks"]:
+            if needs_sync(nics_service):
+                if not module.check_mode:
+                    host_service.sync_all_networks()
+                host_networks_module.changed = True
+
         network_names = [network['name'] for network in networks or []]
         state = module.params['state']
+
         if (
             state == 'present' and
             (nic is None or host_networks_module.has_update(nics_service.service(nic.id)))
