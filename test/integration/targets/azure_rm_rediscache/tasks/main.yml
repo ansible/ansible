@@ -1,8 +1,8 @@
 - name: Fix resource prefix
   set_fact:
-    redis_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}redis"
-    vnet_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}vnet"
-    subnet_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}subnet"
+    redis_name: "redis-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
+    vnet_name: "vnet-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
+    subnet_name: "subnet-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
   run_once: yes
 
 - name: Create a redis cache (Check Mode)
