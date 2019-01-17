@@ -81,6 +81,7 @@ options:
         description:
           - Specifies the type of hash (e.g., 5 for MD5, 8 for PBKDF2, etc.)
           - For this to work, the device needs to support the desired hash type
+        type: int
         required: True
       value:
         description:
