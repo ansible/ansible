@@ -157,10 +157,14 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-meta:
-  description: Message indicating failure or returns results with the object created within Netbox
+ip_address:
+  description: Serialized object as created or already existent within Netbox
+  returned: on creation
+  type: dict
+msg:
+  description: Message indicating failure or info about what has been achieved
   returned: always
-  type: list
+  type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -172,62 +176,6 @@ try:
     HAS_PYNETBOX = True
 except ImportError:
     HAS_PYNETBOX = False
-
-
-def netbox_create_ip_address(nb, nb_endpoint, data):
-    result = []
-    if data.get('vrf'):
-        norm_data = normalize_data(data)
-        if norm_data.get("status"):
-            norm_data["status"] = IP_ADDRESS_STATUS.get(norm_data["status"].lower())
-        if norm_data.get("role"):
-            norm_data["role"] = IP_ADDRESS_ROLE.get(norm_data["role"].lower())
-        data = find_ids(nb, norm_data)
-        if data.get('failed'):
-            result.append(data)
-            return result
-
-        if not nb_endpoint.get(address=data["address"], vrf_id=data['vrf']):
-            try:
-                return nb_endpoint.create([data])
-            except pynetbox.RequestError as e:
-                return json.loads(e.error)
-        else:
-            result.append({'failed': '%s already exists in Netbox' % (data["address"])})
-    else:
-        if not nb_endpoint.get(address=data["address"]):
-            norm_data = normalize_data(data)
-            if norm_data.get("status"):
-                norm_data["status"] = IP_ADDRESS_STATUS.get(norm_data["status"].lower())
-            if norm_data.get("role"):
-                norm_data["role"] = IP_ADDRESS_ROLE.get(norm_data["role"].lower())
-            data = find_ids(nb, norm_data)
-
-            try:
-                return nb_endpoint.create([data])
-            except pynetbox.RequestError as e:
-                return json.loads(e.error)
-        else:
-            result.append({'failed': '%s already exists in Netbox' % (data["address"])})
-
-    return result
-
-
-def netbox_delete_ip_address(nb, nb_endpoint, data):
-    norm_data = normalize_data(data)
-    result = []
-    if data.get('vrf'):
-        data = find_ids(nb, norm_data)
-        endpoint = nb_endpoint.get(address=norm_data["address"], vrf_id=data['vrf'])
-    else:
-        endpoint = nb_endpoint.get(address=norm_data["address"])
-
-    try:
-        if endpoint.delete():
-            result.append({'success': '%s deleted from Netbox' % (norm_data["address"])})
-    except AttributeError:
-        result.append({'failed': '%s not found' % (norm_data["address"])})
-    return result
 
 
 def main():
@@ -250,7 +198,6 @@ def main():
         module.fail_json(msg='pynetbox is required for this module')
 
     # Assign variables to be used with module
-    changed = False
     app = 'ipam'
     endpoint = 'ip_addresses'
     url = module.params["netbox_url"]
@@ -270,15 +217,96 @@ def main():
         module.fail_json(msg="Incorrect application specified: %s" % (app))
 
     nb_endpoint = getattr(nb_app, endpoint)
-    if 'present' in state:
-        response = netbox_create_ip_address(nb, nb_endpoint, data)
-        if response[0].get('created'):
-            changed = True
+    norm_data = normalize_data(data)
+    try:
+        if 'present' in state:
+            return module.exit_json(
+                **ensure_ip_address_present(nb, nb_endpoint, norm_data)
+            )
+        else:
+            return module.exit_json(
+                **ensure_ip_address_absent(nb, nb_endpoint, norm_data)
+            )
+    except pynetbox.RequestError as e:
+        return module.fail_json(msg=json.loads(e.error))
+
+
+def ensure_ip_address_present(nb, nb_endpoint, data):
+    """
+    :returns dict(ip_address, msg, changed): dictionary resulting of the request,
+    where 'prefix' is the serialized device fetched or newly created in Netbox
+    """
+    data = find_ids(nb, data)
+    if not isinstance(data, dict):
+        changed = False
+        return {"msg": data, "changed": changed}
+
+    if data.get('vrf'):
+        if data.get("status"):
+            data["status"] = IP_ADDRESS_STATUS.get(data["status"].lower())
+        if data.get("role"):
+            data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
+
+        if not isinstance(data["vrf"], int):
+            changed = False
+            return {"msg": "%s does not exist - Please create VRF" % (data["vrf"]), "changed": changed}
+        else:
+            try:
+                ip_addr = nb_endpoint.get(address=data["address"], vrf_id=data['vrf'])
+            except ValueError:
+                changed = False
+                return {"msg": "Returned more than result", "changed": changed}
+
     else:
-        response = netbox_delete_ip_address(nb, nb_endpoint, data)
-        if 'success' in response[0]:
-            changed = True
-    module.exit_json(changed=changed, meta=response)
+        try:
+            ip_addr = nb_endpoint.get(address=data["address"])
+        except ValueError:
+            changed = False
+            return {"msg": "Returned more than one result - Try specifying VRF.", "changed": changed}
+
+    if not ip_addr:
+        ip_addr = nb_endpoint.create(data).serialize()
+        changed = True
+        msg = "IP Addresses %s create" % (data["address"])
+    else:
+        ip_addr = ip_addr.serialize()
+        changed = False
+        msg = "IP Address %s already exists" % (data["address"])
+
+    return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def ensure_ip_address_absent(nb, nb_endpoint, data):
+    """
+    :returns dict(msg, changed)
+    """
+    data = find_ids(nb, data)
+    if not isinstance(data, dict):
+        changed = False
+        return {"msg": data, "changed": changed}
+
+    if data.get('vrf'):
+        try:
+            ip_addr = nb_endpoint.get(address=data["address"], vrf_id=data['vrf'])
+        except ValueError:
+            changed = False
+            return {"msg": "Returned more than result", "changed": changed}
+
+    else:
+        try:
+            ip_addr = nb_endpoint.get(address=data["address"])
+        except ValueError:
+            return {"msg": "Returned more than one result - Try specifying VRF.", "changed": changed}
+
+    if ip_addr:
+        ip_addr.delete()
+        changed = True
+        msg = "IP Address %s deleted" % (data["address"])
+    else:
+        changed = False
+        msg = "IP Address %s already absent" % (data["address"])
+
+    return {"msg": msg, "changed": changed}
 
 
 if __name__ == "__main__":
