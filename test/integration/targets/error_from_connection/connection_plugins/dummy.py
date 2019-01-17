@@ -20,7 +20,6 @@ class Connection(ConnectionBase):
 
     transport = 'dummy'
     has_pipelining = True
-    incompatible_methods = []
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

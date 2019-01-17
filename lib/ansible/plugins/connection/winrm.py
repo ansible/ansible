@@ -176,7 +176,6 @@ class Connection(ConnectionBase):
 
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '.exe', '')
-    become_methods = ['runas']
     allow_executable = False
     has_pipelining = True
     allow_extras = True
