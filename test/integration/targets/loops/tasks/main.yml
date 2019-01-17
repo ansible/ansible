@@ -39,6 +39,8 @@
             - tdiff|int < 3
       vars:
         tdiff: '{{ times[2]|float - times[0]|float }}'
+  when:
+    - ansible_facts['distribution'] not in ("MacOSX", "FreeBSD")
 
 #
 # Tests of loop syntax with args
