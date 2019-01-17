@@ -30,7 +30,8 @@ options:
       - name
   state:
     description:
-      - The table state. I(state=absent) is mutually exclusive with all parameters except I(table).
+      - The table state. I(state=absent) is mutually exclusive with I(tablespace), I(owner), I(unlogged),
+        I(like), I(including), I(columns), I(truncate), I(storage_params) and, I(rename).
     default: present
     choices: ["present", "absent"]
   tablespace:
@@ -47,24 +48,25 @@ options:
     type: bool
   like:
     description:
-      - Create a table like another table (with similar DDL). Mutually exclusive with I(columns).
+      - Create a table like another table (with similar DDL). Mutually exclusive with I(columns), I(rename), and I(truncate).
   including:
     description:
-      - Keywords that are used with like parameter, may be DEFAULTS, CONSTRAINTS, INDEXES, STORAGE, COMMENTS or ALL. Needs I(like) specified.
+      - Keywords that are used with like parameter, may be DEFAULTS, CONSTRAINTS, INDEXES, STORAGE, COMMENTS or ALL.
+        Needs I(like) specified. Mutually exclusive with I(columns), I(rename), and I(truncate).
   columns:
     description:
       - Columns that are needed.
   rename:
     description:
-      - New table name. Mutually exclusive with all parameters except I(table).
+      - New table name. Mutually exclusive with I(tablespace), I(owner), I(unlogged), I(like), I(including), I(columns), I(truncate), and I(storage_params).
   truncate:
     description:
-      - Truncate a table. Mutually exclusive with all parameters except I(table).
+      - Truncate a table. Mutually exclusive with I(tablespace), I(owner), I(unlogged), I(like), I(including), I(columns), I(rename), and I(storage_params).
     default: no
     type: bool
   storage_params:
     description:
-      - Storage parameters like fillfactor, autovacuum_vacuum_treshold, etc.
+      - Storage parameters like fillfactor, autovacuum_vacuum_treshold, etc. Mutually exclusive with I(rename) and I(truncate).
   db:
     description:
       - Name of database to connect.
