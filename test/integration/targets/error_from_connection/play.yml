@@ -16,4 +16,5 @@
     - assert:
         that:
           - result is failed
+          - "'an error with' in result.msg"  # makes sure plugin was found
           - debug_task is success

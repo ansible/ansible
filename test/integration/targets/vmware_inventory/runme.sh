@@ -4,10 +4,7 @@
 
 set -euo pipefail
 
-# Get Current test directory
-DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-
-contrib_dir=$(pwd)/../../../../contrib/inventory
+contrib_dir=../../../../contrib/inventory
 
 echo "DEBUG: using ${contrib_dir}"
 
@@ -57,6 +54,6 @@ echo "Debugging new instances"
 curl "http://${vcenter_host}:5000/govc_find"
 
 # Get inventory
-ansible-playbook -i ./vmware_inventory.sh "${DIR}/test_vmware_inventory.yml" --connection=local "$@"
+ansible-playbook -i ./vmware_inventory.sh "./test_vmware_inventory.yml" --connection=local "$@"
 
 echo "DEBUG: Done"
