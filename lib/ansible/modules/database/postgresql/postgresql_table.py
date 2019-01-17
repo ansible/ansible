@@ -121,7 +121,7 @@ EXAMPLES = '''
 # Create tbl2 in the acme database with the DDL like tbl1 with testuser as an owner
 - postgresql_table:
     db: acme
-    table: tbl2
+    name: tbl2
     like: tbl1
     owner: testuser
 
@@ -137,14 +137,14 @@ EXAMPLES = '''
 # Create test_table with several columns in ssd tablespace
 # with fillfactor=10 and autovacuum_analyze_threshold=1
 - postgresql_table:
-    table: test_table
+    name: test_table
     columns: id bigserial primary key, num bigint, stories text
     tablespace: ssd
     with: fillfactor=10, autovacuum_analyze_threshold=1
 
 # Create an unlogged table
 - postgresql_table:
-    table: useless_data
+    name: useless_data
     column: waste_id int
     unlogged: true
 
@@ -155,24 +155,24 @@ EXAMPLES = '''
 
 # Set owner to someuser
 - postgresql_table:
-    table: foo
+    name: foo
     owner: someuser
 
 # Change tablespace of foo table to new_tablespace
 # and set owner to new_user
 - postgresql_table:
-    table: foo
+    name: foo
     tablespace: new_tablespace
     owner: new_user
 
 # Truncate table foo:
 - postgresql_table:
-    table: foo
+    name: foo
     truncate: yes
 
 # Drop table foo:
 - postgresql_table:
-    table: foo
+    name: foo
     state: absent
 '''
 
