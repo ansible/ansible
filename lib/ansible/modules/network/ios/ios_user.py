@@ -213,7 +213,6 @@ commands:
 from copy import deepcopy
 
 import re
-import ast
 import base64
 import hashlib
 
@@ -269,8 +268,8 @@ def map_obj_to_commands(updates, module):
         command.append('username %s %s' % (want['name'], x))
 
     def add_hashed_password(command, want, x):
-        command.append('username %s secret %s %s' % (want['name'], ast.literal_eval(x)['type'],
-                                                     ast.literal_eval(x)['value']))
+        command.append('username %s secret %s %s' % (want['name'], x.get('type'),
+                                                     x.get('value')))
 
     def add_ssh(command, want, x=None):
         command.append('ip ssh pubkey-chain')
