@@ -523,8 +523,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         return True
 
                     if self.addon:
-                        for key in ADDONS.values():
-                            if not compare_addon(response['addon'].get(key), self.addon.get(key)):
+                        for key in ADDONS.keys():
+                            if not compare_addon(response['addon'].get(ADDONS[key]), self.addon.get(key)):
                                 to_be_updated = True
 
                     for profile_result in response['agent_pool_profiles']:
@@ -707,7 +707,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         result = dict()
         addon = addon or {}
         for key in addon.keys():
-            result[key] = self.containerservice_models.ManagedClusterAddonProfile(**addon[key])
+            if not ADDONS.get(key):
+                self.fail('Unsupported addon {0}'.format(key)) 
+            result[ADDONS[key]] = self.containerservice_models.ManagedClusterAddonProfile(**addon[key])
         return result
 
 
