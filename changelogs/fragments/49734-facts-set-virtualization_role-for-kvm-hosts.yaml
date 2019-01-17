@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - set virtualization_role for KVM hosts (https://github.com/ansible/ansible/issues/49734)
