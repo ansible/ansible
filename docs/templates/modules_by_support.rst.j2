@@ -21,7 +21,7 @@ Modules Maintained by the @{ maintainers }@
 {% for name, info in data.items() | sort %}
 
 {% if name.lower() %}
-.. _@{ name.lower() + '_' + slug.lower() + '_' + plugin_type + 's' }@:
+.. _@{ name.lower() + '_' + category + '_' + slug.lower() + '_' + plugin_type + 's' }@:
 {% else %}
 .. _@{ slug.lower() + '_' + category }@:
 {% endif %}
