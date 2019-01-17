@@ -2076,15 +2076,16 @@ def main():
         connection = create_connection(auth)
         vms_service = connection.system_service().vms_service()
 
+        if not module.params['wait'] and state=='running':
+            original_wait = module.params['wait']
+            module.params['wait'] = True
+
         vms_module = VmsModule(
             connection=connection,
             module=module,
             service=vms_service,
         )
 
-        if not module.params['wait'] and state=='running':
-            original_wait = module.params['wait']
-            vms_module._module.params['wait'] = True
         vm = vms_module.search_entity(list_params={'all_content': True})
 
         control_state(vm, vms_service, module)
