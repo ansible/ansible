@@ -17,9 +17,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: postgresql_table
-short_description: Allows to create, drop, rename, or truncate a table. Also allows to change some attributes.
+short_description: Allows to create, drop, rename, or truncate a table and to change some table attributes.
 description:
-   - Create or drop a PostgreSQL table.
+   - Allows to create, drop, rename, or truncate a table and to change some table attributes.
 version_added: "2.8"
 options:
   table:
@@ -30,7 +30,7 @@ options:
       - name
   state:
     description:
-      - The table state.
+      - The table state. I(state=absent) is mutually exclusive with all parameters except I(table).
     default: present
     choices: ["present", "absent"]
   tablespace:
@@ -47,19 +47,19 @@ options:
     type: bool
   like:
     description:
-      - Create a table like another table (with similar DDL).
+      - Create a table like another table (with similar DDL). Mutually exclusive with I(columns).
   including:
     description:
-      - Keywords that are used with like parameter, may be DEFAULTS, CONSTRAINTS, INDEXES, STORAGE, COMMENTS or ALL.
+      - Keywords that are used with like parameter, may be DEFAULTS, CONSTRAINTS, INDEXES, STORAGE, COMMENTS or ALL. Needs I(like) specified.
   columns:
     description:
       - Columns that are needed.
   rename:
     description:
-      - New table name.
+      - New table name. Mutually exclusive with all parameters except I(table).
   truncate:
     description:
-      - Truncate a table.
+      - Truncate a table. Mutually exclusive with all parameters except I(table).
     default: no
     type: bool
   storage_params:
@@ -453,22 +453,29 @@ def main():
     if state == 'absent' and (truncate or newname or columns or tablespace or
                               like or storage_params or unlogged or
                               owner or including):
-        module.fail_json(msg="%s: state=absent is mutual exclusive with: "
+        module.fail_json(msg="%s: state=absent is mutually exclusive with: "
                              "truncate, rename, columns, tablespace, "
                              "including, like, storage_params, "
                              "unlogged, owner" % table)
 
     if truncate and (newname or columns or like or unlogged or
                      storage_params or owner or tablespace or including):
-        module.fail_json(msg="%s: truncate is mutual exclusive with: "
+        module.fail_json(msg="%s: truncate is mutually exclusive with: "
                              "rename, columns, like, unlogged, including, "
-                             "storage_params, owner tablespace" % table)
+                             "storage_params, owner, tablespace" % table)
+
+    if newname and (columns or like or unlogged or
+                    storage_params or owner or tablespace or including):
+        module.fail_json(msg="%s: rename is mutually exclusive with: "
+                             "columns, like, unlogged, including, "
+                             "storage_params, owner, tablespace" % table)
 
     if like and columns:
-        module.fail_json(msg="%s: like and columns params are mutual "
+        module.fail_json(msg="%s: like and columns params are mutually "
                              "exclusive" % table)
     if including and not like:
-        module.fail_json(msg="%s: including param needs like param" % table)
+        module.fail_json(msg="%s: including param needs like "
+                             "param specified" % table)
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -548,7 +555,7 @@ def main():
             db_connection.commit()
 
         # Refresh table info for RETURN.
-        # Note, if table has been renamed, get info by newname:
+        # Note, if table has been renamed, it gets info by newname:
         table_obj.get_info()
         db_connection.commit()
         if table_obj.exists:
