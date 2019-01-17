@@ -19,13 +19,13 @@ DOCUMENTATION = '''
 module: postgresql_set
 short_description: Change a PostgreSQL server configuration parameter.
 description:
-   - Allows to change PostgreSQL (9.4+) server configuration parameters
-     using ALTER SYSTEM command and apply them by reload server configuration.
-   - Changed parameter values are stored in PGDATA/postgresql.auto.conf.
+   - Allows to change a PostgreSQL server configuration parameter
+     using ALTER SYSTEM command and apply it by reload server configuration.
+   - Changed value is stored in PGDATA/postgresql.auto.conf.
    - Allows to reset parameter to boot_val (cluster initial value) or remove parameter
      string from postgresql.auto.conf and reload.
    - After change you can see in ansible output the previous and
-     the new parameter value, and other information by using returned values.
+     the new parameter value and other information using returned values and M(debug) module.
 version_added: "2.8"
 options:
   name:
@@ -34,15 +34,15 @@ options:
     required: true
   value:
     description:
-      - Parameter value to set (may be 'default' to remove parameter string from postgresql.auto.conf).
+      - Parameter value to set. To remove parameter string from postgresql.auto.conf and reload the server you must pass I(value=default).
   show:
     description:
-      - Show parameter value.
+      - Show parameter value. Mutually exclusive with I(reset) and I(value).
     default: false
     type: bool
   reset:
     description:
-      - Restore parameter to initial state (boot_val).
+      - Restore parameter to initial state (boot_val). Mutually exclusive with I(show) and I(value).
     default: false
     type: bool
   db:
@@ -80,11 +80,11 @@ options:
         certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
 notes:
-   - Check_mode is not supported because ALTER SYSTEM cannot run inside a transaction block.
-     You may use "show" parameter to know desired setting will be changed or not.
+   - Check_mode is not supported because ALTER SYSTEM cannot be run inside a transaction block.
+     You can use "show" parameter to know desired setting will be changed or not.
    - Supported version of PostgreSQL is 9.4 and later.
    - For some parameters restart of PostgreSQL server is required.
-     See official documentation.
+     See official documentation U(https://www.postgresql.org/).
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
    - This module uses psycopg2, a Python PostgreSQL database adapter. You must
@@ -251,11 +251,11 @@ def main():
                 value = value.upper()
 
     if value is not None and reset:
-        module.fail_json(msg="%s: value and reset params are mutual "
+        module.fail_json(msg="%s: value and reset params are mutually "
                              "exclusive" % name)
 
     if (value is not None and show) or (reset and show):
-        module.fail_json(msg="%s: param value/reset is mutual "
+        module.fail_json(msg="%s: param value and reset are mutually "
                              "exclusive with show" % name)
 
     if value is None and not reset and not show:
