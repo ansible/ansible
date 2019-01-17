@@ -511,9 +511,10 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         for profile_self in self.agent_pool_profiles:
                             if profile_result['name'] == profile_self['name']:
                                 matched = True
+                                os_disk_size_gb = profile_self.get('os_disk_size_gb') or profile_result['os_disk_size_gb']
                                 if profile_result['count'] != profile_self['count'] \
                                         or profile_result['vm_size'] != profile_self['vm_size'] \
-                                        or profile_result['os_disk_size_gb'] != profile_self.get('os_disk_size_gb', profile_result['os_disk_size_gb']) \
+                                        or profile_result['os_disk_size_gb'] != os_disk_size_gb \
                                         or profile_result['vnet_subnet_id'] != profile_self.get('vnet_subnet_id', profile_result['vnet_subnet_id']):
                                     self.log(("Agent Profile Diff - Origin {0} / Update {1}".format(str(profile_result), str(profile_self))))
                                     to_be_updated = True
