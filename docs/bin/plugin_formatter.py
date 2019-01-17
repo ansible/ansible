@@ -674,7 +674,7 @@ These modules are currently shipped with Ansible, but will most likely be shippe
                 subcategories[category][new_cat]['_modules'] = []
             subcategories[category][new_cat]['_modules'].append(module)
 
-        display.warning('maint is %s subcat is %s and  full cat list are %s' % (maintainers, new_cat, subcategories[category]))
+        display.warning('maint is %s cat is %s and  full cat list are %s' % (maintainers, category, subcategories[category]))
 
         template_data = {'maintainers': maintainers,
                          'subcategories': subcategories,
