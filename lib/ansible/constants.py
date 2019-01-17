@@ -13,6 +13,7 @@ from jinja2 import Template
 from string import ascii_letters, digits
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
 from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
@@ -69,16 +70,32 @@ def set_constant(name, value, export=vars()):
     export[name] = value
 
 
-def _get_become_methods():
-    # p = subprocess.Popen('ansible-doc -l -t become', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # p.communicate()
-    # return p.stdout.splitlines()
-    return []
+class _DeprecatedSequenceConstant(Sequence):
+    def __init__(self, value, msg, version):
+        self._value = value
+        self._msg = msg
+        self._version = version
 
+    def __len__(self):
+        _deprecated(self._msg, version=self._version)
+        return len(self._value)
+
+    def __getitem__(self, y):
+        _deprecated(self._msg, version=self._version)
+        return self._value[y]
+
+
+# Deprecated constants
+BECOME_METHODS = _DeprecatedSequenceConstant(
+    ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun', 'enable', 'machinectl'],
+    ('ansible.constants.BECOME_METHODS is deprecated, please use '
+     'ansible.plugins.loader.become_loader. This list is statically '
+     'defined and may not include all become methods'),
+    '2.12'
+)
 
 # CONSTANTS ### yes, actual ones
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
-BECOME_METHODS = _get_become_methods()
 BOOL_TRUE = BOOLEANS_TRUE
 CONTROLLER_LANG = os.getenv('LANG', 'en_US.UTF-8')
 DEFAULT_BECOME_PASS = None
