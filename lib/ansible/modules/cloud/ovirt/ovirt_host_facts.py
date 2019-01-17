@@ -35,8 +35,8 @@ options:
       type: bool
     cluster_version:
       description:
-        - "Filters all your hosts which you got and returns only those with correct version of cluster."
-      type: dict
+        - "Filter the hosts based on the cluster version."
+      type: str
       version_added: "2.8"
 
 extends_documentation_fragment: ovirt_facts
@@ -55,9 +55,7 @@ EXAMPLES = '''
 # All hosts with cluster version 4.2:
 - ovirt_host_facts:
     pattern: name=host*
-    cluster_version:
-        major: 4
-        minor: 2
+    cluster_version: "4.2"
 - debug:
     var: ovirt_hosts
 '''
@@ -86,7 +84,8 @@ def get_filtered_hosts(cluster_version, hosts):
     filtered_hosts = []
     for host in hosts:
         cluster = host.cluster
-        if cluster.version.major == cluster_version.get("major") and cluster.version.minor == cluster_version.get("minor"):
+        cluster_version_host = str(cluster.version.major) + '.' + str(cluster.version.minor)
+        if cluster_version_host == cluster_version:
             filtered_hosts.append(host)
     return filtered_hosts
 
@@ -95,7 +94,7 @@ def main():
     argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
         all_content=dict(default=False, type='bool'),
-        cluster_version=dict(default=None, type='dict'),
+        cluster_version=dict(default=None, type='str'),
     )
     module = AnsibleModule(argument_spec)
 
@@ -111,7 +110,7 @@ def main():
             follow='cluster',
         )
         cluster_version = module.params.get('cluster_version')
-        if cluster_version is not None and cluster_version.get("major") is not None and cluster_version.get("minor") is not None:
+        if cluster_version is not None:
             hosts = get_filtered_hosts(cluster_version, hosts)
         module.exit_json(
             changed=False,
