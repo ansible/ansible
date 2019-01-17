@@ -681,8 +681,8 @@ def _load_params():
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from {0}.  Unable to figure out what parameters were passed", '
-              '"failed": true}'.format(json_source))
+        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from %s.  Unable to figure out what parameters were passed", '
+              '"failed": true}' % json_source)
         sys.exit(1)
 
 
