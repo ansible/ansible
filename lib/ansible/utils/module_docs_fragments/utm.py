@@ -5,6 +5,11 @@
 class ModuleDocFragment(object):
     DOCUMENTATION = """
 options:
+    headers:
+        description:
+          - A dictionary of additional headers to be sent to POST and PUT requests.
+          - Is needed for some modules
+        required: false
     utm_host:
         description:
           - The REST Endpoint of the Sophos UTM.
@@ -35,10 +40,8 @@ options:
           - The desired state of the object.
           - C(present) will create or update an object
           - C(absent) will delete an object if it was present
-          - C(info) will return the object details
         choices:
           - present
           - absent
-          - info
         default: present
 """
