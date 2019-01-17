@@ -25,7 +25,7 @@ deprecated:
 description:
   - This is the original Ansible module for managing the Docker container life cycle.
   - NOTE - Additional and newer modules are available. For the latest on orchestrating containers with Ansible
-    visit our L(Getting Started with Docker Guide,.../scenario_guides/guide_docker.html).
+    visit our L(Getting Started with Docker Guide,../scenario_guides/guide_docker.html).
 options:
   count:
     description:
