@@ -2918,3 +2918,7 @@ class AnsibleModule(object):
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
+
+
+def get_timestamp():
+    return datetime.datetime.now().replace(microsecond=0).isoformat()
