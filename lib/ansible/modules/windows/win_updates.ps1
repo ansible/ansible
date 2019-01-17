@@ -112,7 +112,7 @@ $update_script_block = {
                 kb = $update.KBArticleIDs
                 id = $update.Identity.UpdateId
                 installed = $false
-                categories = ($update.Categories | ForEach-Object { $_.Name })
+                categories = @($update.Categories | ForEach-Object { $_.Name })
             }
 
             # validate update again blacklist/whitelist/post_category_names/hidden
