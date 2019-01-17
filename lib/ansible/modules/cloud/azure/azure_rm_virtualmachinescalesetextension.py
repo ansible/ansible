@@ -64,8 +64,8 @@ options:
         type: bool
     state:
         description:
-            - Assert the state of the SQL server. Use 'present' to create or update a server and
-              'absent' to delete a server.
+            - Assert the state of the extension.
+            - Use C(present) to create or update an extension and C(absent) to delete it.
         default: present
         choices:
             - absent
