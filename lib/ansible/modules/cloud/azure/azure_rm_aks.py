@@ -230,7 +230,7 @@ def create_addon_dict(addon):
     addon = addon or dict()
     for key in addon.keys():
         result[key] = dict(
-            enable=addon[key].enable,
+            enabled=addon[key].enabled,
             config=addon[key].config
         )
     return result
@@ -509,7 +509,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                             return True
                         if not origin:
                             return False
-                        if origin['enable'] != patch['enable']:
+                        if origin['enabled'] != patch['enabled']:
                             return False
                         origin_config = origin.get('config', {})
                         patch_config = patch.get('config')
@@ -708,8 +708,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         addon = addon or {}
         for key in addon.keys():
             if not ADDONS.get(key):
-                self.fail('Unsupported addon {0}'.format(key)) 
-            result[ADDONS[key]] = self.containerservice_models.ManagedClusterAddonProfile(**addon[key])
+                self.fail('Unsupported addon {0}'.format(key))
+            if addon.get(key):
+                result[ADDONS[key]] = self.containerservice_models.ManagedClusterAddonProfile(**addon[key])
         return result
 
 
