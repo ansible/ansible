@@ -70,7 +70,7 @@
     that:
       - output.changed
 
-- name: Update instance of DebTest Labs with same parameters
+- name: Update instance of DebTest Labs virtual network with same parameters
   azure_rm_devtestlabvirtualnetwork:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
@@ -83,7 +83,7 @@
     that:
       - output.changed == false
 
-- name: Update instance of DebTest Labs with changed description
+- name: Update instance of DebTest Labs virtual network with changed description
   azure_rm_devtestlabvirtualnetwork:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
