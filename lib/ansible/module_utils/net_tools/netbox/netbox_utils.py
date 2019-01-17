@@ -131,12 +131,12 @@ def find_ids(nb, data):
                     if vrf_id:
                         query_id = nb_endpoint.get(**{"address": v["address"], "vrf_id": vrf_id.id})
                     else:
-                        return "%s does not exist - Please create VRF" % (data["vrf"])
+                        raise ValueError("%s does not exist - Please create VRF" % (data["vrf"]))
                 else:
                     try:
                         query_id = nb_endpoint.get(**{"address": v["address"]})
                     except ValueError:
-                        return {"failed": "Multiple results found while searching for %s: %s - Specify a VRF within %s" % (k, v["address"], k)}
+                        raise ValueError("Multiple results found while searching for %s: %s - Specify a VRF within %s" % (k, v["address"], k))
             else:
                 query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
 

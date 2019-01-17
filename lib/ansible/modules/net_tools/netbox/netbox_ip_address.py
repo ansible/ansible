@@ -229,6 +229,8 @@ def main():
             )
     except pynetbox.RequestError as e:
         return module.fail_json(msg=json.loads(e.error))
+    except ValueError as e:
+        return module.fail_json(msg=str(e))
 
 
 def ensure_ip_address_present(nb, nb_endpoint, data):
@@ -248,8 +250,7 @@ def ensure_ip_address_present(nb, nb_endpoint, data):
             data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
 
         if not isinstance(data["vrf"], int):
-            changed = False
-            return {"msg": "%s does not exist - Please create VRF" % (data["vrf"]), "changed": changed}
+            raise ValueError("%s does not exist - Please create VRF" % (data["vrf"]))
         else:
             try:
                 ip_addr = nb_endpoint.get(address=data["address"], vrf_id=data['vrf'])
