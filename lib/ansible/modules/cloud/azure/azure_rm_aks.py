@@ -96,6 +96,57 @@ options:
         type: bool
         default: no
         version_added: 2.8
+    network_profile:
+        description:
+            - Profile of network configuration.
+        suboptions:
+            network_plugin:
+                description:
+                    - Network plugin used for building Kubernetes network.
+                    - This property cannot been changed.
+                choices:
+                    - azure
+                    - kubenet
+            network_policy:
+                description: Network policy used for building Kubernetes network.
+            pod_cidr:
+                description: A CIDR notation IP range from which to assign pod IPs when kubenet is used.
+            service_cidr:
+                description:
+                    - A CIDR notation IP range from which to assign service cluster IPs.
+                    - It must not overlap with any Subnet IP ranges.
+            dns_service_ip:
+                description:
+                    - An IP address assigned to the Kubernetes DNS service.
+                    - It must be within the Kubernetes service address range specified in serviceCidr.
+            docker_bridge_cidr:
+                description:
+                    - A CIDR notation IP range assigned to the Docker bridge network.
+                    - It must not overlap with any Subnet IP ranges or the Kubernetes service address range.
+        version_added: 2.8
+    aad_profile:
+        description:
+            - Profile of Azure Active Directory configuration.
+        suboptions:
+            client_app_id:
+                description: The client AAD application ID.
+            server_app_id:
+                description: The server AAD application ID.
+            server_app_secret:
+                description: The server AAD application secret.
+            tenant_id:
+                description:
+                    - The AAD tenant ID to use for authentication.
+                    - If not specified, will use the tenant of the deployment subscription.
+        version_added: 2.8
+    addon:
+        description:
+            - Profile of managed cluster add-on.
+            - Key can be C(http_application_routing), C(monitoring), C(virtual_node).
+            - Value must be a dict contains a bool variable C(enabled) and a dictionary C(config).
+            - C(config) is the configuration of the add-on.
+        type: dict
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure
@@ -314,7 +365,7 @@ agent_pool_profile_spec = dict(
 
 
 network_profile_spec=dict(
-    network_plugin=dict(type='str'),
+    network_plugin=dict(type='str', choices=['azure', 'kubenet']),
     network_policy=dict(type='str'),
     pod_cidr=dict(type='str'),
     service_cidr=dict(type='str'),
@@ -340,7 +391,7 @@ addon_spec=dict(
 ADDONS = {
     'http_application_routing': 'httpApplicationRouting',
     'monitoring': 'omsagent',
-    'virtual-node': 'aciConnector'
+    'virtual_node': 'aciConnector'
 }
 
 
