@@ -65,7 +65,7 @@ class TestIosNtpModule(TestIosModule):
             'ntp trusted-key 10',
             'ntp authentication-key 10 md5 15435A030726242723273C21181319000A 7'
         ]
-        self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=False, commands=commands)
 
     def test_ios_ntp_remove(self):
         set_module_args(dict(
