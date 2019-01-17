@@ -226,10 +226,11 @@ def create_aad_profiles_dict(aad):
 
 
 def create_addon_dict(addon):
-    result = dict()
+    result = []
     addon = addon or dict()
     for key in addon.keys():
         result[key] = dict(
+            name=key,
             enable=addon[key].enable,
             config=addon[key].config
         )
@@ -322,6 +323,7 @@ aad_profile_spec=dict(
 
 
 addon_spec=dict(
+    name=dict(type='str', required=True),
     enabled=dict(type='bool', default=True),
     config=dict(type='dict')
 )
@@ -380,7 +382,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                 options=aad_profile_spec
             ),
             addon=dict(
-                type='dict',
+                type='list',
                 elements='dict',
                 options=addon_spec
             )
@@ -422,6 +424,14 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         resource_group = None
         to_be_updated = False
         update_tags =  False
+
+        if self.addon:
+            addon_dict = dict()
+            for item in self.addon:
+                if addon_dict.get(item['name']):
+                    self.fail('Duplicate addon setting {0}'.format(item['name']))
+                addon_dict[item['name']] = item
+            self.addon = addon_dict
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
