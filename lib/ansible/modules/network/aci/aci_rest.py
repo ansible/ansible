@@ -133,7 +133,7 @@ EXAMPLES = r'''
   aci_rest:
     host: apic
     username: admin
-    private_key: pki/{{ aci_username}}.key
+    private_key: pki/{{ aci_username }}.key
     validate_certs: no
     path: /api/mo/uni.xml
     method: post
