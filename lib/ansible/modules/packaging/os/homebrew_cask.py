@@ -141,6 +141,7 @@ import os
 import re
 import tempfile
 
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems, string_types
 
@@ -489,7 +490,7 @@ class HomebrewCask(object):
         rc, out, err = '', '', ''
 
         with tempfile.NamedTemporaryFile() as sudo_askpass_file:
-            sudo_askpass_file.write("#!/bin/sh\n\necho '" + self.sudo_password + "'\n")
+            sudo_askpass_file.write(b"#!/bin/sh\n\necho '%s'\n" % to_bytes(self.sudo_password))
             os.chmod(sudo_askpass_file.name, 0o700)
             sudo_askpass_file.file.close()
 
