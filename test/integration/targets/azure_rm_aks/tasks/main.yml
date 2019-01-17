@@ -111,7 +111,7 @@
            count: 1
            vm_size: Standard_DS1_v2
      addon:
-         - name: http_application_routing
+        http_application_routing: {}
      network_profile:
           network_plugin: kubenet
      enable_rbac: yes
@@ -143,7 +143,7 @@
            count: 1
            vm_size: Standard_DS1_v2
      addon:
-         - name: http_application_routing
+        http_application_routing: {}
      network_profile:
           network_plugin: kubenet
      enable_rbac: yes

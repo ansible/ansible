@@ -230,7 +230,6 @@ def create_addon_dict(addon):
     addon = addon or dict()
     for key in addon.keys():
         result[key] = dict(
-            name=key,
             enable=addon[key].enable,
             config=addon[key].config
         )
@@ -278,6 +277,16 @@ def create_agent_pool_profiles_dict(agentpoolprofiles):
     ) for profile in agentpoolprofiles] if agentpoolprofiles else None
 
 
+def create_addon_profiles_spec():
+    '''
+    Helper method to parse the ADDONS dictionary and generate the addon spec
+    '''
+    spec = dict()
+    for key in ADDONS.keys():
+        spec[key] = dict(type='dict', options=addon_spec, aliases=[ADDONS[key]])
+    return spec
+
+
 linux_profile_spec = dict(
     admin_username=dict(type='str', required=True),
     ssh_key=dict(type='str', required=True)
@@ -323,10 +332,16 @@ aad_profile_spec=dict(
 
 
 addon_spec=dict(
-    name=dict(type='str', required=True),
     enabled=dict(type='bool', default=True),
     config=dict(type='dict')
 )
+
+
+ADDONS = {
+    'http_application_routing': 'httpApplicationRouting',
+    'monitoring': 'omsagent',
+    'virtual-node': 'aciConnector'
+}
 
 
 class AzureRMManagedCluster(AzureRMModuleBase):
@@ -382,9 +397,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                 options=aad_profile_spec
             ),
             addon=dict(
-                type='list',
-                elements='dict',
-                options=addon_spec
+                type='dict',
+                options=create_addon_profiles_spec()
             )
         )
 
@@ -424,14 +438,6 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         resource_group = None
         to_be_updated = False
         update_tags =  False
-
-        if self.addon:
-            addon_dict = dict()
-            for item in self.addon:
-                if addon_dict.get(item['name']):
-                    self.fail('Duplicate addon setting {0}'.format(item['name']))
-                addon_dict[item['name']] = item
-            self.addon = addon_dict
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -499,6 +505,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                                 to_be_updated = True
 
                     def compare_addon(origin, patch):
+                        if not patch:
+                            return True
                         if not origin:
                             return False
                         if origin['enable'] != patch['enable']:
@@ -515,8 +523,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         return True
 
                     if self.addon:
-                        for key in self.addon.keys():
-                            if not compare_addon(response['addon'].get(key), self.addon[key]):
+                        for key in ADDONS.values():
+                            if not compare_addon(response['addon'].get(key), self.addon.get(key)):
                                 to_be_updated = True
 
                     for profile_result in response['agent_pool_profiles']:
@@ -590,7 +598,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             enable_rbac=self.enable_rbac,
             network_profile=self.create_network_profile_instance(self.network_profile),
             aad_profile=self.create_aad_profile_instance(self.aad_profile),
-            addon_profile=self.create_addon_profile_instance(self.addon)
+            addon_profiles=self.create_addon_profile_instance(self.addon)
         )
 
         # self.log("service_principal_profile : {0}".format(parameters.service_principal_profile))

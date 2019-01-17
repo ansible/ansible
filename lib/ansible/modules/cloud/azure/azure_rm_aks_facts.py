@@ -33,6 +33,12 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    show_kubeconfig:
+        description:
+            - Show kubeconfig of the AKS cluster.
+            - Note the operation will cost more network overhead, not recommond to use when listing AKS.
+        version_added: 2.8
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -84,7 +90,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            show_kubeconfig=dict(type='bool', default=False)
+            show_kubeconfig=dict(type='bool')
         )
 
         self.results = dict(
