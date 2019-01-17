@@ -637,7 +637,7 @@ def _load_params():
     inside it as a copy in your own code.
     '''
     global _ANSIBLE_ARGS
-    json_source = None
+    json_source = 'stdin'
     if _ANSIBLE_ARGS is not None:
         buffer = _ANSIBLE_ARGS
     else:
@@ -658,7 +658,6 @@ def _load_params():
                 json_source = 'argument'
         # default case, read from stdin
         else:
-            json_source = 'stdin'
             if PY2:
                 buffer = sys.stdin.read()
             else:
@@ -669,8 +668,9 @@ def _load_params():
         params = json.loads(buffer.decode('utf-8'))
     except ValueError:
         # This helper used too early for fail_json to work.
-        message = '\n{{"msg": "Error: Module unable to decode valid JSON.  Unable to figure out what parameters were passed", "failed": true, "json_source": "{}", "json_file":"{}", "buffer_contents":"{}"}}'.format(json_source, sys.argv[1], buffer)
-        print(message)
+        msg = '\n{{"msg": "Error: Module unable to decode valid JSON.  Unable to figure out what parameters were passed",' \
+                  ' "failed": true, "json_source": "{}", "json_file":"{}", "buffer_contents":"{}"}}'.format(json_source, sys.argv[1], buffer)
+        print(msg)
         sys.exit(1)
 
     if PY2:
@@ -681,8 +681,8 @@ def _load_params():
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from stdin.  Unable to figure out what parameters were passed", '
-              '"failed": true}')
+        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from {}.  Unable to figure out what parameters were passed", '
+              '"failed": true}'.format(json_source))
         sys.exit(1)
 
 
