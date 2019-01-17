@@ -36,6 +36,12 @@ RULES_REQUIRED_IF = [
     ["state", "present", ["source", "destination"]]
 ]
 
+# These are rule elements that are (currently) unmanaged by this module
+RULES_UNMANAGED_ELEMENTS = [
+    'created', 'id', 'max', 'max-src-conn', 'max-src-nodes', 'max-src-states', 'os',
+    'statetimeout', 'statetype', 'tag', 'tagged', 'tracker', 'updated'
+]
+
 
 class PFSenseRuleModule(object):
     """ module managing pfsense rules """
@@ -75,17 +81,37 @@ class PFSenseRuleModule(object):
         """ check if a rule elt match the targeted interface """
         return self.pfsense.rule_match_interface(rule_elt, self._interface, self._floating)
 
-    def _find_rule_by_descr(self, descr):
-        """ return rule descr on interface/floating with rule index """
-        found = None
-        i = 0
-        for rule in self.rules:
-            descr_elt = rule.find('descr')
-            if self._match_interface(rule) and descr_elt is not None and descr_elt.text == descr:
-                found = rule
-                break
+    def _find_matching_rule(self):
+        """ retturn rule element and index that matches by description or action """
+        # Prioritize matching my name
+        found, i = self._find_rule_by_descr(self._descr)
+        if found is not None:
+            return (found, i)
+
+        # Match action without name/descr
+        match_rule = self._rule.copy()
+        del match_rule['descr']
+        for rule_elt in self.rules:
+            this_rule = self.pfsense.element_to_dict(rule_elt)
+            this_rule.pop('descr', None)
+            # Remove unmanaged elements
+            for unwanted in RULES_UNMANAGED_ELEMENTS:
+                this_rule.pop(unwanted, None)
+            if this_rule == match_rule:
+                return (rule_elt, i)
             i += 1
-        return (found, i)
+
+        return (None, -1)
+
+    def _find_rule_by_descr(self, descr):
+        """ return rule element and index on interface/floating that matches description """
+        i = 0
+        for rule_elt in self.rules:
+            descr_elt = rule_elt.find('descr')
+            if self._match_interface(rule_elt) and descr_elt is not None and descr_elt.text == descr:
+                return (rule_elt, i)
+            i += 1
+        return (None, -1)
 
     def _adjust_separators(self, start_idx, add=True, before=False):
         """ update separators position """
@@ -162,7 +188,7 @@ class PFSenseRuleModule(object):
                 self.module.fail_json(msg='Failed to insert after rule=%s interface=%s' % (self._after, self._interface_name()))
         elif self._before is not None:
             found, i = self._find_rule_by_descr(self._before)
-            if found:
+            if found is not None:
                 return i
             else:
                 self.module.fail_json(msg='Failed to insert before rule=%s interface=%s' % (self._before, self._interface_name()))
@@ -343,31 +369,26 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
     ##################
     # public methods
     #
-    def _rule_element_to_dict(self, rule_elt):
+    @staticmethod
+    def _rule_element_to_dict(rule_elt):
         """ convert rule_elt to dictionary like module arguments """
-        rule = self.pfsense.element_to_dict(rule_elt)
+        rule = PFSenseModule.element_to_dict(rule_elt)
 
         # We use 'name' for 'descr'
         rule['name'] = rule.pop('descr', 'UNKNOWN')
+        # We use 'action' for 'type'
+        rule['action'] = rule.pop('type', 'UNKNOWN')
 
         # Convert addresses to argument format
         for addr_item in ['source', 'destination']:
-            elt = rule_elt.find(addr_item)
-            if elt is not None:
-                rule[addr_item] = self.pfsense.addr_normalize(self.pfsense.element_to_dict(elt))
-        # Convert nested elements to dicts
-        for other_item in ['created', 'updated']:
-            elt = rule_elt.find(other_item)
-            if elt is not None:
-                rule[other_item] = self.pfsense.element_to_dict(elt)
-        rule['action'] = rule.pop('type', 'UNKNOWN')
+            rule[addr_item] = PFSenseModule.addr_normalize(rule[addr_item])
 
         return rule
 
     def _add(self):
         """ add or update rule """
         rule = self._rule
-        rule_elt, dummy = self._find_rule_by_descr(self._descr)
+        rule_elt, dummy = self._find_matching_rule()
         changed = False
         timestamp = '%d' % int(time.time())
         if rule_elt is None:
@@ -393,8 +414,15 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
                 changed = True
 
             if changed:
-                rule_elt.find('updated').find('time').text = timestamp
-                rule_elt.find('updated').find('username').text = self.pfsense.get_username()
+                updated_elt = rule_elt.find('updated')
+                if updated_elt is None:
+                    updated_elt = self.pfsense.new_element('updated')
+                    updated_elt.append(self.pfsense.new_element('time', timestamp))
+                    updated_elt.append(self.pfsense.new_element('username', self.pfsense.get_username()))
+                    rule_elt.append(updated_elt)
+                else:
+                    updated_elt.find('time').text = timestamp
+                    updated_elt.find('username').text = self.pfsense.get_username()
                 self.diff['after'].update(self._rule_element_to_dict(rule_elt))
                 self.results['modified'].append(self._rule_element_to_dict(rule_elt))
                 self.change_descr = 'ansible pfsense_rule updated "%s" interface %s action %s' % (rule['descr'], rule['interface'], rule['type'])
@@ -404,7 +432,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('rules'); }''')
 
     def _remove(self):
         """ delete rule """
-        rule_elt, dummy = self._find_rule_by_descr(self._descr)
+        rule_elt, dummy = self._find_matching_rule()
         if rule_elt is not None:
             self.diff['before'] = self._rule_element_to_dict(rule_elt)
             self._adjust_separators(self._get_rule_position(), add=False)

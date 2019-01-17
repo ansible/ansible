@@ -130,11 +130,11 @@ class PFSenseModule(object):
         return None
 
     @staticmethod
-    def new_element(tag):
+    def new_element(tag, text='\n\t\t\t'):
         """ Create and return new XML configuration element  """
         elt = ET.Element(tag)
         # Attempt to preserve some of the formatting of pfSense's config.xml
-        elt.text = '\n\t\t\t'
+        elt.text = text
         elt.tail = '\n\t\t'
         return elt
 
@@ -208,6 +208,8 @@ class PFSenseModule(object):
         """ Create dict from XML src_elt """
         res = {}
         for elt in list(src_elt):
+            if list(elt):
+                res[elt.tag] = PFSenseModule.element_to_dict(elt)
             res[elt.tag] = elt.text if elt.text is not None else ''
         return res
 
