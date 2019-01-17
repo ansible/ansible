@@ -48,8 +48,9 @@ class TestVrouterPimConfigModule(TestNvosModule):
         self.assertEqual(result['cli_cmd'], expected_cmd)
 
     def test_vrouter_pim_config_t2(self):
-        set_module_args({'pn_cliswitch': 'sw01', 'pn_querier_timeout': '30',
-                         'pn_querier_timeout': '120', 'pn_vrouter_name': 'foo-vrouter', 'state': 'update'})
+        set_module_args({'pn_cliswitch': 'sw01', 'pn_query_interval': '30',
+                         'pn_hello_interval': '120', 'pn_vrouter_name': 'foo-vrouter', 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
-        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-pim-config-modify vrouter-name foo-vrouter  querier-timeout 120'
+        expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 vrouter-pim-config-modify vrouter-name foo-vrouter  '
+        expected_cmd += 'hello-interval 120 query-interval 30'
         self.assertEqual(result['cli_cmd'], expected_cmd)
