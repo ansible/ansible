@@ -226,7 +226,7 @@ def create_aad_profiles_dict(aad):
 
 
 def create_addon_dict(addon):
-    result = []
+    result = dict()
     addon = addon or dict()
     for key in addon.keys():
         result[key] = dict(
@@ -493,8 +493,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         to_be_updated = True
 
                     if self.network_profile:
-                        for key in self.network_profile:
-                            if self.network_profile[key].lower() != response['network_profile'].get(key).lower():
+                        for key in self.network_profile.keys():
+                            original = response['network_profile'].get(key) or ''
+                            if self.network_profile[key] and self.network_profile[key].lower() != original.lower():
                                 to_be_updated = True
 
                     def compare_addon(origin, patch):
@@ -503,7 +504,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         if origin['enable'] != patch['enable']:
                             return False
                         origin_config = origin.get('config', {})
-                        patch_config = patch.get('config', {})
+                        patch_config = patch.get('config')
+                        if not patch_config:
+                            return True
                         if len(origin_config.keys()) != len(patch_config.keys()):
                             return False
                         for key in origin_config.keys():
@@ -512,7 +515,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         return True
 
                     if self.addon:
-                        for key in self.addon:
+                        for key in self.addon.keys():
                             if not compare_addon(response['addon'].get(key), self.addon[key]):
                                 to_be_updated = True
 
