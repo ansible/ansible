@@ -365,6 +365,19 @@ releases:
     - nxos_interface_linkagg_idempotence.yaml
     - v2.6.11_summary.yaml
     release_date: '2018-12-13'
+  2.6.12:
+    codename: Heartbreaker
+    fragments:
+    - 49409-lineinfile_must_not_insert_lines_multiples_times_with_insertbefore_insertafter.yml
+    - 50143-win_firewall_rule-invalid-bypass.yml
+    - 50185-win_updates-report-changes-correctly.yml
+    - acl_doc_fix.yml
+    - docker_volume-force-change-detection-revert.yaml
+    - openstack_inventory_fix.yml
+    - v2.6.12_summary.yaml
+    - win_copy-empty-dir.yaml
+    - win_lineinfile-output.yaml
+    release_date: '2019-01-17'
   2.6.2:
     codename: Heartbreaker
     fragments:

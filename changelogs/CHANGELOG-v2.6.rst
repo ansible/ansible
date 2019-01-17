@@ -2,6 +2,32 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.12
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-01-17
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- docker_volume - reverted changed behavior of ``force``, which was released in Ansible 2.7.1 to 2.7.5, and Ansible 2.6.8 to 2.6.11. Volumes are now only recreated if the parameters changed **and** ``force`` is set to ``true`` (instead of or). This is the behavior which has been described in the documentation all the time.
+
+Bugfixes
+--------
+
+- This reverts some changes from commit 723daf3. If a line is found in the file, exactly or via regexp matching, it must not be added again. `insertafter`/`insertbefore` options are used only when a line is to be inserted, to specify where it must be added.
+- allow using openstack inventory plugin w/o a cache
+- document old option that was initally missed
+- win_copy - Fix copy of a dir that contains an empty directory - https://github.com/ansible/ansible/issues/50077
+- win_firewall_rule - Remove invalid 'bypass' action
+- win_lineinfile - Fix issue where a malformed json block was returned causing an error
+- win_updates - Correctly report changes on success
+
 v2.6.11
 =======
 
