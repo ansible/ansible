@@ -115,11 +115,6 @@ class Play(Base, Taggable, Become):
 
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    # TODO: REMOVE
-    # def load_data(self, data, variable_manager=None, loader=None, vars=None):
-    #     self._set_from_CLI_options()
-    #     return super(Play, self).load_data(data, variable_manager=variable_manager, loader=loader)
-
     def preprocess_data(self, ds):
         '''
         Adjusts play datastructure to cleanup old/legacy items
@@ -345,34 +340,3 @@ class Play(Base, Taggable, Become):
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
         return new_me
-
-    def _set_from_CLI_options(self):
-        '''
-        Configures this instance with data from options specified by the user on the command line.
-        These override defaults from configuration but are a lower precedence than those set by keywords or variables.
-        '''
-        #  general flags that match keyword name
-        for flag in context.CLIARGS:
-            # exclude private and mismatched names
-            if flag.startswith('_') or flag in ('tags', 'args'):
-                continue
-            if hasattr(self, flag):
-                attribute = context.CLIARGS.get(flag, False)
-                setattr(self, flag, attribute)
-
-        # flags that are named differently or might not be set
-        # self.check_mode = boolean(context.CLIARGS.get('check', False), strict=False)
-
-        # get the tag info from options. We check to see if the options have
-        # the attribute, as it is not always added via the CLI
-        if 'tags' in context.CLIARGS:
-            self.only_tags = context.CLIARGS['tags']
-
-        if 'skip_tags' in context.CLIARGS:
-            self.skip_tags = context.CLIARGS['skip_tags']
-
-        if not self.only_tags:
-            self.only_tags = frozenset(['all'])
-
-        # ensure timeout is int (find out if post validate should already be doing this)
-        self.timeout = int(self.timeout)
