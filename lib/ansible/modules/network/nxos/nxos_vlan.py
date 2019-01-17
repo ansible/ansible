@@ -580,7 +580,7 @@ def map_config_to_obj(module):
                 if len(line) > 0:
                     line = line.strip()
                     if line[0].isdigit():
-                        match = re.search(r'(\d+)', line, re.M)
+                        match = re.search(r'^(\d+)$', line, re.M)
                         if match:
                             v = match.group(1)
                             pos1 = splitted_line.index(v)
