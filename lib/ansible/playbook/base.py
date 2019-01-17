@@ -243,40 +243,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 else:
                     self._attributes[target_name] = ds[name]
 
-        # set defaults from CLI
-        # TODO: REMOVE
-        # self._set_options()
-
         # run early, non-critical validation
         self.validate()
 
         # return the constructed object
         return self
-
-    def _set_options(self):
-        '''
-        Configures defaults using CLI options
-        '''
-
-        attrs = []
-
-        for flag in context.CLIARGS:
-            # skip private and incorrect matches: i.e tags is really only_these_tags
-            if flag.startswith('_') or flag in ('tags', 'args'):
-                continue
-
-            # use mapping when they are not named the same
-            if flag in _option_map:
-                attr = _option_map[flag]
-            else:
-                attr = flag
-
-            attribute = context.CLIARGS.get(attr, False)
-            if attribute and hasattr(self, attr):
-                setattr(self, attr, attribute)
-                attrs.append(attr)
-
-        print('attrs.extend(%r)' % (attrs,))
 
     def get_ds(self):
         try:

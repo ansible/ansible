@@ -183,11 +183,6 @@ class PlayContext(Base):
                 if flag:
                     setattr(self, flag, self.connection.get_option(flag))
 
-        # TODO: made irrelavent by above
-        # get ssh options
-        # for flag in ('ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args'):
-        #     setattr(self, flag, getattr(options, flag, ''))
-
     def set_attributes_from_play(self, play):
         # From ansible.playbook.Become
         self.become = play.become
@@ -223,50 +218,6 @@ class PlayContext(Base):
 
         # Not every cli that uses PlayContext has these command line args so have a default
         self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
-
-        # Docker_extra_args is not passable on the command line, it appears to have been in
-        # OPTION_FLAGS by mistake
-        # self.docker_extra_args = context.CLIARGS['docker_extra_args']  # Else default
-
-        # Step is used by strategy plugins directly from the command line args.  No need for it to
-        # be in play_context
-        # self.step = context.CLIARGS.get('step', None)  # Else default
-        return
-
-        # FIXME: dead code.  Compare this against what's in Play._set_from_CLI_options() and then
-        # remove
-
-# OPTION_FLAGS = ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff',
-#                 'ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args')
-
-        # # privilege escalation
-        # self.become = context.CLIARGS['become']
-        # self.become_method = context.CLIARGS['become_method']
-        # self.become_user = context.CLIARGS['become_user']
-
-        # self.check_mode = boolean(context.CLIARGS['check'], strict=False)
-        # self.diff = boolean(context.CLIARGS['diff'], strict=False)
-
-        # #  general flags (should we move out?)
-        # #  should only be 'non plugin' flags
-        # for flag in OPTION_FLAGS:
-        #     attribute = context.CLIARGS.get(flag, False)
-        #     if attribute:
-        #         setattr(self, flag, attribute)
-
-        # if context.CLIARGS.get('timeout', False):
-        #     self.timeout = context.CLIARGS['timeout']
-
-        # # get the tag info from options. We check to see if the options have
-        # # the attribute, as it is not always added via the CLI
-        # if context.CLIARGS.get('tags', False):
-        #     self.only_tags.update(context.CLIARGS['tags'])
-
-        # if len(self.only_tags) == 0:
-        #     self.only_tags = set(['all'])
-
-        # if context.CLIARGS.get('skip_tags', False):
-        #     self.skip_tags.update(context.CLIARGS['skip_tags'])
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''
