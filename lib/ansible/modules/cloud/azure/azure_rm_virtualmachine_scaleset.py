@@ -22,7 +22,7 @@ version_added: "2.4"
 short_description: Manage Azure virtual machine scale sets.
 
 description:
-    - Create and update a virtual machine scale set.
+    - Create and update a virtual machine scale set. --> trigger test
 
 options:
     resource_group:
