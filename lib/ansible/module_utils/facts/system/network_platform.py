@@ -17,14 +17,22 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import socket
 import platform
+
+from ansible.module_utils.facts.utils import get_file_content
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 from ansible.module_utils.connection import Connection
 
 
-class NetworkFactCollector(BaseFactCollector):
+# i86pc is a Solaris and derivatives-ism
+SOLARIS_I86_RE_PATTERN = r'i([3456]86|86pc)'
+solaris_i86_re = re.compile(SOLARIS_I86_RE_PATTERN)
+
+
+class PlatformFactCollector(BaseFactCollector):
     name = 'network_platform'
 
     _fact_ids = set(['system',
@@ -39,14 +47,73 @@ class NetworkFactCollector(BaseFactCollector):
         platform_facts = {}
 
         self.connection = Connection(module._socket_path)
-        capabilities = module.from_json(self.connection.get_capabilities())
+        resp = module.from_json(self.connection.get_capabilities())
+        device_info = resp['device_info']
 
         # platform_facts['network_capabilities'] = capabilities
 
-        capabilities.pop('network_os')
-        platform_facts.update(capabilities['device_info'])
+        platform_facts['system'] = device_info['network_os']
+        platform_facts['hostname'] = device_info.get('network_os_hostname')
 
-        platform_facts['system'] = capabilities['device_info']['network_os']
+        for item in ('model', 'image', 'version', 'platform'):
+                val = device_info.get('network_os_%s' % item)
+                if val:
+                    platform_facts[item] = val
+
+        platform_facts['network_api'] = resp['network_api']
         platform_facts['python_version'] = platform.python_version()
+
+        if not platform_facts:
+            # platform.system() can be Linux, Darwin, Java, or Windows
+            platform_facts['system'] = platform.system()
+            platform_facts['kernel'] = platform.release()
+            platform_facts['machine'] = platform.machine()
+
+            platform_facts['python_version'] = platform.python_version()
+
+            platform_facts['fqdn'] = socket.getfqdn()
+            platform_facts['hostname'] = platform.node().split('.')[0]
+            platform_facts['nodename'] = platform.node()
+
+            platform_facts['domain'] = '.'.join(platform_facts['fqdn'].split('.')[1:])
+
+            arch_bits = platform.architecture()[0]
+
+            platform_facts['userspace_bits'] = arch_bits.replace('bit', '')
+            if platform_facts['machine'] == 'x86_64':
+                platform_facts['architecture'] = platform_facts['machine']
+                if platform_facts['userspace_bits'] == '64':
+                    platform_facts['userspace_architecture'] = 'x86_64'
+                elif platform_facts['userspace_bits'] == '32':
+                    platform_facts['userspace_architecture'] = 'i386'
+            elif solaris_i86_re.search(platform_facts['machine']):
+                platform_facts['architecture'] = 'i386'
+                if platform_facts['userspace_bits'] == '64':
+                    platform_facts['userspace_architecture'] = 'x86_64'
+                elif platform_facts['userspace_bits'] == '32':
+                    platform_facts['userspace_architecture'] = 'i386'
+            else:
+                platform_facts['architecture'] = platform_facts['machine']
+
+            if platform_facts['system'] == 'AIX':
+                # Attempt to use getconf to figure out architecture
+                # fall back to bootinfo if needed
+                getconf_bin = module.get_bin_path('getconf')
+                if getconf_bin:
+                    rc, out, err = module.run_command([getconf_bin, 'MACHINE_ARCHITECTURE'])
+                    data = out.splitlines()
+                    platform_facts['architecture'] = data[0]
+                else:
+                    bootinfo_bin = module.get_bin_path('bootinfo')
+                    rc, out, err = module.run_command([bootinfo_bin, '-p'])
+                    data = out.splitlines()
+                    platform_facts['architecture'] = data[0]
+            elif platform_facts['system'] == 'OpenBSD':
+                platform_facts['architecture'] = platform.uname()[5]
+
+            machine_id = get_file_content("/var/lib/dbus/machine-id") or get_file_content("/etc/machine-id")
+            if machine_id:
+                machine_id = machine_id.splitlines()[0]
+                platform_facts["machine_id"] = machine_id
 
         return platform_facts

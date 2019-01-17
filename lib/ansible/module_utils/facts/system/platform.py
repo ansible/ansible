@@ -24,9 +24,6 @@ from ansible.module_utils.facts.utils import get_file_content
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
-from ansible.module_utils.connection import Connection
-
-
 # i86pc is a Solaris and derivatives-ism
 SOLARIS_I86_RE_PATTERN = r'i([3456]86|86pc)'
 solaris_i86_re = re.compile(SOLARIS_I86_RE_PATTERN)
@@ -42,28 +39,7 @@ class PlatformFactCollector(BaseFactCollector):
                      'machine_id'])
 
     def collect(self, module=None, collected_facts=None):
-
         platform_facts = {}
-
-        if module and module._socket_path:
-            self.connection = Connection(module._socket_path)
-
-            resp = module.from_json(self.connection.get_capabilities())
-            device_info = resp['device_info']
-
-            platform_facts['system'] = device_info['network_os']
-            platform_facts['hostname'] = device_info.get('network_os_hostname')
-
-            for item in ('model', 'image', 'version', 'platform'):
-                val = device_info.get('network_os_%s' % item)
-                if val:
-                    platform_facts[item] = val
-
-            platform_facts['network_api'] = resp['network_api']
-            platform_facts['python_version'] = platform.python_version()
-
-            return platform_facts
-
         # platform.system() can be Linux, Darwin, Java, or Windows
         platform_facts['system'] = platform.system()
         platform_facts['kernel'] = platform.release()

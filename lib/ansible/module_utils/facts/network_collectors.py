@@ -30,7 +30,7 @@ __metaclass__ = type
 
 
 from ansible.module_utils.facts.system.local import LocalFactCollector
-from ansible.module_utils.facts.system.platform import PlatformFactCollector
+from ansible.module_utils.facts.system.network_platform import PlatformFactCollector
 from ansible.module_utils.facts.system.python import PythonFactCollector
 
 from ansible.module_utils.facts.network.base import NetworkCollector
