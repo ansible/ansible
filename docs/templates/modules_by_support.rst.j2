@@ -10,9 +10,9 @@ Modules Maintained by the @{ maintainers }@
 {% for category, data in subcategories.items() | sort %}
 
 {% if category.lower() %}
-.. _@{ category.lower() + '_' + slug.lower() + '_' + plugin_type + 's' }@:
+.. _@{ category.lower() + '_' + slug.lower() + '_categories' }@:
 {% else %}
-.. _@{ slug.lower() + '_' + plugin_type + 's' }@:
+.. _@{ slug.lower() + '_categories' }@:
 {% endif %}
 
 @{ category.title() }@
@@ -23,14 +23,14 @@ Modules Maintained by the @{ maintainers }@
 {% if name.lower() %}
 .. _@{ name.lower() + '_' + slug.lower() + '_' + plugin_type + 's' }@:
 {% else %}
-.. _@{ slug.lower() + '_' + plugin_type + 's' }@:
+.. _@{ slug.lower() + '_' + category }@:
 {% endif %}
 
 @{ name.title() }@
 @{ '-' * name | length }@
 
 {% for module in info['_modules'] | sort %}
-  * :ref:`@{ module }@_@{plugin_type}@`{% if module_info[module]['deprecated'] %} **(D)** {% endif%}
+  * :ref:`@{ module }@_@{plugin_type}@`{% if module_info[module]['deprecated'] %} **(D)** {% endif%} 
 {% endfor %}
 
 {% endfor %}
