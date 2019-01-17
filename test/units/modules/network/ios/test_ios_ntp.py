@@ -56,15 +56,7 @@ class TestIosNtpModule(TestIosModule):
             key_id='10',
             state='present'
         ))
-        commands = [
-            # 'ntp server 10.75.32.5',
-            # 'ntp source Loopback0',
-            # 'ntp access-group peer NTP_ACL',
-            # 'ntp logging',
-            # 'ntp authenticate',
-            # 'ntp trusted-key 10',
-            # 'ntp authentication-key 10 md5 15435A030726242723273C21181319000A 7'
-        ]
+        commands = []
         self.execute_module(changed=False, commands=commands)
 
     def test_ios_ntp_remove(self):
