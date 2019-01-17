@@ -447,7 +447,7 @@ def main():
     """ main entry point for module execution
     """
     hashed_password_spec = dict(
-        type=dict(required=True),
+        type=dict(type='int', required=True),
         value=dict(no_log=True, required=True)
     )
 
