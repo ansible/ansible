@@ -234,7 +234,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             try:
                 file_vault_secret.load()
             except AnsibleError as exc:
-                display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, exc))
+                display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, to_text(exc)))
                 raise
 
             if vault_id_name:

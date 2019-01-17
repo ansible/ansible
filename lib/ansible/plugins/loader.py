@@ -352,7 +352,7 @@ class PluginLoader:
             warnings.simplefilter("ignore", RuntimeWarning)
             with open(to_bytes(path), 'rb') as module_file:
                 # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
-                module = imp.load_source(full_name, to_native(path), module_file)
+                module = imp.load_source(to_native(full_name), to_native(path), module_file)
         return module
 
     def _update_object(self, obj, name, path):
@@ -622,7 +622,7 @@ def _load_plugin_filter():
     if 'stat' in filters['ansible.modules']:
         raise AnsibleError('The stat module was specified in the module blacklist file, {0}, but'
                            ' Ansible will not function without the stat module.  Please remove stat'
-                           ' from the blacklist.'.format(filter_cfg))
+                           ' from the blacklist.'.format(to_native(filter_cfg)))
     return filters
 
 
