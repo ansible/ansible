@@ -45,7 +45,6 @@ class ConnectionBase(AnsiblePlugin):
     has_native_async = False  # eg, winrm
     always_pipeline_modules = False  # eg, winrm
     has_tty = True  # for interacting with become plugins
-    incompatible_methods = []
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
@@ -94,13 +93,10 @@ class ConnectionBase(AnsiblePlugin):
 
     def load_become(self, name):
 
-        if hasattr(self, 'become_methods') and name not in self.become_methods or name in self.incompatible_methods:
-            raise AnsibleError("The '%s' connection does not support escalating privileges via '%s'" % (self.transport, name))
-
         self.become = become_loader.get(name)
         if not self.become:
             raise AnsibleError("Invalid become method specified, could not find matching plugin: %s\n"
-                               "You can use `ansible-doc -t become -l` to list availabe plugins." % name)
+                               "You can use `ansible-doc -t become -l` to list available plugins." % name)
 
         if self.become.require_tty and not getattr(self, 'has_tty', False):
             raise AnsibleError("The '%s' connection does not provide a tty which is requied for this become plugin: %s." % (self.transport, name))
@@ -114,13 +110,6 @@ class ConnectionBase(AnsiblePlugin):
     def socket_path(self):
         '''Read-only property holding the connection socket path for this remote host'''
         return self._socket_path
-
-    def _become_method_supported(self):
-        # DEPRECATED, should start emitting warnings next version, load_become takes over this check
-        ''' Checks if the current class supports this privilege escalation method '''
-        if hasattr(self, 'become_methods') and self._play_context.become_method not in self.become_methods or \
-           self._play_context.become_method in self.incompatible_methods:
-            raise AnsibleError("The '%s' connection does not support escalating privileges via '%s'" % (self.transport, self._play_context.become_method))
 
     @staticmethod
     def _split_ssh_args(argstring):
