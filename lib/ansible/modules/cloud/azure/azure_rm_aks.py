@@ -199,7 +199,7 @@ def create_aks_dict(aks):
         enable_rbac=aks.enable_rbac,
         network_profile=create_network_profiles_dict(aks.network_profile),
         aad_profile=create_aad_profiles_dict(aks.aad_profile),
-        addon_profiles=create_addon_dict(aks.addon_profiles),
+        addon=create_addon_dict(aks.addon_profiles),
         fqdn=aks.fqdn,
         node_resource_group=aks.node_resource_group
     )
@@ -271,8 +271,6 @@ def create_agent_pool_profiles_dict(agentpoolprofiles):
         vm_size=profile.vm_size,
         name=profile.name,
         os_disk_size_gb=profile.os_disk_size_gb,
-        # dns_prefix=profile.dns_prefix,
-        # ports=profile.ports,
         storage_profile=profile.storage_profile,
         vnet_subnet_id=profile.vnet_subnet_id,
         os_type=profile.os_type
@@ -515,10 +513,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                                 matched = True
                                 if profile_result['count'] != profile_self['count'] \
                                         or profile_result['vm_size'] != profile_self['vm_size'] \
-                                        or profile_result['os_disk_size_gb'] != profile_self['os_disk_size_gb'] \
-                                        or profile_result['dns_prefix'] != profile_self['dns_prefix'] \
-                                        or profile_result['vnet_subnet_id'] != profile_self.get('vnet_subnet_id') \
-                                        or set(profile_result['ports'] or []) != set(profile_self.get('ports') or []):
+                                        or profile_result['os_disk_size_gb'] != profile_self.get('os_disk_size_gb', profile_result['os_disk_size_gb']) \
+                                        or profile_result['vnet_subnet_id'] != profile_self.get('vnet_subnet_id', profile_result['vnet_subnet_id']):
                                     self.log(("Agent Profile Diff - Origin {0} / Update {1}".format(str(profile_result), str(profile_self))))
                                     to_be_updated = True
                         if not matched:
