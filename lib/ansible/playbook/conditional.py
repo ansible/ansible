@@ -199,6 +199,9 @@ class Conditional:
             try:
                 # first we extract the variable name from the error message
                 var_name = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e)).groups()[0]
+                # made check if we use bare not variable as condition trigger (#39414)
+                if ('not ' not in original) and var_name != original:
+                    return True
                 # next we extract all defined/undefined tests from the conditional string
                 def_undef = self.extract_defined_undefined(conditional)
                 # then we loop through these, comparing the error variable name against
