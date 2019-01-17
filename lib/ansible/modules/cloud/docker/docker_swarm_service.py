@@ -47,6 +47,13 @@ options:
     description:
     - List of the service constraints.
     - Maps docker service --constraint option.
+  placement_preferences:
+    required: false
+    type: list
+    description:
+    - List of the placement preferences as key value pairs.
+    - Maps docker service --placement-pref option.
+    version_added: 2.8
   hostname:
     required: false
     default: ""
@@ -490,7 +497,6 @@ except Exception:
 class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
-        self.constraints = []
         self.image = ""
         self.args = []
         self.endpoint_mode = "vip"
@@ -517,6 +523,8 @@ class DockerService(DockerBaseClass):
         self.constraints = []
         self.networks = []
         self.publish = []
+        self.constraints = []
+        self.placement_preferences = None
         self.replicas = -1
         self.service_id = False
         self.service_version = False
@@ -549,6 +557,7 @@ class DockerService(DockerBaseClass):
             'log_driver_options': self.log_driver_options,
             'publish': self.publish,
             'constraints': self.constraints,
+            'placement_preferences': self.placement_preferences,
             'labels': self.labels,
             'container_labels': self.container_labels,
             'mode': self.mode,
@@ -573,6 +582,7 @@ class DockerService(DockerBaseClass):
     def from_ansible_params(ap, old_service):
         s = DockerService()
         s.constraints = ap['constraints']
+        s.placement_preferences = ap['placement_preferences']
         s.image = ap['image']
         s.args = ap['args']
         s.endpoint_mode = ap['endpoint_mode']
@@ -698,6 +708,8 @@ class DockerService(DockerBaseClass):
             differences.add('args', parameter=self.args, active=os.args)
         if self.constraints != os.constraints:
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
+        if self.placement_preferences != os.placement_preferences:
+            differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
         if self.labels != os.labels:
             differences.add('labels', parameter=self.labels, active=os.labels)
         if self.limit_cpu != os.limit_cpu:
@@ -815,7 +827,14 @@ class DockerService(DockerBaseClass):
 
         log_driver = types.DriverConfig(name=self.log_driver, options=self.log_driver_options)
 
-        placement = types.Placement(constraints=self.constraints)
+        placement = types.Placement(
+            constraints=self.constraints,
+            preferences=[
+                {key.title(): {"SpreadDescriptor": value}}
+                for preference in self.placement_preferences
+                for key, value in preference.items()
+            ] if self.placement_preferences else None,
+        )
 
         restart_policy = types.RestartPolicy(
             condition=self.restart_policy,
@@ -930,7 +949,15 @@ class DockerServiceManager():
         ds.hostname = task_template_data['ContainerSpec'].get('Hostname', '')
         ds.tty = task_template_data['ContainerSpec'].get('TTY', False)
         if 'Placement' in task_template_data.keys():
-            ds.constraints = task_template_data['Placement'].get('Constraints', [])
+            placement = task_template_data['Placement']
+            ds.constraints = placement.get('Constraints', [])
+            placement_preferences = []
+            for preference in placement.get('Preferences', []):
+                placement_preferences.append({
+                    key.lower(): value['SpreadDescriptor'] for key, value in preference.items()
+                })
+            if placement_preferences:
+                ds.placement_preferences = placement_preferences
 
         restart_policy_data = task_template_data.get('RestartPolicy', None)
         if restart_policy_data:
@@ -1161,6 +1188,7 @@ def main():
         log_driver_options=dict(default={}, type='dict'),
         publish=dict(default=[], type='list'),
         constraints=dict(default=[], type='list'),
+        placement_preferences=dict(default=None, type='list'),
         tty=dict(default=False, type='bool'),
         dns=dict(default=[], type='list'),
         dns_search=dict(default=[], type='list'),
