@@ -250,7 +250,7 @@ debug1: Sending command: /bin/sh -c 'sudo -H -S  -p "[sudo via ansible, key=ouzm
                 pass
 
         c = ConnectionFoo(self.play_context, self.in_stream, become_method='sudo')
-        c._become.prompt = '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+        c.become.prompt = '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
 
         self.assertTrue(c.check_password_prompt(local))
         self.assertTrue(c.check_password_prompt(ssh_pipelining_vvvv))

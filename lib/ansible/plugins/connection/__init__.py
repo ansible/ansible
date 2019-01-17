@@ -87,7 +87,7 @@ class ConnectionBase(AnsiblePlugin):
         if not self._shell:
             self._shell = get_shell_plugin(shell_type=getattr(self, '_shell_type', None), executable=self._play_context.executable)
 
-        self._become = None
+        self.become = None
         if become_method:
             # dont assign direclty as we need to check stuff
             self.load_become(become_method)
@@ -97,12 +97,12 @@ class ConnectionBase(AnsiblePlugin):
         if hasattr(self, 'become_methods') and name not in self.become_methods or name in self.incompatible_methods:
             raise AnsibleError("The '%s' connection does not support escalating privileges via '%s'" % (self.transport, name))
 
-        self._become = become_loader.get(name)
-        if not self._become:
+        self.become = become_loader.get(name)
+        if not self.become:
             raise AnsibleError("Invalid become method specified, could not find matching plugin: %s\n"
                                "You can use `ansible-doc -t become -l` to list availabe plugins." % name)
 
-        if self._become.require_tty and not getattr(self, 'has_tty', False):
+        if self.become.require_tty and not getattr(self, 'has_tty', False):
             raise AnsibleError("The '%s' connection does not provide a tty which is requied for this become plugin: %s." % (self.transport, name))
 
     @property
@@ -254,16 +254,16 @@ class ConnectionBase(AnsiblePlugin):
     # These are kept for backwards compatiblity, in the next version they will emit deprecation messages
     # Use the methods provided by the become plugins instead
     def check_become_success(self, b_output):
-        return self._become.check_success(b_output)
+        return self.become.check_success(b_output)
 
     def check_password_prompt(self, b_output):
-        return self._become.check_password_prompt(b_output)
+        return self.become.check_password_prompt(b_output)
 
     def check_incorrect_password(self, b_output):
-        return self._become.check_incorrect_password(b_output)
+        return self.become.check_incorrect_password(b_output)
 
     def check_missing_password(self, b_output):
-        return self._become.check_missing_password(b_output)
+        return self.become.check_missing_password(b_output)
 
 
 class NetworkConnectionBase(ConnectionBase):

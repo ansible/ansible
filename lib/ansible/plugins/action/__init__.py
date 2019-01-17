@@ -277,7 +277,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # we need to return become_unprivileged as True
         admin_users = self._get_admin_users()
         remote_user = self._get_remote_user()
-        return bool(self._connection._become.get_option('become_user') not in admin_users + [remote_user])
+        return bool(self._connection.become.get_option('become_user') not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
         '''
@@ -444,7 +444,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # start to we'll have to fix this.
                 setfacl_mode = 'r-X'
 
-            res = self._remote_set_user_facl(remote_paths, self._connection._become.get_option('become_user'), setfacl_mode)
+            res = self._remote_set_user_facl(remote_paths, self._connection.become.get_option('become_user'), setfacl_mode)
             if res['rc'] != 0:
                 # File system acls failed; let's try to use chown next
                 # Set executable bit first as on some systems an
@@ -454,7 +454,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
-                res = self._remote_chown(remote_paths, self._connection._become.get_option('become_user'))
+                res = self._remote_chown(remote_paths, self._connection.become.get_option('become_user'))
                 if res['rc'] != 0 and remote_user in self._get_admin_users():
                     # chown failed even if remote_user is administrator/root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
@@ -593,8 +593,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
             if getattr(self._connection, '_remote_is_local', False):
                 pass
-            elif sudoable and self._play_context.become and self._connection._become.get_option('become_user'):
-                expand_path = '~%s' % self._connection._become.get_option('become_user')
+            elif sudoable and self._play_context.become and self._connection.become.get_option('become_user'):
+                expand_path = '~%s' % self._connection.become.get_option('become_user')
             else:
                 # use remote user instead, if none set default to current user
                 expand_path = '~%s' % (self._get_remote_user() or '')
@@ -958,10 +958,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
-        if sudoable and getattr(self._connection, '_become') and (C.BECOME_ALLOW_SAME_USER or
-           not self._connection._become.get_option('become_user') == self._get_remote_user()):
+        if sudoable and self._connection.become and (C.BECOME_ALLOW_SAME_USER or
+                not self._connection.become.get_option('become_user') == self._get_remote_user()):
             display.debug("_low_level_execute_command(): using become for this command")
-            cmd = self._connection._become.build_become_command(cmd, self._connection._shell)
+            cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 
         if self._connection.allow_executable:
             if executable is None:
