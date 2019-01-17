@@ -114,19 +114,9 @@ class Conditional:
             return conditional
 
         if templar.is_template(conditional):
-            display.warning('when statements should not include jinja2 '
+            display.warning('conditional statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
-
-        # pull the "bare" var out, which allows for nested conditionals
-        # and things like:
-        # - assert:
-        #     that:
-        #     - item
-        #   with_items:
-        #   - 1 == 1
-        if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
-            conditional = all_vars[conditional]
 
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
