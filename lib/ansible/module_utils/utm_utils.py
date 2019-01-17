@@ -59,12 +59,13 @@ class UTMModule(AnsibleModule):
                  mutually_exclusive=None, required_together=None, required_one_of=None, add_file_common_args=False,
                  supports_check_mode=False, required_if=None):
         default_specs = dict(
+            headers=dict(type='dict', required=False, default={}),
             utm_host=dict(type='str', required=True),
             utm_port=dict(type='int', default=4444),
             utm_token=dict(type='str', required=True, no_log=True),
             utm_protocol=dict(type='str', required=False, default="https", choices=["https", "http"]),
             validate_certs=dict(type='bool', required=False, default=True),
-            state=dict(default='present', choices=['present', 'absent', 'info'])
+            state=dict(default='present', choices=['present', 'absent'])
         )
         super(UTMModule, self).__init__(self._merge_specs(default_specs, argument_spec), bypass_checks, no_log,
                                         check_invalid_arguments, mutually_exclusive, required_together, required_one_of,
@@ -132,6 +133,9 @@ class UTM:
         """
         adds or updates a host object on utm
         """
+
+        combined_headers = self._combine_headers()
+
         is_changed = False
         info, result = self._lookup_entry(self.module, self.request_url)
         if info["status"] >= 400:
@@ -140,7 +144,7 @@ class UTM:
             data_as_json_string = self.module.jsonify(self.module.params)
             if result is None:
                 response, info = fetch_url(self.module, self.request_url, method="POST",
-                                           headers={"Accept": "application/json", "Content-type": "application/json"},
+                                           headers=combined_headers,
                                            data=data_as_json_string)
                 if info["status"] >= 400:
                     self.module.fail_json(msg=json.loads(info["body"]))
@@ -149,14 +153,26 @@ class UTM:
             else:
                 if self._is_object_changed(self.change_relevant_keys, self.module, result):
                     response, info = fetch_url(self.module, self.request_url + result['_ref'], method="PUT",
-                                               headers={"Accept": "application/json",
-                                                        "Content-type": "application/json"},
+                                               headers=combined_headers,
                                                data=data_as_json_string)
                     if info['status'] >= 400:
                         self.module.fail_json(msg=json.loads(info["body"]))
                     is_changed = True
                     result = self._clean_result(json.loads(response.read()))
             self.module.exit_json(result=result, changed=is_changed)
+
+    def _combine_headers(self):
+        """
+        This will combine a header default with headers that come from the module declaration
+        :return: A combined headers dict
+        """
+        default_headers = {"Accept": "application/json", "Content-type": "application/json"}
+        if self.module.params.get('headers') is not None:
+            result = default_headers.copy()
+            result.update(self.module.params.get('headers'))
+        else:
+            result = default_headers
+        return result
 
     def _remove(self):
         """
