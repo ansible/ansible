@@ -197,7 +197,6 @@ class PlayContext(Base):
 
         # from ansible.playbook.Play
         self.force_handlers = play.force_handlers
-        self.timeout = play.timeout
         self.only_tags = play.only_tags
         self.skip_tags = play.skip_tags
 
@@ -207,6 +206,9 @@ class PlayContext(Base):
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
         '''
+        if context.CLIARGS.get('timeout', False):
+            self.timeout = int(context.CLIARGS['timeout'])
+
         # From the command line.  These should probably be used directly by plugins instead
         # For now, they are likely to be moved to FieldAttribute defaults
         self.private_key_file = context.CLIARGS['private_key_file']  # Else default

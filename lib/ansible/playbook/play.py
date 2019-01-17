@@ -93,7 +93,6 @@ class Play(Base, Taggable, Become):
 
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
-        self.timeout = int(context.CLIARGS.get('timeout', 10))
 
     def __repr__(self):
         return self.get_name()
