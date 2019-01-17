@@ -190,11 +190,17 @@ class AzureRMVMExtension(AzureRMModuleBase):
         self.protected_settings = None
         self.state = None
 
+        required_if = [
+            ('state', 'present', [
+             'publisher', 'virtual_machine_extension_type', 'type_handler_version'])
+        ]
+
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMVMExtension, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                  supports_check_mode=False,
-                                                 supports_tags=False)
+                                                 supports_tags=False,
+                                                 required_if=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -215,13 +221,42 @@ class AzureRMVMExtension(AzureRMModuleBase):
             if not response:
                 to_be_updated = True
             else:
-                if response['settings'] != self.settings:
-                    response['settings'] = self.settings
+                if self.settings is not None:
+                    if response['settings'] != self.settings:
+                        response['settings'] = self.settings
+                        to_be_updated = True
+                else:
+                    self.settings = response['settings']
+
+                if self.protected_settings is not None:
+                    if response['protected_settings'] != self.protected_settings:
+                        response['protected_settings'] = self.protected_settings
+                        to_be_updated = True
+                else:
+                    self.protected_settings = response['protected_settings']
+
+                if response['location'] != self.location:
+                    self.location = response['location']
+                    self.module.warn("Property 'location' cannot be changed")
+
+                if response['publisher'] != self.publisher:
+                    self.publisher = response['publisher']
+                    self.module.warn("Property 'publisher' cannot be changed")
+
+                if response['virtual_machine_extension_type'] != self.virtual_machine_extension_type:
+                    self.virtual_machine_extension_type = response['virtual_machine_extension_type']
+                    self.module.warn("Property 'virtual_machine_extension_type' cannot be changed")
+
+                if response['type_handler_version'] != self.type_handler_version:
+                    response['type_handler_version'] = self.type_handler_version
                     to_be_updated = True
 
-                if response['protected_settings'] != self.protected_settings:
-                    response['protected_settings'] = self.protected_settings
-                    to_be_updated = True
+                if self.auto_upgrade_minor_version is not None:
+                    if response['auto_upgrade_minor_version'] != self.auto_upgrade_minor_version:
+                        response['auto_upgrade_minor_version'] = self.auto_upgrade_minor_version
+                        to_be_updated = True
+                else:
+                    self.auto_upgrade_minor_version = response['auto_upgrade_minor_version']
 
             if to_be_updated:
                 self.results['changed'] = True
