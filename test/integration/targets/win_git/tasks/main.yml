@@ -1,0 +1,22 @@
+---
+- name: Determine if server has git.exe installed
+  win_command: get-command git.exe
+  register: git_client
+  ignore_errors: yes
+
+- name: Fail when git is not installed
+  win_git:
+    repo: https://github.com/ansible/ansible-examples.git
+  register: git_fail  
+  failed_when: '"git.exe is not installed" in git_fail.result.win_git.msg' 
+
+- name: Install git if not installed
+  win_chocolatey:
+    name: git
+    version: 2.20.1
+  when: git_client.rc !=  0 
+  
+- block:
+  - name: run tests
+    include_tasks: test.yml
+

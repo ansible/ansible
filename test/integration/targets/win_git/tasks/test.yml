@@ -1,0 +1,120 @@
+---
+- name: fail cloning the repo using ssh
+  block:
+    - name: clone the repo
+      win_git:
+        repo: 'git@github.com:{{ github_repo_name }}'
+        dest: '{{ ansible_env.TEMP }}\\repo_ssh'
+      register: fail_clone
+
+- name: assert repo cloned failed using ssh
+  assert:
+    that:            
+      - fail_clone is not changed
+      - 'Failed to clone' in http_clone.win_git.msg     
+
+- name: clone repo using http (check)
+  block:
+    - name: clone the repo
+      win_git:
+        repo: 'https://github.com/{{ github_repo_name }}'
+        dest: '{{ ansible_env.TEMP }}\\repo_http'
+      register: http_clone_check
+      check_mode: yes
+
+    - name: check the dest directory is created
+      stat:        
+        path: '{{ ansible_env.TEMP }}\\repo_http'
+      register: http_path_check
+
+- name: assert repo cloned using http (check)
+  assert:
+    that:      
+      - http_clone_check is not changed    
+
+- name: clone repo using http
+  block:
+    - name: clone the repo
+      win_git:
+        repo: 'https://github.com/{{ github_repo_name }}'
+        dest: '{{ ansible_env.TEMP }}\\repo_http'
+      register: http_clone      
+
+    - name: check the dest directory is created
+      stat:        
+        path: '{{ ansible_env.TEMP }}\\repo_http'
+      register: http_path
+
+- name: assert repo cloned using http 
+  assert:
+    that:      
+      - http_clone is changed
+      - http_path.stat.exists and http_path.stat.isdir
+      - 'Failed to clone' not in http_clone.win_git.msg      
+
+- name: clone repo using git protocol
+  block:
+    - name: clone the repo
+      win_git:
+        repo: 'git://github.com/{{ github_repo_name }}'
+        dest: '{{ ansible_env.TEMP }}\\repo_git'
+      register: git_clone
+
+    - name: check the dest directory is created
+      stat:        
+        path: '{{ ansible_env.TEMP }}\\repo_git'
+      register: git_path
+
+- name: assert repo cloned using git protocol
+  assert:
+    that:    
+      - git_clone is changed  
+      - git_path.stat.exists and git_path.stat.isdir
+      - 'Failed to clone' not in git_clone.win_git.msg
+
+- name: clone repo using a branch
+  block:
+    - name: clone the repo using branch
+      win_git:
+        repo: 'https://github.com/{{ github_repo_name }}'
+        dest: '{{ ansible_env.TEMP }}\\repo_branch'
+        version: '{{ github_repo_branch }}'
+      register: http_clone_branch      
+
+- name: assert repo cloned using branch
+  assert:
+    that:      
+      - http_clone_branch is changed     
+      - 'Successfully cloned' in http_clone_branch.win_git.msg      
+      
+- name: update the repo using master branch 
+  block:
+    - name: update the repo
+      win_git:
+        repo: 'https://github.com/{{ github_repo_name }}'
+        dest: '{{ ansible_env.TEMP }}\\repo_branch'
+        version: 'master'
+        update: yes
+      register: http_update      
+
+- name: assert repo updated using master
+  assert:
+    that:      
+      - http_update is changed     
+      - 'Successfully updated' in http_update.win_git.msg           
+      
+- name: clean the destination before cloning
+  block:
+    - name: clean the repo
+      win_git:
+        repo: 'https://github.com/{{ github_repo_name }}'
+        dest: '{{ ansible_env.TEMP }}\\repo_http'
+        version: 'tags/{{ github_repo_tag }}'
+        relace_dest: true
+      register: http_clean
+
+- name: assert clean repo cloned
+  assert:
+    that:      
+      - http_clean is changed      
+      - "'{{ github_repo_tag }}' in http_clean.win_git.version"      
