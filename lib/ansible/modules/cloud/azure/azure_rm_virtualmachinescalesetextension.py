@@ -174,10 +174,16 @@ class AzureRMVMSSExtension(AzureRMModuleBase):
         self.protected_settings = None
         self.state = None
 
+        required_if = [
+            ('state', 'present', [
+             'publisher', 'virtual_machine_extension_type', 'type_handler_version'])
+        ]
+
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMVMSSExtension, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                   supports_tags=False)
+                                                   supports_tags=False,
+                                                   required_if=required_if)
 
     def exec_module(self, **kwargs):
         for key in list(self.module_arg_spec.keys()):
@@ -209,6 +215,29 @@ class AzureRMVMSSExtension(AzureRMModuleBase):
                         to_be_updated = True
                 else:
                     self.protected_settings = response.get('protected_settings')
+
+                if response['location'] != self.location:
+                    self.location = response['location']
+                    self.module.warn("Property 'location' cannot be changed")
+
+                if response['publisher'] != self.publisher:
+                    self.publisher = response['publisher']
+                    self.module.warn("Property 'publisher' cannot be changed")
+
+                if response['type'] != self.type:
+                    self.type = response['type']
+                    self.module.warn("Property 'type' cannot be changed")
+
+                if response['type_handler_version'] != self.type_handler_version:
+                    response['type_handler_version'] = self.type_handler_version
+                    to_be_updated = True
+
+                if self.auto_upgrade_minor_version is not None:
+                    if response['auto_upgrade_minor_version'] != self.auto_upgrade_minor_version:
+                        response['auto_upgrade_minor_version'] = self.auto_upgrade_minor_version
+                        to_be_updated = True
+                else:
+                    self.auto_upgrade_minor_version = response['auto_upgrade_minor_version']
 
             if to_be_updated:
                 if not self.check_mode:
