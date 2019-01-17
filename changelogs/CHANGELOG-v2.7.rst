@@ -5,6 +5,81 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.6
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-01-17
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Added documentation about using VMware dynamic inventory plugin.
+- Fixed bug around populating host_ip in hostvars in vmware_vm_inventory.
+- Image reference change in Azure VMSS is detected and applied correctly.
+- docker_volume - reverted changed behavior of ``force``, which was released in Ansible 2.7.1 to 2.7.5, and Ansible 2.6.8 to 2.6.11. Volumes are now only recreated if the parameters changed **and** ``force`` is set to ``true`` (instead of or). This is the behavior which has been described in the documentation all the time.
+- set ansible_os_family from name variable in os-release
+- yum and dnf can now handle installing packages from URIs that are proxy redirects and don't end in the .rpm file extension
+
+Bugfixes
+--------
+
+- Added log message at -vvvv when using netconf connection listing connection details.
+- Changes how ansible-connection names socket lock files. They now use the same name as the socket itself, and as such do not lock other attempts on connections to the same host, or cause issues with overly-long hostnames.
+- Fix mandatory statement error for junos modules (https://github.com/ansible/ansible/pull/50138)
+- Moved error in netconf connection plugin from at import to on connection.
+- This reverts some changes from commit 723daf3. If a line is found in the file, exactly or via regexp matching, it must not be added again. `insertafter`/`insertbefore` options are used only when a line is to be inserted, to specify where it must be added.
+- allow using openstack inventory plugin w/o a cache
+- callbacks - Do not filter out exception, warnings, deprecations on failure when using debug (https://github.com/ansible/ansible/issues/47576)
+- certificate_complete_chain - fix behavior when invalid file is parsed while reading intermediate or root certificates.
+- copy - Ensure that the src file contents is converted to unicode in diff information so that it is properly wrapped by AnsibleUnsafeText to prevent unexpected templating of diff data in Python3 (https://github.com/ansible/ansible/issues/45717)
+- correct behaviour of verify_file for vmware inventory plugin, it was always returning True
+- dnf - fix issue where ``conf_file`` was not being loaded properly
+- dnf - fix update_cache combined with install operation to not cause dnf transaction failure
+- docker_container - fix ``network_mode`` idempotency if the ``container:<container-name>`` form is used (as opposed to ``container:<container-id>``) (https://github.com/ansible/ansible/issues/49794)
+- docker_container - warning when non-string env values are found, avoiding YAML parsing issues. Will be made an error in Ansible 2.8. (https://github.com/ansible/ansible/issues/49802)
+- docker_swarm_service - Document ``labels`` and ``container_labels`` with correct type.
+- docker_swarm_service - Document ``limit_memory`` and ``reserve_memory`` correctly on how to specify sizes.
+- docker_swarm_service - Document minimal API version for ``configs`` and ``secrets``.
+- docker_swarm_service - fix use of Docker API so that services are not detected as present if there is an existing service whose name is a substring of the desired service
+- docker_swarm_service - fixing falsely reporting ``update_order`` as changed when option is not used.
+- document old option that was initally missed
+- ec2_instance now respects check mode https://github.com/ansible/ansible/pull/46774
+- fix for network_cli - ansible_command_timeout not working as expected (#49466)
+- fix handling of firewalld port if protocol is missing
+- fix lastpass lookup failure on python 3 (https://github.com/ansible/ansible/issues/42062)
+- flatpak - Fixed Python 2/3 compatibility
+- flatpak - Fixed issue where newer versions of flatpak failed on flatpak removal
+- flatpak_remote - Fixed Python 2/3 compatibility
+- gcp_compute_instance - fix crash when the instance metadata is not set
+- grafana_dashboard - Fix a pair of unicode string handling issues with version checking (https://github.com/ansible/ansible/pull/49194)
+- host execution order - Fix ``reverse_inventory`` not to change the order of the items before reversing on python2 and to not backtrace on python3
+- icinga2_host - fixed the issue with not working ``use_proxy`` option of the module.
+- influxdb_user - An unspecified password now sets the password to blank, except on existing users. This previously caused an unhandled exception.
+- influxdb_user - Fixed unhandled exception when using invalid login credentials (https://github.com/ansible/ansible/issues/50131)
+- openssl_* - fix error when ``path`` contains a file name without path.
+- openssl_csr - fix problem with idempotency of keyUsage option.
+- openssl_pkcs12 - now does proper path expansion for ``ca_certificates``.
+- os_security_group_rule - os_security_group_rule doesn't exit properly when secgroup doesn't exist and state=absent (https://github.com/ansible/ansible/issues/50057)
+- paramiko_ssh - add auth_timeout parameter to ssh.connect when supported by installed paramiko version. This will prevent "Authentication timeout" errors when a slow authentication step (>30s) happens with a host (https://github.com/ansible/ansible/issues/42596)
+- purefa_facts and purefb_facts now correctly adds facts into main ansible_fact dictionary (https://github.com/ansible/ansible/pull/50349)
+- reboot - add appropriate commands to make the plugin work with VMware ESXi (https://github.com/ansible/ansible/issues/48425)
+- reboot - add support for rebooting AIX (https://github.com/ansible/ansible/issues/49712)
+- reboot - gather distribution information in order to support Alpine and other distributions (https://github.com/ansible/ansible/issues/46723)
+- reboot - search common paths for the shutdown command and use the full path to the binary rather than depending on the PATH of the remote system (https://github.com/ansible/ansible/issues/47131)
+- reboot - use a common set of commands for older and newer Solaris and SunOS variants (https://github.com/ansible/ansible/pull/48986)
+- redfish_utils - fix reference to local variable 'systems_service'
+- setup - fix the rounding of the ansible_memtotal_mb value on VMWare vm's (https://github.com/ansible/ansible/issues/49608)
+- vultr_server - fixed multiple ssh keys were not handled.
+- win_copy - Fix copy of a dir that contains an empty directory - https://github.com/ansible/ansible/issues/50077
+- win_firewall_rule - Remove invalid 'bypass' action
+- win_lineinfile - Fix issue where a malformed json block was returned causing an error
+- win_updates - Correctly report changes on success
+
 v2.7.5
 ======
 

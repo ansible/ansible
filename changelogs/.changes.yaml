@@ -702,3 +702,58 @@ releases:
     - v2.7.5_summary.yaml
     - vm_fix.yml
     release_date: '2018-12-13'
+  2.7.6:
+    codename: In the Light
+    fragments:
+    - 46739-gcp-compute-instance-metadata.yaml
+    - 46774-ec2_instance_check_mode_fix.yaml
+    - 49084-influxdb_user-default-password-fix.yaml
+    - 49194-grafana_string_handling_fix.yml
+    - 49409-lineinfile_must_not_insert_lines_multiples_times_with_insertbefore_insertafter.yml
+    - 49758-azure_vmss_update_image_reference_fix.yaml
+    - 49794-docker_container-network-mode.yml
+    - 49843-docker_container-wrap-env.yaml
+    - 49922-network-cli-timeout.yaml
+    - 49987-certificate_complete_chain-error.yml
+    - 50034-move-import-errors.yaml
+    - 50076-os-sec-group-rule-proper-module-exit.yaml
+    - 50134-influxdb_user-invalid_auth_fix.yml
+    - 50143-win_firewall_rule-invalid-bypass.yml
+    - 50169-netconf-connection-log.yaml
+    - 50185-win_updates-report-changes-correctly.yml
+    - 50249-vmware_vm_inventory-fix_host_ip.yaml
+    - 50298-redfish_utils_fix_reference_to_local_variable_systems_service.yaml
+    - 50322-openssl-path-error.yml
+    - 50337-fix-vultr_server-ssh_keys-handling.yml
+    - 50361-openssl_csr-idempotency.yml
+    - 50448-paramiko_ssh_add_auth_timeout.yaml
+    - 50540-fix-lastpass-lookup-error.yaml
+    - 50654-docker-swarm-service-docker-api-fix.yaml
+    - 50655-docker_swarm_service-update_order-idempotency.yml
+    - 50697-openssl_pkcs12-ca_certificates.yaml
+    - 50861-docker_swarm_service-documentation-fixes.yml
+    - acl_doc_fix.yml
+    - callback-keep-more-debug-keys.yml
+    - copy-diff-text.yaml
+    - dnf-conf-file.yaml
+    - dnf-update-cache-broken-transaction.yaml
+    - docker_volume-force-change-detection-revert.yaml
+    - firewalld-missing-port-protocol.yml
+    - fix_vmware_inv.yml
+    - flatpak-compatibility-fixes.yaml
+    - icinga2_host-47671-fix-use_proxy.yaml
+    - junos_commit_error_fix.yaml
+    - openstack_inventory_fix.yml
+    - os-family_distro_variable_clearlinux.yaml
+    - persistent-socket-lock-name.yaml
+    - playbook-order-reverse_inventory.yaml
+    - pure_facts_fix.yaml
+    - reboot-add-aix-support.yml
+    - reboot-path-alpine-solaris.yaml
+    - reboot-vmware-esxi.yaml
+    - v2.7.6_summary.yaml
+    - win_copy-empty-dir.yaml
+    - win_lineinfile-output.yaml
+    - windows_setup_memtotal.yml
+    - yumdnf-better-uri-handling.yaml
+    release_date: '2019-01-17'
