@@ -207,9 +207,9 @@ class Connection(ConnectionBase):
         self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
 
-        self._become_method = self._play_context.become_method
-        self._become_user = self._play_context.become_user
-        self._become_pass = self._play_context.become_pass
+        self.become_method = self._play_context.become_method
+        self.become_user = self._play_context.become_user
+        self.become_pass = self._play_context.become_pass
 
         self._winrm_port = self.get_option('port')
 

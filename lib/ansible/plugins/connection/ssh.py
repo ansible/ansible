@@ -706,11 +706,11 @@ class Connection(ConnectionBase):
             suppress_output = False
 
             # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
-            if self._become.prompt and self.check_password_prompt(b_line):
+            if self.become.prompt and self.check_password_prompt(b_line):
                 display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
-            elif self._become.success and self.check_become_success(b_line):
+            elif self.become.success and self.check_become_success(b_line):
                 display.debug("become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_success'] = True
                 suppress_output = True
@@ -809,11 +809,11 @@ class Connection(ConnectionBase):
 
         state = states.index('ready_to_send')
         if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
-            if self._become and self._become.prompt:
+            if self.become and self.become.prompt:
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
-                display.debug(u'Initial state: %s: %s' % (states[state], self._become.prompt))
+                display.debug(u'Initial state: %s: %s' % (states[state], self.become.prompt))
             elif self._play_context.become and self._play_context.success_key:
                 # We're requesting escalation without a password, so we have to
                 # detect success/failure before sending any initial data.

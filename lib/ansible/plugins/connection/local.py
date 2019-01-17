@@ -83,7 +83,7 @@ class Connection(ConnectionBase):
         )
         display.debug("done running command with Popen()")
 
-        if self._become and self._become.prompt and sudoable:
+        if self.become and self.become.prompt and sudoable:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             selector = selectors.DefaultSelector()

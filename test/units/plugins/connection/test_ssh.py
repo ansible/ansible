@@ -133,7 +133,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         )
 
         pc.prompt = True
-        conn._become.prompt = True
+        conn.become.prompt = True
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nfoo\nline 3\nthis should be the remainder', False)
         self.assertEqual(output, b'line 1\nline 2\nline 3\n')
         self.assertEqual(unprocessed, b'this should be the remainder')
@@ -151,9 +151,9 @@ class TestConnectionBaseClass(unittest.TestCase):
         )
 
         pc.prompt = False
-        conn._become.prompt = False
+        conn.become.prompt = False
         pc.success_key = u'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
-        conn._become.success = u'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
+        conn.become.success = u'BECOME-SUCCESS-abcdefghijklmnopqrstuvxyz'
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nBECOME-SUCCESS-abcdefghijklmnopqrstuvxyz\nline 3\n', False)
         self.assertEqual(output, b'line 1\nline 2\nline 3\n')
         self.assertEqual(unprocessed, b'')
@@ -171,7 +171,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         )
 
         pc.prompt = False
-        conn._become.prompt = False
+        conn.become.prompt = False
         pc.success_key = None
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nincorrect password\n', True)
         self.assertEqual(output, b'line 1\nline 2\nincorrect password\n')
@@ -190,7 +190,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         )
 
         pc.prompt = False
-        conn._become.prompt = False
+        conn.become.prompt = False
         pc.success_key = None
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nbad password\n', True)
         self.assertEqual(output, b'line 1\nbad password\n')
@@ -430,7 +430,7 @@ class TestSSHConnectionRun(object):
     def test_password_with_prompt(self):
         # test with password prompting enabled
         self.pc.password = None
-        self.conn._become.prompt = b'Password:'
+        self.conn.become.prompt = b'Password:'
         self.conn._examine_output.side_effect = self._password_with_prompt_examine_output
         self.mock_popen_res.stdout.read.side_effect = [b"Password:", b"Success", b""]
         self.mock_popen_res.stderr.read.side_effect = [b""]
@@ -455,10 +455,10 @@ class TestSSHConnectionRun(object):
     def test_password_with_become(self):
         # test with some become settings
         self.pc.prompt = b'Password:'
-        self.conn._become.prompt = b'Password:'
+        self.conn.become.prompt = b'Password:'
         self.pc.become = True
         self.pc.success_key = 'BECOME-SUCCESS-abcdefg'
-        self.conn._become._id = 'abcdefg'
+        self.conn.become._id = 'abcdefg'
         self.conn._examine_output.side_effect = self._password_with_prompt_examine_output
         self.mock_popen_res.stdout.read.side_effect = [b"Password:", b"BECOME-SUCCESS-abcdefg", b"abc"]
         self.mock_popen_res.stderr.read.side_effect = [b"123"]

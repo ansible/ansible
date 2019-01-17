@@ -919,7 +919,10 @@ class TaskExecutor:
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
 
-        plugin = getattr(self._connection, '_%s' % plugin_type)
+        plugin = getattr(
+            self._connection, '_%s' % plugin_type,
+            getattr(self._connection, plugin_type, None)
+        )
         option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
         options = {}
         for k in option_vars:
@@ -959,7 +962,7 @@ class TaskExecutor:
         # set options with 'templated vars' specific to this plugin and dependant ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
         self._set_plugin_options('shell', final_vars, templar, task_keys)
-        if self._connection._become is not None:
+        if self._connection.become is not None:
             # FIXME: find alternate route to provide passwords, keep out of play objects to avoid accidental disclosure
             task_keys['become_pass'] = self._play_context.become_pass
             self._set_plugin_options('become', final_vars, templar, task_keys)
@@ -967,10 +970,10 @@ class TaskExecutor:
             # FOR BACKWARDS COMPAT:
             for option in ('become_user', 'become_flags', 'become_exe'):
                 try:
-                    setattr(self._play_context, option, self._connection._become.get_option(option))
+                    setattr(self._play_context, option, self._connection.become.get_option(option))
                 except KeyError:
                     pass  # some plugins don't support all base flags
-            self._play_context.prompt = self._connection._become.prompt
+            self._play_context.prompt = self._connection.become.prompt
 
     def _get_action_handler(self, connection, templar):
         '''
