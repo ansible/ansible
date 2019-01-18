@@ -112,8 +112,7 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
-from ansible.module_utils.network.asa.asa import run_commands
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args, run_commands
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
 
@@ -153,7 +152,7 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses = run_commands(module, commands)
+        responses, timestamps = run_commands(module, commands)
 
         for item in list(conditionals):
             if item(responses):
@@ -176,7 +175,8 @@ def main():
     result.update({
         'changed': False,
         'stdout': responses,
-        'stdout_lines': list(to_lines(responses))
+        'stdout_lines': list(to_lines(responses)),
+        'timestamps': timestamps
     })
 
     module.exit_json(**result)

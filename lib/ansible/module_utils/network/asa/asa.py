@@ -26,7 +26,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback, return_values, get_timestamp
 from ansible.module_utils.network.common.utils import to_list, EntityCollection
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -119,12 +119,15 @@ def run_commands(module, commands, check_rc=True):
     commands = to_commands(module, to_list(commands))
 
     responses = list()
+    timestamps = list()
 
     for cmd in commands:
+        timestamp = get_timestamp()
         out = connection.get(**cmd)
         responses.append(to_text(out, errors='surrogate_then_replace'))
+        timestamps.append(timestamp)
 
-    return responses
+    return responses, timestamps
 
 
 def get_config(module, flags=None):
