@@ -141,6 +141,9 @@ files:
     ignored: sivel angstwad
   $modules/cloud/scaleway/scaleway_volume.py:
     ignored: hekonsek
+  $modules/cloud/smartos/: &solaris
+    labels: solaris
+    maintainers: $team_solaris
   $modules/cloud/univention/: keachi
   $modules/cloud/vmware/:
     maintainers: $team_vmware
@@ -253,7 +256,7 @@ files:
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
   $modules/network/fortimanager/: $team_fortimanager
-  $modules/network/illumos/: xen0l
+  $modules/network/illumos/: *solaris
   $modules/network/interface/: $team_networking
   $modules/network/ios/: rcarrillocruz
   $modules/network/iosxr/: rcarrillocruz gdpak
@@ -305,7 +308,8 @@ files:
   $modules/packaging/os/package.py: $team_ansible
   $modules/packaging/os/pacman.py:
     ignored: elasticdog
-  $modules/packaging/os/pkgin.py: troy2914
+  $modules/packaging/os/pkg5: *solaris
+  $modules/packaging/os/pkgin.py: *solaris
   $modules/packaging/os/pkgng.py:
     ignored: bleader
     maintainers: JoergFiedler
@@ -316,6 +320,7 @@ files:
   $modules/packaging/os/rhn_channel.py: alikins
   $modules/packaging/os/rhn_register.py: $team_rhn
   $modules/packaging/os/snap.py: angristan
+  $modules/packaging/os/svr4pkg.py: *solaris
   $modules/packaging/os/swupd.py: hnanni
   $modules/packaging/os/yum.py:
     maintainers: $team_ansible kustodian
@@ -342,6 +347,7 @@ files:
     labels: pure_storage
   $modules/storage/glusterfs/: devyanikota
   $modules/storage/ibm/: tzurE
+  $modules/storage/zfs/: *solaris
   $modules/system/aix: &aix
     labels: aix
     maintainers: $team_aix
@@ -349,6 +355,7 @@ files:
     ignored: DavidWittman
   $modules/system/at.py: $team_ansible
   $modules/system/authorized_key.py: $team_ansible
+  $modules/system/beadm.py: *solaris
   $modules/system/facter.py: $team_ansible
   $modules/system/filesystem.py: pilou-
   $modules/system/gconftool2.py: Akasurde
@@ -375,6 +382,7 @@ files:
   $modules/system/setup.py:
     ignored: david_obrien
     maintainers: $team_ansible
+  $modules/system/solaris: *solaris
   $modules/system/sysctl.py: Akasurde
   $modules/system/systemd.py: $team_ansible
   $modules/system/user.py: $team_ansible samdoran
@@ -558,6 +566,9 @@ files:
     support: core
   $module_utils/facts/hardware/aix.py: *aix
   $module_utils/facts/network/aix.py: *aix
+  $module_utils/facts/hardware/sunos.py: *solaris
+  $module_utils/facts/network/sunos.py: *solaris
+  $module_utils/facts/virtual/sunos.py: *solaris
   $module_utils/gcp_utils.py:
     maintainers: $team_google
     supershipit: $team_google
@@ -1307,6 +1318,7 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
+  team_solaris: dagwieers troy2914 xen0l
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
   team_e_spirit: MatrixCrawler getjack
