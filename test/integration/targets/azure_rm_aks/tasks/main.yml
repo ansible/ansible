@@ -122,9 +122,9 @@
       that:
        - output.changed
        - output.kubernetes_version == '1.11.5'
-       - output.addon.http_application_routing.enable ==  True
-       - output.agent_pool_profiles[0].count == 2
-       - output.network_profile.network_plugin == 'azure'
+       - output.addon.httpApplicationRouting.enabled ==  True
+       - output.agent_pool_profiles[0].count == 1
+       - output.network_profile.network_plugin == 'kubenet'
 
  - name: Upgrade the AKS instance with addon (idempontent)
    azure_rm_aks:

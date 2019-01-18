@@ -138,7 +138,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         if item and self.has_tags(item.tags, self.tags):
             result = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
             if self.show_kubeconfig:
-                result[0]['kubeconfig'] = self.get_aks_kubeconfig(self.resource_group, self.name)
+                result[0]['kube_config'] = self.get_aks_kubeconfig(self.resource_group, self.name)
 
         return result
 
@@ -157,7 +157,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
             if self.has_tags(item.tags, self.tags):
                 item_dict = self.serialize_obj(item, AZURE_OBJECT_CLASS)
                 if self.show_kubeconfig:
-                    item_dict['kubeconfig'] = self.get_aks_kubeconfig(self.resource_group, item.name)
+                    item_dict['kube_config'] = self.get_aks_kubeconfig(self.resource_group, item.name)
                 results.append(item_dict)
 
         return results
