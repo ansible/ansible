@@ -309,13 +309,15 @@ def parse_systemctl_show(lines):
 
 def unit_is_enabled(module, systemctl_executable, systemd_unit, is_initd):
     """Detect whether given unit is enabled.
-     Args:
-        module (AnsibleModule): Instance of ansible module singleton.
-        systemctl_executable (str): systemctl executable with default
-            arguments pre-filled.
-        systemd_unit (str): Name of systemd unit being checked.
-     Returns:
-        bool: True if systemd unit is enabled, False otherwise.
+
+    Args:
+       module (AnsibleModule): Instance of ansible module singleton.
+       systemctl_executable (str): systemctl executable with default
+           arguments pre-filled.
+       systemd_unit (str): Name of systemd unit being checked.
+
+    Returns:
+       bool: True if systemd unit is enabled, False otherwise.
     """
     rc, out, _err = module.run_command(
         "%s is-enabled '%s'"
@@ -374,13 +376,15 @@ DO_NOTHING = None
 
 def get_action_from_enabled_flag(requested_state, current_state):
     """Decide final action string from current state.
-     Args:
-        requested_state (str): The desired state, requested via module
-            argument in task.
-        current_state (bool): The initial state of the service.
-            True for running, False for stopped.
-     Returns:
-        str: The actual action this module is going to run.
+
+    Args:
+       requested_state (str): The desired state, requested via module
+           argument in task.
+       current_state (bool): The initial state of the service.
+           True for running, False for stopped.
+
+    Returns:
+       str: The actual action this module is going to run.
     """
     ENABLED_NOW = ENABLE_REQUEST = True
     DISABLED_NOW = DISABLE_REQUEST = False
