@@ -5,6 +5,6 @@ subversion_packages:
 upgrade_packages:
 # prevent sqlite from being out-of-sync with the version subversion was compiled with
 - subversion
-- sqlite-libs
+- sqlite
 apache_user: apache
 apache_group: apache
