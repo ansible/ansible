@@ -51,6 +51,7 @@ SKYDIVE_PROVIDER_SPEC = {
     'ssl_verify': dict(type='bool', default=False, fallback=(env_fallback, ['SKYDIVE_SSL_VERIFY']))
 }
 
+
 class skydive_base(object):
     ''' Base class for implementing Skydive Rest API '''
     provider_spec = {'provider': dict(type='dict', options=SKYDIVE_PROVIDER_SPEC)}
