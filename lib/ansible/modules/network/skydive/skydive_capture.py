@@ -107,11 +107,12 @@ def main():
     )
 
     argument_spec = dict(
-        provider=dict(required=True),
+        provider=dict(required=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
     argument_spec.update(ib_spec)
+    argument_spec.update(skydive_flow_topology.provider_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
