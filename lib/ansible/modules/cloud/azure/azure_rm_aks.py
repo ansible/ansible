@@ -364,7 +364,7 @@ agent_pool_profile_spec = dict(
 )
 
 
-network_profile_spec=dict(
+network_profile_spec = dict(
     network_plugin=dict(type='str', choices=['azure', 'kubenet']),
     network_policy=dict(type='str'),
     pod_cidr=dict(type='str'),
@@ -374,7 +374,7 @@ network_profile_spec=dict(
 )
 
 
-aad_profile_spec=dict(
+aad_profile_spec = dict(
     client_app_id=dict(type='str'),
     server_app_id=dict(type='str'),
     server_app_secret=dict(type='str'),
@@ -382,7 +382,7 @@ aad_profile_spec=dict(
 )
 
 
-addon_spec=dict(
+addon_spec = dict(
     enabled=dict(type='bool', default=True),
     config=dict(type='dict')
 )
@@ -488,7 +488,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         resource_group = None
         to_be_updated = False
-        update_tags =  False
+        update_tags = False
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -669,7 +669,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
     def update_aks_tags(self):
         try:
-            return self.containerservice_client.managed_clusters.update_tags(self.resource_group, self.name, self.tags)
+            poller = self.containerservice_client.managed_clusters.update_tags(self.resource_group, self.name, self.tags)
+            return self.get_poller_result(poller)
         except CloudError as exc:
             self.fail("Error attempting to update AKS tags: {0}".format(exc.message))
 
@@ -723,7 +724,6 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         '''
         return self.containerservice_models.ManagedClusterAgentPoolProfile(**agentpoolprofile)
 
-
     def create_service_principal_profile_instance(self, spnprofile):
         '''
         Helper method to serialize a dict to a ManagedClusterServicePrincipalProfile
@@ -734,7 +734,6 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             client_id=spnprofile['client_id'],
             secret=spnprofile['client_secret']
         )
-
 
     def create_linux_profile_instance(self, linuxprofile):
         '''
