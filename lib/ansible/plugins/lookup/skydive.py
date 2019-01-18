@@ -43,7 +43,7 @@ EXAMPLES = """
 
 - name: return skydive metdata if present based on TID
   set_fact:
-    skydive: "{{ lookup('skydive_lookup', filter={'TID': '2b5e8263-89d3-5e01-506b-9120f49572b5'}, 
+    skydive: "{{ lookup('skydive_lookup', filter={'TID': '2b5e8263-89d3-5e01-506b-9120f49572b5'},
                                         provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 """
 
