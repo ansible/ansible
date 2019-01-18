@@ -446,6 +446,7 @@ class User(object):
 
     platform = 'Generic'
     distribution = None
+    PASSWORDFILE = '/etc/passwd'
     SHADOWFILE = '/etc/shadow'
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
@@ -840,11 +841,26 @@ class User(object):
         return groups
 
     def user_exists(self):
-        try:
-            if pwd.getpwnam(self.name):
-                return True
-        except KeyError:
-            return False
+        # The pwd module does not distinguish between local and directory accounts.
+        # It's output cannot be used to determine whether or not an account exists locally.
+        # It returns True if the account exists locally or in the directory.
+        if not self.local:
+            try:
+                if pwd.getpwnam(self.name):
+                    return True
+            except KeyError:
+                return False
+        else:
+            exists = False
+            name_test = '{0}:'.format(self.name)
+            with open(self.PASSWORDFILE, 'rb') as f:
+                reversed_lines = f.readlines()[::-1]
+                for line in reversed_lines:
+                    if line.startswith(to_bytes(name_test)):
+                        exists = True
+                        break
+
+            return exists
 
     def get_pwd_info(self):
         if not self.user_exists():

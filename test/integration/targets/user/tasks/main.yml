@@ -775,3 +775,48 @@
         password_lock: no
 
   when: ansible_facts['system'] in ['FreeBSD', 'OpenBSD', 'Linux']
+
+
+  ## Check local mode
+  # Even if we don't have a system that is bound to a directory, it's useful
+  # to run with local: true to exercise the code path that reads through the local
+  # user database file.
+  # https://github.com/ansible/ansible/issues/50947
+
+- name: Create local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_1
+
+- name: Create local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+  register: local_user_test_2
+
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_3
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  register: local_user_test_4
+
+- name: Ensure local user accounts were created
+  assert:
+    that:
+      - local_user_test_1 is changed
+      - local_user_test_2 is not changed
+      - local_user_test_3 is changed
+      - local_user_test_4 is not changed
