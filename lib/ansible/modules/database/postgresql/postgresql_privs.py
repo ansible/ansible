@@ -87,6 +87,7 @@ options:
   target_roles:
     description:
       - Comma separated list of role (user/group) names to set as the default permissions.
+    version_added: 2.8
   grant_option:
     description:
       - Whether C(role) may grant/revoke the specified privileges/group
@@ -729,8 +730,8 @@ class QueryBuilder(object):
             else:
                 self.query.append(
                     'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} REVOKE ALL ON {2} FROM {3};'.format(self._as_who,
-                                                                                                self._schema, obj,
-                                                                                                self._for_whom))
+                                                                                                             self._schema, obj,
+                                                                                                             self._for_whom))
 
     def add_grant_option(self):
         if self._grant_option:
@@ -756,10 +757,10 @@ class QueryBuilder(object):
             else:
                 self.query.append(
                     'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} GRANT {2} ON {3} TO {4}'.format(self._as_who,
-                                                                                                    self._schema,
-                                                                                                    self._set_what,
-                                                                                                    obj,
-                                                                                                    self._for_whom))
+                                                                                                         self._schema,
+                                                                                                         self._set_what,
+                                                                                                         obj,
+                                                                                                         self._for_whom))
             self.add_grant_option()
         if not self._as_who:
             self.query.append(
@@ -767,8 +768,8 @@ class QueryBuilder(object):
         else:
             self.query.append(
                 'ALTER DEFAULT PRIVILEGES FOR ROLE {0} IN SCHEMA {1} GRANT USAGE ON TYPES TO {2}'.format(self._as_who,
-                                                                                                    self._schema,
-                                                                                                    self._for_whom))
+                                                                                                         self._schema,
+                                                                                                         self._for_whom))
         self.add_grant_option()
 
     def build_present(self):
@@ -938,7 +939,7 @@ def main():
             privs=privs,
             objs=objs,
             roles=roles,
-            target_roles= target_roles,
+            target_roles=target_roles,
             state=p.state,
             grant_option=p.grant_option,
             schema_qualifier=p.schema,
