@@ -1,0 +1,75 @@
+- name: Test no parameters
+  tower_send:
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result is failed"
+
+- name: Create user json
+  set_fact:
+    user:
+      - username: "jowestco"
+        first_name: "John"
+        last_name: "Westcott"
+        asset_type: "user"
+        email: "john.westcott.iv@redhat.com"
+
+- name: Test a new import of asset
+  tower_send:
+    assets: "{{ user | to_json() }}"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Test an existing import of asset
+  tower_send:
+    assets: "{{ user | to_json() }}"
+  register: result
+
+- assert:
+    that:
+      - "result is successful"
+      - "result is not changed"
+
+- name: Change an existing asset
+  tower_send:
+    assets: "{{ user | combine({'last_name': 'Westcott IV'}) | to_json() }}"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create organization json
+  set_fact:
+    organization:
+      - asset_type: organization
+        name: "Red Hat"
+
+- name: Create temp file
+  tempfile:
+    state: file
+  register: my_temp_file
+
+- name: Drop down a file to import
+  copy:
+    dest: "{{ my_temp_file.path }}"
+    content: "{{ organization | to_nice_json() }}"
+
+- name: Create org via files
+  tower_send:
+    files: "{{ my_temp_file.path }}"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Remove Temp File
+  file:
+    path: "{{ my_temp_file.path }}"
+    state: absent
