@@ -340,6 +340,34 @@ def unit_is_enabled(module, systemctl_executable, systemd_unit, is_initd):
     return False
 
 
+def run_systemctl(
+    module, systemctl_executable, systemd_unit,
+    action, abort_on_fail=False,
+):
+    """Run a systemctl action on the specified unit, optionally halt.
+
+    Args:
+       module (AnsibleModule): Instance of ansible module singleton.
+       systemctl_executable (str): systemctl executable with default
+           arguments pre-filled.
+       systemd_unit (str): Name of systemd unit being checked.
+
+    Returns:
+       bool: True if systemd unit is enabled, False otherwise.
+    """
+    rc, out, err = module.run_command(
+        "%s %s '%s'"
+        % (systemctl_executable, action, systemd_unit),
+    )
+    if abort_on_fail and rc != 0:
+        module.fail_json(
+            msg="Unable to %s service %s: %s"
+            % (action, systemd_unit, err),
+        )
+    return rc, out, err
+
+
+
 DO_NOTHING = None
 """Constant indicating a no-op action."""
 
@@ -514,9 +542,10 @@ def main():
             if action is not DO_NOTHING:
                 result['changed'] = True
                 if not module.check_mode:
-                    rc, out, err = module.run_command("%s %s '%s'" % (systemctl, action, unit))
-                    if rc != 0:
-                        module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
+                    run_systemctl(
+                        module, systemctl, unit,
+                        action, abort_on_fail=True,
+                    )
 
                 result['enabled'] = not is_unit_enabled
 
