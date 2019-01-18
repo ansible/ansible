@@ -145,7 +145,6 @@ Here's an example of a valid inventory file:
     plugin: gcp_compute
     projects:
       - graphite-playground
-    filters:
     auth_kind: serviceaccount
     service_account_file: /home/alexstephen/my_account.json
 
