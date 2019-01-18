@@ -305,17 +305,20 @@ files:
     maintainers: tdtrask
   $modules/packaging/os/apt.py: $team_ansible
   $modules/packaging/os/apt_repository.py: $team_ansible
+  $modules/packaging/os/openbsd_pkg.py: &bsd
+    ignored: bleader
+    labels: bsd
+    maintainers: $team_bsd
   $modules/packaging/os/package.py: $team_ansible
   $modules/packaging/os/pacman.py:
     ignored: elasticdog
   $modules/packaging/os/pkg5: *solaris
   $modules/packaging/os/pkgin.py: *solaris
-  $modules/packaging/os/pkgng.py:
-    ignored: bleader
-    maintainers: JoergFiedler
-  $modules/packaging/os/pkgutil.py: scathatheworm
+  $modules/packaging/os/pkgng.py: *bsd
+  $modules/packaging/os/pkgutil.py: *solaris
   $modules/packaging/os/portage.py:
     ignored: sayap
+  $modules/packaging/os/portinstall.py: *bsd
   $modules/packaging/os/redhat_subscription.py: alikins kahowell
   $modules/packaging/os/rhn_channel.py: alikins
   $modules/packaging/os/rhn_register.py: $team_rhn
@@ -568,12 +571,25 @@ files:
   $module_utils/facts:
     support: core
   $module_utils/facts/hardware/aix.py: *aix
+  $module_utils/facts/hardware/dragonfly.py: *bsd
+  $module_utils/facts/hardware/freebsd.py: *bsd
   $module_utils/facts/hardware/hpux.py: *hpux
+  $module_utils/facts/hardware/netbsd.py: *bsd
+  $module_utils/facts/hardware/openbsd.py: *bsd
   $module_utils/facts/hardware/sunos.py: *solaris
   $module_utils/facts/network/aix.py: *aix
+  $module_utils/facts/network/dragonfly.py: *bsd
+  $module_utils/facts/network/freebsd.py: *bsd
+  $module_utils/facts/network/generic_bsd.py: *bsd
   $module_utils/facts/network/hpux.py: *hpux
+  $module_utils/facts/network/netbsd.py: *bsd
+  $module_utils/facts/network/openbsd.py: *bsd
   $module_utils/facts/network/sunos.py: *solaris
+  $module_utils/facts/virtual/dragonfly.py: *bsd
+  $module_utils/facts/virtual/freebsd.py: *bsd
   $module_utils/facts/virtual/hpux.py: *hpux
+  $module_utils/facts/virtual/netbsd.py: *bsd
+  $module_utils/facts/virtual/openbsd.py: *bsd
   $module_utils/facts/virtual/sunos.py: *solaris
   $module_utils/gcp_utils.py:
     maintainers: $team_google
@@ -1218,14 +1234,13 @@ files:
   docs/:
     maintainers:
       - acozine
-  docs/docsite/:
-    labels: docsite
+  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
       - samccann
   docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
-  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
+  docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
 ###############################
 # 'test' is a component path, then 'test' label will be automatically added
   test/runner/:
@@ -1270,6 +1285,7 @@ files:
   test/legacy/scaleway:
     <<: *scaleway
     support: community
+  test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
   test/units/modules/cloud/docker:
     maintainers: $team_docker
     supershipit: felixfontein
@@ -1297,6 +1313,7 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
+  team_bsd: dagwieers JoergFiedler
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
@@ -1327,7 +1344,7 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
-  team_solaris: dagwieers troy2914 xen0l
+  team_solaris: dagwieers scathatheworm troy2914 xen0l
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
   team_vmware: Akasurde dav1x warthog9 ckotte
