@@ -8,99 +8,103 @@
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-#
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ini_file
 short_description: Tweak settings in INI files
 extends_documentation_fragment: files
 description:
      - Manage (add, remove, change) individual settings in an INI-style file without having
-       to manage the file as a whole with, say, M(template) or M(assemble). Adds missing
-       sections if they don't exist.
-     - Before version 2.0, comments are discarded when the source file is read, and therefore will not show up in the destination file.
-     - Since version 2.3, this module adds missing ending newlines to files to keep in line with the POSIX standard, even when
+       to manage the file as a whole with, say, M(template) or M(assemble).
+     - Adds missing sections if they don't exist.
+     - Before Ansible 2.0, comments are discarded when the source file is read, and therefore will not show up in the destination file.
+     - Since Ansible 2.3, this module adds missing ending newlines to files to keep in line with the POSIX standard, even when
        no other modifications need to be applied.
 version_added: "0.9"
 options:
   path:
     description:
       - Path to the INI-style file; this file is created if required.
-      - Before 2.3 this option was only usable as I(dest).
-    aliases: [ dest ]
+      - Before Ansible 2.3 this option was only usable as I(dest).
+    type: path
     required: true
+    aliases: [ dest ]
   section:
     description:
       - Section name in INI file. This is added if C(state=present) automatically when
         a single value is being set.
-      - If left empty or set to `null`, the I(option) will be placed before the first I(section).
-        Using `null` is also required if the config format does not support sections.
+      - If left empty or set to C(null), the I(option) will be placed before the first I(section).
+      - Using C(null) is also required if the config format does not support sections.
+    type: str
     required: true
   option:
     description:
       - If set (required for changing a I(value)), this is the name of the option.
       - May be omitted if adding/removing a whole I(section).
+    type: str
   value:
     description:
-     - The string value to be associated with an I(option). May be omitted when removing an I(option).
+      - The string value to be associated with an I(option).
+      - May be omitted when removing an I(option).
+    type: str
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: 'no'
+    default: no
   others:
-     description:
-       - All arguments accepted by the M(file) module also work here
+    description:
+      - All arguments accepted by the M(file) module also work here.
+    type: str
   state:
-     description:
-       - If set to C(absent) the option or section will be removed if present instead of created.
-     choices: [ absent, present ]
-     default: present
+    description:
+      - If set to C(absent) the option or section will be removed if present instead of created.
+    type: str
+    choices: [ absent, present ]
+    default: present
   no_extra_spaces:
-     description:
-       - Do not insert spaces before and after '=' symbol
-     type: bool
-     default: 'no'
-     version_added: "2.1"
+    description:
+      - Do not insert spaces before and after '=' symbol.
+    type: bool
+    default: no
+    version_added: "2.1"
   create:
-     description:
-       - If set to 'no', the module will fail if the file does not already exist.
-         By default it will create the file if it is missing.
-     type: bool
-     default: 'yes'
-     version_added: "2.2"
+    description:
+      - If set to C(no), the module will fail if the file does not already exist.
+      - By default it will create the file if it is missing.
+    type: bool
+    default: yes
+    version_added: "2.2"
   allow_no_value:
-     description:
-       - allow option without value and without '=' symbol
-     type: bool
-     required: false
-     default: false
-     version_added: "2.6"
+    description:
+      - Allow option without value and without '=' symbol.
+    type: bool
+    default: no
+    version_added: "2.6"
 notes:
-   - While it is possible to add an I(option) without specifying a I(value), this makes
-     no sense.
-   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but
-     I(dest) still works as well.
+   - While it is possible to add an I(option) without specifying a I(value), this makes no sense.
+   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 author:
     - Jan-Piet Mens (@jpmens)
     - Ales Nosek (@noseka1)
 '''
 
-EXAMPLES = '''
-# Before 2.3, option 'dest' was used instead of 'path'
+EXAMPLES = r'''
+# Before Ansible 2.3, option 'dest' was used instead of 'path'
 - name: Ensure "fav=lemonade is in section "[drinks]" in specified file
   ini_file:
     path: /etc/conf
     section: drinks
     option: fav
     value: lemonade
-    mode: 0600
+    mode: '0600'
     backup: yes
 
 - name: Ensure "temperature=cold is in section "[drinks]" in specified file
@@ -302,7 +306,7 @@ def main():
             backup=dict(type='bool', default=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             no_extra_spaces=dict(type='bool', default=False),
-            allow_no_value=dict(type='bool', default=False, required=False),
+            allow_no_value=dict(type='bool', default=False),
             create=dict(type='bool', default=True)
         ),
         add_file_common_args=True,

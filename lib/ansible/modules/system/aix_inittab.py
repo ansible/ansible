@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Joris Weijters <joris.weijters@gmail.com>
+# Copyright: (c) 2017, Joris Weijters <joris.weijters@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -24,15 +24,18 @@ options:
   name:
     description:
     - Name of the inittab entry.
+    type: str
     required: yes
-    aliases: ['service']
+    aliases: [ service ]
   runlevel:
     description:
     - Runlevel of the entry.
+    type: str
     required: yes
   action:
     description:
     - Action what the init has to do with this entry.
+    type: str
     required: yes
     choices:
     - boot
@@ -50,18 +53,21 @@ options:
   command:
     description:
     - What command has to run.
+    type: str
     required: yes
   insertafter:
     description:
     - After which inittabline should the new entry inserted.
+    type: str
   state:
     description:
     - Whether the entry should be present or absent in the inittab file.
+    type: str
     choices: [ absent, present ]
     default: present
 notes:
-  - The changes are persistent across reboots, you need root rights to read or adjust the inittab with the C(lsitab), chitab,
-    C(mkitab) or C(rmitab) commands.
+  - The changes are persistent across reboots.
+  - You need root rights to read or adjust the inittab with the C(lsitab), C(chitab), C(mkitab) or C(rmitab) commands.
   - Tested on AIX 7.1.
 requirements:
 - itertools
@@ -101,17 +107,17 @@ EXAMPLES = '''
 
 RETURN = '''
 name:
-    description: name of the adjusted inittab entry
+    description: Name of the adjusted inittab entry
     returned: always
     type: str
     sample: startmyservice
 msg:
-    description: action done with the inittab entry
+    description: Action done with the inittab entry
     returned: changed
     type: str
     sample: changed inittab entry startmyservice
 changed:
-    description: whether the inittab changed or not
+    description: Whether the inittab changed or not
     returned: always
     type: bool
     sample: true

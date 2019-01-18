@@ -35,10 +35,12 @@ options:
     description:
     - Path of a Jinja2 formatted template on the Ansible controller.
     - This can be a relative or an absolute path.
+    type: path
     required: yes
   dest:
     description:
     - Location to render the template to on the remote machine.
+    type: path
     required: yes
   backup:
     description:
@@ -50,27 +52,32 @@ options:
   newline_sequence:
     description:
     - Specify the newline sequence to use for templating files.
+    type: str
     choices: [ '\n', '\r', '\r\n' ]
     default: '\n'
     version_added: '2.4'
   block_start_string:
     description:
     - The string marking the beginning of a block.
+    type: str
     default: '{%'
     version_added: '2.4'
   block_end_string:
     description:
     - The string marking the end of a block.
+    type: str
     default: '%}'
     version_added: '2.4'
   variable_start_string:
     description:
     - The string marking the beginning of a print statement.
+    type: str
     default: '{{'
     version_added: '2.4'
   variable_end_string:
     description:
     - The string marking the end of a print statement.
+    type: str
     default: '}}'
     version_added: '2.4'
   trim_blocks:
@@ -84,7 +91,7 @@ options:
     description:
     - Determine when leading spaces and tabs should be stripped.
     - When set to C(yes) leading spaces and tabs are stripped from the start of a line to a block.
-    - This functionality requires Jinja v2.7 or newer.
+    - This functionality requires Jinja 2.7 or newer.
     type: bool
     default: no
     version_added: '2.6'
@@ -109,11 +116,12 @@ options:
     - Overrides the encoding used to write the template file defined by C(dest).
     - It defaults to C(utf-8), but any encoding supported by python can be used.
     - The source template file must always be encoded using C(utf-8), for homogeneity.
+    type: str
     default: utf-8
     version_added: '2.7'
 notes:
 - Including a string that uses a date in the template will result in the template being marked 'changed' each time.
-- Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
+- Since Ansible 0.9, templates are loaded with C(trim_blocks=True).
 - >
   Also, you can override jinja2 settings by adding a special header to template file.
   i.e. C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
@@ -151,7 +159,7 @@ EXAMPLES = r'''
     dest: /etc/file.conf
     owner: bin
     group: wheel
-    mode: "u=rw,g=r,o=r"
+    mode: u=rw,g=r,o=r
 
 - name: Create a DOS-style text file from a template
   template:
@@ -163,7 +171,7 @@ EXAMPLES = r'''
   template:
     src: /mine/sudoers
     dest: /etc/sudoers
-    validate: '/usr/sbin/visudo -cf %s'
+    validate: /usr/sbin/visudo -cf %s
 
 - name: Update sshd configuration safely, avoid locking yourself out
   template:

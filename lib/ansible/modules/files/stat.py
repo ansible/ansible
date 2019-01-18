@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,18 +16,19 @@ module: stat
 version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
-     - Retrieves facts for a file similar to the linux/unix 'stat' command.
+     - Retrieves facts for a file similar to the Linux/Unix 'stat' command.
      - For Windows targets, use the M(win_stat) module instead.
 options:
   path:
     description:
       - The full path of the file/object to get the facts of.
+    type: path
     required: true
   follow:
     description:
       - Whether to follow symlinks.
     type: bool
-    default: 'no'
+    default: no
   get_md5:
     description:
       - Whether to return the md5 sum of the file.
@@ -37,19 +39,20 @@ options:
       - Use C(get_checksum=true) with C(checksum_algorithm=md5) to return an
         md5 hash under the C(checksum) return value.
     type: bool
-    default: 'no'
+    default: no
   get_checksum:
     description:
-      - Whether to return a checksum of the file (default sha1).
+      - Whether to return a checksum of the file.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "1.8"
   checksum_algorithm:
     description:
-      - Algorithm to determine checksum of file. Will throw an error if the
-        host is unable to use specified algorithm.
+      - Algorithm to determine checksum of file.
+      - Will throw an error if the host is unable to use specified algorithm.
       - The remote host has to support the hashing method specified, C(md5)
         can be unavailable if the host is FIPS-140 compliant.
+    type: str
     choices: [ md5, sha1, sha224, sha256, sha384, sha512 ]
     default: sha1
     aliases: [ checksum, checksum_algo ]
@@ -59,27 +62,25 @@ options:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
       - This will add both `mime_type` and 'charset' fields to the return, if possible.
-      - In 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'.
+      - In Ansible 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'.
     type: bool
-    default: 'yes'
-    version_added: "2.1"
+    default: yes
     aliases: [ mime, mime_type, mime-type ]
+    version_added: "2.1"
   get_attributes:
     description:
       - Get file attributes using lsattr tool if present.
     type: bool
-    default: 'yes'
-    version_added: "2.3"
+    default: yes
     aliases: [ attr, attributes ]
-notes:
-     - For Windows targets, use the M(win_stat) module instead.
+    version_added: "2.3"
 seealso:
 - module: file
 - module: win_stat
 author: Bruce Pennypacker (@bpennypacker)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
 - stat:
@@ -142,7 +143,7 @@ stat:
     type: complex
     contains:
         exists:
-            description: if the destination path actually exists or not
+            description: If the destination path actually exists or not
             returned: success
             type: bool
             sample: True
@@ -445,7 +446,7 @@ def main():
             follow=dict(type='bool', default=False),
             get_md5=dict(type='bool'),
             get_checksum=dict(type='bool', default=True),
-            get_mime=dict(type='bool', default='yes', aliases=['mime', 'mime_type', 'mime-type']),
+            get_mime=dict(type='bool', default=True, aliases=['mime', 'mime_type', 'mime-type']),
             get_attributes=dict(type='bool', default=True, aliases=['attr', 'attributes']),
             checksum_algorithm=dict(type='str', default='sha1',
                                     choices=['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],

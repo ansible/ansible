@@ -18,8 +18,7 @@ module: blockinfile
 short_description: Insert/update/remove a text block surrounded by marker lines
 version_added: '2.0'
 description:
-- This module will insert/update/remove a block of multi-line text
-  surrounded by customizable marker lines.
+- This module will insert/update/remove a block of multi-line text surrounded by customizable marker lines.
 author:
 - Yaegashi Takeshi (@yaegashi)
 options:
@@ -27,8 +26,8 @@ options:
     description:
     - The file to modify.
     - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
-    required: yes
     type: path
+    required: yes
     aliases: [ dest, destfile, name ]
   state:
     description:
@@ -48,16 +47,16 @@ options:
     - The text to insert inside the marker lines.
     - If it is missing or an empty string, the block will be removed as if C(state) were specified to C(absent).
     type: str
-    aliases: [ content ]
     default: ''
+    aliases: [ content ]
   insertafter:
     description:
     - If specified, the block will be inserted after the last match of specified regular expression.
     - A special value is available; C(EOF) for inserting the block at the end of the file.
     - If specified regular expression has no matches, C(EOF) will be used instead.
     type: str
-    default: EOF
     choices: [ EOF, '*regex*' ]
+    default: EOF
   insertbefore:
     description:
     - If specified, the block will be inserted before the last match of specified regular expression.

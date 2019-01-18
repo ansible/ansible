@@ -14,8 +14,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: group
-author:
-- Stephen Fromm (@sfromm)
 version_added: "0.0.2"
 short_description: Add or remove groups
 requirements:
@@ -29,32 +27,37 @@ options:
     name:
         description:
             - Name of the group to manage.
+        type: str
         required: true
     gid:
         description:
             - Optional I(GID) to set for the group.
+        type: int
     state:
         description:
             - Whether the group should be present or not on the remote host.
+        type: str
         choices: [ absent, present ]
         default: present
     system:
         description:
             - If I(yes), indicates that the group created is a system group.
         type: bool
-        default: 'no'
+        default: no
     local:
-        version_added: "2.6"
-        required: false
-        default: 'no'
-        type: bool
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
-              This is useful in environments that use centralized authentication when you want to manipulate the local groups.
-              I.E. it uses `lgroupadd` instead of `useradd`.
+            - This is useful in environments that use centralized authentication when you want to manipulate the local groups.
+              (e.g. it uses C(lgroupadd) instead of C(useradd)).
             - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
-notes:
-    - For Windows targets, use the M(win_group) module instead.
+        type: bool
+        default: no
+        version_added: "2.6"
+seealso:
+- module: user
+- module: win_group
+author:
+- Stephen Fromm (@sfromm)
 '''
 
 EXAMPLES = '''

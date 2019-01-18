@@ -14,7 +14,8 @@ DOCUMENTATION = r'''
 module: reboot
 short_description: Reboot a machine
 description:
-     - Reboot a machine, wait for it to go down, come back up, and respond to commands.
+    - Reboot a machine, wait for it to go down, come back up, and respond to commands.
+    - For Windows targets, use the M(win_reboot) module instead.
 version_added: "2.7"
 options:
   pre_reboot_delay:
@@ -22,21 +23,21 @@ options:
       - Seconds for shutdown to wait before requesting reboot.
       - On Linux, macOS and OpenBSD, this is converted to minutes and rounded down. If less than 60, it will be set to 0.
       - On Solaris and FreeBSD, this will be seconds.
-    default: 0
     type: int
+    default: 0
   post_reboot_delay:
     description:
       - Seconds to wait after the reboot was successful and the connection was re-established.
       - This is useful if you want wait for something to settle despite your connection already working.
-    default: 0
     type: int
+    default: 0
   reboot_timeout:
     description:
       - Maximum seconds to wait for machine to reboot and respond to a test command.
       - This timeout is evaluated separately for both network connection and test command success so the
         maximum execution time for the module is twice this amount.
-    default: 600
     type: int
+    default: 600
   connect_timeout:
     description:
       - Maximum seconds to wait for a successful connection to the managed hosts before trying again.
@@ -46,15 +47,13 @@ options:
     description:
       - Command to run on the rebooted host and expect success from to determine the machine is ready for
         further tasks.
-    default: whoami
     type: str
+    default: whoami
   msg:
     description:
       - Message to display to users before reboot.
-    default: Reboot initiated by Ansible
     type: str
-notes:
-    - For Windows targets, use the M(win_reboot) module instead.
+    default: Reboot initiated by Ansible
 seealso:
 - module: win_reboot
 author:

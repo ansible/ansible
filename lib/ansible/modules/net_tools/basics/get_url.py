@@ -36,6 +36,7 @@ options:
   url:
     description:
       - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
+    type: str
     required: true
   dest:
     description:
@@ -45,6 +46,7 @@ options:
         used. If a directory, C(force) has no effect.
       - If C(dest) is a directory, the file will always be downloaded
         (regardless of the C(force) option), but replaced only if the contents changed..
+    type: path
     required: true
   tmp_dest:
     description:
@@ -52,6 +54,7 @@ options:
       - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
       - When run on Ansible prior to 2.5, it defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
       - U(https://docs.python.org/2/library/tempfile.html#tempfile.tempdir)
+    type: path
     version_added: '2.1'
   force:
     description:
@@ -60,17 +63,16 @@ options:
         will only be downloaded if the destination does not exist. Generally
         should be C(yes) only for small local files.
       - Prior to 0.6, this module behaved as if C(yes) was the default.
-    version_added: '0.7'
-    default: 'no'
     type: bool
+    default: no
     aliases: [ thirsty ]
+    version_added: '0.7'
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    required: false
-    default: 'no'
     type: bool
+    default: no
     version_added: '2.1'
   sha256sum:
     description:
@@ -94,65 +96,71 @@ options:
         the C(dest) location, the I(destination_checksum) would be calculated, and if
         checksum equals I(destination_checksum), the file download would be skipped
         (unless C(force) is true).
+    type: str
     default: ''
     version_added: "2.0"
   use_proxy:
     description:
       - if C(no), it will not use a proxy, even if one is defined in
         an environment variable on the target hosts.
-    default: 'yes'
     type: bool
+    default: yes
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-        on personally controlled sites using self-signed certificates.
-    default: 'yes'
+      - If C(no), SSL certificates will not be validated.
+      - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
+    default: yes
   timeout:
     description:
       - Timeout in seconds for URL request.
+    type: int
     default: 10
     version_added: '1.8'
   headers:
     description:
-        - Add custom HTTP headers to a request in hash/dict format. The hash/dict format was added in 2.6.
-          Previous versions used a C("key:value,key:value") string format. The C("key:value,key:value") string
-          format is deprecated and will be removed in version 2.10.
+        - Add custom HTTP headers to a request in hash/dict format.
+        - The hash/dict format was added in 2.6.
+        - Previous versions used a C("key:value,key:value") string format.
+        - The C("key:value,key:value") string format is deprecated and will be removed in version 2.10.
+    type: str
     version_added: '2.0'
   url_username:
     description:
       - The username for use in HTTP basic authentication.
       - This parameter can be used without C(url_password) for sites that allow empty passwords.
-      - Since version 2.8 you can also use the 'username' alias for this option.
-    version_added: '1.6'
+      - Since version 2.8 you can also use the C(username) alias for this option.
+    type: str
     aliases: ['username']
+    version_added: '1.6'
   url_password:
     description:
         - The password for use in HTTP basic authentication.
         - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
         - Since version 2.8 you can also use the 'password' alias for this option.
-    version_added: '1.6'
+    type: str
     aliases: ['password']
+    version_added: '1.6'
   force_basic_auth:
-    version_added: '2.0'
     description:
+      - Force the sending of the Basic authentication header upon initial request.
       - httplib2, the library used by the uri module only sends authentication information when a webservice
         responds to an initial request with a 401 status. Since some basic auth services do not properly
-        send a 401, logins will fail. This option forces the sending of the Basic authentication header
-        upon initial request.
-    default: 'no'
+        send a 401, logins will fail.
     type: bool
+    default: no
+    version_added: '2.0'
   client_cert:
     description:
-      - PEM formatted certificate chain file to be used for SSL client
-        authentication. This file can also include the key as well, and if
-        the key is included, C(client_key) is not required.
+      - PEM formatted certificate chain file to be used for SSL client authentication.
+      - This file can also include the key as well, and if the key is included, C(client_key) is not required.
+    type: str
     version_added: '2.4'
   client_key:
     description:
-      - PEM formatted file that contains your private key to be used for SSL
-        client authentication. If C(client_cert) contains both the certificate
-        and key, this option is not required.
+      - PEM formatted file that contains your private key to be used for SSL client authentication.
+      - If C(client_cert) contains both the certificate and key, this option is not required.
+    type: str
     version_added: '2.4'
 # informational: requirements for nodes
 extends_documentation_fragment:
@@ -171,7 +179,7 @@ EXAMPLES = r'''
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
-    mode: 0440
+    mode: '0440'
 
 - name: Download file and force basic auth
   get_url:
@@ -203,7 +211,7 @@ EXAMPLES = r'''
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
-    checksum: 'sha256:http://example.com/path/sha256sum.txt'
+    checksum: sha256:http://example.com/path/sha256sum.txt
 
 - name: Download file from a file path
   get_url:
