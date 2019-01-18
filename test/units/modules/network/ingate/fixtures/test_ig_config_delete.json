@@ -1,0 +1,18 @@
+[
+    {
+        "table": "misc.dns_servers",
+        "data": {
+            "number": "1",
+            "server": "192.168.1.20"
+        },
+        "id": 1
+    },
+    {
+        "table": "misc.dns_servers",
+        "data": {
+            "number": "2",
+            "server": "192.168.1.30"
+        },
+        "id": 2
+    }
+]
