@@ -1,0 +1,2 @@
+bugfixes:
+  - gcp_compute inventory plugin - apply documented default when one is not provided.
