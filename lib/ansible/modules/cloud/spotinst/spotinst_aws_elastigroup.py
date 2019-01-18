@@ -21,7 +21,6 @@ description:
     token = <YOUR TOKEN>
     Full documentation available at https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-
 requirements:
-  - spotinst >= 1.0.21
   - python >= 2.7
   - spotinst_sdk >= 1.0.38
 options:
@@ -755,8 +754,8 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    import spotinst
-    from spotinst import SpotinstClientException
+    import spotinst_sdk as spotinst
+    from spotinst_sdk import SpotinstClientException
 
     HAS_SPOTINST_SDK = True
 
@@ -959,6 +958,7 @@ def handle_elastigroup(client, module):
                     )
                     roll_response = client.roll_group(group_roll=eg_roll, group_id=group_id)
                     message = 'Updated and started rolling the group successfully.'
+
             except SpotinstClientException as exc:
                 message = 'Updated group successfully, but failed to perform roll. Error:' + str(exc)
             has_changed = True
@@ -982,6 +982,8 @@ def retrieve_group_instances(client, module, group_id):
     wait_timeout = module.params.get('wait_timeout')
     wait_for_instances = module.params.get('wait_for_instances')
 
+    health_check_type = module.params.get('health_check_type')
+
     if wait_timeout is None:
         wait_timeout = 300
 
@@ -996,12 +998,22 @@ def retrieve_group_instances(client, module, group_id):
         while is_amount_fulfilled is False and wait_timeout > time.time():
             instances = list()
             amount_of_fulfilled_instances = 0
-            active_instances = client.get_elastigroup_active_instances(group_id=group_id)
 
-            for active_instance in active_instances:
-                if active_instance.get('private_ip') is not None:
-                    amount_of_fulfilled_instances += 1
-                    instances.append(active_instance)
+            if health_check_type is not None:
+                healthy_instances = client.get_instance_healthiness(group_id=group_id)
+
+                for healthy_instance in healthy_instances:
+                    if(healthy_instance.get('healthStatus') == 'HEALTHY'):
+                        amount_of_fulfilled_instances += 1
+                        instances.append(healthy_instance)
+
+            else:
+                active_instances = client.get_elastigroup_active_instances(group_id=group_id)
+
+                for active_instance in active_instances:
+                    if active_instance.get('private_ip') is not None:
+                        amount_of_fulfilled_instances += 1
+                        instances.append(active_instance)
 
             if amount_of_fulfilled_instances >= target:
                 is_amount_fulfilled = True
@@ -1464,7 +1476,7 @@ def main():
     module = AnsibleModule(argument_spec=fields)
 
     if not HAS_SPOTINST_SDK:
-        module.fail_json(msg="the Spotinst SDK library is required. (pip install spotinst)")
+        module.fail_json(msg="the Spotinst SDK library is required. (pip install spotinst_sdk)")
 
     # Retrieve creds file variables
     creds_file_loaded_vars = dict()
@@ -1490,7 +1502,7 @@ def main():
 
     account = module.params.get('account_id')
     if not account:
-        account = os.environ.get('ACCOUNT')
+        account = os.environ.get('SPOTINST_ACCOUNT_ID') or os.environ.get('ACCOUNT')
     if not account:
         account = creds_file_loaded_vars.get("account")
 
