@@ -340,6 +340,33 @@ def unit_is_enabled(module, systemctl_executable, systemd_unit, is_initd):
     return False
 
 
+DO_NOTHING = None
+"""Constant indicating a no-op action."""
+
+
+def get_action_from_enabled_flag(requested_state, current_state):
+    """Decide final action string from current state.
+     Args:
+        requested_state (str): The desired state, requested via module
+            argument in task.
+        current_state (bool): The initial state of the service.
+            True for running, False for stopped.
+     Returns:
+        str: The actual action this module is going to run.
+    """
+    ENABLED_NOW = ENABLE_REQUEST = True
+    DISABLED_NOW = DISABLE_REQUEST = False
+    state_transitions = {
+        # current state => new state action:
+        (ENABLE_REQUEST, DISABLED_NOW): 'enable',
+        (DISABLE_REQUEST, DISABLED_NOW): DO_NOTHING,
+        (ENABLE_REQUEST, ENABLED_NOW): DO_NOTHING,
+        (DISABLE_REQUEST, ENABLED_NOW): 'disable',
+    }
+    transition = requested_state, current_state
+    return state_transitions[transition]
+
+
 # ===========================================
 # Main control flow
 
@@ -470,28 +497,28 @@ def main():
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
 
-            if module.params['enabled']:
-                action = 'enable'
-            else:
-                action = 'disable'
-
             fail_if_missing(module, found, unit, msg='host')
 
             # do we need to enable the service?
-            enabled = unit_is_enabled(module, systemctl, unit, is_initd)
+            is_unit_enabled = unit_is_enabled(module, systemctl, unit, is_initd)
 
             # default to current state
-            result['enabled'] = enabled
+            result['enabled'] = is_unit_enabled
 
-            # Change enable/disable if needed
-            if enabled != module.params['enabled']:
+            # figure out action to get to the desired state
+            action = get_action_from_enabled_flag(
+                requested_state=module.params['enabled'],
+                current_state=is_unit_enabled,
+            )
+
+            if action is not DO_NOTHING:
                 result['changed'] = True
                 if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                    rc, out, err = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
                         module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
 
-                result['enabled'] = not enabled
+                result['enabled'] = not is_unit_enabled
 
         # set service state if requested
         if module.params['state'] is not None:
