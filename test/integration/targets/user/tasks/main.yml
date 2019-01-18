@@ -186,7 +186,7 @@
       - create_home_with_no_parent_1.home == user_home_prefix[ansible_facts.system] ~ '/in2deep/ansibulluser2'
       - create_home_with_no_parent_2 is not changed
       - home_with_no_parent_3.stat.uid == create_home_with_no_parent_1.uid
-      - home_with_no_parent_3.stat.gr_name == 'ansibulluser2'
+      - home_with_no_parent_3.stat.gr_name == default_user_group[ansible_facts.distribution] | default('ansibulluser2')
 
 - name: Cleanup test account
   user:
