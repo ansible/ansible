@@ -115,7 +115,7 @@ def map_obj_to_commands(updates, module):
         if state == 'absent' and obj_in_have:
             command = []
             if obj_in_have['name'] == name:
-                if ipv4 and obj_in_have['ipv4']:
+                if ipv4 and ipv4 == obj_in_have['ipv4']:
                     command.append('no ip address {0}'.format(ipv4))
                 if ipv6 and ipv6 in obj_in_have['ipv6']:
                     command.append('no ipv6 address {0}'.format(ipv6))
@@ -189,7 +189,7 @@ def map_config_to_obj(want, module):
             if match_ipv6:
                 obj['ipv6'] = match_ipv6
 
-        objs.append(obj)
+            objs.append(obj)
     return objs
 
 
