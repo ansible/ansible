@@ -57,9 +57,6 @@ options:
     - Obviously this is only handy if the filenames are unique.
     type: bool
     default: no
-author:
-- Ansible Core Team
-- Michael DeHaan
 notes:
 - When running fetch with C(become), the M(slurp) module will also be
   used to fetch the contents of the file for determining the remote
@@ -74,6 +71,12 @@ notes:
   also explicitly set C(fail_on_missing) to C(no) to get the
   non-failing behaviour.
 - This module is also supported for Windows targets.
+seealso:
+- module: copy
+- module: slurp
+author:
+- Ansible Core Team
+- Michael DeHaan
 '''
 
 EXAMPLES = r'''
