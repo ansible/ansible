@@ -1,0 +1,78 @@
+- name: Get unified job template ID for Demo Job Template"
+  uri:
+    url: "https://{{ lookup('env', 'TOWER_HOST') }}/api/v2/unified_job_templates/?name=Demo+Job+Template"
+    method: GET
+    password: "{{ lookup('env', 'TOWER_PASSWORD') }}"
+    user: "{{ lookup('env', 'TOWER_USERNAME') }}"
+    validate_certs: False
+  register: unified_job
+
+- name: Build workflow
+  uri:
+    url: "https://{{ lookup('env', 'TOWER_HOST') }}/api/v2/workflow_job_templates/"
+    body: 
+      name: "Success Template"
+      variables: "---"
+      extra_vars: ""
+    body_format: 'json'
+    method: 'POST'
+    password: "{{ lookup('env', 'TOWER_PASSWORD') }}"
+    status_code: 201
+    user: "{{ lookup('env', 'TOWER_USERNAME') }}"
+    validate_certs: False
+  register: workflow
+
+- name: Add a node
+  uri:
+    url: "https://{{ lookup('env', 'TOWER_HOST') }}/api/v2/workflow_job_templates/{{ workflow.json.id }}/workflow_nodes/"
+    body:
+      credential: null
+      diff_mode: null
+      extra_data: {}
+      inventory: null
+      job_tags: null
+      job_type: null
+      limit: null
+      skip_tags: null
+      unified_job_template: "{{ unified_job.json.results[0].id }}"
+      verbosity: null
+    body_format: 'json'
+    method: 'POST'
+    password: "{{ lookup('env', 'TOWER_PASSWORD') }}"
+    status_code: 201
+    user: "{{ lookup('env', 'TOWER_USERNAME') }}"
+    validate_certs: False
+  register: node1
+
+- name: Add a node
+  uri:
+    url: "https://{{ lookup('env', 'TOWER_HOST') }}/api/v2/workflow_job_templates/{{ workflow.json.id }}/workflow_nodes/"
+    body:
+      credential: null
+      diff_mode: null
+      extra_data: {}
+      inventory: null
+      job_tags: null
+      job_type: null
+      limit: null
+      skip_tags: null
+      unified_job_template: "{{ unified_job.json.results[0].id }}"
+      verbosity: null
+    body_format: 'json'
+    method: 'POST'
+    password: "{{ lookup('env', 'TOWER_PASSWORD') }}"
+    status_code: 201
+    user: "{{ lookup('env', 'TOWER_USERNAME') }}"
+    validate_certs: False
+  register: node2
+
+- name: "Link nodes {{ node2.json.id }} to {{ node1.json.id }}"
+  uri:
+    url: "https://{{ lookup('env', 'TOWER_HOST') }}/api/v2/workflow_job_template_nodes/{{ node1.json.id }}/success_nodes/"
+    body: '{ "id": {{ node2.json.id }} }'
+    body_format: 'json'
+    method: 'POST'
+    password: "{{ lookup('env', 'TOWER_PASSWORD') }}"
+    status_code: 204
+    user: "{{ lookup('env', 'TOWER_USERNAME') }}"
+    validate_certs: False
