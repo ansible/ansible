@@ -4,6 +4,7 @@
       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     when:
       - ansible_distribution in ['RedHat']
+      - ansible_distribution_major_version is version('7', '==')
 
   - name: Install rpmfluff and deps
     package:
@@ -34,6 +35,22 @@
     when:
       - ansible_distribution not in ['Fedora']
       - ansible_python["version"]["major"] == 3
+      - not (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>='))
+
+  - name: Install rpmfluff from pip on RHEL 8 and later
+    pip:
+      name: rpmfluff
+    when:
+      - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
+
+  - name: Install packages needed on RHEL 8 and later
+    dnf:
+      name: "{{ item }}"
+    with_items:
+      - createrepo_c
+      - rpm-build
+    when:
+      - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
 
   - name: Copy script for creating a repo
     copy:
