@@ -511,12 +511,9 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
 
         # Could not find the module.  Construct a helpful error message.
         if module_info is None:
-            msg = ['Could not find imported module support code for %s.  Looked for' % (name,)]
-            if idx == 2:
-                msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
-            else:
-                msg.append(py_module_name[-1])
-            raise AnsibleError(' '.join(msg))
+            raise AnsibleError(
+                'Could not find imported module support code for %s.  Looked for %s'
+                % (name, ', '.join([n + '.py' for n in py_module_name])))
 
         # Found a byte compiled file rather than source.  We cannot send byte
         # compiled over the wire as the python version might be different.
