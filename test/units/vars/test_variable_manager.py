@@ -75,7 +75,10 @@ class TestVariableManager(unittest.TestCase):
 
         options_vars = dict(a=1, b=2, c=3)
         mock_inventory = MagicMock()
-        v = VariableManager(loader=fake_loader, inventory=mock_inventory, options_vars=options_vars)
+        v = VariableManager(loader=fake_loader, inventory=mock_inventory)
+
+        # override internal options_vars loading
+        v._extra_vars = options_vars
 
         myvars = v.get_vars(use_cache=False)
         for (key, val) in iteritems(options_vars):

@@ -27,7 +27,6 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.release import __version__
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
-from ansible.utils.vars import load_extra_vars, load_options_vars
 from ansible.vars.manager import VariableManager
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 
@@ -520,7 +519,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
-        variable_manager = VariableManager(loader=loader, inventory=inventory, options_vars=load_options_vars(CLI.version_info(gitinfo=False))
+        variable_manager = VariableManager(loader=loader, inventory=inventory, cli=CLI)
 
         return loader, inventory, variable_manager
 

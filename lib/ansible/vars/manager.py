@@ -43,7 +43,7 @@ from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.vars import combine_vars, load_extra_vars
+from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 
@@ -76,7 +76,7 @@ class VariableManager:
     _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
                           'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
 
-    def __init__(self, loader=None, inventory=None, options_vars=None):
+    def __init__(self, loader=None, inventory=None, cli=None):
         self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
@@ -89,12 +89,10 @@ class VariableManager:
         self._templar = Templar(loader=self._loader)
 
         # handle cli option mapping to variables
-        if options_vars is None:
-            self._options_vars = defaultdict(dict)
-        elif isinstance(options_vars, MutableMapping):
-            self._options_vars = options_vars
+        if cli is not None:
+            self._options_vars = load_options_vars(cli.version_info(gitinfo=False))
         else:
-            raise AnsibleError("options_vars must be a dictionary of variables, Got a %s instead" % (type(options_vars)))
+            self._options_vars = defaultdict(dict)
 
         # If the basedir is specified as the empty string then it results in cwd being used.
         # This is not a safe location to load vars from.
