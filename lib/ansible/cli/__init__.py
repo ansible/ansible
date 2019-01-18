@@ -520,19 +520,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
-        variable_manager = VariableManager(loader=loader, inventory=inventory)
-
-        # If the basedir is specified as the empty string then it results in cwd being used.  This
-        # is not a safe location to load vars from
-        if options.get('basedir', False) is not False:
-            if basedir:
-                variable_manager.safe_basedir = True
-        else:
-            variable_manager.safe_basedir = True
-
-        # load vars from cli options
-        variable_manager.extra_vars = load_extra_vars(loader=loader)
-        variable_manager.options_vars = load_options_vars(CLI.version_info(gitinfo=False))
+        variable_manager = VariableManager(loader=loader, inventory=inventory, options_vars=load_options_vars(CLI.version_info(gitinfo=False))
 
         return loader, inventory, variable_manager
 
