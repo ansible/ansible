@@ -54,11 +54,9 @@ options:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
               subscription and location. Check your subscription for available choices.
-        required: true
     capacity:
         description:
             - Capacity of VMSS.
-        required: true
         default: 1
     tier:
         description:
@@ -394,7 +392,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
             short_hostname=dict(type='str'),
-            vm_size=dict(type='str', required=True),
+            vm_size=dict(type='str'),
             tier=dict(type='str', choices=['Basic', 'Standard']),
             capacity=dict(type='int', default=1),
             upgrade_policy=dict(type='str', choices=['Automatic', 'Manual']),
@@ -448,6 +446,11 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.overprovision = None
         self.zones = None
 
+        required_if = [
+            ('state', 'present', [
+             'vm_size'])
+        ]
+
         self.results = dict(
             changed=False,
             actions=[],
@@ -456,8 +459,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         super(AzureRMVirtualMachineScaleSet, self).__init__(
             derived_arg_spec=self.module_arg_spec,
-            supports_check_mode=True
-        )
+            supports_check_mode=True,
+            required_if=required_if)
 
     def exec_module(self, **kwargs):
 
