@@ -6,11 +6,11 @@
     dest: /etc/apt/preferences.d/erlang
     content: |
         Package: erlang*
-        Pin: version 1:20.1-1
+        Pin: version 1:20.3.8.14-1
         Pin-Priority: 1000
 
         Package: esl-erlang
-        Pin: version 1:20.1.7
+        Pin: version 1:20.3.6
         Pin-Priority: 1000
 
 - name: Install https transport for apt
