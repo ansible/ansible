@@ -132,11 +132,6 @@ node_facts:
   description: Information about node after 'update' operation
   returned: success
   type: dict
-actions:
-  description: Provides the actions done on the swarm.
-  returned: when action failed.
-  type: list
-  example: "['This cluster is already a swarm cluster']"
 
 '''
 
@@ -190,7 +185,7 @@ class SwarmNodeManager(DockerBaseClass):
 
     def node_update(self):
         if not (self.client.check_if_swarm_node(node_id=self.parameters.hostname)):
-            self.results['actions'].append("This node is not part of a swarm.")
+            self.client.fail(msg="This node is not part of a swarm.")
             return
 
         try:
@@ -259,11 +254,9 @@ class SwarmNodeManager(DockerBaseClass):
             except APIError as exc:
                 self.client.fail(msg="Failed to update node : %s" % to_native(exc))
             self.results['node_facts'] = self.client.get_node_inspect(node_id=node_info['ID'])
-            self.results['actions'].append("Node updated")
             self.results['changed'] = __changed
         else:
             self.results['node_facts'] = node_info
-            self.results['actions'].append("Nothing to update")
             self.results['changed'] = __changed
 
 
@@ -298,7 +291,6 @@ def main():
 
     results = dict(
         changed=False,
-        actions=[],
     )
 
     SwarmNodeManager(client, results)
