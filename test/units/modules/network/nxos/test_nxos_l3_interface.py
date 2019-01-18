@@ -210,3 +210,17 @@ class TestNxosL3InterfaceModule(TestNxosModule):
         set_module_args(dict(name='Ethernet1/1'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['interface Ethernet1/1'])
+
+    # Add unknown interface
+    def test_nxos_l3_interface_add_on_unknown_itf(self):
+        self.mode = 'ethernet_noshut'
+        set_module_args(dict(name='Ethernet1/2', ipv4='192.168.0.1/24'))
+        result = self.execute_module()
+        self.assertEqual(result['warnings'], ['Unknown interface Ethernet1/2'])
+
+    # Rem unknown interface
+    def test_nxos_l3_interface_rem_on_unknown_itf(self):
+        self.mode = 'ethernet_noshut'
+        set_module_args(dict(name='Ethernet1/2', ipv4='192.168.0.1/24', state='absent'))
+        result = self.execute_module()
+        self.assertEqual(result['warnings'], ['Unknown interface Ethernet1/2'])
