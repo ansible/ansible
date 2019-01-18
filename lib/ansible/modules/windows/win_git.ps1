@@ -7,7 +7,7 @@
 # Michael Hay <project.hay@gmail.com>
 # Ripon Banik <ripon.banik@gmail.com>
 
-#Requires -Module Ansible.ModuleUtils.Legacy.psm1
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode  = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
@@ -25,16 +25,9 @@ $depth =  Get-AnsibleParam -obj $params -name "depth"  -type "int" -default $nul
 $key_file = Get-AnsibleParam -obj $params -name "key_file" -type "str"
 
 $result = @{
-    win_git = @{
-        repo              = $null
-        dest              = $null
-        key_file          = $null       
-        replace_dest      = $false
-        accept_hostkey    = $true
-        update            = $false
-        remote            = "origin" 
-        version           = "HEAD"
-        msg               = $null 
+    win_git = @{        
+        dest = $null        
+        msg  = $null 
     }
     changed = $false    
 }
@@ -378,15 +371,7 @@ if (-Not (Test-Path($dest))) {
  }
 
 
-Set-Attr $result.win_git "repo" $repo
 Set-Attr $result.win_git "dest" $dest
-Set-Attr $result.win_git "replace_dest" $replace_dest
-Set-Attr $result.win_git "accept_hostkey" $accept_hostkey
-Set-Attr $result.win_git "key_file" $key_file
-Set-Attr $result.win_git "update" $update
-Set-Attr $result.win_git "version" $version
-Set-Attr $result.win_git "remote" $remote
-
 
 $git_output = ""
 $rc = 0
