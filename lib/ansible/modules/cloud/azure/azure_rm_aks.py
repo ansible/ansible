@@ -204,7 +204,7 @@ state:
         dns_prefix: aks9860bdcd89
         id: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/yuwzhoaks/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
-        kubernetes_version: 1.7.7
+        kubernetes_version: 1.11.4
         linux_profile:
            admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADA.....
