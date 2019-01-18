@@ -260,13 +260,13 @@ def map_obj_to_commands(want, have, module):
                 commands.append('ntp source {0}'.format(source_int))
             if acl is not None and acl != acl_have:
                 commands.append('ntp access-group peer {0}'.format(acl))
-            if logging != logging_have and logging is not False:
+            if logging is not None and logging != logging_have and logging is not False:
                 commands.append('ntp logging')
-            if auth != auth_have and auth is not False:
+            if auth is not None and auth != auth_have and auth is not False:
                 commands.append('ntp authenticate')
-            if key_id != key_id_have:
+            if key_id is not None and key_id != key_id_have:
                 commands.append('ntp trusted-key {0}'.format(key_id))
-            if auth_key != auth_key_have:
+            if auth_key is not None and auth_key != auth_key_have:
                 commands.append('ntp authentication-key {0} md5 {1} 7'.format(key_id, auth_key))
 
     return commands
