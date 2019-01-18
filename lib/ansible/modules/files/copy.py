@@ -19,8 +19,6 @@ version_added: historical
 short_description: Copy files to remote locations
 description:
     - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
-    - Use the M(fetch) module to copy files from remote locations to the local box.
-    - If you need variable interpolation in copied files, use the M(template) module.
     - For Windows targets, use the M(win_copy) module instead.
 options:
   src:
@@ -31,10 +29,12 @@ options:
       with "/", only inside contents of that directory are copied to destination.
       Otherwise, if it does not end with "/", the directory itself with all contents
       is copied. This behavior is similar to the C(rsync) command line tool.
+    type: path
   content:
     description:
     - When used instead of I(src), sets the contents of a file directly to the specified value.
     - For anything advanced or with formatting also look at the template module.
+    type: str
     version_added: '1.1'
   dest:
     description:
@@ -42,6 +42,7 @@ options:
     - If I(src) is a directory, this must be a directory too.
     - If I(dest) is a non-existent path and if either I(dest) ends with "/" or I(src) is a directory, I(dest) is created.
     - If I(src) and I(dest) are files, the parent directory of I(dest) is not created and the task fails if it does not already exist.
+    type: path
     required: yes
   backup:
     description:
@@ -69,19 +70,21 @@ options:
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
     - As of Ansible 2.3, the mode may also be the special string C(preserve).
     - C(preserve) means that the file will be given the same permissions as the source file.
+    type: path
   directory_mode:
     description:
     - When doing a recursive copy set the mode for the directories.
     - If this is not set we will use the system defaults.
     - The mode is only set on directories which are newly created, and will not affect those that already existed.
+    type: raw
     version_added: '1.5'
   remote_src:
     description:
     - Influence whether I(src) needs to be transferred or already is present remotely.
     - If C(no), it will search for I(src) at originating/master machine.
     - If C(yes) it will go to the remote/target machine for the I(src).
-    - I(remote_src) supports recursive copying as of version 2.8.
-    - I(remote_src) only works with C(mode=preserve) as of version 2.6.
+    - I(remote_src) supports recursive copying as of Ansible 2.8.
+    - I(remote_src) only works with C(mode=preserve) as of Ansible 2.6.
     type: bool
     default: no
     version_added: '2.0'
@@ -102,6 +105,7 @@ options:
     - SHA1 checksum of the file being transferred.
     - Used to validate that the copy of the file was successful.
     - If this is not provided, ansible will use the local calculated checksum of the src file.
+    type: str
     version_added: '2.5'
 extends_documentation_fragment:
 - decrypt
@@ -109,12 +113,11 @@ extends_documentation_fragment:
 - validate
 notes:
 - The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
-- For alternative, see M(synchronize) module, which is a wrapper around the C(rsync) command line tool.
-- For Windows targets, use the M(win_copy) module instead.
 seealso:
 - module: assemble
 - module: fetch
 - module: file
+- module: synchronize
 - module: template
 - module: win_copy
 author:
@@ -129,7 +132,7 @@ EXAMPLES = r'''
     dest: /etc/foo.conf
     owner: foo
     group: foo
-    mode: 0644
+    mode: '0644'
 
 - name: Copy file with owner and permission, using symbolic representation
   copy:
@@ -153,7 +156,7 @@ EXAMPLES = r'''
     dest: /etc/ntp.conf
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'
     backup: yes
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
@@ -174,17 +177,17 @@ EXAMPLES = r'''
     content: '# This file was moved to /etc/other.conf'
     dest: /etc/mine.conf
 
-- name: if follow is true, /path/to/file will be overwritten by contents of foo.conf
+- name: If follow=yes, /path/to/file will be overwritten by contents of foo.conf
   copy:
     src: /etc/foo.conf
-    dest: /path/to/link # /path/to/link is link to /path/to/file
-    follow: True
+    dest: /path/to/link  # link to /path/to/file
+    follow: yes
 
-- name: if follow is False, /path/to/link will become a file and be overwritten by contents of foo.conf
+- name: If follow=no, /path/to/link will become a file and be overwritten by contents of foo.conf
   copy:
     src: /etc/foo.conf
-    dest: /path/to/link # /path/to/link is link to /path/to/file
-    follow: False
+    dest: /path/to/link  # link to /path/to/file
+    follow: no
 '''
 
 RETURN = r'''
@@ -473,7 +476,7 @@ def main():
             directory_mode=dict(type='raw'),
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
-            checksum=dict(),
+            checksum=dict(type='str'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
