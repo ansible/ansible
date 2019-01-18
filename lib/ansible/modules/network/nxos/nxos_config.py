@@ -290,9 +290,12 @@ def get_running_config(module, config=None):
     contents = module.params['running_config']
     if not contents:
         if not module.params['defaults'] and config:
+            # Optimization: The running-config has already been recovered by the backup
             contents = config
         else:
-            flags = ['all']
+            flags = []
+            if module.params['defaults']:
+                flags = ['all']
             contents = get_config(module, flags=flags)
     return contents
 
