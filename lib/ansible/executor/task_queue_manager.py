@@ -36,7 +36,6 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
-from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
@@ -45,6 +44,15 @@ from ansible.utils.display import Display
 __all__ = ['TaskQueueManager']
 
 display = Display()
+
+
+def _callback_exception_handler(e):
+
+    # TODO: add config toggle to make this fatal or not?
+    display.warning(u"Failure calling callback plugin: %s" % (to_text(e)))
+    from traceback import format_tb
+    from sys import exc_info
+    display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
 
 
 class TaskQueueManager:
@@ -78,7 +86,7 @@ class TaskQueueManager:
         self._run_tree = run_tree
         self._forks = forks or 5
 
-        self._callback_pool = multiprocessing.Pool(processes=1)
+        self._callback_pool = None
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done = False
@@ -321,7 +329,11 @@ class TaskQueueManager:
         return defunct
 
     def send_callback(self, method_name, *args, **kwargs):
-        for callback_plugin in [self._stdout_callback] + self._callback_plugins:
+
+        plugins = [self._stdout_callback] + self._callback_plugins
+        self._callback_pool = multiprocessing.Pool(processes=len(plugins))
+
+        for callback_plugin in plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
             if getattr(callback_plugin, 'disabled', False):
@@ -349,10 +361,11 @@ class TaskQueueManager:
 
             for method in methods:
                 try:
-                    self._callback_pool.apply_async(method, new_args, kwargs)
+                    self._callback_pool.apply_async(method, new_args, kwargs, error_callback=_callback_exception_handler)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
                     from traceback import format_tb
                     from sys import exc_info
                     display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
+
