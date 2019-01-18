@@ -282,6 +282,7 @@ options:
     - ' - C(mac) (string): Customize MAC address.'
     - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
           This value is required if multiple distributed portgroups exists with the same name. version_added 2.7'
+    - ' - C(connected) (bool): Sets if virtual network adapter is connected. version_added: 2.8'
     - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on. version_added: 2.5'
     - 'Optional parameters per entry (used for OS customization):'
     - ' - C(type) (string): Type of IP assignment (either C(dhcp) or C(static)). C(dhcp) is default.'
@@ -575,8 +576,8 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
-                                         find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip)
-
+                                         find_dvs_by_name, find_dvspg_by_name)
+def wait_for_vm_ip(*args): pass
 
 class PyVmomiDeviceHelper(object):
     """ This class is a helper to create easily VMWare Objects for PyVmomiHelper """
@@ -710,7 +711,7 @@ class PyVmomiDeviceHelper(object):
         nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         nic.device.connectable.startConnected = bool(device_infos.get('start_connected', True))
         nic.device.connectable.allowGuestControl = bool(device_infos.get('allow_guest_control', True))
-        nic.device.connectable.connected = True
+        nic.device.connectable.connected = bool(device_infos.get('connected', True))
         if 'mac' in device_infos and self.is_valid_mac_addr(device_infos['mac']):
             nic.device.addressType = 'manual'
             nic.device.macAddress = device_infos['mac']
@@ -1036,6 +1037,9 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.firmware = boot_firmware
                 self.change_detected = True
 
+    def configure_cdroms(self, vm_obj):
+        return
+
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
         if "cdrom" in self.params and self.params["cdrom"]:
@@ -1278,22 +1282,31 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_network(self, vm_obj):
         # Ignore empty networks, this permits to keep networks when deploying a template/cloning a VM
-        if len(self.params['networks']) == 0:
+        if self.params['networks'] is None:
             return
 
         network_devices = self.sanitize_network_params()
 
         # List current device for Clone or Idempotency
         current_net_devices = self.get_vm_network_interfaces(vm=vm_obj)
-        if len(network_devices) < len(current_net_devices):
-            self.module.fail_json(msg="Given network device list is lesser than current VM device list (%d < %d). "
-                                      "Removing interfaces is not allowed"
-                                      % (len(network_devices), len(current_net_devices)))
 
-        for key in range(0, len(network_devices)):
+        for key in range(0, max(len(network_devices), len(current_net_devices))):
             nic_change_detected = False
-            network_name = network_devices[key]['name']
+            if key < len(network_devices):
+                network_name = network_devices[key]['name']
+            else:
+                network_name = None
+
+            if key >= len(network_devices) and (vm_obj or self.params['template']):
+                nic = vim.vm.device.VirtualDeviceSpec()
+                nic.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                nic.device = current_net_devices[key]
+                self.configspec.deviceChange.append(nic)
+                self.change_detected = True
+                continue
+
             if key < len(current_net_devices) and (vm_obj or self.params['template']):
+
                 # We are editing existing network devices, this is either when
                 # are cloning from VM or Template
                 nic = vim.vm.device.VirtualDeviceSpec()
@@ -1303,6 +1316,10 @@ class PyVmomiHelper(PyVmomi):
                 if ('wake_on_lan' in network_devices[key] and
                         nic.device.wakeOnLanEnabled != network_devices[key].get('wake_on_lan')):
                     nic.device.wakeOnLanEnabled = network_devices[key].get('wake_on_lan')
+                    nic_change_detected = True
+                if ('connected' in network_devices[key] and
+                        nic.device.connectable.connected != network_devices[key].get('connected')):
+                    nic.device.connectable.connected = network_devices[key].get('connected')
                     nic_change_detected = True
                 if ('start_connected' in network_devices[key] and
                         nic.device.connectable.startConnected != network_devices[key].get('start_connected')):
@@ -2096,6 +2113,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
+        self.configure_cdroms(vm_obj=vm_obj)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)
         network_changes = False
@@ -2106,7 +2124,7 @@ class PyVmomiHelper(PyVmomi):
                     network_changes = True
                     break
 
-        if len(self.params['customization']) > 0 or network_changes or self.params.get('customization_spec'):
+        if len(self.params['customization']) > 0 or self.params.get('customization_spec'):
             self.customize_vm(vm_obj=vm_obj)
 
         clonespec = None
@@ -2263,6 +2281,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
+        self.configure_cdroms(vm_obj=self.current_vm_obj)
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
@@ -2441,9 +2460,9 @@ def main():
         state_change_timeout=dict(type='int', default=0),
         snapshot_src=dict(type='str'),
         linked_clone=dict(type='bool', default=False),
-        networks=dict(type='list', default=[]),
+        networks=dict(type='list', default=None),
         resource_pool=dict(type='str'),
-        customization=dict(type='dict', default={}, no_log=True),
+        customization=dict(type='dict', required=False, default={}, no_log=True),
         customization_spec=dict(type='str', default=None),
         wait_for_customization=dict(type='bool', default=False),
         vapp_properties=dict(type='list', default=[]),
