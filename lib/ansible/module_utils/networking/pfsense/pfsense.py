@@ -210,7 +210,8 @@ class PFSenseModule(object):
         for elt in list(src_elt):
             if list(elt):
                 res[elt.tag] = PFSenseModule.element_to_dict(elt)
-            res[elt.tag] = elt.text if elt.text is not None else ''
+            else:
+                res[elt.tag] = elt.text if elt.text is not None else ''
         return res
 
     def get_caref(self, name):
