@@ -15,11 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: install requirements for RHEL
+- name: install requirements for RHEL 7 and earlier
   package:
     name: policycoreutils-python
   when:
-    - ansible_distribution == 'RedHat'
+    - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('7', '<=')
+
+- name: install requirements for RHEL 8 and later
+  package:
+    name: policycoreutils-python-utils
+  when:
+    - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
 
 - name: Cleanup
   shell: setsebool -P httpd_can_network_connect 0
