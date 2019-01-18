@@ -39,15 +39,15 @@ options:
       - Specifies the name of the domain in which the object will reside.
   growth_increment:
     description:
-      - Specifies the growth increment the amount of logical disk storage
+      - Specifies the growth increment(in MiB, GiB or TiB) the amount of logical disk storage
        created on each auto-grow operation.
   growth_limit:
     description:
       - Specifies that the autogrow operation is limited to the specified
-       storage amount that sets the growth limit.
+       storage amount that sets the growth limit(in MiB, GiB or TiB).
   growth_warning:
     description:
-      - Specifies that the threshold of used logical disk space when exceeded
+      - Specifies that the threshold(in MiB, GiB or TiB) of used logical disk space when exceeded
        results in a warning alert.
   high_availability:
     choices:
