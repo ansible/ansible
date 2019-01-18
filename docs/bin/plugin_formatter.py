@@ -301,6 +301,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # Start at the second directory because we don't want the "vendor"
         mod_path_only = os.path.dirname(module_path[len(module_dir):])
 
+        #Find the subcategory for each module
         relative_dir = mod_path_only.split('/')[1]
         sub_category = mod_path_only[len(relative_dir)+2:]
 
@@ -315,7 +316,6 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
             category = category[new_cat]
 
         category['_modules'].append(module)
-
 
         # the category we will use in links (so list_of_all_plugins can point to plugins/action_plugins/*'
         if module_categories:
@@ -580,7 +580,6 @@ def process_categories(plugin_info, categories, templates, output_dir, output_na
         category_title = category_name.title()
 
         subcategories = dict((k, v) for k, v in module_map.items() if k != '_modules')
-
         template_data = {'title': category_title,
                          'category_name': category_name,
                          'category': module_map,
@@ -657,7 +656,7 @@ These modules are currently shipped with Ansible, but will most likely be shippe
         else:
             raise AnsibleError('Unknown supported_by value: %s' % info['metadata']['supported_by'])
 
-    # Render the module lists
+    # Render the module lists based on category and subcategory
     for maintainers, data in supported_by.items():
         subcategories = dict()
         subcategories[''] = dict()
@@ -668,13 +667,10 @@ These modules are currently shipped with Ansible, but will most likely be shippe
                 subcategories[category] = dict()
                 subcategories[category][''] = dict()
                 subcategories[category]['']['_modules'] = []
-            display.warning('cat is %s subcat is %s' % (category, new_cat))
             if new_cat not in subcategories[category]:
                 subcategories[category][new_cat] = dict()
                 subcategories[category][new_cat]['_modules'] = []
             subcategories[category][new_cat]['_modules'].append(module)
-
-        display.warning('maint is %s cat is %s and  full cat list are %s' % (maintainers, category, subcategories[category]))
 
         template_data = {'maintainers': maintainers,
                          'subcategories': subcategories,
