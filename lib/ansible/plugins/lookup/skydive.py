@@ -55,6 +55,7 @@ _list:
   type: list
 """
 
+
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.network.skydive.api import skydive_lookup
 from ansible.module_utils._text import to_text
