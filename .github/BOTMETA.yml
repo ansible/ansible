@@ -321,6 +321,9 @@ files:
   $modules/packaging/os/rhn_register.py: $team_rhn
   $modules/packaging/os/snap.py: angristan
   $modules/packaging/os/svr4pkg.py: *solaris
+  $modules/packaging/os/swdepot.py: &hpux
+    labels: hpux
+    maintainers: $team_hpux
   $modules/packaging/os/swupd.py: hnanni
   $modules/packaging/os/yum.py:
     maintainers: $team_ansible kustodian
@@ -565,9 +568,12 @@ files:
   $module_utils/facts:
     support: core
   $module_utils/facts/hardware/aix.py: *aix
-  $module_utils/facts/network/aix.py: *aix
+  $module_utils/facts/hardware/hpux.py: *hpux
   $module_utils/facts/hardware/sunos.py: *solaris
+  $module_utils/facts/network/aix.py: *aix
+  $module_utils/facts/network/hpux.py: *hpux
   $module_utils/facts/network/sunos.py: *solaris
+  $module_utils/facts/virtual/hpux.py: *hpux
   $module_utils/facts/virtual/sunos.py: *solaris
   $module_utils/gcp_utils.py:
     maintainers: $team_google
@@ -1296,8 +1302,11 @@ macros:
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
   team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet
+  team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
+  team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_google: rambleraptor erjohnso
+  team_hpux: dagwieers
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
@@ -1321,9 +1330,7 @@ macros:
   team_solaris: dagwieers troy2914 xen0l
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
-  team_e_spirit: MatrixCrawler getjack
   team_vmware: Akasurde dav1x warthog9 ckotte
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
-  team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
