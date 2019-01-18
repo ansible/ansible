@@ -107,7 +107,7 @@ The following example shows how ``win_updates`` can be used:
         category_names:
         - CriticalUpdates
         - SecurityUpdates
-        state: installed
+        state: present
       register: update_result
 
     - name: Reboot host if required
