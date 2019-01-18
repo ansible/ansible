@@ -593,7 +593,6 @@ def process_categories(plugin_info, categories, templates, output_dir, output_na
 
 
 def process_support_levels(plugin_info, categories, templates, output_dir, plugin_type):
-    plugin_info = deepcopy(plugin_info)
     supported_by = {'Ansible Core Team': {'slug': 'core_supported',
                                           'modules': [],
                                           'output': 'core_maintained.rst',
