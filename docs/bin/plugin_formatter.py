@@ -301,9 +301,9 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # Start at the second directory because we don't want the "vendor"
         mod_path_only = os.path.dirname(module_path[len(module_dir):])
 
-        #Find the subcategory for each module
+        # Find the subcategory for each module
         relative_dir = mod_path_only.split('/')[1]
-        sub_category = mod_path_only[len(relative_dir)+2:]
+        sub_category = mod_path_only[len(relative_dir) + 2:]
 
         primary_category = ''
         module_categories = []
