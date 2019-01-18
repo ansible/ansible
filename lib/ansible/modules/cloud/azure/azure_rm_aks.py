@@ -505,6 +505,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
             if response:
                 self.results = response
+                self.results['changed'] = False
             if not response:
                 to_be_updated = True
 
