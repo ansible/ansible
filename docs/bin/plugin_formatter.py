@@ -342,7 +342,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
                                'returndocs': returndocs,
                                'categories': module_categories,
                                'primary_category': primary_category,
-                               'sub_category': sub_category
+                               'sub_category': sub_category,
                                }
 
     # keep module tests out of becoming module docs
@@ -657,17 +657,17 @@ These modules are currently shipped with Ansible, but will most likely be shippe
 
     # Render the module lists based on category and subcategory
     for maintainers, data in supported_by.items():
-        subcategories = dict()
-        subcategories[''] = dict()
+        subcategories = {}
+        subcategories[''] = {}
         for module in data['modules']:
             new_cat = plugin_info[module]['sub_category']
             category = plugin_info[module]['primary_category']
             if category not in subcategories:
-                subcategories[category] = dict()
-                subcategories[category][''] = dict()
+                subcategories[category] = {}
+                subcategories[category][''] = {}
                 subcategories[category]['']['_modules'] = []
             if new_cat not in subcategories[category]:
-                subcategories[category][new_cat] = dict()
+                subcategories[category][new_cat] = {}
                 subcategories[category][new_cat]['_modules'] = []
             subcategories[category][new_cat]['_modules'].append(module)
 
