@@ -953,9 +953,12 @@ class DockerServiceManager():
             ds.constraints = placement.get('Constraints', [])
             placement_preferences = []
             for preference in placement.get('Preferences', []):
-                placement_preferences.append({
-                    key.lower(): value['SpreadDescriptor'] for key, value in preference.items()
-                })
+                placement_preferences.append(
+                    dict(
+                        (key.lower(), value["SpreadDescriptor"])
+                        for key, value in preference.items()
+                    )
+                )
             if placement_preferences:
                 ds.placement_preferences = placement_preferences
 
