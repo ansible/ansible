@@ -28,6 +28,7 @@
 
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback
 
 try:
     from skydive.graph import Node, Edge
@@ -43,27 +44,37 @@ except ImportError:
 # defining skydive constants
 SKYDIVE_LOOKUP_QUERY = 'G.V().Has'
 
+SKYDIVE_PROVIDER_SPEC = {
+    'host': dict(fallback=(env_fallback, ['SKYDIVE_HOST'])),
+    'username': dict(fallback=(env_fallback, ['SKYDIVE_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['SKYDIVE_PASSWORD']), no_log=True),
+    'ssl_verify': dict(type='bool', default=False, fallback=(env_fallback, ['SKYDIVE_SSL_VERIFY']))
+}
 
 class skydive_base(object):
     ''' Base class for implementing Skydive Rest API '''
+    provider_spec = {'provider': dict(type='dict', options=SKYDIVE_PROVIDER_SPEC)}
 
-    def __init__(self, host="localhost:8082", user="admin", password="password"):
+    def __init__(self, host="localhost:8082", username="admin", password="password"):
         try:
-            self.restclient_object = RESTClient(host, username=user, password=password)
-            self.websocketclient_object = WSClient(host, username=user, password=password)
+            self.restclient_object = RESTClient(host, username=username, password=password)
+            self.websocketclient_object = WSClient(host, username=username, password=password)
         except TypeError as err:
             raise err
 
 
 class skydive_lookup(skydive_base):
 
-    def __init__(self):
-        super(skydive_lookup, self).__init__()
+    def __init__(self, provider):
+        host = provider['host']
+        username = provider['username']
+        password = provider['password']
+        super(skydive_lookup, self).__init__(host, username, password)
         self.query_str = ""
 
-    def lookup_query(self, arg_val):
-        query_key = arg_val.keys()[0]
-        self.query_str = SKYDIVE_LOOKUP_QUERY + "('" + query_key + "' ,'" + arg_val[query_key] + "' )"
+    def lookup_query(self, filter_data):
+        query_key = filter_data.keys()[0]
+        self.query_str = SKYDIVE_LOOKUP_QUERY + "('{0}', '{1}')".format(query_key, filter_data[query_key])
         nodes = self.restclient_object.lookup_nodes(self.query_str)
         return nodes[0].__dict__
 
@@ -72,7 +83,13 @@ class skydive_flow_topology(skydive_base):
     ''' Implements Skydive Flow capture modules '''
     def __init__(self, module):
         self.module = module
-        super(skydive_flow_topology, self).__init__()
+        provider = module.params['provider']
+
+        host = provider['host']
+        username = provider['username']
+        password = provider['password']
+
+        super(skydive_flow_topology, self).__init__(host, username, password)
 
     def run(self, ib_spec):
         state = self.module.params['state']
