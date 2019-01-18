@@ -671,7 +671,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
     def update_aks_tags(self):
         try:
             poller = self.containerservice_client.managed_clusters.update_tags(self.resource_group, self.name, self.tags)
-            return self.get_poller_result(poller)
+            response = self.get_poller_result(poller)
+            return response.tags
         except CloudError as exc:
             self.fail("Error attempting to update AKS tags: {0}".format(exc.message))
 
