@@ -664,3 +664,24 @@
       state: absent
 
 # end test case where disable_excludes is supported
+
+- name: Test "dnf install /usr/bin/vi"
+  block:
+    - name: Clean vim-minimal
+      dnf:
+        name: vim-minimal
+        state: absent
+
+    - name: Install vim-minimal by specifying "/usr/bin/vi"
+      dnf:
+        name: /usr/bin/vi
+        state: present
+
+    - name: Get rpm output
+      command: rpm -q vim-minimal
+      register: rpm_output
+
+    - name: Check installation was successful
+      assert:
+        that:
+          - "'vim-minimal' in rpm_output.stdout"
