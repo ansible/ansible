@@ -13,6 +13,8 @@ from lib.config import (
     IntegrationConfig,
 )
 
+from ara.plugins import LOCATION as ara_plugins
+
 
 def ansible_environment(args, color=True, ansible_config=None):
     """
@@ -49,6 +51,9 @@ def ansible_environment(args, color=True, ansible_config=None):
         PYTHONPATH=os.path.abspath('lib'),
         PAGER='/bin/cat',
         PATH=path,
+        ANSIBLE_CALLBACK_PLUGINS=os.path.join(ara_plugins, "callback"),
+        ARA_API_CLIENT="http",
+        ARA_API_SERVER="https://api.demo.recordsansible.org"
     )
 
     env.update(ansible)

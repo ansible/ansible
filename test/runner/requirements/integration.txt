@@ -4,3 +4,5 @@ junit-xml
 ordereddict ; python_version < '2.7'
 paramiko
 pyyaml
+git+https://git.openstack.org/openstack/ara-clients
+git+https://git.openstack.org/openstack/ara-plugins
