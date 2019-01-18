@@ -13,15 +13,235 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: user
-author:
-- Stephen Fromm (@sfromm)
 version_added: "0.2"
 short_description: Manage user accounts
+description:
+    - Manage user accounts and user attributes.
+    - For Windows targets, use the M(win_user) module instead.
+options:
+    name:
+        description:
+            - Name of the user to create, remove or modify.
+        type: str
+        required: true
+        aliases: [ user ]
+    uid:
+        description:
+            - Optionally sets the I(UID) of the user.
+        type: int
+    comment:
+        description:
+            - Optionally sets the description (aka I(GECOS)) of user account.
+        type: str
+    hidden:
+        description:
+            - macOS only, optionally hide the user from the login window and system preferences.
+            - The default will be C(yes) if the I(system) option is used.
+        type: bool
+        required: false
+        version_added: "2.6"
+    non_unique:
+        description:
+            - Optionally when used with the -u option, this option allows to change the user ID to a non-unique value.
+        type: bool
+        default: no
+        version_added: "1.1"
+    seuser:
+        description:
+            - Optionally sets the seuser type (user_u) on selinux enabled systems.
+        type: str
+        version_added: "2.1"
+    group:
+        description:
+            - Optionally sets the user's primary group (takes a group name).
+        type: str
+    groups:
+        description:
+            - List of groups user will be added to. When set to an empty string C(''),
+              C(null), or C(~), the user is removed from all groups except the
+              primary group. (C(~) means C(null) in YAML)
+            - Before Ansible 2.3, the only input format allowed was a comma separated string.
+        type: list
+    append:
+        description:
+            - If C(yes), add the user to the groups specified in C(groups).
+            - If C(no), user will only be added to the groups specified in C(groups),
+              removing them from all other groups.
+        type: bool
+        default: no
+    shell:
+        description:
+            - Optionally set the user's shell.
+            - On macOS, before Ansible 2.5, the default shell for non-system users was C(/usr/bin/false).
+              Since Ansible 2.5, the default shell for non-system users on macOS is C(/bin/bash).
+            - On other operating systems, the default shell is determined by the underlying tool being
+              used. See Notes for details.
+        type: str
+    home:
+        description:
+            - Optionally set the user's home directory.
+        type: path
+    skeleton:
+        description:
+            - Optionally set a home skeleton directory.
+            - Requires C(create_home) option!
+        type: str
+        version_added: "2.0"
+    password:
+        description:
+            - Optionally set the user's password to this crypted value.
+            - On macOS systems, this value has to be cleartext. Beware of security issues.
+            - To create a disabled account on Linux systems, set this to C('!') or C('*').
+            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
+              for details on various ways to generate these password values.
+        type: str
+    state:
+        description:
+            - Whether the account should exist or not, taking action if the state is different from what is stated.
+        type: str
+        choices: [ absent, present ]
+        default: present
+    create_home:
+        description:
+            - Unless set to C(no), a home directory will be made for the user
+              when the account is created or if the home directory does not exist.
+            - Changed from C(createhome) to C(create_home) in Ansible 2.5.
+        type: bool
+        default: yes
+        aliases: [ createhome ]
+    move_home:
+        description:
+            - "If set to C(yes) when used with C(home: ), attempt to move the user's old home
+              directory to the specified directory if it isn't there already and the old home exists."
+        type: bool
+        default: no
+    system:
+        description:
+            - When creating an account C(state=present), setting this to C(yes) makes the user a system account.
+            - This setting cannot be changed on existing users.
+        type: bool
+        default: no
+    force:
+        description:
+            - This only affects C(state=absent), it forces removal of the user and associated directories on supported platforms.
+            - The behavior is the same as C(userdel --force), check the man page for C(userdel) on your system for details and support.
+            - When used with C(generate_ssh_key=yes) this forces an existing key to be overwritten.
+        type: bool
+        default: no
+    remove:
+        description:
+            - This only affects C(state=absent), it attempts to remove directories associated with the user.
+            - The behavior is the same as C(userdel --remove), check the man page for details and support.
+        type: bool
+        default: no
+    login_class:
+        description:
+            - Optionally sets the user's login class, a feature of most BSD OSs.
+        type: str
+    generate_ssh_key:
+        description:
+            - Whether to generate a SSH key for the user in question.
+            - This will B(not) overwrite an existing SSH key unless used with C(force=yes).
+        type: bool
+        default: no
+        version_added: "0.9"
+    ssh_key_bits:
+        description:
+            - Optionally specify number of bits in SSH key to create.
+        type: int
+        default: default set by ssh-keygen
+        version_added: "0.9"
+    ssh_key_type:
+        description:
+            - Optionally specify the type of SSH key to generate.
+            - Available SSH key types will depend on implementation
+              present on target host.
+        type: str
+        default: rsa
+        version_added: "0.9"
+    ssh_key_file:
+        description:
+            - Optionally specify the SSH key filename.
+            - If this is a relative filename then it will be relative to the user's home directory.
+        type: path
+        default: .ssh/id_rsa
+        version_added: "0.9"
+    ssh_key_comment:
+        description:
+            - Optionally define the comment for the SSH key.
+        type: str
+        default: ansible-generated on $HOSTNAME
+        version_added: "0.9"
+    ssh_key_passphrase:
+        description:
+            - Set a passphrase for the SSH key.
+            - If no passphrase is provided, the SSH key will default to having no passphrase.
+        type: str
+        version_added: "0.9"
+    update_password:
+        description:
+            - C(always) will update passwords if they differ.
+            - C(on_create) will only set the password for newly created users.
+        type: str
+        choices: [ always, on_create ]
+        default: always
+        version_added: "1.3"
+    expires:
+        description:
+            - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
+            - Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
+            - Since Ansible 2.6 you can remove the expiry time specify a negative value.
+              Currently supported on GNU/Linux and FreeBSD.
+        type: float
+        version_added: "1.9"
+    password_lock:
+        description:
+            - Lock the password (usermod -L, pw lock, usermod -C).
+            - BUT implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
+            - This option does not disable the user, only lock the password. Do not change the password in the same task.
+            - Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
+        type: bool
+        version_added: "2.6"
+    local:
+        description:
+            - Forces the use of "local" command alternatives on platforms that implement it.
+            - This is useful in environments that use centralized authentification when you want to manipulate the local users
+              (i.e. it uses C(luseradd) instead of C(useradd)).
+            - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
+        type: bool
+        default: no
+        version_added: "2.4"
+    profile:
+        description:
+            - Sets the profile of the user.
+            - Does nothing when used with other platforms.
+            - Can set multiple profiles using comma separation.
+            - To delete all the profiles, use C(profile='').
+            - Currently supported on Illumos/Solaris.
+        type: str
+        version_added: "2.8"
+    authorization:
+        description:
+            - Sets the authorization of the user.
+            - Does nothing when used with other platforms.
+            - Can set multiple authorizations using comma separation.
+            - To delete all authorizations, use C(authorization='').
+            - Currently supported on Illumos/Solaris.
+        type: str
+        version_added: "2.8"
+    role:
+        description:
+            - Sets the role of the user.
+            - Does nothing when used with other platforms.
+            - Can set multiple roles using comma separation.
+            - To delete all roles, use C(role='').
+            - Currently supported on Illumos/Solaris.
+        type: str
+        version_added: "2.8"
 notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
     are present at runtime. If they are not, a descriptive error message will be shown.
-  - For Windows targets, use the M(win_user) module instead.
   - On SunOS platforms, the shadow file is backed up automatically since this module edits it directly.
     On other platforms, the shadow file is backed up by the underlying tools used by this module.
   - On macOS, this module uses C(dscl) to create, modify, and delete accounts. C(dseditgroup) is used to
@@ -31,206 +251,12 @@ notes:
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
-description:
-    - Manage user accounts and user attributes.
-    - For Windows targets, use the M(win_user) module instead.
-options:
-    name:
-        description:
-            - Name of the user to create, remove or modify.
-        required: true
-        aliases: [ user ]
-    uid:
-        description:
-            - Optionally sets the I(UID) of the user.
-    comment:
-        description:
-            - Optionally sets the description (aka I(GECOS)) of user account.
-    hidden:
-        required: false
-        type: bool
-        description:
-            - macOS only, optionally hide the user from the login window and system preferences.
-            - The default will be 'True' if the I(system) option is used.
-        version_added: "2.6"
-    non_unique:
-        description:
-            - Optionally when used with the -u option, this option allows to change the user ID to a non-unique value.
-        type: bool
-        default: "no"
-        version_added: "1.1"
-    seuser:
-        description:
-            - Optionally sets the seuser type (user_u) on selinux enabled systems.
-        version_added: "2.1"
-    group:
-        description:
-            - Optionally sets the user's primary group (takes a group name).
-    groups:
-        description:
-            - List of groups user will be added to. When set to an empty string C(''),
-              C(null), or C(~), the user is removed from all groups except the
-              primary group. (C(~) means C(null) in YAML)
-            - Before version 2.3, the only input format allowed was a comma separated string.
-              Now this parameter accepts a list as well as a comma separated string.
-    append:
-        description:
-            - If C(yes), add the user to the groups specified in C(groups).
-            - If C(no), user will only be added to the groups specified in C(groups),
-              removing them from all other groups.
-        type: bool
-        default: "no"
-    shell:
-        description:
-            - Optionally set the user's shell.
-            - On macOS, before version 2.5, the default shell for non-system users was /usr/bin/false.
-              Since 2.5, the default shell for non-system users on macOS is /bin/bash.
-            - On other operating systems, the default shell is determined by the underlying tool being
-              used. See Notes for details.
-    home:
-        description:
-            - Optionally set the user's home directory.
-    skeleton:
-        description:
-            - Optionally set a home skeleton directory. Requires create_home option!
-        version_added: "2.0"
-    password:
-        description:
-            - Optionally set the user's password to this crypted value.
-            - On macOS systems, this value has to be cleartext. Beware of security issues.
-            - To create a disabled account on Linux systems, set this to C('!') or C('*').
-            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
-              for details on various ways to generate these password values.
-    state:
-        description:
-            - Whether the account should exist or not, taking action if the state is different from what is stated.
-        choices: [ absent, present ]
-        default: present
-    create_home:
-        description:
-            - Unless set to C(no), a home directory will be made for the user
-              when the account is created or if the home directory does not exist.
-            - Changed from C(createhome) to C(create_home) in version 2.5.
-        type: bool
-        default: 'yes'
-        aliases: ['createhome']
-    move_home:
-        description:
-            - "If set to C(yes) when used with C(home: ), attempt to move the user's old home
-              directory to the specified directory if it isn't there already and the old home exists."
-        type: bool
-        default: "no"
-    system:
-        description:
-            - "When creating an account C(state: present), setting this to C(yes) makes the user a system account.
-              This setting cannot be changed on existing users."
-        type: bool
-        default: "no"
-    force:
-        description:
-            - "This only affects C(state: absent), it forces removal of the user and associated directories on supported platforms.
-              The behavior is the same as C(userdel --force), check the man page for C(userdel) on your system for details and support."
-            - "When used with C(generate_ssh_key: yes) this forces an existing key to be overwritten."
-        type: bool
-        default: "no"
-    remove:
-        description:
-            - "This only affects C(state: absent), it attempts to remove directories associated with the user.
-              The behavior is the same as C(userdel --remove), check the man page for details and support."
-        type: bool
-        default: "no"
-    login_class:
-        description:
-            - Optionally sets the user's login class, a feature of most BSD OSs.
-    generate_ssh_key:
-        description:
-            - "Whether to generate a SSH key for the user in question.
-              This will not overwrite an existing SSH key unless used with C(force: yes)."
-        type: bool
-        default: "no"
-        version_added: "0.9"
-    ssh_key_bits:
-        description:
-            - Optionally specify number of bits in SSH key to create.
-        default: default set by ssh-keygen
-        version_added: "0.9"
-    ssh_key_type:
-        description:
-            - Optionally specify the type of SSH key to generate.
-              Available SSH key types will depend on implementation
-              present on target host.
-        default: rsa
-        version_added: "0.9"
-    ssh_key_file:
-        description:
-            - Optionally specify the SSH key filename. If this is a relative
-              filename then it will be relative to the user's home directory.
-        default: .ssh/id_rsa
-        version_added: "0.9"
-    ssh_key_comment:
-        description:
-            - Optionally define the comment for the SSH key.
-        default: ansible-generated on $HOSTNAME
-        version_added: "0.9"
-    ssh_key_passphrase:
-        description:
-            - Set a passphrase for the SSH key.  If no
-              passphrase is provided, the SSH key will default to
-              having no passphrase.
-        version_added: "0.9"
-    update_password:
-        description:
-            - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
-        choices: [ always, on_create ]
-        default: always
-        version_added: "1.3"
-    expires:
-        description:
-            - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
-              Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
-            - Since version 2.6 you can remove the expiry time specify a negative value. Currently supported on GNU/Linux and FreeBSD.
-        version_added: "1.9"
-    password_lock:
-        description:
-            - Lock the password (usermod -L, pw lock, usermod -C).
-              BUT implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
-              This option does not disable the user, only lock the password. Do not change the password in the same task.
-              Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
-        type: bool
-        version_added: "2.6"
-    local:
-        description:
-            - Forces the use of "local" command alternatives on platforms that implement it.
-              This is useful in environments that use centralized authentification when you want to manipulate the local users.
-              I.E. it uses `luseradd` instead of `useradd`.
-            - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
-        type: bool
-        default: 'no'
-        version_added: "2.4"
-    profile:
-        description:
-            - Sets the profile of the user.
-            - Does nothing when used with other platforms.
-            - Can set multiple profiles using comma separation.
-            - "To delete all the profiles, use C(profile: '')"
-            - Currently supported on Illumos/Solaris.
-        version_added: "2.8"
-    authorization:
-        description:
-            - Sets the authorization of the user.
-            - Does nothing when used with other platforms.
-            - Can set multiple authorizations using comma separation.
-            - "To delete all authorizations, use C(authorization: '')"
-            - Currently supported on Illumos/Solaris.
-        version_added: "2.8"
-    role:
-        description:
-            - Sets the role of the user.
-            - Does nothing when used with other platforms.
-            - Can set multiple roles using comma separation.
-            - "To delete all roles, use C(role: '')"
-            - Currently supported on Illumos/Solaris.
-        version_added: "2.8"
+seealso:
+- module: authorized_key
+- module: group
+- module: win_user
+author:
+- Stephen Fromm (@sfromm)
 '''
 
 EXAMPLES = '''
@@ -268,7 +294,7 @@ EXAMPLES = '''
     groups: developers
     expires: 1422403387
 
-- name: starting at version 2.6, modify user, remove expiry time
+- name: Starting at Ansible 2.6, modify user, remove expiry time
   user:
     name: james18
     expires: -1

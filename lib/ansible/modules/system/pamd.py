@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# (c) 2017, Kenneth D. Evensen <kdevensen@gmail.com>
 
+# Copyright: (c) 2017, Kenneth D. Evensen <kdevensen@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -13,93 +13,93 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 module: pamd
 author:
-    - "Kenneth D. Evensen (@kevensen)"
+    - Kenneth D. Evensen (@kevensen)
 short_description: Manage PAM Modules
 description:
   - Edit PAM service's type, control, module path and module arguments.
-    In order for a PAM rule to be modified, the type, control and
+  - In order for a PAM rule to be modified, the type, control and
     module_path must match an existing rule.  See man(5) pam.d for details.
 version_added: "2.3"
 options:
   name:
-    required: true
     description:
       - The name generally refers to the PAM service file to
         change, for example system-auth.
+    type: str
+    required: true
   type:
-    required: true
     description:
-      - The type of the PAM rule being modified.  The type, control
-        and module_path all must match a rule to be modified.
+      - The type of the PAM rule being modified.
+      - The C(type), C(control) and C(module_path) all must match a rule to be modified.
+    type: str
+    required: true
   control:
-    required: true
     description:
-      - The control of the PAM rule being modified.  This may be a
-        complicated control with brackets.  If this is the case, be
-        sure to put "[bracketed controls]" in quotes.  The type,
-        control and module_path all must match a rule to be modified.
+      - The control of the PAM rule being modified.
+      - This may be a complicated control with brackets. If this is the case, be
+        sure to put "[bracketed controls]" in quotes.
+      - The C(type), C(control) and C(module_path) all must match a rule to be modified.
+    type: str
+    required: true
   module_path:
-    required: true
     description:
-      - The module path of the PAM rule being modified.  The type,
-        control and module_path all must match a rule to be modified.
+      - The module path of the PAM rule being modified.
+      - The C(type), C(control) and C(module_path) all must match a rule to be modified.
+    type: str
+    required: true
   new_type:
     description:
     - The new type to assign to the new rule.
+    type: str
   new_control:
     description:
     - The new control to assign to the new rule.
+    type: str
   new_module_path:
     description:
     - The new module path to be assigned to the new rule.
+    type: str
   module_arguments:
     description:
-    - When state is 'updated', the module_arguments will replace existing
-      module_arguments.  When state is 'args_absent' args matching those
-      listed in module_arguments will be removed.  When state is
-      'args_present' any args listed in module_arguments are added if
-      missing from the existing rule.  Furthermore, if the module argument
-      takes a value denoted by '=', the value will be changed to that specified
-      in module_arguments.  Note that module_arguments is a list.  Please see
-      the examples for usage.
+    - When state is C(updated), the module_arguments will replace existing module_arguments.
+    - When state is C(args_absent) args matching those listed in module_arguments will be removed.
+    - When state is C(args_present) any args listed in module_arguments are added if
+      missing from the existing rule.
+    - Furthermore, if the module argument takes a value denoted by C(=),
+      the value will be changed to that specified in module_arguments.
+    type: list
   state:
-    default: updated
-    choices:
-    - updated
-    - before
-    - after
-    - args_present
-    - args_absent
-    - absent
     description:
-    - The default of 'updated' will modify an existing rule if type,
-      control and module_path all match an existing rule.  With 'before',
-      the new rule will be inserted before a rule matching type, control
-      and module_path.  Similarly, with 'after', the new rule will be inserted
-      after an existing rule matching type, control and module_path.  With
-      either 'before' or 'after' new_type, new_control, and new_module_path
-      must all be specified.  If state is 'args_absent' or 'args_present',
-      new_type, new_control, and new_module_path will be ignored.  State
-      'absent' will remove the rule.  The 'absent' state was added in version
-      2.4 and is only available in Ansible versions >= 2.4.
+    - The default of C(updated) will modify an existing rule if type,
+      control and module_path all match an existing rule.
+    - With C(before), the new rule will be inserted before a rule matching type,
+      control and module_path.
+    - Similarly, with C(after), the new rule will be inserted after an existing rulematching type,
+      control and module_path.
+    - With either C(before) or C(after) new_type, new_control, and new_module_path must all be specified.
+    - If state is C(args_absent) or C(args_present), new_type, new_control, and new_module_path will be ignored.
+    - State C(absent) will remove the rule.  The 'absent' state was added in Ansible 2.4.
+    type: str
+    choices: [ absent, before, after, args_absent, args_present, updated ]
+    default: updated
   path:
-    default: /etc/pam.d/
     description:
     - This is the path to the PAM service files
+    type: path
+    default: /etc/pam.d/
   backup:
      description:
        - Create a backup file including the timestamp information so you can
          get the original file back if you somehow clobbered it incorrectly.
      type: bool
-     default: 'no'
+     default: no
      version_added: '2.6'
+'''
 
-"""
-
-EXAMPLES = """
+EXAMPLES = r'''
 - name: Update pamd rule's control in /etc/pam.d/system-auth
   pamd:
     name: system-auth
@@ -220,9 +220,9 @@ EXAMPLES = """
     type: auth
     module_path: pam_sss.so
     control: 'requisite'
-"""
+'''
 
-RETURN = '''
+RETURN = r'''
 change_count:
     description: How many rules were changed
     type: int
@@ -230,14 +230,14 @@ change_count:
     returned: success
     version_added: 2.4
 new_rule:
-    description: The changes to the rule.  This was available in Ansible version 2.4 and 2.5.  It was removed in 2.6.
+    description: The changes to the rule.  This was available in Ansible 2.4 and Ansible 2.5.  It was removed in Ansible 2.6.
     type: str
     sample: None      None None sha512 shadow try_first_pass use_authtok
     returned: success
     version_added: 2.4
 updated_rule_(n):
     description: The rule(s) that was/were changed.  This is only available in
-      Ansible version 2.4 and was removed in 2.5.
+      Ansible 2.4 and was removed in Ansible 2.5.
     type: str
     sample:
     - password      sufficient  pam_unix.so sha512 shadow try_first_pass
@@ -248,7 +248,7 @@ action:
     description:
     - "That action that was taken and is one of: update_rule,
       insert_before_rule, insert_after_rule, args_present, args_absent,
-      absent. This was available in Ansible version 2.4 and removed in 2.8"
+      absent. This was available in Ansible 2.4 and removed in Ansible 2.8"
     returned: always
     type: str
     sample: "update_rule"
@@ -256,7 +256,7 @@ action:
 dest:
     description:
     - "Path to pam.d service that was changed.  This is only available in
-      Ansible version 2.3 and was removed in 2.4."
+      Ansible 2.3 and was removed in Ansible 2.4."
     returned: success
     type: str
     sample: "/etc/pam.d/system-auth"
@@ -770,21 +770,17 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True, type='str'),
-            type=dict(required=True,
-                      choices=VALID_TYPES),
-            control=dict(required=True, type='str'),
-            module_path=dict(required=True, type='str'),
-            new_type=dict(required=False,
-                          choices=VALID_TYPES),
-            new_control=dict(required=False, type='str'),
-            new_module_path=dict(required=False, type='str'),
-            module_arguments=dict(required=False, type='list'),
-            state=dict(required=False, default="updated",
-                       choices=['before', 'after', 'updated',
-                                'args_absent', 'args_present', 'absent']),
-            path=dict(required=False, default='/etc/pam.d', type='str'),
-            backup=dict(default=False, type='bool')
+            name=dict(type='str', required=True),
+            type=dict(type='str', required=True, choices=VALID_TYPES),
+            control=dict(type='str', required=True),
+            module_path=dict(type='str', required=True),
+            new_type=dict(type='str', choices=VALID_TYPES),
+            new_control=dict(type='str'),
+            new_module_path=dict(type='str'),
+            module_arguments=dict(type='list'),
+            state=dict(type='str', default='updated', choices=['absent', 'after', 'args_absent', 'args_present', 'before', 'updated']),
+            path=dict(type='path', default='/etc/pam.d'),
+            backup=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_if=[
