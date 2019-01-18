@@ -307,6 +307,39 @@ def parse_systemctl_show(lines):
     return parsed
 
 
+def unit_is_enabled(module, systemctl_executable, systemd_unit, is_initd):
+    """Detect whether given unit is enabled.
+     Args:
+        module (AnsibleModule): Instance of ansible module singleton.
+        systemctl_executable (str): systemctl executable with default
+            arguments pre-filled.
+        systemd_unit (str): Name of systemd unit being checked.
+     Returns:
+        bool: True if systemd unit is enabled, False otherwise.
+    """
+    rc, out, _err = module.run_command(
+        "%s is-enabled '%s'"
+        % (systemctl_executable, systemd_unit),)
+
+    # check systemctl result or if it is a init script
+    if rc == 0:
+        return True
+
+    if rc == 1:
+        # if not a user or global user service and both init script and
+        # unit file exist stdout should have enabled/disabled,
+        # otherwise use rc entries
+        return (
+            module.params['scope'] in (None, 'system') and
+            not module.params['user'] and
+            is_initd and
+            not out.strip().endswith('disabled') and
+            sysv_is_enabled(systemd_unit)
+        )
+
+    return False
+
+
 # ===========================================
 # Main control flow
 
@@ -445,20 +478,7 @@ def main():
             fail_if_missing(module, found, unit, msg='host')
 
             # do we need to enable the service?
-            enabled = False
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
-
-            # check systemctl result or if it is a init script
-            if rc == 0:
-                enabled = True
-            elif rc == 1:
-                # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-                if module.params['scope'] in (None, 'system') and \
-                        not module.params['user'] and \
-                        is_initd and \
-                        not out.strip().endswith('disabled') and \
-                        sysv_is_enabled(unit):
-                    enabled = True
+            enabled = unit_is_enabled(module, systemctl, unit, is_initd)
 
             # default to current state
             result['enabled'] = enabled
