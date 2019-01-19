@@ -659,10 +659,12 @@ class DockerService(DockerBaseClass):
         s.command = ap['command']
         if isinstance(s.command, string_types):
             s.command = shlex.split(s.command)
-        elif s.command is not None and not isinstance(s.command, list):
+        elif isinstance(s.command, list):
+            s.command = ap['command']
+        elif s.command is not None:
             raise ValueError(
-                "Invalid type for command (%s). Only string or list allowed." %
-                type(s.command)
+                'Invalid type for command (%s). Only string or list allowed.'
+                % type(s.command)
             )
 
         if ap['force_update']:
