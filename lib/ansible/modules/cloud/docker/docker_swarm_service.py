@@ -200,9 +200,35 @@ options:
     required: false
     description:
     - List of dictionaries describing the service published ports.
-    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp')
     - Only used with api_version >= 1.25
-    - If API version >= 1.32 and docker python library >= 3.0.0 attribute 'mode' can be set to 'ingress' or 'host' (default 'ingress').
+    suboptions:
+      published_port:
+         type: int
+         required: true
+         description:
+           - The port to make externally available.
+      target_port:
+         type: int
+         required: true
+         description:
+           - The port inside the container to expose.
+      protocol:
+         type: str
+         required: true
+         description:
+           - What protocol to use.
+         choices:
+           - tcp
+           - udp
+      mode:
+        type: str
+        required: false
+        description:
+          - What publish mode to use.
+          - Requires API version >= 1.32 and docker python library >= 3.0.0
+        choices:
+          - ingress
+          - host
   replicas:
     required: false
     default: -1
@@ -1179,7 +1205,12 @@ def main():
         force_update=dict(default=False, type='bool'),
         log_driver=dict(default="json-file", type='str'),
         log_driver_options=dict(default={}, type='dict'),
-        publish=dict(default=[], type='list'),
+        publish=dict(default=[], type='list', elements='dict', options=dict(
+            published_port=dict(type='int', required=True),
+            target_port=dict(type='int', required=True),
+            protocol=dict(type='str', required=True),
+            mode=dict(type='str', required=False),
+        )),
         constraints=dict(default=[], type='list'),
         tty=dict(default=False, type='bool'),
         dns=dict(default=[], type='list'),
