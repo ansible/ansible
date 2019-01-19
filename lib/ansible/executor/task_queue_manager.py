@@ -29,7 +29,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, PY3
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
@@ -361,7 +361,10 @@ class TaskQueueManager:
 
             for method in methods:
                 try:
-                    self._callback_pool.apply_async(method, new_args, kwargs, error_callback=_callback_exception_handler)
+                    if PY3:
+                        self._callback_pool.apply_async(method, new_args, kwargs, error_callback=_callback_exception_handler)
+                    else:
+                        self._callback_pool.apply_async(method, new_args, kwargs)
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
