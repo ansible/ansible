@@ -196,8 +196,9 @@ options:
     - List of the service networks names.
     - Maps docker service --network option.
   publish:
-    default: []
+    type: list
     required: false
+    default: []
     description:
     - List of dictionaries describing the service published ports.
     - Only used with api_version >= 1.25
