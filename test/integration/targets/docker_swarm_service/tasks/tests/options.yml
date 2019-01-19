@@ -230,6 +230,26 @@
     command: '/bin/sh -c "sleep 10m"'
   register: command_3
 
+- name: command (as list)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command:
+      - "/bin/sh"
+      - "-c"
+      - '"sleep 10m"'
+  register: command_4
+
+- name: command (as list idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command:
+      - "/bin/sh"
+      - "-c"
+      - '"sleep 10m"'
+  register: command_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -241,6 +261,8 @@
       - command_1 is changed
       - command_2 is not changed
       - command_3 is changed
+      - command_4 is changed
+      - command_5 is not changed
 
 ####################################################################
 ## container_labels ################################################
