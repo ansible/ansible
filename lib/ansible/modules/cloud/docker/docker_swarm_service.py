@@ -1194,7 +1194,7 @@ def main():
         supports_check_mode=True,
         min_docker_version='2.0.0',
         min_docker_api_version='1.24',
-        option_minimal_versions=option_minimal_versions
+        option_minimal_versions=option_minimal_versions,
     )
 
     dsm = DockerServiceManager(client)
