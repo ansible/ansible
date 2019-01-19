@@ -90,6 +90,7 @@ options:
     	description:
     	- Informational notes about a device.
     	- Limited to 255 characters.
+        version_added: '2.8'
 
 
 author:
