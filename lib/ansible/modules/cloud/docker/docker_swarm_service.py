@@ -473,6 +473,12 @@ EXAMPLES = '''
     docker_swarm_service:
         name: myservice
         state: absent
+-   name: set placement preferences
+    docker_swarm_service:
+        name: myservice
+        image: alpine:edge
+        placement_preferences:
+          - spread: "node.labels.mylabel"
 '''
 
 import time
