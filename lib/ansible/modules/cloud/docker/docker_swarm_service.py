@@ -660,15 +660,29 @@ class DockerService(DockerBaseClass):
         if isinstance(s.command, string_types):
             s.command = shlex.split(s.command)
         elif isinstance(s.command, list):
-            if not all(isinstance(item, string_types) for item in s.command):
+            invalid_items = [
+                (index, item)
+                for index, item in enumerate(s.command)
+                if not isinstance(item, string_types)
+            ]
+            if invalid_items:
+                errors = ', '.join(
+                    [
+                        '%s (%s) at index %s' % (item, type(item), index)
+                        for index, item in invalid_items
+                    ]
+                )
                 raise Exception(
-                    'All items in a command list needs to be strings. Please check quoting.'
+                    'All items in a command list need to be strings. '
+                    'Check quoting. Invalid items: %s.'
+                    % errors
                 )
             s.command = ap['command']
         elif s.command is not None:
             raise ValueError(
-                'Invalid type for command (%s). Only string or list allowed.'
-                % type(s.command)
+                'Invalid type for command %s (%s). '
+                'Only string or list allowed. Check quoting.'
+                % (s.command, type(s.command))
             )
 
         if ap['force_update']:
