@@ -368,4 +368,3 @@ class TaskQueueManager:
                     from traceback import format_tb
                     from sys import exc_info
                     display.vvv('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
-
