@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -17,6 +17,10 @@ DOCUMENTATION = '''
 ---
 module: digital_ocean
 short_description: Create/delete a droplet/SSH_key in DigitalOcean
+deprecated:
+  removed_in: '2.12'
+  why: Updated module to remove external dependency with increased functionality.
+  alternative: Use M(digital_ocean_droplet) instead.
 description:
      - Create/delete a droplet in DigitalOcean and optionally wait for it to be 'running', or deploy an SSH key.
 version_added: "1.3"
@@ -185,7 +189,7 @@ from distutils.version import LooseVersion
 
 try:
     # Imported as a dependency for dopy
-    import six
+    import ansible.module_utils.six
     HAS_SIX = True
 except ImportError:
     HAS_SIX = False

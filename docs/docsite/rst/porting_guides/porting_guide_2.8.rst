@@ -105,6 +105,7 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 * ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
+* ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
 
 
 Noteworthy module changes
@@ -146,6 +147,9 @@ Noteworthy module changes
   changed if ``state: present``. Any playbooks that are using ``changed_when: no`` to mask this quirk can safely
   remove that workaround. To get the previous behavior when applying ``state: absent`` to a builtin kernel module,
   use ``failed_when: false`` or ``ignore_errors: true`` in your playbook.
+
+* The ``digital_ocean`` module has been deprecated in favor of modules that do not require external dependencies.
+  This allows for more flexibility and better module support.
 
 Plugins
 =======
