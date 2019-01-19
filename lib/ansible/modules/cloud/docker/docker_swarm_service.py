@@ -51,14 +51,14 @@ options:
     required: false
     default: []
     description:
-    - List of the service constraints.
-    - Maps docker service --constraint option.
+    - List of the placement preferences as key value pairs.
+    - Maps docker service C(--placement-pref) option.
   placement_preferences:
     required: false
     type: list
     description:
-    - List of the placement preferences as key value pairs.
-    - Maps docker service C(--placement-pref) option.
+    - Command to execute when the container starts.
+      A command may be either a string or a list of strings.
     version_added: 2.8
   hostname:
     required: false
