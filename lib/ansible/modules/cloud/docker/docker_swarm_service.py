@@ -708,7 +708,7 @@ class DockerService(DockerBaseClass):
             differences.add('args', parameter=self.args, active=os.args)
         if self.constraints != os.constraints:
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
-        if self.placement_preferences != os.placement_preferences:
+        if self.placement_preferences is not None and self.placement_preferences != os.placement_preferences:
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
         if self.labels != os.labels:
             differences.add('labels', parameter=self.labels, active=os.labels)
