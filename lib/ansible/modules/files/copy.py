@@ -107,6 +107,13 @@ options:
     - If this is not provided, ansible will use the local calculated checksum of the src file.
     type: str
     version_added: '2.5'
+  inhibit_copystat:
+    description:
+    - Prevents copying stat values from src to dest.
+    - Used to allow copy to succeed on platforms where stat values are incompatible between src and dest.
+    - If this is not provided, or no, ansible will preserve historical behaviour of copying stats from src to dest.
+    default: no
+    type: bool
 extends_documentation_fragment:
 - decrypt
 - files
@@ -477,6 +484,7 @@ def main():
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
             checksum=dict(type='str'),
+            inhibit_copystat=dict(type='bool', default=False),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -500,6 +508,7 @@ def main():
     group = module.params['group']
     remote_src = module.params['remote_src']
     checksum = module.params['checksum']
+    inhibit_copystat = module.params['inhibit_copystat']
 
     if not os.path.exists(b_src):
         module.fail_json(msg="Source %s not found" % (src))
@@ -620,13 +629,14 @@ def main():
                     _, b_mysrc = tempfile.mkstemp(dir=os.path.dirname(b_dest))
 
                     shutil.copyfile(b_src, b_mysrc)
-                    try:
-                        shutil.copystat(b_src, b_mysrc)
-                    except OSError as err:
-                        if err.errno == errno.ENOSYS and mode == "preserve":
-                            module.warn("Unable to copy stats {0}".format(to_native(b_src)))
-                        else:
-                            raise
+                    if not inhibit_copystat:
+                        try:
+                            shutil.copystat(b_src, b_mysrc)
+                        except OSError as err:
+                            if err.errno == errno.ENOSYS and mode == "preserve":
+                                module.warn("Unable to copy stats {0}".format(to_native(b_src)))
+                            else:
+                                raise
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
