@@ -659,7 +659,9 @@ class DockerService(DockerBaseClass):
         s.command = ap['command']
         if isinstance(s.command, string_types):
             s.command = shlex.split(s.command)
-        elif isinstance(s.command, list):
+        elif isinstance(s.command, list) and all(
+            isinstance(item, string_types) for item in s.command
+        ):
             s.command = ap['command']
         elif s.command is not None:
             raise ValueError(
