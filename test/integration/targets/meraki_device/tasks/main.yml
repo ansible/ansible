@@ -166,11 +166,8 @@
 
   - assert:
       that:
-        - update_device.data.0.notes == "Test device notes"
-
-  - assert:
-      that:
         - update_device.changed == true
+        - update_device.data.0.notes == "Test device notes"
         - '"1060 W. Addison St., Chicago, IL" in update_device.data.0.address'
 
   - name: Update a device with idempotency
