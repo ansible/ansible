@@ -1209,8 +1209,8 @@ def main():
         publish=dict(default=[], type='list', elements='dict', options=dict(
             published_port=dict(type='int', required=True),
             target_port=dict(type='int', required=True),
-            protocol=dict(type='str', required=True),
-            mode=dict(type='str', required=False),
+            protocol=dict(type='str', required=True, choices=('tcp', 'udp')),
+            mode=dict(type='str', required=False, choices=('ingress', 'host')),
         )),
         constraints=dict(default=[], type='list'),
         tty=dict(default=False, type='bool'),
