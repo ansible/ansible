@@ -506,26 +506,29 @@ class RedfishUtils(object):
 
     def get_firmware_inventory(self):
         result = {}
-        firmware = {}
         response = self.get_request(self.root_uri + self.firmware_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
 
+        result['entries'] = []
         for device in data[u'Members']:
-            d = device[u'@odata.id']
-            d = d.replace(self.firmware_uri, "")    # leave just device name
-            if "Installed" in d:
-                uri = self.root_uri + self.firmware_uri + d
-                # Get details for each device that is relevant
-                response = self.get_request(uri)
-                if response['ret'] is False:
-                    return response
-                result['ret'] = True
-                data = response['data']
-                firmware[data[u'Name']] = data[u'Version']
-        result["entries"] = firmware
+            uri = self.root_uri + device[u'@odata.id']
+            # Get details for each device
+            response = self.get_request(uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+            firmware = {}
+            # Get these standard properties if present
+            for key in ['Name', 'Id', 'Status', 'Version', 'Updateable',
+                        'SoftwareId', 'LowestSupportedVersion', 'Manufacturer',
+                        'ReleaseDate']:
+                if key in data:
+                    firmware[key] = data.get(key)
+            result['entries'].append(firmware)
         return result
 
     def get_manager_attributes(self):
