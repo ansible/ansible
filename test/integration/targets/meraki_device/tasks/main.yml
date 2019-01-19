@@ -1,17 +1,17 @@
 ---
 - block:
-  - name: Claim a device into an organization
-    meraki_device:
-      auth_key: '{{auth_key}}'
-      org_name: '{{test_org_name}}'
-      serial: '{{serial}}'
-      state: present
-    delegate_to: localhost
-    register: claim_device_org
+  # - name: Claim a device into an organization
+  #   meraki_device:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     serial: '{{serial}}'
+  #     state: present
+  #   delegate_to: localhost
+  #   register: claim_device_org
 
-  - assert:
-      that:
-        - claim_device_org.changed == true
+  # - assert:
+  #     that:
+  #       - claim_device_org.changed == true
 
   - name: Query status of all devices in an organization
     meraki_device:
@@ -163,9 +163,6 @@
       note: Test device notes
     delegate_to: localhost
     register: update_device
-
-  - debug:
-      msg: '{{update_device.data.0.notes}}'
 
   - assert:
       that:
