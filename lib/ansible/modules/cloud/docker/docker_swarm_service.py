@@ -52,7 +52,7 @@ options:
     type: list
     description:
     - List of the placement preferences as key value pairs.
-    - Maps docker service --placement-pref option.
+    - Maps docker service C(--placement-pref) option.
     version_added: 2.8
   hostname:
     required: false
