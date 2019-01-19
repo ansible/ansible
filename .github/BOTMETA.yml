@@ -1309,11 +1309,11 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers jmcgill298 schunduri
-  team_aix: dagwieers flynn1973 gforster kairoaraujo molekuul MorrisA
+  team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo molekuul MorrisA
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
-  team_bsd: dagwieers JoergFiedler
+  team_bsd: bcoca dagwieers JoergFiedler
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
@@ -1323,7 +1323,7 @@ macros:
   team_extreme: bigmstone LindsayHill
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_google: rambleraptor erjohnso
-  team_hpux: dagwieers
+  team_hpux: bcoca dagwieers
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
@@ -1344,7 +1344,7 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
-  team_solaris: dagwieers scathatheworm troy2914 xen0l
+  team_solaris: bcoca dagwieers scathatheworm troy2914 xen0l
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
   team_vmware: Akasurde dav1x warthog9 ckotte
