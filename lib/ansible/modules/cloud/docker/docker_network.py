@@ -628,6 +628,7 @@ def main():
     option_minimal_versions = dict(
         scope=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         attachable=dict(docker_py_version='2.0.0', docker_api_version='1.26'),
+        labels=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
     )
 
     client = AnsibleDockerClient(
