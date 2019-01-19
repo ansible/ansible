@@ -959,8 +959,7 @@ class DockerServiceManager():
                         for key, value in preference.items()
                     )
                 )
-            if placement_preferences:
-                ds.placement_preferences = placement_preferences
+            ds.placement_preferences = placement_preferences or None
 
         restart_policy_data = task_template_data.get('RestartPolicy', None)
         if restart_policy_data:
