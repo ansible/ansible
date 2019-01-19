@@ -165,16 +165,16 @@
     register: update_device
 
   - debug:
-      msg: '{{update_device}}'
+      msg: '{{update_device.data.0.notes}}'
 
   - assert:
       that:
-        - update_device.data.note == "Test device notes"
+        - update_device.data.0.notes == "Test device notes"
 
-  # - assert:
-  #     that:
-  #       - update_device.changed == true
-  #       - '"1060 W. Addison St., Chicago, IL" in update_device.data.0.address'
+  - assert:
+      that:
+        - update_device.changed == true
+        - '"1060 W. Addison St., Chicago, IL" in update_device.data.0.address'
 
   - name: Update a device with idempotency
     meraki_device:

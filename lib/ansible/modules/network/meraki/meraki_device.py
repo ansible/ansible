@@ -86,7 +86,7 @@ options:
     serial_uplink:
         description:
         - Serial number of device to query uplink information from.
-    notes:
+    note:
     	description:
     	- Informational notes about a device.
     	- Limited to 255 characters.
@@ -242,7 +242,7 @@ def main():
                          lng=dict(type='float', aliases=['longitude']),
                          address=dict(type='str'),
                          move_map_marker=dict(type='bool'),
-                         notes=dict(type='str'),
+                         note=dict(type='str'),
                          )
 
     # seed the result dict in the object
@@ -366,7 +366,7 @@ def main():
                            'lng': meraki.params['lng'],
                            'address': meraki.params['address'],
                            'moveMapMarker': meraki.params['move_map_marker'],
-                           'notes': meraki.params['notes'],
+                           'notes': meraki.params['note'],
                            }
                 query_path = meraki.construct_path('get_device', net_id=net_id) + meraki.params['serial']
                 device_data = meraki.request(query_path, method='GET')
