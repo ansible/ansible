@@ -12,6 +12,13 @@
     name: '{{ subversion_packages }}'
     state: present
 
+- name: upgrade SVN pre-reqs
+  package:
+    name: '{{ upgrade_packages }}'
+    state: latest
+  when:
+    - upgrade_packages | default([])
+
 - name: create SVN home folder
   file:
     path: '{{ subversion_server_dir }}'
