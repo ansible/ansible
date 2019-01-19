@@ -124,6 +124,7 @@ options:
     - If this is not provided, or no, ansible will preserve historical behaviour of copying stats from src to dest.
     default: no
     type: bool
+    version_added: '2.8'
 extends_documentation_fragment:
 - decrypt
 - files
