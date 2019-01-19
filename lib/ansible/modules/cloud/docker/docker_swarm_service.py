@@ -659,9 +659,11 @@ class DockerService(DockerBaseClass):
         s.command = ap['command']
         if isinstance(s.command, string_types):
             s.command = shlex.split(s.command)
-        elif isinstance(s.command, list) and all(
-            isinstance(item, string_types) for item in s.command
-        ):
+        elif isinstance(s.command, list):
+            if not all(isinstance(item, string_types) for item in s.command):
+                raise Exception(
+                    'All items in a command list needs to be strings. Please check quoting.'
+                )
             s.command = ap['command']
         elif s.command is not None:
             raise ValueError(
