@@ -215,7 +215,8 @@ options:
            - The port inside the container to expose.
       protocol:
          type: str
-         required: true
+         required: false
+         default: tcp
          description:
            - What protocol to use.
          choices:
