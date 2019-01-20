@@ -1,29 +1,47 @@
 ---
-- name: Create a new tag
-  digital_ocean_tag:
-    oauth_token: '{{do_api_key}}'
-    name: integration-test
-    state: present
-  register: create_tag
+- block:
+  - name: Create a new tag
+    digital_ocean_tag:
+      oauth_token: '{{do_api_key}}'
+      name: integration-test
+      state: present
+    register: create_tag
 
-- debug:
-    var: create_tag
+  - name: Create a new tag for idempotency
+    digital_ocean_tag:
+      oauth_token: '{{do_api_key}}'
+      name: integration-test
+      state: present
+    register: create_tag_idempotent
 
-- assert:
-    that:
-      - create_tag.changed == True
-      - create_tag.data.tag.name == "integration-test"
+  - debug:
+      var: create_tag
 
-- name: Delete tag
-  digital_ocean_tag:
-    oauth_token: '{{do_api_key}}'
-    name: integration-test
-    state: absent
-  register: delete_tag
+  - assert:
+      that:
+        - create_tag.changed == True
+        - create_tag_idempotent.changed == False
+        - create_tag.data.tag.name == "integration-test"
 
-- debug:
-    var: delete_tag
+  always:
+  - name: Delete tag
+    digital_ocean_tag:
+      oauth_token: '{{do_api_key}}'
+      name: integration-test
+      state: absent
+    register: delete_tag
 
-- assert:
-    that:
-      - delete_tag.changed == True
+  - name: Delete tag
+    digital_ocean_tag:
+      oauth_token: '{{do_api_key}}'
+      name: integration-test
+      state: absent
+    register: delete_tag_idempotent
+
+  - debug:
+      var: delete_tag
+
+  - assert:
+      that:
+        - delete_tag.changed == True
+        - delete_tag_idempotent.changed == False
