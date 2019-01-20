@@ -34,7 +34,7 @@ To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 Reviewing open PRs and issues
 =============================
 
-You can also contribute by reviewing open documentation `issues <https://github.com/ansible/ansible/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3Adocs>`_ and `PRs <https://github.com/ansible/ansible/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+label%3Adocs>`_. To add a helpful review, please:
+You can also contribute by reviewing open documentation `issues <https://GitHub.com/ansible/ansible/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+label%3Adocs>`_ and `PRs <https://GitHub.com/ansible/ansible/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aopen+label%3Adocs>`_. To add a helpful review, please:
 
 - Include a comment - "looks good to me" only helps if we know why.
 - For issues, reproduce the problem.
@@ -179,7 +179,7 @@ Unfortunately, leftover rST-files from previous document-generating can occasion
 Joining the documentation working group
 =======================================
 
-The Documentation Working Group is just getting started, please visit the `community repo <https://github.com/ansible/community>`_ for more information.
+The Documentation Working Group is just getting started, please visit the `community repo <https://GitHub.com/ansible/community>`_ for more information.
 
 .. seealso::
    :ref:`More about testing module documentation <testing_module_documentation>`

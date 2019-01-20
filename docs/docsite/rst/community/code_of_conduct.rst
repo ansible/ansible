@@ -70,7 +70,7 @@ question (the answer is always yes!), instead, simply ask your question. You are
 encouraged to provide as many specifics as possible. Code snippets in the form of Gists or
 other paste site links are almost always needed in order to get the most helpful answers.
 Refrain from pasting multiple lines of code directly into the IRC channels - instead use
-gist.github.com or another paste site to provide code snippets.
+gist.GitHub.com or another paste site to provide code snippets.
 
 **Helpful**
 

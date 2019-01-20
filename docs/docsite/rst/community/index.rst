@@ -81,4 +81,4 @@ If you prefer to read the entire Community Guide, here's a list of the pages in 
    committer_guidelines
    maintainers
    release_managers
-   github_admins
+   GitHub_admins

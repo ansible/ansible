@@ -16,18 +16,18 @@ If you want to follow the conversation about what features will be added to Ansi
 
 * the :ref:`roadmaps`
 * the :ref:`Ansible Release Schedule <release_and_maintenance>`
-* various GitHub `projects <https://github.com/ansible/ansible/projects>`_ - for example:
+* various GitHub `projects <https://GitHub.com/ansible/ansible/projects>`_ - for example:
 
-   * the `2.8 release project <https://github.com/ansible/ansible/projects/30>`_
-   * the `network bugs project <https://github.com/ansible/ansible/projects/20>`_
-   * the `core documentation project <https://github.com/ansible/ansible/projects/27>`_
+   * the `2.8 release project <https://GitHub.com/ansible/ansible/projects/30>`_
+   * the `network bugs project <https://GitHub.com/ansible/ansible/projects/20>`_
+   * the `core documentation project <https://GitHub.com/ansible/ansible/projects/27>`_
 
 .. _community_pull_requests:
 
 Micro development: the lifecycle of a PR
 ========================================
 
-Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of Ansible Core.
+Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.GitHub.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of Ansible Core.
 Here's an overview of the PR lifecycle:
 
 * Contributor opens a PR
@@ -45,7 +45,7 @@ Automated PR review: ansibullbot
 
 Because Ansible receives many pull requests, and because we love automating things, we've automated several steps of the process of reviewing and merging pull requests with a tool called Ansibullbot, or Ansibot for short.
 
-`Ansibullbot <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ serves many functions:
+`Ansibullbot <https://GitHub.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ serves many functions:
 
 - Responds quickly to PR submitters to thank them for submitting their PR
 - Identifies the community maintainer responsible for reviewing PRs for any files affected
@@ -122,7 +122,7 @@ Human PR review
 
 After Ansibot reviews the PR and applies labels, the PR is ready for human review. The most likely reviewers for any PR are the maintainers for the module that PR modifies.
 
-Each module has at least one assigned :ref:`maintainer <maintainers>`, listed in the `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ file.
+Each module has at least one assigned :ref:`maintainer <maintainers>`, listed in the `BOTMETA.yml <https://GitHub.com/ansible/ansible/blob/devel/.GitHub/BOTMETA.yml>`_ file.
 
 The maintainer's job is to review PRs that affect that module and decide whether they should be merged (``shipit``) or revised (``needs_revision``). We'd like to have at least one community maintainer for every module. If a module has no community maintainers assigned, the maintainer is listed as ``$team_ansible``.
 
@@ -165,7 +165,7 @@ To create a changelog entry, create a new file with a unique name in the ``chang
 
 A single changelog fragment may contain multiple sections but most will only contain one section.
 The toplevel keys (bugfixes, major_changes, etc) are defined in the
-`config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>` for our release note tool. Here are the valid sections and a description of each:
+`config file <https://GitHub.com/ansible/ansible/blob/devel/changelogs/config.yaml>` for our release note tool. Here are the valid sections and a description of each:
 
 **major_changes**
     Major changes to Ansible itself. Generally does not include module or plugin changes.
@@ -197,7 +197,7 @@ Here are some examples:
 .. code-block:: yaml
 
   minor_changes:
-    - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
+    - lineinfile - add warning when using an empty regexp (https://GitHub.com/ansible/ansible/issues/29443)
 
 .. code-block:: yaml
 
@@ -206,7 +206,7 @@ Here are some examples:
    remote_src=True even if mode was not set as a parameter.  This failed on
    filesystems which do not have permission bits.
 
-You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.6/changelogs/fragments>`_ for the 2.6 release. You can also find documentation of the format, including hints on embedding rst in the yaml, in the `reno documentation <https://docs.openstack.org/reno/latest/user/usage.html#editing-a-release-note>`_.
+You can find more example changelog fragments in the `changelog directory <https://GitHub.com/ansible/ansible/tree/stable-2.6/changelogs/fragments>`_ for the 2.6 release. You can also find documentation of the format, including hints on embedding rst in the yaml, in the `reno documentation <https://docs.openstack.org/reno/latest/user/usage.html#editing-a-release-note>`_.
 
 Once you've written the changelog fragment for your PR, commit the file and include it with the pull request.
 
@@ -226,10 +226,10 @@ We do **not** backport features.
    These instructions assume that:
 
     * ``stable-2.7`` is the targeted release branch for the backport
-    * ``https://github.com/ansible/ansible.git`` is configured as a
+    * ``https://GitHub.com/ansible/ansible.git`` is configured as a
       ``git remote`` named ``upstream``. If you do not use
       a ``git remote`` named ``upstream``, adjust the instructions accordingly.
-    * ``https://github.com/<yourgithubaccount>/ansible.git``
+    * ``https://GitHub.com/<yourGitHubaccount>/ansible.git``
       is configured as a ``git remote`` named ``origin``. If you do not use
       a ``git remote`` named ``origin``, adjust the instructions accordingly.
 

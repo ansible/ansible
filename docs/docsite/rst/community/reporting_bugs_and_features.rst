@@ -13,7 +13,7 @@ Reporting a bug
 
 Ansible practices responsible disclosure - if this is a security-related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to any public groups, and you will receive a prompt response.
 
-Ansible bugs should be reported to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_ after
+Ansible bugs should be reported to `GitHub.com/ansible/ansible/issues <https://GitHub.com/ansible/ansible/issues>`_ after
 signing up for a free GitHub account.  Before reporting a bug, please use the bug/issue search
 to see if the issue has already been reported.
 
@@ -23,9 +23,9 @@ Do not use the issue tracker for "how do I do this" type questions.  These are g
 
 To be respectful of reviewers' time and allow us to help everyone efficiently, please  provide minimal well-reduced and well-commented examples versus sharing your entire production playbook.  Include playbook snippets and output where possible.
 
-When sharing YAML in playbooks, formatting can be preserved by using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_.
+When sharing YAML in playbooks, formatting can be preserved by using `code blocks  <https://help.GitHub.com/articles/creating-and-highlighting-code-blocks/>`_.
 
-For multiple-file content, we encourage use of gist.github.com.  Online pastebin content can expire, so it's nice to have things around for a longer term if they are referenced in a ticket.
+For multiple-file content, we encourage use of gist.GitHub.com.  Online pastebin content can expire, so it's nice to have things around for a longer term if they are referenced in a ticket.
 
 If you are not sure if something is a bug yet, you are welcome to ask about something on the :ref:`mailing list or IRC first <communication>`.
 
@@ -38,4 +38,4 @@ Requesting a feature
 
 The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`.
 
-The next best way of getting a feature into Ansible is to submit a proposal through the `Ansible proposal process  <https://github.com/ansible/proposals>`_.
+The next best way of getting a feature into Ansible is to submit a proposal through the `Ansible proposal process  <https://GitHub.com/ansible/proposals>`_.
