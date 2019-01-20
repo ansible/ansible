@@ -59,6 +59,29 @@ EXAMPLES = r'''
     state: absent
 '''
 
+RETURN = r'''
+msg:
+    description: The output of the swdepot command (or the status of the package)
+    returned: always
+    type: str
+    sample: No changes
+name:
+    description: The package name
+    returned: always
+    type: str
+    sample: unzip
+rc:
+    description: The return code for the swdepot command.
+    returned: always
+    type: int
+    sample: 0
+state:
+    description: The state of the package
+    returned: success
+    type: str
+    sample: present
+'''
+
 import re
 
 from ansible.module_utils.basic import AnsibleModule
