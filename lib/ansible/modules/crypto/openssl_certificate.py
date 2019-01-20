@@ -464,7 +464,7 @@ class Certificate(crypto_utils.OpenSSLObject):
                 result).strftime("%Y%m%d%H%M%SZ")
         if result is None:
             raise CertificateError(
-                'The timespec %s for %s is not valid' %
+                'The timespec "%s" for %s is not valid' %
                 input_string, input_name)
         return result
 
