@@ -650,8 +650,8 @@ class DockerService(DockerBaseClass):
         s.publish = []
         for param_p in ap['publish']:
             service_p = {}
-            service_p['protocol'] = param_p.get('protocol', 'tcp')
-            service_p['mode'] = param_p.get('mode', None)
+            service_p['protocol'] = param_p['protocol']
+            service_p['mode'] = param_p.get('mode')
             service_p['published_port'] = int(param_p['published_port'])
             service_p['target_port'] = int(param_p['target_port'])
             if service_p['protocol'] not in ['tcp', 'udp']:
@@ -1209,7 +1209,7 @@ def main():
         publish=dict(default=[], type='list', elements='dict', options=dict(
             published_port=dict(type='int', required=True),
             target_port=dict(type='int', required=True),
-            protocol=dict(type='str', required=True, choices=('tcp', 'udp')),
+            protocol=dict(default='tcp', type='str', required=False, choices=('tcp', 'udp')),
             mode=dict(type='str', required=False, choices=('ingress', 'host')),
         )),
         constraints=dict(default=[], type='list'),
