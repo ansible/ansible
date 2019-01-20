@@ -1,5 +1,10 @@
 ---
 - block:
+  - name: Test API key is provided.
+  fail:
+    msg: do_api_key should be defined in integration_config.yml
+  when: do_api_key is not defined
+
   - name: Create a new tag
     digital_ocean_tag:
       oauth_token: '{{do_api_key}}'
