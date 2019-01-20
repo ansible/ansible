@@ -87,9 +87,9 @@ options:
         description:
         - Serial number of device to query uplink information from.
     note:
-    	description:
-    	- Informational notes about a device.
-    	- Limited to 255 characters.
+        description:
+        - Informational notes about a device.
+        - Limited to 255 characters.
         version_added: '2.8'
 
 
