@@ -191,7 +191,7 @@ class SwarmNodeManager(DockerBaseClass):
         try:
             status_down = self.client.check_if_swarm_node_is_down()
         except APIError:
-            return
+            self.client.fail(msg="Can not check the state of node.")
 
         if status_down:
             self.client.fail(msg="Can not update the node. The status node is down.")
@@ -201,7 +201,7 @@ class SwarmNodeManager(DockerBaseClass):
         except APIError as exc:
             self.client.fail(msg="Failed to get node information for %s" % to_native(exc))
 
-        __changed = False
+        changed = False
         node_spec = dict(
             Availability=self.parameters.availability,
             Role=self.parameters.role,
@@ -216,22 +216,19 @@ class SwarmNodeManager(DockerBaseClass):
 
         if self.parameters.labels_state == 'replace':
             node_spec['Labels'] = self.parameters.labels
-            __changed = True
+            changed = True
 
         if self.parameters.labels_state == 'remove':
             node_spec['Labels'] = node_info['Spec']['Labels']
 
-            if self.parameters.labels is None and node_info['Spec']['Labels'] is not None:
+            if self.parameters.labels is None and not node_info['Spec']['Labels']:
                 node_spec['Labels'] = None
-                __changed = True
+                changed = True
             elif self.parameters.labels is not None and node_info['Spec']['Labels'] is not None:
-                for next_key in self.parameters.labels:
-                    if next_key in node_info['Spec']['Labels']:
-                        try:
-                            node_spec['Labels'].pop(next_key)
-                            __changed = True
-                        except KeyError as exc:
-                            self.client.fail(msg="Failed to remove labels for %s" % to_native(exc))
+                for key in self.parameters.labels:
+                    if key in node_info['Spec']['Labels']:
+                        node_spec['Labels'].pop(key)
+                        changed = True
 
         if self.parameters.labels_state == 'merge':
             node_spec['Labels'] = node_info['Spec']['Labels']
@@ -241,23 +238,23 @@ class SwarmNodeManager(DockerBaseClass):
                     if self.parameters.labels.get(next_key) == node_info['Spec']['Labels'][next_key]:
                         pass
                     else:
-                        node_spec['Labels'].update({next_key: self.parameters.labels.get(next_key)})
-                        __changed = True
+                        node_spec['Labels'][next_key] = self.parameters.labels.get(next_key)
+                        changed = True
                 else:
-                    node_spec['Labels'].update({next_key: self.parameters.labels.get(next_key)})
-                    __changed = True
+                    node_spec['Labels'][next_key] = self.parameters.labels.get(next_key)
+                    changed = True
 
-        if __changed is True:
+        if changed is True:
             try:
                 self.client.update_node(node_id=node_info['ID'], version=node_info['Version']['Index'],
                                         node_spec=node_spec)
             except APIError as exc:
                 self.client.fail(msg="Failed to update node : %s" % to_native(exc))
             self.results['node_facts'] = self.client.get_node_inspect(node_id=node_info['ID'])
-            self.results['changed'] = __changed
+            self.results['changed'] = changed
         else:
             self.results['node_facts'] = node_info
-            self.results['changed'] = __changed
+            self.results['changed'] = changed
 
 
 def main():
