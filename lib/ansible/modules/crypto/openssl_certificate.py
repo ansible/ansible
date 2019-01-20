@@ -452,6 +452,19 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.csr = None
         self.module = module
 
+    def get_relative_time_option(self, input_string, input_name):
+        """Return an ASN1 formatted string if a relative timespec
+           or an ASN1 formatted string is provided."""
+        result = input_string
+        if result.startswith("+") or result.startswith("-"):
+            result = crypto_utils.convert_relative_to_datetime(
+                result).strftime("%Y%m%d%H%M%SZ")
+        if result is None:
+            raise CertificateError(
+                'The timespec %s for %s is not valid' %
+                input_string, input_name)
+        return result
+
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
 
@@ -511,22 +524,8 @@ class SelfSignedCertificate(Certificate):
 
     def __init__(self, module):
         super(SelfSignedCertificate, self).__init__(module)
-        self.notBefore = module.params['selfsigned_not_before']
-        if self.notBefore.startswith("+") or self.notBefore.startswith("-"):
-            self.notBefore = crypto_utils.convert_relative_to_datetime(
-                self.notBefore).strftime("%Y%m%d%H%M%SZ")
-        if self.notBefore is None:
-            raise CertificateError(
-                'The timespec %s for selfsigned_not_before is not valid' %
-                module.params['selfsigned_not_before'])
-        self.notAfter = module.params['selfsigned_not_after']
-        if self.notAfter.startswith("+") or self.notAfter.startswith("-"):
-            self.notAfter = crypto_utils.convert_relative_to_datetime(
-                self.notAfter).strftime("%Y%m%d%H%M%SZ")
-        if self.notAfter is None:
-            raise CertificateError(
-                'The timespec %s for selfsigned_not_after is not valid' %
-                module.params['selfsigned_not_after'])
+        self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before')
+        self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after')
         self.digest = module.params['selfsigned_digest']
         self.version = module.params['selfsigned_version']
         self.serial_number = randint(1000, 99999)
@@ -603,22 +602,8 @@ class OwnCACertificate(Certificate):
 
     def __init__(self, module):
         super(OwnCACertificate, self).__init__(module)
-        self.notBefore = module.params['ownca_not_before']
-        if self.notBefore.startswith("+") or self.notBefore.startswith("-"):
-            self.notBefore = crypto_utils.convert_relative_to_datetime(
-                self.notBefore).strftime("%Y%m%d%H%M%SZ")
-        if self.notBefore is None:
-            raise CertificateError(
-                'The timespec %s for ownca_not_before is not valid' %
-                module.params['ownca_not_before'])
-        self.notAfter = module.params['ownca_not_after']
-        if self.notAfter.startswith("+") or self.notAfter.startswith("-"):
-            self.notAfter = crypto_utils.convert_relative_to_datetime(
-                self.notAfter).strftime("%Y%m%d%H%M%SZ")
-        if self.notAfter is None:
-            raise CertificateError(
-                'The timespec %s for ownca_not_after is not valid' %
-                module.params['ownca_not_after'])
+        self.notBefore = self.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before')
+        self.notAfter = self.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after')
         self.digest = module.params['ownca_digest']
         self.version = module.params['ownca_version']
         self.serial_number = randint(1000, 99999)
