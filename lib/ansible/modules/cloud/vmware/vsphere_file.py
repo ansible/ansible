@@ -309,7 +309,6 @@ def main():
         module.exit_json(changed=True, **result)
 
     elif state == 'file':
-        # result['data'] = r.read()
 
         if not exists:
             result['state'] = 'absent'
