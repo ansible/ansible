@@ -337,7 +337,7 @@ def main():
             except socket.error as e:
                 module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
             except Exception as e:
-                module.fail_json(msg=to_native(e), errno=dir(e), reason=to_native(e), **result)
+                module.fail_json(msg=to_native(e), errno=e[0], reason=to_native(e), **result)
 
             if PY2:
                 sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
