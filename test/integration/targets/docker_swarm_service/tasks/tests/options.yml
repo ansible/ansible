@@ -959,10 +959,10 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     publish:
-      - protocol: "tcp"
+      - protocol: tcp
         published_port: 60001
         target_port: 60001
-      - protocol: "udp"
+      - protocol: udp
         published_port: 60002
         target_port: 60002
   register: publish_1
@@ -974,7 +974,7 @@
     publish:
       - published_port: 60001
         target_port: 60001
-      - protocol: "udp"
+      - protocol: udp
         published_port: 60002
         target_port: 60002
   register: publish_2
@@ -984,10 +984,10 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     publish:
-      - protocol: "tcp"
+      - protocol: tcp
         published_port: 60002
         target_port: 60003
-      - protocol: "udp"
+      - protocol: udp
         published_port: 60001
         target_port: 60001
   register: publish_3
@@ -997,14 +997,14 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     publish:
-      - protocol: "tcp"
+      - protocol: tcp
         published_port: 60002
         target_port: 60003
-        mode: "host"
-      - protocol: "udp"
+        mode: host
+      - protocol: udp
         published_port: 60001
         target_port: 60001
-        mode: "host"
+        mode: host
   register: publish_4
 
 - name: publish (mode idempotency)
@@ -1012,14 +1012,14 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     publish:
-      - protocol: "tcp"
+      - protocol: tcp
         published_port: 60002
         target_port: 60003
-        mode: "host"
-      - protocol: "udp"
+        mode: host
+      - protocol: udp
         published_port: 60001
         target_port: 60001
-        mode: "host"
+        mode: host
   register: publish_5
 
 - assert:
