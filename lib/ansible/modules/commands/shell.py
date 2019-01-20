@@ -57,7 +57,7 @@ options:
     version_added: "0.9"
   warn:
     description:
-      - Wether to enable task warnings.
+      - Whether to enable task warnings.
     type: bool
     default: yes
     version_added: "1.8"
