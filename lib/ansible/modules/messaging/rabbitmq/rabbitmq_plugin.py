@@ -161,7 +161,7 @@ def main():
     if state == 'enabled':
         for name in names:
             if name not in available_plugins:
-                module.fail_json(msg='{} plugin is not available'.format(name))
+                module.fail_json(msg='{name} plugin is not available'.format(name=name))
 
         if not new_only:
             for plugin in enabled_plugins:
