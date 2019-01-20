@@ -652,7 +652,7 @@ class DockerService(DockerBaseClass):
         for param_p in ap['publish']:
             service_p = {}
             service_p['protocol'] = param_p['protocol']
-            service_p['mode'] = param_p.get('mode')
+            service_p['mode'] = param_p['mode']
             service_p['published_port'] = int(param_p['published_port'])
             service_p['target_port'] = int(param_p['target_port'])
             if service_p['protocol'] not in ['tcp', 'udp']:
