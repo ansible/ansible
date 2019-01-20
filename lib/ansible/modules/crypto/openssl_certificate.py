@@ -871,7 +871,7 @@ class AssertOnlyCertificate(Certificate):
                         int(self.valid_in)
                     except ValueError:
                         raise CertificateError(
-                        'The supplied value for "valid_in" (%s) is not an integer or a valid timespec' % self.valid_in)
+                            'The supplied value for "valid_in" (%s) is not an integer or a valid timespec' % self.valid_in)
                     self.valid_in = "+" + self.valid_in + "s"
                 valid_in_asn1 = self.get_relative_time_option(self.valid_in, "valid_in")
                 valid_in_date = to_bytes(valid_in_asn1, errors='surrogate_or_strict')
