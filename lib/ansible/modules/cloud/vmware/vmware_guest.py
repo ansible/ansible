@@ -2014,7 +2014,7 @@ class PyVmomiHelper(PyVmomi):
         # Find if we need network customizations
         customize_network = False
         for network in self.params['networks']:
-            if 'ip' in network or 'netmask' in network or 'domain' in network:
+            if any([i in network for i in ['ip', 'domain', 'netmask']])
                 customize_network = True
 
 
