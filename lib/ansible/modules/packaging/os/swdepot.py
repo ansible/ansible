@@ -1,60 +1,60 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Raul Melo
-# Written by Raul Melo <raulmelo@gmail.com>
+# Copyright: (c) 2013, Raul Melo (@melodous) <raulmelo@gmail.com>
+# Copyright: (c) 2019, Dag Wieers (@dagwieers) <dag@wieers.com>
 # Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: swdepot
-short_description: Manage packages with swdepot package manager (HP-UX)
+short_description: Manage packages using the swdepot package manager (HP-UX)
 description:
-    - Will install, upgrade and remove packages with swdepot package manager (HP-UX)
-version_added: "1.4"
-notes: []
-author: "Raul Melo (@melodous)"
+- Will install, upgrade and remove packages with the swdepot package manager (HP-UX).
+version_added: '1.4'
+author:
+- Raul Melo (@melodous)
 options:
-    name:
-        description:
-            - package name.
-        required: true
-        version_added: 1.4
-    state:
-        description:
-            - whether to install (C(present), C(latest)), or remove (C(absent)) a package.
-        required: true
-        choices: [ 'present', 'latest', 'absent']
-        version_added: 1.4
-    depot:
-        description:
-            - The source repository from which install or upgrade a package.
-        version_added: 1.4
+  name:
+    description:
+    - The name of the package.
+    type: str
+    required: true
+  state:
+    description:
+    - Whether to ensure the package is installed, the latest version or uninstalled.
+    type: str
+    choices: [ absent, latest, present ]
+    default: present
+  depot:
+    description:
+    - The source repository from which to install or upgrade a package.
+    type: str
 '''
 
-EXAMPLES = '''
-- swdepot:
+EXAMPLES = r'''
+- name: Ensure the unzip package version 6.0 is installed
+  swdepot:
     name: unzip-6.0
-    state: installed
-    depot: 'repository:/path'
+    depot: repository:/path
+    state: present
 
-- swdepot:
+- name: Ensure the latest unzip package is installed
+  swdepot:
     name: unzip
+    depot: repository:/path
     state: latest
-    depot: 'repository:/path'
 
-- swdepot:
+- name: Ensure the unzip package is not installed
+  swdepot:
     name: unzip
     state: absent
 '''
@@ -107,11 +107,10 @@ def remove_package(module, name):
 
     cmd_remove = '/usr/sbin/swremove'
     rc, stdout, stderr = module.run_command("%s %s" % (cmd_remove, name))
-
     if rc == 0:
         return rc, stdout
-    else:
-        return rc, stderr
+
+    return rc, stderr
 
 
 def install_package(module, depot, name):
@@ -121,87 +120,82 @@ def install_package(module, depot, name):
     rc, stdout, stderr = module.run_command("%s -s %s %s" % (cmd_install, depot, name))
     if rc == 0:
         return rc, stdout
-    else:
-        return rc, stderr
+
+    return rc, stderr
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['pkg'], required=True),
-            state=dict(choices=['present', 'absent', 'latest'], required=True),
-            depot=dict(default=None, required=False)
+            name=dict(type='str', required=True, aliases=['pkg']),
+            state=dict(type='str', default='present', choices=['absent', 'latest', 'present']),
+            depot=dict(type='str'),
         ),
-        supports_check_mode=True
+        required_if=[
+            ['state', 'present', ['depot']],
+            ['state', 'latest', ['depot']],
+        ],
+        supports_check_mode=True,
     )
+
     name = module.params['name']
     state = module.params['state']
     depot = module.params['depot']
 
-    changed = False
-    msg = "No changed"
-    rc = 0
-    if (state == 'present' or state == 'latest') and depot is None:
-        output = "depot parameter is mandatory in present or latest task"
-        module.fail_json(name=name, msg=output, rc=rc)
+    result = dict(
+        changed=False,
+        msg='No changes',
+        name=name,
+        rc=0,
+    )
 
     # Check local version
-    rc, version_installed = query_package(module, name)
-    if not rc:
-        installed = True
-        msg = "Already installed"
-
-    else:
+    result['rc'], version_installed = query_package(module, name)
+    if result['rc']:
         installed = False
+    else:
+        installed = True
+        result['msg'] = 'Already installed'
 
     if (state == 'present' or state == 'latest') and installed is False:
-        if module.check_mode:
-            module.exit_json(changed=True)
-        rc, output = install_package(module, depot, name)
+        if not module.check_mode:
+            # Install package
+            result['rc'], result['msg'] = install_package(module, depot, name)
+            if result['rc']:
+                module.fail_json(**result)
 
-        if not rc:
-            changed = True
-            msg = "Package installed"
-
-        else:
-            module.fail_json(name=name, msg=output, rc=rc)
+        result['changed'] = True
+        result['msg'] = 'Package installed'
 
     elif state == 'latest' and installed is True:
         # Check depot version
-        rc, version_depot = query_package(module, name, depot)
+        result['rc'], version_depot = query_package(module, name, depot)
 
-        if not rc:
-            if compare_package(version_installed, version_depot) == -1:
-                if module.check_mode:
-                    module.exit_json(changed=True)
+        if result['rc']:
+            result['msg'] = 'Software package not in repository %s' % depot
+            module.fail_json(**result)
+
+        if compare_package(version_installed, version_depot) == -1:
+            if not module.check_mode:
                 # Install new version
-                rc, output = install_package(module, depot, name)
+                result['rc'], result['msg'] = install_package(module, depot, name)
+                if result['rc']:
+                    module.fail_json(**result)
 
-                if not rc:
-                    msg = "Package upgraded, Before " + version_installed + " Now " + version_depot
-                    changed = True
-
-                else:
-                    module.fail_json(name=name, msg=output, rc=rc)
-
-        else:
-            output = "Software package not in repository " + depot
-            module.fail_json(name=name, msg=output, rc=rc)
+            result['changed'] = True
+            result['msg'] = 'Package upgraded, Before %s, Now %s' % (version_installed, version_depot)
 
     elif state == 'absent' and installed is True:
-        if module.check_mode:
-            module.exit_json(changed=True)
-        rc, output = remove_package(module, name)
-        if not rc:
-            changed = True
-            msg = "Package removed"
-        else:
-            module.fail_json(name=name, msg=output, rc=rc)
+        if not module.check_mode:
+            # Remove existing version
+            result['rc'], result['msg'] = remove_package(module, name)
+            if result['rc']:
+                module.fail_json(**result)
 
-    if module.check_mode:
-        module.exit_json(changed=False)
+        result['changed'] = True
+        result['msg'] = 'Package removed'
 
-    module.exit_json(changed=changed, name=name, state=state, msg=msg)
+    module.exit_json(state=state, **result)
 
 
 if __name__ == '__main__':
