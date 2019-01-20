@@ -1,0 +1,217 @@
+# Test code for swdepot on HP-UX
+
+# Copyright: (c) 2019, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# This integration tests removes and installs the 'unzip' package by default
+# It requires a repository of packages to be available in /opt/depot
+
+# Modify the following variables
+#
+#   swdepot_package: unzip
+#   swdepot_depot: repository:/opt/depot
+
+- name: Set required variables
+  set_fact: &params
+    package: "{{ swdepot_package | default('unzip') }}"
+    depot: "{{ swdepot_depot | default('repository:/opt/depot') }}"
+
+
+# CLEAN UP ENVIRONMENT
+- name: Remove unzip package if it was installed
+  swdepot:
+    name: '{{ package }}'
+    depot: '{{ depot }}'
+    state: absent
+  register: initial_removal
+  check_mode: yes
+
+
+# ADD PACKAGE
+- name: Install package (checkmode)
+  swdepot:
+    name: '{{ package }}'
+    depot: '{{ depot }}'
+    state: present
+  check_mode: yes
+  register: cm_add_package
+
+- name: Verify cm_add_package
+  assert:
+    that:
+    - cm_add_package is changed
+    - cm_add_package.rc == 0
+    - cm_add_package.msg == 'Package installed'
+
+- name: Install package (normal mode)
+  swdepot:
+    name: '{{ package }}'
+    depot: '{{ depot }}'
+    state: present
+  register: nm_add_package
+
+- name: Verify nm_add_package
+  assert:
+    that:
+    - nm_add_package is changed
+    - nm_add_package.rc == 0
+    - nm_add_package.msg == 'Package installed'
+
+- name: Install package again (checkmode)
+  swdepot:
+    name: '{{ package }}'
+    depot: '{{ depot }}'
+    state: present
+  check_mode: yes
+  register: cm_add_package_again
+
+- name: Verify add_package_again
+  assert:
+    that:
+    - cm_add_package_again is not changed
+    - cm_add_package_again.rc == 0
+    - cm_add_package_again.msg == 'Package already installed'
+
+- name: Install package again (normal mode)
+  swdepot:
+    name: '{{ package }}'
+    depot: '{{ depot }}'
+    state: present
+  register: nm_add_package_again
+
+- name: Verify nm_add_package_again
+  assert:
+    that:
+    - nm_add_package_again is not changed
+    - nm_add_package_again.rc == 0
+    - nm_add_package_again.msg == 'Package already installed'
+
+
+# ADD LATEST PACKAGE
+# NOTE: This will not actually test the logic as it is already installed
+- name: Install latest package (checkmode)
+  swdepot:
+    name: '{{ package }}'
+    depot: '{{ depot }}'
+    state: latest
+  check_mode: yes
+  register: cm_add_latest_package
+
+- name: Verify cm_add_latest_package
+  assert:
+    that:
+    - cm_add_latest_package is not changed
+    - cm_add_latest_package.rc == 0
+    - cm_add_latest_package.msg == 'Package already installed'
+
+- name: Install latest package (normal mode)
+  swdepot:
+    name: '{{ package }}'
+    depot: '{{ depot }}'
+    state: latest
+  check_mode: yes
+  register: nm_add_latest_package
+
+- name: Verify nm_add_latest_package
+  assert:
+    that:
+    - nm_add_latest_package is not changed
+    - nm_add_latest_package.rc == 0
+    - nm_add_latest_package.msg == 'Package already installed'
+
+# REMOVE PACKAGE
+- name: Remove package (checkmode)
+  swdepot:
+    name: '{{ package }}'
+    state: absent
+  check_mode: yes
+  register: cm_remove_package
+
+- name: Verify cm_remove_package
+  assert:
+    that:
+    - cm_remove_package is changed
+    - cm_remove_package.rc == 0
+    - cm_remove_package.msg == 'Package removed'
+
+- name: Remove package (normal mode)
+  swdepot:
+    name: '{{ package }}'
+    state: absent
+  register: nm_remove_package
+
+- name: Verify nm_remove_package
+  assert:
+    that:
+    - nm_remove_package is changed
+    - nm_remove_package.rc == 0
+    - nm_remove_package.msg == 'Package removed'
+
+- name: Remove package again (checkmode)
+  swdepot:
+    name: '{{ package }}'
+    state: absent
+  check_mode: yes
+  register: cm_remove_package_again
+
+- name: Verify remove_package_again
+  assert:
+    that:
+    - cm_remove_package_again is not changed
+    - cm_remove_package_again.rc == 0
+    - cm_remove_package_again.msg == 'Package not installed'
+
+- name: Remove package again (normal mode)
+  swdepot:
+    name: '{{ package }}'
+    state: absent
+  register: nm_remove_package_again
+
+- name: Verify nm_remove_package_again
+  assert:
+    that:
+    - nm_remove_package_again is not changed
+    - nm_remove_package_again.rc == 0
+    - nm_remove_package_again.msg == 'Package not installed'
+
+
+# ERROR CONDITIONS
+- name: Install non-existing package (checkmode)
+  swdepot:
+    name: foobar
+    depot: '{{ depot }}'
+    state: present
+  check_mode: yes
+  register: cm_add_nonexisting_package
+
+- name: Verify cm_add_nonexisting_package
+  assert:
+    that:
+    - cm_add_nonexisting_package is not changed
+    # FIXME: Not sure what the return code is
+    #- cm_add_nonexisting_package.rc == 0
+    - cm_add_nonexisting_package.msg == 'Package not in repository {{ depot }}'
+
+- name: Install non-existing package (normal mode)
+  swdepot:
+    name: foobar
+    depot: '{{ depot }}'
+    state: present
+  register: nm_add_nonexisting_package
+
+- name: Verify nm_add_nonexisting_package
+  assert:
+    that:
+    - nm_add_nonexisting_package is not changed
+    # FIXME: Not sure what the return code is
+    #- nm_add_nonexisting_package.rc == 0
+    - nm_add_nonexisting_package.msg == 'Package not in repository {{ depot }}'
+
+
+# RESTORE ORIGINAL
+- name: Reinstall package if it was originally removed
+  swdepot:
+    name: '{{ package }}'
+    depot: '{{ depot }}'
+    state: present
+  when: initial_removal is changed
