@@ -972,11 +972,11 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     publish:
-      - published_port: 60001
-        target_port: 60001
       - protocol: udp
         published_port: 60002
         target_port: 60002
+      - published_port: 60001
+        target_port: 60001
   register: publish_2
 
 - name: publish (change)
@@ -1012,13 +1012,13 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     publish:
-      - protocol: tcp
-        published_port: 60002
-        target_port: 60003
-        mode: host
       - protocol: udp
         published_port: 60001
         target_port: 60001
+        mode: host
+      - protocol: tcp
+        published_port: 60002
+        target_port: 60003
         mode: host
   register: publish_5
 
