@@ -262,7 +262,7 @@ def main():
             result['reason'] = 'Created'
             result['status'] = 201
         else:
-            # Create a tempory file in the new directory
+            # Create a temporary file in the new directory
             remote_path = vmware_path(datastore, datacenter, path + '/foobar.tmp')
             temp_url = 'https://%s%s' % (host, remote_path)
 
