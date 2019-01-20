@@ -41,12 +41,8 @@ options:
     type: bool
 extends_documentation_fragment: digital_ocean.documentation
 notes:
-  - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
+  - Two environment variables can be used, C(DO_API_KEY) and C(DO_API_TOKEN).
     They both refer to the v2 token.
-  - As of Ansible 2.0, Version 2 of the DigitalOcean API is used.
-
-requirements:
-  - "python >= 2.6"
 '''
 
 
