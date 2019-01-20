@@ -28,6 +28,7 @@ options:
     - The name of the package.
     type: str
     required: true
+    aliases: [ pkg ]
   state:
     description:
     - Whether to ensure the package is installed, the latest version or uninstalled.
@@ -176,9 +177,10 @@ def main():
     result['rc'], version_installed = query_package(module, name)
     if result['rc']:
         installed = False
+        result['msg'] = 'Package not installed'
     else:
         installed = True
-        result['msg'] = 'Already installed'
+        result['msg'] = 'Package already installed'
 
     if (state == 'present' or state == 'latest') and installed is False:
         if not module.check_mode:
@@ -195,7 +197,7 @@ def main():
         result['rc'], version_depot = query_package(module, name, depot)
 
         if result['rc']:
-            result['msg'] = 'Software package not in repository %s' % depot
+            result['msg'] = 'Package not in repository %s' % depot
             module.fail_json(**result)
 
         if compare_package(version_installed, version_depot) == -1:

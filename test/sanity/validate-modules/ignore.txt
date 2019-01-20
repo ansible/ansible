@@ -775,7 +775,6 @@ lib/ansible/modules/packaging/os/rhsm_repository.py E324
 lib/ansible/modules/packaging/os/slackpkg.py E322
 lib/ansible/modules/packaging/os/slackpkg.py E324
 lib/ansible/modules/packaging/os/slackpkg.py E326
-lib/ansible/modules/packaging/os/swdepot.py E322
 lib/ansible/modules/packaging/os/urpmi.py E322
 lib/ansible/modules/packaging/os/urpmi.py E324
 lib/ansible/modules/packaging/os/urpmi.py E325
