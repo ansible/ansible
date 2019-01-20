@@ -127,7 +127,7 @@ class VmwareDatastoreUploadMgr(PyVmomi):
             self._datacenter = self.find_datacenter_by_name(
                 datacenter_name=datacenter_name)
         self._datastore = self.find_datastore_by_name(
-            datastore_name, datacenter=self.datacenter)
+            datastore_name, datacenter=self._datacenter)
         self._fd = open(self.params.get('source'), 'rb')
         self._data = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
         atexit.register(self._data.close)
