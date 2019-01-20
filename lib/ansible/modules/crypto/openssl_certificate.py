@@ -225,7 +225,10 @@ options:
 
     valid_in:
         description:
-            - The certificate must still be valid in I(valid_in) seconds from now.
+            - "The certificate must still be valid at this relative time offset from now.
+               Valid formats are: C([+-]timespec | number_of_seconds)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using this parameter, this module is NOT idempotent."
 
     key_usage:
         description:
@@ -863,15 +866,22 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_valid_in():
             if self.valid_in:
-                valid_in_date = datetime.datetime.utcnow() + datetime.timedelta(seconds=self.valid_in)
-                valid_in_date = to_bytes(valid_in_date.strftime('%Y%m%d%H%M%SZ'), errors='surrogate_or_strict')
-                if not (self.cert.get_notBefore() <= valid_in_date <= self.cert.get_notAfter()):
+                if not self.valid_in.startswith("+") and not self.valid_in.startswith("-"):
+                    try:
+                        int(self.valid_in)
+                    except ValueError:
+                        raise CertificateError(
+                        'The supplied value for "valid_in" (%s) is not an integer or a valid timespec' % self.valid_in)
+                    self.valid_in = "+" + self.valid_in + "s"
+                valid_in_asn1 = self.get_relative_time_option(self.valid_in, "valid_in")
+                valid_in_date = to_bytes(valid_in_asn1, errors='surrogate_or_strict')
+                if not (self.cert.get_notBefore() <= valid_in_date <=
+                        self.cert.get_notAfter()):
                     self.message.append(
-                        'Certificate is not valid in %s seconds from now (%s) - notBefore: %s - notAfter: %s' % (self.valid_in,
-                                                                                                                 valid_in_date,
-                                                                                                                 self.cert.get_notBefore(),
-                                                                                                                 self.cert.get_notAfter())
-                    )
+                        'Certificate is not valid in %s from now (that would be %s) - notBefore: %s - notAfter: %s'
+                        % (self.valid_in, valid_in_date,
+                           self.cert.get_notBefore(),
+                           self.cert.get_notAfter()))
 
         for validation in ['signature_algorithms', 'subject', 'issuer',
                            'has_expired', 'version', 'keyUsage',
@@ -1013,7 +1023,7 @@ def main():
             notAfter=dict(type='str', aliases=['not_after']),
             valid_at=dict(type='str'),
             invalid_at=dict(type='str'),
-            valid_in=dict(type='int'),
+            valid_in=dict(type='str'),
 
             # provider: selfsigned
             selfsigned_version=dict(type='int', default='3'),
