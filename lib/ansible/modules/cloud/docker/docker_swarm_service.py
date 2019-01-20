@@ -321,12 +321,10 @@ options:
     - Maps to docker service --update-order
     - Requires API version >= 1.29
   user:
+    type: str
     required: false
-    default: root
     description:
-    - username or UID.
-    - "If set to C(null) the image provided value (or the one already
-       set for the service) will be used"
+    - Sets the username or UID used for the specified command.
 extends_documentation_fragment:
 - docker
 requirements:
@@ -559,7 +557,7 @@ class DockerService(DockerBaseClass):
         self.reserve_cpu = 0.000
         self.reserve_memory = 0
         self.mode = "replicated"
-        self.user = "root"
+        self.user = None
         self.mounts = []
         self.configs = []
         self.secrets = []
@@ -1303,7 +1301,7 @@ def main():
         update_monitor=dict(default=5000000000, type='int'),
         update_max_failure_ratio=dict(default=0, type='float'),
         update_order=dict(default=None, type='str'),
-        user=dict(default='root'))
+        user=dict(type='str'))
 
     option_minimal_versions = dict(
         dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
