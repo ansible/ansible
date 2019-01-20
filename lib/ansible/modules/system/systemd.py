@@ -325,6 +325,22 @@ def unit_is_enabled(module, systemctl_executable, systemd_unit, is_initd):
 
     # check systemctl result or if it is a init script
     if rc == 0:
+        indirect = False
+        installed_unit = ''
+        if out.strip().endswith('static'):
+            _rc, cat_out, _err = module.run_command(
+                "%s cat '%s' | grep ^Also= | sed 's#^Also=##'"
+                % (systemctl_executable, systemd_unit),)
+            installed_unit = cat_out.strip()
+            if installed_unit:
+                indirect = True
+        elif out.strip().endswith('indirect'):
+            indirect = True
+        if indirect:
+            return unit_is_enabled(
+                module, systemctl_executable,
+                installed_unit, is_initd,
+            )
         return True
 
     if rc == 1:
