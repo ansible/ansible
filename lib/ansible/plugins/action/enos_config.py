@@ -68,7 +68,7 @@ class ActionModule(_ActionModule):
         backup_path = self._get_working_path() + '/backup'
         if not os.path.exists(backup_path):
             os.mkdir(backup_path)
-        for fn in glob.glob('%s/%s*' % (backup_path, host)):
+        for fn in glob.glob('%s/%s_config.*' % (backup_path, host)):
             os.remove(fn)
         tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
         filename = '%s/%s_config.%s' % (backup_path, host, tstamp)
