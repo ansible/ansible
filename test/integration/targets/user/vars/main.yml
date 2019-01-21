@@ -10,4 +10,4 @@ status_command:
 
 default_user_group:
   openSUSE Leap: users
-  Darwin: admin
+  MacOSX: admin

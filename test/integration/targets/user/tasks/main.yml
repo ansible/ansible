@@ -175,10 +175,6 @@
     path: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
   register: home_with_no_parent_3
 
-- debug:
-    var: home_with_no_parent_3
-  tags: debug
-
 - name: Ensure user with non-existing parent paths was created successfully
   assert:
     that:
