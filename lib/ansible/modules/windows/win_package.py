@@ -17,7 +17,7 @@ module: win_package
 version_added: "1.7"
 short_description: Installs/uninstalls an installable package
 description:
-- Installs or uninstalls a package in either an MSI or EXE format.
+- Installs or uninstalls a package in either MSI, MSIX, APPX or EXE format.
 - These packages can be sources from the local file system, network file share
   or a url.
 - Please read the notes section around some caveats with this module.
@@ -136,6 +136,14 @@ options:
     - When omitted, a temporary log file is used for MSI packages.
     - This is only valid for MSI files, use C(arguments) for other package types.
     type: path
+    version_added: '2.8'
+  AllUsers:
+    description:
+    - Specifies if the package should be installed for all users or only for
+      the current user.
+    - Currently this is only honored for appx and msix setups.
+    type: bool
+    default: yes
     version_added: '2.8'
 notes:
 - When C(state=absent) and the product is an exe, the path may be different
