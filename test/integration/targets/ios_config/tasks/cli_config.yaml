@@ -9,7 +9,7 @@
 - name: set test_items
   set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
-- name: run test case (connection=network_cli)
+- name: run test cases (connection=network_cli)
   include: "{{ test_case_to_run }} ansible_connection=network_cli"
   with_items: "{{ test_items }}"
   loop_control:
