@@ -442,7 +442,7 @@ class AnsibleDockerClient(Client):
             if not data['supported']:
                 # Test whether option is specified
                 if 'detect_usage' in data:
-                    used = data['detect_usage']()
+                    used = data['detect_usage'](self)
                 else:
                     used = self.module.params.get(option) is not None
                     if used and 'default' in self.module.argument_spec[option]:
