@@ -162,7 +162,7 @@ Noteworthy module changes
 
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
 
-* The ``docker_swarm_service`` module will no longer set a default for the user option.
+* The ``docker_swarm_service`` module no longer sets a default for the ``user`` option. Before, the default was ``root``.
 
 Plugins
 =======
