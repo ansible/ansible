@@ -121,7 +121,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
