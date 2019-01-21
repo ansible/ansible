@@ -82,9 +82,6 @@ EXAMPLES = '''
         address: 1.2.3.4
         acct_port: 2084
         host_timeout: 10
-        host: "{{ inventory_hostname }}"
-        username: "{{ un }}"
-        password: "{{ pwd }}"
 
 # Radius Server Host Key Configuration
   - name: "Radius Server Host Key Configuration"
@@ -94,9 +91,6 @@ EXAMPLES = '''
         address: 1.2.3.4
         key: hello
         encrypt_type: 7
-        host:  inventory_hostname }}
-        username: "{{ un }}"
-        password: "{{ pwd }}"
 
 # TACACS Server Host Configuration
   - name: "Tacacs Server Host Configuration"
@@ -106,9 +100,7 @@ EXAMPLES = '''
         tacacs_port: 89
         host_timeout: 10
         address: 5.6.7.8
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
+
 '''
 
 RETURN = '''
