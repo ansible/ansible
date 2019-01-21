@@ -41,6 +41,12 @@ options:
     description:
     - List comprised of the command and the arguments to be run inside
     - the container
+  command:
+    required: false
+    description:
+    - Command to execute when the container starts.
+      A command may be either a string or a list or a list of strings.
+    version_added: 2.8
   constraints:
     required: false
     default: []
@@ -511,6 +517,7 @@ EXAMPLES = '''
 '''
 
 import time
+import shlex
 import operator
 from ansible.module_utils.docker_common import (
     DockerBaseClass,
@@ -518,6 +525,7 @@ from ansible.module_utils.docker_common import (
     DifferenceTracker,
 )
 from ansible.module_utils.basic import human_to_bytes
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 
 try:
@@ -532,6 +540,7 @@ class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
         self.image = ""
+        self.command = None
         self.args = []
         self.endpoint_mode = "vip"
         self.dns = []
@@ -579,6 +588,7 @@ class DockerService(DockerBaseClass):
             'mounts': self.mounts,
             'configs': self.configs,
             'networks': self.networks,
+            'command': self.command,
             'args': self.args,
             'tty': self.tty,
             'dns': self.dns,
@@ -645,6 +655,35 @@ class DockerService(DockerBaseClass):
         s.update_max_failure_ratio = ap['update_max_failure_ratio']
         s.update_order = ap['update_order']
         s.user = ap['user']
+
+        s.command = ap['command']
+        if isinstance(s.command, string_types):
+            s.command = shlex.split(s.command)
+        elif isinstance(s.command, list):
+            invalid_items = [
+                (index, item)
+                for index, item in enumerate(s.command)
+                if not isinstance(item, string_types)
+            ]
+            if invalid_items:
+                errors = ', '.join(
+                    [
+                        '%s (%s) at index %s' % (item, type(item), index)
+                        for index, item in invalid_items
+                    ]
+                )
+                raise Exception(
+                    'All items in a command list need to be strings. '
+                    'Check quoting. Invalid items: %s.'
+                    % errors
+                )
+            s.command = ap['command']
+        elif s.command is not None:
+            raise ValueError(
+                'Invalid type for command %s (%s). '
+                'Only string or list allowed. Check quoting.'
+                % (s.command, type(s.command))
+            )
 
         if ap['force_update']:
             s.force_update = int(str(time.time()).replace('.', ''))
@@ -738,6 +777,8 @@ class DockerService(DockerBaseClass):
             needs_rebuild = True
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
+        if self.command is not None and self.command != os.command:
+            differences.add('command', parameter=self.command, active=os.command)
         if self.args != os.args:
             differences.add('args', parameter=self.args, active=os.args)
         if self.constraints != os.constraints:
@@ -866,17 +907,24 @@ class DockerService(DockerBaseClass):
                 )
             )
 
+        dns_config = types.DNSConfig(
+            nameservers=self.dns,
+            search=self.dns_search,
+            options=self.dns_options
+        )
+
         cspec = types.ContainerSpec(
             image=self.image,
-            user=self.user,
-            dns_config=types.DNSConfig(nameservers=self.dns, search=self.dns_search, options=self.dns_options),
+            command=self.command,
             args=self.args,
-            env=self.env,
-            tty=self.tty,
             hostname=self.hostname,
+            env=self.env,
+            user=self.user,
             labels=self.container_labels,
             mounts=mounts,
             secrets=secrets,
+            tty=self.tty,
+            dns_config=dns_config,
             configs=configs
         )
 
@@ -983,6 +1031,7 @@ class DockerServiceManager():
         ds.image = task_template_data['ContainerSpec']['Image']
         ds.user = task_template_data['ContainerSpec'].get('User', 'root')
         ds.env = task_template_data['ContainerSpec'].get('Env', [])
+        ds.command = task_template_data['ContainerSpec'].get('Command')
         ds.args = task_template_data['ContainerSpec'].get('Args', [])
         ds.update_delay = update_config_data['Delay']
         ds.update_parallelism = update_config_data['Parallelism']
@@ -1216,6 +1265,7 @@ def main():
         configs=dict(default=None, type='list'),
         secrets=dict(default=[], type='list'),
         networks=dict(default=[], type='list'),
+        command=dict(default=None, type='raw'),
         args=dict(default=[], type='list'),
         env=dict(default=[], type='list'),
         force_update=dict(default=False, type='bool'),

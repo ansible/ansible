@@ -210,6 +210,74 @@
       - constraints_3 is changed
 
 ####################################################################
+## command #########################################################
+####################################################################
+
+- name: command
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+  register: command_1
+
+- name: command (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+  register: command_2
+
+- name: command (less parameters)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+  register: command_3
+
+- name: command (as list)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "sleep 10m"
+  register: command_4
+
+- name: command (string failure)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: yes
+  register: command_5
+  ignore_errors: yes
+
+- name: command (list failure)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command:
+      - "/bin/sh"
+      - yes
+  register: command_6
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - command_1 is changed
+      - command_2 is not changed
+      - command_3 is changed
+      - command_4 is not changed
+      - command_5 is failed
+      - command_6 is failed
+
+####################################################################
 ## container_labels ################################################
 ####################################################################
 
