@@ -37,9 +37,11 @@ Ansible hosts module code, examples, demonstrations, and other content on GitHub
 - `ansible-network <https://github.com/ansible-network>`_ is the main codebase for the Ansible network team roles
 
 
-IRC
-===
+IRC and Slack
+=============
 
-Join us on Freenode IRC:
+Join us on:
 
-- ``#ansible-network`` Freenode channel
+* Freenode IRC - ``#ansible-network`` Freenode channel
+
+* Slack - `<http://ansiblenetwork.slack.com>`_
