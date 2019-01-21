@@ -67,8 +67,9 @@ options:
         - If not specified, defaults to the value of C(datacenter.vmFolder).
     inject_ovf_env:
         description:
-        - Force the given properties to be inserted into an OVF Environment and injected through VMware Tools
+        - Force the given properties to be inserted into an OVF Environment and injected through VMware Tools.
         version_added: "2.8"
+        type: bool
     name:
         description:
         - Name of the VM to work with.

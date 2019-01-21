@@ -1,0 +1,2 @@
+minor_changes:
+- vmware_deploy_ovf - Add support for 'inject_ovf_env' for injecting user input properties in OVF environment.
