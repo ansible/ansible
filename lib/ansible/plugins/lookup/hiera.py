@@ -12,6 +12,7 @@ DOCUMENTATION = '''
     short_description: get info from hiera data
     requirements:
       - hiera (command line utility)
+      - hieradata format up to vesrsion 3
     description:
         - Retrieves data from an Puppetmaster node using Hiera as ENC
     options:
