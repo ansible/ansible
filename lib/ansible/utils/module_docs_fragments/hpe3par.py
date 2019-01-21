@@ -27,4 +27,3 @@ requirements:
 notes:
   -  check_mode not supported
     '''
-
