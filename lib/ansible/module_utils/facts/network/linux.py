@@ -263,6 +263,13 @@ class LinuxNetwork(Network):
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
 
+            if rc != 0:
+                # possibly busybox, fallback to running without the "primary" arg
+                # https://github.com/ansible/ansible/issues/50871
+                args = [ip_path, 'addr', 'show', device]
+                rc, data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+                parse_ip_output(data)
+
             interfaces[device].update(self.get_ethtool_data(device))
 
         # replace : by _ in interface name since they are hard to use in template
