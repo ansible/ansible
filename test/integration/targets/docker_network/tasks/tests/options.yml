@@ -189,3 +189,51 @@
     - attachable_1 is failed
     - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in attachable_1.msg"
   when: docker_py_version is version('2.0.0', '<')
+
+####################################################################
+## labels ##########################################################
+####################################################################
+
+- name: labels
+  docker_network:
+    name: "{{ nname_1 }}"
+    labels:
+      ansible.test.1: hello
+      ansible.test.2: world
+  register: labels_1
+
+- name: labels (idempotency)
+  docker_network:
+    name: "{{ nname_1 }}"
+    labels:
+      ansible.test.2: world
+      ansible.test.1: hello
+  register: labels_2
+
+- name: labels (less labels)
+  docker_network:
+    name: "{{ nname_1 }}"
+    labels:
+      ansible.test.1: hello
+  register: labels_3
+
+- name: labels (more labels)
+  docker_network:
+    name: "{{ nname_1 }}"
+    labels:
+      ansible.test.1: hello
+      ansible.test.3: ansible
+  register: labels_4
+
+- name: cleanup
+  docker_network:
+    name: "{{ nname_1 }}"
+    state: absent
+    force: yes
+
+- assert:
+    that:
+    - labels_1 is changed
+    - labels_2 is not changed
+    - labels_3 is not changed
+    - labels_4 is changed
