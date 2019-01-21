@@ -335,7 +335,6 @@ class StrategyModule(StrategyBase):
                     # this is a fatal error, so we abort here regardless of block state
                     return self._tqm.RUN_ERROR
 
-                include_failure = False
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
 
@@ -382,7 +381,6 @@ class StrategyModule(StrategyBase):
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                             display.error(to_text(e), wrap_text=False)
-                            include_failure = True
                             continue
 
                     # finally go through all of the hosts and append the
@@ -401,9 +399,8 @@ class StrategyModule(StrategyBase):
                 failed_hosts = []
                 unreachable_hosts = []
                 for res in results:
-                    # execute_meta() does not set 'failed' in the TaskResult
-                    # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
+                    # some tasks don't set 'failed' in the result so we can't test 'res.is_failed()'
+                    if (res.is_failed() or res._task.action in ('meta', 'include_role')) and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
