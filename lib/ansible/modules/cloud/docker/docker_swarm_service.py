@@ -325,6 +325,8 @@ options:
     required: false
     description:
     - Sets the username or UID used for the specified command.
+    - Before Ansible 2.8, the default value for this option was C(root).
+      The default has been removed so that the user defined in an image is used if no user is specified here.
 extends_documentation_fragment:
 - docker
 requirements:
