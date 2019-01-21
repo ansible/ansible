@@ -41,19 +41,19 @@ def test_get_distribution_not_linux():
 class TestGetDistribution:
     """ Tests for get_distribution that have to find somethine"""
     def test_distro_known(self):
-        with patch('ansible.module_utils.distro.name', return_value="foo"):
+        with patch('ansible.module_utils.distro.id', return_value="foo"):
             assert get_distribution() == "Foo"
 
     def test_distro_unknown(self):
-        with patch('ansible.module_utils.distro.name', return_value=""):
+        with patch('ansible.module_utils.distro.id', return_value=""):
             assert get_distribution() == "OtherLinux"
 
     def test_distro_amazon_part_of_another_name(self):
-        with patch('ansible.module_utils.distro.name', return_value="AmazonFooBar"):
+        with patch('ansible.module_utils.distro.id', return_value="AmazonFooBar"):
             assert get_distribution() == "Amazonfoobar"
 
     def test_distro_amazon_linux(self):
-        with patch('ansible.module_utils.distro.name', return_value="Amazon Linux AMI"):
+        with patch('ansible.module_utils.distro.id', return_value="Amazon Linux AMI"):
             assert get_distribution() == "Amazon"
 
 
