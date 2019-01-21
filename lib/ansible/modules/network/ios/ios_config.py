@@ -203,15 +203,14 @@ options:
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     version_added: "2.4"
-  remove_extraneous:
+  filter_lines:
     description:
-      - This argument will remove the intro lines 'Building configuration' and
-        'Current configuration' from current C(running-config) and hence can only
-        be used when backup argument is set to True i.e. yes and backup file is
-        written to the C(backup) folder in the playbook root directory or role
-        root directory, without the running-config intro lines.
-    type: bool
-    default: 'no'
+      - This argument will remove lines from the backup that user want to filter
+        and store as the backup config and backup file is written to the C(backup)
+        folder in the playbook root directory or role root directory, without the
+        user input filter lines.
+    type: list
+    default: None
     version_added: "2.8"
 """
 
@@ -300,7 +299,10 @@ EXAMPLES = """
 - name: save backup config without the intro lines
   ios_config:
     backup: yes
-    remove_extraneous: yes
+    filter_lines:
+    - Building configuration
+    - Current configuration
+    - username
 """
 
 RETURN = """
@@ -331,9 +333,6 @@ from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.ios.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-
-
-REMOVE_EXTRANEOUS_DEFAULT = 'Building configuration.*(\n*).*\nCurrent configuration.*\n*'
 
 
 def check_args(module, warnings):
@@ -407,7 +406,7 @@ def main():
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
-        remove_extraneous=dict(type='bool', default=False),
+        filter_lines=dict(type='list'),
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['startup', 'intended', 'running']),
@@ -452,9 +451,12 @@ def main():
         contents = get_config(module, flags=flags)
         config = NetworkConfig(indent=1, contents=contents)
         if module.params['backup']:
-            if module.params['remove_extraneous']:
-                contents = re.sub(REMOVE_EXTRANEOUS_DEFAULT, '', contents)
-                result['__backup__'] = contents
+            if module.params['filter_lines']:
+                temp_content = contents
+                for each in module.params['filter_lines']:
+                    substr = each + '.*(\n*)'
+                    temp_content = re.sub(substr, '', temp_content)
+                result['__backup__'] = temp_content
             else:
                 result['__backup__'] = contents
 
