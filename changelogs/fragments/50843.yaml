@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - allow to operate on file paths (https://github.com/ansible/ansible/issues/50843)
