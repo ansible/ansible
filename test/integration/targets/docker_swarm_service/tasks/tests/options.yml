@@ -110,60 +110,64 @@
 ## configs #########################################################
 ####################################################################
 
-# FIXME: Broken until #50606 is merged
+- name: configs
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    configs:
+      - config_id: "{{ config_result_1.config_id }}"
+        config_name: "{{ config_name_1 }}"
+        filename: "/tmp/{{ config_name_1 }}.txt"
+  register: configs_1
 
-#- name: configs
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    configs:
-#      - config_id: "{{ config_result_1.config_id }}"
-#        config_name: "{{ config_name_1 }}"
-#        filename: "/tmp/{{ config_name_1 }}.txt"
-#  register: configs_1
-#
-#- name: configs (idempotency)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    configs:
-#      - config_id: "{{ config_result_1.config_id }}"
-#        config_name: "{{ config_name_1 }}"
-#        filename: "/tmp/{{ config_name_1 }}.txt"
-#  register: configs_2
-#
-#- name: configs (add)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    configs:
-#      - config_id: "{{ config_result_1.config_id }}"
-#        config_name: "{{ config_name_1 }}"
-#        filename: "/tmp/{{ config_name_1 }}.txt"
-#      - config_id: "{{ config_result_2.config_id }}"
-#        config_name: "{{ config_name_2 }}"
-#        filename: "/tmp/{{ config_name_2 }}.txt"
-#  register: configs_3
-#
-#- name: configs (empty)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    configs: []
-#  register: configs_4
-#
-#- assert:
-#    that:
-#    - configs_1 is changed
-#    - configs_2 is not changed
-#    - configs_3 is changed
-#    - configs_4 is changed
-#  when: docker_api_version is version('1.30', '>=')
-#- assert:
-#    that:
-#    - configs_1 is failed
-#    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.30') in configs_1.msg"
-#  when: docker_api_version is version('1.30', '<')
+- name: configs (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    configs:
+      - config_id: "{{ config_result_1.config_id }}"
+        config_name: "{{ config_name_1 }}"
+        filename: "/tmp/{{ config_name_1 }}.txt"
+  register: configs_2
+
+- name: configs (add)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    configs:
+      - config_id: "{{ config_result_1.config_id }}"
+        config_name: "{{ config_name_1 }}"
+        filename: "/tmp/{{ config_name_1 }}.txt"
+      - config_id: "{{ config_result_2.config_id }}"
+        config_name: "{{ config_name_2 }}"
+        filename: "/tmp/{{ config_name_2 }}.txt"
+  register: configs_3
+
+- name: configs (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    configs: []
+  register: configs_4
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - configs_1 is changed
+    - configs_2 is not changed
+    - configs_3 is changed
+    - configs_4 is changed
+  when: docker_api_version is version('1.30', '>=')
+- assert:
+    that:
+    - configs_1 is failed
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.30') in configs_1.msg"
+  when: docker_api_version is version('1.30', '<')
 
 ####################################################################
 ## constraints #####################################################
@@ -910,6 +914,12 @@
     mounts: []
   register: mounts_4
 
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
 - assert:
     that:
       - mounts_1 is changed
@@ -943,6 +953,12 @@
     image: alpine:3.8
     networks: []
   register: networks_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
 
 - assert:
     that:
@@ -1061,6 +1077,12 @@
         target_port: 60003
         mode: host
   register: publish_5
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
 
 - assert:
     that:
@@ -1378,6 +1400,12 @@
     image: alpine:3.8
     secrets: []
   register: secrets_4
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
 
 - assert:
     that:
