@@ -1815,7 +1815,6 @@
   docker_volume:
     name: "{{ volume_name }}"
     state: absent
-    force: yes
   loop:
     - "{{ volume_name_1 }}"
     - "{{ volume_name_2 }}"
