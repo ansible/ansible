@@ -400,7 +400,7 @@ class StrategyModule(StrategyBase):
                 unreachable_hosts = []
                 for res in results:
                     # some tasks don't set 'failed' in the result so we can't test 'res.is_failed()'
-                    if (res.is_failed() or res._task.action in ('meta', 'include_role')) and iterator.is_failed(res._host):
+                    if (res.is_failed() or res._task.action in ('meta', 'include_role', 'include_tasks')) and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
