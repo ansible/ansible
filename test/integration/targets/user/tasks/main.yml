@@ -255,7 +255,7 @@
         mode = oct(0o777 & ~umask)
         print(str(mode).replace('o', ''))
       args:
-        executable: python
+        executable: "{{ ansible_facts.python.executable }}"
       register: user_login_defs_umask
 
     - name: validate that user home dir is created
@@ -782,6 +782,27 @@
   # to run with local: true to exercise the code path that reads through the local
   # user database file.
   # https://github.com/ansible/ansible/issues/50947
+
+- name: Create /etc/gshadow
+  file:
+    path: /etc/gshadow
+    state: touch
+  when: ansible_facts.os_family == 'Suse'
+
+- name: Create /etc/libuser.conf
+  file:
+    path: /etc/libuser.conf
+    state: touch
+  when:
+    - ansible_facts.distribution == 'Ubuntu'
+    - ansible_facts.distribution_major_version is version_compare('16', '==')
+
+- name: Ensure luseradd is present
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: libuser
+    state: present
+  when: ansible_facts.system in ['Linux']
 
 - name: Create local_ansibulluser
   user:
