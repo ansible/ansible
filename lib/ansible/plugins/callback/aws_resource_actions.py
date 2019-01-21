@@ -50,21 +50,21 @@ class CallbackModule(CallbackBase):
         self.aws_resource_actions = []
         super(CallbackModule, self).__init__()
 
+    def extend_aws_resource_actions(self, result):
+        if result.get('resource_actions'):
+            self.aws_resource_actions.extend(result['resource_actions'])
+
     def runner_on_ok(self, host, res):
-        if res.get('resource_actions'):
-            self.aws_resource_actions.extend(res['resource_actions'])
+        self.extend_aws_resource_actions(res)
 
     def runner_on_failed(self, host, res, ignore_errors=False):
-        if res.get('resource_actions'):
-            self.aws_resource_actions.extend(res['resource_actions'])
+        self.extend_aws_resource_actions(res)
 
     def v2_runner_item_on_ok(self, result):
-        if result._result.get('resource_actions'):
-            self.aws_resource_actions.extend(result._result['resource_actions'])
+        self.extend_aws_resource_actions(result._result)
 
     def v2_runner_item_on_failed(self, result):
-        if result._result.get('resource_actions'):
-            self.aws_resource_actions.extend(result._result['resource_actions'])
+        self.extend_aws_resource_actions(result._result)
 
     def playbook_on_stats(self, stats):
         if self.aws_resource_actions:
