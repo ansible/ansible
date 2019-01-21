@@ -9,7 +9,7 @@ Release Manager Guidelines
 The release manager's purpose is to ensure a smooth release.  To achieve that goal, they need to
 coordinate between:
 
-* Developers with commit privileges on the `Ansible GitHub repository <https://GitHub.com/ansible/ansible/>`_
+* Developers with commit privileges on the `Ansible GitHub repository <https://github.com/ansible/ansible/>`_
 * Contributors without commit privileges
 * The community
 * Ansible documentation team
