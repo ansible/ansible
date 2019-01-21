@@ -130,25 +130,25 @@ def union(environment, a, b):
 
 
 @environmentfilter
-def min(environment, a, case_sensitive=False, attribute=None):
+def min(environment, a, **kwargs):
     if HAS_MIN_MAX:
-        return do_min(environment, a, case_sensitive=case_sensitive, attribute=attribute)
+        return do_min(environment, a, **kwargs)
     else:
-        if case_sensitive or attribute:
-            raise AnsibleFilterError("Ansible's min filter does not support case_sensitive nor attribute parameters, "
-                                     "you need a newer version of Jinja2 that provides their version of the filter.")
+        if kwargs:
+            raise AnsibleFilterError("Ansible's min filter does not support any keyword arguments. "
+                                     "You need a newer version of Jinja2 that provides their version of the filter.")
         _min = __builtins__.get('min')
         return _min(a)
 
 
 @environmentfilter
-def max(environment, a, case_sensitive=False, attribute=None):
+def max(environment, a, **kwargs):
     if HAS_MIN_MAX:
-        return do_max(environment, a, case_sensitive=case_sensitive, attribute=attribute)
+        return do_max(environment, a, **kwargs)
     else:
-        if case_sensitive or attribute:
-            raise AnsibleFilterError("Ansible's max filter does not support case_sensitive nor attribute parameters, "
-                                     "you need a newer version of Jinja2 that provides their version of the filter.")
+        if kwargs:
+            raise AnsibleFilterError("Ansible's max filter does not support any keyword arguments. "
+                                     "You need a newer version of Jinja2 that provides their version of the filter.")
         _max = __builtins__.get('max')
         return _max(a)
 
