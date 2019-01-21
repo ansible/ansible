@@ -93,7 +93,7 @@ EXAMPLES = r'''
 - name: git clone using specific version
   win_git:
     repo: 'https://foosball.example.org/path/to/repo.git'
-    dest: "{{ ansible_env.TEMP }}\\hellogitworld"    
+    dest: "{{ ansible_env.TEMP }}\\hellogitworld"
     version: release-0.22
 
 # Example git clone using ssh. Also clean up existing directory
@@ -125,14 +125,17 @@ git_msg:
   sample: Successfuly updated
 git_output:
   description: raw git output
+  returned: always
   type: str
   sample: error occured while cloning
 method:
   description: git method used
+  returned: always
   type: str
   sample: pull
 return_code:
   description: return code of running git command
+  returned: always
   type: int
   sample: 0
 '''
