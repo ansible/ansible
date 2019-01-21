@@ -1,7 +1,7 @@
 ---
 - name: fail cloning the repo using ssh
   block:
-    - name: clone the repo
+    - name: clone the ssh repo 
       win_git:
         repo: 'git@github.com:{{ github_repo_name }}'
         dest: '{{ temp_path }}\\repo_ssh'
@@ -11,11 +11,10 @@
   assert:
     that:            
       - fail_clone is not changed
-      - "'Failed to clone' in fail_clone.git_msg"
 
 - name: clone repo using http (check)
   block:
-    - name: clone the repo
+    - name: clone the http repo (check)
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
         dest: '{{ temp_path }}\\repo_http'
@@ -34,7 +33,7 @@
 
 - name: clone repo using http
   block:
-    - name: clone the repo
+    - name: clone the http repo
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
         dest: '{{ temp_path }}\\repo_http'
@@ -54,7 +53,7 @@
 
 - name: clone repo using git protocol
   block:
-    - name: clone the repo
+    - name: clone the git repo
       win_git:
         repo: 'git://github.com/{{ github_repo_name }}'
         dest: '{{ temp_path }}\\repo_git'
