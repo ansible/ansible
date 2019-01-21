@@ -208,7 +208,7 @@ options:
       - This argument will remove lines from the backup that user want to filter
         and store as the backup config and backup file is written to the C(backup)
         folder in the playbook root directory or role root directory, without the
-        user input filter lines.
+        user input. See examples
     type: list
     default: None
     version_added: "2.8"
@@ -296,6 +296,7 @@ EXAMPLES = """
   ios_config:
     backup: yes
     src: ios_template.j2
+
 - name: save backup config without the intro lines
   ios_config:
     backup: yes
