@@ -9,7 +9,7 @@ DOCUMENTATION = '''
     type: stdout
     short_description: formatted stdout/stderr display
     description:
-      - Use this callback to sort though extensive debug output
+      - Use this callback to sort through extensive debug output
     version_added: "2.4"
     extends_documentation_fragment:
       - default_callback
