@@ -1,0 +1,165 @@
+- name: Create new 'test-be' ZFS boot environment
+  beadm:
+    name: test-be
+    state: present
+  register: beadm_create_result
+
+- debug: var=beadm_create_result
+ 
+- name: Get current boot environments
+  shell: beadm list -H
+  register: boot_envs
+ 
+- name: Verify if 'test-be' is created
+  assert:
+    that:
+    - "'test-be' in boot_envs.stdout"
+
+# Creation of the same boot environment
+- name: Create existing ZFS boot environment
+  beadm:
+    name: test-be
+    state: present
+  register: beadm_create_result
+ 
+- debug: var=beadm_create_result
+ 
+- name: Verify no change is done
+  assert:
+    that:
+    - beadm_create_result.changed == False
+
+# Creation of snapshot of boot environment
+- name: Create 'test-be@snapshot1' ZFS boot environment snapshot
+  beadm:
+    name: test-be@snapshot1
+    state: present
+  register: beadm_create_result
+
+- debug: var=beadm_create_result
+
+- name: Get current boot environments
+  shell: beadm list -s
+  register: boot_envs
+
+- name: Verify if 'test-be@snapshot1' is created
+  assert:
+    that:
+    - "'test-be@snapshot1' in boot_envs.stdout"
+ 
+# Creation of the same boot environment snapshot
+- name: Create existing ZFS boot environment snapshot
+  beadm:
+    name: test-be@snapshot1
+    sate: present
+  register: beadm_create_result
+
+- debug: var=beadm_create_result
+
+- name: Verify no change is done
+  assert:
+    that:
+    - beadm_create_result.changed == False
+
+# Creation of boot environment from non-active BE
+- name: Create new ZFS boot environment (non-active BE)
+  beadm:
+    name: test-be-2
+    state: present
+    snapshot: test-be
+  register: beadm_create_result
+
+- debug: var=beadm_create_result
+
+- name: Get current boot environments
+  shell: beadm list -H
+  register: boot_envs
+ 
+- name: 
+  assert:
+    that:
+    - beadm_create_result.rc == 0
+    - "'test-be-2' in boot_envs.stdout"
+ 
+# Creation of the same boot environment from non-active BE
+- name: Create existing ZFS boot environment (non-active BE)
+  beadm:
+    name: test-be-2
+    sate: present
+    snapshot: test-be
+  register: beadm_create_result
+
+- debug: var=beadm_create_result
+ 
+- name: Verify no change is done
+  assert:
+    that:
+    - beadm_create_result.changed == False
+
+# Creation of boot environment from snapshot
+- name: Create new ZFS boot environment (snapshot)
+  beadm:
+    name: test-be-from-snapshot
+    state: present
+    snapshot: test-be@snapshot1
+  register: beadm_create_result
+
+- debug: var=beadm_create_result
+ 
+- name: Get current boot environments
+  shell: beadm list -H
+  register: boot_envs
+ 
+- name: 
+  assert:
+    that:
+    - beadm_create_result.rc == 0
+    - "'test-be-from-snapshot' in boot_envs.stdout"
+ 
+# Creation of the same boot environment from snapshot
+- name: Create existing ZFS boot environment (snapshot)
+  beadm:
+    name: test-be-from-snapshot
+    sate: present
+    snapshot: test-be@snapshot1
+  register: beadm_create_result
+
+- debug: var=beadm_create_result
+
+- name: Verify no change is done
+  assert:
+    that:
+    - beadm_create_result.changed == False
+
+# Deletion of boot environment
+- name: Delete existing ZFS boot environment
+  beadm:
+    name: test-be-from-snapshot
+    state: absent
+  register: beadm_create_result
+  
+- debug: var=beadm_create_result
+
+- name: Get current boot environments
+  shell: beadm list -H
+  register: boot_envs
+
+- name: 
+  assert:
+    that:
+    - beadm_create_result.rc == 0
+    - "'test-be-from-snapshot' not in boot_envs.stdout"
+
+# Delete the same boot environment
+- name: Delete the same ZFS boot environment
+  beadm:
+    name: test-be-from-snapshot
+    state: absent
+  register: beadm_delete_result
+
+- debug: var=beadm_delete_result
+
+- name: Verify no change is done
+  assert:
+    that:
+    - beadm_delete_result.changed == False
