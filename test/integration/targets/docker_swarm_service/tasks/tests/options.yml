@@ -954,14 +954,6 @@
 ## publish #########################################################
 ####################################################################
 
-# FIXME: publish_2 is not marked as changed
-#fatal: [testhost]: FAILED! => {
-#    "assertion": "publish_2 is not changed",
-#    "changed": false,
-#    "evaluated_to": false,
-#    "msg": "Assertion failed"
-#}
-
 - name: publish
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -975,37 +967,68 @@
         target_port: 60002
   register: publish_1
 
-#- name: publish (idempotency)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    publish:
-#      - protocol: tcp
-#        published_port: 60001
-#        target_port: 60001
-#      - protocol: udp
-#        published_port: 60001
-#        target_port: 60001
-#  register: publish_2
-#
-#- name: publish (change)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    publish:
-#      - protocol: tcp
-#        published_port: 60002
-#        target_port: 60001
-#      - protocol: udp
-#        published_port: 60001
-#        target_port: 60001
-#  register: publish_3
-#
+- name: publish (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    publish:
+      - protocol: udp
+        published_port: 60002
+        target_port: 60002
+      - published_port: 60001
+        target_port: 60001
+  register: publish_2
+
+- name: publish (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    publish:
+      - protocol: tcp
+        published_port: 60002
+        target_port: 60003
+      - protocol: udp
+        published_port: 60001
+        target_port: 60001
+  register: publish_3
+
+- name: publish (mode)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    publish:
+      - protocol: tcp
+        published_port: 60002
+        target_port: 60003
+        mode: host
+      - protocol: udp
+        published_port: 60001
+        target_port: 60001
+        mode: host
+  register: publish_4
+
+- name: publish (mode idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    publish:
+      - protocol: udp
+        published_port: 60001
+        target_port: 60001
+        mode: host
+      - protocol: tcp
+        published_port: 60002
+        target_port: 60003
+        mode: host
+  register: publish_5
+
 - assert:
     that:
       - publish_1 is changed
-#      - publish_2 is not changed
-#      - publish_3 is changed
+      - publish_2 is not changed
+      - publish_3 is changed
+      - publish_4 is changed
+      - publish_5 is not changed
   when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
