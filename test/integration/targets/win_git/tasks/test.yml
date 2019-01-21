@@ -11,7 +11,7 @@
   assert:
     that:            
       - fail_clone is not changed
-      - "'Failed to clone' in fail_clone.git_.msg"
+      - "'Failed to clone' in fail_clone.git_msg"
 
 - name: clone repo using http (check)
   block:
