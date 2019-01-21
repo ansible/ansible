@@ -32,7 +32,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'enos'
-        reply = self.get(b'show version')
+        reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'^Software Version (.*?) ', data, re.M | re.I)
@@ -57,14 +57,14 @@ class Cliconf(CliconfBase):
             msg = "fetching configuration from %s is not supported"
             return self.invalid_params(msg % source)
         if source == 'running':
-            cmd = b'show running-config'
+            cmd = 'show running-config'
         else:
-            cmd = b'show startup-config'
+            cmd = 'show startup-config'
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
+        for cmd in chain(['configure terminal'], to_list(command), ['end']):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
