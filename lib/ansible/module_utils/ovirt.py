@@ -741,6 +741,7 @@ class BaseModule(object):
             self.changed = True
 
         post_action(entity)
+        
         wait(
             service=self._service.service(entity.id),
             condition=wait_condition,

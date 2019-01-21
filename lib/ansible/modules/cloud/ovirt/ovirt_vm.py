@@ -2076,6 +2076,8 @@ def main():
         connection = create_connection(auth)
         vms_service = connection.system_service().vms_service()
 
+        #In case of of wait false and state running, waits for VM to be created
+        original_wait=None
         if not module.params['wait'] and state=='running':
             original_wait = module.params['wait']
             module.params['wait'] = True
@@ -2102,6 +2104,10 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+
+            if original_wait != None:
+                vms_module._module.params['wait'] = original_wait
+
             # If VM is going to be created and check_mode is on, return now:
             if module.check_mode and ret.get('id') is None:
                 module.exit_json(**ret)
@@ -2157,8 +2163,6 @@ def main():
                     ticket = console_service.remote_viewer_connection_file()
                     if ticket:
                         ret['vm']['remote_vv_file'] = ticket
-                if original_wait != None:
-                    vms_module._module.params['wait'] = original_wait
             if state == 'next_run':
                 # Apply next run configuration, if needed:
                 vm = vms_service.vm_service(ret['id']).get()
