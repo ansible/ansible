@@ -78,3 +78,12 @@
     that:
       - csr_ecc_cn.stdout.split('=')[-1] == 'www.ansible.com'
       - csr_ecc_pubkey.stdout == privatekey_ecc_key.stdout
+
+- name: Validate CSR (text common name - Common Name)
+  shell: "openssl req -noout -subject -in {{ output_dir }}/csr3.csr -nameopt oneline,-space_eq"
+  register: csr3_cn
+
+- name: Validate CSR (assert)
+  assert:
+    that:
+      - csr3_cn.stdout.split('=')[-1] == 'This is for Ansible'
