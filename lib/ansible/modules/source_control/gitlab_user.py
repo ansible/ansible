@@ -1,15 +1,13 @@
-#!/usr/bin/python
-# (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
+#!/usr/bin/env python
+# Copyright: (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -77,7 +75,8 @@ options:
             - guest
             - reporter
             - developer
-            - master
+            - master (alias for maintainer)
+            - maintainer
             - owner
     state:
         description:
@@ -91,6 +90,18 @@ options:
         type: bool
         default: 'yes'
         version_added: "2.4"
+    isadmin:
+        description:
+            - Grant admin privilieges to the user
+        type: bool
+        default: 'false'
+        version_added: "2.8"
+    external:
+        description:
+            - Define external parameter for this user
+        type: bool
+        default: 'false'
+        version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -116,10 +127,14 @@ EXAMPLES = '''
     sshkey_name: MySSH
     sshkey_file: ssh-rsa AAAAB3NzaC1yc...
     state: present
+    group: super_group/mon_group
+    access_level: owner
   delegate_to: localhost
 '''
 
 RETURN = '''# '''
+
+import os
 
 try:
     import gitlab
@@ -130,220 +145,315 @@ except Exception:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+ACCESS_LEVEL = {
+    'guest': gitlab.GUEST_ACCESS,
+    'reporter': gitlab.REPORTER_ACCESS,
+    'developer': gitlab.DEVELOPER_ACCESS,
+    'master': gitlab.MAINTAINER_ACCESS,
+    'maintainer': gitlab.MAINTAINER_ACCESS,
+    'owner': gitlab.OWNER_ACCESS}
 
 class GitLabUser(object):
-    def __init__(self, module, git):
+    def __init__(self, module, gitlab_instance):
         self._module = module
-        self._gitlab = git
+        self._gitlab = gitlab_instance
+        self.userObject = None
 
-    def addToGroup(self, group_id, user_id, access_level):
-        if access_level == "guest":
-            level = 10
-        elif access_level == "reporter":
-            level = 20
-        elif access_level == "developer":
-            level = 30
-        elif access_level == "master":
-            level = 40
-        elif access_level == "owner":
-            level = 50
-        return self._gitlab.addgroupmember(group_id, user_id, level)
+    '''
+    @param * Attribut du user
+    '''
+    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name, 
+        user_sshkey_file, group_path, access_level, confirm, user_isadmin, user_external):
+        changed = False
 
-    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level, confirm):
-        group_id = ''
-        arguments = {"name": user_name,
-                     "username": user_username,
-                     "email": user_email}
-
-        if group_name is not None:
-            if self.existsGroup(group_name):
-                group_id = self.getGroupId(group_name)
-
-        if self.existsUser(user_username):
-            self.updateUser(group_id, user_sshkey_name, user_sshkey_file, access_level, arguments)
+        # Because we have already call userExists in main()
+        if self.userObject is None:
+            user = self.createUser({
+                'name': user_name,
+                'username': user_username,
+                'email': user_email,
+                'password': user_password,
+                'group': group_path,
+                'skip_confirmation': not confirm,
+                'admin': user_isadmin,
+                'external': user_external})
+            changed = True
         else:
+            changed, user = self.updateUser(self.userObject, {
+                'name': user_name,
+                'email': user_email,
+                'skip_confirmation': not confirm,
+                'admin': user_isadmin,
+                'external': user_external})
+
+        # Assign ssh keys
+        if user_sshkey_name and user_sshkey_file:
+            changed = changed or self.addSshKeyToUser(user, {
+                'name': user_sshkey_name,
+                'file': user_sshkey_file})
+
+        # Assign group
+        if group_path:
+            changed = changed or self.assignUserToGroup(user, group_path, access_level)
+
+        self.userObject = user
+        if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            self.createUser(group_id, user_password, user_sshkey_name, user_sshkey_file, access_level, confirm, arguments)
+                self._module.exit_json(changed=True, result="User should have updated.")
 
-    def createUser(self, group_id, user_password, user_sshkey_name, user_sshkey_file, access_level, confirm, arguments):
-        user_changed = False
-
-        # Create the user
-        user_username = arguments['username']
-        if self._gitlab.createuser(password=user_password, confirm=confirm, **arguments):
-            user_id = self.getUserId(user_username)
-            if self._gitlab.addsshkeyuser(user_id=user_id, title=user_sshkey_name, key=user_sshkey_file):
-                user_changed = True
-            # Add the user to the group if group_id is not empty
-            if group_id != '':
-                if self.addToGroup(group_id, user_id, access_level):
-                    user_changed = True
-            user_changed = True
-
-        # Exit with change to true or false
-        if user_changed:
-            self._module.exit_json(changed=True, result="Created the user")
+            try:
+                user.save()
+            except Exception as e:
+                self._module.fail_json(msg="Failed to create or update a user: %s " % to_native(e))
+            return True
         else:
-            self._module.exit_json(changed=False)
+            return False
 
-    def deleteUser(self, user_username):
-        user_id = self.getUserId(user_username)
+    '''
+    @param group User object
+    '''
+    def getUserId(self, user):
+        if user is not None:
+            return user.id
+        return None
 
-        if self._gitlab.deleteuser(user_id):
-            self._module.exit_json(changed=True, result="Successfully deleted user %s" % user_username)
+    '''
+    @param name Name of the groupe
+    @param full_path Complete path of the Group including parent group path. <parent_path>/<group_path>
+    '''
+    def findGroup(self, name, full_path):
+        groups = self._gitlab.groups.list(search=name)
+        for group in groups:
+            if (group.full_path == full_path):
+                return group
+
+    '''
+    @param user User object
+    @param sshkey_name Name of the ssh key
+    '''
+    def sshKeyExists(self, user, sshkey_name):
+        keyList = map(lambda k: k.title, user.keys.list())
+        
+        return sshkey_name in keyList
+
+    '''
+    @param user User object
+    @param sshkey Dict containing sshkey infos {"name": "", "file": ""}
+    '''
+    def addSshKeyToUser(self, user, sshkey):
+        if not self.sshKeyExists(user, sshkey['name']):
+            try:
+                user.keys.create({
+                    'title': sshkey['name'],
+                    'key': sshkey['file']})
+            except gitlab.exceptions.GitlabCreateError as e:
+                self._module.fail_json(msg="Failed to assign sshkey to user: %s" % to_native(e))
+            return True
+        return False
+
+    '''
+    @param group Group object
+    @param user_id Id of the user to find
+    '''
+    def findMember(self, group, user_id):
+        try:
+            member = group.members.get(user_id)
+        except gitlab.exceptions.GitlabGetError as e:
+            return None
+        return member
+
+    '''
+    @param group Group object
+    @param user_id Id of the user to check
+    '''
+    def memberExists(self, group, user_id):
+        member = self.findMember(group, user_id)
+
+        return member is not None
+
+    '''
+    @param group Group object
+    @param user_id Id of the user to check
+    @param access_level Gitlab access_level to check
+    '''
+    def memberAsGoodAccessLevel(self, group, user_id, access_level):
+        member = self.findMember(group, user_id)
+
+        return member.access_level == access_level
+
+    '''
+    @param user User object
+    @param group_path Complete path of the Group including parent group path. <parent_path>/<group_path>
+    @param access_level Gitlab access_level to assign
+    '''
+    def assignUserToGroup(self, user, group_path, access_level):
+        group_name = group_path.split('/').pop()
+        group = self.findGroup(group_name, group_path)
+
+        if self.memberExists(group, self.getUserId(user)):
+            if not self.memberAsGoodAccessLevel(group, self.getUserId(user), ACCESS_LEVEL[access_level]):
+                member = self.findMember(group, self.getUserId(user))
+                member.access_level = ACCESS_LEVEL[access_level]
+                member.save()
+                return True
         else:
-            self._module.exit_json(changed=False, result="User %s already deleted or something went wrong" % user_username)
-
-    def existsGroup(self, group_name):
-        for group in self._gitlab.getall(self._gitlab.getgroups):
-            if group['name'] == group_name:
+            if group is not None:
+                try:
+                    group.members.create({
+                        'user_id': self.getUserId(user),
+                        'access_level': ACCESS_LEVEL[access_level]})
+                except gitlab.exceptions.GitlabCreateError as e:
+                    self._module.fail_json(msg="Failed to assign user to group: %s" % to_native(e))
                 return True
         return False
 
+    '''
+    @param user User object
+    @param arguments User attributes
+    '''
+    def updateUser(self, user, arguments):
+        changed = False
+
+        if arguments['name'] is not None:
+            if user.name != arguments['name']:
+                user.name = arguments['name']
+                changed = True
+
+        if arguments['email'] is not None:
+            if user.email != arguments['email']:
+                user.email = arguments['email']
+                changed = True
+
+        return (changed, user)
+
+    '''
+    @param arguments User attributes
+    '''
+    def createUser(self, arguments):
+        changed = False
+
+        user = self._gitlab.users.create(arguments)
+
+        return user
+
+    '''
+    @param name Username of the user
+    '''
+    def findUser(self, username):
+        users = self._gitlab.users.list(search=username)
+        for user in users:
+            if (user.username == username):
+                return user
+
+    '''
+    @param name Username of the user
+    '''
     def existsUser(self, username):
-        found_user = self._gitlab.getusers(search=username)
-        for user in found_user:
-            if user['id'] != '':
-                return True
+        #When user exists, object will be stored in self.userObject.
+        user = self.findUser(username)
+        if user:
+            self.userObject = user
+            return True
         return False
 
-    def getGroupId(self, group_name):
-        for group in self._gitlab.getall(self._gitlab.getgroups):
-            if group['name'] == group_name:
-                return group['id']
+    '''
 
-    def getUserId(self, username):
-        found_user = self._gitlab.getusers(search=username)
-        for user in found_user:
-            if user['id'] != '':
-                return user['id']
+    '''
+    def deleteUser(self):
+        user = self.userObject
 
-    def updateUser(self, group_id, user_sshkey_name, user_sshkey_file, access_level, arguments):
-        user_changed = False
-        user_username = arguments['username']
-        user_id = self.getUserId(user_username)
-        user_data = self._gitlab.getuser(user_id=user_id)
-
-        # Lets check if we need to update the user
-        for arg_key, arg_value in arguments.items():
-            if user_data[arg_key] != arg_value:
-                user_changed = True
-
-        if user_changed:
-            if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            self._gitlab.edituser(user_id=user_id, **arguments)
-            user_changed = True
-        if self._module.check_mode or self._gitlab.addsshkeyuser(user_id=user_id, title=user_sshkey_name, key=user_sshkey_file):
-            user_changed = True
-        if group_id != '':
-            if self._module.check_mode or self.addToGroup(group_id, user_id, access_level):
-                user_changed = True
-        if user_changed:
-            self._module.exit_json(changed=True, result="The user %s is updated" % user_username)
-        else:
-            self._module.exit_json(changed=False, result="The user %s is already up2date" % user_username)
-
+        return user.delete()
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True),
-            validate_certs=dict(required=False, default=True, type='bool', aliases=['verify_ssl']),
-            login_user=dict(required=False, no_log=True),
-            login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True),
-            name=dict(required=True),
+            server_url=dict(required=True, type='str'),
+            verify_ssl=dict(required=False, default=True, type='bool', aliases=['validate_certs']),
+            login_user=dict(required=False, no_log=True, type='str'),
+            login_password=dict(required=False, no_log=True, type='str'),
+            login_token=dict(required=False, no_log=True, type='str'),
+            name=dict(required=True, type='str'),
+            state=dict(required=False, default="present", choices=["present", "absent"]),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
             email=dict(required=True),
             sshkey_name=dict(required=False),
-            sshkey_file=dict(required=False),
+            sshkey_file=dict(required=False, aliases=['ssh_key']),
             group=dict(required=False),
-            access_level=dict(required=False, choices=["guest", "reporter", "developer", "master", "owner"]),
-            state=dict(default="present", choices=["present", "absent"]),
-            confirm=dict(required=False, default=True, type='bool')
+            access_level=dict(required=False, default="guest", choices=["guest", "reporter", "developer", "master", "maintainer" "owner"]),
+            confirm=dict(required=False, default=True, type='bool'),
+            isadmin=dict(required=False, default=False, type='bool'),
+            external=dict(required=False, default=False, type='bool')
         ),
+        mutually_exclusive=[
+            ['login_user', 'login_token'],
+            ['login_password', 'login_token']
+        ],
+        required_together=[
+            ['login_user', 'login_password']
+        ],
+        required_one_of=[
+            ['login_user', 'login_token']
+        ],
         supports_check_mode=True
     )
 
-    if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install pyapi-gitlab")
-
     server_url = module.params['server_url']
-    verify_ssl = module.params['validate_certs']
+    verify_ssl = module.params['verify_ssl']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']
     user_name = module.params['name']
-    user_username = module.params['username']
+    state = module.params['state']
+    user_username = module.params['username'].lower()
     user_password = module.params['password']
     user_email = module.params['email']
     user_sshkey_name = module.params['sshkey_name']
     user_sshkey_file = module.params['sshkey_file']
-    group_name = module.params['group']
+    group_path = module.params['group']
     access_level = module.params['access_level']
-    state = module.params['state']
     confirm = module.params['confirm']
+    user_isadmin = module.params['isadmin']
+    user_external = module.params['external']
 
-    if len(user_password) < 8:
-        module.fail_json(msg="New user's 'password' should contain more than 8 characters.")
+    if not HAS_GITLAB_PACKAGE:
+        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
-    # We need both login_user and login_password or login_token, otherwise we fail.
-    if login_user is not None and login_password is not None:
-        use_credentials = True
-    elif login_token is not None:
-        use_credentials = False
-    else:
-        module.fail_json(msg="No login credentials are given. Use login_user with login_password, or login_token")
-
-    # Check if vars are none
-    if user_sshkey_file is not None and user_sshkey_name is not None:
-        use_sshkey = True
-    else:
-        use_sshkey = False
-
-    if group_name is not None and access_level is not None:
-        add_to_group = True
-        group_name = group_name.lower()
-    else:
-        add_to_group = False
-
-    user_username = user_username.lower()
-
-    # Lets make an connection to the Gitlab server_url, with either login_user and login_password
-    # or with login_token
     try:
-        if use_credentials:
-            git = gitlab.Gitlab(host=server_url, verify_ssl=verify_ssl)
-            git.login(user=login_user, password=login_password)
+        gitlab_instance = gitlab.Gitlab(url=server_url, ssl_verify=verify_ssl, email=login_user, password=login_password,
+                            private_token=login_token, api_version=4)
+        gitlab_instance.auth()
+    except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+    except (gitlab.exceptions.GitlabHttpError) as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s. Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+
+    gitlab_user = GitLabUser(module, gitlab_instance)
+    user_exists = gitlab_user.existsUser(user_username)
+
+    if state == 'absent':
+        if user_exists:
+            gitlab_user.deleteUser()
+            module.exit_json(changed=True, result="Successfully deleted user %s" % user_username)
         else:
-            git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
-    except Exception as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s " % to_native(e))
+            module.exit_json(changed=False, result="User deleted or does not exists")
 
-    # Check if user is authorized or not before proceeding to any operations
-    # if not, exit from here
-    auth_msg = git.currentuser().get('message', None)
-    if auth_msg is not None and auth_msg == '401 Unauthorized':
-        module.fail_json(msg='User unauthorized',
-                         details="User is not allowed to access Gitlab server "
-                                 "using login_token. Please check login_token")
-
-    # Validate if group exists and take action based on "state"
-    user = GitLabUser(module, git)
-
-    # Check if user exists, if not exists and state = absent, we exit nicely.
-    if not user.existsUser(user_username) and state == "absent":
-        module.exit_json(changed=False, result="User already deleted or does not exist")
-    else:
-        # User exists,
-        if state == "absent":
-            user.deleteUser(user_username)
+    if state == 'present':
+        if gitlab_user.createOrUpdateUser(
+            user_name,
+            user_username,
+            user_password,
+            user_email,
+            user_sshkey_name,
+            user_sshkey_file,
+            group_path,
+            access_level,
+            confirm,
+            user_isadmin,
+            user_external):
+            module.exit_json(changed=True, result="Successfully created or updated the user %s" % user_username, user=gitlab_user.userObject._attrs)
         else:
-            user.createOrUpdateUser(user_name, user_username, user_password, user_email, user_sshkey_name, user_sshkey_file, group_name, access_level, confirm)
-
+            module.exit_json(changed=False, result="No need to update the user %s" % user_username, user=gitlab_user.userObject._attrs)
 
 if __name__ == '__main__':
     main()
