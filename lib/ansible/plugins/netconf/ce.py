@@ -107,7 +107,7 @@ class Netconf(NetconfBase):
                 hostkey_verify=obj.get_option('host_key_checking'),
                 look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj._play_context.timeout
+                timeout=obj.get_option('persistent_connect_timeout')
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))
