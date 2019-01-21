@@ -169,27 +169,42 @@ def file_props(root, path):
 
     return ret
 
-
 class LookupModule(LookupBase):
+
+    def lookup_term(self, term, variables=None, **kwargs):
+        basedir = self.get_basedir(variables)
+        term_file = os.path.basename(term)
+        ret = []
+        term_file = os.path.basename(term)
+        dwimmed_path = self._loader.path_dwim_relative(basedir, 'files', os.path.dirname(term))
+        path = os.path.join(dwimmed_path, term_file)
+        display.debug("Walking '{0}'".format(path))
+        for root, dirs, files in os.walk(path, topdown=True):
+            for entry in dirs + files:
+                relpath = os.path.relpath(os.path.join(root, entry), path)
+
+                # Skip if relpath was already processed (from another root)
+                if relpath not in [entry['path'] for entry in ret]:
+                    props = file_props(path, relpath)
+                    if props is not None:
+                        display.debug("  found '{0}'".format(os.path.join(path, relpath)))
+                        ret.append(props)
+      return ret
 
     def run(self, terms, variables=None, **kwargs):
         basedir = self.get_basedir(variables)
-
         ret = []
         for term in terms:
-            term_file = os.path.basename(term)
-            dwimmed_path = self._loader.path_dwim_relative(basedir, 'files', os.path.dirname(term))
-            path = os.path.join(dwimmed_path, term_file)
-            display.debug("Walking '{0}'".format(path))
-            for root, dirs, files in os.walk(path, topdown=True):
-                for entry in dirs + files:
-                    relpath = os.path.relpath(os.path.join(root, entry), path)
-
-                    # Skip if relpath was already processed (from another root)
-                    if relpath not in [entry['path'] for entry in ret]:
-                        props = file_props(path, relpath)
-                        if props is not None:
-                            display.debug("  found '{0}'".format(os.path.join(path, relpath)))
-                            ret.append(props)
-
+            display.debug("Walking '{0}'".format(term))
+            
+            if not isinstance(term, list):
+                t = self.lookup_term(term, variables, **kwargs)
+                if t:
+                        ret += t
+            else:
+               for term_l in term:
+                   t= self.lookup_term(term_l, variables, **kwargs)
+                   if t:
+                       ret += t
         return ret
+
