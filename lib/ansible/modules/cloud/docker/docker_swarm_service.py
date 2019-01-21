@@ -552,7 +552,7 @@ class DockerService(DockerBaseClass):
         self.mode = "replicated"
         self.user = "root"
         self.mounts = []
-        self.configs = None
+        self.configs = []
         self.secrets = []
         self.constraints = []
         self.networks = []
@@ -688,7 +688,7 @@ class DockerService(DockerBaseClass):
             s.mounts.append(service_m)
 
         s.configs = None
-        if ap['configs']:
+        if ap['configs'] is not None:
             s.configs = []
             for param_m in ap['configs']:
                 service_c = {}
@@ -729,7 +729,7 @@ class DockerService(DockerBaseClass):
             differences.add('mode', parameter=self.mode, active=os.mode)
         if self.mounts != os.mounts:
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if self.configs != os.configs:
+        if self.configs is not None and self.configs != os.configs:
             differences.add('configs', parameter=self.configs, active=os.configs)
         if self.secrets != os.secrets:
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
