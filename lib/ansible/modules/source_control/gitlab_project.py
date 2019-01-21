@@ -87,13 +87,14 @@ options:
             - Possible values are true and false.
         type: bool
         default: 'no'
-    visibility_level:
+    visibility:
         description:
-            - Private. visibility_level is 0. Project access must be granted explicitly for each user.
-            - Internal. visibility_level is 10. The project can be cloned by any logged in user.
-            - Public. visibility_level is 20. The project can be cloned without any authentication.
-            - Possible values are 0, 10 and 20.
-        default: 0
+            - Private. Project access must be granted explicitly for each user.
+            - Internal. The project can be cloned by any logged in user.
+            - Public. The project can be cloned without any authentication.
+        default: private
+        aliases:
+            - visibility_level
     import_url:
         description:
             - Git repository which will be imported into gitlab.
@@ -147,6 +148,7 @@ except Exception:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+
 class GitLabProject(object):
     def __init__(self, module, gitlab_instance):
         self._module = module
@@ -159,8 +161,8 @@ class GitLabProject(object):
     @param description Description of the group
     @param parent Parent group full path
     '''
-    def createOrUpdateProject(self, project_name, project_path, project_description, namespace, issues_enabled, merge_requests_enabled, 
-                                wiki_enabled, snippets_enabled, visibility, import_url):
+    def createOrUpdateProject(self, project_name, project_path, project_description, namespace, issues_enabled, merge_requests_enabled,
+                            wiki_enabled, snippets_enabled, visibility, import_url):
         changed = False
 
         # Because we have already call userExists in main()
@@ -257,6 +259,7 @@ class GitLabProject(object):
             return True
         return False
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -320,7 +323,8 @@ def main():
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
+            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     # Set project_path to project_name if it is empty.
     if project_path is None:
@@ -346,7 +350,7 @@ def main():
             module.exit_json(changed=False, result="Project deleted or does not exists")
 
     if state == 'present':
-        if gitlab_project.createOrUpdateProject(project_name, project_path, project_description, namespace, issues_enabled, merge_requests_enabled, 
+        if gitlab_project.createOrUpdateProject(project_name, project_path, project_description, namespace, issues_enabled, merge_requests_enabled,
                                                 wiki_enabled, snippets_enabled, visibility, import_url):
 
             module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name, project=gitlab_project.projectObject._attrs)

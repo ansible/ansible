@@ -25,13 +25,13 @@ options:
         description:
             - Url of Gitlab server, with protocol (http or https).
         required: true
-    validate_certs:
+    verify_ssl:
         description:
             - When using https if SSL certificate needs to be verified.
         type: bool
         default: 'yes'
         aliases:
-            - verify_ssl
+            - validate_certs
     login_user:
         description:
             - Gitlab user name.
@@ -76,11 +76,12 @@ EXAMPLES = '''
 - name: "Delete Gitlab Group"
   local_action:
     gitlab_group:
-        server_url: "http://gitlab.dj-wasabi.local
+        server_url: "http://gitlab.dj-wasabi.local"
         validate_certs: False
         login_token: WnUzDsxjy8230-Dy_k
         name: my_first_group
         state: absent
+
 - name: "Create Gitlab Group"
   local_action:
     gitlab_group:
@@ -91,6 +92,7 @@ EXAMPLES = '''
         name: my_first_group
         path: my_first_group
         state: present
+
 # The group will by created at https://gitlab.dj-wasabi.local/super_parent/parent/my_first_group
 - name: "Create Gitlab SubGroup"
   local_action:
@@ -157,6 +159,7 @@ class GitLabGroup(object):
                 'description': description,
                 'visibility': visibility})
 
+        self.groupObject = group
         if changed:
             if self._module.check_mode:
                 self._module.exit_json(changed=True, result="Group should have updated.")
@@ -176,20 +179,11 @@ class GitLabGroup(object):
     def updateGroup(self, group, arguments):
         changed = False
 
-        if arguments['name'] is not None:
-            if group.name != arguments['name']:
-                group.name = arguments['name']
-                changed = True
-
-        if arguments['description'] is not None:
-            if group.description != arguments['description']:
-                group.description = arguments['description']
-                changed = True
-
-        if arguments['visibility'] is not None:
-            if group.visibility != arguments['visibility']:
-                group.visibility = arguments['visibility']
-                changed = True
+        for arg_key, arg_value in arguments.items():
+            if arguments[arg_key] is not None:
+                if getattr(group, arg_key) != arguments[arg_key]:
+                    setattr(group, arg_key, arguments[arg_key])
+                    changed = True
 
         return (changed, group)
 
@@ -284,7 +278,8 @@ def main():
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
+            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
 
     # Define default group_path based on group_name
     if group_path is None:

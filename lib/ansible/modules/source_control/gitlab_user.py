@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # Copyright: (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -68,6 +68,7 @@ options:
             - The ssh key itself.
     group:
         description:
+            - The full path of the group.
             - Add user as an member to this group.
     access_level:
         description:
@@ -164,8 +165,8 @@ class GitLabUser(object):
     '''
     @param * Attribut du user
     '''
-    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name, 
-        user_sshkey_file, group_path, access_level, confirm, user_isadmin, user_external):
+    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name,
+                        user_sshkey_file, group_path, access_level, confirm, user_isadmin, user_external):
         changed = False
 
         # Because we have already call userExists in main()
@@ -235,7 +236,7 @@ class GitLabUser(object):
     '''
     def sshKeyExists(self, user, sshkey_name):
         keyList = map(lambda k: k.title, user.keys.list())
-        
+
         return sshkey_name in keyList
 
     '''
@@ -316,15 +317,11 @@ class GitLabUser(object):
     def updateUser(self, user, arguments):
         changed = False
 
-        if arguments['name'] is not None:
-            if user.name != arguments['name']:
-                user.name = arguments['name']
-                changed = True
-
-        if arguments['email'] is not None:
-            if user.email != arguments['email']:
-                user.email = arguments['email']
-                changed = True
+        for arg_key, arg_value in arguments.items():
+            if arguments[arg_key] is not None:
+                if getattr(user, arg_key) != arguments[arg_key]:
+                    setattr(user, arg_key, arguments[arg_key])
+                    changed = True
 
         return (changed, user)
 
@@ -332,8 +329,6 @@ class GitLabUser(object):
     @param arguments User attributes
     '''
     def createUser(self, arguments):
-        changed = False
-
         user = self._gitlab.users.create(arguments)
 
         return user
@@ -365,6 +360,7 @@ class GitLabUser(object):
         user = self.userObject
 
         return user.delete()
+
 
 def main():
     module = AnsibleModule(
@@ -428,7 +424,8 @@ def main():
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
+            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     gitlab_user = GitLabUser(module, gitlab_instance)
     user_exists = gitlab_user.existsUser(user_username)
@@ -456,6 +453,7 @@ def main():
             module.exit_json(changed=True, result="Successfully created or updated the user %s" % user_username, user=gitlab_user.userObject._attrs)
         else:
             module.exit_json(changed=False, result="No need to update the user %s" % user_username, user=gitlab_user.userObject._attrs)
+
 
 if __name__ == '__main__':
     main()
