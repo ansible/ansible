@@ -1554,7 +1554,7 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
   type: integer
 PERSISTENT_COMMAND_TIMEOUT:
   name: Persistence command timeout
-  default: 10
+  default: 30
   description: This controls the amount of time to wait for response from remote device before timing out presistent connection.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:

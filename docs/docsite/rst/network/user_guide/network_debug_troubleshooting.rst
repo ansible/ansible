@@ -240,7 +240,7 @@ If the identified error message from the log file is:
 
 .. code-block:: yaml
 
-   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 30 secs
 
 or
 
@@ -472,7 +472,7 @@ For example:
 
 .. code-block:: yaml
 
-   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 30 secs
 
 Suggestions to resolve:
 
@@ -481,14 +481,14 @@ Increase value of command timeout in configuration file or by setting environmen
 
 .. code-block:: yaml
 
-   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=30
+   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=60
 
 To make this a permanent change, add the following to your ``ansible.cfg`` file:
 
 .. code-block:: ini
 
    [persistent_connection]
-   command_timeout = 30
+   command_timeout = 60
 
 Option 2 (Per task command timeout setting):
 Increase command timeout per task basis. All network modules support a
@@ -522,11 +522,11 @@ Suggestions to resolve:
       ios_command:
         commands: copy running-config startup-config
       vars:
-        ansible_command_timeout: 30
+        ansible_command_timeout: 60
 
-Some operations take longer than the default 10 seconds to complete.  One good
+Some operations take longer than the default 30 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value from the default 10 seconds to 30
+In this case, changing the timeout value from the default 30 seconds to 60
 seconds will prevent the task from failing before the command completes
 successfully.
 
