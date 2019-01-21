@@ -79,6 +79,7 @@ DOCUMENTATION = '''
                 it can from as many clouds as it can contact. (Note, the
                 default value of this is opposite from the old openstack.py
                 inventory script's option fail_on_errors)
+                note: if filters are defined this option is always 'yes'.
             type: bool
             default: 'no'
         clouds_yaml_path:
@@ -97,6 +98,13 @@ DOCUMENTATION = '''
             description: Add hosts to group based on Jinja2 conditionals.
             type: dictionary
             default: {}
+        filters:
+            description: |
+                Match hosts with metadata. Use dictionary or a string containing
+                a jmespath expression for further filtering.
+                note: fail_on_errors is always True when using filters
+            type: dictionary or string
+            default: None
 '''
 
 EXAMPLES = '''
@@ -105,12 +113,21 @@ EXAMPLES = '''
 plugin: openstack
 expand_hostvars: yes
 fail_on_errors: yes
+
+# filter hosts with dictionary
+plugin: openstack
+expand_hostvars: yes
+filters:
+    metadata:
+        custom_metadata_key: custom_metadata_value
+
 '''
 
 import collections
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+from ansible.module_utils.six import string_types
 
 try:
     # Due to the name shadowing we should import other way
@@ -192,9 +209,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             expand_hostvars = self._config_data.get('expand_hostvars', False)
             fail_on_errors = self._config_data.get('fail_on_errors', False)
+            filters = self._config_data.get('filters', None)
 
-            source_data = cloud_inventory.list_hosts(
-                expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
+            if isinstance(filters, dict) or isinstance(filters, string_types):
+                source_data = cloud_inventory.search_hosts(
+                    expand=expand_hostvars, filters=filters)
+            else:
+                source_data = cloud_inventory.list_hosts(
+                    expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
             if self.cache is not None:
                 self.cache.set(cache_key, source_data)
