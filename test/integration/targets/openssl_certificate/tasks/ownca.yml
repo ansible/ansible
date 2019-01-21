@@ -9,6 +9,7 @@
     privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
     subject:
       commonName: Example CA
+    useCommonNameForSAN: no
     basic_constraints:
     - 'CA:TRUE'
     basic_constraints_critical: yes
