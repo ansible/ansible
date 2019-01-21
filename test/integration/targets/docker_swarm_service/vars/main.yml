@@ -5,6 +5,7 @@ service_expected_output:
   configs: null
   constraints: []
   container_labels: {}
+  command: null
   dns: []
   dns_options: []
   dns_search: []
