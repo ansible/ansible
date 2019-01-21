@@ -747,6 +747,13 @@ class DnfModule(YumDnf):
                     "results": []
                 }
 
+    def _whatprovides(self, filepath):
+        available = self.base.sack.query().available()
+        pkg_spec = available.filter(provides=filepath).run()
+
+        if pkg_spec:
+            return pkg_spec[0].name
+
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
         already_loaded_comps = False  # Only load this if necessary, it's slow
@@ -758,6 +765,13 @@ class DnfModule(YumDnf):
             elif name.endswith(".rpm"):
                 filenames.append(name)
             elif name.startswith("@") or ('/' in name):
+                # like "dnf install /usr/bin/vi"
+                if '/' in name:
+                    pkg_spec = self._whatprovides(name)
+                    if pkg_spec:
+                        pkg_specs.append(pkg_spec)
+                        continue
+
                 if not already_loaded_comps:
                     self.base.read_comps()
                     already_loaded_comps = True
