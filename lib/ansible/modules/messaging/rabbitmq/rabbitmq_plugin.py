@@ -113,21 +113,14 @@ class RabbitMqPlugins(object):
         return list()
 
     def get_all(self):
-        list_output = self._exec(['-q', 'list', '--enabled', '--minimal'], True)
-        enabled_plugins = []
+        list_output = self._exec(['list', '-E', '-m'], True)
+        plugins = []
         for plugin in list_output:
             if not plugin:
                 break
-            enabled_plugins.append(plugin)
+            plugins.append(plugin)
 
-        list_output = self._exec(['-q', 'list', '--minimal'], True)
-        available_plugins = []
-        for plugin in list_output:
-            if not plugin:
-                break
-            available_plugins.append(plugin)
-
-        return enabled_plugins, available_plugins
+        return plugins
 
     def enable(self, name):
         self._exec(['enable', name])
@@ -154,15 +147,11 @@ def main():
     state = module.params['state']
 
     rabbitmq_plugins = RabbitMqPlugins(module)
-    enabled_plugins, available_plugins = rabbitmq_plugins.get_all()
+    enabled_plugins = rabbitmq_plugins.get_all()
 
     enabled = []
     disabled = []
     if state == 'enabled':
-        for name in names:
-            if name not in available_plugins:
-                module.fail_json(msg='{} plugin is not available'.format(name))
-
         if not new_only:
             for plugin in enabled_plugins:
                 if " " in plugin:
