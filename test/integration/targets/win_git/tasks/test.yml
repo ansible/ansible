@@ -11,7 +11,7 @@
   assert:
     that:            
       - fail_clone is not changed
-      - "'Failed to clone' in fail_clone.win_git.msg"
+      - "'Failed to clone' in fail_clone.git_.msg"
 
 - name: clone repo using http (check)
   block:
@@ -50,7 +50,7 @@
     that:      
       - http_clone is changed
       - http_path.stat.exists and http_path.stat.isdir
-      - "'Failed to clone' not in http_clone.win_git.msg"
+      - "'Failed to clone' not in http_clone.git_msg"
 
 - name: clone repo using git protocol
   block:
@@ -70,7 +70,7 @@
     that:    
       - git_clone is changed  
       - git_path.stat.exists and git_path.stat.isdir
-      - "'Failed to clone' not in git_clone.win_git.msg"
+      - "'Failed to clone' not in git_clone.git_msg"
 
 - name: clone repo using a branch
   block:
@@ -85,7 +85,7 @@
   assert:
     that:      
       - http_clone_branch is changed     
-      - "'Successfully cloned' in http_clone_branch.win_git.msg"      
+      - "'Successfully cloned' in http_clone_branch.git_msg"      
       
 - name: update the repo using master branch 
   block:
@@ -101,7 +101,7 @@
   assert:
     that:      
       - http_update is changed     
-      - "'Successfully updated' in http_update.win_git.msg"
+      - "'Successfully updated' in http_update.git_msg"
       
 - name: clean the destination before cloning
   block:

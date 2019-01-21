@@ -8,7 +8,7 @@
   win_git:
     repo: https://github.com/ansible/ansible-examples.git
   register: git_fail  
-  failed_when: '"git.exe is not installed" in git_fail.win_git.msg' 
+  failed_when: '"git.exe is not installed" in git_fail.git_msg' 
 
 - name: Install git if not installed
   win_chocolatey:

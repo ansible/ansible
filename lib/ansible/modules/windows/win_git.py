@@ -118,9 +118,21 @@ dest:
   returned: always
   type: str
   sample: /tmp/hellogitworld
-msg:
+git_msg:
   description: success or error message
   returned: always
   type: str
   sample: Successfuly updated
+git_output:
+  description: raw git output
+  type: str
+  sample: error occured while cloning
+method:
+  description: git method used
+  type: str
+  sample: pull
+return_code:
+  description: return code of running git command
+  type: int
+  sample: 0
 '''

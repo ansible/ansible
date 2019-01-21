@@ -24,12 +24,13 @@ $accept_hostkey = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "accept_ho
 $depth =  Get-AnsibleParam -obj $params -name "depth"  -type "int" -default $null
 $key_file = Get-AnsibleParam -obj $params -name "key_file" -type "str"
 
-$result = @{
-    win_git = @{        
-        dest = $null        
-        msg  = $null 
-    }
+$result = @{      
     changed = $false    
+    dest = $null        
+    git_msg =  $null      
+    git_output = $null
+    return_code = $null
+    method = $null
 }
 
 # Add Git to PATH variable
@@ -79,7 +80,7 @@ function PrepareDestination {
             if (-Not (Test-Path($dest))) {
                New-Item -ItemType directory -Path $dest      
             }
-            Set-Attr $result.win_git "msg" "Successfully replaced dir $dest."
+            Set-Attr $result "git_msg" "Successfully replaced dir $dest."
             Set-Attr $result "changed" $true            
         } catch {
             $ErrorMessage = $_.Exception.Message
@@ -119,7 +120,7 @@ function CheckSshKnownHosts {
         if ([string]::IsNullOrEmpty($key_search)) {
             try {  
                 [System.IO.File]::AppendAllText($sshKnownHostsPath, $sshHostKey, $(New-Object System.Text.UTF8Encoding $False))
-                Set-Attr $result.win_git "msg" "Successfully updated $sshKnownHostsPath."
+                Set-Attr $result "git_msg" "Successfully updated $sshKnownHostsPath."
             }
             catch {
                $ErrorMessage = $_.Exception.Message
@@ -127,7 +128,7 @@ function CheckSshKnownHosts {
             }               
         }  
         else {
-            Set-Attr $result.win_git "msg" "No update to $sshKnownHostsPath. $key_search exits"
+            Set-Attr $result "git_msg" "No update to $sshKnownHostsPath. $key_search exits"
         }    
     }
     else {
@@ -148,7 +149,7 @@ function CheckSshKnownHosts {
             try {
               [System.IO.File]::AppendAllText($sshConfigPath, "Host $gitServer`n", $(New-Object System.Text.UTF8Encoding $False))
               [System.IO.File]::AppendAllText($sshConfigPath, "IdentityFile $key_file", $(New-Object System.Text.UTF8Encoding $False))       
-              Set-Attr $result.win_git "msg" "Successfully updated $sshConfigPath."
+              Set-Attr $result "git_msg" "Successfully updated $sshConfigPath."
             }
             catch {
                 $ErrorMessage = $_.Exception.Message
@@ -156,7 +157,7 @@ function CheckSshKnownHosts {
             }            
         }   
         else {
-            Set-Attr $result.win_git "msg" "No update to $sshConfigPath. $key_search exits"
+            Set-Attr $result "git_msg" "No update to $sshConfigPath. $key_search exits"
         }         
         & cmd /c start-ssh-agent.cmd | Out-Null
         & cmd /c $gitKeyAddPath $env:Userprofile\.ssh\id_rsa      
@@ -233,7 +234,7 @@ function checkout {
     if ($version -ne "HEAD") {
       Set-Location $dest; &git status --short --branch $version | Tee-Object -Variable branch_status | Out-Null
       $branch_status = $branch_status.split("/")[1]
-      Set-Attr $result.win_git "branch_status" "$branch_status"
+      Set-Attr $result "branch_status" "$branch_status"
 
         if ( $branch_status -ne "$version" ) {
             Fail-Json $result "Failed to checkout to $branch"
@@ -248,7 +249,7 @@ function clone {
     [CmdletBinding()]
     param()
 
-    Set-Attr $result.win_git "method" "clone"
+    Set-Attr $result "method" "clone"
     [hashtable]$Return = @{} 
     $git_output = ""
 
@@ -268,7 +269,7 @@ function clone {
        $git_opts += $depth
     } 
 
-    Set-Attr $result.win_git "git_opts" "$git_opts"
+    Set-Attr $result "git_opts" "$git_opts"
 
     #Only clone if $dest does not exist and not in check mode    
     if( -Not $check_mode) {    
@@ -280,28 +281,28 @@ function clone {
             
             if ($LASTEXITCODE -eq 0) {
                $result.changed = $true           
-               Set-Attr $result.win_git "msg" "Successfully cloned $repo into $dest."    
+               Set-Attr $result "git_msg" "Successfully cloned $repo into $dest."    
             }                    
      
         }    
         else {
-            Set-Attr $result.win_git "msg" "Failed to clone $repo into $dest. It is either not empty or does not exist"    
+            Set-Attr $result "git_msg" "Failed to clone $repo into $dest. It is either not empty or does not exist"    
         }
 
-        Set-Attr $result.win_git "return_code" $LASTEXITCODE
-        Set-Attr $result.win_git "git_output" $git_output
+        Set-Attr $result "return_code" $LASTEXITCODE
+        Set-Attr $result "git_output" $git_output
     }
     else {
         $Return.rc = 0
         $Return.git_output = $git_output        
-        Set-Attr $result.win_git "msg" "Check Mode - Skipping clone of $repo"
+        Set-Attr $result "git_msg" "Check Mode - Skipping clone of $repo"
     }
 
     # Check if branch is the correct one
     if ($version -ne "HEAD") {
         Set-Location $dest; &git status --short --branch $version | Tee-Object -Variable branch_status | Out-Null
         $branch_status = $branch_status.split("/")[1]
-        Set-Attr $result.win_git "branch_status" "$branch_status"
+        Set-Attr $result "branch_status" "$branch_status"
 
             if ( $branch_status -ne "$version" ) {
                 Fail-Json $result "Branch $branch_status is not $branch"
@@ -316,7 +317,7 @@ function update {
     [CmdletBinding()]
     param()
 
-    Set-Attr $result.win_git "method" "pull"
+    Set-Attr $result "method" "pull"
     [hashtable]$Return = @{}
     $git_output = ""
 
@@ -330,7 +331,7 @@ function update {
        $git_opts += $version
     } 
 
-    Set-Attr $result.win_git "git_opts" $git_opts
+    #Set-Attr $result "git_opts" $git_opts
     #Only update if $dest does exist and not in check mode
     if(-Not $check_mode) {
         # move into correct branch before pull
@@ -341,15 +342,15 @@ function update {
         $Return.git_output = $git_output
         if ($LASTEXITCODE -eq 0) {
             Set-Attr $result "changed" $true
-            Set-Attr $result.win_git "msg" "Successfully updated $repo to $version."
+            Set-Attr $result "git_msg" "Successfully updated $repo to $version."
         }  
         #TODO: handle correct status change when using update        
-        Set-Attr $result.win_git "return_code" $LASTEXITCODE
-        Set-Attr $result.win_git "git_output" $git_output
+        Set-Attr $result "return_code" $LASTEXITCODE
+        Set-Attr $result "git_output" $git_output
     } else {
         $Return.rc = 0
         $Return.git_output =  $git_output
-        Set-Attr $result.win_git "msg" "Check Mode - Skipping update of $repo"
+        Set-Attr $result "git_msg" "Check Mode - Skipping update of $repo"
     }
 
     return $Return
@@ -371,7 +372,7 @@ if (-Not (Test-Path($dest))) {
  }
 
 
-Set-Attr $result.win_git "dest" $dest
+Set-Attr $result "dest" $dest
 
 $git_output = ""
 $rc = 0
