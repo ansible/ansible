@@ -2645,6 +2645,16 @@ class ContainerManager(DockerBaseClass):
         return response
 
 
+def detect_ipvX_address_usage(client):
+    '''
+    Helper function to detect whether any specified network uses ipv4_address or ipv6_address
+    '''
+    for network in client.module.params.get("networks") or []:
+        if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
+            return True
+    return False
+
+
 class AnsibleDockerClientContainer(AnsibleDockerClient):
     # A list of module options which are not docker container properties
     __NON_CONTAINER_PROPERTY_OPTIONS = (
@@ -2772,15 +2782,6 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self.option_minimal_versions['stop_timeout']['supported'] = stop_timeout_supported
 
     def __init__(self, **kwargs):
-        def detect_ipvX_address_usage():
-            '''
-            Helper function to detect whether any specified network uses ipv4_address or ipv6_address
-            '''
-            for network in self.module.params.get("networks") or []:
-                if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
-                    return True
-            return False
-
         option_minimal_versions = dict(
             # internal options
             log_config=dict(),
@@ -2814,7 +2815,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
-                                        usage_msg='ipv4_address or ipv6_address in networks'),  # see above
+                                        usage_msg='ipv4_address or ipv6_address in networks'),
             stop_timeout=dict(),  # see _get_additional_minimal_versions()
         )
 
