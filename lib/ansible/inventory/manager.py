@@ -21,8 +21,10 @@ __metaclass__ = type
 
 import fnmatch
 import os
+import sys
 import re
 import itertools
+import traceback
 
 from operator import attrgetter
 from random import shuffle
@@ -273,6 +275,9 @@ class InventoryManager(object):
                         break
                     except AnsibleParserError as e:
                         display.debug('%s was not parsable by %s' % (source, plugin_name))
+                        # Ansible error was created before the exception has been processed,
+                        # so traceback can only be obtained within this context
+                        e.tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
                     except Exception as e:
                         display.debug('%s failed to parse %s' % (plugin_name, source))
