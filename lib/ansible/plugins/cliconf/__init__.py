@@ -278,7 +278,26 @@ class CliconfBase(AnsiblePlugin):
             }
         :return: capability as json string
         """
-        pass
+        result = {}
+        result['rpc'] = self.get_base_rpc()
+        result['device_operations'] = self.get_device_operations()
+        result['network_api'] = 'cliconf'
+        return result
+
+    def get_device_operations(self):
+        return {
+            'supports_commit': False,
+            'supports_replace': False,
+            'supports_rollback': False,
+            'supports_commit_comment': False,
+            'supports_defaults': False,
+            'supports_multiline_delimiter': False,
+            'supports_diff_replace': False,
+            'supports_diff_match': False,
+            'supports_diff_ignore_lines': False,
+            'supports_onbox_diff': False,
+            'supports_generate_diff': False,
+        }
 
     def commit(self, comment=None):
         """Commit configuration changes

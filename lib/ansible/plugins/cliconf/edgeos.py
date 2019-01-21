@@ -59,8 +59,7 @@ class Cliconf(CliconfBase):
         self.send_command('discard')
 
     def get_capabilities(self):
-        result = {}
+        result = super(Cliconf, self).get_capabilities()
         result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes']
-        result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
         return json.dumps(result)

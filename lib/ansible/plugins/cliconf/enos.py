@@ -71,8 +71,6 @@ class Cliconf(CliconfBase):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
+        result = super(Cliconf, self).get_capabilities()
         result['device_info'] = self.get_device_info()
         return json.dumps(result)
