@@ -145,6 +145,7 @@ options:
     type: bool
     default: yes
     version_added: '2.8'
+    aliases: [ AllUsers, isAllUser ]
 notes:
 - When C(state=absent) and the product is an exe, the path may be different
   from what was used to install the package originally. If path is not set then

@@ -7,9 +7,6 @@
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.CommandUtil
 #Requires -Module Ansible.ModuleUtils.ArgvParser
-#Requires -Module appx
-#Requires -Module dism
-#Requires -Module PackageManagement
 
 $ErrorActionPreference = 'Stop'
 
@@ -30,6 +27,7 @@ $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "
 $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
 $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 #$package_scope = Get-AnsibleParam -obj $params -name "package_scope" -type "str" -default "AllUsers" -validateset "CurrentUser","AllUsers" -aliases "scope"
+$install_all_users = Get-AnsibleParam -obj $params -name "install_all_users" -type "bool" -default $true -aliases "isAllUser","AllUsers"
 
 $result = @{
     changed = $false
@@ -154,6 +152,10 @@ Function Test-RegistryProperty($path, $name) {
     }
 }
 
+Function Test-Module($Name) {
+    return [Boolean](Get-InstalledModule -Name $Name);
+}
+
 Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credential, $creates_path, $creates_version, $creates_service) {
     # will get some metadata about the program we are trying to install or remove
     $metadata = @{
@@ -162,6 +164,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
         location_type = $null
         msi = $false
         uwa = $false # .msix or .appx
+        allusers = $install_all_users
         uninstall_string = $null
         path_error = $null
     }
@@ -174,7 +177,16 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
             $path.EndsWith(".msix", [System.StringComparison]::CurrentcultureIgnoreCase) -or
             $path.EndsWith(".appx", [System.StringComparison]::CurrentcultureIgnoreCase)
             ) {
+
             $metadata.uwa = $true
+            if ($metadata.uwa -and $metadata.allusers -and (Test-Module -Name dism)) {
+                $null = Import-Module -Name dism,PackageManagement
+            } elseif($metadata.uwa -and (-not $metadata.allusers) -and (Test-Module -Name appx)) {
+                $null = Import-Module -Name appx,PackageManagement
+            } elseif ($metadata.uwa) {
+                Fail-Json -obj $result -message "Required module not found. To install appx and msix packages PackageManagement and either appx (current user) or dism (all users) are required."
+            } else {
+            }
         } else {
             $metadata.msi = $false
         }
@@ -279,7 +291,11 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
         $metadata.installed = $service_exists
     }
     if ($metadata.uwa) {
-        $package = Get-Package -Name $product_id -PackageManagementProvider -Scope AllUsers -ErrorAction SilentlyContinue
+        if ($metadata.allusers) {
+            $package = Get-Package -Name $product_id -PackageManagementProvider -Scope AllUsers -ErrorAction SilentlyContinue
+        } else {
+            $package = Get-Package -Name $product_id -PackageManagementProvider -Scope CurrentUser -ErrorAction SilentlyContinue
+        }
         $metadata.installed = [bool]$package
     }
 
@@ -358,7 +374,11 @@ if ($state -eq "absent") {
             } elseif ($program_metadata.uwa) {
                 # We're uninstalling an uwa app
                 # Remove-Package -Name $program_metadata.product_id -Force -WhatIf:$check_mode
-                Remove-AppxProvisionedPackage -Online -Name $program_metadata.product_id -WhatIf:$check_mode
+                if ($program_metadata.allusers) {
+                    Remove-AppxProvisionedPackage -Online -Name $program_metadata.product_id -WhatIf:$check_mode
+                } else {
+                    Remove-AppxPackage -AllUsers:$program_metadata.allusers -WhatIf:$check_mode
+                }
             } else {
                 $log_path = $null
                 $uninstall_arguments = @($local_path)
@@ -457,9 +477,12 @@ if ($state -eq "absent") {
                     New-ItemProperty -Path $SideloadRegPath -Name "AllowAllTrustedApps" -Value "1" -PropertyType DWORD -Force -WhatIf:$check_mode
                 }
                 # TODO: Add Ansible parameter for untrusted and unsigned packages (AllowDevelopmentWithoutDevLicense = 1)
-                # TODO: If scope currentuser only: Add-AppxPackage -Path $local_path -WhatIf:$check_mode
-                Add-AppxProvisionedPackage -Online -PackagePath $local_path -SkipLicense -WhatIf:$check_mode
                 # TODO: Add -DependencyPath and -LicensePath, until the later is implemented, use -SkipLicense
+                if ($program_metadata.allusers) {
+                    Add-AppxProvisionedPackage -Online -PackagePath $local_path -SkipLicense -WhatIf:$check_mode
+                } else {
+                    Add-AppxPackage -Path $local_path -WhatIf:$check_mode
+                }
                 Set-ItemProperty -Path $SideloadRegPath -Name "AllowAllTrustedApps" -Value $oldValue -Force -WhatIf:$check_mode
             } else {
                 $log_path = $null
