@@ -1,0 +1,4 @@
+bugfixes:
+- Change backup file globbing for network _config modules so backing up one host's config
+  will not delete the backed up config of any host whose hostname is a subset of the first
+  host's hostname (e.g., switch1 and switch11)
