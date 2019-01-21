@@ -26,6 +26,10 @@
 - name: List of elliptic curves supported by OpenSSL
   debug: var=openssl_ecc_list
 
+- name: Run module with backend autodetection
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey_backend_selection.pem'
+
 - block:
   - name: Running tests with pyOpenSSL backend
     include_tasks: impl.yml
