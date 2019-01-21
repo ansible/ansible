@@ -2077,8 +2077,8 @@ def main():
         vms_service = connection.system_service().vms_service()
 
         #In case of of wait false and state running, waits for VM to be created
-        original_wait=None
-        if not module.params['wait'] and state=='running':
+        original_wait = None
+        if not module.params['wait'] and state == 'running':
             original_wait = module.params['wait']
             module.params['wait'] = True
 
@@ -2105,7 +2105,7 @@ def main():
                 clone_permissions=module.params['clone_permissions'],
             )
 
-            if original_wait != None:
+            if original_wait is not None:
                 vms_module._module.params['wait'] = original_wait
 
             # If VM is going to be created and check_mode is on, return now:
