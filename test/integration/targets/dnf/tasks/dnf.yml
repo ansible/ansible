@@ -1,3 +1,5 @@
+- include_vars: "{{ ansible_distribution }}.yml"
+
 # UNINSTALL 'python2-dnf'
 #  The `dnf` module has the smarts to auto-install the relevant python
 #  bindings.  To test, we will first uninstall python2-dnf (so that the tests
@@ -84,8 +86,8 @@
         - "not dnf_result.changed"
 
 # Multiple packages
-- name: uninstall sos and sharutils
-  dnf: name=sos,sharutils state=removed
+- name: uninstall sos and bc
+  dnf: name=sos,bc state=removed
   register: dnf_result
 
 - name: check sos with rpm
@@ -93,19 +95,19 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check bc with rpm
+  shell: rpm -q bc
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_bc_result
 
 - name: verify packages installed
   assert:
     that:
         - "rpm_sos_result.rc != 0"
-        - "rpm_sharutils_result.rc != 0"
+        - "rpm_bc_result.rc != 0"
 
-- name: install sos and sharutils as comma separated
-  dnf: name=sos,sharutils state=present
+- name: install sos and bc as comma separated
+  dnf: name=sos,bc state=present
   register: dnf_result
 
 - name: check sos with rpm
@@ -113,10 +115,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check bc with rpm
+  shell: rpm -q bc
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_bc_result
 
 - name: verify packages installed
   assert:
@@ -124,17 +126,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_bc_result.rc == 0"
 
-- name: uninstall sos and sharutils
-  dnf: name=sos,sharutils state=removed
+- name: uninstall sos and bc
+  dnf: name=sos,bc state=removed
   register: dnf_result
 
-- name: install sos and sharutils as list
+- name: install sos and bc as list
   dnf:
     name:
       - sos
-      - sharutils
+      - bc
     state: present
   register: dnf_result
 
@@ -143,10 +145,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check bc with rpm
+  shell: rpm -q bc
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_bc_result
 
 - name: verify packages installed
   assert:
@@ -154,17 +156,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_bc_result.rc == 0"
 
-- name: uninstall sos and sharutils
+- name: uninstall sos and bc
   dnf:
-    name: "sos,sharutils"
+    name: "sos,bc"
     state: removed
   register: dnf_result
 
-- name: install sos and sharutils as comma separated with spaces
+- name: install sos and bc as comma separated with spaces
   dnf:
-    name: "sos, sharutils"
+    name: "sos, bc"
     state: present
   register: dnf_result
 
@@ -174,9 +176,9 @@
   register: rpm_sos_result
 
 - name: check sos with rpm
-  shell: rpm -q sharutils
+  shell: rpm -q bc
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_bc_result
 
 - name: verify packages installed
   assert:
@@ -184,13 +186,13 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_bc_result.rc == 0"
 
-- name: uninstall sos and sharutils
+- name: uninstall sos and bc
   dnf:
     name:
       - sos
-      - sharutils
+      - bc
     state: removed
 
 - name: install non-existent rpm
@@ -265,11 +267,15 @@
         - "not dnf_result is changed"
 
 # GROUP INSTALL
-# Using 'Books and Guides' because it is only 5 packages and a 7.3 M download on Fedora 26.
-# It also doesn't install anything that will tamper with our Python environment.
-- name: install Books and Guides group
+# this allows the tests to be re-run on the same host and still report changed
+- name: "make sure {{ dnf_group }} group is not installed"
   dnf:
-    name: "@Books and Guides"
+    name: "@{{ dnf_group }}"
+    state: absent
+
+- name: "install {{ dnf_group }} group"
+  dnf:
+    name: "@{{ dnf_group }}"
     state: present
   register: dnf_result
 
@@ -287,7 +293,7 @@
 
 - name: install the group again
   dnf:
-    name: "@Books and Guides"
+    name: "@{{ dnf_group }}"
     state: present
   register: dnf_result
 
@@ -310,7 +316,7 @@
 - name: install the group again but also with a package that is not yet installed
   dnf:
     name:
-      - "@Books and Guides"
+      - "@{{ dnf_group }}"
       - bc
     state: present
   register: dnf_result
@@ -328,7 +334,7 @@
 
 - name: try to install the group again, with --check to check 'changed'
   dnf:
-    name: "@Books and Guides"
+    name: "@{{ dnf_group }}"
     state: present
   check_mode: yes
   register: dnf_result
@@ -345,15 +351,15 @@
         - "'msg' in dnf_result"
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: 'dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"'
+- shell: 'dnf -y group install "{{ dnf_group }}" && dnf -y group remove "{{ dnf_group }}"'
   register: shell_dnf_result
 
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
 # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
-- name: install latest Books and Guides
+- name: "install latest {{ dnf_group }}"
   dnf:
-    name: "@Books and Guides"
+    name: "@{{ dnf_group }}"
     state: latest
   register: dnf_result
 
@@ -370,7 +376,7 @@
         - "'results' in dnf_result"
 
 # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
+- shell: dnf -y group install "{{ dnf_group }}" && dnf -y group remove "{{ dnf_group }}"
 
 - name: try to install non existing group
   dnf:
@@ -432,26 +438,17 @@
 # ENVIRONMENT UPGRADE
 # see commit de299ef77c03a64a8f515033a79ac6b7db1bc710
 
-# Newer Fedora Docker images come with coreutils-single which is incompatible
-# with coreutils (required by @Web Server). We force the install of coreutils
-# before running the environment group install.
-# https://github.com/fedora-cloud/docker-brew-fedora/issues/58
-- name: ensure coreutils is installed over coreutils-single
-  command: dnf install --allowerasing -y coreutils
-  changed_when: '"Nothing to do" not in coreutils_install.stdout'
-  register: coreutils_install
+# this allows the tests to be re-run on the same host and still report changed
+- name: "make sure {{ dnf_environment_group_package_to_remove }} is not installed"
+  dnf:
+    name: "{{ dnf_environment_group_package_to_remove }}"
+    state: absent
 
-- block:
-  - name: install Web Server environment
-    dnf:
-      name: "@Web Server"
-      state: latest
-    register: dnf_result
-
-  always:
-  - name: reinstall coreutils-single if coreutils was installed
-    command: dnf install --allowerasing -y coreutils-single
-    when: coreutils_install is changed
+- name: "install {{ dnf_environment_group }} environment"
+  dnf:
+    name: "@{{ dnf_environment_group }}"
+    state: latest
+  register: dnf_result
 
 - name: verify installation of the environment
   assert:

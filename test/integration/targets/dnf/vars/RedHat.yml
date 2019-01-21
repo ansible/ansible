@@ -1,0 +1,4 @@
+# Using 'Security Tools' because it is only 7 packages and a 8.0 M download on RedHat 8.0.
+dnf_group: "Security Tools"
+dnf_environment_group: 'Minimal Install'
+dnf_environment_group_package_to_remove: "plymouth"

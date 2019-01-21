@@ -1,0 +1,5 @@
+# Using 'Books and Guides' because it is only 5 packages and a 6.9 M download on Fedora 29.
+# It also doesn't install anything that will tamper with our Python environment.
+dnf_group: "Books and Guides"
+dnf_environment_group: 'Minimal Install'
+dnf_environment_group_package_to_remove: "plymouth"

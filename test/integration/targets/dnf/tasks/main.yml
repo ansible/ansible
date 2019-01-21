@@ -16,30 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Note: We install the yum package onto Fedora so that this will work on dnf systems
-# We want to test that for people who don't want to upgrade their systems.
+- block:
+    - include_tasks: 'dnf.yml'
+    - include_tasks: 'repo.yml'
+    - include_tasks: 'dnfinstallroot.yml'
+  when: ((ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23)
+    or   (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8))
 
-- include: 'dnf.yml'
-  when:
-    - ansible_distribution == 'Fedora'
-    - ansible_distribution_major_version|int >= 23
+- block:
+    - include_tasks: 'dnfreleasever.yml'
+  when:  (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23)
 
-- include: 'repo.yml'
-  when:
-    - ansible_distribution == 'Fedora'
-    - ansible_distribution_major_version|int >= 23
-
-- include: 'dnfinstallroot.yml'
-  when:
-    - ansible_distribution == 'Fedora'
-    - ansible_distribution_major_version|int >= 23
-
-- include: 'dnfreleasever.yml'
-  when:
-    - ansible_distribution == 'Fedora'
-    - ansible_distribution_major_version|int >= 23
-
-- import_tasks: 'modularity.yml'
-  when:
-    - ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 29
-    - ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8
+- block:
+    - include_tasks: 'modularity.yml'
+  when: ((ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 29)
+    or   (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8))
