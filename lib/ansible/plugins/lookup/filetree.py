@@ -189,22 +189,19 @@ class LookupModule(LookupBase):
                     if props is not None:
                         display.debug("  found '{0}'".format(os.path.join(path, relpath)))
                         ret.append(props)
-      return ret
+        return ret
 
     def run(self, terms, variables=None, **kwargs):
-        basedir = self.get_basedir(variables)
         ret = []
         for term in terms:
             display.debug("Walking '{0}'".format(term))
-            
-            if not isinstance(term, list):
-                t = self.lookup_term(term, variables, **kwargs)
-                if t:
-                        ret += t
+            if isinstance(term, list):
+                display.debug("List found, walking recursively")
+                for term_l in term:
+                    ret += self.lookup_term(term_l, variables, **kwargs)
             else:
-               for term_l in term:
-                   t= self.lookup_term(term_l, variables, **kwargs)
-                   if t:
-                       ret += t
+                ret += self.lookup_term(term, variables, **kwargs)
+
         return ret
+
 
