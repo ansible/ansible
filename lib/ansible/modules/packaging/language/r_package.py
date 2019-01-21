@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Evan Van Dam <evandam92@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -49,13 +52,21 @@ options:
         description:
             - The type of package to download and install,
               as used in the install.packages function.
+        choices:
+            - source
+            - mac.binary
+            - mac.binary.el-capitan
+            - win.binary
+            - binary
+            - both
     repos:
         description:
             - The base URL(s) of the repositories to use, such as CRAN mirrors.
     extra_args:
         description:
-            - Extra arguments passed to R functions:
-            - install.packages, install_version, or remove.packages
+            - Extra arguments passed to R functions to
+              install.packages, install_version, or remove.packages
+        default: {}
 
 requirements:
     - R
@@ -141,7 +152,7 @@ class RInstaller(object):
         else:
             return (name, version)
 
-    def _run_R_function(self, funcname, *args, check_rc=False, **kwargs):
+    def _run_R_function(self, funcname, args=[], kwargs={}, check_rc=False):
         """Run an R function that might have positional and/or named args."""
         # Clean up all args before passing to R
         def _escape_arg(arg):
@@ -173,11 +184,11 @@ class RInstaller(object):
 
     def is_present(self, name, version=None, lib=None):
         """Return whether or not the package is installed.
-        
+
         Optionally check for the correct version.
         """
         present = False
-        rc, out, err = self._run_R_function('packageVersion', name, **{'lib.loc': lib})
+        rc, out, err = self._run_R_function('packageVersion', [name], {'lib.loc': lib})
         if rc == 0:
             if version is not None:
                 installed_version = self._parse_R_output(out)
@@ -199,7 +210,7 @@ class RInstaller(object):
         """Install a new package."""
         # Check if we can lump all packages into one command when no versions are specified
         if versions is None:
-           versions = [None for _ in names]
+            versions = [None for n in names]
 
         names_and_versions = list(zip(names, versions))
         specific_versions = [(n, v) for n, v in names_and_versions if v]
@@ -208,25 +219,30 @@ class RInstaller(object):
         # Install all unversioned packages in batch
         if no_versions:
             print('Installing packages in one batch: %s' % no_versions)
-            self._run_R_function('install.packages', no_versions, check_rc=True, 
-                                 lib=lib, type=install_type, repos=repos, **kwargs)
-        
+            r_kwargs = {'lib': lib, 'type': install_type, 'repos': repos}
+            r_kwargs.update(kwargs)
+            self._run_R_function('install.packages', [no_versions], r_kwargs, check_rc=True)
+
         # Install each package one at a time, specifying versions
         if specific_versions:
             for name, version in specific_versions:
                 print('Installing %s=%s' % (name, version))
-                self._run_R_function('devtools::install_version', name, check_rc=True, lib=lib,
-                                     version=version, type=install_type, repos=repos, **kwargs)
+                r_kwargs = {'lib': lib, 'version': version, 'type': install_type, 'repos': repos}
+                r_kwargs.update(kwargs)
+                self._run_R_function('devtools::install_version', [name], r_kwargs, check_rc=True)
 
     def update_packages(self, name, lib=None):
         """Update to the latest version."""
         print('Updating packages %s' % name)
-        self._run_R_function('update.packages', oldPkgs=name, ask='FALSE', **{'lib.loc': lib})
+        r_kwargs = {'lib.loc': lib, 'oldPkgs': name, 'ask': False}
+        self._run_R_function('update.packages', kwargs=r_kwargs)
 
     def remove_packages(self, name, lib=None, **kwargs):
         """Uninstall a package."""
         print('Removing packages %s' % name)
-        self._run_R_function('remove.packages', name, lib=lib, **kwargs)
+        r_kwargs = {'lib': lib}
+        r_kwargs.update(kwargs)
+        self._run_R_function('remove.packages', [name], r_kwargs)
 
 
 def run_module():
@@ -237,7 +253,7 @@ def run_module():
         name=dict(required=True, type='list'),
         version=dict(required=False),
         state=dict(default='present', choices=['present', 'latest', 'absent']),
-        executable=dict(required=False),
+        executable=dict(required=False, type='path'),
         lib=dict(required=False, type='list'),
         type=dict(required=False, choices=install_types),
         repos=dict(required=False, type='list'),
@@ -260,7 +276,7 @@ def run_module():
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
-    )  
+    )
 
     name = module.params['name']
     version = module.params['version']
