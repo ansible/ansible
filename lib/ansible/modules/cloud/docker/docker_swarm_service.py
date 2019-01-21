@@ -196,13 +196,41 @@ options:
     - List of the service networks names.
     - Maps docker service --network option.
   publish:
-    default: []
+    type: list
     required: false
+    default: []
     description:
     - List of dictionaries describing the service published ports.
-    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp')
     - Only used with api_version >= 1.25
-    - If API version >= 1.32 and docker python library >= 3.0.0 attribute 'mode' can be set to 'ingress' or 'host' (default 'ingress').
+    suboptions:
+      published_port:
+         type: int
+         required: true
+         description:
+           - The port to make externally available.
+      target_port:
+         type: int
+         required: true
+         description:
+           - The port inside the container to expose.
+      protocol:
+         type: str
+         required: false
+         default: tcp
+         description:
+           - What protocol to use.
+         choices:
+           - tcp
+           - udp
+      mode:
+        type: str
+        required: false
+        description:
+          - What publish mode to use.
+          - Requires API version >= 1.32 and docker python library >= 3.0.0
+        choices:
+          - ingress
+          - host
   replicas:
     required: false
     default: -1
@@ -470,6 +498,7 @@ EXAMPLES = '''
 '''
 
 import time
+import operator
 from ansible.module_utils.docker_common import (
     DockerBaseClass,
     AnsibleDockerClient,
@@ -477,7 +506,6 @@ from ansible.module_utils.docker_common import (
 )
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
-
 
 try:
     from distutils.version import LooseVersion
@@ -623,8 +651,8 @@ class DockerService(DockerBaseClass):
         s.publish = []
         for param_p in ap['publish']:
             service_p = {}
-            service_p['protocol'] = param_p.get('protocol', 'tcp')
-            service_p['mode'] = param_p.get('mode', None)
+            service_p['protocol'] = param_p['protocol']
+            service_p['mode'] = param_p['mode']
             service_p['published_port'] = int(param_p['published_port'])
             service_p['target_port'] = int(param_p['target_port'])
             if service_p['protocol'] not in ['tcp', 'udp']:
@@ -710,7 +738,7 @@ class DockerService(DockerBaseClass):
             differences.add('reserve_memory', parameter=self.reserve_memory, active=os.reserve_memory)
         if self.container_labels != os.container_labels:
             differences.add('container_labels', parameter=self.container_labels, active=os.container_labels)
-        if self.publish != os.publish:
+        if self.has_publish_changed(os.publish):
             differences.add('publish', parameter=self.publish, active=os.publish)
         if self.restart_policy != os.restart_policy:
             differences.add('restart_policy', parameter=self.restart_policy, active=os.restart_policy)
@@ -749,6 +777,27 @@ class DockerService(DockerBaseClass):
         if self.force_update:
             force_update = True
         return not differences.empty or force_update, differences, needs_rebuild, force_update
+
+    def has_publish_changed(self, old_publish):
+        if len(self.publish) != len(old_publish):
+            return True
+        publish_sorter = operator.itemgetter('published_port', 'target_port', 'protocol')
+        publish = sorted(self.publish, key=publish_sorter)
+        old_publish = sorted(old_publish, key=publish_sorter)
+        for publish_item, old_publish_item in zip(publish, old_publish):
+            ignored_keys = set()
+            if not publish_item.get('mode'):
+                ignored_keys.add('mode')
+            # Create copies of publish_item dicts where keys specified in ignored_keys are left out
+            filtered_old_publish_item = dict(
+                (k, v) for k, v in old_publish_item.items() if k not in ignored_keys
+            )
+            filtered_publish_item = dict(
+                (k, v) for k, v in publish_item.items() if k not in ignored_keys
+            )
+            if filtered_publish_item != filtered_old_publish_item:
+                return True
+        return False
 
     def __str__(self):
         return str({
@@ -1137,7 +1186,12 @@ def main():
         force_update=dict(default=False, type='bool'),
         log_driver=dict(default="json-file", type='str'),
         log_driver_options=dict(default={}, type='dict'),
-        publish=dict(default=[], type='list'),
+        publish=dict(default=[], type='list', elements='dict', options=dict(
+            published_port=dict(type='int', required=True),
+            target_port=dict(type='int', required=True),
+            protocol=dict(default='tcp', type='str', required=False, choices=('tcp', 'udp')),
+            mode=dict(type='str', required=False, choices=('ingress', 'host')),
+        )),
         constraints=dict(default=[], type='list'),
         tty=dict(default=False, type='bool'),
         dns=dict(default=[], type='list'),
