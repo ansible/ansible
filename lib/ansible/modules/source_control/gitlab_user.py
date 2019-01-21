@@ -145,6 +145,7 @@ except Exception:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+
 ACCESS_LEVEL = {
     'guest': gitlab.GUEST_ACCESS,
     'reporter': gitlab.REPORTER_ACCESS,
@@ -152,6 +153,7 @@ ACCESS_LEVEL = {
     'master': gitlab.MAINTAINER_ACCESS,
     'maintainer': gitlab.MAINTAINER_ACCESS,
     'owner': gitlab.OWNER_ACCESS}
+
 
 class GitLabUser(object):
     def __init__(self, module, gitlab_instance):
@@ -349,7 +351,7 @@ class GitLabUser(object):
     @param name Username of the user
     '''
     def existsUser(self, username):
-        #When user exists, object will be stored in self.userObject.
+        # When user exists, object will be stored in self.userObject.
         user = self.findUser(username)
         if user:
             self.userObject = user
@@ -421,7 +423,7 @@ def main():
 
     try:
         gitlab_instance = gitlab.Gitlab(url=server_url, ssl_verify=verify_ssl, email=login_user, password=login_password,
-                            private_token=login_token, api_version=4)
+                                        private_token=login_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))

@@ -118,6 +118,7 @@ except Exception:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+
 class GitLabGroup(object):
     def __init__(self, module, gitlab_instance):
         self._module = module
@@ -222,7 +223,7 @@ class GitLabGroup(object):
     @param full_path Complete path of the Group including parent group path. <parent_path>/<group_path>
     '''
     def existsGroup(self, name, full_path):
-        #When group/user exists, object will be stored in self.groupObject.
+        # When group/user exists, object will be stored in self.groupObject.
         group = self.findGroup(name, full_path)
         if group:
             self.groupObject = group
@@ -278,7 +279,7 @@ def main():
 
     try:
         gitlab_instance = gitlab.Gitlab(url=server_url, ssl_verify=verify_ssl, email=login_user, password=login_password,
-                            private_token=login_token, api_version=4)
+                                        private_token=login_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
@@ -310,6 +311,7 @@ def main():
             module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name, group=gitlab_group.groupObject._attrs)
         else:
             module.exit_json(changed=False, result="No need to update the group %s" % group_name, group=gitlab_group.groupObject._attrs)
+
 
 if __name__ == '__main__':
     main()
