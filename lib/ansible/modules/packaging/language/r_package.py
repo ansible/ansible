@@ -66,7 +66,6 @@ options:
         description:
             - Extra arguments passed to R functions to
               install.packages, install_version, or remove.packages
-        default: {}
 
 requirements:
     - R
@@ -152,7 +151,7 @@ class RInstaller(object):
         else:
             return (name, version)
 
-    def _run_R_function(self, funcname, args=[], kwargs={}, check_rc=False):
+    def _run_R_function(self, funcname, args=None, kwargs=None, check_rc=False):
         """Run an R function that might have positional and/or named args."""
         # Clean up all args before passing to R
         def _escape_arg(arg):
@@ -167,8 +166,12 @@ class RInstaller(object):
                 return 'NULL'
             return '"{0}"'.format(arg)
 
-        r_args = [_escape_arg(a) for a in args]
-        r_args += [k + ' = ' + _escape_arg(v) for k, v in kwargs.items() if v is not None]
+        if args:
+            r_args = [_escape_arg(a) for a in args]
+        else:
+            r_args = []
+        if kwargs:
+            r_args += [k + ' = ' + _escape_arg(v) for k, v in kwargs.items() if v is not None]
         r_func = '{func}({args})'.format(func=funcname, args=', '.join(r_args))
 
         return self._run_R_statement(r_func, check_rc=check_rc)
@@ -257,7 +260,7 @@ def run_module():
         lib=dict(required=False, type='list'),
         type=dict(required=False, choices=install_types),
         repos=dict(required=False, type='list'),
-        extra_args=dict(required=False, type='dict', default={})
+        extra_args=dict(required=False, type='dict')
     )
 
     # seed the result dict in the object
