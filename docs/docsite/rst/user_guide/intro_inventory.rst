@@ -70,7 +70,7 @@ You can put systems in more than one group, for instance a server could be both 
 * Where - A datacenter or region, to talk to local DNS, storage, etc. (For example, east, west).
 * When - The development stage, to avoid testing on production resources. (For example, prod, test).
 
-Extending the previous YAMl inventory to include what, when, and where would look like:
+Extending the previous YAML inventory to include what, when, and where would look like:
 
 .. code-block:: yaml
 
@@ -90,12 +90,12 @@ Extending the previous YAMl inventory to include what, when, and where would loo
       east:
         hosts:
           foo.example.com:
+          one.example.com:
           two.example.com:
-          three.example.com:
       west:
         hosts:
           bar.example.com:
-          one.example.com:
+          three.example.com:
       prod:
         hosts:
           foo.example.com:
@@ -106,7 +106,41 @@ Extending the previous YAMl inventory to include what, when, and where would loo
           bar.example.com:
           three.example.com:
 
-You can see that ``one.example.com`` exists in the ``dbservers``, ``west``, and ``prod`` groups.
+You can see that ``one.example.com`` exists in the ``dbservers``, ``east``, and ``prod`` groups.
+
+You could also use nested groups to simplify ``prod`` and ``test`` in this inventory, for the same result:
+
+.. code-block:: yaml
+
+  all:
+    hosts:
+      mail.example.com:
+    children:
+      webservers:
+        hosts:
+          foo.example.com:
+          bar.example.com:
+      dbservers:
+        hosts:
+          one.example.com:
+          two.example.com:
+          three.example.com:
+      east:
+        hosts:
+          foo.example.com:
+          one.example.com:
+          two.example.com:
+      west:
+        hosts:
+          bar.example.com:
+          three.example.com:
+      prod:
+        children:
+          east:
+      test:
+        children:
+          west:
+
 
 If you do have systems in multiple groups, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in :ref:`ansible_variable_precedence`.
 
