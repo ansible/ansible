@@ -210,7 +210,6 @@ options:
         folder in the playbook root directory or role root directory, without the
         user input. See examples
     type: list
-    default: None
     version_added: "2.8"
 """
 
