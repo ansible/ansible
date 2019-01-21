@@ -788,6 +788,7 @@ class DockerService(DockerBaseClass):
             ignored_keys = set()
             if not publish_item.get('mode'):
                 ignored_keys.add('mode')
+            # Create copies of publish_item dicts where keys specified in ignored_keys are left out
             filtered_old_publish_item = dict(
                 (k, v) for k, v in old_publish_item.items() if k not in ignored_keys
             )
