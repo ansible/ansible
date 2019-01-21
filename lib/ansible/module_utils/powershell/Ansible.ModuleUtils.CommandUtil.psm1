@@ -259,8 +259,15 @@ namespace Ansible
             if (environment != null && environment.Count > 0)
             {
                 environmentString = new StringBuilder();
+
+                IDictionary existing_environment = Environment.GetEnvironmentVariables();
+                foreach (DictionaryEntry kv in existing_environment)
+                    if (!environment.Contains(kv.Key))
+                        environmentString.AppendFormat("{0}={1}\0", kv.Key, kv.Value);
+
                 foreach (DictionaryEntry kv in environment)
                     environmentString.AppendFormat("{0}={1}\0", kv.Key, kv.Value);
+
                 environmentString.Append('\0');
             }
 
