@@ -45,20 +45,20 @@ options:
     required: false
     description:
     - Command to execute when the container starts.
-      A command may be either a string or a list.
+      A command may be either a string or a list or a list of strings.
     version_added: 2.8
   constraints:
     required: false
     default: []
     description:
-    - List of the placement preferences as key value pairs.
-    - Maps docker service C(--placement-pref) option.
+    - List of the service constraints.
+    - Maps docker service --constraint option.
   placement_preferences:
     required: false
     type: list
     description:
-    - Command to execute when the container starts.
-      A command may be either a string or a list of strings.
+    - List of the placement preferences as key value pairs.
+    - Maps docker service C(--placement-pref) option.
     version_added: 2.8
   hostname:
     required: false
