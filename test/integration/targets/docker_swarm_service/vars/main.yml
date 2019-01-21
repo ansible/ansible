@@ -21,6 +21,7 @@ service_expected_output:
   mode: global
   mounts: []
   networks: []
+  placement_preferences: null
   publish:
     - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
     - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
