@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_psmodule
 version_added: "2.4"
@@ -29,7 +29,7 @@ options:
     description:
       - If C(present) a new module is installed.
       - If C(absent) a module is removed.
-      - If C(latest) a module is updated to the newest version. The option was added in version 2.8.
+      - If C(latest) a module is updated to the newest version. This option was added in version 2.8.
     type: str
     choices: [ absent, latest, present ]
     default: present
@@ -87,7 +87,7 @@ author:
 - Daniele Lazzari (@dlazz)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ---
 - name: Add a PowerShell module
   win_psmodule:
@@ -129,7 +129,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 output:
   description: A message describing the task result.
