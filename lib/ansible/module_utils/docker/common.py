@@ -569,6 +569,11 @@ class AnsibleDockerClient(Client):
                 # isn't found in some cases (#41509)
                 self.log("Check for docker.io image: %s" % repo_name)
                 images = self._image_lookup(repo_name, tag)
+                if len(images) == 0 and repo_name.startswith('library/'):
+                    # Sometimes library/xxx images are not found
+                    lookup = repo_name[len('library/'):]
+                    self.log("Check for docker.io image: %s" % lookup)
+                    images = self._image_lookup(lookup, tag)
                 if len(images) == 0:
                     # Last case: if docker.io wasn't there, it can be that
                     # the image wasn't found either (#15586)
