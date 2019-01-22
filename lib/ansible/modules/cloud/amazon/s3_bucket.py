@@ -112,7 +112,7 @@ EXAMPLES = '''
       another: tag2
 
 # Create a simple DigitalOcean Spaces bucket using their provided regional endpoint
-- digital_ocean_space:
+- s3_bucket:
     name: mydobucket
     s3_url: 'https://nyc3.digitaloceanspaces.com'
 
