@@ -101,7 +101,7 @@ def main():
     argument_spec = meraki_argument_spec()
     argument_spec.update(
         net_id=dict(type='str'),
-        net_name=dict(type='str', aliases=['name', 'content_filtering_facts']),
+        net_name=dict(type='str'),
         subset=dict(type='str', choices=['categories', 'policy'])
     )
 
