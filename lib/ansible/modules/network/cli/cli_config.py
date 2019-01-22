@@ -168,36 +168,32 @@ from ansible.module_utils._text import to_text
 def validate_args(module, capabilities):
     """validate param if it is supported on the platform
     """
-    if (module.params['replace'] and
-            not capabilities['device_operations']['supports_replace']):
+    device_operations = capabilities.get('device_operations')
+    if device_operations is None:
+        module.fail_json(msg="Platform does not provide 'device_operations', and cannot be used with cli_config.")
+
+    if (module.params['replace'] and not device_operations['supports_replace']):
         module.fail_json(msg='replace is not supported on this platform')
 
-    if (module.params['rollback'] is not None and
-            not capabilities['device_operations']['supports_rollback']):
+    if (module.params['rollback'] is not None and not device_operations['supports_rollback']):
         module.fail_json(msg='rollback is not supported on this platform')
 
-    if (module.params['commit_comment'] and
-            not capabilities['device_operations']['supports_commit_comment']):
+    if (module.params['commit_comment'] and not device_operations['supports_commit_comment']):
         module.fail_json(msg='commit_comment is not supported on this platform')
 
-    if (module.params['defaults'] and
-            not capabilities['device_operations']['supports_defaults']):
+    if (module.params['defaults'] and not device_operations['supports_defaults']):
         module.fail_json(msg='defaults is not supported on this platform')
 
-    if (module.params['multiline_delimiter'] and
-            not capabilities['device_operations']['supports_multiline_delimiter']):
+    if (module.params['multiline_delimiter'] and not device_operations['supports_multiline_delimiter']):
         module.fail_json(msg='multiline_delimiter is not supported on this platform')
 
-    if (module.params['diff_replace'] and
-            not capabilities['device_operations']['supports_diff_replace']):
+    if (module.params['diff_replace'] and not device_operations['supports_diff_replace']):
         module.fail_json(msg='diff_replace is not supported on this platform')
 
-    if (module.params['diff_match'] and
-            not capabilities['device_operations']['supports_diff_match']):
+    if (module.params['diff_match'] and not device_operations['supports_diff_match']):
         module.fail_json(msg='diff_match is not supported on this platform')
 
-    if (module.params['diff_ignore_lines'] and
-            not capabilities['device_operations']['supports_diff_ignore_lines']):
+    if (module.params['diff_ignore_lines'] and not device_operations['supports_diff_ignore_lines']):
         module.fail_json(msg='diff_ignore_lines is not supported on this platform')
 
 
