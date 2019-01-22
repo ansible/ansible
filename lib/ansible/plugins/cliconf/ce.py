@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'ce'
-        reply = self.get(b'display version')
+        reply = self.get('display version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'^Huawei.+\n.+\Version\s+(\S+)', data)

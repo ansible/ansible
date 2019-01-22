@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
         device_info['network_os'] = 'exos'
 
-        reply = self.get(b'show switch detail')
+        reply = self.get('show switch detail')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'ExtremeXOS version  (\S+)', data)
@@ -59,7 +59,7 @@ class Cliconf(CliconfBase):
             cmd = 'show configuration'
         else:
             cmd = 'debug cfgmgr show configuration file'
-            reply = self.get(b'show switch | include "Config Selected"')
+            reply = self.get('show switch | include "Config Selected"')
             data = to_text(reply, errors='surrogate_or_strict').strip()
             match = re.search(r': +(\S+)\.cfg', data)
             if match:
