@@ -24,8 +24,6 @@ module: s3_bucket
 short_description: Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
 description:
     - Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
-    - DigitalOcean Spaces support is available through the `digital_ocean_space` module name or setting `s3_url` parameter to a DigitalOcean endpoint.
-      (ex. `https://ams3.digitaloceanspaces.com`)
 version_added: "2.0"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
