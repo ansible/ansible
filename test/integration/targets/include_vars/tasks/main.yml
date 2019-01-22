@@ -40,9 +40,23 @@
       - "testing == 123"
       - "base_dir == 'all'"
 
+- name: include var files with extension only
+  include_vars:
+    dir: webapp
+    ignore_unknown_extensions: True
+    extensions: ['', 'yaml', 'yml', 'json']
+  register: include_without_file_extension
+
+- name: verify that only files with valid extensions are loaded
+  assert:
+    that:
+      - webapp_version is defined
+      - "'file_without_extension' in '{{ include_without_file_extension.ansible_included_var_files | join(' ') }}'"
+
 - name: include every directory in vars
   include_vars:
     dir: vars
+    extensions: ['', 'yaml', 'yml', 'json']
   register: include_every_dir
 
 - name: verify that the correct files have been loaded and overwrite based on alphabetical order
@@ -51,17 +65,19 @@
       - "testing == 456"
       - "base_dir == 'services'"
       - "webapp_containers == 10"
-      - "{{ include_every_dir.ansible_included_var_files | length }} == 4"
+      - "{{ include_every_dir.ansible_included_var_files | length }} == 5"
       - "'vars/all/all.yml' in include_every_dir.ansible_included_var_files[0]"
       - "'vars/environments/development/all.yml' in include_every_dir.ansible_included_var_files[1]"
       - "'vars/environments/development/services/webapp.yml' in include_every_dir.ansible_included_var_files[2]"
       - "'vars/services/webapp.yml' in include_every_dir.ansible_included_var_files[3]"
+      - "'vars/webapp/file_without_extension' in include_every_dir.ansible_included_var_files[4]"
 
 - name: include every directory in vars except files matching webapp.yml
   include_vars:
     dir: vars
     ignore_files:
       - webapp.yml
+      - file_without_extension
   register: include_without_webapp
 
 - name: verify that the webapp.yml file was not included
@@ -71,6 +87,7 @@
       - "base_dir == 'environments/development'"
       - "{{ include_without_webapp.ansible_included_var_files | length }} == 2"
       - "'webapp.yml' not in '{{ include_without_webapp.ansible_included_var_files | join(' ') }}'"
+      - "'file_without_extension' not in '{{ include_without_webapp.ansible_included_var_files | join(' ') }}'"
 
 - name: include only files matching webapp.yml
   include_vars:
@@ -100,3 +117,15 @@
       - "webapp['testing'] == 101112"
       - "webapp['base_dir'] == 'development/services'"
       - "webapp['webapp_containers'] == 20"
+
+- name: include var files without extension
+  include_vars:
+    dir: webapp
+    ignore_unknown_extensions: False
+  register: include_with_unknown_file_extension
+  ignore_errors: True
+
+- name: verify that files without valid extensions are loaded
+  assert:
+    that:
+      - "'a valid extension' in include_with_unknown_file_extension.message"
