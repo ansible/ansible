@@ -60,5 +60,5 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes']
+        result['rpc'] += ['commit', 'discard_changes']
         return json.dumps(result)

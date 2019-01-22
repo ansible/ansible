@@ -235,6 +235,6 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'get_diff', 'configure', 'exit']
+        result['rpc'] += ['commit', 'discard_changes', 'get_diff', 'configure', 'exit']
         result.update(self.get_option_values())
         return json.dumps(result)
