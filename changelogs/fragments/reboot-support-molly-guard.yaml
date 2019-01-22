@@ -1,0 +1,2 @@
+bugfixes:
+  - 'reboot - look in ``/lib/molly-guard/`` for the shutdown command (https://github.com/ansible/ansible/issues/51190)'

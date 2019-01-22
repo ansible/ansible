@@ -136,7 +136,7 @@ class ActionModule(ActionBase):
             task_vars=task_vars,
             module_name='find',
             module_args={
-                'paths': ['/sbin', '/usr/sbin', '/usr/local/sbin'],
+                'paths': ['/lib/molly-guard', '/sbin', '/usr/sbin', '/usr/local/sbin'],
                 'patterns': [shutdown_bin],
                 'file_type': 'any'
             }
