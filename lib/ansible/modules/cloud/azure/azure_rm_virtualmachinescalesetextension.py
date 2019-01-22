@@ -176,7 +176,7 @@ class AzureRMVMSSExtension(AzureRMModuleBase):
 
         required_if = [
             ('state', 'present', [
-             'publisher', 'virtual_machine_extension_type', 'type_handler_version'])
+             'publisher', 'type', 'type_handler_version'])
         ]
 
         self.results = dict(changed=False, state=dict())
