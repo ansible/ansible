@@ -213,4 +213,9 @@ import and instantiate ``ansible.utils.display.Display`` on its own.
 Networking
 ==========
 
-No notable changes.
+* The ``eos_config``, ``ios_config``, and ``nxos_config`` modules have removed the deprecated
+  ``save`` and ``force`` parameters, use the ``save_when`` parameter to replicate their
+  functionality.
+
+* The ``nxos_vrf_af`` module has removed the ``safi`` paramter. This parameter was deprecated
+  in Ansible 2.4 and has had no impact on the module since then.

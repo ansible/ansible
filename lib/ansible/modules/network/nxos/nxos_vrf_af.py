@@ -42,12 +42,6 @@ options:
       - Address-Family Identifier (AFI).
     required: true
     choices: ['ipv4', 'ipv6']
-  safi:
-    description:
-      - Sub Address-Family Identifier (SAFI).
-      - Deprecated in 2.4
-    required: true
-    choices: ['unicast', 'multicast']
   route_target_both_auto_evpn:
     description:
       - Enable/Disable the EVPN route-target 'auto' setting for both
@@ -88,7 +82,6 @@ def main():
         afi=dict(required=True, choices=['ipv4', 'ipv6']),
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
-        safi=dict(choices=['unicast', 'multicast'], removed_in_version="2.4"),
     )
 
     argument_spec.update(nxos_argument_spec)

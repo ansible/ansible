@@ -103,17 +103,6 @@ options:
         line is not correct. replace I(config) is supported only on Nexus 9K device.
     default: line
     choices: ['line', 'block', 'config']
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices running-config.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in a future release.
-    type: bool
-    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -143,18 +132,6 @@ options:
         the command used to collect the running-config is append with
         the all keyword.  When the value is set to false, the command
         is issued without the all keyword
-    type: bool
-    default: 'no'
-    version_added: "2.2"
-  save:
-    description:
-      - The C(save) argument instructs the module to save the
-        running-config to startup-config.  This operation is performed
-        after any changes are made to the current running config.  If
-        no changes are made, the configuration is still saved to the
-        startup config.  This option will always cause the module to
-        return changed.
-      - This option is deprecated as of Ansible 2.4, use C(save_when)
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -359,19 +336,12 @@ def main():
 
         diff_against=dict(choices=['running', 'startup', 'intended']),
         diff_ignore_lines=dict(type='list'),
-
-        # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.8'),
-
-        # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     argument_spec.update(nxos_argument_spec)
 
     mutually_exclusive = [('lines', 'src', 'replace_src'),
-                          ('parents', 'src'),
-                          ('save', 'save_when')]
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
@@ -448,7 +418,7 @@ def main():
     running_config = module.params['running_config']
     startup_config = None
 
-    if module.params['save_when'] == 'always' or module.params['save']:
+    if module.params['save_when'] == 'always':
         save_config(module, result)
     elif module.params['save_when'] == 'modified':
         output = execute_show_commands(module, ['show running-config', 'show startup-config'])
