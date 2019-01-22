@@ -1235,6 +1235,36 @@ TESTSETS = [
             "distribution_version": "26580"
         }
     },
+    "name": "ClearLinux 26580",
+    "result": {
+        "distribution_release": "clear-linux-os",
+        "distribution": "Clear Linux OS",
+        "distribution_major_version": "26580",
+        "os_family": "ClearLinux",
+        "distribution_version": "26580"
+    }
+},
+    # KDE Neon
+{
+    "platform.dist": [
+        "neon",
+        "18.04",
+        "neon"
+    ],
+    "input": {
+        "/etc/os-release": "NAME=\"KDE neon\"\nVERSION=\"5.14\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.14\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\nBUG_REPORT_URL=\"http://bugs.kde.org/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n",
+        "/usr/lib/os-release": "NAME=\"KDE neon\"\nVERSION=\"5.14\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.14\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\nBUG_REPORT_URL=\"http://bugs.kde.org/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n",
+        "/etc/lsb-release": "DISTRIB_ID=neon\nDISTRIB_RELEASE=18.04\nDISTRIB_CODENAME=bionic\nDISTRIB_DESCRIPTION=\"KDE neon User Edition 5.14\"\n"
+    },
+    "name": "KDE neon",
+    "result": {
+        "distribution_release": "neon",
+        "distribution": "KDE neon",
+        "distribution_major_version": "18",
+        "os_family": "Debian",
+        "distribution_version": "18.04"
+    }
+},
     # ArchLinux with no /etc/arch-release but with a /etc/os-release with NAME=Arch Linux
     # The fact needs to map 'Arch Linux' to 'Archlinux' for compat with 2.3 and earlier facts
     {

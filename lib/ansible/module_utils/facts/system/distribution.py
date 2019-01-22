@@ -351,6 +351,8 @@ class DistributionFiles:
             if version:
                 debian_facts['distribution_version'] = version.group(1)
                 debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'KDE neon' in data:
+            debian_facts['distribution'] = 'KDE neon'
         else:
             return False, debian_facts
 
@@ -461,6 +463,7 @@ class Distribution(object):
         'Altlinux': 'ALT Linux',
         'ClearLinux': 'Clear Linux Software for Intel Architecture',
         'SMGL': 'Source Mage GNU/Linux',
+        'Neon': 'KDE neon',
     }
 
     # keep keys in sync with Conditionals page of docs
@@ -483,7 +486,7 @@ class Distribution(object):
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
                      'FreeBSD': ['FreeBSD', 'TrueOS'],
-                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix']}
+                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix', 'ClearLinux']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():

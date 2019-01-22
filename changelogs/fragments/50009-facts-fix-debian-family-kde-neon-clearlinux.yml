@@ -1,0 +1,2 @@
+bugfixes:
+  - setup - resolve issue where KDE neon wasn not properly detected as a debian derivative and fix clearlinux false positive
