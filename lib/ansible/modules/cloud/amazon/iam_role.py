@@ -507,7 +507,7 @@ def update_role_tags(connection, module):
         return False, {}
 
     if not hasattr(connection, 'list_role_tags'):
-        module.fail_json(msg='You need at least boto3 1.9.54 to manage IAM role tags')
+        module.fail_json(msg='You need at least boto3 1.9.83 to manage IAM role tags')
 
     role_name = module.params.get('name')
     purge_tags = module.params.get('purge_tags')
