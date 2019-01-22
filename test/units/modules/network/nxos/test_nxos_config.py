@@ -215,13 +215,10 @@ class TestNxosConfigModule(TestNxosModule):
         set_module_args(dict(lines=['hostname localhost'], defaults=False, backup=True))
         result = self.execute_module(changed=True)
         self.assertEqual(self.get_config.call_count, 1)
-        self.assertEqual(self.get_config.call_args[1], dict())
+        self.assertEqual(self.get_config.call_args[1], dict(flags=[]))
 
     def test_nxos_config_defaults_true_backup_true(self):
         set_module_args(dict(lines=['hostname localhost'], defaults=True, backup=True))
         result = self.execute_module(changed=True)
-        self.assertEqual(self.get_config.call_count, 2)
-        # get_config call for backup
-        self.assertEqual(self.get_config.call_args_list[0][1], dict())
-        # get_config call to get running-config with the 'all' option
-        self.assertEqual(self.get_config.call_args_list[1][1], dict(flags=['all']))
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.get_config.call_args[1], dict(flags=['all']))
