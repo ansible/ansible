@@ -442,6 +442,9 @@
     dns_search:
       - example.com
       - example.org
+    dns_options:
+      - "timeout:1"
+      - "attempts:1"
   register: dns_search_1
 
 - name: dns_search (idempotency)
@@ -451,6 +454,9 @@
     dns_search:
       - example.com
       - example.org
+    dns_options:
+      - "timeout:1"
+      - "attempts:1"
   register: dns_search_2
 
 - name: dns_search (different order)
@@ -460,6 +466,9 @@
     dns_search:
       - example.org
       - example.com
+    dns_options:
+      - "timeout:1"
+      - "attempts:1"
   register: dns_search_3
 
 - name: dns_search (changed elements)
@@ -469,6 +478,9 @@
     dns_search:
       - ansible.com
       - example.com
+    dns_options:
+      - "timeout:1"
+      - "attempts:1"
   register: dns_search_4
 
 - name: cleanup
