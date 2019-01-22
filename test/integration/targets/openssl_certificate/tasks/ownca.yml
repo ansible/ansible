@@ -129,6 +129,17 @@
     ownca_path: '{{ output_dir }}/ca_cert.pem'
     ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
 
+- name: Create ownca certificate with relative notBefore and notAfter
+  openssl_certificate:
+    provider: ownca
+    ownca_not_before: +1s
+    ownca_not_after: +52w
+    path: "{{ output_dir }}/ownca_cert4.pem"
+    csr_path: "{{ output_dir }}/csr.csr"
+    privatekey_path: "{{ output_dir }}/privatekey3.pem"
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+
 - name: Generate ownca ECC certificate
   openssl_certificate:
     path: '{{ output_dir }}/ownca_cert_ecc.pem'
