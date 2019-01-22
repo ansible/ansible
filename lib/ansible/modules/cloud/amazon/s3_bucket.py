@@ -156,7 +156,7 @@ def create_or_update_bucket(s3_client, module, location):
 
     if not bucket_is_present:
         try:
-            bucket_changed = create_bucket(s3_client, module, name, location)
+            bucket_changed = create_bucket(s3_client, name, location)
             s3_client.get_waiter('bucket_exists').wait(Bucket=name)
             changed = changed or bucket_changed
         except WaiterError as e:
