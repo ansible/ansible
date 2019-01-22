@@ -137,7 +137,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
-def create_or_update_bucket(s3_client, location):
+def create_or_update_bucket(s3_client, module, location):
 
     policy = module.params.get("policy")
     name = module.params.get("name")
@@ -156,7 +156,7 @@ def create_or_update_bucket(s3_client, location):
 
     if not bucket_is_present:
         try:
-            bucket_changed = create_bucket(s3_client, name, location)
+            bucket_changed = create_bucket(s3_client, module, name, location)
             s3_client.get_waiter('bucket_exists').wait(Bucket=name)
             changed = changed or bucket_changed
         except WaiterError as e:
