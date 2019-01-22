@@ -169,8 +169,8 @@ def file_props(root, path):
 
     return ret
 
+  
 class LookupModule(LookupBase):
-
     def lookup_term(self, term, variables=None, **kwargs):
         basedir = self.get_basedir(variables)
         term_file = os.path.basename(term)
@@ -191,6 +191,7 @@ class LookupModule(LookupBase):
                         ret.append(props)
         return ret
 
+      
     def run(self, terms, variables=None, **kwargs):
         ret = []
         for term in terms:
@@ -203,5 +204,3 @@ class LookupModule(LookupBase):
                 ret += self.lookup_term(term, variables, **kwargs)
 
         return ret
-
-
