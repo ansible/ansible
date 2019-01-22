@@ -143,7 +143,7 @@ EXAMPLES = """
 - name: create a new user with multiple keys
   ios_user:
     name: ansible
-    sshkey: 
+    sshkey:
       - "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
       - "{{ lookup('file', '~/path/to/public_key') }}"
     state: present
@@ -520,8 +520,6 @@ def main():
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
-
-
 
     commands = map_obj_to_commands(update_objects(want, have), module)
 
