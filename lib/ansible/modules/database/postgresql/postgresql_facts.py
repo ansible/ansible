@@ -144,7 +144,7 @@ class PgClusterFacts(object):
             "roles": {},
         }
 
-    def collect(self, include=[], exclude=[]):
+    def collect(self, include=False, exclude=False):
         subset_map = {
             "version": self.get_pg_version,
             "tablespaces": self.get_tablespaces,
