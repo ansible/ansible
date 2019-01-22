@@ -107,6 +107,8 @@ def main():
         scm_clean=dict(type='bool', default=False),
         scm_delete_on_update=dict(type='bool', default=False),
         scm_update_on_launch=dict(type='bool', default=False),
+        scm_update_cache_timeout=dict(type='int'),
+        job_timeout=dict(type='int'),
         local_path=dict(),
 
         state=dict(choices=['present', 'absent'], default='present'),
@@ -127,6 +129,8 @@ def main():
     scm_clean = module.params.get('scm_clean')
     scm_delete_on_update = module.params.get('scm_delete_on_update')
     scm_update_on_launch = module.params.get('scm_update_on_launch')
+    scm_update_cache_timeout = module.params.get('scm_update_cache_timeout')
+    job_timeout = module.params.get('job_timeout')
     state = module.params.get('state')
 
     json_output = {'project': name, 'state': state}
@@ -155,12 +159,17 @@ def main():
                     except (exc.NotFound) as excinfo:
                         module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)
 
+                if (scm_update_cache_timeout is not None) and (scm_update_on_launch is not True):
+                    module.warn('scm_update_cache_timeout will be ignored since scm_update_on_launch was not set to true')
+
                 result = project.modify(name=name, description=description,
                                         organization=org['id'],
                                         scm_type=scm_type, scm_url=scm_url, local_path=local_path,
                                         scm_branch=scm_branch, scm_clean=scm_clean, credential=scm_credential,
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
+                                        scm_update_cache_timeout=scm_update_cache_timeout,
+                                        job_timeout=job_timeout,
                                         create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
