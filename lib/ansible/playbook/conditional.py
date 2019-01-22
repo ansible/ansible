@@ -25,6 +25,7 @@ import re
 from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
@@ -113,11 +114,16 @@ class Conditional:
         if isinstance(conditional, bool):
             return conditional
 
+        if C.CONDITINAL_BARE_VARS:
+            if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
+                display.deprecation('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
+                                    ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional)
+                conditional = all_vars[conditional]
+
         if templar.is_template(conditional):
             display.warning('conditional statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
-
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
 
@@ -209,5 +215,5 @@ class Conditional:
                 # as nothing above matched the failed var name, re-raise here to
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
-            except Exception as new_e:
+            except Exception:
                 raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
