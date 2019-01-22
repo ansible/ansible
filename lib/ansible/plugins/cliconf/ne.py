@@ -24,7 +24,7 @@ import json
 
 from itertools import chain
 
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = dict()
 
         device_info['network_os'] = 'ne'
-        reply = self.get(b'display version')
+        reply = self.get('display version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'^Huawei.+\n.+\Version\s+(\S+)', data)
@@ -61,7 +61,7 @@ class Cliconf(CliconfBase):
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
+        for cmd in chain(['configure terminal'], to_list(command), ['end']):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
