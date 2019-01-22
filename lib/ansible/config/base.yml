@@ -1493,6 +1493,19 @@ MAX_FILE_SIZE_FOR_DIFF:
   ini:
   - {key: max_diff_size, section: defaults}
   type: int
+MODULE_DEFAULTS_MERGE:
+  name: Allow module_defaults to be merged instead of overwritten
+  default: False
+  description:
+    - If module_defaults are set for a play or set of tasks, setting module_defaults on any inner tasks
+      will overwrite the former defaults rather than merging them together. Setting this option to true
+      allows defaults to be merged/updated rather than overwritten/cleared.
+  env: [{name: ANSIBLE_MODULE_DEFAULTS_MERGE}]
+  ini:
+  - {key: module_defaults_merge, section: defaults}
+  yaml:
+  - {key: defaults.module_defaults_merge}
+  type: bool
 NETWORK_GROUP_MODULES:
   name: Network module families
   default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]

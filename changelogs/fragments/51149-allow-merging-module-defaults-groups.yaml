@@ -1,0 +1,5 @@
+minor_changes:
+  - module_defaults - Introduce a new 'module_defaults_merge' option to control how module_defaults
+    defined at different scopes are overwritten or merged. This option can be set at the global, play,
+    block, and task level. When set to True, instead of module_defaults defined in an inner scope overwriting
+    those in the outer scope, the modules/groups of the outer scope are updated with those in the inner scope.

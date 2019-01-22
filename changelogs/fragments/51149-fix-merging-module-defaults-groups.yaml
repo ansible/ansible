@@ -1,3 +1,0 @@
-bugfixes:
-  - module_defaults - Fix merging play level module_defaults with task level, rather than
-    overwriting module_defaults with the last value.

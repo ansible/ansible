@@ -598,11 +598,14 @@ class TaskExecutor:
         # These are collected as a list of dicts, so we need to merge them
         module_defaults = {}
         for default in self._task.module_defaults:
-            for group in default:
-                if group in module_defaults:
-                    module_defaults[group].update(default[group])
-                else:
-                    module_defaults[group] = default[group]
+            if self._task.module_defaults_merge:
+                for group in default:
+                    if group in module_defaults:
+                        module_defaults[group].update(default[group])
+                    else:
+                        module_defaults[group] = default[group]
+            else:
+                module_defaults.update(default)
         if module_defaults:
             module_defaults = templar.template(module_defaults)
         if self._task.action in module_defaults:

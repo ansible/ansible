@@ -463,6 +463,14 @@ class Task(Base, Conditional, Taggable, Become):
             value = C.ANY_ERRORS_FATAL
         return value
 
+    def _get_attr_module_defaults_merge(self):
+       value = self._attributes['module_defaults_merge']
+       if value is None:
+           value = self._get_parent_attribute('module_defaults_merge')
+       if value is None:
+           value = C.MODULE_DEFAULTS_MERGE
+       return value
+
     def get_dep_chain(self):
         if self._parent:
             return self._parent.get_dep_chain()
