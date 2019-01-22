@@ -260,7 +260,6 @@ from ansible.module_utils.postgres import (
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
 
-
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 FLAGS_BY_VERSION = {'BYPASSRLS': 90500}
 
