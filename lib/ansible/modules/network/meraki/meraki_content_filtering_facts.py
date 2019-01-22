@@ -28,7 +28,7 @@ options:
     net_name:
         description:
         - Name of a network.
-        aliases: [name, network]
+        aliases: [network]
     net_id:
         description:
         - ID number of a network.
@@ -101,7 +101,7 @@ def main():
     argument_spec = meraki_argument_spec()
     argument_spec.update(
         net_id=dict(type='str'),
-        net_name=dict(type='str'),
+        net_name=dict(type='str', aliases=['network']),
         subset=dict(type='str', choices=['categories', 'policy'])
     )
 
