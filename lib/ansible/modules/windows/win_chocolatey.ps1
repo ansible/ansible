@@ -213,6 +213,7 @@ Function Install-Chocolatey {
         if ($proxy_url) {
             # the env values are used in the install.ps1 script when getting
             # external dependencies
+            $environment = [Environment]::GetEnvironmentVariables()
             $environment.chocolateyProxyLocation = $proxy_url
             $web_proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList $proxy_url, $true
             $client.Proxy = $web_proxy
