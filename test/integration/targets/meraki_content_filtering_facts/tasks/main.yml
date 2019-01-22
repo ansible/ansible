@@ -1,4 +1,4 @@
-# Test code for the Meraki Admin module
+# Test code for the Meraki Content Filtering Facts module
 # Copyright: (c) 2019, Kevin Breit (@kbreit)
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -7,35 +7,50 @@
   - name: Query all content filtering information
     meraki_content_filtering_facts:
       auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
     delegate_to: localhost
     register: query_all
+
+  - debug:
+      var: query_all
 
   - name: Query all content filtering assertion
     assert:
       that:
-        - query_all.data.categories is defined
-        - query_all.data.policy is defined
+        - query_all.ansible_facts.categories is defined
+        - query_all.ansible_facts.policy is defined
 
   - name: Query categories
     meraki_content_filtering_facts:
       auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
       subset: categories
     delegate_to: localhost
     register: query_categories
 
+  - debug:
+      var: query_categories
+
   - name: Query categories assertion
     assert:
       that:
-        - query_categories.data is defined
+        - query_categories.ansible_facts is defined
 
   - name: Query content filtering policies
     meraki_content_filtering_facts:
       auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
       subset: policy
     delegate_to: localhost
     register: query_policy
 
+  - debug:
+      var: query_policy
+
   - name: Query contnet filtering policy assertion
     assert:
       that:
-        - query_policy.data is defined
+        - query_policy.ansible_facts is defined
