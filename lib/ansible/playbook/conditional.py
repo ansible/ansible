@@ -116,8 +116,8 @@ class Conditional:
 
         if C.CONDITINAL_BARE_VARS:
             if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
-                display.deprecation('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
-                                    ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional)
+                display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
+                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional, "2.12")
                 conditional = all_vars[conditional]
 
         if templar.is_template(conditional):
