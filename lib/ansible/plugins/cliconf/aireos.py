@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'aireos'
-        reply = self.get(b'show sysinfo')
+        reply = self.get('show sysinfo')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'Product Version\.* (.*)', data)
@@ -46,7 +46,7 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_hostname'] = match.group(1)
 
-        reply = self.get(b'show inventory')
+        reply = self.get('show inventory')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'DESCR: \"(.*)\"', data, re.M)
@@ -59,14 +59,14 @@ class Cliconf(CliconfBase):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if source == 'running':
-            cmd = b'show run-config commands'
+            cmd = 'show run-config commands'
         else:
-            cmd = b'show run-config startup-commands'
+            cmd = 'show run-config startup-commands'
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'config'], to_list(command), [b'end']):
+        for cmd in chain(['config'], to_list(command), ['end']):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
