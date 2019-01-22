@@ -32,7 +32,7 @@ requirements:
 options:
     switch:
         description:
-            - The name of the switch to create or remove
+            - The name of the switch to create or remove.
         required: True
         aliases: [ 'switch_name' ]
     name:
