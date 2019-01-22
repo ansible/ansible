@@ -178,7 +178,8 @@ options:
     - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
-    - ' - C(filename) (string): Existing disk image to use. Must already exist on the datastore. String is in C([datastore_name] path/to/file.vmdk) format'
+    - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
+    - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
     - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
     - '     - Available options are :'
@@ -562,12 +563,10 @@ instance:
 
 import re
 import time
-import os.path
-import sys
 
 HAS_PYVMOMI = False
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim, vmodl, VmomiSupport
     HAS_PYVMOMI = True
 except ImportError:
     pass
@@ -578,7 +577,8 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
-                                         find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip)
+                                         find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip,
+                                         wait_for_task, TaskError)
 
 
 class PyVmomiDeviceHelper(object):
@@ -1710,71 +1710,58 @@ class PyVmomiHelper(PyVmomi):
         self.module.fail_json(
             msg="No size, size_kb, size_mb, size_gb or size_tb attribute found into disk configuration")
 
-    def vmdk_disk_path_split(self, vmdk_path):
-        """
-        Takes a string in the format
-
-            [datastore_name] /path/to/vm_name.vmdk
-
-        Returns a tuple with multiple strings:
-
-        1. datastore_name: The name of the datastore (without brackets)
-        2. vmdk_fullpath: The "/path/to/vm_name.vmdk" portion
-        3. vmdk_filename: The "vm_name.vmdk" portion of the string (os.path.basename equivalent)
-        4. vmdk_folder: The "/path/to/" portion of the string (os.path.dirname equivalent)
-        """
-        try:
-            datastore_name = re.match(r'^\[(.*?)\]', vmdk_path, re.DOTALL).groups()[0]
-            vmdk_fullpath = re.match(r'\[.*?\] (.*)$', vmdk_path).groups()[0]
-            vmdk_filename = os.path.basename(vmdk_fullpath)
-            vmdk_folder = os.path.dirname(vmdk_fullpath)
-        except (IndexError, AttributeError) as e:
-            raise RuntimeError("Bad path for filename disk vmdk image")
-
-        return (datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder)
-
     def find_vmdk(self, vmdk_path):
         """
         Takes a vsphere datastore path in the format
 
-            [datastore_name] /path/to/file.vmdk
+            [datastore_name] path/to/file.vmdk
 
         Returns vsphere file object or raises RuntimeError
         """
-        datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder \
-            = self.vmdk_disk_path_split(vmdk_path)
+        datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder = self.vmdk_disk_path_split(vmdk_path)
 
-        datastore = self.cache.find_obj(self.content,
-                                        [vim.Datastore],
-                                        datastore_name)
+        datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
+
+        if datastore is None:
+            self.module.fail_json(msg="Failed to find the datastore %s" % datastore_name)
+
         browser = datastore.browser
+        if browser is None:
+            self.module.fail_json(msg="Unable to access browser for datastore %s" % datastore_name)
+
         detail_query = vim.host.DatastoreBrowser.FileInfo.Details(
             fileOwner=True,
             fileSize=True,
             fileType=True,
             modification=True
         )
-        searchSpec = vim.host.DatastoreBrowser.SearchSpec(
+        search_spec = vim.host.DatastoreBrowser.SearchSpec(
             details=detail_query,
             matchPattern=[vmdk_filename],
             searchCaseInsensitive=True,
         )
         search_res = browser.SearchSubFolders(
             datastorePath="[" + datastore_name + "]",
-            searchSpec=searchSpec
+            searchSpec=search_spec
         )
-        while search_res.info.state not in [vim.TaskInfo.State.success,
-                                            vim.TaskInfo.State.error]:
-            time.sleep(1)
-        if search_res.info.result is None:
-            raise RuntimeError("No valid disk vmdk image found")
+
+        changed = False
+        try:
+            changed, result = wait_for_task(search_res)
+        except TaskError as task_e:
+            self.module.fail_json(msg=to_native(task_e))
+
+        if not changed:
+            self.module.fail_json(msg="No valid disk vmdk image found for path %s" % vmdk_path)
+
         target_folder_path = "[" + datastore_name + "]" + " " + vmdk_folder + '/'
+
         for result in search_res.info.result:
             for f in getattr(result, 'file'):
-                if f.path == vmdk_filename and \
-                   result.folderPath == target_folder_path:
+                if f.path == vmdk_filename and result.folderPath == target_folder_path:
                     return f
-        raise RuntimeError("No vmdk file found")
+
+        self.module.fail_json(msg="No vmdk file found for path specified [%s]" % vmdk_path)
 
     def add_existing_vmdk(self, vm_obj, expected_disk_spec, diskspec, scsi_ctl):
         """
@@ -1782,17 +1769,11 @@ class PyVmomiHelper(PyVmomi):
         information and adds the correct spec to self.configspec.deviceChange.
         """
         filename = expected_disk_spec['filename']
-        # if this is a new disk, or the disk filenames are different
-        if (vm_obj and diskspec.device.backing.fileName != filename) or (vm_obj is None):
+        # if this is a new disk, or the disk file names are different
+        if (vm_obj and diskspec.device.backing.fileName != filename) or vm_obj is None:
             vmdk_file = self.find_vmdk(expected_disk_spec['filename'])
-            datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder \
-                = self.vmdk_disk_path_split(expected_disk_spec['filename'])
             diskspec.device.backing.fileName = expected_disk_spec['filename']
-            diskspec.device.backing.diskMode = 'persistent'
-            # convert filesize to KB, on python2 this needs to be a long type
-            if sys.version_info > (3,):
-                long = int
-            diskspec.device.capacityInKB = long(vmdk_file.fileSize / 1024)
+            diskspec.device.capacityInKB = VmomiSupport.vmodlTypes['long'](vmdk_file.fileSize / 1024)
             diskspec.device.key = -1
             self.change_detected = True
             self.configspec.deviceChange.append(diskspec)
@@ -1849,12 +1830,6 @@ class PyVmomiHelper(PyVmomi):
             else:
                 diskspec.device.backing.diskMode = "persistent"
 
-            if 'filename' in expected_disk_spec and expected_disk_spec['filename'] is not None:
-                self.add_existing_vmdk(vm_obj, expected_disk_spec, diskspec, scsi_ctl)
-                continue
-            else:
-                diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
-
             # is it thin?
             if 'type' in expected_disk_spec:
                 disk_type = expected_disk_spec.get('type', '').lower()
@@ -1862,6 +1837,12 @@ class PyVmomiHelper(PyVmomi):
                     diskspec.device.backing.thinProvisioned = True
                 elif disk_type == 'eagerzeroedthick':
                     diskspec.device.backing.eagerlyScrub = True
+
+            if 'filename' in expected_disk_spec and expected_disk_spec['filename'] is not None:
+                self.add_existing_vmdk(vm_obj, expected_disk_spec, diskspec, scsi_ctl)
+                continue
+            else:
+                diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
 
             # which datastore?
             if expected_disk_spec.get('datastore'):
