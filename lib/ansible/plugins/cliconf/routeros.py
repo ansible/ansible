@@ -35,19 +35,19 @@ class Cliconf(CliconfBase):
         device_info = {}
         device_info['network_os'] = 'RouterOS'
 
-        resource = self.get(b'/system resource print')
+        resource = self.get('/system resource print')
         data = to_text(resource, errors='surrogate_or_strict').strip()
         match = re.search(r'version: (\S+)', data)
         if match:
             device_info['network_os_version'] = match.group(1)
 
-        routerboard = self.get(b'/system routerboard print')
+        routerboard = self.get('/system routerboard print')
         data = to_text(routerboard, errors='surrogate_or_strict').strip()
         match = re.search(r'model: (.+)$', data, re.M)
         if match:
             device_info['network_os_model'] = match.group(1)
 
-        identity = self.get(b'/system identity print')
+        identity = self.get('/system identity print')
         data = to_text(identity, errors='surrogate_or_strict').strip()
         match = re.search(r'name: (.+)$', data, re.M)
         if match:
