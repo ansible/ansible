@@ -196,6 +196,7 @@ seealso:
 - module: win_domain_group
 - module: win_domain_membership
 - module: win_user
+- module: win_user_profile
 author:
     - Nick Chandler (@nwchandler)
 '''
