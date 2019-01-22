@@ -39,19 +39,19 @@ options:
   filter_input:
     description:
       - The name of input filter.
-    version_added: "2.7"
+    version_added: "2.8"
   filter_output:
     description:
       - The name of output filter.
-    version_added: "2.7"
+    version_added: "2.8"
   filter6_input:
     description:
       - The name of input filter for ipv6.
-    version_added: "2.7"
+    version_added: "2.8"
   filter6_output:
     description:
       - The name of output filter for ipv6.
-    version_added: "2.7"
+    version_added: "2.8"
   aggregate:
     description: List of L3 interfaces definitions
   state:

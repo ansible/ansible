@@ -56,11 +56,11 @@ options:
   filter_input:
     description:
       - The name of input filter of ethernet-switching.
-    version_added: "2.7"
+    version_added: "2.8"
   filter_output:
     description:
       - The name of output filter of ethernet-switching.
-    version_added: "2.7"
+    version_added: "2.8"
   state:
     description:
       - State of the Layer-2 Interface configuration.
