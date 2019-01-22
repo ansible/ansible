@@ -377,7 +377,6 @@ lib/ansible/modules/database/mongodb/mongodb_parameter.py E317
 lib/ansible/modules/database/mongodb/mongodb_parameter.py E323
 lib/ansible/modules/database/mongodb/mongodb_parameter.py E326
 lib/ansible/modules/database/mongodb/mongodb_user.py E322
-lib/ansible/modules/database/mongodb/mongodb_user.py E324
 lib/ansible/modules/database/mysql/mysql_replication.py E325
 lib/ansible/modules/database/mysql/mysql_replication.py E326
 lib/ansible/modules/database/mysql/mysql_user.py E322
