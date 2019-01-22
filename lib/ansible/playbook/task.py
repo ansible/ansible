@@ -454,9 +454,6 @@ class Task(Base, Conditional, Taggable, Become):
         except KeyError:
             pass
 
-        # if value is Sentinel:
-        #     value = self._attr_defaults[attr]
-
         return value
 
     def get_dep_chain(self):
