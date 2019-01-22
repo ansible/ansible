@@ -937,7 +937,11 @@ def get_diff_final_resource(client, module, security_group):
                     'vpc_id': rule_sg.get('vpc_id', module.params['vpc_id']),
                     'vpc_peering_connection_id': rule_sg.get('vpc_peering_connection_id')
                 }]
-                format_rule['user_id_group_pairs'][0] = {k: v for k, v in format_rule['user_id_group_pairs'][0].items() if v is not None}
+                user_id_group_pair = {}
+                for k, v in format_rule['user_id_group_pairs'][0].items():
+                    if v is not None:
+                        user_id_group_pair[k] = [v]
+                format_rule['user_id_group_pairs'][0] = user_id_group_pair
             final_rules.append(format_rule)
             # Order final rules consistently
             final_rules.sort(key=lambda x: x.get('cidr_ip', x.get('ip_ranges', x.get('ipv6_ranges', x.get('prefix_list_ids', x.get('user_id_group_pairs'))))))
