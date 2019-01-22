@@ -459,33 +459,29 @@
       - "attempts:1"
   register: dns_search_2
 
-- name: dns_search (different order)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    dns_search:
-      - example.org
-      - example.com
-    dns_options:
-      - "timeout:1"
-      - "attempts:1"
-  register: dns_search_3
-
-- name: give service a while to finish updating
-  pause:
-    seconds: 2
-
-- name: dns_search (changed elements)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    dns_search:
-      - ansible.com
-      - example.com
-    dns_options:
-      - "timeout:1"
-      - "attempts:1"
-  register: dns_search_4
+#- name: dns_search (different order)
+#  docker_swarm_service:
+#    name: "{{ service_name }}"
+#    image: alpine:3.8
+#    dns_search:
+#      - example.org
+#      - example.com
+#    dns_options:
+#      - "timeout:1"
+#      - "attempts:1"
+#  register: dns_search_3
+#
+#- name: dns_search (changed elements)
+#  docker_swarm_service:
+#    name: "{{ service_name }}"
+#    image: alpine:3.8
+#    dns_search:
+#      - ansible.com
+#      - example.com
+#    dns_options:
+#      - "timeout:1"
+#      - "attempts:1"
+#  register: dns_search_4
 
 - name: cleanup
   docker_swarm_service:
@@ -497,8 +493,8 @@
     that:
       - dns_search_1 is changed
       - dns_search_2 is not changed
-      - dns_search_3 is changed
-      - dns_search_4 is changed
+#      - dns_search_3 is changed
+#      - dns_search_4 is changed
   when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
