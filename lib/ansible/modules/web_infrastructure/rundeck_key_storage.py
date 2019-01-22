@@ -3,8 +3,6 @@
 
 # Ansible module to manage rundeck projects
 # (c) 2019, Amine CHIKOUCHE <amine.chikouche@fitbrain.guru>
-# Sponsored by Bnp Paribas CIB. https://group.bnpparibas/en/group/activities/corporate-institutional-banking
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
