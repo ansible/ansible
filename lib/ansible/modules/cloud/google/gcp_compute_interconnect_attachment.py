@@ -77,6 +77,20 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+  candidate_subnets:
+    description:
+    - Up to 16 candidate prefixes that can be used to restrict the allocation of cloudRouterIpAddress
+      and customerRouterIpAddress for this attachment.
+    - All prefixes must be within link-local address space (169.254.0.0/16) and must
+      be /29 or shorter (/28, /27, etc). Google will attempt to select an unused /29
+      from the supplied candidate prefix(es). The request will fail if all possible
+      /29s are in use on Google's edge. If not supplied, Google will randomly select
+      an unused /29 from all of link-local space.
+    required: false
+  vlan_tag8021q:
+    description:
+    - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+    required: false
   region:
     description:
     - Region where the regional interconnect attachment resides.
@@ -169,6 +183,22 @@ name:
     which cannot be a dash.
   returned: success
   type: str
+candidateSubnets:
+  description:
+  - Up to 16 candidate prefixes that can be used to restrict the allocation of cloudRouterIpAddress
+    and customerRouterIpAddress for this attachment.
+  - All prefixes must be within link-local address space (169.254.0.0/16) and must
+    be /29 or shorter (/28, /27, etc). Google will attempt to select an unused /29
+    from the supplied candidate prefix(es). The request will fail if all possible
+    /29s are in use on Google's edge. If not supplied, Google will randomly select
+    an unused /29 from all of link-local space.
+  returned: success
+  type: list
+vlanTag8021q:
+  description:
+  - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+  returned: success
+  type: int
 region:
   description:
   - Region where the regional interconnect attachment resides.
@@ -200,6 +230,8 @@ def main():
             description=dict(type='str'),
             router=dict(required=True),
             name=dict(required=True, type='str'),
+            candidate_subnets=dict(type='list', elements='str'),
+            vlan_tag8021q=dict(type='int'),
             region=dict(required=True, type='str'),
         )
     )
@@ -256,6 +288,8 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'router': replace_resource_dict(module.params.get(u'router', {}), 'selfLink'),
         u'name': module.params.get('name'),
+        u'candidateSubnets': module.params.get('candidate_subnets'),
+        u'vlanTag8021q': module.params.get('vlan_tag8021q'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -331,6 +365,8 @@ def response_to_hash(module, response):
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
+        u'candidateSubnets': response.get(u'candidateSubnets'),
+        u'vlanTag8021q': response.get(u'vlanTag8021q'),
     }
 
 
