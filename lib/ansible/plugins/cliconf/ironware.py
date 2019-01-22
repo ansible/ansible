@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'ironware'
-        reply = self.send_command(b'show version')
+        reply = self.send_command('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'IronWare : Version (\S+),', data)
@@ -54,12 +54,12 @@ class Cliconf(CliconfBase):
             raise ValueError("fetching configuration from %s is not supported" % source)
 
         if source == 'running':
-            cmd = b'show running-config'
+            cmd = 'show running-config'
             if flags is not None:
                 cmd += ' ' + ' '.join(flags)
 
         else:
-            cmd = b'show configuration'
+            cmd = 'show configuration'
             if flags is not None:
                 raise ValueError("flags are only supported with running-config")
 
@@ -67,7 +67,7 @@ class Cliconf(CliconfBase):
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
+        for cmd in chain(['configure terminal'], to_list(command), ['end']):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):

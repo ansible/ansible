@@ -33,14 +33,14 @@ class Cliconf(CliconfBase):
     def get_device_info(self):
         device_info = {}
 
-        reply = self.get(b'show version | json-print')
+        reply = self.get('show version | json-print')
         data = json.loads(reply)
         device_info['network_os'] = data['Product name']
         device_info['network_os_version'] = data['Product release']
         device_info['network_os_version_summary'] = data['Version summary']
         device_info['network_os_model'] = data['Product model']
 
-        reply = self.get(b'show hosts | include Hostname')
+        reply = self.get('show hosts | include Hostname')
         data = to_text(reply, errors='surrogate_or_strict').strip()
         hostname = data.split(':')[1]
         hostname = hostname.strip()
@@ -52,12 +52,12 @@ class Cliconf(CliconfBase):
     def get_config(self, source='running', format='text'):
         if source not in ('running',):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
-        cmd = b'show running-config'
+        cmd = 'show running-config'
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'exit']):
+        for cmd in chain(['configure terminal'], to_list(command), ['exit']):
             self.send_command(cmd)
 
     def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):

@@ -30,12 +30,12 @@ from ansible.plugins.terminal import TerminalBase
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(r"[\r\n]?(?:\w+@)?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$")
+        re.compile(br"[\r\n]?(?:\w+@)?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$")
     ]
 
     terminal_stderr_re = [
-        re.compile(r"[\r\n]Error - "),
-        re.compile(r"[\r\n](?:incomplete|ambiguous|unrecognised|invalid) (?:command|input)", re.I)
+        re.compile(br"[\r\n]Error - "),
+        re.compile(br"[\r\n](?:incomplete|ambiguous|unrecognised|invalid) (?:command|input)", re.I)
     ]
 
     def on_open_shell(self):
