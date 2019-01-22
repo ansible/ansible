@@ -301,8 +301,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-service:
-  description: Name of the service.
+service_facts:
+  description:
+  - A dictionary mapping the service's name to a dictionary of containers.
+  - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+    are also accessible directly. The service's name is the variable with which the container dictionary
+    can be accessed.
   returned: success
   type: complex
   contains:
@@ -681,7 +685,7 @@ class ContainerManager(DockerBaseClass):
         start_deps = self.dependencies
         service_names = self.services
         detached = True
-        result = dict(changed=False, actions=[], ansible_facts=dict())
+        result = dict(changed=False, actions=[], ansible_facts=dict(), service_facts=dict())
 
         up_options = {
             u'--no-recreate': False,
@@ -765,7 +769,9 @@ class ContainerManager(DockerBaseClass):
             result['actions'] += scale_output['actions']
 
         for service in self.project.services:
-            result['ansible_facts'][service.name] = dict()
+            service_facts = dict()
+            result['ansible_facts'][service.name] = service_facts
+            result['service_facts'][service.name] = service_facts
             for container in service.containers(stopped=True):
                 inspection = container.inspect()
                 # pare down the inspection data to the most useful bits
@@ -817,7 +823,7 @@ class ContainerManager(DockerBaseClass):
                         if networks[key].get('MacAddress', None) is not None:
                             facts['networks'][key]['macAddress'] = networks[key]['MacAddress']
 
-                result['ansible_facts'][service.name][container.name] = facts
+                service_facts[container.name] = facts
 
         return result
 
