@@ -55,8 +55,6 @@ def _generic_g_parent(prop_name, self):
             value = self._attributes[prop_name]
         else:
             try:
-                # Note: _get_parent_attributes(prop_name) should never return Sentinel.  It is
-                # responsible for turning Sentinel into the parent's default prior to returning.
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
                 value = self._attributes[prop_name]
