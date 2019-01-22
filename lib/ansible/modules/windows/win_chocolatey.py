@@ -195,6 +195,8 @@ options:
     - Specific version of the package to be installed.
     - When I(state) is set to C(absent), will uninstall the specific version
       otherwise all versions of that package will be removed.
+    - If a different version of package is installed, I(state) must be C(latest)
+      or I(force) set to C(yes) to install the desired version.
     - Provide as a string (e.g. C('6.1')), otherwise it is considered to be
       a floating-point number and depending on the locale could become C(6,1),
       which will cause a failure.
