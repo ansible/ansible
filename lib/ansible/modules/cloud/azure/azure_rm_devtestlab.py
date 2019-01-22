@@ -179,7 +179,8 @@ class AzureRMDevTestLab(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                if self.lab.get('lab_storage_type') is not None and self.lab.get('lab_storage_type').lower() != old_response.get('lab_storage_type', '').lower():
+                if self.lab.get('lab_storage_type') is not None and \
+                   self.lab.get('lab_storage_type').lower() != old_response.get('lab_storage_type', '').lower():
                     self.to_do = Actions.Update
                 if (self.lab.get('premium_data_disks') is not None and
                         self.lab.get('premium_data_disks').lower() != old_response.get('premium_data_disks').lower()):
