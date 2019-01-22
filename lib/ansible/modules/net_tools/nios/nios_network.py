@@ -82,6 +82,7 @@ options:
     description:
       - If set to true it'll create the network container to be added or removed
         from the system.
+    type: bool
     version_added: '2.8'
   state:
     description:
