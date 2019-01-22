@@ -15,7 +15,7 @@
     - name: download PackageManagement
       win_get_url:
         url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/win_psmodule/PackageManagement_x64.msi
-        dest: '{{ temp_path.stdout | trim }}\PackageManagement_x64.msi'
+        dest: '{{ win_output_dir }}\PackageManagement_x64.msi'
 
     - name: install PackageManagement
       win_package:

@@ -22,10 +22,10 @@ $allow_clobber = Get-AnsibleParam -obj $params -name "allow_clobber" -type "bool
 $skip_publisher_check = Get-AnsibleParam -obj $params -name "skip_publisher_check" -type "bool" -default $false
 $allow_prerelease = Get-AnsibleParam -obj $params -name "allow_prerelease" -type "bool" -default $false
 
-$result = @{"changed" = $false
-            "output" = ""
-            "nuget_changed" = $false
-            "repository_changed" = $false}
+$result = @{changed = $false
+            output = ""
+            nuget_changed = $false
+            repository_changed = $false}
 
 Function Install-NugetProvider {
     Param(
@@ -185,7 +185,7 @@ Function Install-PsModule {
             $ht = @{
                 Name = $Name
                 WhatIf = $CheckMode
-                'Force' = $true
+                Force = $true
             }
 
             [String[]]$ParametersNames = @("RequiredVersion","MinimumVersion","MaximumVersion","AllowPrerelease","AllowClobber","SkipPublisherCheck","Repository")

@@ -31,8 +31,8 @@
 - name: "test installing module from Powershell Gallery - without version - check mode: true"
   assert:
     that:
-      - "module_without_version_setup_1 is changed"
-      - "{{ result_module_without_version_setup_1.stdout | trim }} | bool == false"
+      - module_without_version_setup_1 is changed
+      - result_module_without_version_setup_1.stdout | trim | bool == false
 
 - name: "check installing module from Powershell Gallery - without version - check mode: false"
   win_psmodule:
@@ -48,8 +48,8 @@
 - name: "test installing module from Powershell Gallery - without version - check mode: false"
   assert:
     that:
-      - "module_without_version_setup_1 is changed"
-      - "{{ result_module_without_version_setup_1.stdout | trim }} | bool == true"
+      - module_without_version_setup_1 is changed
+      - result_module_without_version_setup_1.stdout | trim | bool == true
 
 - name: check idempotency installing module from PowerShell Gallery - without version
   win_psmodule:
@@ -60,7 +60,7 @@
 - name: test idempotency installing module from PowerShell Gallery - without version
   assert:
     that:
-      - "module_without_version_setup_2 is not changed"
+      - module_without_version_setup_2 is not changed
 
 - name: "check uninstalling PowerShell module - without version - check mode: true"
   win_psmodule:
@@ -77,8 +77,8 @@
 - name: "test uninstalling PowerShell module - without version - check mode: true"
   assert:
     that:
-      - "module_uninstall_without_version is changed"
-      - "{{ result_module_uninstall_without_version.stdout | trim }} | bool == true"
+      - module_uninstall_without_version is changed
+      - result_module_uninstall_without_version.stdout | trim | bool == true
 
 - name: "check uninstalling PowerShell module - without version - check mode: false"
   win_psmodule:
@@ -94,8 +94,8 @@
 - name: "test uninstalling PowerShell module - without version - check mode: false"
   assert:
     that:
-      - "module_uninstall_without_version is changed"
-      - "{{ result_module_uninstall_without_version.stdout | trim }} | bool == true"
+      - module_uninstall_without_version is changed
+      - result_module_uninstall_without_version.stdout | trim | bool == true
 
 - name: check idempotency uninstalling PowerShell module - without version
   win_psmodule:
@@ -106,7 +106,7 @@
 - name: test idempotency uninstalling PowerShell module - without version
   assert:
     that:
-      - "module_uninstall_2 is not changed"
+      - module_uninstall_2 is not changed
 
 - name: "check installing module from Powershell Gallery - required_version - check mode: true"
   win_psmodule:
@@ -124,8 +124,8 @@
 - name: "test installing module from Powershell Gallery - required_version - check mode: true"
   assert:
     that:
-      - "module_required_version_setup_1 is changed"
-      - "{{ result_module_required_version_setup_1.stdout | trim }} | bool == false"
+      - module_required_version_setup_1 is changed
+      - result_module_required_version_setup_1.stdout | trim | bool == false
 
 - name: "check installing module from Powershell Gallery - required_version - check mode: false"
   win_psmodule:
@@ -142,8 +142,8 @@
 - name: "test installing module from Powershell Gallery - required_version - check mode: false"
   assert:
     that:
-      - "module_required_version_setup_1 is changed"
-      - "{{ result_module_required_version_setup_1.stdout | trim }} | bool == true"
+      - module_required_version_setup_1 is changed
+      - result_module_required_version_setup_1.stdout | trim | bool == true
 
 - name: check idempotency installing module from Powershell Gallery - required_version
   win_psmodule:
@@ -155,7 +155,7 @@
 - name: test idempotency installing module from Powershell Gallery - required_version
   assert:
     that:
-      - "module_required_version_setup_2 is not changed"
+      - module_required_version_setup_2 is not changed
 
 - name: "check uninstall PowerShell module - required_version - check mode: false"
   win_psmodule:
@@ -172,8 +172,8 @@
 - name: "test PowerShell module uninstall - required_version - check mode: false"
   assert:
     that:
-      - "module_uninstall_required_version is changed"
-      - "{{ result_module_uninstall_required_version.stdout | trim }} | bool == true"
+      - module_uninstall_required_version is changed
+      - result_module_uninstall_required_version.stdout | trim | bool == true
 
 - name: check installing module from Powershell Gallery - required_version but not existing
   win_psmodule:
@@ -186,8 +186,8 @@
 - name: test installing module from Powershell Gallery - required_version but not existing
   assert:
     that:
-      - "module_required_version_setup_3 is not changed"
-      - "module_required_version_setup_3 is failed"
+      - module_required_version_setup_3 is not changed
+      - module_required_version_setup_3 is failed
       - "'Problems installing {{ powershell_module }} module: No match was found for the specified search criteria' in module_required_version_setup_3.msg"
 
 - name: "check installing module from Powershell Gallery - maximum_version - check mode: true"
@@ -206,8 +206,8 @@
 - name: "test installing module from Powershell Gallery - maximum_version - check mode: true"
   assert:
     that:
-      - "module_maximum_version_setup_1 is changed"
-      - "{{ result_module_maximum_version_setup_1.stdout | trim }} | bool == false"
+      - module_maximum_version_setup_1 is changed
+      - result_module_maximum_version_setup_1.stdout | trim | bool == false
 
 - name: "check installing module from Powershell Gallery - maximum_version - check mode: false"
   win_psmodule:
@@ -224,8 +224,8 @@
 - name: "test installing module from Powershell Gallery - maximum_version - check mode: false"
   assert:
     that:
-      - "module_maximum_version_setup_1 is changed"
-      - "{{ result_module_maximum_version_setup_1.stdout | trim }} | bool == true"
+      - module_maximum_version_setup_1 is changed
+      - result_module_maximum_version_setup_1.stdout | trim | bool == true
 
 - name: check idempotency installing module from Powershell Gallery - maximum_version
   win_psmodule:
@@ -237,7 +237,7 @@
 - name: test idempotency installing module from Powershell Gallery - maximum_version
   assert:
     that:
-      - "module_maximum_version_setup_2 is not changed"
+      - module_maximum_version_setup_2 is not changed
 
 - name: "check uninstall PowerShell module - maximum_version - check mode: true"
   win_psmodule:
@@ -255,8 +255,8 @@
 - name: "test PowerShell module uninstall - maximum_version - check mode: true"
   assert:
     that:
-      - "module_uninstall_maximum_version is changed"
-      - "{{ result_module_uninstall_maximum_version.stdout | trim }} | bool == true"
+      - module_uninstall_maximum_version is changed
+      - result_module_uninstall_maximum_version.stdout | trim | bool == true
 
 - name: "check uninstall PowerShell module - maximum_version - check mode: false"
   win_psmodule:
@@ -273,8 +273,8 @@
 - name: "test PowerShell module uninstall - maximum_version - check mode: false"
   assert:
     that:
-      - "module_uninstall_maximum_version is changed"
-      - "{{ result_module_uninstall_maximum_version.stdout | trim }} | bool == true"
+      - module_uninstall_maximum_version is changed
+      - result_module_uninstall_maximum_version.stdout | trim | bool == true
 
 - name: check installing module from Powershell Gallery - maximum_version but not existing
   win_psmodule:
@@ -287,8 +287,8 @@
 - name: test installing module from Powershell Gallery - maximum_version but not existing
   assert:
     that:
-      - "module_maximum_version_setup_3 is not changed"
-      - "module_maximum_version_setup_3 is failed"
+      - module_maximum_version_setup_3 is not changed
+      - module_maximum_version_setup_3 is failed
 
   # Don't move skip_publisher_check tests below minimum_version and maximum_version tests
 - name: check installing module with skip_publisher_check not active
@@ -305,7 +305,7 @@
 - name: test installing module with skip_publisher_check not active
   assert:
     that:
-      - "fail_skip_publisher_check is failed"
+      - fail_skip_publisher_check is failed
       - "'being installed is not catalog signed. Ensure that the version' in fail_skip_publisher_check.msg"
   when: skip_publisher_module_exist.stdout | int >= 1
 
@@ -327,8 +327,8 @@
 - name: "test installing module with skip_publisher_check active - check mode: true"
   assert:
     that:
-      - "ok_skip_publisher_check is changed"
-      - "{{ result_ok_skip_publisher_check.stdout | trim }} | bool == true"
+      - ok_skip_publisher_check is changed
+      - result_ok_skip_publisher_check.stdout | trim | bool == true
 
 - name: "check installing module with skip_publisher_check active - check mode: false"
   win_psmodule:
@@ -347,8 +347,8 @@
 - name: "test installing module with skip_publisher_check active - check mode: false"
   assert:
     that:
-      - "ok_skip_publisher_check is changed"
-      - "{{ result_ok_skip_publisher_check.stdout | trim }} | bool == true"
+      - ok_skip_publisher_check is changed
+      - result_ok_skip_publisher_check.stdout | trim | bool == true
 
 - name: "check Powershell Gallery module setup - minimum_version and maximum_version - check mode: true"
   win_psmodule:
@@ -368,8 +368,8 @@
 - name: "test Powershell Gallery module setup - minimum_version and maximum_version - check mode: true"
   assert:
     that:
-      - "module_minimum_maximim_version_setup_1 is changed"
-      - "{{ result_module_minimum_maximim_version_setup_1.stdout | trim }} | bool == false"
+      - module_minimum_maximim_version_setup_1 is changed
+      - result_module_minimum_maximim_version_setup_1.stdout | trim | bool == false
 
 - name: "check Powershell Gallery module setup - minimum_version and maximum_version - check mode: false"
   win_psmodule:
@@ -388,8 +388,8 @@
 - name: "test Powershell Gallery module setup - minimum_version and maximum_version - check mode: false"
   assert:
     that:
-      - "module_minimum_maximim_version_setup_1 is changed"
-      - "{{ result_module_minimum_maximim_version_setup_1.stdout | trim }} | bool == true"
+      - module_minimum_maximim_version_setup_1 is changed
+      - result_module_minimum_maximim_version_setup_1.stdout | trim | bool == true
 
 - name: check idempotency reinstalling module - minimum_version and maximum_version
   win_psmodule:
@@ -402,7 +402,7 @@
 - name: test idempotency reinstalling module - minimum_version and maximum_version
   assert:
     that:
-      - "module_minimum_maximim_version_setup_2 is not changed"
+      - module_minimum_maximim_version_setup_2 is not changed
 
 - name: "check uninstall PowerShell module - minimum_version and maximum_version - check mode: true"
   win_psmodule:
@@ -421,8 +421,8 @@
 - name: "test uninstall PowerShell module - minimum_version and maximum_version - check mode: true"
   assert:
     that:
-      - "module_uninstall_minimum_maximum_version is changed"
-      - "{{ result_module_uninstall_minimum_maximum_version.stdout | trim }} | bool == true"
+      - module_uninstall_minimum_maximum_version is changed
+      - result_module_uninstall_minimum_maximum_version.stdout | trim | bool == true
 
 - name: "check uninstall PowerShell module - minimum_version and maximum_version - check mode: false"
   win_psmodule:
@@ -440,8 +440,8 @@
 - name: "test uninstall PowerShell module - minimum_version and maximum_version - check mode: false"
   assert:
     that:
-      - "module_uninstall_minimum_maximum_version is changed"
-      - "{{ result_module_uninstall_minimum_maximum_version.stdout | trim }} | bool == true"
+      - module_uninstall_minimum_maximum_version is changed
+      - result_module_uninstall_minimum_maximum_version.stdout | trim | bool == true
 
 - name: check installing module with allow_clobber not active
   win_psmodule:
@@ -452,7 +452,7 @@
 - name: test installing module with allow_clobber not active
   assert:
     that:
-      - "fail_allow_clobber is failed"
+      - fail_allow_clobber is failed
       - "'The following commands are already available on this system' in fail_allow_clobber.msg"
 
 - name: "check installing module with allow_clobber active - check mode: true"
@@ -470,8 +470,8 @@
 - name: "test installing module with allow_clobber active - check mode: true"
   assert:
     that:
-      - "ok_allow_clobber is changed"
-      - "{{ result_ok_allow_clobber.stdout | trim }} | bool == false"
+      - ok_allow_clobber is changed
+      - result_ok_allow_clobber.stdout | trim | bool == false
 
 - name: "check installing module with allow_clobber active - check mode: false"
   win_psmodule:
@@ -487,8 +487,8 @@
 - name: "test installing module with allow_clobber active - check mode: false"
   assert:
     that:
-      - "ok_allow_clobber is changed"
-      - "{{ result_ok_allow_clobber.stdout | trim }} | bool == true"
+      - ok_allow_clobber is changed
+      - result_ok_allow_clobber.stdout | trim | bool == true
 
 - name: "check uninstall PowerShell module allow_clobber - check mode: true"
   win_psmodule:
@@ -504,8 +504,8 @@
 - name: "test uninstall PowerShell module allow_clobber - check mode: true"
   assert:
     that:
-      - "module_uninstall_4 is changed"
-      - "{{ result_module_uninstall_4.stdout | trim }} | bool == true"
+      - module_uninstall_4 is changed
+      - result_module_uninstall_4.stdout | trim | bool == true
 
 - name: "check uninstall PowerShell module allow_clobber - check mode: false"
   win_psmodule:
@@ -520,8 +520,8 @@
 - name: "test uninstall PowerShell module allow_clobber - check mode: false"
   assert:
     that:
-      - "module_uninstall_4 is changed"
-      - "{{ result_module_uninstall_4.stdout | trim }} | bool == true"
+      - module_uninstall_4 is changed
+      - result_module_uninstall_4.stdout | trim | bool == true
 
 - name: check installing module with allow_prerelease not active
   win_psmodule:
@@ -535,7 +535,7 @@
 - name: test installing module with allow_prerelease not active
   assert:
     that:
-      - "fail_allow_prerelease is failed"
+      - fail_allow_prerelease is failed
       - "'parameter must be specified when using the Prerelease string in MinimumVersion' in fail_allow_prerelease.msg"
 
 - name: "check installing prerelease module with allow_prerelease active - check mode: true"
@@ -550,7 +550,7 @@
 - name: "test installing prerelease module with allow_prerelease active - check mode: true"
   assert:
     that:
-      - "ok_allow_prerelease is changed"
+      - ok_allow_prerelease is changed
 
 - name: "check installing prerelease module with allow_prerelease active - check mode: false"
   win_psmodule:
@@ -563,7 +563,7 @@
 - name: "test installing prerelease module with allow_prerelease active - check mode: false"
   assert:
     that:
-      - "ok_allow_prerelease is changed"
+      - ok_allow_prerelease is changed
 
 - name: check installing module with a wrong name
   win_psmodule:
@@ -575,7 +575,7 @@
 - name: test installing module with a wrong name
   assert:
     that:
-      - "module_fail is failed"
+      - module_fail is failed
       - "'Problems installing {{ wrong_module }} module: No match was found for the specified search criteria' in module_fail.msg"
 
 - name: check installing module from Powershell Gallery - without version 3
@@ -592,8 +592,8 @@
 - name: test Powershell Gallery module setup - without version 3
   assert:
     that:
-      - "module_without_version_setup_3 is changed"
-      - "'{{ result_module_without_version_setup_3.stdout | trim }}' == 'True'"
+      - module_without_version_setup_3 is changed
+      - result_module_without_version_setup_3.stdout | trim | bool == true
 
 - name: check installing module from Powershell Gallery - required_version 4
   win_psmodule:
@@ -610,8 +610,8 @@
 - name: test installing module from Powershell Gallery - required_version 4
   assert:
     that:
-      - "module_required_version_setup_4 is changed"
-      - "'{{ result_module_required_version_setup_4.stdout | trim }}' == 'True'"
+      - module_required_version_setup_4 is changed
+      - result_module_required_version_setup_4.stdout | trim | bool == true
 
 - name: "check uninstall PowerShell module - required_version - check mode: true"
   win_psmodule:
@@ -629,8 +629,8 @@
 - name: "test PowerShell module uninstall - required_version - check mode: true"
   assert:
     that:
-      - "module_uninstall_required_version is changed"
-      - "{{ result_module_uninstall_required_version.stdout | trim }} | bool == true"
+      - module_uninstall_required_version is changed
+      - result_module_uninstall_required_version.stdout | trim | bool == true
 
 - name: "check uninstall PowerShell module - minimum_version - ultra high version - check mode: true"
   win_psmodule:
@@ -643,7 +643,7 @@
 - name: "test Powershell Gallery module setup - minimum_version - ultra high version - check mode: true"
   assert:
     that:
-      - "module_uninstall_minimum_version is not changed"
+      - module_uninstall_minimum_version is not changed
 
 - name: "check uninstall PowerShell module - minimum_version - ultra high version - check mode: false"
   win_psmodule:
@@ -655,7 +655,7 @@
 - name: "test Powershell Gallery module setup - minimum_version - ultra high version - check mode: false"
   assert:
     that:
-      - "module_uninstall_minimum_version is not changed"
+      - module_uninstall_minimum_version is not changed
 
 - name: check fake custom ps repository registration attempt
   win_psmodule:
@@ -667,7 +667,7 @@
 - name: test fake custom ps repository registration attempt
   assert:
     that:
-      - "fake_repo_fail is failed"
+      - fake_repo_fail is failed
 
 - name: check installing module from the My Get repository and registering that repository at the same time
   win_psmodule:
@@ -764,7 +764,7 @@
     - name: "test sample module in custom repo - check mode: false"
       assert:
         that:
-          - "'{{ powershell_module }}' | lower in ((saved_package.stdout_lines | last) | lower)"
+          - powershell_module | lower in ((saved_package.stdout_lines | last) | lower)
 
     - name: "get the latest version of module in custom repo"
       win_shell: "((Find-Module -Name {{ powershell_module }} -Repository {{custom_repo_name}}).Version).ToString()"
@@ -779,8 +779,8 @@
     - name: "test installing module from custom Powershell repository - check mode: true"
       assert:
         that:
-          - "module_from_custom_repo is changed"
-          - "{{ result_module_from_custom_repo.stdout | trim }} | bool == false"
+          - module_from_custom_repo is changed
+          - result_module_from_custom_repo.stdout | trim | bool == false
 
     - name: "check installing module from custom Powershell repository - check mode: false"
       win_psmodule:
@@ -797,8 +797,8 @@
     - name: "test installing module from custom Powershell repository - check mode: false"
       assert:
         that:
-          - "module_from_custom_repo is changed"
-          - "{{ result_module_from_custom_repo.stdout | trim }} | bool == true"
+          - module_from_custom_repo is changed
+          - result_module_from_custom_repo.stdout | trim | bool == true
 
     - name: test module was installed from custom repo
       win_shell: "(Get-InstalledModule -Name {{ powershell_module }}).Repository"
@@ -807,4 +807,4 @@
     - name: test sample module is installed from custom repo
       assert:
         that:
-          - "is_package_customrepo.stdout_lines[0] == custom_repo_name"
+          - is_package_customrepo.stdout_lines[0] == custom_repo_name
