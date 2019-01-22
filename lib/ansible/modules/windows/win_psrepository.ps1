@@ -18,9 +18,11 @@ $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" 
 
 $result = @{"changed" = $false}
 
-$PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
-if ($null -eq $PackageProvider) {
-    Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force | Out-Null
+Function Update-NuGetPackageProvider {
+    $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
+    if ($null -eq $PackageProvider) {
+        Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force | Out-Null
+    }
 }
 
 $Repo = Get-PSRepository -Name $name -ErrorAction Ignore
@@ -30,6 +32,7 @@ if ($state -eq "present") {
             $installationpolicy = "trusted"
         }
         if (-not $check_mode) {
+            Update-NuGetPackageProvider
             Register-PSRepository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy
         }
         $result.changed = $true
@@ -47,6 +50,7 @@ if ($state -eq "present") {
 
         if ($changed_properties.Count -gt 0) {
             if (-not $check_mode) {
+                Update-NuGetPackageProvider
                 Set-PSRepository -Name $name @changed_properties
             }
             $result.changed = $true
@@ -55,6 +59,7 @@ if ($state -eq "present") {
 }
 elseif ($state -eq "absent" -and $null -ne $Repo) {
     if (-not $check_mode) {
+        Update-NuGetPackageProvider
         Unregister-PSRepository -Name $name
     }
     $result.changed = $true
