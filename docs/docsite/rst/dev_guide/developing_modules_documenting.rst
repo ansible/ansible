@@ -234,7 +234,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
     .. code-block:: yaml+jinja
 
-        seealso::
+        seealso:
 
         # Reference by module name
         - module: aci_tenant
