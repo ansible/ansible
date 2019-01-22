@@ -137,7 +137,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
-def create_or_update_bucket(s3_client, module, location):
+def create_or_update_bucket(s3_client, location):
 
     policy = module.params.get("policy")
     name = module.params.get("name")
