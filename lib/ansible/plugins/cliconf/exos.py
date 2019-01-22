@@ -115,6 +115,5 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
-        result['device_info'] = self.get_device_info()
         result.update(self.get_option_values())
         return json.dumps(result)

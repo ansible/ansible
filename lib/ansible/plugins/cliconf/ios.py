@@ -232,7 +232,6 @@ class Cliconf(CliconfBase):
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
         result['rpc'] = self.get_base_rpc() + ['edit_banner', 'get_diff', 'run_commands', 'get_defaults_flag']
-        result['device_info'] = self.get_device_info()
         result.update(self.get_option_values())
         return json.dumps(result)
 

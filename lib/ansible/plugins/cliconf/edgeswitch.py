@@ -105,7 +105,6 @@ class Cliconf(CliconfBase):
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
         result['rpc'] = self.get_base_rpc() + ['run_commands']
-        result['device_info'] = self.get_device_info()
         return json.dumps(result)
 
     def run_commands(self, commands=None, check_rc=True):
