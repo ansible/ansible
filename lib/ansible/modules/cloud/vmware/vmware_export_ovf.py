@@ -123,7 +123,14 @@ class LeaseProgressUpdater(Thread):
                 if self.httpNfcLease.state == vim.HttpNfcLease.State.done:
                     return
                 self.httpNfcLease.HttpNfcLeaseProgress(self.progressPercent)
-                sleep(self.updateInterval)
+                sleep_sec = 0
+                while True:
+                    if self.httpNfcLease.state == vim.HttpNfcLease.State.done or self.httpNfcLease.state == vim.HttpNfcLease.State.error:
+                        return
+                    sleep_sec += 1
+                    sleep(1)
+                    if sleep_sec == self.updateInterval:
+                        break
             except Exception:
                 return
 
@@ -137,8 +144,8 @@ class VMwareExportVmOvf(PyVmomi):
         self.ovf_dir = ''
         # set read device content chunk size to 2 MB
         self.chunk_size = 2 * 2 ** 20
-        # set lease progress update interval to 30 seconds
-        self.lease_interval = 30
+        # set lease progress update interval to 15 seconds
+        self.lease_interval = 15
         self.facts = {'device_files': []}
 
     def create_export_dir(self, vm_obj):
