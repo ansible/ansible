@@ -105,7 +105,7 @@ class NetAppONTAPGatherFacts(object):
             return ontapi_version
         except netapp_utils.zapi.NaApiError as e:
             self.module.fail_json(msg="Error calling API %s: %s" %
-                                  (call, to_native(e)), exception=traceback.format_exc())
+                                  (api_call.to_string(), to_native(e)), exception=traceback.format_exc())
 
     def call_api(self, call, query=None):
         api_call = netapp_utils.zapi.NaElement(call)
