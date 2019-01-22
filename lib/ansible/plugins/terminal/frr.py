@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import re
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.terminal import TerminalBase
 from ansible.utils.display import Display
 
@@ -55,21 +53,12 @@ class TerminalModule(TerminalBase):
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
     def on_become(self, passwd=None):
-        if self._get_prompt().endswith(b'#'):
-            return
+        # NOTE: For FRR, enable password only takes effect when telnetting to individual daemons
+        #       vtysh will always drop into enable mode since it runs as a privileged process
+        pass
 
-        # TO-DO: FRR 6.0 not throwing enable prompt
 
     def on_unbecome(self):
-        # NOTE: FRR 6.0 not throwing enable prompt
-        prompt = self._get_prompt()
-        if prompt is None:
-            # if prompt is None most likely the terminal is hung up at a prompt
-            return
-
-        if b'(config' in prompt:
-            self._exec_cli_command(b'end')
-            self._exec_cli_command(b'disable')
-
-        elif prompt.endswith(b'#'):
-            self._exec_cli_command(b'disable')
+        # NOTE: For FRR, enable password only takes effect when telnetting to individual daemons
+        #       vtysh will always drop into enable mode since it runs as a privileged process
+        pass

@@ -19,20 +19,73 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: frr
+short_description: Use frr cliconf to run command on Free Range Routing platform
+description:
+  - This frr plugin provides low level abstraction api's for
+    sending and receiving CLI commands from devices running frr.
+version_added: "2.8"
+"""
+
 import re
-import time
 import json
 
-
-from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
 class Cliconf(CliconfBase):
+
+    def get_device_info(self):
+        device_info = {}
+
+        device_info['network_os'] = 'frr'
+        reply = self.get('show version')
+        data = to_text(reply, errors='surrogate_or_strict').strip()
+
+        match = re.search(r'FRRouting (\S+) \((\S+)\)', data)
+        if match:
+            device_info['network_os_version'] = match.group(1)
+            if match.group(2):
+                device_info['network_os_hostname'] = match.group(2)
+
+        return device_info
+
+
+    def get_option_values(self):
+        return {
+            'format': ['text'],
+            'output': ['text']
+        }
+
+    def get_device_operations(self):
+        return {
+            'supports_diff_replace': False,
+            'supports_commit': False,
+            'supports_rollback': False,
+            'supports_defaults': False,
+            'supports_onbox_diff': False,
+            'supports_commit_comment': False,
+            'supports_multiline_delimiter': False,
+            'supports_diff_match': False,
+            'supports_diff_ignore_lines': False,
+            'supports_generate_diff': False,
+            'supports_replace': False
+        }
+
+    def get_capabilities(self):
+        result = dict()
+        result['rpc'] = self.get_base_rpc() + ['get']
+        result['network_api'] = 'cliconf'
+        result['device_info'] = self.get_device_info()
+        result.update(self.get_option_values())
+        return json.dumps(result)
+
 
     @enable_mode
     def get_config(self, source='running', flags=None, format=None):
@@ -90,18 +143,3 @@ class Cliconf(CliconfBase):
             raise ValueError("'output' value %s is not supported for get" % output)
 
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
-
-    def get_device_operations(self):
-        return {
-            'supports_diff_replace': True,
-            'supports_commit': False,
-            'supports_rollback': False,
-            'supports_defaults': True,
-            'supports_onbox_diff': False,
-            'supports_commit_comment': False,
-            'supports_multiline_delimiter': True,
-            'supports_diff_match': True,
-            'supports_diff_ignore_lines': True,
-            'supports_generate_diff': True,
-            'supports_replace': False
-        }
