@@ -282,7 +282,8 @@ def map_obj_to_commands(updates, module):
         command.append('ip ssh pubkey-chain')
         if x:
             command.append('username %s' % want['name'])
-            command.append('key-hash %s' % x)
+            for item in x:
+                command.append('key-hash %s' % item)
             command.append('exit')
         else:
             command.append('no username %s' % want['name'])
@@ -304,8 +305,7 @@ def map_obj_to_commands(updates, module):
             add(commands, want, 'privilege %s' % want['privilege'])
 
         if needs_update(want, have, 'sshkey'):
-            for item in want['sshkey']:
-                add_ssh(commands, want, item)
+            add_ssh(commands, want, want['sshkey'])
 
         if needs_update(want, have, 'configured_password'):
             if update_password == 'always' or not have:
