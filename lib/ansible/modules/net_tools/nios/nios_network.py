@@ -82,7 +82,6 @@ options:
     description:
       - If set to true it'll create the network container to be added or removed
         from the system.
-    default: false
     version_added: '2.8'
   state:
     description:
@@ -217,15 +216,15 @@ def check_ip_addr_type(obj_filter, ib_spec):
     ip = obj_filter['network']
     if 'container' in obj_filter and obj_filter['container']:
         check_ip = ip.split('/')
-        del ib_spec['container'] #removing the container key from post arguments
-        del ib_spec['options'] #removing option argument as for network container it's not supported
+        del ib_spec['container']  # removing the container key from post arguments
+        del ib_spec['options']  # removing option argument as for network container it's not supported
         if validate_ip_address(check_ip[0]):
             return NIOS_IPV4_NETWORK_CONTAINER, ib_spec
         elif validate_ip_v6_address(check_ip[0]):
             return NIOS_IPV6_NETWORK_CONTAINER, ib_spec
     else:
         check_ip = ip.split('/')
-
+        del ib_spec['container']  # removing the container key from post arguments
         if validate_ip_address(check_ip[0]):
             return NIOS_IPV4_NETWORK, ib_spec
         elif validate_ip_v6_address(check_ip[0]):
@@ -267,7 +266,7 @@ def main():
 
         extattrs=dict(type='dict'),
         comment=dict(),
-        container=dict(type='bool', default=False, ib_req=True)
+        container=dict(type='bool', ib_req=True)
     )
 
     argument_spec = dict(
