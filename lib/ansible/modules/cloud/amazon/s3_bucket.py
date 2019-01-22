@@ -21,9 +21,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: s3_bucket
-short_description: Manage S3 buckets in AWS, Ceph, Walrus and FakeS3
+short_description: Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
 description:
-    - Manage S3 buckets in AWS, Ceph, Walrus and FakeS3
+    - Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
 version_added: "2.0"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
@@ -43,7 +43,7 @@ options:
       - The JSON policy as a string.
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc.
+      - S3 URL endpoint for usage with DigitalOcean, Ceph, Eucalyptus and fakes3 etc.
       - Assumes AWS if not specified.
       - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
@@ -110,6 +110,11 @@ EXAMPLES = '''
     tags:
       example: tag1
       another: tag2
+
+# Create a simple DigitalOcean Spaces bucket using their provided regional endpoint
+- s3_bucket:
+    name: mydobucket
+    s3_url: 'https://nyc3.digitaloceanspaces.com'
 
 '''
 
