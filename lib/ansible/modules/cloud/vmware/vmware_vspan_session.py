@@ -32,7 +32,7 @@ requirements:
 options:
     switch:
         description:
-            - The name of the distributed vSwitch on which to add or remove the mirroring session.
+            - The name of the switch to create or remove.
         required: True
         aliases: [ 'switch_name' ]
     name:
