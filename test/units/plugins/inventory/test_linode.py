@@ -58,18 +58,21 @@ def test_validation_option_bad_option(inventory):
 
 
 def test_empty_config_query_options(inventory):
-    regions, types = inventory._get_query_options({})
+    regions, types, instance_access = inventory._get_user_options({})
     assert regions == types == []
+    assert instance_access == 'hostname'
 
 
-def test_conig_query_options(inventory):
-    regions, types = inventory._get_query_options({
+def test_config_user_options(inventory):
+    regions, types, instance_access = inventory._get_user_options({
         'regions': ['eu-west', 'us-east'],
         'types': ['g5-standard-2', 'g6-standard-2'],
+        'instance_access': 'public_ip',
     })
 
     assert regions == ['eu-west', 'us-east']
     assert types == ['g5-standard-2', 'g6-standard-2']
+    assert instance_access == 'public_ip'
 
 
 def test_verify_file_bad_config(inventory):

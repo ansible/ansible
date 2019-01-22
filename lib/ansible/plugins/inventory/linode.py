@@ -29,6 +29,11 @@ DOCUMENTATION = r'''
             required: true
             env:
                 - name: LINODE_ACCESS_TOKEN
+        instance_access:
+          description: How to access the instance(hostname, public_ip, private_ip).
+          default: 'hostname'
+          type: str
+          required: false
         regions:
           description: Populate inventory with instances in this region.
           default: []
@@ -48,6 +53,7 @@ plugin: linode
 # Example with regions, types, groups and access token
 plugin: linode
 access_token: foobar
+instance_access: hostname
 regions:
   - eu-west
 types:
@@ -55,6 +61,7 @@ types:
 '''
 
 import os
+import ipaddress
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
@@ -125,18 +132,85 @@ class InventoryModule(BaseInventoryPlugin):
                 if instance.type.id in types
             ]
 
-    def _add_instances_to_groups(self):
+    def _get_instance_public_ip(self, instance):
+        """Returns the public IP address of the instance"""
+        if instance.ipv4 and len(instance.ipv4) > 0:
+            public_ip = None
+            for ip in instance.ipv4:
+                if not ipaddress.ip_address(ip).is_private:
+                    public_ip = ip
+            if public_ip:
+                return public_ip
+            else:
+                raise AnsibleError(
+                    'Expected public IP not found'
+                )
+        else:
+            raise AnsibleError(
+                'Instance IPv4 address is missing or empty'
+            )
+
+    def _get_instance_private_ip(self, instance):
+        """Returns the private IP address of the instance"""
+        if instance.ipv4 and len(instance.ipv4) > 0:
+            private_ip = None
+            for ip in instance.ipv4:
+                if ipaddress.ip_address(ip).is_private:
+                    private_ip = ip
+            if private_ip:
+                return private_ip
+            else:
+                raise AnsibleError(
+                    'Expected public IP not found'
+                )
+        else:
+            raise AnsibleError(
+                'Instance IPv4 address is missing or empty'
+            )
+
+    def _add_instances_to_groups(self, instance_access):
         """Add instance names to their dynamic inventory groups."""
         for instance in self.instances:
-            self.inventory.add_host(instance.label, group=instance.group)
+            if instance_access == 'public_ip':
+                host_identifier = self._get_instance_public_ip(instance)
+            elif instance_access == 'private_ip':
+                host_identifier = self._get_instance_private_ip(instance)
+            elif instance_access == 'hostname':
+                host_identifier = instance.label
+            else:
+                raise AnsibleError(
+                    'Instance Access setting is not valid'
+                )
+            self.inventory.add_host(host_identifier, group=instance.group)
 
-    def _add_hostvars_for_instances(self):
+    def _add_hostvars_for_instances(self, instance_access):
         """Add hostvars for instances in the dynamic inventory."""
         for instance in self.instances:
+            if instance_access == 'public_ip':
+                host_identifier = self._get_instance_public_ip(instance)
+            elif instance_access == 'private_ip':
+                host_identifier = self._get_instance_private_ip(instance)
+            elif instance_access == 'hostname':
+                host_identifier = instance.label
+            else:
+                raise AnsibleError(
+                    'Instance Access setting is not valid'
+                )
+
+            self.inventory.set_variable(
+                host_identifier,
+                "public_ip",
+                self._get_instance_public_ip(instance)
+            )
+            self.inventory.set_variable(
+                host_identifier,
+                "private_ip",
+                self._get_instance_private_ip(instance)
+            )
             hostvars = instance._raw_json
             for hostvar_key in hostvars:
                 self.inventory.set_variable(
-                    instance.label,
+                    host_identifier,
                     hostvar_key,
                     hostvars[hostvar_key]
                 )
@@ -158,8 +232,8 @@ class InventoryModule(BaseInventoryPlugin):
 
         return option_value
 
-    def _get_query_options(self, config_data):
-        """Get user specified query options from the configuration."""
+    def _get_user_options(self, config_data):
+        """Get user specified options from the configuration."""
         options = {
             'regions': {
                 'type_to_be': list,
@@ -168,6 +242,10 @@ class InventoryModule(BaseInventoryPlugin):
             'types': {
                 'type_to_be': list,
                 'value': config_data.get('types', [])
+            },
+            'instance_access': {
+                'type_to_be': str,
+                'value': config_data.get('instance_access', 'hostname')
             },
         }
 
@@ -180,8 +258,9 @@ class InventoryModule(BaseInventoryPlugin):
 
         regions = options['regions']['value']
         types = options['types']['value']
+        instance_access = options['instance_access']['value']
 
-        return regions, types
+        return regions, types, instance_access
 
     def verify_file(self, path):
         """Verify the Linode configuration file."""
@@ -200,9 +279,9 @@ class InventoryModule(BaseInventoryPlugin):
         self._get_instances_inventory()
 
         config_data = self._read_config_data(path)
-        regions, types = self._get_query_options(config_data)
+        regions, types, instance_access = self._get_user_options(config_data)
         self._filter_by_config(regions, types)
 
         self._add_groups()
-        self._add_instances_to_groups()
-        self._add_hostvars_for_instances()
+        self._add_instances_to_groups(instance_access)
+        self._add_hostvars_for_instances(instance_access)
