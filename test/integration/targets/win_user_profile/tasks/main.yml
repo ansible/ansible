@@ -1,0 +1,42 @@
+---
+- name: set custom user facts
+  set_fact:
+    test_username: ansible_test
+    test_password: '{{ "password123!" + lookup("password", "/dev/null chars=ascii_letters,digits length=9") }}'
+
+- name: create test account
+  win_user:
+    name: '{{ test_username }}'
+    password: '{{ test_password }}'
+    state: present
+  register: test_username_info
+
+- block:
+  - name: check if profile exists
+    win_stat:
+      path: C:\temp\{{ test_username }}
+    register: profile_path
+
+  - name: assert that profile doesn't exist before the test
+    assert:
+      that:
+      - not profile_path.stat.exists
+
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: remove test account
+    win_user:
+      name: '{{ test_username }}'
+      state: absent
+
+  - name: remove test account profile
+    win_user_profile:
+      name: '{{ item }}'
+      state: absent
+      remove_multiple: True
+    with_items:
+    - '{{ test_username }}'
+    - '{{ test_username }}.000'
+    - test_username_profile
