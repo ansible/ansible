@@ -135,10 +135,6 @@ class TestIosUserModule(TestIosModule):
             'ip ssh pubkey-chain',
             'username ansible',
             'key-hash ssh-rsa 098F6BCD4621D373CADE4E832627B4F6',
-            'exit',
-            'exit',
-            'ip ssh pubkey-chain',
-            'username ansible',
             'key-hash ssh-rsa A019918340A1E9183388D9A675603036',
             'exit',
             'exit'
