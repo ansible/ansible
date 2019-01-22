@@ -4,7 +4,7 @@
     - name: clone the ssh repo 
       win_git:
         repo: 'git@github.com:{{ github_repo_name }}'
-        dest: '{{ temp_path }}\repo_ssh'
+        dest: "{{ temp_path }}\\repo_ssh"
       register: fail_clone
 
 - name: assert repo cloned failed using ssh
@@ -17,7 +17,7 @@
     - name: clone the http repo (check)
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
-        dest: '{{ temp_path }}\repo_http'
+        dest: "{{ temp_path }}\\repo_http"
       register: http_clone_check
       check_mode: yes
 
@@ -31,7 +31,7 @@
     - name: clone the http repo
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
-        dest: '{{ temp_path }}\repo_http'
+        dest: "{{ temp_path }}\\repo_http"
       register: http_clone      
 
 - name: assert repo cloned using http 
@@ -45,7 +45,7 @@
     - name: clone the git repo
       win_git:
         repo: 'git://github.com/{{ github_repo_name }}'
-        dest: '{{ temp_path }}\repo_git'
+        dest: "{{ temp_path }}\\repo_git"
       register: git_clone
 
 - name: assert repo cloned using git protocol
@@ -59,7 +59,7 @@
     - name: clone the repo using branch
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
-        dest: '{{ temp_path }}\repo_branch'
+        dest: "{{ temp_path }}\\repo_branch"
         version: '{{ github_repo_branch }}'
       register: http_clone_branch      
 
@@ -74,7 +74,7 @@
     - name: update the repo
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
-        dest: '{{ temp_path }}\repo_branch'
+        dest: "{{ temp_path }}\\repo_branch"
         version: 'master'
         update: yes
       register: http_update      
@@ -90,7 +90,7 @@
     - name: clean the repo
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
-        dest: '{{ temp_path }}\repo_http'
+        dest: "{{ temp_path }}\\repo_http"
         version: 'tags/{{ github_repo_tag }}'
         relace_dest: true
       register: http_clean
