@@ -56,7 +56,6 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-
     def get_option_values(self):
         return {
             'format': ['text'],
@@ -86,7 +85,6 @@ class Cliconf(CliconfBase):
         result.update(self.get_option_values())
         return json.dumps(result)
 
-
     @enable_mode
     def get_config(self, source='running', flags=None, format=None):
         if source not in ('running', 'startup'):
@@ -106,7 +104,6 @@ class Cliconf(CliconfBase):
         cmd = cmd.strip()
 
         return self.send_command(cmd)
-
 
     @enable_mode
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
@@ -134,7 +131,6 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         resp['response'] = results
         return resp
-
 
     def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
         if not command:

@@ -57,7 +57,6 @@ class TerminalModule(TerminalBase):
         #       vtysh will always drop into enable mode since it runs as a privileged process
         pass
 
-
     def on_unbecome(self):
         # NOTE: For FRR, enable password only takes effect when telnetting to individual daemons
         #       vtysh will always drop into enable mode since it runs as a privileged process
