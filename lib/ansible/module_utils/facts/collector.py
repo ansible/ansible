@@ -134,7 +134,7 @@ def get_collector_names(valid_subsets=None,
     # Retrieve module parameters
     gather_subset = gather_subset or ['all']
 
-    min_valid = frozenset(('all', 'min'))
+    min_valid = ('all', 'min')
     # the list of everything that 'all' expands to
     valid_subsets = valid_subsets or min_valid
 
