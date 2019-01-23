@@ -413,11 +413,11 @@ rebuilt:
 '''
 
 EXAMPLES = '''
-- name: Set an argument
+- name: Set arguments
   docker_swarm_service:
     name: myservice
     image: alpine
-    command:
+    args:
       - "sleep"
       - "3600"
 
