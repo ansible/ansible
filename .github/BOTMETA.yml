@@ -1244,6 +1244,9 @@ files:
     maintainers:
       - samccann
   docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
+  docs/docsite/rst/scenario_guides/guide_docker.rst:
+    maintainers: $team_docker
+    labels: docker
   docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
 ###############################
 # 'test' is a component path, then 'test' label will be automatically added
