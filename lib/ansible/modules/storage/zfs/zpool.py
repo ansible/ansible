@@ -55,7 +55,7 @@ options:
     default: false
   autoreplace:
     description:
-      - Automatically replace a bad device in pool using a spare device
+      - Automatically replace a bad device in pool using a spare device.
     type: bool
   autoexpand:
     description:
