@@ -96,8 +96,7 @@ def check_cli(module, cli):
     name = module.params['pn_vrouter_name']
 
     show = cli
-    cli += 'vrouter-show name %s ' % name
-    cli += 'format name no-show-headers'
+    cli += 'vrouter-show name %s format name no-show-headers ' % name
     out = module.run_command(cli, use_unsafe_shell=True)
     if out:
         pass
@@ -105,8 +104,7 @@ def check_cli(module, cli):
         return False
 
     cli = show
-    cli += ' vrouter-show name '
-    cli += '%s format proto-multi no-show-headers' % name
+    cli += ' vrouter-show name %s format proto-multi no-show-headers' % name
     out = module.run_command(cli, use_unsafe_shell=True)[1]
 
     return True if 'none' not in out else False
