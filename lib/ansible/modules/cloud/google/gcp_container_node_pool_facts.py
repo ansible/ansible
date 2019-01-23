@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -268,12 +267,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            zone=dict(required=True, type='str'),
-            cluster=dict(required=True)
-        )
-    )
+    module = GcpModule(argument_spec=dict(zone=dict(required=True, type='str'), cluster=dict(required=True)))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
@@ -283,18 +277,12 @@ def main():
         items = items.get('nodePools')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'zone': module.params['zone'],
-        'cluster': replace_resource_dict(module.params['cluster'], 'name')
-    }
+    res = {'project': module.params['project'], 'zone': module.params['zone'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
     return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools".format(**res)
 
 
