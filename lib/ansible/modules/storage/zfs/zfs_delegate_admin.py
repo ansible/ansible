@@ -1,101 +1,104 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Nate Coraor <nate@coraor.org>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-from __future__ import absolute_import
+# Copyright: (c) 2015, Nate Coraor <nate@coraor.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zfs_delegate_admin
 short_description: Manage ZFS delegated administration (user admin privileges)
 description:
   - Manages ZFS file system delegated administration permissions, which allow unprivileged users to perform ZFS
     operations normally restricted to the superuser.
-  - See the "zfs allow" section of C(zfs(1M)) for detailed explanations of options. This module attempts to adhere to
-    the behavior of the command line tool as much as possible.
+  - See the C(zfs allow) section of C(zfs(1M)) for detailed explanations of options.
+  - This module attempts to adhere to the behavior of the command line tool as much as possible.
 requirements:
   - "A ZFS/OpenZFS implementation that supports delegation with `zfs allow`, including: Solaris >= 10, illumos (all
     versions), FreeBSD >= 8.0R, ZFS on Linux >= 0.7.0."
-version_added: "2.5"
+version_added: '2.8'
 options:
   name:
     description:
-      - File system or volume name e.g. C(rpool/myfs)
+      - File system or volume name e.g. C(rpool/myfs).
     required: true
+    type: str
   state:
     description:
-      - Whether to allow (C(present)), or unallow (C(absent)) a permission. When set to C(present), at least one
-        "entity" param of I(users), I(groups), or I(everyone) are required. When set to C(absent), removes permissions
-        from the specified entities, or removes all permissions if no entity params are specified.
+      - Whether to allow (C(present)), or unallow (C(absent)) a permission.
+      - When set to C(present), at least one "entity" param of I(users), I(groups), or I(everyone) are required.
+      - When set to C(absent), removes permissions from the specified entities, or removes all permissions if no entity params are specified.
     required: true
-    choices: [present, absent]
+    choices: [ absent, present ]
+    default: present
   users:
     description:
-      - List of users to whom permission(s) should be granted
+      - List of users to whom permission(s) should be granted.
+    type: list
   groups:
     description:
-      - List of groups to whom permission(s) should be granted
+      - List of groups to whom permission(s) should be granted.
+    type: list
   everyone:
     description:
       - Apply permissions to everyone.
-    default: false
     type: bool
+    default: no
   permissions:
     description:
-      - The list of permission(s) to delegate (required if C(state) is C(present))
-    choices: ['allow','clone','create','destroy',...]
+      - The list of permission(s) to delegate (required if C(state) is C(present)).
+    type: str
+    choices: [ allow, clone, create, destroy, mount, promote, readonly, receive, rename, rollback, send, share, snapshot, unallow ]
   local:
     description:
-      - Apply permissions to C(name) locally (C(zfs allow -l))
-    default: null
+      - Apply permissions to C(name) locally (C(zfs allow -l)).
     type: bool
   descendents:
     description:
-      - Apply permissions to C(name)'s descendents (C(zfs allow -d))
-    default: null
+      - Apply permissions to C(name)'s descendents (C(zfs allow -d)).
     type: bool
   recursive:
     description:
-      - Unallow permissions recursively (ignored when C(state) is C(present))
-    default: false
+      - Unallow permissions recursively (ignored when C(state) is C(present)).
     type: bool
-author: "Nate Coraor (@natefoo)"
+    default: no
+author:
+- Nate Coraor (@natefoo)
 '''
 
-EXAMPLES = '''
-# Grant `zfs allow` and `unallow` permission to the `adm` user with the default local+descendents scope
-- zfs_delegate_admin: name=rpool/myfs users=adm permissions=allow,unallow
+EXAMPLES = r'''
+- name: Grant `zfs allow` and `unallow` permission to the `adm` user with the default local+descendents scope
+  zfs_delegate_admin:
+    name: rpool/myfs
+    users: adm
+    permissions: allow,unallow
 
-# Grant `zfs send` to everyone, plus the group `backup`
-- zfs_delegate_admin: name=rpool/myvol groups=backup everyone=yes permissions=send
+- name: Grant `zfs send` to everyone, plus the group `backup`
+  zfs_delegate_admin:
+    name: rpool/myvol
+    groups: backup
+    everyone: yes
+    permissions: send
 
-# Grant `zfs send,receive` to users `foo` and `bar` with local scope only
-- zfs_delegate_admin: name=rpool/myfs users=foo,bar permissions=send,receive local=yes
+- name: Grant `zfs send,receive` to users `foo` and `bar` with local scope only
+  zfs_delegate_admin:
+    name: rpool/myfs
+    users: foo,bar
+    permissions: send,receive
+    local: yes
 
-# Revoke all permissions from everyone (permissions specifically assigned to users and groups remain)
-- zfs_delegate_admin: name=rpool/myfs state=absent everyone=yes
+- name: Revoke all permissions from everyone (permissions specifically assigned to users and groups remain)
+- zfs_delegate_admin:
+    name: rpool/myfs
+    everyone: yes
+    state: absent
 '''
 
 # This module does not return anything other than the standard
@@ -242,18 +245,20 @@ class ZfsDelegateAdmin(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=True),
-            state=dict(default='present', choices=['absent', 'present']),
-            users=dict(default=[], type='list'),
-            groups=dict(default=[], type='list'),
-            everyone=dict(default=False, type='bool'),
-            permissions=dict(default=[], type='list'),
-            local=dict(default=None, type='bool'),
-            descendents=dict(default=None, type='bool'),
-            recursive=dict(default=False, type='bool')
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            users=dict(type='list'),
+            groups=dict(type='list'),
+            everyone=dict(type='bool', default=False),
+            permissions=dict(type='list',
+                             choices=['allow', 'clone', 'create', 'destroy', 'mount', 'promote', 'readonly', 'receive',
+                                      'rename', 'rollback', 'send', 'share', 'snapshot', 'unallow']),
+            local=dict(type='bool'),
+            descendents=dict(type='bool'),
+            recursive=dict(type='bool', default=False),
         ),
         supports_check_mode=False,
-        required_if=[('state', 'present', ['permissions'])]
+        required_if=[('state', 'present', ['permissions'])],
     )
     zfs_delegate_admin = ZfsDelegateAdmin(module)
     zfs_delegate_admin.run()
