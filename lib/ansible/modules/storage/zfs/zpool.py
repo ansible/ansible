@@ -82,7 +82,7 @@ options:
     default: present
 author:
 - Remy Mudingay (@rmudingay)
-- Stephane Armanet
+#- Stephane Armanet
 '''
 
 EXAMPLES = r'''
@@ -297,18 +297,18 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            state=dict(type='str', required=True, choices=['absent', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
             raid_level=dict(type='str', required=False, choices=['raid0', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3']),
             vdev=dict(type='int', require=False),
-            devices=dict(type='list', default=None),
-            spare=dict(type='list', default=None),
+            devices=dict(type='list'),
+            spare=dict(type='list'),
             add=dict(type='bool', default=False),
             ashift=dict(type='int', default=0, choices=[0, 9, 10, 11, 12, 13, 14, 15, 16]),
             sets=dict(type='bool', default=False),
             autoreplace=dict(type='bool'),
             autoexpand=dict(type='bool'),
-            zil=dict(type='str', default=None),
-            l2arc=dict(type='str', default=None),
+            zil=dict(type='str'),
+            l2arc=dict(type='str'),
         ),
         supports_check_mode=True,
         required_together=[['raid_level', 'devices'], ['devices', 'vdev']],
@@ -363,7 +363,7 @@ def main():
     if ashift is None:
         ashift = 0
 
-    if devices is None:
+    if not devices:
         devices = ''
     else:
         if vdev > 1:
