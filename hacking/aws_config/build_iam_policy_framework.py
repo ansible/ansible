@@ -4,28 +4,28 @@
 # python build_iam_policy_framework.py ['ec2:AuthorizeSecurityGroupEgress', 'ec2:AuthorizeSecurityGroupIngress', 'sts:GetCallerIdentity']
 #
 # The sample output:
-#{
-#    "Version": "2012-10-17",
-#    "Statement": [
-#        {
-#            "Sid": "AnsibleEditor0",
-#            "Effect": "Allow",
-#            "Action": [
-#                "ec2:AuthorizeSecurityGroupEgress",
-#                "ec2:AuthorizeSecurityGroupIngress"
-#            ],
-#            "Resource": "arn:aws:ec2:${Region}:${Account}:security-group/${SecurityGroupId}"
-#        },
-#        {
-#            "Sid": "AnsibleEditor1",
-#            "Effect": "Allow",
-#            "Action": [
-#                "sts:GetCallerIdentity"
-#            ],
-#            "Resource": "*"
-#        }
-#    ]
-#}
+# {
+#     "Version": "2012-10-17",
+#     "Statement": [
+#         {
+#             "Sid": "AnsibleEditor0",
+#             "Effect": "Allow",
+#             "Action": [
+#                 "ec2:AuthorizeSecurityGroupEgress",
+#                 "ec2:AuthorizeSecurityGroupIngress"
+#             ],
+#             "Resource": "arn:aws:ec2:${Region}:${Account}:security-group/${SecurityGroupId}"
+#         },
+#         {
+#             "Sid": "AnsibleEditor1",
+#             "Effect": "Allow",
+#             "Action": [
+#                 "sts:GetCallerIdentity"
+#             ],
+#             "Resource": "*"
+#         }
+#     ]
+# }
 #
 # Policy troubleshooting:
 #    - If there are more actions in the policy than you provided, AWS has documented dependencies for some of your actions and
@@ -133,7 +133,7 @@ irregular_service_links = {
         'https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awsmarketplacemeteringservice.html',
         'https://docs.aws.amazon.com/IAM/latest/UserGuide/list_awsprivatemarketplace.html'
     ],
-    'discovery':  [
+    'discovery': [
         'https://docs.aws.amazon.com/IAM/latest/UserGuide/list_applicationdiscovery.html'
     ],
     'elasticloadbalancing': [
