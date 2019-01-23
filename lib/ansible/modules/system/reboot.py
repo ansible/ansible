@@ -54,6 +54,12 @@ options:
       - Message to display to users before reboot.
     type: str
     default: Reboot initiated by Ansible
+
+  extra_search_paths:
+    description: Additional paths to search for the C(shutdown) command
+    type: list
+    default: []
+    version_added: '2.8'
 seealso:
 - module: win_reboot
 author:

@@ -24,7 +24,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout'))
+    _VALID_ARGS = frozenset(('connect_timeout', 'extra_search_paths', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout' ))
 
     DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = None
@@ -130,13 +130,21 @@ class ActionModule(ActionBase):
 
     def get_shutdown_command(self, task_vars, distribution):
         shutdown_bin = self._get_value_from_facts('SHUTDOWN_COMMANDS', distribution, 'DEFAULT_SHUTDOWN_COMMAND')
+        search_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+        extra_search_paths = self._task.args.get('extra_search_paths', [])
+
+        if not isinstance(extra_search_paths, list):
+            extra_search_paths = [extra_search_paths]
+
+        if extra_search_paths:
+            search_paths = extra_search_paths + search_paths
 
         display.debug('{action}: running find module to get path for "{command}"'.format(action=self._task.action, command=shutdown_bin))
         find_result = self._execute_module(
             task_vars=task_vars,
             module_name='find',
             module_args={
-                'paths': ['/lib/molly-guard', '/sbin', '/usr/sbin', '/usr/local/sbin'],
+                'paths': search_paths,
                 'patterns': [shutdown_bin],
                 'file_type': 'any'
             }
