@@ -600,7 +600,7 @@ class Distribution(object):
             sunos_facts['distribution'] = data.split()[0]
             sunos_facts['distribution_version'] = data.split()[1]
             sunos_facts['distribution_release'] = ora_prefix + data
-            sunos_facts['distribution_major_version'] = uname_r.split('.')[1].rstrip();
+            sunos_facts['distribution_major_version'] = uname_r.split('.')[1].rstrip()
             return sunos_facts
 
         uname_v = get_uname(self.module, flags=['-v'])
