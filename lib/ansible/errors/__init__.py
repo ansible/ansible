@@ -219,6 +219,11 @@ class AnsibleConnectionFailure(AnsibleRuntimeError):
     pass
 
 
+class AnsibleAuthenticationFailure(AnsibleConnectionFailure):
+    '''invalid username/password/key'''
+    pass
+
+
 class AnsibleCallbackError(AnsibleRuntimeError):
     ''' a callback failure '''
     pass
