@@ -22,7 +22,7 @@ class ActionModule(ActionBase):
         if fact_module != 'setup':
 
             # network facts modules must support gather_subset
-            if self._connection.load_name not in ('network_cli', 'httpapi', 'netconf'):
+            if self._connection._load_name not in ('network_cli', 'httpapi', 'netconf'):
                 subset = mod_args.pop('gather_subset', None)
                 if subset not in ('all', ['all']):
                     self._display.warning('Ignoring subset(%s) for %s' % (subset, fact_module))
