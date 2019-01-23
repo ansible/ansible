@@ -115,7 +115,7 @@ tests = [
     {'playbook': 'unsafe.yml',
      'test_spec': [
          [('prompting for variable:', '{{whole}}')],
-         r'testhost.*ok=1']},
+         r'testhost.*ok=2']},
 ]
 
 for t in tests:

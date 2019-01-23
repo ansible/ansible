@@ -8,6 +8,7 @@
     - name: input
       prompt: prompting for variable
       unsafe: true
+
   tasks:
     - name:
       assert:
