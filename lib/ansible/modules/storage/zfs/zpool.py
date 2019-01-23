@@ -77,7 +77,7 @@ options:
       - Create or delete the pool
     type: str
     choices: [ absent, present ]
-    required: true
+    default: present
 author:
 - Remy Mudingay
 - Stephane Armanet
