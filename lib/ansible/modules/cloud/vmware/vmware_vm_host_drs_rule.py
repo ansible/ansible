@@ -121,25 +121,24 @@ class VmwareVmHostRuleDrs(PyVmomi):
     Class to manage VM HOST DRS Rules
     """
 
-    def __init__(self, module, cluster_name, drs_rule_name, enabled, mandatory, affinity_rule, state,
-                 datacenter_name=None, vm_group_name=None, host_group_name=None):
+    def __init__(self, module):
         """
         Doctring: Init
         """
 
         super(VmwareVmHostRuleDrs, self).__init__(module)
 
-        self.__datacenter_name = datacenter_name
+        self.__datacenter_name = module.params.get('datacenter', None)
         self.__datacenter_obj = None
-        self.__cluster_name = cluster_name
+        self.__cluster_name = module.params['cluster_name']
         self.__cluster_obj = None
-        self.__vm_group_name = vm_group_name
-        self.__host_group_name = host_group_name
-        self.__rule_name = drs_rule_name
-        self.__enabled = enabled
-        self.__mandatory = mandatory
-        self.__affinity_rule = affinity_rule
-        self.__state = state
+        self.__vm_group_name = module.params.get('vm_group_name', None)
+        self.__host_group_name = module.params.get('host_group_name', None)
+        self.__rule_name = module.params['drs_rule_name']
+        self.__enabled = module.params['enabled']
+        self.__mandatory = module.params['mandatory']
+        self.__affinity_rule = module.params['affinity_rule']
+        self.__state = module.params['state']
         self.__msg = 'Nothing to see here...'
         self.__result = dict()
         self.__changed = False
@@ -435,16 +434,7 @@ def main():
 
     try:
         # Create instance of VmwareDrsGroupManager
-        vm_host_drs = VmwareVmHostRuleDrs(module=module,
-                                          datacenter_name=module.params.get('datacenter', None),
-                                          cluster_name=module.params['cluster_name'],
-                                          drs_rule_name=module.params['drs_rule_name'],
-                                          vm_group_name=module.params.get('vm_group_name', None),
-                                          host_group_name=module.params.get('host_group_name', None),
-                                          enabled=module.params['enabled'],
-                                          mandatory=module.params['mandatory'],
-                                          affinity_rule=module.params['affinity_rule'],
-                                          state=module.params['state'])
+        vm_host_drs = VmwareVmHostRuleDrs(module=module)
 
         if module.params['state'] == 'present':
             vm_host_drs.create()
