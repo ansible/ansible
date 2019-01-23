@@ -130,6 +130,7 @@ options:
     description:
       - Service endpoint mode.
       - Maps docker service --endpoint-mode option.
+      - Requires API version >= 1.25.
     choices:
       - vip
       - dnsrr
@@ -248,7 +249,7 @@ options:
         required: false
         description:
           - What publish mode to use.
-          - Requires API version >= 1.32 and docker python library >= 3.0.0
+          - Requires API version >= 1.32.
         choices:
           - ingress
           - host
@@ -1341,6 +1342,7 @@ def main():
         dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         dns_options=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+        endpoint_mode=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
@@ -1348,6 +1350,7 @@ def main():
         configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
         placement_preferences=dict(docker_py_version='2.4.0', docker_api_version='1.27'),
+        publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         # specials
         publish_mode=dict(
             docker_py_version='3.0.0',
