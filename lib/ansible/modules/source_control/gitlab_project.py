@@ -14,99 +14,92 @@ DOCUMENTATION = '''
 module: gitlab_project
 short_description: Creates/updates/deletes Gitlab Projects
 description:
-   - When the project does not exist in Gitlab, it will be created.
-   - When the project does exists and state=absent, the project will be deleted.
-   - When changes are made to the project, the project will be updated.
+  - When the project does not exist in Gitlab, it will be created.
+  - When the project does exists and state=absent, the project will be deleted.
+  - When changes are made to the project, the project will be updated.
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
-    - pyapi-gitlab python module
+  - python-gitlab python module
 options:
-    server_url:
-        description:
-            - Url of Gitlab server, with protocol (http or https).
-        required: true
-    verify_ssl:
-        description:
-            - When using https if SSL certificate needs to be verified.
-        type: bool
-        default: 'yes'
-        aliases:
-            - validate_certs
-    login_user:
-        description:
-            - Gitlab user name.
-    login_password:
-        description:
-            - Gitlab password for login_user
-    login_token:
-        description:
-            - Gitlab token for logging in.
-    group:
-        description:
-            - The full path of the group of which this projects belongs to.
-    name:
-        description:
-            - The name of the project
-        required: true
-    path:
-        description:
-            - The path of the project you want to create, this will be server_url/<group>/path
-            - If not supplied, name will be used.
+  server_url:
     description:
-        description:
-            - An description for the project.
-    issues_enabled:
-        description:
-            - Whether you want to create issues or not.
-            - Possible values are true and false.
-        type: bool
-        default: 'yes'
-    merge_requests_enabled:
-        description:
-            - If merge requests can be made or not.
-            - Possible values are true and false.
-        type: bool
-        default: 'yes'
-    wiki_enabled:
-        description:
-            - If an wiki for this project should be available or not.
-            - Possible values are true and false.
-        type: bool
-        default: 'yes'
-    snippets_enabled:
-        description:
-            - If creating snippets should be available or not.
-            - Possible values are true and false.
-        type: bool
-        default: 'yes'
-    public:
-        description:
-            - If the project is public available or not.
-            - Setting this to true is same as setting visibility_level to 20.
-            - Possible values are true and false.
-        type: bool
-        default: 'no'
-    visibility:
-        description:
-            - Private. Project access must be granted explicitly for each user.
-            - Internal. The project can be cloned by any logged in user.
-            - Public. The project can be cloned without any authentication.
-        default: private
-        aliases:
-            - visibility_level
-    import_url:
-        description:
-            - Git repository which will be imported into gitlab.
-            - Gitlab server needs read access to this git repository.
-        type: bool
-        default: 'no'
-    state:
-        description:
-            - create or delete project.
-            - Possible values are present and absent.
-        default: "present"
-        choices: ["present", "absent"]
+      - Url of Gitlab server, with protocol (http or https).
+    required: true
+  verify_ssl:
+    description:
+      - When using https if SSL certificate needs to be verified.
+    type: bool
+    default: 'yes'
+    aliases:
+      - validate_certs
+  login_user:
+    description:
+      - Gitlab user name.
+  login_password:
+    description:
+      - Gitlab password for login_user
+  login_token:
+    description:
+      - Gitlab token for logging in.
+  group:
+    description:
+      - The full path of the group of which this projects belongs to.
+  name:
+    description:
+      - The name of the project
+    required: true
+  path:
+    description:
+      - The path of the project you want to create, this will be server_url/<group>/path
+      - If not supplied, name will be used.
+  description:
+    description:
+      - An description for the project.
+  issues_enabled:
+    description:
+      - Whether you want to create issues or not.
+      - Possible values are true and false.
+    type: bool
+    default: 'yes'
+  merge_requests_enabled:
+    description:
+      - If merge requests can be made or not.
+      - Possible values are true and false.
+    type: bool
+    default: 'yes'
+  wiki_enabled:
+    description:
+      - If an wiki for this project should be available or not.
+      - Possible values are true and false.
+    type: bool
+    default: 'yes'
+  snippets_enabled:
+    description:
+      - If creating snippets should be available or not.
+      - Possible values are true and false.
+    type: bool
+    default: 'yes'
+  visibility:
+    description:
+      - Private. Project access must be granted explicitly for each user.
+      - Internal. The project can be cloned by any logged in user.
+      - Public. The project can be cloned without any authentication.
+    default: private
+    aliases:
+      - visibility_level
+  import_url:
+    description:
+      - Git repository which will be imported into gitlab.
+      - Gitlab server needs read access to this git repository.
+    type: bool
+    default: 'no'
+  state:
+    description:
+      - create or delete project.
+      - Possible values are present and absent.
+    default: "present"
+    choices: ["present", "absent"]
 '''
 
 EXAMPLES = '''
@@ -135,7 +128,29 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-RETURN = '''# '''
+RETURN = '''
+msg:
+  description: Success or failure message
+  returned: always
+  type: str
+  sample: "Success"
+
+result:
+  description: json parsed response from the server
+  returned: always
+  type: dict
+
+error:
+  description: the error message returned by the Gitlab API
+  returned: failed
+  type: str
+  sample: "400: path is already in use"
+
+project:
+  description: API object
+  returned: always
+  type: dict
+'''
 
 import os
 
@@ -156,37 +171,35 @@ class GitLabProject(object):
         self.projectObject = None
 
     '''
-    @param name Name of the group
-    @param path Path of the group
-    @param description Description of the group
-    @param parent Parent group full path
+    @param project_name Name of the project
+    @param namespace Namespace Object (User or Group)
+    @param options Options of the project
     '''
-    def createOrUpdateProject(self, project_name, project_path, project_description, namespace, issues_enabled, merge_requests_enabled,
-                            wiki_enabled, snippets_enabled, visibility, import_url):
+    def createOrUpdateProject(self, project_name, namespace, options):
         changed = False
 
         # Because we have already call userExists in main()
         if self.projectObject is None:
             project = self.createProject(namespace, {
                 'name': project_name,
-                'path': project_path,
-                'description': project_description,
-                'issues_enabled': issues_enabled,
-                'merge_requests_enabled': merge_requests_enabled,
-                'wiki_enabled': wiki_enabled,
-                'snippets_enabled': snippets_enabled,
-                'visibility': visibility,
-                'import_url': import_url})
+                'path': options['path'],
+                'description': options['description'],
+                'issues_enabled': options['issues_enabled'],
+                'merge_requests_enabled': options['merge_requests_enabled'],
+                'wiki_enabled': options['wiki_enabled'],
+                'snippets_enabled': options['snippets_enabled'],
+                'visibility': options['visibility'],
+                'import_url': options['import_url']})
             changed = True
         else:
             changed, project = self.updateProject(self.projectObject, {
                 'name': project_name,
-                'description': project_description,
-                'issues_enabled': issues_enabled,
-                'merge_requests_enabled': merge_requests_enabled,
-                'wiki_enabled': wiki_enabled,
-                'snippets_enabled': snippets_enabled,
-                'visibility': visibility})
+                'description': options['description'],
+                'issues_enabled': options['issues_enabled'],
+                'merge_requests_enabled': options['merge_requests_enabled'],
+                'wiki_enabled': options['wiki_enabled'],
+                'snippets_enabled': options['snippets_enabled'],
+                'visibility': options['visibility']})
 
         self.projectObject = project
         if changed:
@@ -196,22 +209,31 @@ class GitLabProject(object):
             try:
                 project.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to create or update a project: %s " % e)
+                self._module.fail_json(msg="Failed update a project: %s " % e)
             return True
         else:
             return False
 
+    '''
+    @param namespace Namespace Object (User or Group)
+    @param arguments Attributs of the project
+    '''
     def createProject(self, namespace, arguments):
+        if self._module.check_mode:
+                self._module.exit_json(changed=True, result="Project should have created.")
+        
         arguments['namespace_id'] = namespace.id
-        project = self._gitlab.projects.create(arguments)
+        try:
+            project = self._gitlab.projects.create(arguments)
+        except (gitlab.exceptions.GitlabCreateError) as e:
+            self._module.fail_json(msg="Failed to create a project: %s " % to_native(e))
 
         return project
 
-    def to_bool(self, value):
-        if value:
-            return 1
-        return 0
-
+    '''
+    @param project Project Object
+    @param arguments Attributs of the project
+    '''
     def updateProject(self, project, arguments):
         changed = False
 
@@ -249,6 +271,7 @@ class GitLabProject(object):
                 return self._gitlab.projects.get(project.id)
 
     '''
+    @param namespace User/Group object
     @param name Name of the project
     '''
     def existsProject(self, namespace, name):
@@ -350,12 +373,20 @@ def main():
             module.exit_json(changed=False, result="Project deleted or does not exists")
 
     if state == 'present':
-        if gitlab_project.createOrUpdateProject(project_name, project_path, project_description, namespace, issues_enabled, merge_requests_enabled,
-                                                wiki_enabled, snippets_enabled, visibility, import_url):
+        if gitlab_project.createOrUpdateProject(project_name, namespace, {
+            "path": project_path,
+            "description": project_description,
+            "issues_enabled": issues_enabled,
+            "merge_requests_enabled": merge_requests_enabled,
+            "wiki_enabled": wiki_enabled,
+            "snippets_enabled": snippets_enabled,
+            "visibility": visibility,
+            "import_url": import_url}):
 
             module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name, project=gitlab_project.projectObject._attrs)
         else:
             module.exit_json(changed=False, result="No need to update the project %s" % project_name, project=gitlab_project.projectObject._attrs)
+
 
 if __name__ == '__main__':
     main()
