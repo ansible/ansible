@@ -27,7 +27,7 @@ If you want to follow the conversation about what features will be added to Ansi
 Micro development: the lifecycle of a PR
 ========================================
 
-Ansible accepts code via **pull requests** ("PRs" for short). github provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of Ansible Core.
+Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of Ansible Core.
 Here's an overview of the PR lifecycle:
 
 * Contributor opens a PR
