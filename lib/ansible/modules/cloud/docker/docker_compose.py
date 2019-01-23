@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 
-module: docker_service
+module: docker_compose
 
 short_description: Manage docker services and containers.
 
@@ -28,6 +28,7 @@ description:
   - Compose can be read from a docker-compose.yml (or .yaml) file or inline using the C(definition) option.
   - See the examples for more details.
   - Supports check mode.
+  - This module was called C(docker_service) before Ansible 2.8. The usage did not change.
 
 options:
   project_src:
@@ -166,18 +167,18 @@ EXAMPLES = '''
   connection: local
   gather_facts: no
   tasks:
-    - docker_service:
+    - docker_compose:
         project_src: flask
         state: absent
 
-    - docker_service:
+    - docker_compose:
         project_src: flask
       register: output
 
     - debug:
         var: output
 
-    - docker_service:
+    - docker_compose:
         project_src: flask
         build: no
       register: output
@@ -188,7 +189,7 @@ EXAMPLES = '''
     - assert:
         that: "not output.changed "
 
-    - docker_service:
+    - docker_compose:
         project_src: flask
         build: no
         stopped: true
@@ -202,7 +203,7 @@ EXAMPLES = '''
           - "not web.flask_web_1.state.running"
           - "not db.flask_db_1.state.running"
 
-    - docker_service:
+    - docker_compose:
         project_src: flask
         build: no
         restarted: true
@@ -221,7 +222,7 @@ EXAMPLES = '''
   connection: local
   gather_facts: no
   tasks:
-    - docker_service:
+    - docker_compose:
         project_src: flask
         scale:
           web: 2
@@ -235,11 +236,11 @@ EXAMPLES = '''
   connection: local
   gather_facts: no
   tasks:
-    - docker_service:
+    - docker_compose:
         project_src: flask
         state: absent
 
-    - docker_service:
+    - docker_compose:
         project_name: flask
         definition:
           version: '2'
@@ -270,11 +271,11 @@ EXAMPLES = '''
   connection: local
   gather_facts: no
   tasks:
-    - docker_service:
+    - docker_compose:
         project_src: flask
         state: absent
 
-    - docker_service:
+    - docker_compose:
         project_name: flask
         definition:
             db:
@@ -503,8 +504,8 @@ def stderr_redirector(path_name):
 
 
 def make_redirection_tempfiles():
-    _, out_redir_name = tempfile.mkstemp(prefix="ansible")
-    _, err_redir_name = tempfile.mkstemp(prefix="ansible")
+    dummy, out_redir_name = tempfile.mkstemp(prefix="ansible")
+    dummy, err_redir_name = tempfile.mkstemp(prefix="ansible")
     return (out_redir_name, err_redir_name)
 
 
@@ -1064,6 +1065,8 @@ def main():
         supports_check_mode=True,
         min_docker_api_version='1.20',
     )
+    if client.module._name == 'docker_service':
+        client.module.deprecate("The 'docker_service' module has been renamed to 'docker_compose'.", version='2.12')
 
     result = ContainerManager(client).exec_module()
     client.module.exit_json(**result)
