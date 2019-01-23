@@ -308,10 +308,7 @@ def delegate_docker(args, exclude, require, integration_targets):
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
             finally:
-                with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
-                    docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', '/root/ansible/test', 'results'])
-                    docker_get(args, test_id, '/root/results.tgz', local_result_fd.name)
-                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', 'test'])
+                run_command(args, ['test/runner/scripts/docker_get.sh', test_id])
         finally:
             if httptester_id:
                 docker_rm(args, httptester_id)
