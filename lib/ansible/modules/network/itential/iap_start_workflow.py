@@ -116,8 +116,10 @@ def start_workflow(module):
     :param module:
     :return: response and msg
     """
-    # When https is true or validate_certs is False, self-signed certificate will be applied
-    if module.params['https'] is True or module.params['validate_certs'] is False:
+    # By default this will be http.
+    # By default when using https, self signed certificate is used
+    # If https needs to pass certificate then use validate_certs as true
+    if module.params['https']:
         transport_protocol = 'https'
     else:
         transport_protocol = 'http'
