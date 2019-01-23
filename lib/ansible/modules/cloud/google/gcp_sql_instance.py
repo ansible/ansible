@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -571,46 +570,53 @@ def main():
             backend_type=dict(type='str', choices=['FIRST_GEN', 'SECOND_GEN', 'EXTERNAL']),
             connection_name=dict(type='str'),
             database_version=dict(type='str', choices=['MYSQL_5_5', 'MYSQL_5_6', 'MYSQL_5_7', 'POSTGRES_9_6']),
-            failover_replica=dict(type='dict', options=dict(
-                available=dict(type='bool'),
-                name=dict(type='str')
-            )),
+            failover_replica=dict(type='dict', options=dict(available=dict(type='bool'), name=dict(type='str'))),
             instance_type=dict(type='str', choices=['CLOUD_SQL_INSTANCE', 'ON_PREMISES_INSTANCE', 'READ_REPLICA_INSTANCE']),
             ipv6_address=dict(type='str'),
             master_instance_name=dict(type='str'),
             max_disk_size=dict(type='int'),
             name=dict(required=True, type='str'),
             region=dict(type='str'),
-            replica_configuration=dict(type='dict', options=dict(
-                failover_target=dict(type='bool'),
-                mysql_replica_configuration=dict(type='dict', options=dict(
-                    ca_certificate=dict(type='str'),
-                    client_certificate=dict(type='str'),
-                    client_key=dict(type='str'),
-                    connect_retry_interval=dict(type='int'),
-                    dump_file_path=dict(type='str'),
-                    master_heartbeat_period=dict(type='int'),
-                    password=dict(type='str'),
-                    ssl_cipher=dict(type='str'),
-                    username=dict(type='str'),
-                    verify_server_certificate=dict(type='bool')
-                )),
-                replica_names=dict(type='list', elements='str'),
-                service_account_email_address=dict(type='str')
-            )),
-            settings=dict(type='dict', options=dict(
-                ip_configuration=dict(type='dict', options=dict(
-                    ipv4_enabled=dict(type='bool'),
-                    authorized_networks=dict(type='list', elements='dict', options=dict(
-                        expiration_time=dict(type='str'),
-                        name=dict(type='str'),
-                        value=dict(type='str')
-                    )),
-                    require_ssl=dict(type='bool')
-                )),
-                tier=dict(type='str'),
-                settings_version=dict(type='int')
-            ))
+            replica_configuration=dict(
+                type='dict',
+                options=dict(
+                    failover_target=dict(type='bool'),
+                    mysql_replica_configuration=dict(
+                        type='dict',
+                        options=dict(
+                            ca_certificate=dict(type='str'),
+                            client_certificate=dict(type='str'),
+                            client_key=dict(type='str'),
+                            connect_retry_interval=dict(type='int'),
+                            dump_file_path=dict(type='str'),
+                            master_heartbeat_period=dict(type='int'),
+                            password=dict(type='str'),
+                            ssl_cipher=dict(type='str'),
+                            username=dict(type='str'),
+                            verify_server_certificate=dict(type='bool'),
+                        ),
+                    ),
+                    replica_names=dict(type='list', elements='str'),
+                    service_account_email_address=dict(type='str'),
+                ),
+            ),
+            settings=dict(
+                type='dict',
+                options=dict(
+                    ip_configuration=dict(
+                        type='dict',
+                        options=dict(
+                            ipv4_enabled=dict(type='bool'),
+                            authorized_networks=dict(
+                                type='list', elements='dict', options=dict(expiration_time=dict(type='str'), name=dict(type='str'), value=dict(type='str'))
+                            ),
+                            require_ssl=dict(type='bool'),
+                        ),
+                    ),
+                    tier=dict(type='str'),
+                    settings_version=dict(type='int'),
+                ),
+            ),
         )
     )
 
@@ -674,7 +680,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'region': module.params.get('region'),
         u'replicaConfiguration': InstanceReplicaconfiguration(module.params.get('replica_configuration', {}), module).to_request(),
-        u'settings': InstanceSettings(module.params.get('settings', {}), module).to_request()
+        u'settings': InstanceSettings(module.params.get('settings', {}), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
@@ -755,7 +761,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'region': response.get(u'region'),
         u'replicaConfiguration': InstanceReplicaconfiguration(response.get(u'replicaConfiguration', {}), module).from_response(),
-        u'settings': InstanceSettings(response.get(u'settings', {}), module).from_response()
+        u'settings': InstanceSettings(response.get(u'settings', {}), module).from_response(),
     }
 
 
@@ -781,7 +787,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'sql#operation')
         status = navigate_hash(op_result, ['status'])
@@ -803,16 +809,10 @@ class InstanceFailoverreplica(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'available': self.request.get('available'),
-            u'name': self.request.get('name')
-        })
+        return remove_nones_from_dict({u'available': self.request.get('available'), u'name': self.request.get('name')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'available': self.request.get(u'available'),
-            u'name': self.request.get(u'name')
-        })
+        return remove_nones_from_dict({u'available': self.request.get(u'available'), u'name': self.request.get(u'name')})
 
 
 class InstanceIpaddressesArray(object):
@@ -836,18 +836,10 @@ class InstanceIpaddressesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'ipAddress': item.get('ip_address'),
-            u'timeToRetire': item.get('time_to_retire'),
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict({u'ipAddress': item.get('ip_address'), u'timeToRetire': item.get('time_to_retire'), u'type': item.get('type')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'ipAddress': item.get(u'ipAddress'),
-            u'timeToRetire': item.get(u'timeToRetire'),
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict({u'ipAddress': item.get(u'ipAddress'), u'timeToRetire': item.get(u'timeToRetire'), u'type': item.get(u'type')})
 
 
 class InstanceReplicaconfiguration(object):
@@ -859,20 +851,26 @@ class InstanceReplicaconfiguration(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'failoverTarget': self.request.get('failover_target'),
-            u'mysqlReplicaConfiguration': InstanceMysqlreplicaconfiguration(self.request.get('mysql_replica_configuration', {}), self.module).to_request(),
-            u'replicaNames': self.request.get('replica_names'),
-            u'serviceAccountEmailAddress': self.request.get('service_account_email_address')
-        })
+        return remove_nones_from_dict(
+            {
+                u'failoverTarget': self.request.get('failover_target'),
+                u'mysqlReplicaConfiguration': InstanceMysqlreplicaconfiguration(self.request.get('mysql_replica_configuration', {}), self.module).to_request(),
+                u'replicaNames': self.request.get('replica_names'),
+                u'serviceAccountEmailAddress': self.request.get('service_account_email_address'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'failoverTarget': self.request.get(u'failoverTarget'),
-            u'mysqlReplicaConfiguration': InstanceMysqlreplicaconfiguration(self.request.get(u'mysqlReplicaConfiguration', {}), self.module).from_response(),
-            u'replicaNames': self.request.get(u'replicaNames'),
-            u'serviceAccountEmailAddress': self.request.get(u'serviceAccountEmailAddress')
-        })
+        return remove_nones_from_dict(
+            {
+                u'failoverTarget': self.request.get(u'failoverTarget'),
+                u'mysqlReplicaConfiguration': InstanceMysqlreplicaconfiguration(
+                    self.request.get(u'mysqlReplicaConfiguration', {}), self.module
+                ).from_response(),
+                u'replicaNames': self.request.get(u'replicaNames'),
+                u'serviceAccountEmailAddress': self.request.get(u'serviceAccountEmailAddress'),
+            }
+        )
 
 
 class InstanceMysqlreplicaconfiguration(object):
@@ -884,32 +882,36 @@ class InstanceMysqlreplicaconfiguration(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'caCertificate': self.request.get('ca_certificate'),
-            u'clientCertificate': self.request.get('client_certificate'),
-            u'clientKey': self.request.get('client_key'),
-            u'connectRetryInterval': self.request.get('connect_retry_interval'),
-            u'dumpFilePath': self.request.get('dump_file_path'),
-            u'masterHeartbeatPeriod': self.request.get('master_heartbeat_period'),
-            u'password': self.request.get('password'),
-            u'sslCipher': self.request.get('ssl_cipher'),
-            u'username': self.request.get('username'),
-            u'verifyServerCertificate': self.request.get('verify_server_certificate')
-        })
+        return remove_nones_from_dict(
+            {
+                u'caCertificate': self.request.get('ca_certificate'),
+                u'clientCertificate': self.request.get('client_certificate'),
+                u'clientKey': self.request.get('client_key'),
+                u'connectRetryInterval': self.request.get('connect_retry_interval'),
+                u'dumpFilePath': self.request.get('dump_file_path'),
+                u'masterHeartbeatPeriod': self.request.get('master_heartbeat_period'),
+                u'password': self.request.get('password'),
+                u'sslCipher': self.request.get('ssl_cipher'),
+                u'username': self.request.get('username'),
+                u'verifyServerCertificate': self.request.get('verify_server_certificate'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'caCertificate': self.request.get(u'caCertificate'),
-            u'clientCertificate': self.request.get(u'clientCertificate'),
-            u'clientKey': self.request.get(u'clientKey'),
-            u'connectRetryInterval': self.request.get(u'connectRetryInterval'),
-            u'dumpFilePath': self.request.get(u'dumpFilePath'),
-            u'masterHeartbeatPeriod': self.request.get(u'masterHeartbeatPeriod'),
-            u'password': self.request.get(u'password'),
-            u'sslCipher': self.request.get(u'sslCipher'),
-            u'username': self.request.get(u'username'),
-            u'verifyServerCertificate': self.request.get(u'verifyServerCertificate')
-        })
+        return remove_nones_from_dict(
+            {
+                u'caCertificate': self.request.get(u'caCertificate'),
+                u'clientCertificate': self.request.get(u'clientCertificate'),
+                u'clientKey': self.request.get(u'clientKey'),
+                u'connectRetryInterval': self.request.get(u'connectRetryInterval'),
+                u'dumpFilePath': self.request.get(u'dumpFilePath'),
+                u'masterHeartbeatPeriod': self.request.get(u'masterHeartbeatPeriod'),
+                u'password': self.request.get(u'password'),
+                u'sslCipher': self.request.get(u'sslCipher'),
+                u'username': self.request.get(u'username'),
+                u'verifyServerCertificate': self.request.get(u'verifyServerCertificate'),
+            }
+        )
 
 
 class InstanceSettings(object):
@@ -921,18 +923,22 @@ class InstanceSettings(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
-            u'tier': self.request.get('tier'),
-            u'settingsVersion': self.request.get('settings_version')
-        })
+        return remove_nones_from_dict(
+            {
+                u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
+                u'tier': self.request.get('tier'),
+                u'settingsVersion': self.request.get('settings_version'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
-            u'tier': self.request.get(u'tier'),
-            u'settingsVersion': self.request.get(u'settingsVersion')
-        })
+        return remove_nones_from_dict(
+            {
+                u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
+                u'tier': self.request.get(u'tier'),
+                u'settingsVersion': self.request.get(u'settingsVersion'),
+            }
+        )
 
 
 class InstanceIpconfiguration(object):
@@ -944,18 +950,22 @@ class InstanceIpconfiguration(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'ipv4Enabled': self.request.get('ipv4_enabled'),
-            u'authorizedNetworks': InstanceAuthorizednetworksArray(self.request.get('authorized_networks', []), self.module).to_request(),
-            u'requireSsl': self.request.get('require_ssl')
-        })
+        return remove_nones_from_dict(
+            {
+                u'ipv4Enabled': self.request.get('ipv4_enabled'),
+                u'authorizedNetworks': InstanceAuthorizednetworksArray(self.request.get('authorized_networks', []), self.module).to_request(),
+                u'requireSsl': self.request.get('require_ssl'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'ipv4Enabled': self.request.get(u'ipv4Enabled'),
-            u'authorizedNetworks': InstanceAuthorizednetworksArray(self.request.get(u'authorizedNetworks', []), self.module).from_response(),
-            u'requireSsl': self.request.get(u'requireSsl')
-        })
+        return remove_nones_from_dict(
+            {
+                u'ipv4Enabled': self.request.get(u'ipv4Enabled'),
+                u'authorizedNetworks': InstanceAuthorizednetworksArray(self.request.get(u'authorizedNetworks', []), self.module).from_response(),
+                u'requireSsl': self.request.get(u'requireSsl'),
+            }
+        )
 
 
 class InstanceAuthorizednetworksArray(object):
@@ -979,18 +989,10 @@ class InstanceAuthorizednetworksArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'expirationTime': item.get('expiration_time'),
-            u'name': item.get('name'),
-            u'value': item.get('value')
-        })
+        return remove_nones_from_dict({u'expirationTime': item.get('expiration_time'), u'name': item.get('name'), u'value': item.get('value')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'expirationTime': item.get(u'expirationTime'),
-            u'name': item.get(u'name'),
-            u'value': item.get(u'value')
-        })
+        return remove_nones_from_dict({u'expirationTime': item.get(u'expirationTime'), u'name': item.get(u'name'), u'value': item.get(u'value')})
 
 
 if __name__ == '__main__':
