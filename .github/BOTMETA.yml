@@ -288,7 +288,10 @@ files:
   $modules/network/system/: $team_networking
   $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos samdoran NilashishC
-  $modules/notification/_osx_say.py: $team_ansible
+  $modules/notification/_osx_say.py: &macos
+    ignored: frenck
+    labels: macos
+    maintainers: $team_macos
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
     maintainers: Deepakkothandan
@@ -309,6 +312,9 @@ files:
     ignored: bleader
     labels: bsd
     maintainers: $team_bsd
+  $modules/packaging/os/homebrew.py: *macos
+  $modules/packaging/os/homebrew_: *macos
+  $modules/packaging/os/macports.py: *macos
   $modules/packaging/os/package.py: $team_ansible
   $modules/packaging/os/pacman.py:
     ignored: elasticdog
@@ -377,9 +383,7 @@ files:
     maintainers: $team_ansible jtyr
     ignored: skvidal
   $modules/system/ohai.py: $team_ansible
-  $modules/system/osx_defaults.py:
-    ignored: frenck
-    maintainers: $team_ansible
+  $modules/system/osx_defaults.py: *macos
   $modules/system/pam_limits.py:
     ignored: usawa
     maintainers: giovannisciortino
@@ -574,6 +578,7 @@ files:
   $module_utils/facts:
     support: core
   $module_utils/facts/hardware/aix.py: *aix
+  $module_utils/facts/hardware/darwin.py: *macos
   $module_utils/facts/hardware/dragonfly.py: *bsd
   $module_utils/facts/hardware/freebsd.py: *bsd
   $module_utils/facts/hardware/hpux.py: *hpux
@@ -581,6 +586,7 @@ files:
   $module_utils/facts/hardware/openbsd.py: *bsd
   $module_utils/facts/hardware/sunos.py: *solaris
   $module_utils/facts/network/aix.py: *aix
+  $module_utils/facts/network/darwin.py: *macos
   $module_utils/facts/network/dragonfly.py: *bsd
   $module_utils/facts/network/freebsd.py: *bsd
   $module_utils/facts/network/generic_bsd.py: *bsd
@@ -928,6 +934,7 @@ files:
     support: core
   $plugins/callback/oneline:
     support: core
+  $plugins/callback/osx_say.py: *macos
   $plugins/callback/profile:
     support: core
   $plugins/callback/stderr.py:
@@ -1336,6 +1343,7 @@ macros:
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
+  team_macos: dagwieers
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
