@@ -815,3 +815,5 @@
       assert:
         that:
           - "'vim-minimal' in rpm_output.stdout"
+  when:
+    - ansible_distribution == 'Fedora'
