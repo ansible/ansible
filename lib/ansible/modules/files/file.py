@@ -211,6 +211,11 @@ class ParameterError(AnsibleModuleError):
     pass
 
 
+class Sentinel(object):
+    def __new__(cls, *args, **kwargs):
+        return cls
+
+
 def _ansible_excepthook(exc_type, exc_value, tb):
     # Using an exception allows us to catch it if the calling code knows it can recover
     if issubclass(exc_type, AnsibleModuleError):
@@ -349,8 +354,7 @@ def get_timestamp_for_time(formatted_time, time_format):
     if formatted_time == 'preserve':
         return None
     elif formatted_time == 'now':
-        current_time = time.time()
-        return current_time
+        return Sentinel
     else:
         try:
             struct = time.strptime(formatted_time, time_format)
@@ -363,25 +367,43 @@ def get_timestamp_for_time(formatted_time, time_format):
 
 
 def update_timestamp_for_file(path, mtime, atime, diff=None):
-    # If both parameters are None, nothing to do
-    if mtime is None and atime is None:
-        return False
-
     try:
-        previous_mtime = os.stat(path).st_mtime
-        previous_atime = os.stat(path).st_atime
+        # When mtime and atime are set to 'now', rely on utime(path, None) which does not require ownership of the file
+        # https://github.com/ansible/ansible/issues/50943
+        if mtime is Sentinel and atime is Sentinel:
+            # It's not exact but we can't rely on os.stat(path).st_mtime after setting os.utime(path, None) as it may
+            # not be updated. Just use the current time for the diff values
+            mtime = atime = time.time()
 
-        if mtime is None:
-            mtime = previous_mtime
+            previous_mtime = os.stat(path).st_mtime
+            previous_atime = os.stat(path).st_atime
 
-        if atime is None:
-            atime = previous_atime
+            set_time = None
+        else:
+            # If both parameters are None 'preserve', nothing to do
+            if mtime is None and atime is None:
+                return False
 
-        # If both timestamps are already ok, nothing to do
-        if mtime == previous_mtime and atime == previous_atime:
-            return False
+            previous_mtime = os.stat(path).st_mtime
+            previous_atime = os.stat(path).st_atime
 
-        os.utime(path, (atime, mtime))
+            if mtime is None:
+                mtime = previous_mtime
+            elif mtime is Sentinel:
+                mtime = time.time()
+
+            if atime is None:
+                atime = previous_atime
+            elif atime is Sentinel:
+                atime = time.time()
+
+            # If both timestamps are already ok, nothing to do
+            if mtime == previous_mtime and atime == previous_atime:
+                return False
+
+            set_time = (atime, mtime)
+
+        os.utime(path, set_time)
 
         if diff is not None:
             if 'before' not in diff:
