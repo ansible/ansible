@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -260,16 +259,16 @@ def main():
             name=dict(required=True, type='str'),
             description=dict(type='str'),
             network=dict(required=True),
-            bgp=dict(type='dict', options=dict(
-                asn=dict(required=True, type='int'),
-                advertise_mode=dict(default='DEFAULT', type='str', choices=['DEFAULT', 'CUSTOM']),
-                advertised_groups=dict(type='list', elements='str'),
-                advertised_ip_ranges=dict(type='list', elements='dict', options=dict(
-                    range=dict(type='str'),
-                    description=dict(type='str')
-                ))
-            )),
-            region=dict(required=True, type='str')
+            bgp=dict(
+                type='dict',
+                options=dict(
+                    asn=dict(required=True, type='int'),
+                    advertise_mode=dict(default='DEFAULT', type='str', choices=['DEFAULT', 'CUSTOM']),
+                    advertised_groups=dict(type='list', elements='str'),
+                    advertised_ip_ranges=dict(type='list', elements='dict', options=dict(range=dict(type='str'), description=dict(type='str'))),
+                ),
+            ),
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -326,7 +325,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'description': module.params.get('description'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
-        u'bgp': RouterBgp(module.params.get('bgp', {}), module).to_request()
+        u'bgp': RouterBgp(module.params.get('bgp', {}), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
@@ -361,8 +360,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -397,7 +396,7 @@ def response_to_hash(module, response):
         u'name': module.params.get('name'),
         u'description': response.get(u'description'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
-        u'bgp': RouterBgp(response.get(u'bgp', {}), module).from_response()
+        u'bgp': RouterBgp(response.get(u'bgp', {}), module).from_response(),
     }
 
 
@@ -423,7 +422,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
@@ -445,20 +444,24 @@ class RouterBgp(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'asn': self.request.get('asn'),
-            u'advertiseMode': self.request.get('advertise_mode'),
-            u'advertisedGroups': self.request.get('advertised_groups'),
-            u'advertisedIpRanges': RouterAdvertisediprangesArray(self.request.get('advertised_ip_ranges', []), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'asn': self.request.get('asn'),
+                u'advertiseMode': self.request.get('advertise_mode'),
+                u'advertisedGroups': self.request.get('advertised_groups'),
+                u'advertisedIpRanges': RouterAdvertisediprangesArray(self.request.get('advertised_ip_ranges', []), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'asn': self.request.get(u'asn'),
-            u'advertiseMode': self.request.get(u'advertiseMode'),
-            u'advertisedGroups': self.request.get(u'advertisedGroups'),
-            u'advertisedIpRanges': RouterAdvertisediprangesArray(self.request.get(u'advertisedIpRanges', []), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'asn': self.request.get(u'asn'),
+                u'advertiseMode': self.request.get(u'advertiseMode'),
+                u'advertisedGroups': self.request.get(u'advertisedGroups'),
+                u'advertisedIpRanges': RouterAdvertisediprangesArray(self.request.get(u'advertisedIpRanges', []), self.module).from_response(),
+            }
+        )
 
 
 class RouterAdvertisediprangesArray(object):
@@ -482,16 +485,10 @@ class RouterAdvertisediprangesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'range': item.get('range'),
-            u'description': item.get('description')
-        })
+        return remove_nones_from_dict({u'range': item.get('range'), u'description': item.get('description')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'range': item.get(u'range'),
-            u'description': item.get(u'description')
-        })
+        return remove_nones_from_dict({u'range': item.get(u'range'), u'description': item.get(u'description')})
 
 
 if __name__ == '__main__':
