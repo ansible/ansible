@@ -22,7 +22,8 @@ description:
 options:
   name:
     description:
-      - Pool name
+      - The name of the pool.
+      type: str
     required: true
   add:
     description:
