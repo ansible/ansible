@@ -206,7 +206,7 @@ try:
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml
     HAS_NCCLIENT = True
-except ImportError:
+except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
     HAS_NCCLIENT = False
 
 logging.getLogger('ncclient').setLevel(logging.INFO)

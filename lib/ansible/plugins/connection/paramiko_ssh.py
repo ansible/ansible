@@ -173,7 +173,7 @@ with warnings.catch_warnings():
     try:
         import paramiko
         HAVE_PARAMIKO = True
-    except ImportError:
+    except (ImportError, AttributeError):  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
         pass
 
 
