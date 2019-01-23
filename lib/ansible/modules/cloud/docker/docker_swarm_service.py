@@ -413,114 +413,86 @@ rebuilt:
 '''
 
 EXAMPLES = '''
--   name: define myservice
-    docker_swarm_service:
-        name: myservice
-        image: "alpine"
-        args:
-        - "sleep"
-        - "3600"
-        mounts:
-        -   source: /tmp/
-            target: /remote_tmp/
-            type: bind
-        env:
-        -   "ENVVAR1=envvar1"
-        log_driver: fluentd
-        log_driver_options:
-          fluentd-address: "127.0.0.1:24224"
-          fluentd-async-connect: true
-          tag: "{{.Name}}/{{.ID}}"
-        restart_policy: any
-        restart_policy_attempts: 5
-        restart_policy_window: 30
-    register: dss_out1
--   name: change myservice.env
-    docker_swarm_service:
-        name: myservice
-        image: "alpine"
-        args:
-        -   "sleep"
-        -   "7200"
-        mounts:
-        -   source: /tmp/
-            target: /remote_tmp/
-            type: bind
-        env:
-        -   "ENVVAR1=envvar1"
-        restart_policy: any
-        restart_policy_attempts: 5
-        restart_policy_window: 30
-    register: dss_out2
--   name: test for changed myservice facts
-    fail:
-        msg: unchanged service
-    when: "{{ dss_out1 == dss_out2 }}"
--   name: change myservice.image
-    docker_swarm_service:
-        name: myservice
-        image: "alpine:edge"
-        args:
-        -   "sleep"
-        -   "7200"
-        mounts:
-        -   source: /tmp/
-            target: /remote_tmp/
-            type: bind
-        env:
-        -   "ENVVAR1=envvar1"
-        restart_policy: any
-        restart_policy_attempts: 5
-        restart_policy_window: 30
-    register: dss_out3
--   name: test for changed myservice facts
-    fail:
-        msg: unchanged service
-    when: "{{ dss_out2 == dss_out3 }}"
--   name: remove mount
-    docker_swarm_service:
-        name: myservice
-        image: "alpine:edge"
-        args:
-        -   "sleep"
-        -   "7200"
-        env:
-        -   "ENVVAR1=envvar1"
-        restart_policy: any
-        restart_policy_attempts: 5
-        restart_policy_window: 30
-    register: dss_out4
--   name: test for changed myservice facts
-    fail:
-        msg: unchanged service
-    when: "{{ dss_out3 == dss_out4 }}"
--   name: keep service as it is
-    docker_swarm_service:
-        name: myservice
-        image: "alpine:edge"
-        args:
-        -   "sleep"
-        -   "7200"
-        env:
-        -   "ENVVAR1=envvar1"
-        restart_policy: any
-        restart_policy_attempts: 5
-        restart_policy_window: 30
-    register: dss_out5
--   name: test for changed service facts
-    fail:
-        msg: changed service
-    when: "{{ dss_out5 != dss_out5 }}"
--   name: remove myservice
-    docker_swarm_service:
-        name: myservice
-        state: absent
--   name: set placement preferences
-    docker_swarm_service:
-        name: myservice
-        image: alpine:edge
-        placement_preferences:
-          - spread: "node.labels.mylabel"
+- name: Set a argument
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    command:
+      - "sleep"
+      - "3600"
+
+- name: Set a bind mount
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    mounts:
+      - source: /tmp/
+        target: /remote_tmp/
+        type: bind
+
+- name: Set environment variables
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    env:
+      - "ENVVAR1=envvar1"
+      - "ENVVAR2=envvar2"
+
+- name: Set fluentd logging
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    log_driver: fluentd
+    log_driver_options:
+      fluentd-address: "127.0.0.1:24224"
+      fluentd-async-connect: true
+      tag: myservice
+
+- name: Set restart policies
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    restart_policy: any
+    restart_policy_attempts: 5
+    restart_policy_delay: 5
+    restart_policy_window: 30
+
+- name: Set placement preferences
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    placement_preferences:
+      - spread: "node.labels.mylabel"
+
+- name: Set configs
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    configs:
+      - config_id: myconfig_id
+        config_name: myconfig_name
+        filename: "/tmp/config.txt"
+
+- name: Set networks
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    networks:
+      - mynetwork
+
+- name: Set secrets
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    secrets:
+      - secret_id: mysecret_id
+        secret_name: mysecret_name
+        filename: "/run/secrets/secret.txt"
+
+- name: Remove service
+  docker_swarm_service:
+    name: myservice
+    state: absent
 '''
 
 import time
