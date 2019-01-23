@@ -27,6 +27,7 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
 from ansible.playbook import Playbook
 from ansible.template import Templar
+from ansible.plugins.loader import connection_loader, shell_loader
 from ansible.utils.helpers import pct_to_int
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.path import makedirs_safe
@@ -76,6 +77,10 @@ class PlaybookExecutor:
         entrylist = []
         entry = {}
         try:
+            # preload become/connecition/shell to set config defs cached
+            list(connection_loader.all(class_only=True))
+            list(shell_loader.all(class_only=True))
+
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))

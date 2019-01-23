@@ -8,7 +8,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSet, MutableSequence
-from ansible.parsing.plugin_docs import read_docstring, read_docstub
+from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
 

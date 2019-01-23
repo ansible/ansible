@@ -20,9 +20,10 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.yaml import from_yaml
+from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import get_docstring
+from ansible.utils.plugin_docs import add_fragments
 
 display = Display()
 
@@ -199,7 +200,7 @@ class PluginLoader:
         self._paths = reordered_paths
         return reordered_paths
 
-    def _load_config_defs(self, name, path):
+    def _load_config_defs(self, name, module, path):
         ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
 
         # plugins w/o class name don't support config
@@ -208,7 +209,9 @@ class PluginLoader:
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS:
-                dstring = get_docstring(path, fragment_loader, verbose=False, ignore_errors=True)[0]
+                dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
+                if dstring:
+                    add_fragments(dstring, path, fragment_loader=fragment_loader)
 
                 if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
                     C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
@@ -374,6 +377,7 @@ class PluginLoader:
 
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source(name, path)
+            self._load_config_defs(name, self._module_cache[path], path)
             found_in_cache = False
 
         obj = getattr(self._module_cache[path], self.class_name)
@@ -400,23 +404,21 @@ class PluginLoader:
                     return None
                 raise
 
-        # load plugin config data
-        if not found_in_cache:
-            self._load_config_defs(name, path)
-
         self._update_object(obj, name, path)
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
-        msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
+        ''' formats data to display debug info for plugin loading, also avoids processing unless really needed '''
+        if C.DEFAULT_DEBUG:
+            msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
 
-        if len(searched_paths) > 1:
-            msg = '%s (searched paths: %s)' % (msg, self.format_paths(searched_paths))
+            if len(searched_paths) > 1:
+                msg = '%s (searched paths: %s)' % (msg, self.format_paths(searched_paths))
 
-        if found_in_cache or class_only:
-            msg = '%s (found_in_cache=%s, class_only=%s)' % (msg, found_in_cache, class_only)
+            if found_in_cache or class_only:
+                msg = '%s (found_in_cache=%s, class_only=%s)' % (msg, found_in_cache, class_only)
 
-        display.debug(msg)
+            display.debug(msg)
 
     def all(self, *args, **kwargs):
         '''
@@ -486,6 +488,7 @@ class PluginLoader:
             if path not in self._module_cache:
                 try:
                     module = self._load_module_source(name, path)
+                    self._load_config_defs(basename, module, path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 self._module_cache[path] = module
@@ -515,10 +518,6 @@ class PluginLoader:
                     obj = obj(*args, **kwargs)
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
-
-            # load plugin config data
-            if not found_in_cache:
-                self._load_config_defs(basename, path)
 
             self._update_object(obj, basename, path)
             yield obj
