@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -289,7 +288,7 @@ def main():
             local_traffic_selector=dict(type='list', elements='str'),
             remote_traffic_selector=dict(type='list', elements='str'),
             labels=dict(type='dict'),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -331,8 +330,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -344,14 +342,8 @@ def update_fields(module, request, response):
 def labels_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/vpnTunnels/{name}/setLabels"
-        ]).format(**module.params),
-        {
-            u'labels': module.params.get('labels'),
-            u'labelFingerprint': response.get('labelFingerprint')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/vpnTunnels/{name}/setLabels"]).format(**module.params),
+        {u'labels': module.params.get('labels'), u'labelFingerprint': response.get('labelFingerprint')},
     )
 
 
@@ -372,7 +364,7 @@ def resource_to_request(module):
         u'ikeVersion': module.params.get('ike_version'),
         u'localTrafficSelector': module.params.get('local_traffic_selector'),
         u'remoteTrafficSelector': module.params.get('remote_traffic_selector'),
-        u'labels': module.params.get('labels')
+        u'labels': module.params.get('labels'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -407,8 +399,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -450,7 +442,7 @@ def response_to_hash(module, response):
         u'localTrafficSelector': response.get(u'localTrafficSelector'),
         u'remoteTrafficSelector': response.get(u'remoteTrafficSelector'),
         u'labels': response.get(u'labels'),
-        u'labelFingerprint': response.get(u'labelFingerprint')
+        u'labelFingerprint': response.get(u'labelFingerprint'),
     }
 
 
@@ -476,7 +468,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])

@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -371,27 +370,33 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             default_service=dict(required=True),
             description=dict(type='str'),
-            host_rules=dict(type='list', elements='dict', options=dict(
-                description=dict(type='str'),
-                hosts=dict(required=True, type='list', elements='str'),
-                path_matcher=dict(required=True, type='str')
-            )),
+            host_rules=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    description=dict(type='str'), hosts=dict(required=True, type='list', elements='str'), path_matcher=dict(required=True, type='str')
+                ),
+            ),
             name=dict(required=True, type='str'),
-            path_matchers=dict(type='list', elements='dict', options=dict(
-                default_service=dict(required=True),
-                description=dict(type='str'),
-                name=dict(required=True, type='str'),
-                path_rules=dict(type='list', elements='dict', options=dict(
-                    paths=dict(required=True, type='list', elements='str'),
-                    service=dict(required=True)
-                ))
-            )),
-            tests=dict(type='list', elements='dict', options=dict(
-                description=dict(type='str'),
-                host=dict(required=True, type='str'),
-                path=dict(required=True, type='str'),
-                service=dict(required=True)
-            ))
+            path_matchers=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    default_service=dict(required=True),
+                    description=dict(type='str'),
+                    name=dict(required=True, type='str'),
+                    path_rules=dict(
+                        type='list', elements='dict', options=dict(paths=dict(required=True, type='list', elements='str'), service=dict(required=True))
+                    ),
+                ),
+            ),
+            tests=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    description=dict(type='str'), host=dict(required=True, type='str'), path=dict(required=True, type='str'), service=dict(required=True)
+                ),
+            ),
         )
     )
 
@@ -449,7 +454,7 @@ def resource_to_request(module):
         u'hostRules': UrlMapHostrulesArray(module.params.get('host_rules', []), module).to_request(),
         u'name': module.params.get('name'),
         u'pathMatchers': UrlMapPathmatchersArray(module.params.get('path_matchers', []), module).to_request(),
-        u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request()
+        u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
@@ -484,8 +489,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -523,7 +528,7 @@ def response_to_hash(module, response):
         u'fingerprint': response.get(u'fingerprint'),
         u'name': module.params.get('name'),
         u'pathMatchers': UrlMapPathmatchersArray(response.get(u'pathMatchers', []), module).from_response(),
-        u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response()
+        u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response(),
     }
 
 
@@ -549,7 +554,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
@@ -583,18 +588,10 @@ class UrlMapHostrulesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get('description'),
-            u'hosts': item.get('hosts'),
-            u'pathMatcher': item.get('path_matcher')
-        })
+        return remove_nones_from_dict({u'description': item.get('description'), u'hosts': item.get('hosts'), u'pathMatcher': item.get('path_matcher')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get(u'description'),
-            u'hosts': item.get(u'hosts'),
-            u'pathMatcher': item.get(u'pathMatcher')
-        })
+        return remove_nones_from_dict({u'description': item.get(u'description'), u'hosts': item.get(u'hosts'), u'pathMatcher': item.get(u'pathMatcher')})
 
 
 class UrlMapPathmatchersArray(object):
@@ -618,20 +615,24 @@ class UrlMapPathmatchersArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'defaultService': replace_resource_dict(item.get(u'default_service', {}), 'selfLink'),
-            u'description': item.get('description'),
-            u'name': item.get('name'),
-            u'pathRules': UrlMapPathrulesArray(item.get('path_rules', []), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'defaultService': replace_resource_dict(item.get(u'default_service', {}), 'selfLink'),
+                u'description': item.get('description'),
+                u'name': item.get('name'),
+                u'pathRules': UrlMapPathrulesArray(item.get('path_rules', []), self.module).to_request(),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'defaultService': item.get(u'defaultService'),
-            u'description': item.get(u'description'),
-            u'name': item.get(u'name'),
-            u'pathRules': UrlMapPathrulesArray(item.get(u'pathRules', []), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'defaultService': item.get(u'defaultService'),
+                u'description': item.get(u'description'),
+                u'name': item.get(u'name'),
+                u'pathRules': UrlMapPathrulesArray(item.get(u'pathRules', []), self.module).from_response(),
+            }
+        )
 
 
 class UrlMapPathrulesArray(object):
@@ -655,16 +656,10 @@ class UrlMapPathrulesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'paths': item.get('paths'),
-            u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')
-        })
+        return remove_nones_from_dict({u'paths': item.get('paths'), u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'paths': item.get(u'paths'),
-            u'service': item.get(u'service')
-        })
+        return remove_nones_from_dict({u'paths': item.get(u'paths'), u'service': item.get(u'service')})
 
 
 class UrlMapTestsArray(object):
@@ -688,20 +683,19 @@ class UrlMapTestsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get('description'),
-            u'host': item.get('host'),
-            u'path': item.get('path'),
-            u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')
-        })
+        return remove_nones_from_dict(
+            {
+                u'description': item.get('description'),
+                u'host': item.get('host'),
+                u'path': item.get('path'),
+                u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get(u'description'),
-            u'host': item.get(u'host'),
-            u'path': item.get(u'path'),
-            u'service': item.get(u'service')
-        })
+        return remove_nones_from_dict(
+            {u'description': item.get(u'description'), u'host': item.get(u'host'), u'path': item.get(u'path'), u'service': item.get(u'service')}
+        )
 
 
 if __name__ == '__main__':
