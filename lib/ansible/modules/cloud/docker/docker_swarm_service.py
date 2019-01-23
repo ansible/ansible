@@ -316,12 +316,14 @@ options:
     description:
       - Time to monitor updated tasks for failures, in nanoseconds.
       - Maps to docker service --update-monitor option.
+      - Requires API version >= 1.25.
   update_max_failure_ratio:
     required: false
     default: 0.00
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
       - Maps to docker service --update-max-failure-ratio.
+      - Requires API version >= 1.25.
   update_order:
     required: false
     default: null
@@ -1348,6 +1350,8 @@ def main():
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
         secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
+        update_max_failure_ratio=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        update_monitor=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
         placement_preferences=dict(docker_py_version='2.4.0', docker_api_version='1.27'),
         publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
