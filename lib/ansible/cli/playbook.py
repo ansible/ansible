@@ -89,10 +89,6 @@ class PlaybookCLI(CLI):
             (sshpass, becomepass) = self.ask_passwords()
             passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        # load plugins from all playbooks in case they add callbacks/inventory/etc
-        for pbdir in pb_dirs:
-            add_all_plugin_dirs(pbdir)
-
         # create base objects
         loader, inventory, variable_manager = self._play_prereqs()
 

@@ -440,10 +440,6 @@ class PluginLoader:
             if not issubclass(obj, plugin_class):
                 return None
 
-        # load plugin config data
-        if not found_in_cache:
-            self._load_config_defs(name, path)
-
         self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
 
         if not class_only:
@@ -563,10 +559,6 @@ class PluginLoader:
                     continue
                 if not issubclass(obj, plugin_class):
                     continue
-
-            # load plugin config data
-            if not found_in_cache:
-                self._load_config_defs(basename, path)
 
             self._display_plugin_load(self.class_name, basename, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
 
