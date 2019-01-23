@@ -247,7 +247,7 @@ options:
         required: false
         description:
           - What publish mode to use.
-          - Requires API version >= 1.32 and docker python library >= 3.0.0
+          - Requires API version >= 1.32.
         choices:
           - ingress
           - host
@@ -1365,18 +1365,16 @@ def main():
         user=dict(type='str'))
 
     option_minimal_versions = dict(
-        dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
-        dns_options=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
-        dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
-        force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
-        hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
-        tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
-        secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
-        configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
-        update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
+        dns=dict(docker_api_version='1.25'),
+        dns_search=dict(docker_api_version='1.25'),
+        force_update=dict(docker_api_version='1.25'),
+        hostname=dict(docker_api_version='1.25'),
+        tty=dict(docker_api_version='1.25'),
+        secrets=dict(docker_api_version='1.25'),
+        configs=dict(docker_api_version='1.30'),
+        update_order=dict(docker_api_version='1.29'),
         # specials
         publish_mode=dict(
-            docker_py_version='3.0.0',
             docker_api_version='1.25',
             detect_usage=_detect_publish_mode_usage,
             usage_msg='set publish.mode'
@@ -1391,7 +1389,7 @@ def main():
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True,
-        min_docker_version='2.0.0',
+        min_docker_version='3.0.0',
         min_docker_api_version='1.24',
         option_minimal_versions=option_minimal_versions,
     )
