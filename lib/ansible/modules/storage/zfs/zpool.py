@@ -18,7 +18,7 @@ module: zpool
 short_description: Manage zfs zpools
 version_added: "2.7"
 description:
-  - Manage virtual storage pools using zfs zpools
+  - Manage virtual storage pools using zfs zpools.
 options:
   name:
     description:
