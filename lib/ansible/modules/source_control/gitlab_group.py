@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # Copyright: (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -14,62 +14,62 @@ DOCUMENTATION = '''
 module: gitlab_group
 short_description: Creates/updates/deletes Gitlab Groups
 description:
-   - When the group does not exist in Gitlab, it will be created.
-   - When the group does exist and state=absent, the group will be deleted.
+  - When the group does not exist in Gitlab, it will be created.
+  - When the group does exist and state=absent, the group will be deleted.
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
-    - python-gitlab python module
+  - python-gitlab python module
 options:
-    server_url:
-        description:
-            - Url of Gitlab server, with protocol (http or https).
-        required: true
-    verify_ssl:
-        description:
-            - When using https if SSL certificate needs to be verified.
-        type: bool
-        default: 'yes'
-        aliases:
-            - validate_certs
-    login_user:
-        description:
-            - Gitlab user name.
-    login_password:
-        description:
-            - Gitlab password for login_user
-    login_token:
-        description:
-            - Gitlab token for logging in.
-    name:
-        description:
-            - Name of the group you want to create.
-        required: true
-    path:
-        description:
-            - The path of the group you want to create, this will be server_url/group_path
-            - If not supplied, the group_name will be used.
+  server_url:
     description:
-        description:
-            - A description for the group.
-        version_added: "2.7"
-    state:
-        description:
-            - create or delete group.
-            - Possible values are present and absent.
-        default: "present"
-        choices: ["present", "absent"]
-    parent:
-        description:
-            - Allow to create subgroups
-            - Must contain the full path of the parent.
-        version_added: "2.8"
-    visibility:
-        description:
-            - Default visibility of the group
-        version_added: "2.8"
-        choices: ["private", "internal", "public"]
-        default: "private"
+      - Url of Gitlab server, with protocol (http or https).
+    required: true
+  verify_ssl:
+    description:
+      - When using https if SSL certificate needs to be verified.
+    type: bool
+    default: 'yes'
+    aliases:
+      - validate_certs
+  login_user:
+    description:
+      - Gitlab user name.
+  login_password:
+    description:
+      - Gitlab password for login_user
+  login_token:
+    description:
+      - Gitlab token for logging in.
+  name:
+    description:
+      - Name of the group you want to create.
+    required: true
+  path:
+    description:
+      - The path of the group you want to create, this will be server_url/group_path
+      - If not supplied, the group_name will be used.
+  description:
+    description:
+      - A description for the group.
+    version_added: "2.7"
+  state:
+    description:
+      - create or delete group.
+      - Possible values are present and absent.
+    default: "present"
+    choices: ["present", "absent"]
+  parent:
+    description:
+      - Allow to create subgroups
+      - Must contain the full path of the parent.
+    version_added: "2.8"
+  visibility:
+    description:
+      - Default visibility of the group
+    version_added: "2.8"
+    choices: ["private", "internal", "public"]
+    default: "private"
 '''
 
 EXAMPLES = '''
@@ -107,7 +107,29 @@ EXAMPLES = '''
         parent_path: "super_parent/parent"
 '''
 
-RETURN = '''# '''
+RETURN = '''
+msg:
+  description: Success or failure message
+  returned: always
+  type: str
+  sample: "Success"
+
+result:
+  description: json parsed response from the server
+  returned: always
+  type: dict
+
+error:
+  description: the error message returned by the Gitlab API
+  returned: failed
+  type: str
+  sample: "400: path is already in use"
+
+group:
+  description: API object
+  returned: always
+  type: dict
+'''
 
 import os
 
@@ -141,7 +163,7 @@ class GitLabGroup(object):
     @param description Description of the group
     @param parent Parent group full path
     '''
-    def createOrUpdateGroup(self, name, path, description, parent, visibility):
+    def createOrUpdateGroup(self, name, parent, options):
         changed = False
 
         # Because we have already call userExists in main()
@@ -150,14 +172,14 @@ class GitLabGroup(object):
 
             group = self.createGroup({
                 'name': name,
-                'path': path,
+                'path': options['path'],
                 'parent_id': parent_id})
             changed = True
         else:
             changed, group = self.updateGroup(self.groupObject, {
                 'name': name,
-                'description': description,
-                'visibility': visibility})
+                'description': options['description'],
+                'visibility': options['visibility']})
 
         self.groupObject = group
         if changed:
@@ -167,15 +189,29 @@ class GitLabGroup(object):
             try:
                 group.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to create or update a group: %s " % e)
+                self._module.fail_json(msg="Failed to update a group: %s " % e)
             return True
         else:
             return False
 
+    '''
+    @param arguments Attributs of the group
+    '''
     def createGroup(self, arguments):
-        group = self._gitlab.groups.create(arguments)
+        if self._module.check_mode:
+                self._module.exit_json(changed=True, result="Group should have created.")
+
+        try:
+            group = self._gitlab.groups.create(arguments)
+        except (gitlab.exceptions.GitlabCreateError) as e:
+            self._module.fail_json(msg="Failed to create a group: %s " % to_native(e))
+
         return group
 
+    '''
+    @param group Group Object
+    @param arguments Attributs of the group
+    '''
     def updateGroup(self, group, arguments):
         changed = False
 
@@ -200,7 +236,7 @@ class GitLabGroup(object):
             try:
                 group.delete()
             except Exception as e:
-                self._module.fail_json(msg="Failed to delete a group: %s " % e)
+                self._module.fail_json(msg="Failed to delete a group: %s " % to_native(e))
 
     '''
     @param name Name of the groupe
@@ -302,7 +338,10 @@ def main():
             if not parent_group:
                 module.fail_json(msg="Failed create Gitlab group: Parent group doesn't exists")
 
-        if gitlab_group.createOrUpdateGroup(group_name, group_path, description, parent_group, group_visibility):
+        if gitlab_group.createOrUpdateGroup(group_name, parent_group, {
+            "path": group_path,
+            "description": description,
+            "visibility": group_visibility}):
             module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name, group=gitlab_group.groupObject._attrs)
         else:
             module.exit_json(changed=False, result="No need to update the group %s" % group_name, group=gitlab_group.groupObject._attrs)
