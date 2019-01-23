@@ -67,6 +67,7 @@ options:
     description:
       - List of the placement preferences as key value pairs.
       - Maps docker service C(--placement-pref) option.
+      - Requires API version >= 1.27.
     version_added: 2.8
   hostname:
     required: false
@@ -1346,6 +1347,7 @@ def main():
         secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
+        placement_preferences=dict(docker_py_version='2.4.0', docker_api_version='1.27'),
         # specials
         publish_mode=dict(
             docker_py_version='3.0.0',
