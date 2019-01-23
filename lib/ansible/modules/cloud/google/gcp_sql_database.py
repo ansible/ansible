@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -146,7 +145,7 @@ def main():
             charset=dict(type='str'),
             collation=dict(type='str'),
             name=dict(type='str'),
-            instance=dict(required=True)
+            instance=dict(required=True),
         )
     )
 
@@ -201,7 +200,7 @@ def resource_to_request(module):
         u'kind': 'sql#database',
         u'charset': module.params.get('charset'),
         u'collation': module.params.get('collation'),
-        u'name': module.params.get('name')
+        u'name': module.params.get('name'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -217,19 +216,12 @@ def fetch_resource(module, link, kind, allow_not_found=True):
 
 
 def self_link(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name'),
-        'name': module.params['name']
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name'), 'name': module.params['name']}
     return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases/{name}".format(**res)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name')
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
     return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/databases".format(**res)
 
 
@@ -278,11 +270,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {
-        u'charset': response.get(u'charset'),
-        u'collation': response.get(u'collation'),
-        u'name': response.get(u'name')
-    }
+    return {u'charset': response.get(u'charset'), u'collation': response.get(u'collation'), u'name': response.get(u'name')}
 
 
 def async_op_url(module, extra_data=None):
@@ -307,7 +295,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'sql#operation')
         status = navigate_hash(op_result, ['status'])

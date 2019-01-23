@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -179,10 +178,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
             topic=dict(),
-            push_config=dict(type='dict', options=dict(
-                push_endpoint=dict(type='str')
-            )),
-            ack_deadline_seconds=dict(type='int')
+            push_config=dict(type='dict', options=dict(push_endpoint=dict(type='str'))),
+            ack_deadline_seconds=dict(type='int'),
         )
     )
 
@@ -235,7 +232,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
         u'pushConfig': SubscriptionPushconfig(module.params.get('push_config', {}), module).to_request(),
-        u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds')
+        u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds'),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -271,8 +268,8 @@ def return_if_object(module, response, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     result = decode_request(result, module)
 
@@ -308,7 +305,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'topic': response.get(u'topic'),
         u'pushConfig': SubscriptionPushconfig(response.get(u'pushConfig', {}), module).from_response(),
-        u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds')
+        u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds'),
     }
 
 
@@ -323,10 +320,8 @@ def decode_request(response, module):
 
 
 def encode_request(request, module):
-    request['topic'] = '/'.join(['projects', module.params['project'],
-                                 'topics', module.params['topic']['name']])
-    request['name'] = '/'.join(['projects', module.params['project'],
-                                'subscriptions', module.params['name']])
+    request['topic'] = '/'.join(['projects', module.params['project'], 'topics', module.params['topic']['name']])
+    request['name'] = '/'.join(['projects', module.params['project'], 'subscriptions', module.params['name']])
 
     return request
 
@@ -340,14 +335,10 @@ class SubscriptionPushconfig(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'pushEndpoint': self.request.get('push_endpoint')
-        })
+        return remove_nones_from_dict({u'pushEndpoint': self.request.get('push_endpoint')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'pushEndpoint': self.request.get(u'pushEndpoint')
-        })
+        return remove_nones_from_dict({u'pushEndpoint': self.request.get(u'pushEndpoint')})
 
 
 if __name__ == '__main__':

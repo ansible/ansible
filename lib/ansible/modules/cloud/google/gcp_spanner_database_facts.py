@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -70,8 +69,7 @@ items:
     name:
       description:
       - A unique identifier for the database, which cannot be changed after the instance
-        is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-        The final segment of the name must be between 6 and 30 characters in length.
+        is created. Values are of the form [a-z][-a-z0-9]*[a-z0-9].
       returned: success
       type: str
     extraStatements:
@@ -101,11 +99,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            instance=dict(required=True)
-        )
-    )
+    module = GcpModule(argument_spec=dict(instance=dict(required=True)))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/spanner.admin']
@@ -115,17 +109,12 @@ def main():
         items = items.get('databases')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name')
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases".format(**res)
 
 
