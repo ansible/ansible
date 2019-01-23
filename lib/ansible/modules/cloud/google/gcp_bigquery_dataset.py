@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -306,27 +305,29 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
-            access=dict(type='list', elements='dict', options=dict(
-                domain=dict(type='str'),
-                group_by_email=dict(type='str'),
-                role=dict(type='str', choices=['READER', 'WRITER', 'OWNER']),
-                special_group=dict(type='str'),
-                user_by_email=dict(type='str'),
-                view=dict(type='dict', options=dict(
-                    dataset_id=dict(required=True, type='str'),
-                    project_id=dict(required=True, type='str'),
-                    table_id=dict(required=True, type='str')
-                ))
-            )),
-            dataset_reference=dict(required=True, type='dict', options=dict(
-                dataset_id=dict(required=True, type='str'),
-                project_id=dict(type='str')
-            )),
+            access=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    domain=dict(type='str'),
+                    group_by_email=dict(type='str'),
+                    role=dict(type='str', choices=['READER', 'WRITER', 'OWNER']),
+                    special_group=dict(type='str'),
+                    user_by_email=dict(type='str'),
+                    view=dict(
+                        type='dict',
+                        options=dict(
+                            dataset_id=dict(required=True, type='str'), project_id=dict(required=True, type='str'), table_id=dict(required=True, type='str')
+                        ),
+                    ),
+                ),
+            ),
+            dataset_reference=dict(required=True, type='dict', options=dict(dataset_id=dict(required=True, type='str'), project_id=dict(type='str'))),
             default_table_expiration_ms=dict(type='int'),
             description=dict(type='str'),
             friendly_name=dict(type='str'),
             labels=dict(type='dict'),
-            location=dict(default='US', type='str')
+            location=dict(default='US', type='str'),
         )
     )
 
@@ -386,7 +387,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'friendlyName': module.params.get('friendly_name'),
         u'labels': module.params.get('labels'),
-        u'location': module.params.get('location')
+        u'location': module.params.get('location'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -421,8 +422,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -462,7 +463,7 @@ def response_to_hash(module, response):
         u'id': response.get(u'id'),
         u'labels': response.get(u'labels'),
         u'lastModifiedTime': response.get(u'lastModifiedTime'),
-        u'location': response.get(u'location')
+        u'location': response.get(u'location'),
     }
 
 
@@ -487,24 +488,28 @@ class DatasetAccessArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'domain': item.get('domain'),
-            u'groupByEmail': item.get('group_by_email'),
-            u'role': item.get('role'),
-            u'specialGroup': item.get('special_group'),
-            u'userByEmail': item.get('user_by_email'),
-            u'view': DatasetView(item.get('view', {}), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'domain': item.get('domain'),
+                u'groupByEmail': item.get('group_by_email'),
+                u'role': item.get('role'),
+                u'specialGroup': item.get('special_group'),
+                u'userByEmail': item.get('user_by_email'),
+                u'view': DatasetView(item.get('view', {}), self.module).to_request(),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'domain': item.get(u'domain'),
-            u'groupByEmail': item.get(u'groupByEmail'),
-            u'role': item.get(u'role'),
-            u'specialGroup': item.get(u'specialGroup'),
-            u'userByEmail': item.get(u'userByEmail'),
-            u'view': DatasetView(item.get(u'view', {}), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'domain': item.get(u'domain'),
+                u'groupByEmail': item.get(u'groupByEmail'),
+                u'role': item.get(u'role'),
+                u'specialGroup': item.get(u'specialGroup'),
+                u'userByEmail': item.get(u'userByEmail'),
+                u'view': DatasetView(item.get(u'view', {}), self.module).from_response(),
+            }
+        )
 
 
 class DatasetView(object):
@@ -516,18 +521,14 @@ class DatasetView(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'datasetId': self.request.get('dataset_id'),
-            u'projectId': self.request.get('project_id'),
-            u'tableId': self.request.get('table_id')
-        })
+        return remove_nones_from_dict(
+            {u'datasetId': self.request.get('dataset_id'), u'projectId': self.request.get('project_id'), u'tableId': self.request.get('table_id')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'datasetId': self.request.get(u'datasetId'),
-            u'projectId': self.request.get(u'projectId'),
-            u'tableId': self.request.get(u'tableId')
-        })
+        return remove_nones_from_dict(
+            {u'datasetId': self.request.get(u'datasetId'), u'projectId': self.request.get(u'projectId'), u'tableId': self.request.get(u'tableId')}
+        )
 
 
 class DatasetDatasetreference(object):
@@ -539,16 +540,10 @@ class DatasetDatasetreference(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'datasetId': self.request.get('dataset_id'),
-            u'projectId': self.request.get('project_id')
-        })
+        return remove_nones_from_dict({u'datasetId': self.request.get('dataset_id'), u'projectId': self.request.get('project_id')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'datasetId': self.request.get(u'datasetId'),
-            u'projectId': self.request.get(u'projectId')
-        })
+        return remove_nones_from_dict({u'datasetId': self.request.get(u'datasetId'), u'projectId': self.request.get(u'projectId')})
 
 
 if __name__ == '__main__':
