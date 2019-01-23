@@ -254,7 +254,7 @@ if($state -eq 'present') {
     }
 }
 
-if( $result.changed ) {
+if( $result.changed -and -not $check_mode ) {
     Set-Content -Path $hosts_file -Value $hosts_lines
 }
 
