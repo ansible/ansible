@@ -31,6 +31,7 @@ import time
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
@@ -228,7 +229,7 @@ class PullCLI(CLI):
         cmd = '%s/ansible %s %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts)
 
         for ev in self.options.extra_vars:
-            cmd += ' -e "%s"' % ev
+            cmd += ' -e %s' % shlex_quote(ev)
 
         # Nap?
         if self.options.sleep:
@@ -263,7 +264,7 @@ class PullCLI(CLI):
                 cmd += " --vault-id=%s" % vault_id
 
         for ev in self.options.extra_vars:
-            cmd += ' -e "%s"' % ev
+            cmd += ' -e %s' % shlex_quote(ev)
         if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
             cmd += ' --ask-become-pass'
         if self.options.skip_tags:
