@@ -741,13 +741,20 @@ def main():
     changeset = dict()
 
     for client_param in client_params:
-        # lists in the Keycloak API are sorted
         new_param_value = module.params.get(client_param)
+
+        # some lists in the Keycloak API are sorted, some are not.
         if isinstance(new_param_value, list):
-            try:
-                new_param_value = sorted(new_param_value)
-            except TypeError:
-                pass
+            if client_param in ['attributes']:
+                try:
+                    new_param_value = sorted(new_param_value)
+                except TypeError:
+                    pass
+        # Unfortunately, the ansible argument spec checker introduces variables with null values when
+        # they are not specified
+        if client_param == 'protocol_mappers':
+            new_param_value = [dict((k, v) for k, v in x.items() if x[k] is not None) for x in new_param_value]
+
         changeset[camel(client_param)] = new_param_value
 
     # Whether creating or updating a client, take the before-state and merge the changeset into it
