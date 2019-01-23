@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -431,7 +430,7 @@ def main():
             port_range=dict(type='str'),
             ports=dict(type='list', elements='str'),
             subnetwork=dict(),
-            target=dict(type='str')
+            target=dict(type='str'),
         )
     )
 
@@ -495,7 +494,7 @@ def resource_to_request(module):
         u'portRange': module.params.get('port_range'),
         u'ports': module.params.get('ports'),
         u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
-        u'target': module.params.get('target')
+        u'target': module.params.get('target'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -530,8 +529,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -575,7 +574,7 @@ def response_to_hash(module, response):
         u'ports': response.get(u'ports'),
         u'subnetwork': response.get(u'subnetwork'),
         u'region': response.get(u'region'),
-        u'target': response.get(u'target')
+        u'target': response.get(u'target'),
     }
 
 
@@ -601,7 +600,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])

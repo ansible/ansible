@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -184,6 +183,11 @@ items:
             key that protects this resource.
           returned: success
           type: str
+        kmsKeyName:
+          description:
+          - The name of the encryption key that is stored in Google Cloud KMS.
+          returned: success
+          type: str
     sourceImageId:
       description:
       - The ID value of the image used to create this disk. This value identifies
@@ -219,6 +223,11 @@ items:
             key that protects this resource.
           returned: success
           type: str
+        kmsKeyName:
+          description:
+          - The name of the encryption key that is stored in Google Cloud KMS.
+          returned: success
+          type: str
     sourceSnapshot:
       description:
       - The source snapshot used to create this disk. You can provide this as a partial
@@ -236,6 +245,11 @@ items:
           description:
           - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
             base64 to either encrypt or decrypt this resource.
+          returned: success
+          type: str
+        kmsKeyName:
+          description:
+          - The name of the encryption key that is stored in Google Cloud KMS.
           returned: success
           type: str
         sha256:
@@ -267,12 +281,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            filters=dict(type='list', elements='str'),
-            zone=dict(required=True, type='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), zone=dict(required=True, type='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
@@ -282,9 +291,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 
