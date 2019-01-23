@@ -4,7 +4,7 @@
 Dell OS10 Platform Options
 ***************************************
 
-OS10 supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on OS10 in Ansible 2.6. 
+OS10 supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on OS10 in Ansible.
 
 .. contents:: Topics
 
