@@ -84,8 +84,8 @@
         - "not dnf_result.changed"
 
 # Multiple packages
-- name: uninstall sos and sharutils
-  dnf: name=sos,sharutils state=removed
+- name: uninstall sos and pciutils
+  dnf: name=sos,pciutils state=removed
   register: dnf_result
 
 - name: check sos with rpm
@@ -93,19 +93,19 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check pciutils with rpm
+  shell: rpm -q pciutils
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_pciutils_result
 
 - name: verify packages installed
   assert:
     that:
         - "rpm_sos_result.rc != 0"
-        - "rpm_sharutils_result.rc != 0"
+        - "rpm_pciutils_result.rc != 0"
 
-- name: install sos and sharutils as comma separated
-  dnf: name=sos,sharutils state=present
+- name: install sos and pciutils as comma separated
+  dnf: name=sos,pciutils state=present
   register: dnf_result
 
 - name: check sos with rpm
@@ -113,10 +113,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check pciutils with rpm
+  shell: rpm -q pciutils
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_pciutils_result
 
 - name: verify packages installed
   assert:
@@ -124,17 +124,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_pciutils_result.rc == 0"
 
-- name: uninstall sos and sharutils
-  dnf: name=sos,sharutils state=removed
+- name: uninstall sos and pciutils
+  dnf: name=sos,pciutils state=removed
   register: dnf_result
 
-- name: install sos and sharutils as list
+- name: install sos and pciutils as list
   dnf:
     name:
       - sos
-      - sharutils
+      - pciutils
     state: present
   register: dnf_result
 
@@ -143,10 +143,10 @@
   failed_when: False
   register: rpm_sos_result
 
-- name: check sharutils with rpm
-  shell: rpm -q sharutils
+- name: check pciutils with rpm
+  shell: rpm -q pciutils
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_pciutils_result
 
 - name: verify packages installed
   assert:
@@ -154,17 +154,17 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_pciutils_result.rc == 0"
 
-- name: uninstall sos and sharutils
+- name: uninstall sos and pciutils
   dnf:
-    name: "sos,sharutils"
+    name: "sos,pciutils"
     state: removed
   register: dnf_result
 
-- name: install sos and sharutils as comma separated with spaces
+- name: install sos and pciutils as comma separated with spaces
   dnf:
-    name: "sos, sharutils"
+    name: "sos, pciutils"
     state: present
   register: dnf_result
 
@@ -174,9 +174,9 @@
   register: rpm_sos_result
 
 - name: check sos with rpm
-  shell: rpm -q sharutils
+  shell: rpm -q pciutils
   failed_when: False
-  register: rpm_sharutils_result
+  register: rpm_pciutils_result
 
 - name: verify packages installed
   assert:
@@ -184,13 +184,13 @@
         - "not dnf_result.failed | default(False)"
         - "dnf_result.changed"
         - "rpm_sos_result.rc == 0"
-        - "rpm_sharutils_result.rc == 0"
+        - "rpm_pciutils_result.rc == 0"
 
-- name: uninstall sos and sharutils
+- name: uninstall sos and pciutils
   dnf:
     name:
       - sos
-      - sharutils
+      - pciutils
     state: removed
 
 - name: install non-existent rpm
@@ -267,110 +267,221 @@
 # GROUP INSTALL
 # Using 'Books and Guides' because it is only 5 packages and a 7.3 M download on Fedora 26.
 # It also doesn't install anything that will tamper with our Python environment.
-- name: install Books and Guides group
-  dnf:
-    name: "@Books and Guides"
-    state: present
-  register: dnf_result
+- name: install Books and Guides group block (Fedora)
+  block:
+  - name: install Books and Guides group
+    dnf:
+      name: "@Books and Guides"
+      state: present
+    register: dnf_result
 
-- name: verify installation of the group
-  assert:
-    that:
-        - "not dnf_result.failed | default(False)"
-        - "dnf_result.changed"
+  - name: verify installation of the group
+    assert:
+      that:
+          - "not dnf_result.failed | default(False)"
+          - "dnf_result.changed"
 
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
 
-- name: install the group again
-  dnf:
-    name: "@Books and Guides"
-    state: present
-  register: dnf_result
+  - name: install the group again
+    dnf:
+      name: "@Books and Guides"
+      state: present
+    register: dnf_result
 
-- name: verify nothing changed
-  assert:
-    that:
-        - "not dnf_result.changed"
+  - name: verify nothing changed
+    assert:
+      that:
+          - "not dnf_result.changed"
 
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'msg' in dnf_result"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'msg' in dnf_result"
 
-- name: verify that bc is not installed
-  dnf:
-    name: bc
-    state: absent
+  - name: verify that bc is not installed
+    dnf:
+      name: bc
+      state: absent
 
-- name: install the group again but also with a package that is not yet installed
-  dnf:
-    name:
-      - "@Books and Guides"
-      - bc
-    state: present
-  register: dnf_result
+  - name: install the group again but also with a package that is not yet installed
+    dnf:
+      name:
+        - "@Books and Guides"
+        - bc
+      state: present
+    register: dnf_result
 
-- name: verify bc is installed
-  assert:
-    that:
-        - "dnf_result.changed"
+  - name: verify bc is installed
+    assert:
+      that:
+          - "dnf_result.changed"
 
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
 
-- name: try to install the group again, with --check to check 'changed'
-  dnf:
-    name: "@Books and Guides"
-    state: present
-  check_mode: yes
-  register: dnf_result
+  - name: try to install the group again, with --check to check 'changed'
+    dnf:
+      name: "@Books and Guides"
+      state: present
+    check_mode: yes
+    register: dnf_result
 
-- name: verify nothing changed
-  assert:
-    that:
-        - "not dnf_result.changed"
+  - name: verify nothing changed
+    assert:
+      that:
+          - "not dnf_result.changed"
 
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'msg' in dnf_result"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'msg' in dnf_result"
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: 'dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"'
-  register: shell_dnf_result
+  # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+  - shell: 'dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"'
+    register: shell_dnf_result
 
-# GROUP UPGRADE - this will go to the same method as group install
-# but through group_update - it is its invocation we're testing here
-# see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
-- name: install latest Books and Guides
-  dnf:
-    name: "@Books and Guides"
-    state: latest
-  register: dnf_result
+  # GROUP UPGRADE - this will go to the same method as group install
+  # but through group_update - it is its invocation we're testing here
+  # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
+  - name: install latest Books and Guides
+    dnf:
+      name: "@Books and Guides"
+      state: latest
+    register: dnf_result
 
-- name: verify installation of the group
-  assert:
-    that:
-        - "not dnf_result.failed | default(False)"
-        - "dnf_result.changed"
+  - name: verify installation of the group
+    assert:
+      that:
+          - "not dnf_result.failed | default(False)"
+          - "dnf_result.changed"
 
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
+  # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+  - shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
+  when: ansible_distribution == "Fedora"
+
+- name: install RPM Development Tools group block (rhel8 beta)
+  block:
+  - name: install RPM Development Tools group
+    dnf:
+      name: "@RPM Development Tools"
+      state: present
+    register: dnf_result
+
+  - name: verify installation of the group
+    assert:
+      that:
+          - "not dnf_result.failed | default(False)"
+          - "dnf_result.changed"
+
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
+
+  - name: install the group again
+    dnf:
+      name: "@RPM Development Tools"
+      state: present
+    register: dnf_result
+
+  - name: verify nothing changed
+    assert:
+      that:
+          - "not dnf_result.changed"
+
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'msg' in dnf_result"
+
+  - name: verify that bc is not installed
+    dnf:
+      name: bc
+      state: absent
+
+  - name: install the group again but also with a package that is not yet installed
+    dnf:
+      name:
+        - "@RPM Development Tools"
+        - bc
+      state: present
+    register: dnf_result
+
+  - name: verify bc is installed
+    assert:
+      that:
+          - "dnf_result.changed"
+
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
+
+  - name: try to install the group again, with --check to check 'changed'
+    dnf:
+      name: "@RPM Development Tools"
+      state: present
+    check_mode: yes
+    register: dnf_result
+
+  - name: verify nothing changed
+    assert:
+      that:
+          - "not dnf_result.changed"
+
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'msg' in dnf_result"
+
+  # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+  - shell: 'dnf -y group install "RPM Development Tools" && dnf -y group remove "RPM Development Tools"'
+    register: shell_dnf_result
+
+  # GROUP UPGRADE - this will go to the same method as group install
+  # but through group_update - it is its invocation we're testing here
+  # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
+  - name: install latest RPM Development Tools
+    dnf:
+      name: "@RPM Development Tools"
+      state: latest
+    register: dnf_result
+
+  - name: verify installation of the group
+    assert:
+      that:
+          - "not dnf_result.failed | default(False)"
+          - "dnf_result.changed"
+
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
+
+  # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+  - shell: dnf -y group install "RPM Development Tools" && dnf -y group remove "RPM Development Tools"
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version|int == 8
 
 - name: try to install non existing group
   dnf:
@@ -440,30 +551,49 @@
   command: dnf install --allowerasing -y coreutils
   changed_when: '"Nothing to do" not in coreutils_install.stdout'
   register: coreutils_install
+  when: ansible_distribution == "Fedora"
 
-- block:
+- name: install Web Server environment block (Fedora)
+  block:
   - name: install Web Server environment
     dnf:
       name: "@Web Server"
       state: latest
     register: dnf_result
-
+  - name: verify installation of the environment
+    assert:
+      that:
+          - "not dnf_result.failed | default(False)"
+          - "dnf_result.changed"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
   always:
   - name: reinstall coreutils-single if coreutils was installed
     command: dnf install --allowerasing -y coreutils-single
     when: coreutils_install is changed
+  when: ansible_distribution == "Fedora"
 
-- name: verify installation of the environment
-  assert:
-    that:
-        - "not dnf_result.failed | default(False)"
-        - "dnf_result.changed"
-
-- name: verify dnf module outputs
-  assert:
-    that:
-        - "'changed' in dnf_result"
-        - "'results' in dnf_result"
+- name: install Server environment block (rhel8 beta)
+  block:
+  - name: install Server environment
+    dnf:
+      name: "@Server"
+      state: latest
+    register: dnf_result
+  - name: verify installation of the environment
+    assert:
+      that:
+          - "not dnf_result.failed | default(False)"
+          - "dnf_result.changed"
+  - name: verify dnf module outputs
+    assert:
+      that:
+          - "'changed' in dnf_result"
+          - "'results' in dnf_result"
+  when: ansible_distribution == "RedHat"
 
 # https://github.com/ansible/ansible/issues/39704
 - name: install non-existent rpm, state=latest
@@ -685,3 +815,5 @@
       assert:
         that:
           - "'vim-minimal' in rpm_output.stdout"
+  when:
+    - ansible_distribution == 'Fedora'
