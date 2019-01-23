@@ -17,7 +17,7 @@ module: pkg5
 author:
 - Peter Oliver (@mavit)
 short_description: Manages packages with the Solaris 11 Image Packaging System
-version_added: 1.9
+version_added: '1.9'
 description:
   - IPS packages are the native packages in Solaris 11 and higher.
 notes:
@@ -37,19 +37,19 @@ options:
     description:
       - Accept any licences.
     type: bool
-    default: 'no'
+    default: no
     aliases: [ accept, accept_licences ]
   be_name:
     description:
-      - creates a new boot environment with the given name
+      - Creates a new boot environment with the given name.
     version_added: "2.8"
     type: str
   refresh:
     description:
-      - refresh publishers before execution
+      - Refresh publishers before execution.
     version_added: "2.8"
     type: bool
-    default: 'yes'
+    default: yes
 '''
 EXAMPLES = '''
 - name: Install Vim
