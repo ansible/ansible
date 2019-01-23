@@ -93,7 +93,7 @@ mtu:
 force:
   description: Shows if -f was used during the deletion of a nic tag
   returned: always
-  type: boolean
+  type: bool
   sample: False
 state:
   description: state of the target
@@ -235,6 +235,7 @@ def main():
         result['stderr'] = err
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
