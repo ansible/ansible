@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -266,7 +265,7 @@ def main():
             proxy_header=dict(type='str', choices=['NONE', 'PROXY_V1']),
             service=dict(required=True),
             ssl_certificates=dict(required=True, type='list'),
-            ssl_policy=dict()
+            ssl_policy=dict(),
         )
     )
 
@@ -307,8 +306,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -326,52 +324,32 @@ def update_fields(module, request, response):
 def proxy_header_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetSslProxies/{name}/setProxyHeader"
-        ]).format(**module.params),
-        {
-            u'proxyHeader': module.params.get('proxy_header')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetSslProxies/{name}/setProxyHeader"]).format(**module.params),
+        {u'proxyHeader': module.params.get('proxy_header')},
     )
 
 
 def service_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetSslProxies/{name}/setBackendService"
-        ]).format(**module.params),
-        {
-            u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetSslProxies/{name}/setBackendService"]).format(**module.params),
+        {u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink')},
     )
 
 
 def ssl_certificates_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetSslProxies/{name}/setSslCertificates"
-        ]).format(**module.params),
-        {
-            u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetSslProxies/{name}/setSslCertificates"]).format(**module.params),
+        {u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')},
     )
 
 
 def ssl_policy_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetSslProxies/{name}/setSslPolicy"
-        ]).format(**module.params),
-        {
-            u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetSslProxies/{name}/setSslPolicy"]).format(**module.params),
+        {u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink')},
     )
 
 
@@ -388,7 +366,7 @@ def resource_to_request(module):
         u'proxyHeader': module.params.get('proxy_header'),
         u'service': replace_resource_dict(module.params.get(u'service', {}), 'selfLink'),
         u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink'),
-        u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink')
+        u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -423,8 +401,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -461,7 +439,7 @@ def response_to_hash(module, response):
         u'proxyHeader': response.get(u'proxyHeader'),
         u'service': response.get(u'service'),
         u'sslCertificates': response.get(u'sslCertificates'),
-        u'sslPolicy': response.get(u'sslPolicy')
+        u'sslPolicy': response.get(u'sslPolicy'),
     }
 
 
@@ -487,7 +465,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])

@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -279,12 +278,11 @@ def main():
             name=dict(required=True, type='str'),
             network=dict(required=True),
             enable_flow_logs=dict(type='bool'),
-            secondary_ip_ranges=dict(type='list', elements='dict', options=dict(
-                range_name=dict(required=True, type='str'),
-                ip_cidr_range=dict(required=True, type='str')
-            )),
+            secondary_ip_ranges=dict(
+                type='list', elements='dict', options=dict(range_name=dict(required=True, type='str'), ip_cidr_range=dict(required=True, type='str'))
+            ),
             private_ip_google_access=dict(type='bool'),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -325,8 +323,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -342,41 +339,30 @@ def update_fields(module, request, response):
 def ip_cidr_range_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/subnetworks/{name}/expandIpCidrRange"
-        ]).format(**module.params),
-        {
-            u'ipCidrRange': module.params.get('ip_cidr_range')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/subnetworks/{name}/expandIpCidrRange"]).format(**module.params),
+        {u'ipCidrRange': module.params.get('ip_cidr_range')},
     )
 
 
 def enable_flow_logs_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.patch(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/subnetworks/{name}"
-        ]).format(**module.params),
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/subnetworks/{name}"]).format(**module.params),
         {
             u'enableFlowLogs': module.params.get('enable_flow_logs'),
             u'fingerprint': response.get('fingerprint'),
-            u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request()
-        }
+            u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
+        },
     )
 
 
 def private_ip_google_access_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/subnetworks/{name}/setPrivateIpGoogleAccess"
-        ]).format(**module.params),
-        {
-            u'privateIpGoogleAccess': module.params.get('private_ip_google_access')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/subnetworks/{name}/setPrivateIpGoogleAccess"]).format(
+            **module.params
+        ),
+        {u'privateIpGoogleAccess': module.params.get('private_ip_google_access')},
     )
 
 
@@ -395,7 +381,7 @@ def resource_to_request(module):
         u'enableFlowLogs': module.params.get('enable_flow_logs'),
         u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
         u'privateIpGoogleAccess': module.params.get('private_ip_google_access'),
-        u'region': module.params.get('region')
+        u'region': module.params.get('region'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -430,8 +416,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -472,7 +458,7 @@ def response_to_hash(module, response):
         u'fingerprint': response.get(u'fingerprint'),
         u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(response.get(u'secondaryIpRanges', []), module).from_response(),
         u'privateIpGoogleAccess': response.get(u'privateIpGoogleAccess'),
-        u'region': module.params.get('region')
+        u'region': module.params.get('region'),
     }
 
 
@@ -498,7 +484,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
@@ -532,16 +518,10 @@ class SubnetworkSecondaryiprangesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'rangeName': item.get('range_name'),
-            u'ipCidrRange': item.get('ip_cidr_range')
-        })
+        return remove_nones_from_dict({u'rangeName': item.get('range_name'), u'ipCidrRange': item.get('ip_cidr_range')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'rangeName': item.get(u'rangeName'),
-            u'ipCidrRange': item.get(u'ipCidrRange')
-        })
+        return remove_nones_from_dict({u'rangeName': item.get(u'rangeName'), u'ipCidrRange': item.get(u'ipCidrRange')})
 
 
 if __name__ == '__main__':
