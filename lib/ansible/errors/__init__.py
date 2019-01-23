@@ -209,6 +209,11 @@ class AnsibleConnectionFailure(AnsibleRuntimeError):
     pass
 
 
+class AnsibleAuthenticationFailure(AnsibleConnectionFailure):
+    '''invalid username/password/key'''
+    pass
+
+
 class AnsibleFilterError(AnsibleRuntimeError):
     ''' a templating failure '''
     pass

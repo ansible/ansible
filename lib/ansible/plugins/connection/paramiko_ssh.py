@@ -141,12 +141,17 @@ from distutils.version import LooseVersion
 from binascii import hexlify
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import (
+    AnsibleAuthenticationFailure,
+    AnsibleConnectionFailure,
+    AnsibleError,
+    AnsibleFileNotFound,
+)
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
     from __main__ import display
@@ -358,6 +363,9 @@ class Connection(ConnectionBase):
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
+        except paramiko.ssh_exception.AuthenticationException as e:
+            msg = 'Invalid/incorrect username/password. {0}'.format(to_text(e))
+            raise AnsibleAuthenticationFailure(msg)
         except Exception as e:
             msg = str(e)
             if "PID check failed" in msg:
