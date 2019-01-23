@@ -81,6 +81,8 @@
         vpc_id: "{{ vpc.vpc.id }}"
         subnet_ids: "{{ subnets | json_query('results[*].subnet.id') }}"
 
+    - include_tasks: tasks/ipv6.yml
+
     # ============================================================
 
   always:
@@ -94,7 +96,7 @@
       register: removed_acl
       until: removed_acl is success
       retries: 5
-      delay: 2
+      delay: 5
       ignore_errors: yes
 
     - name: remove subnets
@@ -121,6 +123,10 @@
           az: "b"
           public: "False"
       ignore_errors: yes
+      register: removed_subnets
+      until: removed_subnets is success
+      retries: 5
+      delay: 5
 
     - name: remove the VPC
       ec2_vpc_net:
@@ -128,5 +134,10 @@
         name: "{{ resource_prefix }}"
         state: absent
         <<: *aws_connection_info
+      ignore_errors: yes
+      register: removed_vpc
+      until: removed_vpc is success
+      retries: 5
+      delay: 5
 
     # ============================================================

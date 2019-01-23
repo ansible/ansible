@@ -9,11 +9,11 @@
 
 # ============================================================
 
-- name: create ingress and egress rules using subnet names
+- name: create ingress and egress rules using subnet IDs
   ec2_vpc_nacl:
     vpc_id: "{{ vpc_id }}"
     name: "{{ resource_prefix }}-acl"
-    subnets: "{{ subnet_names }}"
+    subnets: "{{ subnet_ids }}"
     tags:
       Created_by: "Ansible test {{ resource_prefix }}"
     ingress:
@@ -43,34 +43,31 @@
   assert:
     that:
       - nacl_facts.nacls | length == 1
-      - nacl_facts.nacls[0].subnets | length == 4
       - nacl_facts.nacls[0].ingress | length == 3
       - nacl_facts.nacls[0].egress | length == 1
-      - "'{{ nacl_facts.nacls[0].tags.Name }}' == '{{ resource_prefix }}-acl'"
 
 # ============================================================
 
-- name: test idempotence
+- name: remove an ingress rule
   ec2_vpc_nacl:
     vpc_id: "{{ vpc_id }}"
     name: "{{ resource_prefix }}-acl"
-    subnets: "{{ subnet_names }}"
+    subnets: "{{ subnet_ids }}"
     tags:
       Created_by: "Ansible test {{ resource_prefix }}"
     ingress:
       - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
       - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
-      - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
     egress:
       - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
     state: 'present'
     <<: *aws_connection_info
   register: nacl
 
-- name: assert the network acl already existed
+- name: assert the network acl changed
   assert:
     that:
-      - not nacl.changed
+      - nacl.changed
       - nacl.nacl_id.startswith('acl-')
 
 - name: get network ACL facts
@@ -78,57 +75,90 @@
     nacl_ids:
       - "{{ nacl.nacl_id }}"
     <<: *aws_connection_info
-  register: nacl_facts_idem
+  register: nacl_facts
 
-- name: assert the facts are the same as before
+- name: assert the nacl has the correct attributes
   assert:
     that:
-      - nacl_facts_idem == nacl_facts
+      - nacl_facts.nacls | length == 1
+      - nacl_facts.nacls[0].ingress | length == 2
+      - nacl_facts.nacls[0].egress | length == 1
 
 # ============================================================
 
-- name: remove a subnet from the network ACL
+- name: remove the egress rule
   ec2_vpc_nacl:
     vpc_id: "{{ vpc_id }}"
     name: "{{ resource_prefix }}-acl"
-    subnets:
-      - "{{ subnet_names[0] }}"
-      - "{{ subnet_names[1] }}"
-      - "{{ subnet_names[2] }}"
+    subnets: "{{ subnet_ids }}"
     tags:
       Created_by: "Ansible test {{ resource_prefix }}"
     ingress:
       - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
       - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
-      - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
-    egress:
-      - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+    egress: []
     state: 'present'
     <<: *aws_connection_info
   register: nacl
 
-- name: assert the network ACL changed
+- name: assert the network acl changed
   assert:
     that:
       - nacl.changed
       - nacl.nacl_id.startswith('acl-')
 
-# FIXME: Currently removing a subnet using the subnet names does not work
-#- name: get network ACL facts
-#  ec2_vpc_nacl_facts:
-#    nacl_ids:
-#      - "{{ nacl.nacl_id }}"
-#    <<: *aws_connection_info
-#  register: nacl_facts
+- name: get network ACL facts
+  ec2_vpc_nacl_facts:
+    nacl_ids:
+      - "{{ nacl.nacl_id }}"
+    <<: *aws_connection_info
+  register: nacl_facts
 
-#- name: assert the nacl has the correct attributes
-#  assert:
-#    that:
-#      - nacl_facts.nacls | length == 1
-#      - nacl_facts.nacls[0].subnets | length == 3
-#      - nacl_facts.nacls[0].ingress | length == 3
-#      - nacl_facts.nacls[0].egress | length == 1
-#      - "'{{ nacl_facts.nacls[0].tags.Name }}' == '{{ resource_prefix }}-acl'"
+- name: assert the nacl has the correct attributes
+  assert:
+    that:
+      - nacl_facts.nacls | length == 1
+      - nacl_facts.nacls[0].ingress | length == 2
+      - nacl_facts.nacls[0].egress | length == 0
+
+# ============================================================
+
+- name: add egress rules
+  ec2_vpc_nacl:
+    vpc_id: "{{ vpc_id }}"
+    name: "{{ resource_prefix }}-acl"
+    subnets: "{{ subnet_ids }}"
+    tags:
+      Created_by: "Ansible test {{ resource_prefix }}"
+    ingress:
+      - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+      - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+    egress:
+      - [100, 'tcp', 'allow', '10.0.0.0/24', null, null, 22, 22]
+      - [200, 'udp', 'allow', '10.0.0.0/24', null, null, 22, 22]
+    state: 'present'
+    <<: *aws_connection_info
+  register: nacl
+
+- name: assert the network acl changed
+  assert:
+    that:
+      - nacl.changed
+      - nacl.nacl_id.startswith('acl-')
+
+- name: get network ACL facts
+  ec2_vpc_nacl_facts:
+    nacl_ids:
+      - "{{ nacl.nacl_id }}"
+    <<: *aws_connection_info
+  register: nacl_facts
+
+- name: assert the nacl has the correct attributes
+  assert:
+    that:
+      - nacl_facts.nacls | length == 1
+      - nacl_facts.nacls[0].ingress | length == 2
+      - nacl_facts.nacls[0].egress | length == 2
 
 # ============================================================
 

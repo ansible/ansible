@@ -16,14 +16,12 @@
     subnets: "{{ subnet_ids }}"
     tags:
       Created_by: "Ansible test {{ resource_prefix }}"
-    ingress: [
-        [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22],
-        [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80],
-        [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8],
-    ]
-    egress: [
-        [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
-    ]
+    ingress:
+      - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+      - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+      - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+    egress:
+      - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
     state: 'present'
     <<: *aws_connection_info
   register: nacl
@@ -60,14 +58,12 @@
     subnets: "{{ subnet_ids }}"
     tags:
       Created_by: "Ansible test {{ resource_prefix }}"
-    ingress: [
-        [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22],
-        [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80],
-        [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8],
-    ]
-    egress: [
-        [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
-    ]
+    ingress:
+      - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+      - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+      - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+    egress:
+      - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
     state: 'present'
     <<: *aws_connection_info
   register: nacl
@@ -102,14 +98,12 @@
       - "{{ subnet_ids[2] }}"
     tags:
       Created_by: "Ansible test {{ resource_prefix }}"
-    ingress: [
-        [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22],
-        [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80],
-        [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8],
-    ]
-    egress: [
-        [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
-    ]
+    ingress:
+      - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+      - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+      - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+    egress:
+      - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
     state: 'present'
     <<: *aws_connection_info
   register: nacl
@@ -121,7 +115,7 @@
       - nacl.nacl_id.startswith('acl-')
 
 - set_fact:
-  nacl_id: "{{ nacl.nacl_id }}"
+    nacl_id: "{{ nacl.nacl_id }}"
 
 - name: get network ACL facts
   ec2_vpc_nacl_facts:
@@ -149,6 +143,10 @@
     state: absent
     <<: *aws_connection_info
   register: nacl
+  until: nacl is success
+  ignore_errors: yes
+  retries: 5
+  delay: 5
 
 - name: assert nacl was removed
   assert:

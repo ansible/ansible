@@ -1,0 +1,217 @@
+- block:
+
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: create a VPC
+      ec2_vpc_net:
+        cidr_block: 10.230.231.0/24
+        name: "{{ resource_prefix }}-ipv6"
+        state: present
+        <<: *aws_connection_info
+      register: vpc_result
+
+    # FIXME - Replace by creating IPv6 enabled VPC once ec2_vpc_net module supports it.
+    - name: install aws cli - FIXME temporary this should go for a lighterweight solution
+      command: pip install awscli
+
+    - name: Assign an Amazon provided IPv6 CIDR block to the VPC
+      command: aws ec2 associate-vpc-cidr-block --amazon-provided-ipv6-cidr-block --vpc-id '{{ vpc_result.vpc.id }}'
+      environment:
+          AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
+          AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
+          AWS_SESSION_TOKEN: '{{security_token}}'
+          AWS_DEFAULT_REGION: '{{aws_region}}'
+
+    - name: wait for the IPv6 CIDR to be assigned
+      command: sleep 5
+
+    - name: Get the assigned IPv6 CIDR
+      command: aws ec2 describe-vpcs --vpc-ids '{{ vpc_result.vpc.id }}'
+      environment:
+          AWS_ACCESS_KEY_ID: '{{aws_access_key}}'
+          AWS_SECRET_ACCESS_KEY: '{{aws_secret_key}}'
+          AWS_SESSION_TOKEN: '{{security_token}}'
+          AWS_DEFAULT_REGION: '{{aws_region}}'
+      register: vpc_ipv6
+
+    - set_fact:
+        vpc_ipv6_cidr: "{{ vpc_ipv6.stdout | from_json | json_query('Vpcs[0].Ipv6CidrBlockAssociationSet[0].Ipv6CidrBlock') }}"
+
+    # ============================================================
+    - name: create subnet with IPv6 (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: 10.230.231.0/26
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
+        state: present
+        tags:
+          Name: "{{ resource_prefix }}-ipv6-subnet-1"
+        <<: *aws_connection_info
+      register: vpc_subnet_ipv6
+
+    - name: assert creation with IPv6 happened (expected changed=true)
+      assert:
+        that:
+           - "vpc_subnet_ipv6.subnet.ipv6_cidr_block == '{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}'"
+
+    # ============================================================
+
+    - name: create ingress and egress rules using subnet names
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        subnets:
+          - "{{ resource_prefix }}-ipv6-subnet-1"
+        tags:
+          Created_by: "Ansible test {{ resource_prefix }}"
+        ingress:
+          - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+          - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+          - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+        egress:
+          - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+        state: 'present'
+        <<: *aws_connection_info
+      register: nacl
+
+    - assert:
+        that:
+          - nacl.nacl_id
+
+    - name: remove and add an entry
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        subnets:
+          - "{{ resource_prefix }}-ipv6-subnet-1"
+        tags:
+          Created_by: "Ansible test {{ resource_prefix }}"
+        ingress:
+          - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+          - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+        egress:
+          - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+        state: 'present'
+        <<: *aws_connection_info
+      register: nacl
+      ignore_errors: yes
+
+    # FIXME: Currently VPCs with an IPv6 CIDR are not supported - uncomment correct assertion when fixed
+    - assert:
+        that:
+          - "'Value (32768) for parameter ruleNumber is invalid' in nacl.msg"
+    #- assert:
+    #    that:
+    #      - nacl.changed
+
+    - name: add ipv6 entries
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        subnets:
+          - "{{ resource_prefix }}-ipv6-subnet-1"
+        tags:
+          Created_by: "Ansible test {{ resource_prefix }}"
+        ingress:
+          - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+          - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+          - [205, 'tcp', 'allow', '::/0', null, null, 80, 80]
+          - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+          - [305, 'ipv6-icmp', 'allow', '::/0', 0, 8]
+        egress:
+          - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+          - [105, 'all', 'allow', '::/0', null, null, null, null]
+        state: 'present'
+        <<: *aws_connection_info
+      register: nacl
+      ignore_errors: yes
+
+    # FIXME: Currently IPv6 rules are not supported - uncomment assertion when fixed
+    #- assert:
+    #    that:
+    #      - nacl.changed
+
+    - name: purge ingress entries
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        subnets:
+          - "{{ resource_prefix }}-ipv6-subnet-1"
+        tags:
+          Created_by: "Ansible test {{ resource_prefix }}"
+        ingress: []
+        egress:
+          - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+          - [105, 'all', 'allow', '::/0', null, null, null, null]
+        state: 'present'
+        <<: *aws_connection_info
+      register: nacl
+      ignore_errors: yes
+
+    # FIXME: Currently IPv6 rules are not supported - uncomment assertion when fixed
+    #- assert:
+    #    that:
+    #      - nacl.changed
+
+    # ============================================================
+    - name: remove subnet ipv6 cidr (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: 10.230.231.0/26
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        <<: *aws_connection_info
+        state: absent
+      register: vpc_remove_ipv6_cidr
+
+    - name: assert subnet ipv6 cidr removed (expected changed=true)
+      assert:
+        that:
+           - 'vpc_remove_ipv6_cidr.changed'
+
+  always:
+
+    ################################################
+    # TEARDOWN STARTS HERE
+    ################################################
+
+    - name: remove network ACL
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        state: absent
+        <<: *aws_connection_info
+      register: removed_acl
+      until: removed_acl is success
+      retries: 5
+      delay: 5
+      ignore_errors: yes
+
+    - name: tidy up subnet
+      ec2_vpc_subnet:
+        cidr: 10.230.231.0/26
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: removed_subnet
+      until: removed_subnet is success
+      retries: 5
+      delay: 5
+      ignore_errors: yes
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-ipv6"
+        state: absent
+        cidr_block: 10.230.231.0/24
+        <<: *aws_connection_info
+      register: removed_vpc
+      until: removed_vpc is success
+      retries: 5
+      delay: 5
+      ignore_errors: yes

@@ -108,6 +108,10 @@
     state: absent
     <<: *aws_connection_info
   register: nacl
+  until: nacl is success
+  ignore_errors: yes
+  retries: 5
+  delay: 5
 
 - name: assert nacl was removed
   assert:
