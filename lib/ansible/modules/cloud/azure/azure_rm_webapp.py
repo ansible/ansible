@@ -253,6 +253,16 @@ EXAMPLES = '''
             version: 6.6
           - name: "php"
             version: "7.0"
+    
+    - name: Create a stage deployment slot for an existing web app
+      azure_rm_webapp:
+        resource_group: myresourcegroup
+        name: mywebapp/slots/stage
+        plan:
+          resource_group: myresourcegroup
+          name: myappplan
+        app_settings:
+          testkey:testvalue      
 
     - name: Create a linux web app with java framework
       azure_rm_webapp:
