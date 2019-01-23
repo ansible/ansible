@@ -75,6 +75,7 @@ options:
   state:
     description:
       - Create or delete the pool
+    type: str
     choices: [ absent, present ]
     required: true
 author:
