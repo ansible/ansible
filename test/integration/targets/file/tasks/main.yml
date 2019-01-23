@@ -488,6 +488,37 @@
     that:
     - result.mode == '0444'
 
+# https://github.com/ansible/ansible/issues/50943
+# Need to use /tmp as nobody can't access output_dir at all
+- name: create file as root with all write permissions
+  file: dest=/tmp/write_utime state=touch mode=0666 owner={{ansible_user}}
+
+- block:
+  - name: get previous time
+    stat: path=/tmp/write_utime
+    register: previous_time
+
+  - name: touch file as nobody
+    file: dest=/tmp/write_utime state=touch
+    become: True
+    become_user: nobody
+    register: result
+
+  - name: get new time
+    stat: path=/tmp/write_utime
+    register: current_time
+
+  always:
+  - name: remove test utime file
+    file: path=/tmp/write_utime state=absent
+
+- name: assert touch file as nobody
+  assert:
+    that:
+    - result is changed
+    - current_time.stat.atime > previous_time.stat.atime
+    - current_time.stat.mtime > previous_time.stat.mtime
+
 # Follow + recursive tests
 - name: create a toplevel directory
   file: path={{output_dir}}/test_follow_rec state=directory mode=0755
