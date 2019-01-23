@@ -98,7 +98,7 @@ fi
 # We also need to add localhost's server keys to known_hosts.
 
 if [ ! -f "${HOME}/.ssh/id_rsa.pub" ]; then
-    ssh-keygen -q -t rsa -N '' -f "${HOME}/.ssh/id_rsa"
+    ssh-keygen -m PEM -q -t rsa -N '' -f "${HOME}/.ssh/id_rsa"
     cp "${HOME}/.ssh/id_rsa.pub" "${HOME}/.ssh/authorized_keys"
     for key in /etc/ssh/ssh_host_*_key.pub; do
         pk=$(cat "${key}")
