@@ -297,13 +297,15 @@ options:
     version_added: '2.3'
   customization:
     description:
-    - Parameters for OS customization when cloning from the template or the virtual machine.
+    - Parameters for OS customization when cloning from the template or the virtual machine, or apply to the existing virtual machine directly.
     - Not all operating systems are supported for customization with respective vCenter version,
       please check VMware documentation for respective OS customization.
     - For supported customization operating system matrix, (see U(http://partnerweb.vmware.com/programs/guestOS/guest-os-customization-matrix.pdf))
     - All parameters and VMware object names are case sensitive.
     - Linux based OSes requires Perl package to be installed for OS customizations.
     - 'Common parameters (Linux/Windows):'
+    - ' - C(existing_vm) (bool): If set to C(True), do OS customization on the specified virtual machine directly.
+          If set to C(False) or not specified, do OS customization when cloning from the template or the virtual machine. version_added: 2.8' 
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
     - ' - C(dns_suffix) (list): List of domain suffixes, also known as DNS search path (default: C(domain) parameter).'
     - ' - C(domain) (string): DNS domain name to use.'
@@ -563,6 +565,7 @@ instance:
 
 import re
 import time
+import string
 
 HAS_PYVMOMI = False
 try:
@@ -1584,7 +1587,9 @@ class PyVmomiHelper(PyVmomi):
 
             # Setting hostName, orgName and fullName is mandatory, so we set some default when missing
             ident.userData.computerName = vim.vm.customization.FixedName()
-            ident.userData.computerName.name = str(self.params['customization'].get('hostname', self.params['name'].split('.')[0]))
+            # computer name will be truncated to 15 characters if using VM name
+            default_name = self.params['name'].translate(None, string.punctuation)
+            ident.userData.computerName.name = str(self.params['customization'].get('hostname', default_name[0:15]))
             ident.userData.fullName = str(self.params['customization'].get('fullname', 'Administrator'))
             ident.userData.orgName = str(self.params['customization'].get('orgname', 'ACME'))
 
@@ -2146,7 +2151,7 @@ class PyVmomiHelper(PyVmomi):
                     network_changes = True
                     break
 
-        if len(self.params['customization']) > 0 or network_changes or self.params.get('customization_spec'):
+        if len(self.params['customization']) > 0 or network_changes or self.params.get('customization_spec') is not None:
             self.customize_vm(vm_obj=vm_obj)
 
         clonespec = None
@@ -2397,6 +2402,40 @@ class PyVmomiHelper(PyVmomi):
         vm_facts = self.gather_facts(self.current_vm_obj)
         return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
 
+    def customize_exist_vm(self):
+        task = None
+        # Find if we need network customizations (find keys in dictionary that requires customizations)
+        network_changes = False
+        for nw in self.params['networks']:
+            for key in nw:
+                # We don't need customizations for these keys
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                    network_changes = True
+                    break
+
+        if len(self.params['customization']) > 1 or network_changes or self.params.get('customization_spec'):
+            self.customize_vm(vm_obj=self.current_vm_obj)
+        try:
+            task = self.current_vm_obj.CustomizeVM_Task(self.customspec)
+        except vim.fault.CustomizationFault as e:
+            self.module.fail_json(msg="Failed to customization virtual machine due to CustomizationFault: %s" % to_native(e.msg))
+        except vim.fault.RuntimeFault as e:
+            self.module.fail_json(msg="failed to customization virtual machine due to RuntimeFault: %s" % to_native(e.msg))
+        except Exception as e:
+            self.module.fail_json(msg="failed to customization virtual machine due to fault: %s" % to_native(e.msg))
+        self.wait_for_task(task)
+        if task.info.state == 'error':
+            return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customize_exist'}
+
+        vm_facts = self.gather_facts(self.current_vm_obj)
+        if self.params['wait_for_customization']:
+            set_vm_power_state(self.content, self.current_vm_obj, 'poweredon', force=False)
+            is_customization_ok = self.wait_for_customization(self.current_vm_obj)
+            if not is_customization_ok:
+                return {'changed': self.change_applied, 'failed': True, 'instance': vm_facts, 'op': 'wait_for_customize_exist'}
+
+        return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
+
     def wait_for_task(self, task, poll_interval=1):
         """
         Wait for a VMware task to complete.  Terminal states are 'error' and 'success'.
@@ -2430,9 +2469,8 @@ class PyVmomiHelper(PyVmomi):
 
         return facts
 
-    def get_vm_events(self, eventTypeIdList):
-        newvm = self.get_vm()
-        byEntity = vim.event.EventFilterSpec.ByEntity(entity=newvm, recursion="self")
+    def get_vm_events(self, vm, eventTypeIdList):
+        byEntity = vim.event.EventFilterSpec.ByEntity(entity=vm, recursion="self")
         filterSpec = vim.event.EventFilterSpec(entity=byEntity, eventTypeId=eventTypeIdList)
         eventManager = self.content.eventManager
         return eventManager.QueryEvent(filterSpec)
@@ -2440,11 +2478,11 @@ class PyVmomiHelper(PyVmomi):
     def wait_for_customization(self, vm, poll=10000, sleep=10):
         thispoll = 0
         while thispoll <= poll:
-            eventStarted = self.get_vm_events(['CustomizationStartedEvent'])
+            eventStarted = self.get_vm_events(vm, ['CustomizationStartedEvent'])
             if len(eventStarted):
                 thispoll = 0
                 while thispoll <= poll:
-                    eventsFinishedResult = self.get_vm_events(['CustomizationSucceeded', 'CustomizationFailed'])
+                    eventsFinishedResult = self.get_vm_events(vm, ['CustomizationSucceeded', 'CustomizationFailed'])
                     if len(eventsFinishedResult):
                         if not isinstance(eventsFinishedResult[0], vim.event.CustomizationSucceeded):
                             self.module.fail_json(msg='Customization failed with error {0}:\n{1}'.format(
@@ -2531,14 +2569,24 @@ def main():
                 set_vm_power_state(pyv.content, vm, 'poweredoff', module.params['force'])
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
-            if module.check_mode:
-                result.update(
-                    vm_name=vm.name,
-                    changed=True,
-                    desired_operation='reconfigure_vm',
-                )
-                module.exit_json(**result)
-            result = pyv.reconfigure_vm()
+            if 'existing_vm' in module.params['customization'] and module.params['customization']['existing_vm']:
+                if module.check_mode:
+                    result.update(
+                        vm_name=vm.name,
+                        changed=True,
+                        desired_operation='customize_exist_vm',
+                    )
+                    module.exit_json(**result)
+                result = pyv.customize_exist_vm()
+            else:
+                if module.check_mode:
+                    result.update(
+                        vm_name=vm.name,
+                        changed=True,
+                        desired_operation='reconfigure_vm',
+                    )
+                    module.exit_json(**result)
+                result = pyv.reconfigure_vm()
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             if module.check_mode:
                 result.update(
