@@ -8,8 +8,13 @@ Ansible provides a number of module utilities that provide helper functions that
 
   from ansible.module_utils.basic import AnsibleModule
 
+If you need to share Python code between some of your own local modules, you can use Ansible's ``module_utils`` directories for this. When you run ``ansible-playbook``, Ansible will merge any files in the local ``module_utils`` directory into the ``ansible.module_utils`` namespace. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file in the root location where your playbook lives, and then import it in your modules like so::
 
-The following is a list of ``module_utils`` files and a general description. The module utility source code lives in the ``./lib/ansible/module_utils`` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
+  from ansible.module_utils.my_shared_code import MySharedCodeClient
+
+Your custom ``module_utils`` directories can live in the root directory of your playbook, or in the individual role directories, or in the directories specified by the ``ANSIBLE_MODULE_UTILS`` configuration setting.
+
+Ansible ships with the following list of ``module_utils`` files. The module utility source code lives in the ``./lib/ansible/module_utils`` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
 
 .. include:: shared_snippets/licensing.txt
 
