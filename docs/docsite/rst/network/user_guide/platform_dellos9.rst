@@ -64,7 +64,7 @@ Example CLI Task
    - name: Backup current switch config (dellos9)
      dellos9_config:
        backup: yes
-     register: backup_dellso6_location
+     register: backup_dellos9_location
      when: ansible_network_os == 'dellos9'
 
 .. include:: shared_snippets/SSH_warning.txt
