@@ -198,3 +198,27 @@ class TestNxosConfigModule(TestNxosModule):
         self.assertEqual(self.save_config.call_count, 0)
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
+
+    def test_nxos_config_defaults_false(self):
+        set_module_args(dict(lines=['hostname localhost'], defaults=False))
+        result = self.execute_module(changed=True)
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.get_config.call_args[1], dict(flags=[]))
+
+    def test_nxos_config_defaults_true(self):
+        set_module_args(dict(lines=['hostname localhost'], defaults=True))
+        result = self.execute_module(changed=True)
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.get_config.call_args[1], dict(flags=['all']))
+
+    def test_nxos_config_defaults_false_backup_true(self):
+        set_module_args(dict(lines=['hostname localhost'], defaults=False, backup=True))
+        result = self.execute_module(changed=True)
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.get_config.call_args[1], dict(flags=[]))
+
+    def test_nxos_config_defaults_true_backup_true(self):
+        set_module_args(dict(lines=['hostname localhost'], defaults=True, backup=True))
+        result = self.execute_module(changed=True)
+        self.assertEqual(self.get_config.call_count, 1)
+        self.assertEqual(self.get_config.call_args[1], dict(flags=['all']))
