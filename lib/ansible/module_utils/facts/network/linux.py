@@ -256,12 +256,20 @@ class LinuxNetwork(Network):
 
             args = [ip_path, 'addr', 'show', 'primary', device]
             rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+            if rc == 0:
+                parse_ip_output(primary_data)
+            else:
+                # possibly busybox, fallback to running without the "primary" arg
+                # https://github.com/ansible/ansible/issues/50871
+                args = [ip_path, 'addr', 'show', device]
+                rc, data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+                if rc == 0:
+                    parse_ip_output(data)
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
             rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
-
-            parse_ip_output(primary_data)
-            parse_ip_output(secondary_data, secondary=True)
+            if rc == 0:
+                parse_ip_output(secondary_data, secondary=True)
 
             interfaces[device].update(self.get_ethtool_data(device))
 
