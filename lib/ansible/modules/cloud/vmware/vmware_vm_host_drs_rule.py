@@ -143,7 +143,7 @@ class VmwareVmHostRuleDrs(PyVmomi):
         self.__result = dict()
         self.__changed = False
 
-        if datacenter_name is not None:
+        if self.__datacenter_name is not None:
 
             self.__datacenter_obj = find_datacenter_by_name(self.content, self.__datacenter_name)
 
@@ -159,7 +159,7 @@ class VmwareVmHostRuleDrs(PyVmomi):
             raise Exception("Cluster '%s' not found" % self.__cluster_name)
 
         # Dont populate lists if we are deleting group
-        if state == 'present':
+        if self.__state == 'present':
             # Get list of vm groups only if state is present
             self.__vm_group_obj = self.__get_group_by_name(group_name=self.__vm_group_name)
             self.__host_group_obj = self.__get_group_by_name(group_name=self.__host_group_name, host_group=True)
