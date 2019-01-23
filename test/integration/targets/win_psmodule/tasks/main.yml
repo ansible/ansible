@@ -55,7 +55,9 @@
         - PowerShellGet
 
     - name: create required folder
-      win_shell: 'if ( -not $(Test-Path {{ psmodulepath.stdout | trim }}) ) { New-Item -Path {{ psmodulepath.stdout | trim }} -ItemType Directory | Out-Null }'
+      win_file:
+        path:  "{{ psmodulepath.stdout | trim }}"
+        state: directory
 
     - name: update PowerShellGet and PackageManagement modules
       win_shell: 'Copy-Item -Path {{ win_output_dir }}\{{ item }} -Destination {{ psmodulepath.stdout | trim }}\ -Recurse -Force'
