@@ -238,7 +238,7 @@ def key_name_from_file(filename, module):
         try:
             json_data = json.loads(f.read())
             return "projects/{project_id}/serviceAccounts/{client_email}/keys/{private_key_id}".format(**json_data)
-        except:
+        except ValueError as inst:
             module.fail_json(msg="File is not a valid GCP JSON service account key")
 
 
