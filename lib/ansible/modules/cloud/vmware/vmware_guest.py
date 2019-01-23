@@ -305,7 +305,7 @@ options:
     - Linux based OSes requires Perl package to be installed for OS customizations.
     - 'Common parameters (Linux/Windows):'
     - ' - C(existing_vm) (bool): If set to C(True), do OS customization on the specified virtual machine directly.
-          If set to C(False) or not specified, do OS customization when cloning from the template or the virtual machine. version_added: 2.8' 
+          If set to C(False) or not specified, do OS customization when cloning from the template or the virtual machine. version_added: 2.8'
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
     - ' - C(dns_suffix) (list): List of domain suffixes, also known as DNS search path (default: C(domain) parameter).'
     - ' - C(domain) (string): DNS domain name to use.'
