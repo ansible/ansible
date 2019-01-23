@@ -135,6 +135,7 @@ else:
 try:
     import winrm
     from winrm import Response
+    from winrm.exceptions import WinRMOperationTimeoutError
     from winrm.protocol import Protocol
     HAS_WINRM = True
 except ImportError as e:
@@ -453,6 +454,15 @@ class Connection(ConnectionBase):
                 if stdin_iterator:
                     for (data, is_last) in stdin_iterator:
                         self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
+
+            except WinRMOperationTimeoutError as ex:
+                # This exception seems to be a non-error and could make Ansible tasks fail even so they
+                # completed successfully and returned a valid result.
+                # Usually, this exception should only be raised during a Receive operation, not during a Send.
+                # The Receive operation is implemented in winrm.get_command_output()
+                # which polls the result asynchronously and already handles this case.
+                # Thus, we should ignore this exception here.
+                display.warning("IGNORING WINRM OPERATION TIMEOUT ERROR: %s" % to_text(ex))
 
             except Exception as ex:
                 display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % to_text(ex))
