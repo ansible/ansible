@@ -14,95 +14,95 @@ DOCUMENTATION = '''
 module: gitlab_user
 short_description: Creates/updates/deletes Gitlab Users
 description:
-   - When the user does not exist in Gitlab, it will be created.
-   - When the user does exists and state=absent, the user will be deleted.
-   - When changes are made to user, the user will be updated.
+  - When the user does not exist in Gitlab, it will be created.
+  - When the user does exists and state=absent, the user will be deleted.
+  - When changes are made to user, the user will be updated.
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
-    - pyapi-gitlab python module
-    - administrator rights on the Gitlab server
+  - python-gitlab python module
+  - administrator rights on the Gitlab server
 options:
-    server_url:
-        description:
-            - Url of Gitlab server, with protocol (http or https).
-        required: true
-    validate_certs:
-        description:
-            - When using https if SSL certificate needs to be verified.
-        type: bool
-        default: 'yes'
-        aliases:
-            - verify_ssl
-    login_user:
-        description:
-            - Gitlab user name.
-    login_password:
-        description:
-            - Gitlab password for login_user
-    login_token:
-        description:
-            - Gitlab token for logging in.
-    name:
-        description:
-            - Name of the user you want to create
-        required: true
-    username:
-        description:
-            - The username of the user.
-        required: true
-    password:
-        description:
-            - The password of the user.
-            - GitLab server enforces minimum password length to 8, set this value with 8 or more characters.
-        required: true
-    email:
-        description:
-            - The email that belongs to the user.
-        required: true
-    sshkey_name:
-        description:
-            - The name of the sshkey
-    sshkey_file:
-        description:
-            - The ssh key itself.
-    group:
-        description:
-            - The full path of the group.
-            - Add user as an member to this group.
-    access_level:
-        description:
-            - The access level to the group. One of the following can be used.
-            - guest
-            - reporter
-            - developer
-            - master (alias for maintainer)
-            - maintainer
-            - owner
-    state:
-        description:
-            - create or delete group.
-            - Possible values are present and absent.
-        default: present
-        choices: ["present", "absent"]
-    confirm:
-        description:
-            - Require confirmation.
-        type: bool
-        default: 'yes'
-        version_added: "2.4"
-    isadmin:
-        description:
-            - Grant admin privilieges to the user
-        type: bool
-        default: 'false'
-        version_added: "2.8"
-    external:
-        description:
-            - Define external parameter for this user
-        type: bool
-        default: 'false'
-        version_added: "2.8"
+  server_url:
+    description:
+      - Url of Gitlab server, with protocol (http or https).
+    required: true
+  validate_certs:
+    description:
+      - When using https if SSL certificate needs to be verified.
+    type: bool
+    default: 'yes'
+    aliases:
+      - verify_ssl
+  login_user:
+    description:
+      - Gitlab user name.
+  login_password:
+    description:
+      - Gitlab password for login_user
+  login_token:
+    description:
+      - Gitlab token for logging in.
+  name:
+    description:
+      - Name of the user you want to create
+    required: true
+  username:
+    description:
+      - The username of the user.
+    required: true
+  password:
+    description:
+      - The password of the user.
+      - GitLab server enforces minimum password length to 8, set this value with 8 or more characters.
+    required: true
+  email:
+    description:
+      - The email that belongs to the user.
+    required: true
+  sshkey_name:
+    description:
+      - The name of the sshkey
+  sshkey_file:
+    description:
+      - The ssh key itself.
+  group:
+    description:
+      - The full path of the group.
+      - Add user as an member to this group.
+  access_level:
+    description:
+      - The access level to the group. One of the following can be used.
+      - guest
+      - reporter
+      - developer
+      - master (alias for maintainer)
+      - maintainer
+      - owner
+  state:
+    description:
+      - create or delete group.
+      - Possible values are present and absent.
+    default: present
+    choices: ["present", "absent"]
+  confirm:
+    description:
+      - Require confirmation.
+    type: bool
+    default: 'yes'
+    version_added: "2.4"
+  isadmin:
+    description:
+      - Grant admin privilieges to the user
+    type: bool
+    default: 'false'
+    version_added: "2.8"
+  external:
+    description:
+      - Define external parameter for this user
+    type: bool
+    default: 'false'
+    version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -133,7 +133,29 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-RETURN = '''# '''
+RETURN = '''
+msg:
+  description: Success or failure message
+  returned: always
+  type: str
+  sample: "Success"
+
+result:
+  description: json parsed response from the server
+  returned: always
+  type: dict
+
+error:
+  description: the error message returned by the Gitlab API
+  returned: failed
+  type: str
+  sample: "400: path is already in use"
+
+user:
+  description: API object
+  returned: always
+  type: dict
+'''
 
 import os
 
@@ -163,41 +185,39 @@ class GitLabUser(object):
         self.userObject = None
 
     '''
-    @param * Attribut du user
+    @param username Username of the user
+    @param options User options
     '''
-    def createOrUpdateUser(self, user_name, user_username, user_password, user_email, user_sshkey_name,
-                        user_sshkey_file, group_path, access_level, confirm, user_isadmin, user_external):
+    def createOrUpdateUser(self, username, options):
         changed = False
 
         # Because we have already call userExists in main()
         if self.userObject is None:
             user = self.createUser({
-                'name': user_name,
-                'username': user_username,
-                'email': user_email,
-                'password': user_password,
-                'group': group_path,
-                'skip_confirmation': not confirm,
-                'admin': user_isadmin,
-                'external': user_external})
+                'name': options['name'],
+                'username': username,
+                'password': options['password'],
+                'email': options['email'],
+                'skip_confirmation': not options['confirm'],
+                'admin': options['isadmin'],
+                'external': options['external']})
             changed = True
         else:
             changed, user = self.updateUser(self.userObject, {
-                'name': user_name,
-                'email': user_email,
-                'skip_confirmation': not confirm,
-                'admin': user_isadmin,
-                'external': user_external})
+                'name': options['name'],
+                'email': options['email'],
+                'is_admin': options['isadmin'],
+                'external': options['external']})
 
         # Assign ssh keys
-        if user_sshkey_name and user_sshkey_file:
+        if options['sshkey_name'] and options['sshkey_file']:
             changed = changed or self.addSshKeyToUser(user, {
-                'name': user_sshkey_name,
-                'file': user_sshkey_file})
+                'name': options['sshkey_name'],
+                'file': options['sshkey_file']})
 
         # Assign group
-        if group_path:
-            changed = changed or self.assignUserToGroup(user, group_path, access_level)
+        if options['group_path']:
+            changed = changed or self.assignUserToGroup(user, options['group_path'], options['access_level'])
 
         self.userObject = user
         if changed:
@@ -207,7 +227,7 @@ class GitLabUser(object):
             try:
                 user.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to create or update a user: %s " % to_native(e))
+                self._module.fail_json(msg="Failed to update a user: %s " % to_native(e))
             return True
         else:
             return False
@@ -245,6 +265,9 @@ class GitLabUser(object):
     '''
     def addSshKeyToUser(self, user, sshkey):
         if not self.sshKeyExists(user, sshkey['name']):
+            if self._module.check_mode:
+                return True
+
             try:
                 user.keys.create({
                     'title': sshkey['name'],
@@ -293,6 +316,9 @@ class GitLabUser(object):
         group_name = group_path.split('/').pop()
         group = self.findGroup(group_name, group_path)
 
+        if self._module.check_mode:
+            return True
+
         if self.memberExists(group, self.getUserId(user)):
             if not self.memberAsGoodAccessLevel(group, self.getUserId(user), ACCESS_LEVEL[access_level]):
                 member = self.findMember(group, self.getUserId(user))
@@ -329,12 +355,18 @@ class GitLabUser(object):
     @param arguments User attributes
     '''
     def createUser(self, arguments):
-        user = self._gitlab.users.create(arguments)
+        if self._module.check_mode:
+                self._module.exit_json(changed=True, result="User should have created.")
+
+        try:
+            user = self._gitlab.users.create(arguments)
+        except (gitlab.exceptions.GitlabCreateError) as e:
+            self._module.fail_json(msg="Failed to create a user: %s " % to_native(e))
 
         return user
 
     '''
-    @param name Username of the user
+    @param username Username of the user
     '''
     def findUser(self, username):
         users = self._gitlab.users.list(search=username)
@@ -343,7 +375,7 @@ class GitLabUser(object):
                 return user
 
     '''
-    @param name Username of the user
+    @param username Username of the user
     '''
     def existsUser(self, username):
         # When user exists, object will be stored in self.userObject.
@@ -353,9 +385,6 @@ class GitLabUser(object):
             return True
         return False
 
-    '''
-
-    '''
     def deleteUser(self):
         user = self.userObject
 
@@ -438,18 +467,17 @@ def main():
             module.exit_json(changed=False, result="User deleted or does not exists")
 
     if state == 'present':
-        if gitlab_user.createOrUpdateUser(
-            user_name,
-            user_username,
-            user_password,
-            user_email,
-            user_sshkey_name,
-            user_sshkey_file,
-            group_path,
-            access_level,
-            confirm,
-            user_isadmin,
-            user_external):
+        if gitlab_user.createOrUpdateUser(user_username, {
+            "name": user_name,
+            "password": user_password,
+            "email": user_email,
+            "sshkey_name": user_sshkey_name,
+            "sshkey_file": user_sshkey_file,
+            "group_path": group_path,
+            "access_level": access_level,
+            "confirm": confirm,
+            "isadmin": user_isadmin,
+            "external": user_external}):
             module.exit_json(changed=True, result="Successfully created or updated the user %s" % user_username, user=gitlab_user.userObject._attrs)
         else:
             module.exit_json(changed=False, result="No need to update the user %s" % user_username, user=gitlab_user.userObject._attrs)
