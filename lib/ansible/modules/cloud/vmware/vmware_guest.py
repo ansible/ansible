@@ -1725,43 +1725,7 @@ class PyVmomiHelper(PyVmomi):
         if datastore is None:
             self.module.fail_json(msg="Failed to find the datastore %s" % datastore_name)
 
-        browser = datastore.browser
-        if browser is None:
-            self.module.fail_json(msg="Unable to access browser for datastore %s" % datastore_name)
-
-        detail_query = vim.host.DatastoreBrowser.FileInfo.Details(
-            fileOwner=True,
-            fileSize=True,
-            fileType=True,
-            modification=True
-        )
-        search_spec = vim.host.DatastoreBrowser.SearchSpec(
-            details=detail_query,
-            matchPattern=[vmdk_filename],
-            searchCaseInsensitive=True,
-        )
-        search_res = browser.SearchSubFolders(
-            datastorePath="[" + datastore_name + "]",
-            searchSpec=search_spec
-        )
-
-        changed = False
-        try:
-            changed, result = wait_for_task(search_res)
-        except TaskError as task_e:
-            self.module.fail_json(msg=to_native(task_e))
-
-        if not changed:
-            self.module.fail_json(msg="No valid disk vmdk image found for path %s" % vmdk_path)
-
-        target_folder_path = "[" + datastore_name + "]" + " " + vmdk_folder + '/'
-
-        for result in search_res.info.result:
-            for f in getattr(result, 'file'):
-                if f.path == vmdk_filename and result.folderPath == target_folder_path:
-                    return f
-
-        self.module.fail_json(msg="No vmdk file found for path specified [%s]" % vmdk_path)
+        return self.find_vmdk_file(datastore, vmdk_fullpath, vmdk_filename, vmdk_folder)
 
     def add_existing_vmdk(self, vm_obj, expected_disk_spec, diskspec, scsi_ctl):
         """
