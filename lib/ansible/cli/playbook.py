@@ -13,6 +13,7 @@ from ansible.cli import CLI
 from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
+from ansible.module_utils._text import to_bytes
 from ansible.playbook.block import Block
 from ansible.utils.display import Display
 from ansible.plugins.loader import add_all_plugin_dirs
@@ -75,13 +76,19 @@ class PlaybookCLI(CLI):
 
         # initial error check, to make sure all specified playbooks are accessible
         # before we start running anything through the playbook executor
-        pb_dirs = []
         for playbook in context.CLIARGS['args']:
             if not os.path.exists(playbook):
                 raise AnsibleError("the playbook: %s could not be found" % playbook)
             if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
                 raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
-            pb_dirs.append(os.path.dirname(os.path.abspath(playbook)))
+            # load plugins from all playbooks in case they add callbacks/inventory/etc
+            add_all_plugin_dirs(
+                os.path.dirname(
+                    os.path.abspath(
+                        to_bytes(playbook, errors='surrogate_or_strict')
+                    )
+                )
+            )
 
         # don't deal with privilege escalation or passwords when we don't need to
         if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or

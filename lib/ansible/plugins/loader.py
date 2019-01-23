@@ -36,12 +36,13 @@ def get_all_plugin_loaders():
 
 def add_all_plugin_dirs(mydir):
     ''' add any existing plugin dirs in the path provided '''
-    if os.path.isdir(mydir):
+    b_mydir = to_bytes(mydir, errors='surrogate_or_strict')
+    if os.path.isdir(b_mydir):
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
-                plugin_path = os.path.join(mydir, obj.subdir)
+                plugin_path = os.path.join(b_mydir, to_bytes(obj.subdir))
                 if os.path.isdir(plugin_path):
-                    obj.add_directory(plugin_path)
+                    obj.add_directory(to_text(plugin_path))
     else:
         display.warning("Ignoring invalid path provided to plugin path: %s is not a directory" % to_native(mydir))
 
