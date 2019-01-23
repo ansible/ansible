@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -904,85 +903,107 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            table_reference=dict(type='dict', options=dict(
-                dataset_id=dict(type='str'),
-                project_id=dict(type='str'),
-                table_id=dict(type='str')
-            )),
+            table_reference=dict(type='dict', options=dict(dataset_id=dict(type='str'), project_id=dict(type='str'), table_id=dict(type='str'))),
             description=dict(type='str'),
             friendly_name=dict(type='str'),
             labels=dict(type='dict'),
             name=dict(type='str'),
-            view=dict(type='dict', options=dict(
-                use_legacy_sql=dict(type='bool'),
-                user_defined_function_resources=dict(type='list', elements='dict', options=dict(
-                    inline_code=dict(type='str'),
-                    resource_uri=dict(type='str')
-                ))
-            )),
-            time_partitioning=dict(type='dict', options=dict(
-                expiration_ms=dict(type='int'),
-                type=dict(type='str', choices=['DAY'])
-            )),
-            schema=dict(type='dict', options=dict(
-                fields=dict(type='list', elements='dict', options=dict(
-                    description=dict(type='str'),
-                    fields=dict(type='list', elements='str'),
-                    mode=dict(type='str', choices=['NULLABLE', 'REQUIRED', 'REPEATED']),
-                    name=dict(type='str'),
-                    type=dict(type='str', choices=['STRING', 'BYTES', 'INTEGER', 'FLOAT', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD'])
-                ))
-            )),
-            encryption_configuration=dict(type='dict', options=dict(
-                kms_key_name=dict(type='str')
-            )),
+            view=dict(
+                type='dict',
+                options=dict(
+                    use_legacy_sql=dict(type='bool'),
+                    user_defined_function_resources=dict(
+                        type='list', elements='dict', options=dict(inline_code=dict(type='str'), resource_uri=dict(type='str'))
+                    ),
+                ),
+            ),
+            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), type=dict(type='str', choices=['DAY']))),
+            schema=dict(
+                type='dict',
+                options=dict(
+                    fields=dict(
+                        type='list',
+                        elements='dict',
+                        options=dict(
+                            description=dict(type='str'),
+                            fields=dict(type='list', elements='str'),
+                            mode=dict(type='str', choices=['NULLABLE', 'REQUIRED', 'REPEATED']),
+                            name=dict(type='str'),
+                            type=dict(type='str', choices=['STRING', 'BYTES', 'INTEGER', 'FLOAT', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']),
+                        ),
+                    )
+                ),
+            ),
+            encryption_configuration=dict(type='dict', options=dict(kms_key_name=dict(type='str'))),
             expiration_time=dict(type='int'),
-            external_data_configuration=dict(type='dict', options=dict(
-                autodetect=dict(type='bool'),
-                compression=dict(type='str', choices=['GZIP', 'NONE']),
-                ignore_unknown_values=dict(type='bool'),
-                max_bad_records=dict(default=0, type='int'),
-                source_format=dict(type='str', choices=['CSV', 'GOOGLE_SHEETS', 'NEWLINE_DELIMITED_JSON', 'AVRO', 'DATASTORE_BACKUP', 'BIGTABLE']),
-                source_uris=dict(type='list', elements='str'),
-                schema=dict(type='dict', options=dict(
-                    fields=dict(type='list', elements='dict', options=dict(
-                        description=dict(type='str'),
-                        fields=dict(type='list', elements='str'),
-                        mode=dict(type='str', choices=['NULLABLE', 'REQUIRED', 'REPEATED']),
-                        name=dict(type='str'),
-                        type=dict(type='str', choices=['STRING', 'BYTES', 'INTEGER', 'FLOAT', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD'])
-                    ))
-                )),
-                google_sheets_options=dict(type='dict', options=dict(
-                    skip_leading_rows=dict(default=0, type='int')
-                )),
-                csv_options=dict(type='dict', options=dict(
-                    allow_jagged_rows=dict(type='bool'),
-                    allow_quoted_newlines=dict(type='bool'),
-                    encoding=dict(type='str', choices=['UTF-8', 'ISO-8859-1']),
-                    field_delimiter=dict(type='str'),
-                    quote=dict(type='str'),
-                    skip_leading_rows=dict(default=0, type='int')
-                )),
-                bigtable_options=dict(type='dict', options=dict(
-                    ignore_unspecified_column_families=dict(type='bool'),
-                    read_rowkey_as_string=dict(type='bool'),
-                    column_families=dict(type='list', elements='dict', options=dict(
-                        columns=dict(type='list', elements='dict', options=dict(
-                            encoding=dict(type='str', choices=['TEXT', 'BINARY']),
-                            field_name=dict(type='str'),
-                            only_read_latest=dict(type='bool'),
-                            qualifier_string=dict(required=True, type='str'),
-                            type=dict(type='str', choices=['BYTES', 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN'])
-                        )),
-                        encoding=dict(type='str', choices=['TEXT', 'BINARY']),
-                        family_id=dict(type='str'),
-                        only_read_latest=dict(type='bool'),
-                        type=dict(type='str', choices=['BYTES', 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN'])
-                    ))
-                ))
-            )),
-            dataset=dict(type='str')
+            external_data_configuration=dict(
+                type='dict',
+                options=dict(
+                    autodetect=dict(type='bool'),
+                    compression=dict(type='str', choices=['GZIP', 'NONE']),
+                    ignore_unknown_values=dict(type='bool'),
+                    max_bad_records=dict(default=0, type='int'),
+                    source_format=dict(type='str', choices=['CSV', 'GOOGLE_SHEETS', 'NEWLINE_DELIMITED_JSON', 'AVRO', 'DATASTORE_BACKUP', 'BIGTABLE']),
+                    source_uris=dict(type='list', elements='str'),
+                    schema=dict(
+                        type='dict',
+                        options=dict(
+                            fields=dict(
+                                type='list',
+                                elements='dict',
+                                options=dict(
+                                    description=dict(type='str'),
+                                    fields=dict(type='list', elements='str'),
+                                    mode=dict(type='str', choices=['NULLABLE', 'REQUIRED', 'REPEATED']),
+                                    name=dict(type='str'),
+                                    type=dict(type='str', choices=['STRING', 'BYTES', 'INTEGER', 'FLOAT', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']),
+                                ),
+                            )
+                        ),
+                    ),
+                    google_sheets_options=dict(type='dict', options=dict(skip_leading_rows=dict(default=0, type='int'))),
+                    csv_options=dict(
+                        type='dict',
+                        options=dict(
+                            allow_jagged_rows=dict(type='bool'),
+                            allow_quoted_newlines=dict(type='bool'),
+                            encoding=dict(type='str', choices=['UTF-8', 'ISO-8859-1']),
+                            field_delimiter=dict(type='str'),
+                            quote=dict(type='str'),
+                            skip_leading_rows=dict(default=0, type='int'),
+                        ),
+                    ),
+                    bigtable_options=dict(
+                        type='dict',
+                        options=dict(
+                            ignore_unspecified_column_families=dict(type='bool'),
+                            read_rowkey_as_string=dict(type='bool'),
+                            column_families=dict(
+                                type='list',
+                                elements='dict',
+                                options=dict(
+                                    columns=dict(
+                                        type='list',
+                                        elements='dict',
+                                        options=dict(
+                                            encoding=dict(type='str', choices=['TEXT', 'BINARY']),
+                                            field_name=dict(type='str'),
+                                            only_read_latest=dict(type='bool'),
+                                            qualifier_string=dict(required=True, type='str'),
+                                            type=dict(type='str', choices=['BYTES', 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN']),
+                                        ),
+                                    ),
+                                    encoding=dict(type='str', choices=['TEXT', 'BINARY']),
+                                    family_id=dict(type='str'),
+                                    only_read_latest=dict(type='bool'),
+                                    type=dict(type='str', choices=['BYTES', 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN']),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            dataset=dict(type='str'),
         )
     )
 
@@ -1045,7 +1066,7 @@ def resource_to_request(module):
         u'schema': TableSchema(module.params.get('schema', {}), module).to_request(),
         u'encryptionConfiguration': TableEncryptionconfiguration(module.params.get('encryption_configuration', {}), module).to_request(),
         u'expirationTime': module.params.get('expiration_time'),
-        u'externalDataConfiguration': TableExternaldataconfiguration(module.params.get('external_data_configuration', {}), module).to_request()
+        u'externalDataConfiguration': TableExternaldataconfiguration(module.params.get('external_data_configuration', {}), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
@@ -1080,8 +1101,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -1130,7 +1151,7 @@ def response_to_hash(module, response):
         u'schema': TableSchema(response.get(u'schema', {}), module).from_response(),
         u'encryptionConfiguration': TableEncryptionconfiguration(response.get(u'encryptionConfiguration', {}), module).from_response(),
         u'expirationTime': response.get(u'expirationTime'),
-        u'externalDataConfiguration': TableExternaldataconfiguration(response.get(u'externalDataConfiguration', {}), module).from_response()
+        u'externalDataConfiguration': TableExternaldataconfiguration(response.get(u'externalDataConfiguration', {}), module).from_response(),
     }
 
 
@@ -1143,18 +1164,14 @@ class TableTablereference(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'datasetId': self.request.get('dataset_id'),
-            u'projectId': self.request.get('project_id'),
-            u'tableId': self.request.get('table_id')
-        })
+        return remove_nones_from_dict(
+            {u'datasetId': self.request.get('dataset_id'), u'projectId': self.request.get('project_id'), u'tableId': self.request.get('table_id')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'datasetId': self.request.get(u'datasetId'),
-            u'projectId': self.request.get(u'projectId'),
-            u'tableId': self.request.get(u'tableId')
-        })
+        return remove_nones_from_dict(
+            {u'datasetId': self.request.get(u'datasetId'), u'projectId': self.request.get(u'projectId'), u'tableId': self.request.get(u'tableId')}
+        )
 
 
 class TableView(object):
@@ -1166,18 +1183,24 @@ class TableView(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'useLegacySql': self.request.get('use_legacy_sql'),
-            u'userDefinedFunctionResources':
-                TableUserdefinedfunctionresourcesArray(self.request.get('user_defined_function_resources', []), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'useLegacySql': self.request.get('use_legacy_sql'),
+                u'userDefinedFunctionResources': TableUserdefinedfunctionresourcesArray(
+                    self.request.get('user_defined_function_resources', []), self.module
+                ).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'useLegacySql': self.request.get(u'useLegacySql'),
-            u'userDefinedFunctionResources':
-                TableUserdefinedfunctionresourcesArray(self.request.get(u'userDefinedFunctionResources', []), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'useLegacySql': self.request.get(u'useLegacySql'),
+                u'userDefinedFunctionResources': TableUserdefinedfunctionresourcesArray(
+                    self.request.get(u'userDefinedFunctionResources', []), self.module
+                ).from_response(),
+            }
+        )
 
 
 class TableUserdefinedfunctionresourcesArray(object):
@@ -1201,16 +1224,10 @@ class TableUserdefinedfunctionresourcesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'inlineCode': item.get('inline_code'),
-            u'resourceUri': item.get('resource_uri')
-        })
+        return remove_nones_from_dict({u'inlineCode': item.get('inline_code'), u'resourceUri': item.get('resource_uri')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'inlineCode': item.get(u'inlineCode'),
-            u'resourceUri': item.get(u'resourceUri')
-        })
+        return remove_nones_from_dict({u'inlineCode': item.get(u'inlineCode'), u'resourceUri': item.get(u'resourceUri')})
 
 
 class TableTimepartitioning(object):
@@ -1222,16 +1239,10 @@ class TableTimepartitioning(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'expirationMs': self.request.get('expiration_ms'),
-            u'type': self.request.get('type')
-        })
+        return remove_nones_from_dict({u'expirationMs': self.request.get('expiration_ms'), u'type': self.request.get('type')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'expirationMs': self.request.get(u'expirationMs'),
-            u'type': self.request.get(u'type')
-        })
+        return remove_nones_from_dict({u'expirationMs': self.request.get(u'expirationMs'), u'type': self.request.get(u'type')})
 
 
 class TableStreamingbuffer(object):
@@ -1243,18 +1254,22 @@ class TableStreamingbuffer(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'estimatedBytes': self.request.get('estimated_bytes'),
-            u'estimatedRows': self.request.get('estimated_rows'),
-            u'oldestEntryTime': self.request.get('oldest_entry_time')
-        })
+        return remove_nones_from_dict(
+            {
+                u'estimatedBytes': self.request.get('estimated_bytes'),
+                u'estimatedRows': self.request.get('estimated_rows'),
+                u'oldestEntryTime': self.request.get('oldest_entry_time'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'estimatedBytes': self.request.get(u'estimatedBytes'),
-            u'estimatedRows': self.request.get(u'estimatedRows'),
-            u'oldestEntryTime': self.request.get(u'oldestEntryTime')
-        })
+        return remove_nones_from_dict(
+            {
+                u'estimatedBytes': self.request.get(u'estimatedBytes'),
+                u'estimatedRows': self.request.get(u'estimatedRows'),
+                u'oldestEntryTime': self.request.get(u'oldestEntryTime'),
+            }
+        )
 
 
 class TableSchema(object):
@@ -1266,14 +1281,10 @@ class TableSchema(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'fields': TableFieldsArray(self.request.get('fields', []), self.module).to_request()
-        })
+        return remove_nones_from_dict({u'fields': TableFieldsArray(self.request.get('fields', []), self.module).to_request()})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'fields': TableFieldsArray(self.request.get(u'fields', []), self.module).from_response()
-        })
+        return remove_nones_from_dict({u'fields': TableFieldsArray(self.request.get(u'fields', []), self.module).from_response()})
 
 
 class TableFieldsArray(object):
@@ -1297,22 +1308,26 @@ class TableFieldsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get('description'),
-            u'fields': item.get('fields'),
-            u'mode': item.get('mode'),
-            u'name': item.get('name'),
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'description': item.get('description'),
+                u'fields': item.get('fields'),
+                u'mode': item.get('mode'),
+                u'name': item.get('name'),
+                u'type': item.get('type'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get(u'description'),
-            u'fields': item.get(u'fields'),
-            u'mode': item.get(u'mode'),
-            u'name': item.get(u'name'),
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'description': item.get(u'description'),
+                u'fields': item.get(u'fields'),
+                u'mode': item.get(u'mode'),
+                u'name': item.get(u'name'),
+                u'type': item.get(u'type'),
+            }
+        )
 
 
 class TableEncryptionconfiguration(object):
@@ -1324,14 +1339,10 @@ class TableEncryptionconfiguration(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'kmsKeyName': self.request.get('kms_key_name')
-        })
+        return remove_nones_from_dict({u'kmsKeyName': self.request.get('kms_key_name')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'kmsKeyName': self.request.get(u'kmsKeyName')
-        })
+        return remove_nones_from_dict({u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 class TableExternaldataconfiguration(object):
@@ -1343,32 +1354,36 @@ class TableExternaldataconfiguration(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'autodetect': self.request.get('autodetect'),
-            u'compression': self.request.get('compression'),
-            u'ignoreUnknownValues': self.request.get('ignore_unknown_values'),
-            u'maxBadRecords': self.request.get('max_bad_records'),
-            u'sourceFormat': self.request.get('source_format'),
-            u'sourceUris': self.request.get('source_uris'),
-            u'schema': TableSchema(self.request.get('schema', {}), self.module).to_request(),
-            u'googleSheetsOptions': TableGooglesheetsoptions(self.request.get('google_sheets_options', {}), self.module).to_request(),
-            u'csvOptions': TableCsvoptions(self.request.get('csv_options', {}), self.module).to_request(),
-            u'bigtableOptions': TableBigtableoptions(self.request.get('bigtable_options', {}), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'autodetect': self.request.get('autodetect'),
+                u'compression': self.request.get('compression'),
+                u'ignoreUnknownValues': self.request.get('ignore_unknown_values'),
+                u'maxBadRecords': self.request.get('max_bad_records'),
+                u'sourceFormat': self.request.get('source_format'),
+                u'sourceUris': self.request.get('source_uris'),
+                u'schema': TableSchema(self.request.get('schema', {}), self.module).to_request(),
+                u'googleSheetsOptions': TableGooglesheetsoptions(self.request.get('google_sheets_options', {}), self.module).to_request(),
+                u'csvOptions': TableCsvoptions(self.request.get('csv_options', {}), self.module).to_request(),
+                u'bigtableOptions': TableBigtableoptions(self.request.get('bigtable_options', {}), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'autodetect': self.request.get(u'autodetect'),
-            u'compression': self.request.get(u'compression'),
-            u'ignoreUnknownValues': self.request.get(u'ignoreUnknownValues'),
-            u'maxBadRecords': self.request.get(u'maxBadRecords'),
-            u'sourceFormat': self.request.get(u'sourceFormat'),
-            u'sourceUris': self.request.get(u'sourceUris'),
-            u'schema': TableSchema(self.request.get(u'schema', {}), self.module).from_response(),
-            u'googleSheetsOptions': TableGooglesheetsoptions(self.request.get(u'googleSheetsOptions', {}), self.module).from_response(),
-            u'csvOptions': TableCsvoptions(self.request.get(u'csvOptions', {}), self.module).from_response(),
-            u'bigtableOptions': TableBigtableoptions(self.request.get(u'bigtableOptions', {}), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'autodetect': self.request.get(u'autodetect'),
+                u'compression': self.request.get(u'compression'),
+                u'ignoreUnknownValues': self.request.get(u'ignoreUnknownValues'),
+                u'maxBadRecords': self.request.get(u'maxBadRecords'),
+                u'sourceFormat': self.request.get(u'sourceFormat'),
+                u'sourceUris': self.request.get(u'sourceUris'),
+                u'schema': TableSchema(self.request.get(u'schema', {}), self.module).from_response(),
+                u'googleSheetsOptions': TableGooglesheetsoptions(self.request.get(u'googleSheetsOptions', {}), self.module).from_response(),
+                u'csvOptions': TableCsvoptions(self.request.get(u'csvOptions', {}), self.module).from_response(),
+                u'bigtableOptions': TableBigtableoptions(self.request.get(u'bigtableOptions', {}), self.module).from_response(),
+            }
+        )
 
 
 class TableSchema(object):
@@ -1380,14 +1395,10 @@ class TableSchema(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'fields': TableFieldsArray(self.request.get('fields', []), self.module).to_request()
-        })
+        return remove_nones_from_dict({u'fields': TableFieldsArray(self.request.get('fields', []), self.module).to_request()})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'fields': TableFieldsArray(self.request.get(u'fields', []), self.module).from_response()
-        })
+        return remove_nones_from_dict({u'fields': TableFieldsArray(self.request.get(u'fields', []), self.module).from_response()})
 
 
 class TableFieldsArray(object):
@@ -1411,22 +1422,26 @@ class TableFieldsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get('description'),
-            u'fields': item.get('fields'),
-            u'mode': item.get('mode'),
-            u'name': item.get('name'),
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'description': item.get('description'),
+                u'fields': item.get('fields'),
+                u'mode': item.get('mode'),
+                u'name': item.get('name'),
+                u'type': item.get('type'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get(u'description'),
-            u'fields': item.get(u'fields'),
-            u'mode': item.get(u'mode'),
-            u'name': item.get(u'name'),
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'description': item.get(u'description'),
+                u'fields': item.get(u'fields'),
+                u'mode': item.get(u'mode'),
+                u'name': item.get(u'name'),
+                u'type': item.get(u'type'),
+            }
+        )
 
 
 class TableGooglesheetsoptions(object):
@@ -1438,14 +1453,10 @@ class TableGooglesheetsoptions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'skipLeadingRows': self.request.get('skip_leading_rows')
-        })
+        return remove_nones_from_dict({u'skipLeadingRows': self.request.get('skip_leading_rows')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'skipLeadingRows': self.request.get(u'skipLeadingRows')
-        })
+        return remove_nones_from_dict({u'skipLeadingRows': self.request.get(u'skipLeadingRows')})
 
 
 class TableCsvoptions(object):
@@ -1457,24 +1468,28 @@ class TableCsvoptions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'allowJaggedRows': self.request.get('allow_jagged_rows'),
-            u'allowQuotedNewlines': self.request.get('allow_quoted_newlines'),
-            u'encoding': self.request.get('encoding'),
-            u'fieldDelimiter': self.request.get('field_delimiter'),
-            u'quote': self.request.get('quote'),
-            u'skipLeadingRows': self.request.get('skip_leading_rows')
-        })
+        return remove_nones_from_dict(
+            {
+                u'allowJaggedRows': self.request.get('allow_jagged_rows'),
+                u'allowQuotedNewlines': self.request.get('allow_quoted_newlines'),
+                u'encoding': self.request.get('encoding'),
+                u'fieldDelimiter': self.request.get('field_delimiter'),
+                u'quote': self.request.get('quote'),
+                u'skipLeadingRows': self.request.get('skip_leading_rows'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'allowJaggedRows': self.request.get(u'allowJaggedRows'),
-            u'allowQuotedNewlines': self.request.get(u'allowQuotedNewlines'),
-            u'encoding': self.request.get(u'encoding'),
-            u'fieldDelimiter': self.request.get(u'fieldDelimiter'),
-            u'quote': self.request.get(u'quote'),
-            u'skipLeadingRows': self.request.get(u'skipLeadingRows')
-        })
+        return remove_nones_from_dict(
+            {
+                u'allowJaggedRows': self.request.get(u'allowJaggedRows'),
+                u'allowQuotedNewlines': self.request.get(u'allowQuotedNewlines'),
+                u'encoding': self.request.get(u'encoding'),
+                u'fieldDelimiter': self.request.get(u'fieldDelimiter'),
+                u'quote': self.request.get(u'quote'),
+                u'skipLeadingRows': self.request.get(u'skipLeadingRows'),
+            }
+        )
 
 
 class TableBigtableoptions(object):
@@ -1486,18 +1501,22 @@ class TableBigtableoptions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'ignoreUnspecifiedColumnFamilies': self.request.get('ignore_unspecified_column_families'),
-            u'readRowkeyAsString': self.request.get('read_rowkey_as_string'),
-            u'columnFamilies': TableColumnfamiliesArray(self.request.get('column_families', []), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'ignoreUnspecifiedColumnFamilies': self.request.get('ignore_unspecified_column_families'),
+                u'readRowkeyAsString': self.request.get('read_rowkey_as_string'),
+                u'columnFamilies': TableColumnfamiliesArray(self.request.get('column_families', []), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'ignoreUnspecifiedColumnFamilies': self.request.get(u'ignoreUnspecifiedColumnFamilies'),
-            u'readRowkeyAsString': self.request.get(u'readRowkeyAsString'),
-            u'columnFamilies': TableColumnfamiliesArray(self.request.get(u'columnFamilies', []), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'ignoreUnspecifiedColumnFamilies': self.request.get(u'ignoreUnspecifiedColumnFamilies'),
+                u'readRowkeyAsString': self.request.get(u'readRowkeyAsString'),
+                u'columnFamilies': TableColumnfamiliesArray(self.request.get(u'columnFamilies', []), self.module).from_response(),
+            }
+        )
 
 
 class TableColumnfamiliesArray(object):
@@ -1521,22 +1540,26 @@ class TableColumnfamiliesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'columns': TableColumnsArray(item.get('columns', []), self.module).to_request(),
-            u'encoding': item.get('encoding'),
-            u'familyId': item.get('family_id'),
-            u'onlyReadLatest': item.get('only_read_latest'),
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'columns': TableColumnsArray(item.get('columns', []), self.module).to_request(),
+                u'encoding': item.get('encoding'),
+                u'familyId': item.get('family_id'),
+                u'onlyReadLatest': item.get('only_read_latest'),
+                u'type': item.get('type'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'columns': TableColumnsArray(item.get(u'columns', []), self.module).from_response(),
-            u'encoding': item.get(u'encoding'),
-            u'familyId': item.get(u'familyId'),
-            u'onlyReadLatest': item.get(u'onlyReadLatest'),
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'columns': TableColumnsArray(item.get(u'columns', []), self.module).from_response(),
+                u'encoding': item.get(u'encoding'),
+                u'familyId': item.get(u'familyId'),
+                u'onlyReadLatest': item.get(u'onlyReadLatest'),
+                u'type': item.get(u'type'),
+            }
+        )
 
 
 class TableColumnsArray(object):
@@ -1560,22 +1583,26 @@ class TableColumnsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'encoding': item.get('encoding'),
-            u'fieldName': item.get('field_name'),
-            u'onlyReadLatest': item.get('only_read_latest'),
-            u'qualifierString': item.get('qualifier_string'),
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'encoding': item.get('encoding'),
+                u'fieldName': item.get('field_name'),
+                u'onlyReadLatest': item.get('only_read_latest'),
+                u'qualifierString': item.get('qualifier_string'),
+                u'type': item.get('type'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'encoding': item.get(u'encoding'),
-            u'fieldName': item.get(u'fieldName'),
-            u'onlyReadLatest': item.get(u'onlyReadLatest'),
-            u'qualifierString': item.get(u'qualifierString'),
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict(
+            {
+                u'encoding': item.get(u'encoding'),
+                u'fieldName': item.get(u'fieldName'),
+                u'onlyReadLatest': item.get(u'onlyReadLatest'),
+                u'qualifierString': item.get(u'qualifierString'),
+                u'type': item.get(u'type'),
+            }
+        )
 
 
 if __name__ == '__main__':
