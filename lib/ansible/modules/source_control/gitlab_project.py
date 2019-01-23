@@ -204,7 +204,7 @@ class GitLabProject(object):
         self.projectObject = project
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Project should have updated.")
+                self._module.exit_json(changed=True, result="Project should have been updated.")
 
             try:
                 project.save()
@@ -220,7 +220,7 @@ class GitLabProject(object):
     '''
     def createProject(self, namespace, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Project should have created.")
+                self._module.exit_json(changed=True, result="Project should have been created.")
         
         arguments['namespace_id'] = namespace.id
         try:
@@ -246,6 +246,9 @@ class GitLabProject(object):
         return (changed, project)
 
     def deleteProject(self):
+        if self._module.check_mode:
+            self._module.exit_json(changed=True, result="Project should have been deleted.")
+
         project = self.projectObject
 
         return project.delete()

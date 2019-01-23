@@ -222,7 +222,7 @@ class GitLabUser(object):
         self.userObject = user
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="User should have updated.")
+                self._module.exit_json(changed=True, result="User should have beenupdated.")
 
             try:
                 user.save()
@@ -356,7 +356,7 @@ class GitLabUser(object):
     '''
     def createUser(self, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="User should have created.")
+                self._module.exit_json(changed=True, result="User should have been created.")
 
         try:
             user = self._gitlab.users.create(arguments)
@@ -386,6 +386,9 @@ class GitLabUser(object):
         return False
 
     def deleteUser(self):
+        if self._module.check_mode:
+            self._module.exit_json(changed=True, result="User should have been deleted.")
+
         user = self.userObject
 
         return user.delete()

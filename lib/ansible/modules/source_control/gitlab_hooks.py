@@ -1,5 +1,7 @@
 #!/usr/bin/python
-# (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
+# (c) 2018, Marcus Watkins <marwatk@marcuswatkins.net>
+# Based on code:
+# (c) 2013, Phillip Gentry <phillip@cx.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,6 +17,8 @@ module: gitlab_hooks
 short_description: Manages GitLab project hooks.
 description:
      - Adds, updates and removes project hooks
+requirements:
+  - python-gitlab python module
 version_added: "2.6"
 options:
   server_url:
@@ -219,12 +223,12 @@ class GitLabHook(object):
         self.hookObject = hook
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Hook should have updated.")
+                self._module.exit_json(changed=True, result="Hook should have been updated.")
 
             try:
                 hook.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to create or update a hook: %s " % e)
+                self._module.fail_json(msg="Failed to update a hook: %s " % e)
             return True
         else:
             return False
@@ -234,6 +238,9 @@ class GitLabHook(object):
     @param arguments Attributs of the hook
     '''
     def createHook(self, project, arguments):
+        if self._module.check_mode:
+                self._module.exit_json(changed=True, result="Hook should have been created.")
+
         hook = project.hooks.create(arguments)
 
         return hook
@@ -286,7 +293,10 @@ class GitLabHook(object):
                 return self._gitlab.projects.get(project.id)
 
     def deleteHook(self):
-        self.hookObject.delete()
+        if self._module.check_mode:
+                self._module.exit_json(changed=True, result="Hook should have been deleted.")
+
+        return self.hookObject.delete()
 
 
 def main():

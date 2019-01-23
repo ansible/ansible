@@ -203,7 +203,7 @@ class GitLabRunner(object):
         self.runnerObject = runner
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Runner should have updated.")
+                self._module.exit_json(changed=True, result="Runner should have been updated.")
 
             try:
                 runner.save()
@@ -218,7 +218,7 @@ class GitLabRunner(object):
     '''
     def createRunner(self, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Runner should have created.")
+                self._module.exit_json(changed=True, result="Runner should have been created.")
 
         try:
             runner = self._gitlab.runners.create(arguments)
@@ -273,6 +273,9 @@ class GitLabRunner(object):
         return False
 
     def deleteRunner(self):
+        if self._module.check_mode:
+            self._module.exit_json(changed=True, result="Runner should have been deleted.")
+
         runner = self.runnerObject
 
         return runner.delete()

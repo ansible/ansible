@@ -159,9 +159,8 @@ class GitLabGroup(object):
 
     '''
     @param name Name of the group
-    @param path Path of the group
-    @param description Description of the group
     @param parent Parent group full path
+    @param options Group options
     '''
     def createOrUpdateGroup(self, name, parent, options):
         changed = False
@@ -184,7 +183,7 @@ class GitLabGroup(object):
         self.groupObject = group
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Group should have updated.")
+                self._module.exit_json(changed=True, result="Group should have been updated.")
 
             try:
                 group.save()
@@ -199,7 +198,7 @@ class GitLabGroup(object):
     '''
     def createGroup(self, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Group should have created.")
+            self._module.exit_json(changed=True, result="Group should have been created.")
 
         try:
             group = self._gitlab.groups.create(arguments)
@@ -231,7 +230,7 @@ class GitLabGroup(object):
                 msg="There are still projects in this group. These needs to be moved or deleted before this group can be removed.")
         else:
             if self._module.check_mode:
-                self._module.exit_json(changed=True)
+                self._module.exit_json(changed=True, result="Group should have been deleted.")
 
             try:
                 group.delete()
