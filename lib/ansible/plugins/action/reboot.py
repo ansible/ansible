@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.collections import is_string
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -24,7 +25,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('connect_timeout', 'extra_search_paths', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout' ))
+    _VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout', 'search_paths'))
 
     DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = None
@@ -130,16 +131,26 @@ class ActionModule(ActionBase):
 
     def get_shutdown_command(self, task_vars, distribution):
         shutdown_bin = self._get_value_from_facts('SHUTDOWN_COMMANDS', distribution, 'DEFAULT_SHUTDOWN_COMMAND')
-        search_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-        extra_search_paths = self._task.args.get('extra_search_paths', [])
+        default_search_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+        search_paths = self._task.args.get('search_paths', default_search_paths)
 
-        if not isinstance(extra_search_paths, list):
-            extra_search_paths = [extra_search_paths]
+        # Convert bare strings to a list
+        if is_string(search_paths):
+            search_paths = [search_paths]
 
-        if extra_search_paths:
-            search_paths = extra_search_paths + search_paths
+        # Error if we didn't get a list
+        if not isinstance(search_paths, list):
+            raise AnsibleError("'search_paths' must be a string or list, got {0}: {1}".format(type(search_paths), search_paths))
 
-        display.debug('{action}: running find module to get path for "{command}"'.format(action=self._task.action, command=shutdown_bin))
+        # If we did get a list, ensure it's a flast list and does not contain nested data structures
+        nested_list = any(isinstance(x, (dict, list)) for x in search_paths)
+        if nested_list:
+            raise AnsibleError("'search_paths' must be a flat list of paths {0}".format(search_paths))
+
+        display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
+            action=self._task.action,
+            command=shutdown_bin,
+            paths=search_paths))
         find_result = self._execute_module(
             task_vars=task_vars,
             module_name='find',
@@ -152,7 +163,7 @@ class ActionModule(ActionBase):
 
         full_path = [x['path'] for x in find_result['files']]
         if not full_path:
-            raise AnsibleError('Unable to find command "{0}" in system paths.'.format(shutdown_bin))
+            raise AnsibleError('Unable to find command "{0}" in search paths: {1}'.format(shutdown_bin, search_paths))
         self._shutdown_command = full_path[0]
         return self._shutdown_command
 
