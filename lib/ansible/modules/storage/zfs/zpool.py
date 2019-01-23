@@ -43,7 +43,8 @@ options:
       - Full path to list of block devices such as hdd, nvme or file
   ashift:
     description:
-      - Alignment shift can be used to improve performance and is set once during the creation
+      - Alignment shift can be used to improve performance and is set once during the creation.
+      type: int
     choices: [ 0, 9, 10, 11, 12, 13, 14, 15, 16 ]
     type: int
     default: 0
