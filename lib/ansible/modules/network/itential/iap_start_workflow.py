@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: iap_start_workflow
 version_added: "2.8"
-author: "Itential (@bhansalij21) <opensource@itential.com>"
+author: "Itential (@cma0) <opensource@itential.com>"
 short_description: Start a workflow in the Itential Automation Platform
 description:
   - This will start a specified workflow in the Itential Automation Platform with given arguments.
