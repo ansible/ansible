@@ -25,6 +25,7 @@ import pytest
 
 
 from ansible import constants as C
+from ansible.errors import AnsibleAuthenticationFailure
 from ansible.compat.selectors import SelectorKey, EVENT_READ
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
@@ -501,6 +502,33 @@ class TestSSHConnectionRun(object):
 
 @pytest.mark.usefixtures('mock_run_env')
 class TestSSHConnectionRetries(object):
+    def test_incorrect_password(self, monkeypatch):
+        monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
+        monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 5)
+        monkeypatch.setattr('time.sleep', lambda x: None)
+
+        self.mock_popen_res.stdout.read.side_effect = [b'']
+        self.mock_popen_res.stderr.read.side_effect = [b'Permission denied, please try again.\r\n']
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[5] * 4)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+        ]
+
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = [b'sshpass', b'-d41', b'ssh', b'-C']
+        self.conn.get_option = MagicMock()
+        self.conn.get_option.return_value = True
+
+        exception_info = pytest.raises(AnsibleAuthenticationFailure, self.conn.exec_command, 'sshpass', 'some data')
+        assert exception_info.value.message == ('Invalid/incorrect username/password. Skipping remaining 5 retries to prevent account lockout: '
+                                                'Permission denied, please try again.')
+        assert self.mock_popen.call_count == 1
+
     def test_retry_then_success(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
         monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
