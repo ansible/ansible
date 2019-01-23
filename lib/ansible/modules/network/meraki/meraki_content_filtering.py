@@ -38,10 +38,28 @@ options:
     org_id:
         description:
         - ID of organization associated to a network.
-    subset:
+    state:
         description:
-        - Display only certain facts
-        choices: [categories, policy]
+        - States that a policy should be created or modified.
+        choices: [present]
+        default: present
+    allowed_urls:
+        description:
+        - List of URL patterns which should be allowed.
+        type: list
+    blocked_urls:
+        description:
+        - List of URL patterns which should be blocked.
+        type: list
+    blocked_categories:
+        description:
+        - List of content categories which should be blocked.
+        - Use the C(meraki_content_filtering_facts) module for a full list of categories.
+        type: list
+    category_list_size:
+        description:
+        - Determines whether a network filters fo rall URLs in a category or only the list of top blocked sites.
+        choices: [top sites, full list]
 
 author:
     - Kevin Breit (@kbreit)
@@ -49,28 +67,37 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
-- name: List all content filtering information
-  meraki_content_filtering_facts:
-    auth_key: abc12345
-    org_name: YourOrg
-    net_name: YourNet
-  delegate_to: localhost
+  - name: Set single allowed URL pattern
+    meraki_content_filtering:
+      auth_key: abc123
+      org_name: YourOrg
+      net_name: YourMXNet
+      allowed_urls:
+        - "http://www.ansible.com/*"
 
-- name: List content filtering policy information
-  meraki_content_filtering_facts:
-    auth_key: abc12345
-    org_name: YourOrg
-    net_name: YourNet
-    subset: policy
-  delegate_to: localhost
+  - name: Set blocked URL category
+    meraki_content_filtering:
+      auth_key: abc123
+      org_name: YourOrg
+      net_name: YourMXNet
+      state: present
+      category_list_size: full list
+      blocked_categories:
+        - "Adult and Pornography"
 
-- name: List all content filtering categories
-  meraki_content_filtering_facts:
-    auth_key: abc12345
-    org_name: YourOrg
-    net_name: YourNet
-    subset: categories
-  delegate_to: localhost
+    - name: Remove match patterns and categories
+      meraki_content_filtering:
+        auth_key: abc123
+        org_name: YourOrg
+        net_name: YourMXNet
+        state: present
+        category_list_size: full list
+        allowed_urls:
+          -
+        blocked_urls:
+          -
+        blocked_categories:
+          -
 '''
 
 RETURN = r'''
@@ -102,24 +129,20 @@ def get_category_dict(meraki, full_list, category):
             return i
     meraki.fail_json(msg="{0} is not a valid content filtering category".format(category))
 
+
 def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
 
-    category_spec = dict(
-                         )
-
     argument_spec = meraki_argument_spec()
     argument_spec.update(
         net_id=dict(type='str'),
         net_name=dict(type='str', aliases=['network']),
-        subset=dict(type='str', choices=['categories', 'policy']),
         state=dict(type='str', choices=['present'], default='present'),
         allowed_urls=dict(type='list'),
         blocked_urls=dict(type='list'),
         blocked_categories=dict(type='list'),
-        # blocked_categories=dict(type='list', element='dict', default=None, options=category_spec),
         category_list_size=dict(type='str', choices=['top sites', 'full list']),
     )
 
