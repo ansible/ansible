@@ -1172,7 +1172,7 @@ test_no_log - Invoked with:
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
         $expected_msg += "required, required_if, required_one_of, required_together, supports_check_mode, type - "
-        $expected_msg += "found in option_key -> sub_option_key."
+        $expected_msg += "found in option_key -> sub_option_key"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -1446,6 +1446,114 @@ test_no_log - Invoked with:
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $complex_args}
     }
 
+    "Numeric choices" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    choices = 1, 2, 3
+                    type = "int"
+                }
+            }
+        }
+        $complex_args = @{
+            option_key = "2"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $output.Keys.Count | Assert-Equals -Expected 2
+        $output.changed | Assert-Equals -Expected $false
+        $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = 2}}
+    }
+
+    "Case insensitive choice" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    choices = "abc", "def"
+                }
+            }
+        }
+        $complex_args = @{
+            option_key = "ABC"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $expected_warning = "value of option_key was a case insensitive match of one of: abc, def. "
+        $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
+        $expected_warning += "Case insensitive matches were: ABC"
+
+        $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "ABC"}}
+        $output.warnings.Count | Assert-Equals -Expected 1
+        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+    }
+
+    "Case insensitive choice no_log" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    choices = "abc", "def"
+                    no_log = $true
+                }
+            }
+        }
+        $complex_args = @{
+            option_key = "ABC"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $expected_warning = "value of option_key was a case insensitive match of one of: abc, def. "
+        $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
+        $expected_warning += "Case insensitive matches were: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+
+        $output.invocation | Assert-DictionaryEquals -Expected @{module_args = @{option_key = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"}}
+        $output.warnings.Count | Assert-Equals -Expected 1
+        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+    }
+
+    "Case insentitive choice as list" = {
+        $spec = @{
+            options = @{
+                option_key = @{
+                    choices = "abc", "def", "ghi", "JKL"
+                    type = "list"
+                    elements = "str"
+                }
+            }
+        }
+        $complex_args = @{
+            option_key = "AbC", "ghi", "jkl"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $expected_warning = "value of option_key was a case insensitive match of one or more of: abc, def, ghi, JKL. "
+        $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
+        $expected_warning += "Case insensitive matches were: AbC, jkl"
+
+        $output.invocation | Assert-DictionaryEquals -Expected @{module_args = $complex_args}
+        $output.warnings.Count | Assert-Equals -Expected 1
+        $output.warnings[0] | Assert-Equals -Expected $expected_warning
+    }
+
     "Invalid choice" = {
         $spec = @{
             options = @{
@@ -1468,7 +1576,7 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equals -Expected $true
 
-        $expected_msg = "value of option_key must be one of: a, b, got: c"
+        $expected_msg = "value of option_key must be one of: a, b. Got no match for: c"
 
         $actual.Keys.Count | Assert-Equals -Expected 4
         $actual.changed | Assert-Equals -Expected $false
@@ -1500,7 +1608,7 @@ test_no_log - Invoked with:
         }
         $failed | Assert-Equals -Expected $true
 
-        $expected_msg = "value of option_key must be one of: a, b, got: ***"
+        $expected_msg = "value of option_key must be one of: a, b. Got no match for: ***"
 
         $actual.Keys.Count | Assert-Equals -Expected 4
         $actual.changed | Assert-Equals -Expected $false
