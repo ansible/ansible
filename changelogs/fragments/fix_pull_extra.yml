@@ -1,0 +1,2 @@
+bugfixes:
+    - fix ansible-pull hanlding of extra args, complex quoting is needed for inline JSON
