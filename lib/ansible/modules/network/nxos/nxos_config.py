@@ -263,13 +263,12 @@ from ansible.module_utils.network.nxos.nxos import check_args as nxos_check_args
 from ansible.module_utils.network.common.utils import to_list
 
 
-def get_running_config(module, config=None):
+def get_running_config(module, config=None, flags=None):
     contents = module.params['running_config']
     if not contents:
-        if not module.params['defaults'] and config:
+        if config:
             contents = config
         else:
-            flags = ['all']
             contents = get_config(module, flags=flags)
     return contents
 
@@ -365,13 +364,14 @@ def main():
     path = module.params['parents']
     connection = get_connection(module)
     contents = None
+    flags = ['all'] if module.params['defaults'] else []
     replace_src = module.params['replace_src']
     if replace_src:
         if module.params['replace'] != 'config':
             module.fail_json(msg='replace: config is required with replace_src')
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
-        contents = get_config(module)
+        contents = get_config(module, flags=flags)
         config = NetworkConfig(indent=2, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
@@ -382,7 +382,7 @@ def main():
 
         commit = not module.check_mode
         candidate = get_candidate(module)
-        running = get_running_config(module, contents)
+        running = get_running_config(module, contents, flags=flags)
         if replace_src:
             commands = candidate.split('\n')
             result['commands'] = result['updates'] = commands
