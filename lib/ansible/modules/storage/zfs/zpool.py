@@ -70,7 +70,7 @@ options:
     type: str
   l2arc:
     description:
-      - ZFS cache device or devices
+      - ZFS cache device or devices.
     type: str
   state:
     description:
