@@ -34,6 +34,14 @@ options:
     description:
       -  Name of logical layer 3 interface.
     version_added: "2.7"
+  filter_input:
+    description:
+      - The name of input filter.
+    version_added: "2.8"
+  filter_output:
+    description:
+      - The name of output filter.
+    version_added: "2.8"
   description:
     description:
       - Text description of VLANs.
@@ -157,6 +165,8 @@ def main():
         description=dict(),
         interfaces=dict(),
         l3_interface=dict(),
+        filter_input=dict(),
+        filter_output=dict(),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
     )
@@ -195,6 +205,8 @@ def main():
         ('name', {'xpath': 'name', 'is_key': True}),
         ('vlan_id', 'vlan-id'),
         ('l3_interface', 'l3-interface'),
+        ('filter_input', 'forwarding-options/filter/input'),
+        ('filter_output', 'forwarding-options/filter/output'),
         ('description', 'description')
     ])
 
