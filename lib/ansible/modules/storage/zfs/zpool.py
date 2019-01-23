@@ -37,7 +37,7 @@ options:
     choices: [ raid0, mirror, raidz, raidz1, raidz2, raidz3 ]
   vdev:
     description:
-      - Number of devices in a vdev
+      - The number of devices in a vdev.
     type: int
   devices:
     description:
