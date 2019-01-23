@@ -89,7 +89,7 @@ EXAMPLES = '''
 RETURN = '''
 response:
     description: The result contains the response from the call
-    type: obj
+    type: dict
     returned: always
 msg:
     description: The msg will contain the error code or status of the workflow
