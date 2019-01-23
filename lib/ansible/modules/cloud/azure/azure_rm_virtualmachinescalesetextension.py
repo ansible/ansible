@@ -216,10 +216,6 @@ class AzureRMVMSSExtension(AzureRMModuleBase):
                 else:
                     self.protected_settings = response.get('protected_settings')
 
-                if response['location'] != self.location:
-                    self.location = response['location']
-                    self.module.warn("Property 'location' cannot be changed")
-
                 if response['publisher'] != self.publisher:
                     self.publisher = response['publisher']
                     self.module.warn("Property 'publisher' cannot be changed")
