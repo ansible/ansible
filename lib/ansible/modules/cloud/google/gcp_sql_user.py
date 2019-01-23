@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -149,7 +148,7 @@ def main():
             host=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             instance=dict(required=True),
-            password=dict(type='str')
+            password=dict(type='str'),
         )
     )
 
@@ -159,9 +158,7 @@ def main():
     state = module.params['state']
     kind = 'sql#user'
 
-    fetch = fetch_wrapped_resource(module, 'sql#user',
-                                   'sql#usersList',
-                                   'items')
+    fetch = fetch_wrapped_resource(module, 'sql#user', 'sql#usersList', 'items')
     changed = False
 
     if fetch:
@@ -202,12 +199,7 @@ def delete(module, link, kind):
 
 
 def resource_to_request(module):
-    request = {
-        u'kind': 'sql#user',
-        u'password': module.params.get('password'),
-        u'host': module.params.get('host'),
-        u'name': module.params.get('name')
-    }
+    request = {u'kind': 'sql#user', u'password': module.params.get('password'), u'host': module.params.get('host'), u'name': module.params.get('name')}
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
@@ -217,10 +209,7 @@ def resource_to_request(module):
 
 
 def unwrap_resource_filter(module):
-    return {
-        'host': module.params['host'],
-        'name': module.params['name']
-    }
+    return {'host': module.params['host'], 'name': module.params['name']}
 
 
 def unwrap_resource(result, module):
@@ -264,16 +253,13 @@ def self_link(module):
         'project': module.params['project'],
         'instance': replace_resource_dict(module.params['instance'], 'name'),
         'name': module.params['name'],
-        'host': module.params['host']
+        'host': module.params['host'],
     }
     return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users?name={name}&host={host}".format(**res)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name')
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
     return "https://www.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}/users".format(**res)
 
 
@@ -322,10 +308,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {
-        u'host': response.get(u'host'),
-        u'name': response.get(u'name')
-    }
+    return {u'host': response.get(u'host'), u'name': response.get(u'name')}
 
 
 def async_op_url(module, extra_data=None):
@@ -350,7 +333,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'sql#operation')
         status = navigate_hash(op_result, ['status'])
