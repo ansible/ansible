@@ -20,17 +20,23 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
-from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
+from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
 
 
 def _generic_g(prop_name, self):
     try:
-        return self._attributes[prop_name]
+        value = self._attributes[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+    if value is Sentinel:
+        value = self._attr_defaults[prop_name]
+
+    return value
 
 
 def _generic_g_method(prop_name, self):
@@ -54,6 +60,9 @@ def _generic_g_parent(prop_name, self):
                 value = self._attributes[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
+    if value is Sentinel:
+        value = self._attr_defaults[prop_name]
 
     return value
 
@@ -105,7 +114,8 @@ class BaseMeta(type):
 
                     dst_dict[attr_name] = property(getter, setter, deleter)
                     dst_dict['_valid_attrs'][attr_name] = value
-                    dst_dict['_attributes'][attr_name] = value.default
+                    dst_dict['_attributes'][attr_name] = Sentinel
+                    dst_dict['_attr_defaults'][attr_name] = value.default
 
                     if value.alias is not None:
                         dst_dict[value.alias] = property(getter, setter, deleter)
@@ -125,9 +135,10 @@ class BaseMeta(type):
                     _process_parents(parent.__bases__, new_dst_dict)
 
         # create some additional class attributes
-        dct['_attributes'] = dict()
-        dct['_valid_attrs'] = dict()
-        dct['_alias_attrs'] = dict()
+        dct['_attributes'] = {}
+        dct['_attr_defaults'] = {}
+        dct['_valid_attrs'] = {}
+        dct['_alias_attrs'] = {}
 
         # now create the attributes based on the FieldAttributes
         # available, including from parent (and grandparent) objects
@@ -158,10 +169,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # it was initialized as a class param in the meta class, so we
         # need a unique object here (all members contained within are
         # unique already).
-        self._attributes = self._attributes.copy()
-        for key, value in self._attributes.items():
+        self._attributes = self.__class__._attributes.copy()
+        self._attr_defaults = self.__class__._attr_defaults.copy()
+        for key, value in self._attr_defaults.items():
             if callable(value):
-                self._attributes[key] = value()
+                self._attr_defaults[key] = value()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
@@ -312,6 +324,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if name in self._alias_attrs:
                 continue
             new_me._attributes[name] = shallowcopy(self._attributes[name])
+            new_me._attr_defaults[name] = shallowcopy(self._attr_defaults[name])
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
@@ -482,6 +495,12 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if not isinstance(new_value, list):
             new_value = [new_value]
 
+        # Due to where _extend_value may run for some attributes
+        # it is possible to end up with Sentinel in the list of values
+        # ensure we strip them
+        value[:] = [v for v in value if v is not Sentinel]
+        new_value[:] = [v for v in new_value if v is not Sentinel]
+
         if prepend:
             combined = new_value + value
         else:
@@ -583,7 +602,7 @@ class Base(FieldAttributeBase):
     _ignore_unreachable = FieldAttribute(isa='bool')
     _check_mode = FieldAttribute(isa='bool')
     _diff = FieldAttribute(isa='bool')
-    _any_errors_fatal = FieldAttribute(isa='bool')
+    _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
 
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')

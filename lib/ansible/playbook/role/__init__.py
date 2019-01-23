@@ -183,19 +183,16 @@ class Role(Base, Become, Conditional, Taggable):
         if parent_role:
             self.add_parent(parent_role)
 
-        # copy over all field attributes, except for when and tags, which
-        # are special cases and need to preserve pre-existing values
+        # copy over all field attributes from the RoleInclude
+        # update self._attributes directly, to avoid squashing
         for (attr_name, _) in iteritems(self._valid_attrs):
-            if attr_name not in ('when', 'tags'):
-                setattr(self, attr_name, getattr(role_include, attr_name))
-
-        current_when = getattr(self, 'when')[:]
-        current_when.extend(role_include.when)
-        setattr(self, 'when', current_when)
-
-        current_tags = getattr(self, 'tags')[:]
-        current_tags.extend(role_include.tags)
-        setattr(self, 'tags', current_tags)
+            if attr_name in ('when', 'tags'):
+                self._attributes[attr_name] = self._extend_value(
+                    self._attributes[attr_name],
+                    role_include._attributes[attr_name],
+                )
+            else:
+                self._attributes[attr_name] = role_include._attributes[attr_name]
 
         # dynamically load any plugins from the role directory
         for name, obj in get_all_plugin_loaders():
