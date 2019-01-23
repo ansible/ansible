@@ -63,7 +63,7 @@ options:
     type: bool
   spare:
     description:
-      - Full path to list of block devices such as hdd, nvme or nvme
+      - The full path to a list of block devices such as hdd, nvme or nvme.
   zil:
     description:
       - ZFS intent log device or devices when mirrored
