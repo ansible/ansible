@@ -26,8 +26,8 @@ options:
     type: str
     required: true
     description:
-    - Service image path and tag.
-      Maps docker service IMAGE parameter.
+      - Service image path and tag.
+        Maps docker service IMAGE parameter.
   resolve_image:
     type: bool
     required: false
@@ -127,8 +127,8 @@ options:
   endpoint_mode:
     type: str
     description:
-    - Service endpoint mode.
-    - Maps docker service --endpoint-mode option.
+      - Service endpoint mode.
+      - Maps docker service --endpoint-mode option.
     choices:
       - vip
       - dnsrr
@@ -247,7 +247,7 @@ options:
         required: false
         description:
           - What publish mode to use.
-          - Requires API version >= 1.32.
+          - Requires API version >= 1.32 and docker python library >= 3.0.0
         choices:
           - ingress
           - host
@@ -331,9 +331,9 @@ options:
     type: str
     required: false
     description:
-    - Sets the username or UID used for the specified command.
-    - Before Ansible 2.8, the default value for this option was C(root).
-      The default has been removed so that the user defined in the image is used if no user is specified here.
+      - Sets the username or UID used for the specified command.
+      - Before Ansible 2.8, the default value for this option was C(root).
+        The default has been removed so that the user defined in the image is used if no user is specified here.
 extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
@@ -1337,16 +1337,18 @@ def main():
         user=dict(type='str'))
 
     option_minimal_versions = dict(
-        dns=dict(docker_api_version='1.25'),
-        dns_search=dict(docker_api_version='1.25'),
-        force_update=dict(docker_api_version='1.25'),
-        hostname=dict(docker_api_version='1.25'),
-        tty=dict(docker_api_version='1.25'),
-        secrets=dict(docker_api_version='1.25'),
-        configs=dict(docker_api_version='1.30'),
-        update_order=dict(docker_api_version='1.29'),
+        dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+        dns_options=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+        dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+        force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
+        tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
+        secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
+        update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
         # specials
         publish_mode=dict(
+            docker_py_version='3.0.0',
             docker_api_version='1.25',
             detect_usage=_detect_publish_mode_usage,
             usage_msg='set publish.mode'
@@ -1361,7 +1363,7 @@ def main():
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True,
-        min_docker_version='3.0.0',
+        min_docker_version='2.0.0',
         min_docker_api_version='1.24',
         option_minimal_versions=option_minimal_versions,
     )
