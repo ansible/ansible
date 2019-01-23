@@ -21,7 +21,7 @@ options:
   name:
     required: true
     description:
-    - Service name
+      - Service name
   image:
     type: str
     required: true
@@ -39,209 +39,209 @@ options:
     required: true
     default: present
     description:
-    - Service state.
+      - Service state.
     choices:
-    - present
-    - absent
+      - present
+      - absent
   args:
     required: false
     default: []
     description:
-    - List comprised of the command and the arguments to be run inside
-    - the container
+      - List comprised of the command and the arguments to be run inside
+      - the container
   command:
     required: false
     description:
-    - Command to execute when the container starts.
-      A command may be either a string or a list or a list of strings.
+      - Command to execute when the container starts.
+        A command may be either a string or a list or a list of strings.
     version_added: 2.8
   constraints:
     required: false
     default: []
     description:
-    - List of the service constraints.
-    - Maps docker service --constraint option.
+      - List of the service constraints.
+      - Maps docker service --constraint option.
   placement_preferences:
     required: false
     type: list
     description:
-    - List of the placement preferences as key value pairs.
-    - Maps docker service C(--placement-pref) option.
+      - List of the placement preferences as key value pairs.
+      - Maps docker service C(--placement-pref) option.
     version_added: 2.8
   hostname:
     required: false
     default: ""
     description:
-    - Container hostname
-    - Maps docker service --hostname option.
-    - Requires API version >= 1.25
+      - Container hostname
+      - Maps docker service --hostname option.
+      - Requires API version >= 1.25.
   tty:
     required: false
     type: bool
-    default: False
+    default: false
     description:
-    - Allocate a pseudo-TTY
-    - Maps docker service --tty option.
-    - Requires API version >= 1.25
+      - Allocate a pseudo-TTY
+      - Maps docker service --tty option.
+      - Requires API version >= 1.25.
   dns:
     required: false
     default: []
     description:
-    - List of custom DNS servers.
-    - Maps docker service --dns option.
-    - Requires API version >= 1.25
+      - List of custom DNS servers.
+      - Maps docker service --dns option.
+      - Requires API version >= 1.25.
   dns_search:
     required: false
     default: []
     description:
-    - List of custom DNS search domains.
-    - Maps docker service --dns-search option.
-    - Requires API version >= 1.25
+      - List of custom DNS search domains.
+      - Maps docker service --dns-search option.
+      - Requires API version >= 1.25.
   dns_options:
     required: false
     default: []
     description:
-    - List of custom DNS options.
-    - Maps docker service --dns-option option.
-    - Requires API version >= 1.25
+      - List of custom DNS options.
+      - Maps docker service --dns-option option.
+      - Requires API version >= 1.25.
   force_update:
     required: false
     type: bool
-    default: False
+    default: false
     description:
-    - Force update even if no changes require it.
-    - Maps to docker service update --force option.
-    - Requires API version >= 1.25
+      - Force update even if no changes require it.
+      - Maps to docker service update --force option.
+      - Requires API version >= 1.25.
   labels:
     required: false
     type: dict
     description:
-    - Dictionary of key value pairs.
-    - Maps docker service --label option.
+      - Dictionary of key value pairs.
+      - Maps docker service --label option.
   container_labels:
     required: false
     type: dict
     description:
-    - Dictionary of key value pairs.
-    - Maps docker service --container-label option.
+      - Dictionary of key value pairs.
+      - Maps docker service --container-label option.
   endpoint_mode:
     type: str
     description:
     - Service endpoint mode.
     - Maps docker service --endpoint-mode option.
     choices:
-    - vip
-    - dnsrr
+      - vip
+      - dnsrr
   env:
     required: false
     default: []
     description:
-    - List of the service environment variables.
-    - Maps docker service --env option.
+      - List of the service environment variables.
+      - Maps docker service --env option.
   log_driver:
     required: false
     default: json-file
     description:
-    - Configure the logging driver for a service
+      - Configure the logging driver for a service
   log_driver_options:
     required: false
     default: []
     description:
-    - Options for service logging driver
+      - Options for service logging driver
   limit_cpu:
     required: false
     default: 0.000
     description:
-    - Service CPU limit. 0 equals no limit.
-    - Maps docker service --limit-cpu option.
+      - Service CPU limit. 0 equals no limit.
+      - Maps docker service --limit-cpu option.
   reserve_cpu:
     required: false
     default: 0.000
     description:
-    - Service CPU reservation. 0 equals no reservation.
-    - Maps docker service --reserve-cpu option.
+      - Service CPU reservation. 0 equals no reservation.
+      - Maps docker service --reserve-cpu option.
   limit_memory:
     required: false
     default: 0
     description:
-    - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
       Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
       C(T) (tebibyte), or C(P) (pebibyte)."
-    - 0 equals no limit.
-    - Omitting the unit defaults to bytes.
-    - Maps docker service --limit-memory option.
+      - 0 equals no limit.
+      - Omitting the unit defaults to bytes.
+      - Maps docker service --limit-memory option.
   reserve_memory:
     required: false
     default: 0
     description:
-    - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
       Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
       C(T) (tebibyte), or C(P) (pebibyte)."
-    - 0 equals no reservation.
-    - Omitting the unit defaults to bytes.
-    - Maps docker service --reserve-memory option.
+      - 0 equals no reservation.
+      - Omitting the unit defaults to bytes.
+      - Maps docker service --reserve-memory option.
   mode:
     required: false
     default: replicated
     description:
-    - Service replication mode.
-    - Maps docker service --mode option.
+      - Service replication mode.
+      - Maps docker service --mode option.
   mounts:
     required: false
     description:
-    - List of dictionaries describing the service mounts.
-    - Every item must be a dictionary exposing the keys source, target, type (defaults to 'bind'), readonly (defaults to false)
-    - Maps docker service --mount option.
+      - List of dictionaries describing the service mounts.
+      - Every item must be a dictionary exposing the keys source, target, type (defaults to 'bind'), readonly (defaults to false)
+      - Maps docker service --mount option.
     default: []
   secrets:
     required: false
     description:
-    - List of dictionaries describing the service secrets.
-    - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
-    - Maps docker service --secret option.
-    - Requires API version >= 1.25
+      - List of dictionaries describing the service secrets.
+      - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
+      - Maps docker service --secret option.
+      - Requires API version >= 1.25.
     default: []
   configs:
     required: false
     description:
-    - List of dictionaries describing the service configs.
-    - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
-    - Maps docker service --config option.
-    - Requires API version >= 1.30
+      - List of dictionaries describing the service configs.
+      - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
+      - Maps docker service --config option.
+      - Requires API version >= 1.30.
     default: null
   networks:
     required: false
     default: []
     description:
-    - List of the service networks names.
-    - Maps docker service --network option.
+      - List of the service networks names.
+      - Maps docker service --network option.
   publish:
     type: list
     required: false
     default: []
     description:
-    - List of dictionaries describing the service published ports.
-    - Only used with api_version >= 1.25
+      - List of dictionaries describing the service published ports.
+      - Requires API version >= 1.25.
     suboptions:
       published_port:
-         type: int
-         required: true
-         description:
-           - The port to make externally available.
+        type: int
+        required: true
+        description:
+          - The port to make externally available.
       target_port:
-         type: int
-         required: true
-         description:
-           - The port inside the container to expose.
+        type: int
+        required: true
+        description:
+          - The port inside the container to expose.
       protocol:
-         type: str
-         required: false
-         default: tcp
-         description:
-           - What protocol to use.
-         choices:
-           - tcp
-           - udp
+        type: str
+        required: false
+        default: tcp
+        description:
+          - What protocol to use.
+        choices:
+          - tcp
+          - udp
       mode:
         type: str
         required: false
@@ -255,78 +255,78 @@ options:
     required: false
     default: -1
     description:
-    - Number of containers instantiated in the service. Valid only if ``mode=='replicated'``.
-    - If set to -1, and service is not present, service replicas will be set to 1.
-    - If set to -1, and service is present, service replicas will be unchanged.
-    - Maps docker service --replicas option.
+      - Number of containers instantiated in the service. Valid only if ``mode=='replicated'``.
+      - If set to -1, and service is not present, service replicas will be set to 1.
+      - If set to -1, and service is present, service replicas will be unchanged.
+      - Maps docker service --replicas option.
   restart_policy:
     required: false
     default: none
     description:
-    - Restart condition of the service.
-    - Maps docker service --restart-condition option.
+      - Restart condition of the service.
+      - Maps docker service --restart-condition option.
     choices:
-    - none
-    - on-failure
-    - any
+      - none
+      - on-failure
+      - any
   restart_policy_attempts:
     required: false
     default: 0
     description:
-    - Maximum number of service restarts.
-    - Maps docker service --restart-max-attempts option.
+      - Maximum number of service restarts.
+      - Maps docker service --restart-max-attempts option.
   restart_policy_delay:
     required: false
     default: 0
     description:
-    - Delay between restarts.
-    - Maps docker service --restart-delay option.
+      - Delay between restarts.
+      - Maps docker service --restart-delay option.
   restart_policy_window:
     required: false
     default: 0
     description:
-    - Restart policy evaluation window.
-    - Maps docker service --restart-window option.
+      - Restart policy evaluation window.
+      - Maps docker service --restart-window option.
   update_delay:
     required: false
     default: 10
     description:
-    - Rolling update delay
-    - Maps docker service --update-delay option
+      - Rolling update delay
+      - Maps docker service --update-delay option.
   update_parallelism:
     required: false
     default: 1
     description:
-    - Rolling update parallelism
-    - Maps docker service --update-parallelism option
+      - Rolling update parallelism
+      - Maps docker service --update-parallelism option.
   update_failure_action:
     required: false
     default: continue
     description:
-    - Action to take in case of container failure
-    - Maps to docker service --update-failure-action option
+      - Action to take in case of container failure.
+      - Maps to docker service --update-failure-action option.
     choices:
-    - continue
-    - pause
+      - continue
+      - pause
   update_monitor:
     required: false
     default: 5000000000
     description:
-    - Time to monitor updated tasks for failures, in nanoseconds.
-    - Maps to docker service --update-monitor option
+      - Time to monitor updated tasks for failures, in nanoseconds.
+      - Maps to docker service --update-monitor option.
   update_max_failure_ratio:
     required: false
     default: 0.00
     description:
-    - Fraction of tasks that may fail during an update before the failure action is invoked
-    - Maps to docker service --update-max-failure-ratio
+      - Fraction of tasks that may fail during an update before the failure action is invoked.
+      - Maps to docker service --update-max-failure-ratio.
   update_order:
     required: false
     default: null
     description:
-    - Specifies the order of operations when rolling out an updated task.
-    - Maps to docker service --update-order
-    - Requires API version >= 1.29
+      - Specifies the order of operations when rolling out an updated task.
+      - Maps to docker service --update-order.
+      - Requires API version >= 1.29.
   user:
     type: str
     required: false
