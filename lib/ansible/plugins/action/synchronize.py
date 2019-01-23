@@ -216,7 +216,7 @@ class ActionModule(ActionBase):
         inventory_hostname = task_vars.get('inventory_hostname')
         dest_host_inventory_vars = task_vars['hostvars'].get(inventory_hostname)
         try:
-            dest_host = dest_host_inventory_vars['ansible_host']
+            dest_host = self._templar.template(dest_host_inventory_vars['ansible_host'])
         except KeyError:
             dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
 
