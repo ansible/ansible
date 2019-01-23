@@ -16,6 +16,11 @@
     version: 2.20.1
   when: git_client.rc !=  0 
 
+- name: Create a temp directory
+  win_file:
+    name: {{ temp_path }}
+    state: directory
+
 - block:
   - name: run tests
     include_tasks: test.yml
