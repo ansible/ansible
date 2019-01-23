@@ -40,7 +40,7 @@ options:
     type: int
   devices:
     description:
-      - Full path to list of block devices such as hdd, nvme or file
+      - Full path to list of block devices such as hdd, nvme or file.
   ashift:
     description:
       - Alignment shift can be used to improve performance and is set once during the creation.
