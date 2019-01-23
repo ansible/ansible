@@ -23,9 +23,6 @@ import re
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.plugins.terminal import TerminalBase
-from ansible.utils.display import Display
-
-display = Display()
 
 
 class TerminalModule(TerminalBase):
