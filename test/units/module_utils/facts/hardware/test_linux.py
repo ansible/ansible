@@ -84,6 +84,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
                          'uuid': 'N/A'}
         home_info = [x for x in mount_facts['mounts'] if x['mount'] == '/home'][0]
 
+        self.maxDiff = 4096
         self.assertDictEqual(home_info, home_expected)
 
     @patch('ansible.module_utils.facts.hardware.linux.get_file_content', return_value=MTAB)
