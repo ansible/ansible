@@ -4,7 +4,7 @@
 Dell OS6 Platform Options
 ***************************************
 
-OS6 supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on OS6 in Ansible 2.6. 
+OS6 supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on OS6 in Ansible.
 
 .. contents:: Topics
 
