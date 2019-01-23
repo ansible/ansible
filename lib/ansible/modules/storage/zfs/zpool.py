@@ -79,7 +79,7 @@ options:
     choices: [ absent, present ]
     default: present
 author:
-- Remy Mudingay
+- Remy Mudingay (@rmudingay)
 - Stephane Armanet
 """
 
