@@ -189,7 +189,7 @@ if ($state -eq 'absent') {
 }
 if($state -eq 'present') {
     $entry_idx = -1
-
+    $aliases_to_keep = @()
     # go through lines, find the entry and determine what to remove based on action
     for($idx = 0; $idx -lt $hosts_lines.Count; $idx++) {
         $entry = $hosts_lines[$idx]
@@ -212,14 +212,44 @@ if($state -eq 'present') {
                     } else {
                         # this is the right ip_address, but not the cname we were looking for.
                         # we need to make sure none of aliases or canonical_name exist for this entry
-                        # since the given canonical_name should be an A record, 
-                        # and aliases should be cname records for canonical_name.
+                        # since the given canonical_name should be an A/AAAA record, 
+                        # and aliases should be cname records for the canonical_name.
                         $aliases_to_remove = $aliases + $canonical_name
                     }
-                } elseif ($ip_address_type -eq $entry_parts.ip_type) {
+                } else {
                     # this is not the ip_address we are looking for
-                    # ensure canonical_name and aliases removed from this entry
-                    $aliases_to_remove = $aliases + $canonical_name
+                    if ($ip_address_type -eq $entry_parts.ip_type) {
+                        if ($entry_parts.canonical_name -eq $canonical_name) {                     
+                            # remove the entry
+                            if (Remove-HostEntry -list $hosts_lines -idx $idx){
+                                # keep index correct if we removed the line
+                                $idx = $idx - 1
+                            }
+                            if ($action -ne "set") {
+                                # keep old aliases intact
+                                $aliases_to_keep += $entry_parts.aliases | Where-Object { ($aliases + $aliases_to_keep + $canonical_name) -notcontains $_ }
+                            }
+                        } elseif ($action -eq "remove") {
+                            # just remove canonical_name. user may want alias(es) mapped to this canonical name
+                            $aliases_to_remove = $canonical_name
+                        } elseif ($aliases -contains $entry_parts.canonical_name) {
+                            # remove the entry
+                            if (Remove-HostEntry -list $hosts_lines -idx $idx) {
+                                # keep index correct if we removed the line
+                                $idx = $idx - 1
+                            }
+                            if ($action -eq "add") {
+                                # keep old aliases intact
+                                $aliases_to_keep += $entry_parts.aliases | Where-Object { ($aliases + $aliases_to_keep + $canonical_name) -notcontains $_ }
+                            }
+                        } else {
+                            # ensure canonical_name and aliases removed from this entry
+                            $aliases_to_remove = $aliases + $canonical_name
+                        }
+                    } else {
+                        # Just ignore if the types don't match.
+                        # TODO: Better ipv6 support. There is odd behavior for when an alias can be used for both ipv6 and ipv4
+                    }
                 }
 
                 if($aliases_to_remove) {
@@ -232,24 +262,31 @@ if($state -eq 'present') {
         }
     }
 
-
     if($entry_idx -ge 0) {
         # we found the entry
-        if($action -ne 'remove') {
-            # we can add our aliases that are not already in the list
-            $entry_parts = Get-HostEntryParts -line $hosts_lines[$entry_idx]
-            $aliases_to_add = $aliases | Where-Object { $entry_parts.aliases -notcontains $_ }
-            if($aliases_to_add) {
-                Add-AliasesToEntry -list $hosts_lines -idx $entry_idx -aliases $aliases_to_add
-            }
+        $aliases_to_add = @()
+        $entry_parts = Get-HostEntryParts -line $hosts_lines[$entry_idx]
+        if($action -eq 'remove') {
+            # just preserve any previously removed aliases
+            $aliases_to_add = $aliases_to_keep | Where-Object { $entry_parts.aliases -notcontains $_ }
+        } else {
+            # we want to add provided aliases and previously removed aliases that are not already in the list
+            $aliases_to_add = ($aliases + $aliases_to_keep) | Where-Object { $entry_parts.aliases -notcontains $_ }
         }
-        # if action -eq remove then we're already done
+            
+        if($aliases_to_add) {
+            Add-AliasesToEntry -list $hosts_lines -idx $entry_idx -aliases $aliases_to_add
+        }
     } else {
         # add the entry at the end
         if($action -eq 'remove') {
-            Add-HostEntry -list $hosts_lines -ip $ip_address -cname $canonical_name
+            if($aliases_to_keep) {
+                Add-HostEntry -list $hosts_lines -ip $ip_address -cname $canonical_name -aliases $aliases_to_keep
+            } else {
+                Add-HostEntry -list $hosts_lines -ip $ip_address -cname $canonical_name
+            }
         } else {
-            Add-HostEntry -list $hosts_lines -ip $ip_address -cname $canonical_name -aliases $aliases
+            Add-HostEntry -list $hosts_lines -ip $ip_address -cname $canonical_name -aliases ($aliases + $aliases_to_keep)
         }
     }
 }
