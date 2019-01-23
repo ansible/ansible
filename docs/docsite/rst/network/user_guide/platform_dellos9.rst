@@ -4,7 +4,7 @@
 Dell OS9 Platform Options
 ***************************************
 
-OS9 supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on OS9 in Ansible 2.6. 
+OS9 supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on OS9 in Ansible.
 
 .. contents:: Topics
 
