@@ -37,7 +37,7 @@
 - name: uninstall "@postgresql:9.6/client" module again
   dnf:
     name: "@postgresql:9.6/client"
-    state: install
+    state: absent
   register: dnf_result
 
 - name: verify uninstallation of "@postgresql:9.6/client" module again
