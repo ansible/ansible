@@ -31,7 +31,8 @@ options:
     default: false
   raid_level:
     description:
-      - Pool raid level
+      - The RAID level of the pool.
+      type: str
     choices: [ raid0, mirror, raidz, raidz1, raidz2, raidz3 ]
   vdev:
     description:
