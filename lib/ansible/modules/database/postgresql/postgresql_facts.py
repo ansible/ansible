@@ -232,7 +232,7 @@ class PgClusterFacts(object):
             ext_name = i[0]
             ext_info = {}
             ext_info["extversion"] = i[1]
-            ext_info["nspame"] = i[2]
+            ext_info["nspname"] = i[2]
             ext_info["description"] = i[3]
             ext_dict[ext_name] = ext_info
 
