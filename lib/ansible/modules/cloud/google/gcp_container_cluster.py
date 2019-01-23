@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -597,40 +596,45 @@ def main():
             name=dict(type='str'),
             description=dict(type='str'),
             initial_node_count=dict(required=True, type='int'),
-            node_config=dict(type='dict', options=dict(
-                machine_type=dict(type='str'),
-                disk_size_gb=dict(type='int'),
-                oauth_scopes=dict(type='list', elements='str'),
-                service_account=dict(type='str'),
-                metadata=dict(type='dict'),
-                image_type=dict(type='str'),
-                labels=dict(type='dict'),
-                local_ssd_count=dict(type='int'),
-                tags=dict(type='list', elements='str'),
-                preemptible=dict(type='bool')
-            )),
-            master_auth=dict(type='dict', options=dict(
-                username=dict(type='str'),
-                password=dict(type='str'),
-                cluster_ca_certificate=dict(type='str'),
-                client_certificate=dict(type='str'),
-                client_key=dict(type='str')
-            )),
+            node_config=dict(
+                type='dict',
+                options=dict(
+                    machine_type=dict(type='str'),
+                    disk_size_gb=dict(type='int'),
+                    oauth_scopes=dict(type='list', elements='str'),
+                    service_account=dict(type='str'),
+                    metadata=dict(type='dict'),
+                    image_type=dict(type='str'),
+                    labels=dict(type='dict'),
+                    local_ssd_count=dict(type='int'),
+                    tags=dict(type='list', elements='str'),
+                    preemptible=dict(type='bool'),
+                ),
+            ),
+            master_auth=dict(
+                type='dict',
+                options=dict(
+                    username=dict(type='str'),
+                    password=dict(type='str'),
+                    cluster_ca_certificate=dict(type='str'),
+                    client_certificate=dict(type='str'),
+                    client_key=dict(type='str'),
+                ),
+            ),
             logging_service=dict(type='str', choices=['logging.googleapis.com', 'none']),
             monitoring_service=dict(type='str', choices=['monitoring.googleapis.com', 'none']),
             network=dict(type='str'),
             cluster_ipv4_cidr=dict(type='str'),
-            addons_config=dict(type='dict', options=dict(
-                http_load_balancing=dict(type='dict', options=dict(
-                    disabled=dict(type='bool')
-                )),
-                horizontal_pod_autoscaling=dict(type='dict', options=dict(
-                    disabled=dict(type='bool')
-                ))
-            )),
+            addons_config=dict(
+                type='dict',
+                options=dict(
+                    http_load_balancing=dict(type='dict', options=dict(disabled=dict(type='bool'))),
+                    horizontal_pod_autoscaling=dict(type='dict', options=dict(disabled=dict(type='bool'))),
+                ),
+            ),
             subnetwork=dict(type='str'),
             location=dict(type='list', elements='str'),
-            zone=dict(required=True, type='str')
+            zone=dict(required=True, type='str'),
         )
     )
 
@@ -692,7 +696,7 @@ def resource_to_request(module):
         u'clusterIpv4Cidr': module.params.get('cluster_ipv4_cidr'),
         u'addonsConfig': ClusterAddonsconfig(module.params.get('addons_config', {}), module).to_request(),
         u'subnetwork': module.params.get('subnetwork'),
-        u'location': module.params.get('location')
+        u'location': module.params.get('location'),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -728,8 +732,8 @@ def return_if_object(module, response, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -779,7 +783,7 @@ def response_to_hash(module, response):
         u'nodeIpv4CidrSize': response.get(u'nodeIpv4CidrSize'),
         u'servicesIpv4Cidr': response.get(u'servicesIpv4Cidr'),
         u'currentNodeCount': response.get(u'currentNodeCount'),
-        u'expireTime': response.get(u'expireTime')
+        u'expireTime': response.get(u'expireTime'),
     }
 
 
@@ -805,7 +809,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri)
         status = navigate_hash(op_result, ['status'])
@@ -829,9 +833,7 @@ def raise_if_errors(response, err_path, module):
 #
 # Format the request to match the expected input by the API
 def encode_request(resource_request, module):
-    return {
-        'cluster': resource_request
-    }
+    return {'cluster': resource_request}
 
 
 class ClusterNodeconfig(object):
@@ -843,32 +845,36 @@ class ClusterNodeconfig(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'machineType': self.request.get('machine_type'),
-            u'diskSizeGb': self.request.get('disk_size_gb'),
-            u'oauthScopes': self.request.get('oauth_scopes'),
-            u'serviceAccount': self.request.get('service_account'),
-            u'metadata': self.request.get('metadata'),
-            u'imageType': self.request.get('image_type'),
-            u'labels': self.request.get('labels'),
-            u'localSsdCount': self.request.get('local_ssd_count'),
-            u'tags': self.request.get('tags'),
-            u'preemptible': self.request.get('preemptible')
-        })
+        return remove_nones_from_dict(
+            {
+                u'machineType': self.request.get('machine_type'),
+                u'diskSizeGb': self.request.get('disk_size_gb'),
+                u'oauthScopes': self.request.get('oauth_scopes'),
+                u'serviceAccount': self.request.get('service_account'),
+                u'metadata': self.request.get('metadata'),
+                u'imageType': self.request.get('image_type'),
+                u'labels': self.request.get('labels'),
+                u'localSsdCount': self.request.get('local_ssd_count'),
+                u'tags': self.request.get('tags'),
+                u'preemptible': self.request.get('preemptible'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'machineType': self.request.get(u'machineType'),
-            u'diskSizeGb': self.request.get(u'diskSizeGb'),
-            u'oauthScopes': self.request.get(u'oauthScopes'),
-            u'serviceAccount': self.request.get(u'serviceAccount'),
-            u'metadata': self.request.get(u'metadata'),
-            u'imageType': self.request.get(u'imageType'),
-            u'labels': self.request.get(u'labels'),
-            u'localSsdCount': self.request.get(u'localSsdCount'),
-            u'tags': self.request.get(u'tags'),
-            u'preemptible': self.request.get(u'preemptible')
-        })
+        return remove_nones_from_dict(
+            {
+                u'machineType': self.request.get(u'machineType'),
+                u'diskSizeGb': self.request.get(u'diskSizeGb'),
+                u'oauthScopes': self.request.get(u'oauthScopes'),
+                u'serviceAccount': self.request.get(u'serviceAccount'),
+                u'metadata': self.request.get(u'metadata'),
+                u'imageType': self.request.get(u'imageType'),
+                u'labels': self.request.get(u'labels'),
+                u'localSsdCount': self.request.get(u'localSsdCount'),
+                u'tags': self.request.get(u'tags'),
+                u'preemptible': self.request.get(u'preemptible'),
+            }
+        )
 
 
 class ClusterMasterauth(object):
@@ -880,22 +886,26 @@ class ClusterMasterauth(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'username': self.request.get('username'),
-            u'password': self.request.get('password'),
-            u'clusterCaCertificate': self.request.get('cluster_ca_certificate'),
-            u'clientCertificate': self.request.get('client_certificate'),
-            u'clientKey': self.request.get('client_key')
-        })
+        return remove_nones_from_dict(
+            {
+                u'username': self.request.get('username'),
+                u'password': self.request.get('password'),
+                u'clusterCaCertificate': self.request.get('cluster_ca_certificate'),
+                u'clientCertificate': self.request.get('client_certificate'),
+                u'clientKey': self.request.get('client_key'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'username': self.request.get(u'username'),
-            u'password': self.request.get(u'password'),
-            u'clusterCaCertificate': self.request.get(u'clusterCaCertificate'),
-            u'clientCertificate': self.request.get(u'clientCertificate'),
-            u'clientKey': self.request.get(u'clientKey')
-        })
+        return remove_nones_from_dict(
+            {
+                u'username': self.request.get(u'username'),
+                u'password': self.request.get(u'password'),
+                u'clusterCaCertificate': self.request.get(u'clusterCaCertificate'),
+                u'clientCertificate': self.request.get(u'clientCertificate'),
+                u'clientKey': self.request.get(u'clientKey'),
+            }
+        )
 
 
 class ClusterAddonsconfig(object):
@@ -907,16 +917,20 @@ class ClusterAddonsconfig(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'httpLoadBalancing': ClusterHttploadbalancing(self.request.get('http_load_balancing', {}), self.module).to_request(),
-            u'horizontalPodAutoscaling': ClusterHorizontalpodautoscaling(self.request.get('horizontal_pod_autoscaling', {}), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'httpLoadBalancing': ClusterHttploadbalancing(self.request.get('http_load_balancing', {}), self.module).to_request(),
+                u'horizontalPodAutoscaling': ClusterHorizontalpodautoscaling(self.request.get('horizontal_pod_autoscaling', {}), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'httpLoadBalancing': ClusterHttploadbalancing(self.request.get(u'httpLoadBalancing', {}), self.module).from_response(),
-            u'horizontalPodAutoscaling': ClusterHorizontalpodautoscaling(self.request.get(u'horizontalPodAutoscaling', {}), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'httpLoadBalancing': ClusterHttploadbalancing(self.request.get(u'httpLoadBalancing', {}), self.module).from_response(),
+                u'horizontalPodAutoscaling': ClusterHorizontalpodautoscaling(self.request.get(u'horizontalPodAutoscaling', {}), self.module).from_response(),
+            }
+        )
 
 
 class ClusterHttploadbalancing(object):
@@ -928,14 +942,10 @@ class ClusterHttploadbalancing(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'disabled': self.request.get('disabled')
-        })
+        return remove_nones_from_dict({u'disabled': self.request.get('disabled')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'disabled': self.request.get(u'disabled')
-        })
+        return remove_nones_from_dict({u'disabled': self.request.get(u'disabled')})
 
 
 class ClusterHorizontalpodautoscaling(object):
@@ -947,14 +957,10 @@ class ClusterHorizontalpodautoscaling(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'disabled': self.request.get('disabled')
-        })
+        return remove_nones_from_dict({u'disabled': self.request.get('disabled')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'disabled': self.request.get(u'disabled')
-        })
+        return remove_nones_from_dict({u'disabled': self.request.get(u'disabled')})
 
 
 if __name__ == '__main__':
