@@ -338,9 +338,9 @@ def main():
                 module.fail_json(msg="Failed create Gitlab group: Parent group doesn't exists")
 
         if gitlab_group.createOrUpdateGroup(group_name, parent_group, {
-            "path": group_path,
-            "description": description,
-            "visibility": group_visibility}):
+                                            "path": group_path,
+                                            "description": description,
+                                            "visibility": group_visibility}):
             module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name, group=gitlab_group.groupObject._attrs)
         else:
             module.exit_json(changed=False, result="No need to update the group %s" % group_name, group=gitlab_group.groupObject._attrs)

@@ -386,16 +386,16 @@ def main():
 
     if state == 'present':
         if gitlab_hook.createOrUpdateHook(project, hook_url, {
-            "push_events": push_events,
-            "issues_events": issues_events,
-            "merge_requests_events": merge_requests_events,
-            "tag_push_events": tag_push_events,
-            "note_events": note_events,
-            "job_events": job_events,
-            "pipeline_events": pipeline_events,
-            "wiki_page_events": wiki_page_events,
-            "enable_ssl_verification": enable_ssl_verification,
-            "token": hook_token}):
+                                          "push_events": push_events,
+                                          "issues_events": issues_events,
+                                          "merge_requests_events": merge_requests_events,
+                                          "tag_push_events": tag_push_events,
+                                          "note_events": note_events,
+                                          "job_events": job_events,
+                                          "pipeline_events": pipeline_events,
+                                          "wiki_page_events": wiki_page_events,
+                                          "enable_ssl_verification": enable_ssl_verification,
+                                          "token": hook_token}):
 
             module.exit_json(changed=True, result="Successfully created or updated the hook %s" % hook_url, hook=gitlab_hook.hookObject._attrs)
         else:

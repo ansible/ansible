@@ -89,9 +89,9 @@ options:
     description:
       - Determines if a runner can pick up jobs from protected branches.
     required: False
-        default: "ref_protected"
-        choices: ["ref_protected", "not_protected"]
-        type: str
+    default: "ref_protected"
+    choices: ["ref_protected", "not_protected"]
+    type: str
   maximum_timeout:
     description:
       - The maximum timeout that a runner has to pick up a specific job.
@@ -352,18 +352,18 @@ def main():
 
     if state == 'present':
         if gitlab_runner.createOrUpdateRunner(runner_description, {
-            "active": runner_active,
-            "tag_list": tag_list,
-            "run_untagged": run_untagged,
-            "locked": runner_locked,
-            "access_level": access_level,
-            "maximum_timeout": maximum_timeout,
-            "registration_token":registration_token}):
+                                              "active": runner_active,
+                                              "tag_list": tag_list,
+                                              "run_untagged": run_untagged,
+                                              "locked": runner_locked,
+                                              "access_level": access_level,
+                                              "maximum_timeout": maximum_timeout,
+                                              "registration_token": registration_token}):
             module.exit_json(changed=True, runner=gitlab_runner.runnerObject._attrs,
-                            result="Successfully created or updated the runner %s" % runner_description)
+                             result="Successfully created or updated the runner %s" % runner_description)
         else:
             module.exit_json(changed=False, runner=gitlab_runner.runnerObject._attrs,
-                            result="No need to update the runner %s" % runner_description)
+                             result="No need to update the runner %s" % runner_description)
 
 
 if __name__ == '__main__':

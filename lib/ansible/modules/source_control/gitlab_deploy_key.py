@@ -314,14 +314,13 @@ def main():
             module.exit_json(changed=False, result="DeployKey deleted or does not exists")
 
     if state == 'present':
-        if gitlab_deploy_key.createOrUpdateDeployKey(project, key_title, key_keyfile, {
-            'can_push': key_can_push}):
+        if gitlab_deploy_key.createOrUpdateDeployKey(project, key_title, key_keyfile, {'can_push': key_can_push}):
 
-            module.exit_json(changed=True, result="Successfully created or updated the deployKey %s" % key_title, 
-                            deployKey=gitlab_deploy_key.deployKeyObject._attrs)
+            module.exit_json(changed=True, result="Successfully created or updated the deployKey %s" % key_title,
+                             deployKey=gitlab_deploy_key.deployKeyObject._attrs)
         else:
-            module.exit_json(changed=False, result="No need to update the deployKey %s" % key_title, 
-                            deployKey=gitlab_deploy_key.deployKeyObject._attrs)
+            module.exit_json(changed=False, result="No need to update the deployKey %s" % key_title,
+                             deployKey=gitlab_deploy_key.deployKeyObject._attrs)
 
 
 if __name__ == '__main__':

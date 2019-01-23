@@ -27,13 +27,13 @@ options:
     description:
       - Url of Gitlab server, with protocol (http or https).
     required: true
-  validate_certs:
+  verify_ssl:
     description:
       - When using https if SSL certificate needs to be verified.
     type: bool
     default: 'yes'
     aliases:
-      - verify_ssl
+      - validate_certs
   login_user:
     description:
       - Gitlab user name.
@@ -66,6 +66,8 @@ options:
   sshkey_file:
     description:
       - The ssh key itself.
+    aliases:
+      - ssh_key
   group:
     description:
       - The full path of the group.
@@ -79,11 +81,13 @@ options:
       - master (alias for maintainer)
       - maintainer
       - owner
+    default: "guest"
+    choices: ["guest", "reporter", "developer", "master", "maintainer", "owner"]
   state:
     description:
       - create or delete group.
       - Possible values are present and absent.
-    default: present
+    default: "present"
     choices: ["present", "absent"]
   confirm:
     description:
@@ -169,20 +173,18 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
-ACCESS_LEVEL = {
-    'guest': gitlab.GUEST_ACCESS,
-    'reporter': gitlab.REPORTER_ACCESS,
-    'developer': gitlab.DEVELOPER_ACCESS,
-    'master': gitlab.MAINTAINER_ACCESS,
-    'maintainer': gitlab.MAINTAINER_ACCESS,
-    'owner': gitlab.OWNER_ACCESS}
-
-
 class GitLabUser(object):
     def __init__(self, module, gitlab_instance):
         self._module = module
         self._gitlab = gitlab_instance
         self.userObject = None
+        self.ACCESS_LEVEL = {
+            'guest': gitlab.GUEST_ACCESS,
+            'reporter': gitlab.REPORTER_ACCESS,
+            'developer': gitlab.DEVELOPER_ACCESS,
+            'master': gitlab.MAINTAINER_ACCESS,
+            'maintainer': gitlab.MAINTAINER_ACCESS,
+            'owner': gitlab.OWNER_ACCESS}
 
     '''
     @param username Username of the user
@@ -320,9 +322,9 @@ class GitLabUser(object):
             return True
 
         if self.memberExists(group, self.getUserId(user)):
-            if not self.memberAsGoodAccessLevel(group, self.getUserId(user), ACCESS_LEVEL[access_level]):
+            if not self.memberAsGoodAccessLevel(group, self.getUserId(user), self.ACCESS_LEVEL[access_level]):
                 member = self.findMember(group, self.getUserId(user))
-                member.access_level = ACCESS_LEVEL[access_level]
+                member.access_level = self.ACCESS_LEVEL[access_level]
                 member.save()
                 return True
         else:
@@ -330,7 +332,7 @@ class GitLabUser(object):
                 try:
                     group.members.create({
                         'user_id': self.getUserId(user),
-                        'access_level': ACCESS_LEVEL[access_level]})
+                        'access_level': self.ACCESS_LEVEL[access_level]})
                 except gitlab.exceptions.GitlabCreateError as e:
                     self._module.fail_json(msg="Failed to assign user to group: %s" % to_native(e))
                 return True
@@ -410,7 +412,7 @@ def main():
             sshkey_name=dict(required=False),
             sshkey_file=dict(required=False, aliases=['ssh_key']),
             group=dict(required=False),
-            access_level=dict(required=False, default="guest", choices=["guest", "reporter", "developer", "master", "maintainer" "owner"]),
+            access_level=dict(required=False, default="guest", choices=["guest", "reporter", "developer", "master", "maintainer", "owner"]),
             confirm=dict(required=False, default=True, type='bool'),
             isadmin=dict(required=False, default=False, type='bool'),
             external=dict(required=False, default=False, type='bool')
@@ -471,16 +473,16 @@ def main():
 
     if state == 'present':
         if gitlab_user.createOrUpdateUser(user_username, {
-            "name": user_name,
-            "password": user_password,
-            "email": user_email,
-            "sshkey_name": user_sshkey_name,
-            "sshkey_file": user_sshkey_file,
-            "group_path": group_path,
-            "access_level": access_level,
-            "confirm": confirm,
-            "isadmin": user_isadmin,
-            "external": user_external}):
+                                          "name": user_name,
+                                          "password": user_password,
+                                          "email": user_email,
+                                          "sshkey_name": user_sshkey_name,
+                                          "sshkey_file": user_sshkey_file,
+                                          "group_path": group_path,
+                                          "access_level": access_level,
+                                          "confirm": confirm,
+                                          "isadmin": user_isadmin,
+                                          "external": user_external}):
             module.exit_json(changed=True, result="Successfully created or updated the user %s" % user_username, user=gitlab_user.userObject._attrs)
         else:
             module.exit_json(changed=False, result="No need to update the user %s" % user_username, user=gitlab_user.userObject._attrs)

@@ -85,15 +85,15 @@ options:
       - Private. Project access must be granted explicitly for each user.
       - Internal. The project can be cloned by any logged in user.
       - Public. The project can be cloned without any authentication.
-    default: private
+    default: "private"
+    choices: ["private", "internal", "public"]
     aliases:
       - visibility_level
   import_url:
     description:
       - Git repository which will be imported into gitlab.
       - Gitlab server needs read access to this git repository.
-    type: bool
-    default: 'no'
+    required: false
   state:
     description:
       - create or delete project.
@@ -221,7 +221,7 @@ class GitLabProject(object):
     def createProject(self, namespace, arguments):
         if self._module.check_mode:
                 self._module.exit_json(changed=True, result="Project should have been created.")
-        
+
         arguments['namespace_id'] = namespace.id
         try:
             project = self._gitlab.projects.create(arguments)
@@ -304,7 +304,7 @@ def main():
             snippets_enabled=dict(default=True, type='bool'),
             visibility=dict(default="private", choices=["private", "internal", "public"], aliases=["visibility_level"]),
             import_url=dict(required=False),
-            state=dict(default="present", choices=["present", 'absent']),
+            state=dict(default="present", choices=["present", "absent"]),
         ),
         mutually_exclusive=[
             ['login_user', 'login_token'],
@@ -377,14 +377,14 @@ def main():
 
     if state == 'present':
         if gitlab_project.createOrUpdateProject(project_name, namespace, {
-            "path": project_path,
-            "description": project_description,
-            "issues_enabled": issues_enabled,
-            "merge_requests_enabled": merge_requests_enabled,
-            "wiki_enabled": wiki_enabled,
-            "snippets_enabled": snippets_enabled,
-            "visibility": visibility,
-            "import_url": import_url}):
+                                                "path": project_path,
+                                                "description": project_description,
+                                                "issues_enabled": issues_enabled,
+                                                "merge_requests_enabled": merge_requests_enabled,
+                                                "wiki_enabled": wiki_enabled,
+                                                "snippets_enabled": snippets_enabled,
+                                                "visibility": visibility,
+                                                "import_url": import_url}):
 
             module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name, project=gitlab_project.projectObject._attrs)
         else:
