@@ -33,7 +33,7 @@ playbooks to run on newer versions.
 
 Release status
 ``````````````
-This table links to the release notes for each major release, which contain the dates and significant changes in their minor releases.
+This table links to the release notes for each major release. These release notes (changelogs) contain the dates and significant changes in each minor release.
 
 ==============================      =================================================
 Ansible Release                     Status
@@ -50,6 +50,8 @@ devel                               In development (2.8 unreleased, trunk)
 `1.9 Release Notes`_                Unsupported (end of life)
 <1.9                                Unsupported (end of life)
 ==============================      =================================================
+
+You can download the releases from `<https://releases.ansible.com/ansible/>`_.
 
 .. note:: Starting with Ansible-2.4, support lasts for 3 releases.  Thus Ansible-2.4 will receive
     security and general bug fixes when it is first released, security and critical bug fixes when
