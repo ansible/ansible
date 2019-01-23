@@ -100,7 +100,7 @@ class ActionModule(ActionBase):
             elif arg in self.VALID_ALL:
                 pass
             else:
-                raise AnsibleError('{0} is not a valid option in include_vars'.format(arg))
+                raise AnsibleError('{0} is not a valid option in include_vars'.format(to_native(arg)))
 
         if dirs and files:
             raise AnsibleError("You are mixing file only and dir only arguments, these are incompatible")
@@ -114,10 +114,10 @@ class ActionModule(ActionBase):
             self._set_root_dir()
             if not path.exists(self.source_dir):
                 failed = True
-                err_msg = ('{0} directory does not exist'.format(self.source_dir))
+                err_msg = ('{0} directory does not exist'.format(to_native(self.source_dir)))
             elif not path.isdir(self.source_dir):
                 failed = True
-                err_msg = ('{0} is not a directory'.format(self.source_dir))
+                err_msg = ('{0} is not a directory'.format(to_native(self.source_dir)))
             else:
                 for root_dir, filenames in self._traverse_dir_depth():
                     failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames))
@@ -231,7 +231,7 @@ class ActionModule(ActionBase):
         err_msg = ''
         if validate_extensions and not self._is_valid_file_ext(filename):
             failed = True
-            err_msg = ('{0} does not have a valid extension: {1}' .format(filename, ', '.join(self.valid_extensions)))
+            err_msg = ('{0} does not have a valid extension: {1}'.format(to_native(filename), ', '.join(self.valid_extensions)))
         else:
             b_data, show_content = self._loader._get_file_contents(filename)
             data = to_text(b_data, errors='surrogate_or_strict')
@@ -242,7 +242,7 @@ class ActionModule(ActionBase):
                 data = dict()
             if not isinstance(data, dict):
                 failed = True
-                err_msg = ('{0} must be stored as a dictionary/hash' .format(filename))
+                err_msg = ('{0} must be stored as a dictionary/hash'.format(to_native(filename)))
             else:
                 self.included_files.append(filename)
                 results.update(data)
