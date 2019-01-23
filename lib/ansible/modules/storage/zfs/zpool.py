@@ -50,7 +50,7 @@ options:
     default: 0
   sets:
     description:
-      - Set options for existing pools
+      - Set options for existing pools.
     type: bool
     default: false
   autoreplace:
