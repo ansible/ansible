@@ -3,7 +3,7 @@ Getting Started with Docker
 
 Ansible offers the following modules for orchestrating Docker containers:
 
-    docker_service
+    docker_compose
         Use your existing Docker compose files to orchestrate containers on a single Docker daemon or on
         Swarm. Supports compose versions 1 and 2.
 
@@ -66,7 +66,7 @@ a broken installation. If this happens, Ansible will detect it and inform you ab
     for Python 2.6 is required. Please note that simply uninstalling one of the modules can leave the
     other module in a broken state.
 
-The docker_service module also requires `docker-compose <https://github.com/docker/compose>`_
+The docker_compose module also requires `docker-compose <https://github.com/docker/compose>`_
 
 .. code-block:: bash
 
