@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -78,6 +77,20 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+  candidate_subnets:
+    description:
+    - Up to 16 candidate prefixes that can be used to restrict the allocation of cloudRouterIpAddress
+      and customerRouterIpAddress for this attachment.
+    - All prefixes must be within link-local address space (169.254.0.0/16) and must
+      be /29 or shorter (/28, /27, etc). Google will attempt to select an unused /29
+      from the supplied candidate prefix(es). The request will fail if all possible
+      /29s are in use on Google's edge. If not supplied, Google will randomly select
+      an unused /29 from all of link-local space.
+    required: false
+  vlan_tag8021q:
+    description:
+    - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+    required: false
   region:
     description:
     - Region where the regional interconnect attachment resides.
@@ -170,6 +183,22 @@ name:
     which cannot be a dash.
   returned: success
   type: str
+candidateSubnets:
+  description:
+  - Up to 16 candidate prefixes that can be used to restrict the allocation of cloudRouterIpAddress
+    and customerRouterIpAddress for this attachment.
+  - All prefixes must be within link-local address space (169.254.0.0/16) and must
+    be /29 or shorter (/28, /27, etc). Google will attempt to select an unused /29
+    from the supplied candidate prefix(es). The request will fail if all possible
+    /29s are in use on Google's edge. If not supplied, Google will randomly select
+    an unused /29 from all of link-local space.
+  returned: success
+  type: list
+vlanTag8021q:
+  description:
+  - The IEEE 802.1Q VLAN tag for this attachment, in the range 2-4094.
+  returned: success
+  type: int
 region:
   description:
   - Region where the regional interconnect attachment resides.
@@ -201,7 +230,9 @@ def main():
             description=dict(type='str'),
             router=dict(required=True),
             name=dict(required=True, type='str'),
-            region=dict(required=True, type='str')
+            candidate_subnets=dict(type='list', elements='str'),
+            vlan_tag8021q=dict(type='int'),
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -256,7 +287,9 @@ def resource_to_request(module):
         u'interconnect': module.params.get('interconnect'),
         u'description': module.params.get('description'),
         u'router': replace_resource_dict(module.params.get(u'router', {}), 'selfLink'),
-        u'name': module.params.get('name')
+        u'name': module.params.get('name'),
+        u'candidateSubnets': module.params.get('candidate_subnets'),
+        u'vlanTag8021q': module.params.get('vlan_tag8021q'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -291,8 +324,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -331,7 +364,9 @@ def response_to_hash(module, response):
         u'router': response.get(u'router'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
         u'id': response.get(u'id'),
-        u'name': response.get(u'name')
+        u'name': response.get(u'name'),
+        u'candidateSubnets': response.get(u'candidateSubnets'),
+        u'vlanTag8021q': response.get(u'vlanTag8021q'),
     }
 
 
@@ -366,7 +401,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
@@ -388,14 +423,10 @@ class InterconnectAttachmentPrivateinterconnectinfo(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'tag8021q': self.request.get('tag8021q')
-        })
+        return remove_nones_from_dict({u'tag8021q': self.request.get('tag8021q')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'tag8021q': self.request.get(u'tag8021q')
-        })
+        return remove_nones_from_dict({u'tag8021q': self.request.get(u'tag8021q')})
 
 
 if __name__ == '__main__':
