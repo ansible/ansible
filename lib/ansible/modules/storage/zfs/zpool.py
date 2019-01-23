@@ -59,7 +59,7 @@ options:
     type: bool
   autoexpand:
     description:
-      - Enable or disable automatic pool expansion when a larger disk replaces a smaller disk
+      - Whether to enable or disable automatic pool expansion when a larger disk replaces a smaller disk.
     type: bool
   spare:
     description:
