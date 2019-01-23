@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -452,28 +451,19 @@ def main():
             description=dict(type='str'),
             disk_size_gb=dict(type='int'),
             family=dict(type='str'),
-            guest_os_features=dict(type='list', elements='dict', options=dict(
-                type=dict(type='str', choices=['VIRTIO_SCSI_MULTIQUEUE'])
-            )),
-            image_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            )),
+            guest_os_features=dict(type='list', elements='dict', options=dict(type=dict(type='str', choices=['VIRTIO_SCSI_MULTIQUEUE']))),
+            image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
             labels=dict(type='dict'),
             licenses=dict(type='list', elements='str'),
             name=dict(required=True, type='str'),
-            raw_disk=dict(type='dict', options=dict(
-                container_type=dict(type='str', choices=['TAR']),
-                sha1_checksum=dict(type='str'),
-                source=dict(required=True, type='str')
-            )),
+            raw_disk=dict(
+                type='dict',
+                options=dict(container_type=dict(type='str', choices=['TAR']), sha1_checksum=dict(type='str'), source=dict(required=True, type='str')),
+            ),
             source_disk=dict(),
-            source_disk_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            )),
+            source_disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
             source_disk_id=dict(type='str'),
-            source_type=dict(type='str', choices=['RAW'])
+            source_type=dict(type='str', choices=['RAW']),
         )
     )
 
@@ -514,8 +504,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -527,14 +516,8 @@ def update_fields(module, request, response):
 def labels_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/images/{name}/setLabels"
-        ]).format(**module.params),
-        {
-            u'labels': module.params.get('labels'),
-            u'labelFingerprint': response.get('labelFingerprint')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/images/{name}/setLabels"]).format(**module.params),
+        {u'labels': module.params.get('labels'), u'labelFingerprint': response.get('labelFingerprint')},
     )
 
 
@@ -558,7 +541,7 @@ def resource_to_request(module):
         u'sourceDisk': replace_resource_dict(module.params.get(u'source_disk', {}), 'selfLink'),
         u'sourceDiskEncryptionKey': ImageSourcediskencryptionkey(module.params.get('source_disk_encryption_key', {}), module).to_request(),
         u'sourceDiskId': module.params.get('source_disk_id'),
-        u'sourceType': module.params.get('source_type')
+        u'sourceType': module.params.get('source_type'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -593,8 +576,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -641,7 +624,7 @@ def response_to_hash(module, response):
         u'sourceDisk': response.get(u'sourceDisk'),
         u'sourceDiskEncryptionKey': ImageSourcediskencryptionkey(response.get(u'sourceDiskEncryptionKey', {}), module).from_response(),
         u'sourceDiskId': response.get(u'sourceDiskId'),
-        u'sourceType': response.get(u'sourceType')
+        u'sourceType': response.get(u'sourceType'),
     }
 
 
@@ -667,7 +650,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
@@ -689,22 +672,26 @@ class ImageDeprecated(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'deleted': self.request.get('deleted'),
-            u'deprecated': self.request.get('deprecated'),
-            u'obsolete': self.request.get('obsolete'),
-            u'replacement': self.request.get('replacement'),
-            u'state': self.request.get('state')
-        })
+        return remove_nones_from_dict(
+            {
+                u'deleted': self.request.get('deleted'),
+                u'deprecated': self.request.get('deprecated'),
+                u'obsolete': self.request.get('obsolete'),
+                u'replacement': self.request.get('replacement'),
+                u'state': self.request.get('state'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'deleted': self.request.get(u'deleted'),
-            u'deprecated': self.request.get(u'deprecated'),
-            u'obsolete': self.request.get(u'obsolete'),
-            u'replacement': self.request.get(u'replacement'),
-            u'state': self.request.get(u'state')
-        })
+        return remove_nones_from_dict(
+            {
+                u'deleted': self.request.get(u'deleted'),
+                u'deprecated': self.request.get(u'deprecated'),
+                u'obsolete': self.request.get(u'obsolete'),
+                u'replacement': self.request.get(u'replacement'),
+                u'state': self.request.get(u'state'),
+            }
+        )
 
 
 class ImageGuestosfeaturesArray(object):
@@ -728,14 +715,10 @@ class ImageGuestosfeaturesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'type': item.get('type')
-        })
+        return remove_nones_from_dict({u'type': item.get('type')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'type': item.get(u'type')
-        })
+        return remove_nones_from_dict({u'type': item.get(u'type')})
 
 
 class ImageImageencryptionkey(object):
@@ -747,16 +730,10 @@ class ImageImageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
 
 
 class ImageRawdisk(object):
@@ -768,18 +745,14 @@ class ImageRawdisk(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'containerType': self.request.get('container_type'),
-            u'sha1Checksum': self.request.get('sha1_checksum'),
-            u'source': self.request.get('source')
-        })
+        return remove_nones_from_dict(
+            {u'containerType': self.request.get('container_type'), u'sha1Checksum': self.request.get('sha1_checksum'), u'source': self.request.get('source')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'containerType': self.request.get(u'containerType'),
-            u'sha1Checksum': self.request.get(u'sha1Checksum'),
-            u'source': self.request.get(u'source')
-        })
+        return remove_nones_from_dict(
+            {u'containerType': self.request.get(u'containerType'), u'sha1Checksum': self.request.get(u'sha1Checksum'), u'source': self.request.get(u'source')}
+        )
 
 
 class ImageSourcediskencryptionkey(object):
@@ -791,16 +764,10 @@ class ImageSourcediskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict({u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256')})
 
 
 if __name__ == '__main__':
