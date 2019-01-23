@@ -36,6 +36,22 @@ options:
     description:
       - Logical interface number.
     default: 0
+  filter_input:
+    description:
+      - The name of input filter.
+    version_added: "2.8"
+  filter_output:
+    description:
+      - The name of output filter.
+    version_added: "2.8"
+  filter6_input:
+    description:
+      - The name of input filter for ipv6.
+    version_added: "2.8"
+  filter6_output:
+    description:
+      - The name of output filter for ipv6.
+    version_added: "2.8"
   aggregate:
     description: List of L3 interfaces definitions
   state:
@@ -120,6 +136,10 @@ def main():
         name=dict(),
         ipv4=dict(),
         ipv6=dict(),
+        filter_input=dict(),
+        filter_output=dict(),
+        filter6_input=dict(),
+        filter6_output=dict(),
         unit=dict(default=0, type='int'),
         state=dict(default='present', choices=['present', 'absent']),
         active=dict(default=True, type='bool')
@@ -159,7 +179,11 @@ def main():
         ('name', {'xpath': 'name', 'parent_attrib': False, 'is_key': True}),
         ('unit', {'xpath': 'name', 'top': 'unit', 'parent_attrib': False, 'is_key': True}),
         ('ipv4', {'xpath': 'inet/address/name', 'top': 'unit/family', 'is_key': True}),
-        ('ipv6', {'xpath': 'inet6/address/name', 'top': 'unit/family', 'is_key': True})
+        ('ipv6', {'xpath': 'inet6/address/name', 'top': 'unit/family', 'is_key': True}),
+        ('filter_input', {'xpath': 'inet/filter/input', 'top': 'unit/family'}),
+        ('filter_output', {'xpath': 'inet/filter/output', 'top': 'unit/family'}),
+        ('filter6_input', {'xpath': 'inet6/filter/input', 'top': 'unit/family'}),
+        ('filter6_output', {'xpath': 'inet6/filter/output', 'top': 'unit/family'}),
     ])
 
     params = to_param_list(module)
