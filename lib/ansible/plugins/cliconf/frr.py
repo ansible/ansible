@@ -41,6 +41,16 @@ from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 class Cliconf(CliconfBase):
 
+    def get_supported_protocols(self):
+        supported_protocols = {}
+        protocols = ['bgp', 'isis', 'ospf', 'ldp', 'ospf6', 'pim', 'rip', 'ripm', 'zebra']
+        daemons = self.get('show daemons')
+        data = to_text(daemons, errors='surrogate_or_strict').strip()
+
+        for item in protocols:
+            supported_protocols[item] = True if item in data else False
+        return supported_protocols
+
     def get_device_info(self):
         device_info = {}
 
@@ -82,6 +92,8 @@ class Cliconf(CliconfBase):
         result['rpc'] = self.get_base_rpc() + ['get']
         result['network_api'] = 'cliconf'
         result['device_info'] = self.get_device_info()
+        result['device_operations'] = self.get_device_operations()
+        result['supported_protocols'] = self.get_supported_protocols()
         result.update(self.get_option_values())
         return json.dumps(result)
 

@@ -37,9 +37,9 @@ class TerminalModule(TerminalBase):
     terminal_stderr_re = [
         re.compile(br"% Command incomplete", re.I),
         re.compile(br"% Unknown command", re.I),
-        re.compile(br"% (?:\S+) instance is already running", re.I),
+        re.compile(br"(?:\S+) instance is already running", re.I),
         re.compile(br"% (?:Create|Specify) .* first", re.I),
-        re.compile(br"% (?:\S+) is not running", re.I),
+        re.compile(br"(?:\S+) is not running", re.I),
         re.compile(br"% Can't find .*", re.I),
         re.compile(br"invalid input", re.I),
         re.compile(br"connection timed out", re.I),
