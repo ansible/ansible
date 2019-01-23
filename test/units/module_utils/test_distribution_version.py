@@ -1186,8 +1186,8 @@ def test_distribution_version(am, mocker, testcase):
         return False
 
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
-    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
-    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_release', mock_get_uname_release)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname(flags='-v'))
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_release', mock_get_uname(flags='-r'))
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
     mocker.patch('ansible.module_utils.distro.id', mock_distro_name)
