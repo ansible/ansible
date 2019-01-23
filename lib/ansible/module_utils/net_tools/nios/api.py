@@ -59,6 +59,8 @@ NIOS_NSGROUP = 'nsgroup'
 NIOS_IPV4_FIXED_ADDRESS = 'fixedaddress'
 NIOS_IPV6_FIXED_ADDRESS = 'ipv6fixedaddress'
 NIOS_NEXT_AVAILABLE_IP = 'func:nextavailableip'
+NIOS_IPV4_NETWORK_CONTAINER = 'networkcontainer'
+NIOS_IPV6_NETWORK_CONTAINER = 'ipv6networkcontainer'
 
 NIOS_PROVIDER_SPEC = {
     'host': dict(fallback=(env_fallback, ['INFOBLOX_HOST'])),
