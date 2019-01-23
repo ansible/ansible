@@ -26,7 +26,7 @@ options:
     description:
       - Limit collected subsets by comma separated list. Allowable values are C(version),
         C(databases), C(settings), C(tablespaces), C(languages), C(roles), C(namespaces),
-        C(replications), C(repl_slots). By default, collects all subsets.
+        C(replications), C(repl_slots), C(extensions). By default, collects all subsets.
         You can use shell-style (fnmatch) wildcard to pass groups of values (see Examples).
     default: '*'
   exclude_subset:
@@ -93,9 +93,9 @@ EXAMPLES = '''
 # Display all facts from databases hosts except settings:
 # ansible databases -m postgresql_facts -a "exclude_subset=settings"
 
-- name: Collect PostgreSQL version
+- name: Collect PostgreSQL version and extensions
   postgresql_facts:
-    include_subset: ver*
+    include_subset: ver*, ext*
 
 - name: Collect all subsets, excluding settings and roles
   postgresql_facts:
@@ -142,6 +142,7 @@ class PgClusterFacts(object):
             "repl_slots": {},
             "settings": {},
             "roles": {},
+            "extensions": {},
         }
 
     def collect(self, include=False, exclude=False):
@@ -155,6 +156,7 @@ class PgClusterFacts(object):
             "repl_slots": self.get_rslot_info,
             "settings": self.get_settings,
             "roles": self.get_role_info,
+            "extensions": self.get_ext_info,
         }
 
         if include:
@@ -212,6 +214,29 @@ class PgClusterFacts(object):
             ts_dict[ts_name] = ts_info
 
         self.pg_facts["tablespaces"] = ts_dict
+
+    def get_ext_info(self):
+        """
+        Get information about existing extensions.
+        """
+        query = ("SELECT e.extname, e.extversion, n.nspname, c.description "
+                 "FROM pg_catalog.pg_extension AS e "
+                 "LEFT JOIN pg_catalog.pg_namespace AS n "
+                 "ON n.oid = e.extnamespace "
+                 "LEFT JOIN pg_catalog.pg_description AS c "
+                 "ON c.objoid = e.oid "
+                 "AND c.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass")
+        res = self.__exec_sql(query)
+        ext_dict = {}
+        for i in res:
+            ext_name = i[0]
+            ext_info = {}
+            ext_info["extversion"] = i[1]
+            ext_info["nspame"] = i[2]
+            ext_info["description"] = i[3]
+            ext_dict[ext_name] = ext_info
+
+        self.pg_facts["extensions"] = ext_dict
 
     def get_role_info(self):
         """
