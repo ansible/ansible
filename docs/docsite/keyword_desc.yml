@@ -27,7 +27,7 @@ delay: Number of seconds to delay between retries. This setting is only used in 
 delegate_facts: Boolean that allows you to apply facts to a delegated host instead of inventory_hostname.
 delegate_to: Host to execute task instead of the target (inventory_hostname). Connection vars from the delegated host will also be used for the task.
 diff: "Toggle to make tasks return 'diff' information or not."
-environment: A dictionary that gets converted into environment vars to be provided for the task upon execution.
+environment: A dictionary that gets converted into environment vars to be provided for the task upon execution. This cannot affect Ansible itself nor its configuration, it just sets the variables for the code responsible for executing the task.
 fact_path: Set the fact path option for the fact gathering plugin controlled by :term:`gather_facts`.
 failed_when: "Conditional expression that overrides the task's normal 'failed' status."
 force_handlers: Will force notified handler execution for hosts even if they failed during the play. Will not trigger if the play itself fails.
