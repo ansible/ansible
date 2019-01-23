@@ -1140,11 +1140,13 @@ def test_distribution_version(am, mocker, testcase):
             data = data.strip()
         return data
 
-    def mock_get_uname_version(am):
-        return testcase.get('uname_v', None)
-
-    def mock_get_uname_release(am):
-        return testcase.get('uname_r', None)
+    def mock_get_uname(am, flags):
+        if '-v' in flags:
+            return testcase.get('uname_v', None)
+        elif '-r' in flags:
+            return testcase.get('uname_r', None)
+        else:
+            return None
 
     def mock_file_exists(fname, allow_empty=False):
         if fname not in testcase['input']:
@@ -1186,8 +1188,7 @@ def test_distribution_version(am, mocker, testcase):
         return False
 
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
-    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
-    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_release', mock_get_uname_release)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname', mock_get_uname)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
     mocker.patch('ansible.module_utils.distro.id', mock_distro_name)
