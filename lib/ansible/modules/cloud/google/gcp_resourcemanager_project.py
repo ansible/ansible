@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -182,11 +181,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
             labels=dict(type='dict'),
-            parent=dict(type='dict', options=dict(
-                type=dict(type='str'),
-                id=dict(type='str')
-            )),
-            id=dict(required=True, type='str')
+            parent=dict(type='dict', options=dict(type=dict(type='str'), id=dict(type='str'))),
+            id=dict(required=True, type='str'),
         )
     )
 
@@ -240,7 +236,7 @@ def resource_to_request(module):
         u'projectId': module.params.get('id'),
         u'name': module.params.get('name'),
         u'labels': module.params.get('labels'),
-        u'parent': ProjectParent(module.params.get('parent', {}), module).to_request()
+        u'parent': ProjectParent(module.params.get('parent', {}), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
@@ -314,7 +310,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'createTime': response.get(u'createTime'),
         u'labels': response.get(u'labels'),
-        u'parent': ProjectParent(response.get(u'parent', {}), module).from_response()
+        u'parent': ProjectParent(response.get(u'parent', {}), module).from_response(),
     }
 
 
@@ -333,6 +329,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['done'])
     wait_done = wait_for_completion(status, op_result, module)
+    raise_if_errors(op_result, ['error'], module)
     return navigate_hash(wait_done, ['response'])
 
 
@@ -340,7 +337,7 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     if not status:
-        raise_if_errors(op_result, ['error'], 'message')
+        raise_if_errors(op_result, ['error'], module)
         time.sleep(1.0)
         op_result = fetch_resource(module, op_uri)
         status = navigate_hash(op_result, ['done'])
@@ -362,16 +359,10 @@ class ProjectParent(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'type': self.request.get('type'),
-            u'id': self.request.get('id')
-        })
+        return remove_nones_from_dict({u'type': self.request.get('type'), u'id': self.request.get('id')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'type': self.request.get(u'type'),
-            u'id': self.request.get(u'id')
-        })
+        return remove_nones_from_dict({u'type': self.request.get(u'type'), u'id': self.request.get(u'id')})
 
 
 if __name__ == '__main__':
