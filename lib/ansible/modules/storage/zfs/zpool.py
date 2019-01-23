@@ -66,7 +66,7 @@ options:
       - The full path to a list of block devices such as hdd, nvme or nvme.
   zil:
     description:
-      - ZFS intent log device or devices when mirrored
+      - ZFS intent log device or devices when mirrored.
     type: str
   l2arc:
     description:
