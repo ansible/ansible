@@ -33,22 +33,25 @@ playbooks to run on newer versions.
 
 Release status
 ``````````````
+This table links to the release notes for each major release. These release notes (changelogs) contain the dates and significant changes in each minor release.
 
-===============   ==========================   =================================================
-Ansible Release   Latest Version               Status
-===============   ==========================   =================================================
-devel             2.8 (unreleased, trunk)      In development
-`2.7`_            2.7.0 (2018-10-04)           Supported (security **and** general bug fixes)
-`2.6`_            2.6.5 (2018-09-28)           Supported (security **and** critical bug fixes)
-`2.5`_            2.5.9 (2018-09-10)           Supported (security fixes)
-`2.4`_            2.4.6 (2018-07-05)           Unsupported (end of life)
-`2.3`_            2.3.3 (2017-12-20)           Unsupported (end of life)
-`2.2`_            2.2.3 (2017-05-09)           Unsupported (end of life)
-`2.1`_            2.1.6 (2017-06-01)           Unsupported (end of life)
-`2.0`_            2.0.2 (2016-04-19)           Unsupported (end of life)
-`1.9`_            1.9.6 (2016-04-15)           Unsupported (end of life)
-<1.9              n/a                          Unsupported (end of life)
-===============   ==========================   =================================================
+==============================      =================================================
+Ansible Release                     Status
+==============================      =================================================
+devel                               In development (2.8 unreleased, trunk)
+`2.7 Release Notes`_                Supported (security **and** general bug fixes)
+`2.6 Release Notes`_                Supported (security **and** critical bug fixes)
+`2.5 Release Notes`_                Supported (security fixes)
+`2.4 Release Notes`_                Unsupported (end of life)
+`2.3 Release Notes`_                Unsupported (end of life)
+`2.2 Release Notes`_                Unsupported (end of life)
+`2.1 Release Notes`_                Unsupported (end of life)
+`2.0 Release Notes`_                Unsupported (end of life)
+`1.9 Release Notes`_                Unsupported (end of life)
+<1.9                                Unsupported (end of life)
+==============================      =================================================
+
+You can download the releases from `<https://releases.ansible.com/ansible/>`_.
 
 .. note:: Starting with Ansible-2.4, support lasts for 3 releases.  Thus Ansible-2.4 will receive
     security and general bug fixes when it is first released, security and critical bug fixes when
@@ -56,15 +59,17 @@ devel             2.8 (unreleased, trunk)      In development
 
 .. Comment: devel used to point here but we're currently revamping our changelog process and have no
    link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
-.. _2.7: https://github.com/ansible/ansible/blob/stable-2.7/changelogs/CHANGELOG-v2.7.rst
+.. _2.7 Release Notes: https://github.com/ansible/ansible/blob/stable-2.7/changelogs/CHANGELOG-v2.7.rst
+.. _2.6 Release Notes:
 .. _2.6: https://github.com/ansible/ansible/blob/stable-2.6/changelogs/CHANGELOG-v2.6.rst
-.. _2.5: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
+.. _2.5 Release Notes: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
+.. _2.4 Release Notes:
 .. _2.4: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
-.. _2.3: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
-.. _2.2: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
-.. _2.1: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
-.. _2.0: https://github.com/ansible/ansible/blob/stable-2.0/CHANGELOG.md
-.. _1.9: https://github.com/ansible/ansible/blob/stable-1.9/CHANGELOG.md
+.. _2.3 Release Notes: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
+.. _2.2 Release Notes: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
+.. _2.1 Release Notes: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
+.. _2.0 Release Notes: https://github.com/ansible/ansible/blob/stable-2.0/CHANGELOG.md
+.. _1.9 Release Notes: https://github.com/ansible/ansible/blob/stable-1.9/CHANGELOG.md
 
 .. _support_life:
 .. _methods:
