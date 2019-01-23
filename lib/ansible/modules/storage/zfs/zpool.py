@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: zpool
 short_description: Manage zfs zpools
@@ -23,7 +23,7 @@ options:
   name:
     description:
       - The name of the pool.
-      type: str
+    type: str
     required: true
   add:
     description:
@@ -33,7 +33,7 @@ options:
   raid_level:
     description:
       - The RAID level of the pool.
-      type: str
+    type: str
     choices: [ raid0, mirror, raidz, raidz1, raidz2, raidz3 ]
   vdev:
     description:
@@ -41,11 +41,12 @@ options:
     type: int
   devices:
     description:
-      - Full path to list of block devices such as hdd, nvme or file.
+      - List of block devices such as hdd, nvme or file.
+    type: list
   ashift:
     description:
       - Alignment shift can be used to improve performance and is set once during the creation.
-      type: int
+    type: int
     choices: [ 0, 9, 10, 11, 12, 13, 14, 15, 16 ]
     default: 0
   sets:
@@ -63,7 +64,8 @@ options:
     type: bool
   spare:
     description:
-      - The full path to a list of block devices such as hdd, nvme or nvme.
+      - A list of block devices such as hdd, nvme or nvme.
+    type: list
   zil:
     description:
       - ZFS intent log device or devices when mirrored.
@@ -81,9 +83,9 @@ options:
 author:
 - Remy Mudingay (@rmudingay)
 - Stephane Armanet
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = r'''
 - name: Create a new raidz zpool
   zpool:
     name: zfspool
@@ -183,13 +185,13 @@ EXAMPLES = """
   zpool:
     name: rpool
     state: absent
-"""
+'''
 
-RETURN = """ # """
+RETURN = r''' # '''
 
+import ntpath
 import os
 import re
-import ntpath
 import subprocess
 
 from ansible.module_utils.basic import AnsibleModule
