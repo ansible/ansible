@@ -413,7 +413,7 @@ rebuilt:
 '''
 
 EXAMPLES = '''
-- name: Set a argument
+- name: Set an argument
   docker_swarm_service:
     name: myservice
     image: alpine
