@@ -31,6 +31,7 @@ $result = @{
     git_output = $null
     return_code = $null
     method = $null
+    branch_status = "master"
 }
 
 # Add Git to PATH variable
@@ -278,6 +279,8 @@ function clone {
 
         if (CheckPath "$dest") {   
             &git $git_opts | Tee-Object -Variable git_output | Out-Null
+            Set-Attr $result "git_output" "$git_output"   
+            
             $Return.rc = $LASTEXITCODE
             $Return.git_output = $git_output
             
@@ -406,8 +409,8 @@ try {
     }
 }
 catch {
-    $ErrorMessage = $_.Exception.Message    
-    Fail-Json $result "Error cloning $repo Msg: $ErrorMessage - $git_output"
+    $ErrorMessage = $_.Exception.Message        
+    Fail-Json $result "Error cloning $repo Msg: $ErrorMessage"
 }
 
 Exit-Json $result
