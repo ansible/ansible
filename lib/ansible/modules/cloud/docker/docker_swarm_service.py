@@ -45,7 +45,6 @@ options:
       - absent
   args:
     required: false
-    default: []
     description:
       - List comprised of the command and the arguments to be run inside
       - the container
@@ -57,7 +56,6 @@ options:
     version_added: 2.8
   constraints:
     required: false
-    default: []
     description:
       - List of the service constraints.
       - Maps docker service --constraint option.
@@ -71,7 +69,6 @@ options:
     version_added: 2.8
   hostname:
     required: false
-    default: ""
     description:
       - Container hostname
       - Maps docker service --hostname option.
@@ -79,28 +76,24 @@ options:
   tty:
     required: false
     type: bool
-    default: false
     description:
       - Allocate a pseudo-TTY
       - Maps docker service --tty option.
       - Requires API version >= 1.25.
   dns:
     required: false
-    default: []
     description:
       - List of custom DNS servers.
       - Maps docker service --dns option.
       - Requires API version >= 1.25.
   dns_search:
     required: false
-    default: []
     description:
       - List of custom DNS search domains.
       - Maps docker service --dns-search option.
       - Requires API version >= 1.25.
   dns_options:
     required: false
-    default: []
     description:
       - List of custom DNS options.
       - Maps docker service --dns-option option.
@@ -127,6 +120,7 @@ options:
       - Maps docker service --container-label option.
   endpoint_mode:
     type: str
+    required: false
     description:
       - Service endpoint mode.
       - Maps docker service --endpoint-mode option.
@@ -136,35 +130,29 @@ options:
       - dnsrr
   env:
     required: false
-    default: []
     description:
       - List of the service environment variables.
       - Maps docker service --env option.
   log_driver:
     required: false
-    default: json-file
     description:
       - Configure the logging driver for a service
   log_driver_options:
     required: false
-    default: []
     description:
       - Options for service logging driver
   limit_cpu:
     required: false
-    default: 0.000
     description:
       - Service CPU limit. 0 equals no limit.
       - Maps docker service --limit-cpu option.
   reserve_cpu:
     required: false
-    default: 0.000
     description:
       - Service CPU reservation. 0 equals no reservation.
       - Maps docker service --reserve-cpu option.
   limit_memory:
     required: false
-    default: 0
     description:
       - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
       Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
@@ -174,7 +162,6 @@ options:
       - Maps docker service --limit-memory option.
   reserve_memory:
     required: false
-    default: 0
     description:
       - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
       Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
@@ -194,7 +181,6 @@ options:
       - List of dictionaries describing the service mounts.
       - Every item must be a dictionary exposing the keys source, target, type (defaults to 'bind'), readonly (defaults to false)
       - Maps docker service --mount option.
-    default: []
   secrets:
     required: false
     description:
@@ -202,7 +188,6 @@ options:
       - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
       - Maps docker service --secret option.
       - Requires API version >= 1.25.
-    default: []
   configs:
     required: false
     description:
@@ -210,17 +195,14 @@ options:
       - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
       - Maps docker service --config option.
       - Requires API version >= 1.30.
-    default: null
   networks:
     required: false
-    default: []
     description:
       - List of the service networks names.
       - Maps docker service --network option.
   publish:
     type: list
     required: false
-    default: []
     description:
       - List of dictionaries describing the service published ports.
       - Requires API version >= 1.25.
@@ -263,7 +245,6 @@ options:
       - Maps docker service --replicas option.
   restart_policy:
     required: false
-    default: none
     description:
       - Restart condition of the service.
       - Maps docker service --restart-condition option.
@@ -273,37 +254,31 @@ options:
       - any
   restart_policy_attempts:
     required: false
-    default: 0
     description:
       - Maximum number of service restarts.
       - Maps docker service --restart-max-attempts option.
   restart_policy_delay:
     required: false
-    default: 0
     description:
       - Delay between restarts.
       - Maps docker service --restart-delay option.
   restart_policy_window:
     required: false
-    default: 0
     description:
       - Restart policy evaluation window.
       - Maps docker service --restart-window option.
   update_delay:
     required: false
-    default: 10
     description:
       - Rolling update delay
       - Maps docker service --update-delay option.
   update_parallelism:
     required: false
-    default: 1
     description:
       - Rolling update parallelism
       - Maps docker service --update-parallelism option.
   update_failure_action:
     required: false
-    default: continue
     description:
       - Action to take in case of container failure.
       - Maps to docker service --update-failure-action option.
@@ -312,14 +287,12 @@ options:
       - pause
   update_monitor:
     required: false
-    default: 5000000000
     description:
       - Time to monitor updated tasks for failures, in nanoseconds.
       - Maps to docker service --update-monitor option.
       - Requires API version >= 1.25.
   update_max_failure_ratio:
     required: false
-    default: 0.00
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
       - Maps to docker service --update-max-failure-ratio.
@@ -526,32 +499,31 @@ class DockerService(DockerBaseClass):
         super(DockerService, self).__init__()
         self.image = ""
         self.command = None
-        self.args = []
+        self.args = None
         self.endpoint_mode = None
-        self.dns = []
-        self.hostname = ""
-        self.tty = False
-        self.dns_search = []
-        self.dns_options = []
-        self.env = []
+        self.dns = None
+        self.hostname = None
+        self.tty = None
+        self.dns_search = None
+        self.dns_options = None
+        self.env = None
         self.force_update = None
-        self.log_driver = "json-file"
-        self.log_driver_options = {}
-        self.labels = {}
-        self.container_labels = {}
-        self.limit_cpu = 0.000
-        self.limit_memory = 0
-        self.reserve_cpu = 0.000
-        self.reserve_memory = 0
+        self.log_driver = None
+        self.log_driver_options = None
+        self.labels = None
+        self.container_labels = None
+        self.limit_cpu = None
+        self.limit_memory = None
+        self.reserve_cpu = None
+        self.reserve_memory = None
         self.mode = "replicated"
         self.user = None
-        self.mounts = []
-        self.configs = []
-        self.secrets = []
-        self.constraints = []
-        self.networks = []
-        self.publish = []
-        self.constraints = []
+        self.mounts = None
+        self.configs = None
+        self.secrets = None
+        self.constraints = None
+        self.networks = None
+        self.publish = None
         self.placement_preferences = None
         self.replicas = -1
         self.service_id = False
@@ -561,10 +533,10 @@ class DockerService(DockerBaseClass):
         self.restart_policy_delay = None
         self.restart_policy_window = None
         self.update_delay = None
-        self.update_parallelism = 1
-        self.update_failure_action = "continue"
-        self.update_monitor = 5000000000
-        self.update_max_failure_ratio = 0.00
+        self.update_parallelism = None
+        self.update_failure_action = None
+        self.update_monitor = None
+        self.update_max_failure_ratio = None
         self.update_order = None
 
     def get_facts(self):
@@ -688,30 +660,32 @@ class DockerService(DockerBaseClass):
                 except ValueError as exc:
                     raise Exception("Failed to convert %s to bytes: %s" % (param_name, exc))
 
-        s.publish = []
-        for param_p in ap['publish']:
-            service_p = {}
-            service_p['protocol'] = param_p['protocol']
-            service_p['mode'] = param_p['mode']
-            service_p['published_port'] = int(param_p['published_port'])
-            service_p['target_port'] = int(param_p['target_port'])
-            if service_p['protocol'] not in ['tcp', 'udp']:
-                raise ValueError("got publish.protocol '%s', valid values:'tcp', 'udp'" %
-                                 service_p['protocol'])
-            if service_p['mode'] not in [None, 'ingress', 'host']:
-                raise ValueError("got publish.mode '%s', valid values:'ingress', 'host'" %
-                                 service_p['mode'])
-            s.publish.append(service_p)
-        s.mounts = []
-        for param_m in ap['mounts']:
-            service_m = {}
-            service_m['readonly'] = bool(param_m.get('readonly', False))
-            service_m['type'] = param_m.get('type', 'bind')
-            service_m['source'] = param_m['source']
-            service_m['target'] = param_m['target']
-            s.mounts.append(service_m)
+        if ap['publish'] is not None:
+            s.publish = []
+            for param_p in ap['publish']:
+                service_p = {}
+                service_p['protocol'] = param_p['protocol']
+                service_p['mode'] = param_p['mode']
+                service_p['published_port'] = int(param_p['published_port'])
+                service_p['target_port'] = int(param_p['target_port'])
+                if service_p['protocol'] not in ['tcp', 'udp']:
+                    raise ValueError("got publish.protocol '%s', valid values:'tcp', 'udp'" %
+                                     service_p['protocol'])
+                if service_p['mode'] not in [None, 'ingress', 'host']:
+                    raise ValueError("got publish.mode '%s', valid values:'ingress', 'host'" %
+                                     service_p['mode'])
+                s.publish.append(service_p)
 
-        s.configs = None
+        if ap['mounts'] is not None:
+            s.mounts = []
+            for param_m in ap['mounts']:
+                service_m = {}
+                service_m['readonly'] = bool(param_m.get('readonly', False))
+                service_m['type'] = param_m.get('type', 'bind')
+                service_m['source'] = param_m['source']
+                service_m['target'] = param_m['target']
+                s.mounts.append(service_m)
+
         if ap['configs'] is not None:
             s.configs = []
             for param_m in ap['configs']:
@@ -724,16 +698,17 @@ class DockerService(DockerBaseClass):
                 service_c['mode'] = param_m.get('mode', 0o444)
                 s.configs.append(service_c)
 
-        s.secrets = []
-        for param_m in ap['secrets']:
-            service_s = {}
-            service_s['secret_id'] = param_m['secret_id']
-            service_s['secret_name'] = str(param_m['secret_name'])
-            service_s['filename'] = param_m.get('filename', service_s['secret_name'])
-            service_s['uid'] = int(param_m.get('uid', "0"))
-            service_s['gid'] = int(param_m.get('gid', "0"))
-            service_s['mode'] = param_m.get('mode', 0o444)
-            s.secrets.append(service_s)
+        if ap['secrets'] is not None:
+            s.secrets = []
+            for param_m in ap['secrets']:
+                service_s = {}
+                service_s['secret_id'] = param_m['secret_id']
+                service_s['secret_name'] = str(param_m['secret_name'])
+                service_s['filename'] = param_m.get('filename', service_s['secret_name'])
+                service_s['uid'] = int(param_m.get('uid', "0"))
+                service_s['gid'] = int(param_m.get('gid', "0"))
+                service_s['mode'] = param_m.get('mode', 0o444)
+                s.secrets.append(service_s)
         return s
 
     def compare(self, os):
@@ -742,65 +717,65 @@ class DockerService(DockerBaseClass):
         force_update = False
         if self.endpoint_mode is not None and self.endpoint_mode != os.endpoint_mode:
             differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
-        if self.env != os.env:
+        if self.env is not None and self.env != os.env:
             differences.add('env', parameter=self.env, active=os.env)
-        if self.log_driver != os.log_driver:
+        if self.log_driver is not None and self.log_driver != os.log_driver:
             differences.add('log_driver', parameter=self.log_driver, active=os.log_driver)
-        if self.log_driver_options != os.log_driver_options:
+        if self.log_driver_options is not None and self.log_driver_options != os.log_driver_options:
             differences.add('log_opt', parameter=self.log_driver_options, active=os.log_driver_options)
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if self.mounts != os.mounts:
+        if self.mounts is not None and self.mounts != os.mounts:
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
         if self.configs is not None and self.configs != os.configs:
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if self.secrets != os.secrets:
+        if self.secrets is not None and self.secrets != os.secrets:
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
-        if self.networks != os.networks:
+        if self.networks is not None and self.networks != os.networks:
             differences.add('networks', parameter=self.networks, active=os.networks)
             needs_rebuild = True
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
         if self.command is not None and self.command != os.command:
             differences.add('command', parameter=self.command, active=os.command)
-        if self.args != os.args:
+        if self.args is not None and self.args != os.args:
             differences.add('args', parameter=self.args, active=os.args)
-        if self.constraints != os.constraints:
+        if self.constraints is not None and self.constraints != os.constraints:
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
         if self.placement_preferences is not None and self.placement_preferences != os.placement_preferences:
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
-        if self.labels != os.labels:
+        if self.labels is not None and self.labels != os.labels:
             differences.add('labels', parameter=self.labels, active=os.labels)
-        if self.limit_cpu != os.limit_cpu:
+        if self.limit_cpu is not None and self.limit_cpu != os.limit_cpu:
             differences.add('limit_cpu', parameter=self.limit_cpu, active=os.limit_cpu)
-        if self.limit_memory != os.limit_memory:
+        if self.limit_memory is not None and self.limit_memory != os.limit_memory:
             differences.add('limit_memory', parameter=self.limit_memory, active=os.limit_memory)
-        if self.reserve_cpu != os.reserve_cpu:
+        if self.reserve_cpu is not None and self.reserve_cpu != os.reserve_cpu:
             differences.add('reserve_cpu', parameter=self.reserve_cpu, active=os.reserve_cpu)
-        if self.reserve_memory != os.reserve_memory:
+        if self.reserve_memory is not None and self.reserve_memory != os.reserve_memory:
             differences.add('reserve_memory', parameter=self.reserve_memory, active=os.reserve_memory)
-        if self.container_labels != os.container_labels:
+        if self.container_labels is not None and self.container_labels != os.container_labels:
             differences.add('container_labels', parameter=self.container_labels, active=os.container_labels)
         if self.has_publish_changed(os.publish):
             differences.add('publish', parameter=self.publish, active=os.publish)
-        if self.restart_policy != os.restart_policy:
+        if self.restart_policy is not None and self.restart_policy != os.restart_policy:
             differences.add('restart_policy', parameter=self.restart_policy, active=os.restart_policy)
-        if self.restart_policy_attempts != os.restart_policy_attempts:
+        if self.restart_policy_attempts is not None and self.restart_policy_attempts != os.restart_policy_attempts:
             differences.add('restart_policy_attempts', parameter=self.restart_policy_attempts, active=os.restart_policy_attempts)
-        if self.restart_policy_delay != os.restart_policy_delay:
+        if self.restart_policy_delay is not None and self.restart_policy_delay != os.restart_policy_delay:
             differences.add('restart_policy_delay', parameter=self.restart_policy_delay, active=os.restart_policy_delay)
-        if self.restart_policy_window != os.restart_policy_window:
+        if self.restart_policy_window is not None and self.restart_policy_window != os.restart_policy_window:
             differences.add('restart_policy_window', parameter=self.restart_policy_window, active=os.restart_policy_window)
-        if self.update_delay != os.update_delay:
+        if self.update_delay is not None and self.update_delay != os.update_delay:
             differences.add('update_delay', parameter=self.update_delay, active=os.update_delay)
-        if self.update_parallelism != os.update_parallelism:
+        if self.update_parallelism is not None and self.update_parallelism != os.update_parallelism:
             differences.add('update_parallelism', parameter=self.update_parallelism, active=os.update_parallelism)
-        if self.update_failure_action != os.update_failure_action:
+        if self.update_failure_action is not None and self.update_failure_action != os.update_failure_action:
             differences.add('update_failure_action', parameter=self.update_failure_action, active=os.update_failure_action)
-        if self.update_monitor != os.update_monitor:
+        if self.update_monitor is not None and self.update_monitor != os.update_monitor:
             differences.add('update_monitor', parameter=self.update_monitor, active=os.update_monitor)
-        if self.update_max_failure_ratio != os.update_max_failure_ratio:
+        if self.update_max_failure_ratio is not None and self.update_max_failure_ratio != os.update_max_failure_ratio:
             differences.add('update_max_failure_ratio', parameter=self.update_max_failure_ratio, active=os.update_max_failure_ratio)
         if self.update_order is not None and self.update_order != os.update_order:
             differences.add('update_order', parameter=self.update_order, active=os.update_order)
@@ -809,21 +784,24 @@ class DockerService(DockerBaseClass):
             differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
-        if self.dns != os.dns:
+        if self.dns is not None and self.dns != os.dns:
             differences.add('dns', parameter=self.dns, active=os.dns)
-        if self.dns_search != os.dns_search:
+        if self.dns_search is not None and self.dns_search != os.dns_search:
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
-        if self.dns_options != os.dns_options:
+        if self.dns_options is not None and self.dns_options != os.dns_options:
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
-        if self.hostname != os.hostname:
+        if self.hostname is not None and self.hostname != os.hostname:
             differences.add('hostname', parameter=self.hostname, active=os.hostname)
-        if self.tty != os.tty:
+        if self.tty is not None and self.tty != os.tty:
             differences.add('tty', parameter=self.tty, active=os.tty)
         if self.force_update:
             force_update = True
         return not differences.empty or force_update, differences, needs_rebuild, force_update
 
     def has_publish_changed(self, old_publish):
+        if self.publish is None:
+            return False
+        old_publish = old_publish or []
         if len(self.publish) != len(old_publish):
             return True
         publish_sorter = operator.itemgetter('published_port', 'target_port', 'protocol')
@@ -860,18 +838,20 @@ class DockerService(DockerBaseClass):
             'networks': self.networks,
             'replicas': self.replicas})
 
-    def generate_docker_py_service_description(self, name, docker_networks):
-        mounts = []
-        for mount_config in self.mounts:
-            mounts.append(
-                types.Mount(target=mount_config['target'],
-                            source=mount_config['source'],
-                            type=mount_config['type'],
-                            read_only=mount_config['readonly'])
-            )
+    def build_container_spec(self):
+        mounts = None
+        if self.mounts is not None:
+            mounts = []
+            for mount_config in self.mounts:
+                mounts.append(
+                    types.Mount(target=mount_config['target'],
+                                source=mount_config['source'],
+                                type=mount_config['type'],
+                                read_only=mount_config['readonly'])
+                )
 
         configs = None
-        if self.configs:
+        if self.configs is not None:
             configs = []
             for config_config in self.configs:
                 configs.append(
@@ -885,116 +865,202 @@ class DockerService(DockerBaseClass):
                     )
                 )
 
-        secrets = []
-        for secret_config in self.secrets:
-            secrets.append(
-                types.SecretReference(
-                    secret_id=secret_config['secret_id'],
-                    secret_name=secret_config['secret_name'],
-                    filename=secret_config.get('filename'),
-                    uid=secret_config.get('uid'),
-                    gid=secret_config.get('gid'),
-                    mode=secret_config.get('mode')
+        secrets = None
+        if self.secrets is not None:
+            secrets = []
+            for secret_config in self.secrets:
+                secrets.append(
+                    types.SecretReference(
+                        secret_id=secret_config['secret_id'],
+                        secret_name=secret_config['secret_name'],
+                        filename=secret_config.get('filename'),
+                        uid=secret_config.get('uid'),
+                        gid=secret_config.get('gid'),
+                        mode=secret_config.get('mode')
+                    )
                 )
-            )
 
-        dns_config = types.DNSConfig(
-            nameservers=self.dns,
-            search=self.dns_search,
-            options=self.dns_options
-        )
+        dns_config_args = {}
+        if self.dns is not None:
+            dns_config_args['nameservers'] = self.dns
+        if self.dns_search is not None:
+            dns_config_args['search'] = self.dns_search
+        if self.dns_options is not None:
+            dns_config_args['options'] = self.dns_options
+        dns_config = types.DNSConfig(**dns_config_args) if dns_config_args else None
 
-        cspec = types.ContainerSpec(
-            image=self.image,
-            command=self.command,
-            args=self.args,
-            hostname=self.hostname,
-            env=self.env,
-            user=self.user,
-            labels=self.container_labels,
-            mounts=mounts,
-            secrets=secrets,
-            tty=self.tty,
-            dns_config=dns_config,
-            configs=configs
-        )
+        container_spec_args = {}
+        if self.command is not None:
+            container_spec_args['command'] = self.command
+        if self.args is not None:
+            container_spec_args['args'] = self.args
+        if self.env is not None:
+            container_spec_args['env'] = self.env
+        if self.user is not None:
+            container_spec_args['user'] = self.user
+        if self.container_labels is not None:
+            container_spec_args['labels'] = self.container_labels
+        if self.hostname is not None:
+            container_spec_args['hostname'] = self.hostname
+        if self.tty is not None:
+            container_spec_args['tty'] = self.tty
+        if secrets is not None:
+            container_spec_args['secrets'] = secrets
+        if self.mounts is not None:
+            container_spec_args['mounts'] = mounts
+        if dns_config is not None:
+            container_spec_args['dns_config'] = dns_config
+        if configs is not None:
+            container_spec_args['configs'] = configs
 
-        log_driver = types.DriverConfig(name=self.log_driver, options=self.log_driver_options)
+        return types.ContainerSpec(self.image, **container_spec_args)
 
-        placement = types.Placement(
-            constraints=self.constraints,
-            preferences=[
-                {key.title(): {"SpreadDescriptor": value}}
+    def build_placement(self):
+        placement_args = {}
+        if self.constraints is not None:
+            placement_args['constraints'] = self.constraints
+        if self.placement_preferences is not None:
+            placement_args['preferences'] = [
+                {key.title(): {'SpreadDescriptor': value}}
                 for preference in self.placement_preferences
                 for key, value in preference.items()
-            ] if self.placement_preferences else None,
-        )
+            ]
+        return types.Placement(**placement_args) if placement_args else None
 
-        restart_policy = types.RestartPolicy(
-            condition=self.restart_policy,
-            delay=self.restart_policy_delay,
-            max_attempts=self.restart_policy_attempts,
-            window=self.restart_policy_window)
+    def build_update_config(self):
+        update_config_args = {}
+        if self.update_parallelism is not None:
+            update_config_args['parallelism'] = self.update_parallelism
+        if self.update_delay is not None:
+            update_config_args['delay'] = self.update_delay
+        if self.update_failure_action is not None:
+            update_config_args['failure_action'] = self.update_failure_action
+        if self.update_monitor is not None:
+            update_config_args['monitor'] = self.update_monitor
+        if self.update_max_failure_ratio is not None:
+            update_config_args['max_failure_ratio'] = self.update_max_failure_ratio
+        if self.update_order is not None:
+            update_config_args['order'] = self.update_order
+        return types.UpdateConfig(**update_config_args) if update_config_args else None
 
-        resources = types.Resources(
-            cpu_limit=int(self.limit_cpu * 1000000000.0),
-            mem_limit=self.limit_memory,
-            cpu_reservation=int(self.reserve_cpu * 1000000000.0),
-            mem_reservation=self.reserve_memory
-        )
+    def build_log_driver(self):
+        log_driver_args = {}
+        if self.log_driver is not None:
+            log_driver_args['name'] = self.log_driver
+        if self.log_driver_options is not None:
+            log_driver_args['options'] = self.log_driver_options
+        return types.DriverConfig(**log_driver_args) if log_driver_args else None
 
-        update_policy = types.UpdateConfig(
-            parallelism=self.update_parallelism,
-            delay=self.update_delay,
-            failure_action=self.update_failure_action,
-            monitor=self.update_monitor,
-            max_failure_ratio=self.update_max_failure_ratio,
-            order=self.update_order
-        )
+    def build_restart_policy(self):
+        restart_policy_args = {}
+        if self.restart_policy is not None:
+            restart_policy_args['condition'] = self.restart_policy
+        if self.restart_policy_delay is not None:
+            restart_policy_args['delay'] = self.restart_policy_delay
+        if self.restart_policy_attempts is not None:
+            restart_policy_args['max_attempts'] = self.restart_policy_attempts
+        if self.restart_policy_window is not None:
+            restart_policy_args['window'] = self.restart_policy_window
+        return types.RestartPolicy(**restart_policy_args) if restart_policy_args else None
 
-        task_template = types.TaskTemplate(
-            container_spec=cspec,
-            log_driver=log_driver,
-            restart_policy=restart_policy,
-            placement=placement,
-            resources=resources,
-            force_update=self.force_update)
+    def build_resources(self):
+        resources_args = {}
+        if self.limit_cpu is not None:
+            resources_args['cpu_limit'] = int(self.limit_cpu * 1000000000.0)
+        if self.limit_memory is not None:
+            resources_args['mem_limit'] = self.limit_memory
+        if self.reserve_cpu is not None:
+            resources_args['cpu_reservation'] = int(self.reserve_cpu * 1000000000.0)
+        if self.reserve_memory is not None:
+            resources_args['mem_reservation'] = self.reserve_memory
+        return types.Resources(**resources_args) if resources_args else None
 
+    def build_task_template(self, container_spec, placement=None):
+        log_driver = self.build_log_driver()
+        restart_policy = self.build_restart_policy()
+        resources = self.build_resources()
+
+        task_template_args = {}
+        if placement is not None:
+            task_template_args['placement'] = placement
+        if log_driver is not None:
+            task_template_args['log_driver'] = log_driver
+        if restart_policy is not None:
+            task_template_args['restart_policy'] = restart_policy
+        if resources is not None:
+            task_template_args['resources'] = resources
+        if self.force_update:
+            task_template_args['force_update'] = self.force_update
+        return types.TaskTemplate(container_spec=container_spec, **task_template_args)
+
+    def build_service_mode(self):
         if self.mode == 'global':
             self.replicas = None
+        return types.ServiceMode(self.mode, replicas=self.replicas)
 
-        mode = types.ServiceMode(self.mode, replicas=self.replicas)
+    def build_networks(self, docker_networks):
+        networks = None
+        if self.networks is not None:
+            networks = []
+            for network_name in self.networks:
+                network_id = None
+                try:
+                    network_id = list(
+                        filter(lambda n: n['name'] == network_name, docker_networks)
+                    )[0]['id']
+                except (IndexError, KeyError):
+                    pass
+                if network_id:
+                    networks.append({'Target': network_id})
+                else:
+                    raise Exception("no docker networks named: %s" % network_name)
+        return networks
 
-        networks = []
-        for network_name in self.networks:
-            network_id = None
-            try:
-                network_id = list(filter(lambda n: n['name'] == network_name, docker_networks))[0]['id']
-            except Exception:
-                pass
-            if network_id:
-                networks.append({'Target': network_id})
-            else:
-                raise Exception("no docker networks named: %s" % network_name)
+    def build_endpoint_spec(self):
+        endpoint_spec_args = {}
+        if self.publish is not None:
+            ports = {}
+            for port in self.publish:
+                if port.get('mode'):
+                    ports[int(port['published_port'])] = (
+                        int(port['target_port']),
+                        port['protocol'],
+                        port['mode'],
+                    )
+                else:
+                    ports[int(port['published_port'])] = (
+                        int(port['target_port']),
+                        port['protocol'],
+                    )
+            endpoint_spec_args['ports'] = ports
+        if self.endpoint_mode is not None:
+            endpoint_spec_args['mode'] = self.endpoint_mode
+        return types.EndpointSpec(**endpoint_spec_args) if endpoint_spec_args else None
 
-        ports = {}
-        for port in self.publish:
-            if port.get('mode'):
-                ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'], port['mode'])
-            else:
-                ports[int(port['published_port'])] = (int(port['target_port']), port['protocol'])
-        endpoint_spec = types.EndpointSpec(mode=self.endpoint_mode, ports=ports)
-        return update_policy, task_template, networks, endpoint_spec, mode, self.labels
+    def build_docker_service(self, docker_networks):
+        container_spec = self.build_container_spec()
+        placement = self.build_placement()
+        task_template = self.build_task_template(container_spec, placement)
 
-    # def fail(self, msg):
-    #     self.parameters.client.module.fail_json(msg=msg)
-    #
-    # @property
-    # def exists(self):
-    #     return True if self.service else False
+        update_config = self.build_update_config()
+        service_mode = self.build_service_mode()
+        networks = self.build_networks(docker_networks)
+        endpoint_spec = self.build_endpoint_spec()
+
+        service = {'task_template': task_template, 'mode': service_mode}
+        if update_config:
+            service['update_config'] = update_config
+        if networks:
+            service['networks'] = networks
+        if endpoint_spec:
+            service['endpoint_spec'] = endpoint_spec
+        if self.labels:
+            service['labels'] = self.labels
+        return service
 
 
-class DockerServiceManager():
+class DockerServiceManager(object):
+
     def get_networks_names_ids(self):
         return [{'name': n['Name'], 'id': n['Id']} for n in self.client.networks()]
 
@@ -1013,39 +1079,36 @@ class DockerServiceManager():
             return None
 
         raw_data = raw_data[0]
-        networks_names_ids = self.get_networks_names_ids()
         ds = DockerService()
 
         task_template_data = raw_data['Spec']['TaskTemplate']
-        update_config_data = raw_data['Spec']['UpdateConfig']
-
         ds.image = task_template_data['ContainerSpec']['Image']
-        ds.user = task_template_data['ContainerSpec'].get('User', None)
-        ds.env = task_template_data['ContainerSpec'].get('Env', [])
+        ds.user = task_template_data['ContainerSpec'].get('User')
+        ds.env = task_template_data['ContainerSpec'].get('Env')
         ds.command = task_template_data['ContainerSpec'].get('Command')
-        ds.args = task_template_data['ContainerSpec'].get('Args', [])
-        ds.update_delay = update_config_data['Delay']
-        ds.update_parallelism = update_config_data['Parallelism']
-        ds.update_failure_action = update_config_data['FailureAction']
-        ds.update_monitor = update_config_data['Monitor']
-        ds.update_max_failure_ratio = update_config_data['MaxFailureRatio']
+        ds.args = task_template_data['ContainerSpec'].get('Args')
 
-        if 'Order' in update_config_data:
-            ds.update_order = update_config_data['Order']
+        update_config_data = raw_data['Spec'].get('UpdateConfig')
+        if update_config_data:
+            ds.update_delay = update_config_data.get('Delay')
+            ds.update_parallelism = update_config_data.get('Parallelism')
+            ds.update_failure_action = update_config_data.get('FailureAction')
+            ds.update_monitor = update_config_data.get('Monitor')
+            ds.update_max_failure_ratio = update_config_data.get('MaxFailureRatio')
+            ds.update_order = update_config_data.get('Order')
 
-        dns_config = task_template_data['ContainerSpec'].get('DNSConfig', None)
+        dns_config = task_template_data['ContainerSpec'].get('DNSConfig')
         if dns_config:
-            if 'Nameservers' in dns_config.keys():
-                ds.dns = dns_config['Nameservers']
-            if 'Search' in dns_config.keys():
-                ds.dns_search = dns_config['Search']
-            if 'Options' in dns_config.keys():
-                ds.dns_options = dns_config['Options']
-        ds.hostname = task_template_data['ContainerSpec'].get('Hostname', '')
-        ds.tty = task_template_data['ContainerSpec'].get('TTY', False)
-        if 'Placement' in task_template_data.keys():
-            placement = task_template_data['Placement']
-            ds.constraints = placement.get('Constraints', [])
+            ds.dns = dns_config.get('Nameservers')
+            ds.dns_search = dns_config.get('Search')
+            ds.dns_options = dns_config.get('Options')
+
+        ds.hostname = task_template_data['ContainerSpec'].get('Hostname')
+        ds.tty = task_template_data['ContainerSpec'].get('TTY')
+
+        placement = task_template_data.get('Placement')
+        if placement:
+            ds.constraints = placement.get('Constraints')
             placement_preferences = []
             for preference in placement.get('Preferences', []):
                 placement_preferences.append(
@@ -1056,7 +1119,7 @@ class DockerServiceManager():
                 )
             ds.placement_preferences = placement_preferences or None
 
-        restart_policy_data = task_template_data.get('RestartPolicy', None)
+        restart_policy_data = task_template_data.get('RestartPolicy')
         if restart_policy_data:
             ds.restart_policy = restart_policy_data.get('Condition')
             ds.restart_policy_delay = restart_policy_data.get('Delay')
@@ -1065,32 +1128,43 @@ class DockerServiceManager():
 
         raw_data_endpoint_spec = raw_data['Spec'].get('EndpointSpec')
         if raw_data_endpoint_spec:
-            ds.endpoint_mode = raw_data_endpoint_spec.get('Mode')
-            for port in raw_data_endpoint_spec.get('Ports', []):
-                ds.publish.append({
-                    'protocol': port['Protocol'],
-                    'mode': port.get('PublishMode', None),
-                    'published_port': int(port['PublishedPort']),
-                    'target_port': int(port['TargetPort'])})
+            ds.endpoint_mode = raw_data_endpoint_spec.get('Mode', 'vip')
+            raw_data_ports = raw_data_endpoint_spec.get('Ports')
+            if raw_data_ports:
+                ds.publish = []
+                for port in raw_data_ports:
+                    ds.publish.append({
+                        'protocol': port['Protocol'],
+                        'mode': port.get('PublishMode', None),
+                        'published_port': int(port['PublishedPort']),
+                        'target_port': int(port['TargetPort'])
+                    })
 
-        if 'Resources' in task_template_data.keys():
-            if 'Limits' in task_template_data['Resources'].keys():
-                if 'NanoCPUs' in task_template_data['Resources']['Limits'].keys():
-                    ds.limit_cpu = float(task_template_data['Resources']['Limits']['NanoCPUs']) / 1000000000
-                if 'MemoryBytes' in task_template_data['Resources']['Limits'].keys():
-                    ds.limit_memory = int(task_template_data['Resources']['Limits']['MemoryBytes'])
-            if 'Reservations' in task_template_data['Resources'].keys():
-                if 'NanoCPUs' in task_template_data['Resources']['Reservations'].keys():
-                    ds.reserve_cpu = float(task_template_data['Resources']['Reservations']['NanoCPUs']) / 1000000000
-                if 'MemoryBytes' in task_template_data['Resources']['Reservations'].keys():
-                    ds.reserve_memory = int(
-                        task_template_data['Resources']['Reservations']['MemoryBytes'])
+        raw_data_limits = task_template_data.get('Resources', {}).get('Limits')
+        if raw_data_limits:
+            raw_cpu_limits = raw_data_limits.get('NanoCPUs')
+            if raw_cpu_limits:
+                ds.limit_cpu = float(raw_cpu_limits) / 1000000000
 
-        ds.labels = raw_data['Spec'].get('Labels', {})
-        if 'LogDriver' in task_template_data.keys():
-            ds.log_driver = task_template_data['LogDriver'].get('Name', 'json-file')
-            ds.log_driver_options = task_template_data['LogDriver'].get('Options', {})
-        ds.container_labels = task_template_data['ContainerSpec'].get('Labels', {})
+            raw_memory_limits = raw_data_limits.get('MemoryBytes')
+            if raw_memory_limits:
+                ds.limit_memory = int(raw_memory_limits)
+
+        raw_data_reservations = task_template_data.get('Resources', {}).get('Reservations')
+        if raw_data_reservations:
+            raw_cpu_reservations = raw_data_reservations.get('NanoCPUs')
+            if raw_cpu_reservations:
+                ds.reserve_cpu = float(raw_cpu_reservations) / 1000000000
+
+            raw_memory_reservations = raw_data_reservations.get('MemoryBytes')
+            if raw_memory_reservations:
+                ds.reserve_memory = int(raw_memory_reservations)
+
+        ds.labels = raw_data['Spec'].get('Labels')
+        ds.log_driver = task_template_data.get('LogDriver', {}).get('Name')
+        ds.log_driver_options = task_template_data.get('LogDriver', {}).get('Options')
+        ds.container_labels = task_template_data['ContainerSpec'].get('Labels')
+
         mode = raw_data['Spec']['Mode']
         if 'Replicated' in mode.keys():
             ds.mode = to_text('replicated', encoding='utf-8')
@@ -1099,67 +1173,72 @@ class DockerServiceManager():
             ds.mode = 'global'
         else:
             raise Exception("Unknown service mode: %s" % mode)
-        for mount_data in raw_data['Spec']['TaskTemplate']['ContainerSpec'].get('Mounts', []):
-            ds.mounts.append({
-                'source': mount_data['Source'],
-                'type': mount_data['Type'],
-                'target': mount_data['Target'],
-                'readonly': mount_data.get('ReadOnly', False)})
-        for config_data in raw_data['Spec']['TaskTemplate']['ContainerSpec'].get('Configs', []):
-            ds.configs.append({
-                'config_id': config_data['ConfigID'],
-                'config_name': config_data['ConfigName'],
-                'filename': config_data['File'].get('Name'),
-                'uid': int(config_data['File'].get('UID')),
-                'gid': int(config_data['File'].get('GID')),
-                'mode': config_data['File'].get('Mode')
-            })
-        for secret_data in raw_data['Spec']['TaskTemplate']['ContainerSpec'].get('Secrets', []):
-            ds.secrets.append({
-                'secret_id': secret_data['SecretID'],
-                'secret_name': secret_data['SecretName'],
-                'filename': secret_data['File'].get('Name'),
-                'uid': int(secret_data['File'].get('UID')),
-                'gid': int(secret_data['File'].get('GID')),
-                'mode': secret_data['File'].get('Mode')
-            })
+
+        raw_data_mounts = task_template_data['ContainerSpec'].get('Mounts')
+        if raw_data_mounts:
+            ds.mounts = []
+            for mount_data in raw_data_mounts:
+                ds.mounts.append({
+                    'source': mount_data['Source'],
+                    'type': mount_data['Type'],
+                    'target': mount_data['Target'],
+                    'readonly': mount_data.get('ReadOnly', False)
+                })
+
+        raw_data_configs = task_template_data['ContainerSpec'].get('Configs')
+        if raw_data_configs:
+            ds.configs = []
+            for config_data in raw_data_configs:
+                ds.configs.append({
+                    'config_id': config_data['ConfigID'],
+                    'config_name': config_data['ConfigName'],
+                    'filename': config_data['File'].get('Name'),
+                    'uid': int(config_data['File'].get('UID')),
+                    'gid': int(config_data['File'].get('GID')),
+                    'mode': config_data['File'].get('Mode')
+                })
+
+        raw_data_secrets = task_template_data['ContainerSpec'].get('Secrets')
+        if raw_data_secrets:
+            ds.secrets = []
+            for secret_data in raw_data_secrets:
+                ds.secrets.append({
+                    'secret_id': secret_data['SecretID'],
+                    'secret_name': secret_data['SecretName'],
+                    'filename': secret_data['File'].get('Name'),
+                    'uid': int(secret_data['File'].get('UID')),
+                    'gid': int(secret_data['File'].get('GID')),
+                    'mode': secret_data['File'].get('Mode')
+                })
+
         networks_names_ids = self.get_networks_names_ids()
-        for raw_network_data in raw_data['Spec']['TaskTemplate'].get('Networks', raw_data['Spec'].get('Networks', [])):
-            network_name = [network_name_id['name'] for network_name_id in networks_names_ids if
-                            network_name_id['id'] == raw_network_data['Target']]
-            if len(network_name) == 0:
-                ds.networks.append(raw_network_data['Target'])
-            else:
-                ds.networks.append(network_name[0])
+        raw_networks_data = task_template_data.get('Networks', raw_data['Spec'].get('Networks'))
+        if raw_networks_data:
+            ds.networks = []
+            for network_data in raw_networks_data:
+                network_name = [network_name_id['name'] for network_name_id in networks_names_ids if
+                                network_name_id['id'] == network_data['Target']]
+                if len(network_name) == 0:
+                    ds.networks.append(network_data['Target'])
+                else:
+                    ds.networks.append(network_name[0])
+
         ds.service_version = raw_data['Version']['Index']
         ds.service_id = raw_data['ID']
         return ds
 
     def update_service(self, name, old_service, new_service):
-        update_policy, task_template, networks, endpoint_spec, mode, labels = new_service.generate_docker_py_service_description(
-            name, self.get_networks_names_ids())
+        service_data = new_service.build_docker_service(self.get_networks_names_ids())
         self.client.update_service(
             old_service.service_id,
             old_service.service_version,
             name=name,
-            endpoint_spec=endpoint_spec,
-            networks=networks,
-            mode=mode,
-            update_config=update_policy,
-            task_template=task_template,
-            labels=labels)
+            **service_data
+        )
 
     def create_service(self, name, service):
-        update_policy, task_template, networks, endpoint_spec, mode, labels = service.generate_docker_py_service_description(
-            name, self.get_networks_names_ids())
-        self.client.create_service(
-            name=name,
-            endpoint_spec=endpoint_spec,
-            mode=mode,
-            networks=networks,
-            update_config=update_policy,
-            task_template=task_template,
-            labels=labels)
+        service_data = service.build_docker_service(self.get_networks_names_ids())
+        self.client.create_service(name=name, **service_data)
 
     def remove_service(self, name):
         self.client.remove_service(name)
@@ -1261,8 +1340,7 @@ class DockerServiceManager():
                 msg = 'Service absent'
             else:
                 if not module.check_mode:
-                    service_id = self.create_service(module.params['name'],
-                                                     new_service)
+                    self.create_service(module.params['name'], new_service)
                 msg = 'Service created'
                 changed = True
                 facts = new_service.get_facts()
@@ -1295,48 +1373,48 @@ def main():
         name=dict(required=True),
         image=dict(type='str'),
         state=dict(default="present", choices=['present', 'absent']),
-        mounts=dict(default=[], type='list'),
+        mounts=dict(default=None, type='list'),
         configs=dict(default=None, type='list'),
-        secrets=dict(default=[], type='list'),
-        networks=dict(default=[], type='list'),
+        secrets=dict(default=None, type='list'),
+        networks=dict(default=None, type='list'),
         command=dict(default=None, type='raw'),
-        args=dict(default=[], type='list'),
-        env=dict(default=[], type='list'),
+        args=dict(default=None, type='list'),
+        env=dict(default=None, type='list'),
         force_update=dict(default=False, type='bool'),
-        log_driver=dict(default="json-file", type='str'),
-        log_driver_options=dict(default={}, type='dict'),
-        publish=dict(default=[], type='list', elements='dict', options=dict(
+        log_driver=dict(default=None, type='str'),
+        log_driver_options=dict(default=None, type='dict'),
+        publish=dict(default=None, type='list', elements='dict', options=dict(
             published_port=dict(type='int', required=True),
             target_port=dict(type='int', required=True),
             protocol=dict(default='tcp', type='str', required=False, choices=('tcp', 'udp')),
             mode=dict(type='str', required=False, choices=('ingress', 'host')),
         )),
-        constraints=dict(default=[], type='list'),
+        constraints=dict(default=None, type='list'),
         placement_preferences=dict(default=None, type='list'),
-        tty=dict(default=False, type='bool'),
-        dns=dict(default=[], type='list'),
-        dns_search=dict(default=[], type='list'),
-        dns_options=dict(default=[], type='list'),
-        hostname=dict(default="", type='str'),
-        labels=dict(default={}, type='dict'),
-        container_labels=dict(default={}, type='dict'),
-        mode=dict(default="replicated"),
+        tty=dict(default=None, type='bool'),
+        dns=dict(default=None, type='list'),
+        dns_search=dict(default=None, type='list'),
+        dns_options=dict(default=None, type='list'),
+        hostname=dict(default=None, type='str'),
+        labels=dict(default=None, type='dict'),
+        container_labels=dict(default=None, type='dict'),
+        mode=dict(default='replicated', type='str'),
         replicas=dict(default=-1, type='int'),
         endpoint_mode=dict(default=None, choices=['vip', 'dnsrr']),
-        restart_policy=dict(default='none', choices=['none', 'on-failure', 'any']),
-        limit_cpu=dict(default=0, type='float'),
-        limit_memory=dict(default=0, type='str'),
-        reserve_cpu=dict(default=0, type='float'),
-        reserve_memory=dict(default=0, type='str'),
+        limit_cpu=dict(default=None, type='float'),
+        limit_memory=dict(default=None, type='str'),
+        reserve_cpu=dict(default=None, type='float'),
+        reserve_memory=dict(default=None, type='str'),
         resolve_image=dict(default=True, type='bool'),
-        restart_policy_delay=dict(default=0, type='int'),
-        restart_policy_attempts=dict(default=0, type='int'),
-        restart_policy_window=dict(default=0, type='int'),
-        update_delay=dict(default=10, type='int'),
-        update_parallelism=dict(default=1, type='int'),
-        update_failure_action=dict(default='continue', choices=['continue', 'pause']),
-        update_monitor=dict(default=5000000000, type='int'),
-        update_max_failure_ratio=dict(default=0, type='float'),
+        restart_policy=dict(default=None, choices=['none', 'on-failure', 'any']),
+        restart_policy_delay=dict(default=None, type='int'),
+        restart_policy_attempts=dict(default=None, type='int'),
+        restart_policy_window=dict(default=None, type='int'),
+        update_delay=dict(default=None, type='int'),
+        update_parallelism=dict(default=None, type='int'),
+        update_failure_action=dict(default=None, choices=['continue', 'pause']),
+        update_monitor=dict(default=None, type='int'),
+        update_max_failure_ratio=dict(default=None, type='float'),
         update_order=dict(default=None, type='str'),
         user=dict(type='str'))
 
