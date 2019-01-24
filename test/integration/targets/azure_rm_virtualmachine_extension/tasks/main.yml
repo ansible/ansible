@@ -83,6 +83,50 @@
   assert:
     that: results.changed
 
+
+
+- name: Query extension
+  azure_rm_virtualmachineextension_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMExtension
+    virtual_machine_name: testVM
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.extensions[0]['id'] != None
+      - output.extensions[0]['resource_group'] != None
+      - output.extensions[0]['virtual_machine_name'] != None
+      - output.extensions[0]['name'] != None
+      - output.extensions[0]['location'] != None
+      - output.extensions[0]['publisher'] != None
+      - output.extensions[0]['type'] != None
+      - output.extensions[0]['settings'] != None
+      - output.extensions[0]['auto_upgrade_minor_version'] != None
+      - output.extensions[0]['provisioning_state'] != None
+
+- name: List extensions
+  azure_rm_virtualmachineextension_facts:
+    resource_group: "{{ resource_group }}"
+    name: testVMExtension
+    virtual_machine_name: testVM
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.extensions[0]['id'] != None
+      - output.extensions[0]['resource_group'] != None
+      - output.extensions[0]['virtual_machine_name'] != None
+      - output.extensions[0]['name'] != None
+      - output.extensions[0]['location'] != None
+      - output.extensions[0]['publisher'] != None
+      - output.extensions[0]['type'] != None
+      - output.extensions[0]['settings'] != None
+      - output.extensions[0]['auto_upgrade_minor_version'] != None
+      - output.extensions[0]['provisioning_state'] != None
+
 - name: Delete VM Extension
   azure_rm_virtualmachine_extension:
     resource_group: "{{ resource_group }}"
