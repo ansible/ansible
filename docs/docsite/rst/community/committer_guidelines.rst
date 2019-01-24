@@ -56,7 +56,7 @@ Individuals with direct commit access to ansible/ansible are entrusted with powe
 
 * Do
 
-  - Squash, avoid merges whenever possible, use github's squash commits or cherry pick if needed (bisect thanks you).
+  - Squash, avoid merges whenever possible, use GitHub's squash commits or cherry pick if needed (bisect thanks you).
   - Be active. Committers who have no activity on the project (through merges, triage, commits, etc.) will have their permissions suspended.
   - Consider backwards compatibility (goes back to "don't break existing playbooks").
   - Write tests. PRs with tests are looked at with more priority than PRs without tests that should have them included. While not all changes require tests, be sure to add them for bug fixes or functionality changes.
