@@ -238,6 +238,8 @@ There are a few common errors that one might run into when trying to execute Ans
   
   To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
 
+* Python interpret cannot be found in default location ``/usr/bin/python`` on target host.
+
   .. error::
       /usr/bin/python: EDC5129I No such file or directory
 
