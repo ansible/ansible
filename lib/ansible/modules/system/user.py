@@ -206,7 +206,9 @@ options:
             - Forces the use of "local" command alternatives on platforms that implement it.
             - This is useful in environments that use centralized authentification when you want to manipulate the local users
               (i.e. it uses C(luseradd) instead of C(useradd)).
-            - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
+            - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
+              exists somewhere other than C(/etc/passwd), this setting will not work properly.
+            - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
         type: bool
         default: no
         version_added: "2.4"
@@ -843,7 +845,8 @@ class User(object):
     def user_exists(self):
         # The pwd module does not distinguish between local and directory accounts.
         # It's output cannot be used to determine whether or not an account exists locally.
-        # It returns True if the account exists locally or in the directory.
+        # It returns True if the account exists locally or in the directory, so instead
+        # look in the local PASSWORD file for an existing account.
         if not self.local:
             try:
                 if pwd.getpwnam(self.name):
@@ -851,6 +854,9 @@ class User(object):
             except KeyError:
                 return False
         else:
+            if not os.path.exists(self.PASSWORDFILE):
+                self.module.fail_json(msg="'local: true' specified but unable to find local account file {0} to parse.".format(self.PASSWORDFILE))
+
             exists = False
             name_test = '{0}:'.format(self.name)
             with open(self.PASSWORDFILE, 'rb') as f:
@@ -859,6 +865,10 @@ class User(object):
                     if line.startswith(to_bytes(name_test)):
                         exists = True
                         break
+
+            self.module.warn(
+                "'local: true' specified and user was not found in {file}. "
+                "The local user account may already exist if the local account database exists somewhere other than {file}.".format(file=self.PASSWORDFILE))
 
             return exists
 
