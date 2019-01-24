@@ -197,14 +197,17 @@ EXAMPLES = '''
       - user1@example.com
     host: smtp.example.com
     port: 25
+    use_tls: no
+    use_ssl: no
     state: present
     tower_config_file: "~/tower_cli.cfg"
 
 - name: Add twilio notification
   tower_notification:
-    name: notification4
+    name: twilio notification
     notification_type: twilio
     account_token: a_token
+    account_sid: a_sid
     from_number: '+15551112222'
     to_numbers:
       - '+15553334444'
@@ -213,7 +216,7 @@ EXAMPLES = '''
 
 - name: Add PagerDuty notification
   tower_notification:
-    name: notification5
+    name: pagerduty notification
     notification_type: pagerduty
     token: a_token
     subdomain: sub
@@ -223,7 +226,7 @@ EXAMPLES = '''
 
 - name: Add HipChat notification
   tower_notification:
-    name: notification6
+    name: hipchat notification
     notification_type: hipchat
     token: a_token
     message_from: user1
@@ -237,14 +240,15 @@ EXAMPLES = '''
 
 - name: Add IRC notification
   tower_notification:
-    name: notification7
+    name: irc notification
     notification_type: irc
-    password: s3cr3t
-    port: 8080
-    server: irc.example.com
     nickname: tower
+    password: s3cr3t
     target:
       - user1
+    port: 8080
+    server: irc.example.com
+    use_ssl: no
     state: present
     tower_config_file: "~/tower_cli.cfg"
 
