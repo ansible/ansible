@@ -284,7 +284,7 @@
     that:
     - define_users_as_pure_again.changed == false
     - define_users_as_pure_again.added == []
-    - define_users_as_pure.removed == []
+    - define_users_as_pure_again.removed == []
     - define_users_as_pure_again.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
   when: not in_check_mode
 
