@@ -1,0 +1,2 @@
+bugfixes:
+- fix ansible_connect_timeout variable in network_cli,netconf,httpapi and nxos_install_os timeout check

@@ -56,7 +56,8 @@ class ActionModule(_ActionModule):
                 self._task.args['username'] = self._play_context.connection_user
 
         if self._task.action == 'nxos_install_os':
-            if C.PERSISTENT_COMMAND_TIMEOUT < 600 or C.PERSISTENT_CONNECT_TIMEOUT < 600:
+            connection = self._connection
+            if connection.get_option('persistent_command_timeout') < 600 or connection.get_option('persistent_connect_timeout') < 600:
                 msg = 'PERSISTENT_COMMAND_TIMEOUT and PERSISTENT_CONNECT_TIMEOUT'
                 msg += ' must be set to 600 seconds or higher when using nxos_install_os module'
                 return {'failed': True, 'msg': msg}
