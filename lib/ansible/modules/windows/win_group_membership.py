@@ -65,12 +65,12 @@ EXAMPLES = r'''
       - NT AUTHORITY\SYSTEM
     state: absent
 
-- name: Ensure only a domain user exists on a local group
+- name: Ensure only a domain user exists in a local group
   win_group_membership:
     name: Remote Desktop Users
     members:
       - DOMAIN\TestUser
-    state: absent
+    state: pure
 '''
 
 RETURN = r'''
