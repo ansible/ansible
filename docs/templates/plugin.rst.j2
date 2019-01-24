@@ -415,7 +415,7 @@ Status
 
 {% else %}
 
-{%   set support = { 'core': 'the Ansible Core Team', 'network': 'the Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'the Ansible Community', 'curated': 'a Third Party'} %}
+{%   set support = { 'core': 'the Ansible Core Team', 'network': 'the Ansible Network and Security Teams', 'certified': 'an Ansible Partner', 'community': 'the Ansible Community', 'curated': 'a Third Party'} %}
 {%   set module_states = { 'preview': 'not guaranteed to have a backwards compatible interface', 'stableinterface': 'guaranteed to have no backward incompatible interface changes going forward'} %}
 
 {%   if metadata %}
@@ -429,7 +429,7 @@ Status
 
 {%     if metadata.supported_by %}
 {%       set supported_by = support[metadata.supported_by] %}
-- This @{ plugin_type }@ is :ref:`maintained by @{ supported_by }@ <modules_support>`. *[@{ metadata.supported_by }@]*
+- This @{ plugin_type }@ is :ref:`maintained by @{ supported_by }@ <modules_support>`.
 
 {%       if metadata.supported_by in ('core', 'network') %}
 Red Hat Support
