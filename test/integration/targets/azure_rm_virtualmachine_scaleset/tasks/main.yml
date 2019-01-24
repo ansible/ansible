@@ -291,7 +291,7 @@
     that: not results.changed
 
 - name: Query extension
-  azure_rm_virtualmachineextension_facts:
+  azure_rm_virtualmachinescalesetextension_facts:
     resource_group: "{{ resource_group }}"
     vmss_name: testVMSS{{ rpfx }}
     name: testExtension
@@ -312,7 +312,7 @@
       - results.extensions[0]['provisioning_state'] != None
 
 - name: List extensions
-  azure_rm_virtualmachineextension_facts:
+  azure_rm_virtualmachinescalesetextension_facts:
     resource_group: "{{ resource_group }}"
     vmss_name: testVMSS{{ rpfx }}
   register: results
