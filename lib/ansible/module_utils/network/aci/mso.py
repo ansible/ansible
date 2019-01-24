@@ -268,6 +268,18 @@ class MSOModule(object):
             self.fail_json(msg='More than one object matches unique filter: {0}'.format(kwargs))
         return objs[0]
 
+    def lookup_schema(self, schema):
+        ''' Look up schema and return its id '''
+        if schema is None:
+            return schema
+
+        s = self.get_obj('schemas', displayName=schema)
+        if not s:
+            self.module.fail_json(msg="Schema '%s' is not a valid schema name." % schema)
+        if 'id' not in s:
+            self.module.fail_json(msg="Schema lookup failed for '%s': %s" % (schema, s))
+        return s['id']
+
     def lookup_domain(self, domain):
         ''' Look up a domain and return its id '''
         if domain is None:
@@ -275,9 +287,9 @@ class MSOModule(object):
 
         d = self.get_obj('auth/domains', key='domains', name=domain)
         if not d:
-            self.module.fail_json(msg="Domain '%s' is not valid." % domain)
+            self.module.fail_json(msg="Domain '%s' is not a valid domain name." % domain)
         if 'id' not in d:
-                self.module.fail_json(msg="Domain lookup failed for '%s': %s" % (domain, d))
+            self.module.fail_json(msg="Domain lookup failed for '%s': %s" % (domain, d))
         return d['id']
 
     def lookup_roles(self, roles):
@@ -289,7 +301,7 @@ class MSOModule(object):
         for role in roles:
             r = self.get_obj('roles', name=role)
             if not r:
-                self.module.fail_json(msg="Role '%s' is not valid." % role)
+                self.module.fail_json(msg="Role '%s' is not a valid role." % role)
             if 'id' not in r:
                 self.module.fail_json(msg="Role lookup failed for '%s': %s" % (role, r))
             ids.append(dict(roleId=r['id']))
@@ -355,6 +367,15 @@ class MSOModule(object):
                 self.module.fail_json(msg="Label lookup failed for '%s': %s" % (label, l))
             ids.append(l['id'])
         return ids
+
+    def filter_ref(self, schema_id, template, filter_name):
+        ''' Create a filterRef string '''
+        data = dict(
+            schema_id=schema_id,
+            template=template,
+            filter=filter_name,
+        )
+        return '/schemas/{schema_id}/templates/{template}/filters/{filter}'.format(**data)
 
     def make_reference(self, data, reftype, schema_id, template):
         ''' Create a reference from a dictionary '''
