@@ -46,6 +46,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+notes:
+- This module cannot create empty schemas (i.e. schemas without templates).
+  Use the M(mso_schema_template) to automatically create schemas with templates.
+seealso:
+- module: mso_schema_site
+- module: mso_schema_template
 extends_documentation_fragment: mso
 '''
 
@@ -126,7 +132,7 @@ def main():
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['schema']],
-            ['state', 'present', ['schema']],
+            ['state', 'present', ['schema', 'templates']],
         ],
     )
 
