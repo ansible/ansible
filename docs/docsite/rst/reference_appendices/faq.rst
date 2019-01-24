@@ -231,7 +231,7 @@ There are a few common errors that one might run into when trying to execute Ans
 
   To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
 
-When `pipelining = False` in `/etc/ansible/ansible.cfg` then Ansible modules are transfered in binary mode via sftp however execution of python fails with 
+* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with 
 
 .. error::
     SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
