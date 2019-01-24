@@ -13,9 +13,6 @@ import os
 import json
 import pytest
 
-sys.modules['XenAPI'] = importlib.import_module('units.module_utils.xenserver.FakeXenAPI')
-import XenAPI
-
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
 from ansible.module_utils import six
 from mock import MagicMock
@@ -37,8 +34,40 @@ def fake_ansible_module(request):
         return FakeAnsibleModule(params)
 
 
+@pytest.fixture(autouse=True)
+def XenAPI():
+    """Imports and returns fake XenAPI module."""
+
+    # Import of fake XenAPI module is wrapped by fixture so that it does not
+    # affect other unit tests which could potentialy also use XenAPI module.
+
+    # First we use importlib.import_module() to import the module and assign
+    # it to a local symbol.
+    fake_xenapi = importlib.import_module('units.module_utils.xenserver.FakeXenAPI')
+
+    # Now we populate Python module cache with imported fake module using the
+    # original module name (XenAPI). That way, any 'import XenAPI' statement
+    # will just load already imported fake module from the cache.
+    sys.modules['XenAPI'] = fake_xenapi
+
+    return fake_xenapi
+
+
+@pytest.fixture(autouse=True)
+def xenserver(XenAPI):
+    """Imports and returns xenserver module util."""
+
+    # Since we are wrapping fake XenAPI module inside a fixture, all modules
+    # that depend on it have to be imported inside a test function. To make
+    # this easier to handle and remove some code repetition, we wrap the import
+    # of xenserver module util with a fixture.
+    from ansible.module_utils import xenserver
+
+    return xenserver
+
+
 @pytest.fixture
-def mock_xenapi_failure(mocker):
+def mock_xenapi_failure(XenAPI, mocker):
     """
     Returns mock object that raises XenAPI.Failure on any XenAPI
     method call.

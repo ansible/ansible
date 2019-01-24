@@ -7,18 +7,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-fake_xenapi_refs = {
-    "sesion": "OpaqueRef:fake-xenapi-session-ref",
-    "pool": "OpaqueRef:fake-xenapi-pool-ref",
-    "host": "OpaqueRef:fake-xenapi-host-ref",
-    "sr": "OpaqueRef:fake-xenapi-sr-ref",
-    "vm": "OpaqueRef:fake-xenapi-vm-ref",
-    "vm_guest_metrics": "OpaqueRef:fake-xenapi-vm-guest-metrics-ref",
-    "task": "OpaqueRef:fake-xenapi-task-ref",
-    "VBD": "OpaqueRef:fake-xenapi-VBD-ref",
-    "VDI": "OpaqueRef:fake-xenapi-VDI-ref",
-    "VIF": "OpaqueRef:fake-xenapi-VIF-ref",
-}
+def fake_xenapi_ref(xenapi_class):
+    return "OpaqueRef:fake-xenapi-%s-ref" % xenapi_class
+
 
 testcase_bad_xenapi_refs = {
     "params": [

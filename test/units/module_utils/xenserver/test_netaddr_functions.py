@@ -10,14 +10,6 @@ __metaclass__ = type
 import pytest
 
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from ansible.module_utils.xenserver import (is_valid_mac_addr,
-                                            is_valid_ip_addr,
-                                            is_valid_ip_netmask,
-                                            is_valid_ip_prefix,
-                                            ip_prefix_to_netmask,
-                                            ip_netmask_to_prefix,
-                                            is_valid_ip6_addr,
-                                            is_valid_ip6_prefix)
 
 
 testcase_is_valid_mac_addr = [
@@ -144,48 +136,48 @@ testcase_is_valid_ip6_prefix = [
 
 
 @pytest.mark.parametrize('mac_addr, result', testcase_is_valid_mac_addr)
-def test_is_valid_mac_addr(mac_addr, result):
+def test_is_valid_mac_addr(xenserver, mac_addr, result):
     """Tests against examples of valid and invalid mac addresses."""
-    assert is_valid_mac_addr(mac_addr) is result
+    assert xenserver.is_valid_mac_addr(mac_addr) is result
 
 
 @pytest.mark.parametrize('ip_addr, result', testcase_is_valid_ip_addr)
-def test_is_valid_ip_addr(ip_addr, result):
+def test_is_valid_ip_addr(xenserver, ip_addr, result):
     """Tests against examples of valid and invalid ip addresses."""
-    assert is_valid_ip_addr(ip_addr) is result
+    assert xenserver.is_valid_ip_addr(ip_addr) is result
 
 
 @pytest.mark.parametrize('ip_netmask, result', testcase_is_valid_ip_netmask)
-def test_is_valid_ip_netmask(ip_netmask, result):
+def test_is_valid_ip_netmask(xenserver, ip_netmask, result):
     """Tests against examples of valid and invalid ip netmasks."""
-    assert is_valid_ip_netmask(ip_netmask) is result
+    assert xenserver.is_valid_ip_netmask(ip_netmask) is result
 
 
 @pytest.mark.parametrize('ip_prefix, result', testcase_is_valid_ip_prefix)
-def test_is_valid_ip_prefix(ip_prefix, result):
+def test_is_valid_ip_prefix(xenserver, ip_prefix, result):
     """Tests against examples of valid and invalid ip prefixes."""
-    assert is_valid_ip_prefix(ip_prefix) is result
+    assert xenserver.is_valid_ip_prefix(ip_prefix) is result
 
 
 @pytest.mark.parametrize('ip_prefix, ip_netmask', testcase_ip_prefix_to_netmask['params'], ids=testcase_ip_prefix_to_netmask['ids'])
-def test_ip_prefix_to_netmask(ip_prefix, ip_netmask):
+def test_ip_prefix_to_netmask(xenserver, ip_prefix, ip_netmask):
     """Tests ip prefix to netmask conversion."""
-    assert ip_prefix_to_netmask(ip_prefix) == ip_netmask
+    assert xenserver.ip_prefix_to_netmask(ip_prefix) == ip_netmask
 
 
 @pytest.mark.parametrize('ip_netmask, ip_prefix', testcase_ip_netmask_to_prefix['params'], ids=testcase_ip_netmask_to_prefix['ids'])
-def test_ip_netmask_to_prefix(ip_netmask, ip_prefix):
+def test_ip_netmask_to_prefix(xenserver, ip_netmask, ip_prefix):
     """Tests ip netmask to prefix conversion."""
-    assert ip_netmask_to_prefix(ip_netmask) == ip_prefix
+    assert xenserver.ip_netmask_to_prefix(ip_netmask) == ip_prefix
 
 
 @pytest.mark.parametrize('ip6_addr, result', testcase_is_valid_ip6_addr)
-def test_is_valid_ip6_addr(ip6_addr, result):
+def test_is_valid_ip6_addr(xenserver, ip6_addr, result):
     """Tests against examples of valid and invalid ip6 addresses."""
-    assert is_valid_ip6_addr(ip6_addr) is result
+    assert xenserver.is_valid_ip6_addr(ip6_addr) is result
 
 
 @pytest.mark.parametrize('ip6_prefix, result', testcase_is_valid_ip6_prefix)
-def test_is_valid_ip6_prefix(ip6_prefix, result):
+def test_is_valid_ip6_prefix(xenserver, ip6_prefix, result):
     """Tests against examples of valid and invalid ip6 prefixes."""
-    assert is_valid_ip6_prefix(ip6_prefix) is result
+    assert xenserver.is_valid_ip6_prefix(ip6_prefix) is result

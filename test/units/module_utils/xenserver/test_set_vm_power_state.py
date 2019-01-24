@@ -8,11 +8,9 @@ __metaclass__ = type
 
 
 import pytest
-import XenAPI
 
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from .common import fake_xenapi_refs, testcase_bad_xenapi_refs
-from ansible.module_utils.xenserver import set_vm_power_state
+from .common import fake_xenapi_ref, testcase_bad_xenapi_refs
 
 
 testcase_set_vm_power_state_bad_transitions = {
@@ -188,23 +186,23 @@ testcase_set_vm_power_state_transitions_async = {
 
 
 @pytest.mark.parametrize('vm_ref', testcase_bad_xenapi_refs['params'], ids=testcase_bad_xenapi_refs['ids'])
-def test_set_vm_power_state_bad_vm_ref(fake_ansible_module, vm_ref):
+def test_set_vm_power_state_bad_vm_ref(fake_ansible_module, xenserver, vm_ref):
     """Tests failure on bad vm_ref."""
     with pytest.raises(FailJsonException) as exc_info:
-        set_vm_power_state(fake_ansible_module, vm_ref, None)
+        xenserver.set_vm_power_state(fake_ansible_module, vm_ref, None)
 
     assert exc_info.value.kwargs['msg'] == "Cannot set VM power state. Invalid VM reference supplied!"
 
 
-def test_set_vm_power_state_xenapi_failure(mock_xenapi_failure, fake_ansible_module):
+def test_set_vm_power_state_xenapi_failure(mock_xenapi_failure, fake_ansible_module, xenserver):
     """Tests catching of XenAPI failures."""
     with pytest.raises(FailJsonException) as exc_info:
-        set_vm_power_state(fake_ansible_module, fake_xenapi_refs['vm'], "poweredon")
+        xenserver.set_vm_power_state(fake_ansible_module, fake_xenapi_ref('VM'), "poweredon")
 
     assert exc_info.value.kwargs['msg'] == "XAPI ERROR: %s" % mock_xenapi_failure[1]
 
 
-def test_set_vm_power_state_bad_power_state(mocker, fake_ansible_module):
+def test_set_vm_power_state_bad_power_state(mocker, fake_ansible_module, XenAPI, xenserver):
     """Tests failure on unsupported power state."""
     mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
 
@@ -215,7 +213,7 @@ def test_set_vm_power_state_bad_power_state(mocker, fake_ansible_module):
     mocked_xenapi.configure_mock(**mocked_returns)
 
     with pytest.raises(FailJsonException) as exc_info:
-        set_vm_power_state(fake_ansible_module, fake_xenapi_refs['vm'], "bad")
+        xenserver.set_vm_power_state(fake_ansible_module, fake_xenapi_ref('VM'), "bad")
 
     # Beside VM.get_power_state() no other method should have been
     # called additionally.
@@ -227,7 +225,7 @@ def test_set_vm_power_state_bad_power_state(mocker, fake_ansible_module):
 @pytest.mark.parametrize('power_state_desired, power_state_current, error_msg',
                          testcase_set_vm_power_state_bad_transitions['params'],
                          ids=testcase_set_vm_power_state_bad_transitions['ids'])
-def test_set_vm_power_state_bad_transition(mocker, fake_ansible_module, power_state_desired, power_state_current, error_msg):
+def test_set_vm_power_state_bad_transition(mocker, fake_ansible_module, XenAPI, xenserver, power_state_desired, power_state_current, error_msg):
     """Tests failure on bad power state transition."""
     mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
 
@@ -238,7 +236,7 @@ def test_set_vm_power_state_bad_transition(mocker, fake_ansible_module, power_st
     mocked_xenapi.configure_mock(**mocked_returns)
 
     with pytest.raises(FailJsonException) as exc_info:
-        set_vm_power_state(fake_ansible_module, fake_xenapi_refs['vm'], power_state_desired)
+        xenserver.set_vm_power_state(fake_ansible_module, fake_xenapi_ref('VM'), power_state_desired)
 
     # Beside VM.get_power_state() no other method should have been
     # called additionally.
@@ -250,14 +248,14 @@ def test_set_vm_power_state_bad_transition(mocker, fake_ansible_module, power_st
 @pytest.mark.parametrize('power_state, error_msg',
                          testcase_set_vm_power_state_task_timeout['params'],
                          ids=testcase_set_vm_power_state_task_timeout['ids'])
-def test_set_vm_power_state_task_timeout(mocker, fake_ansible_module, power_state, error_msg):
+def test_set_vm_power_state_task_timeout(mocker, fake_ansible_module, XenAPI, xenserver, power_state, error_msg):
     """Tests failure on async task timeout."""
     mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
 
     mocked_returns = {
         "VM.get_power_state.return_value": "Running",
-        "Async.VM.clean_shutdown.return_value": fake_xenapi_refs['task'],
-        "Async.VM.clean_reboot.return_value": fake_xenapi_refs['task'],
+        "Async.VM.clean_shutdown.return_value": fake_xenapi_ref('task'),
+        "Async.VM.clean_reboot.return_value": fake_xenapi_ref('task'),
     }
 
     mocked_xenapi.configure_mock(**mocked_returns)
@@ -265,7 +263,7 @@ def test_set_vm_power_state_task_timeout(mocker, fake_ansible_module, power_stat
     mocker.patch('ansible.module_utils.xenserver.wait_for_task', return_value="timeout")
 
     with pytest.raises(FailJsonException) as exc_info:
-        set_vm_power_state(fake_ansible_module, fake_xenapi_refs['vm'], power_state, timeout=1)
+        xenserver.set_vm_power_state(fake_ansible_module, fake_xenapi_ref('VM'), power_state, timeout=1)
 
     # Beside VM.get_power_state() only one of Async.VM.clean_shutdown or
     # Async.VM.clean_reboot should have been called additionally.
@@ -277,7 +275,7 @@ def test_set_vm_power_state_task_timeout(mocker, fake_ansible_module, power_stat
 @pytest.mark.parametrize('power_state_desired, power_state_current',
                          testcase_set_vm_power_state_no_transitions['params'],
                          ids=testcase_set_vm_power_state_no_transitions['ids'])
-def test_set_vm_power_state_no_transition(mocker, fake_ansible_module, power_state_desired, power_state_current):
+def test_set_vm_power_state_no_transition(mocker, fake_ansible_module, XenAPI, xenserver, power_state_desired, power_state_current):
     """Tests regular invocation without power state transition."""
     mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
 
@@ -287,7 +285,7 @@ def test_set_vm_power_state_no_transition(mocker, fake_ansible_module, power_sta
 
     mocked_xenapi.configure_mock(**mocked_returns)
 
-    result = set_vm_power_state(fake_ansible_module, fake_xenapi_refs['vm'], power_state_desired)
+    result = xenserver.set_vm_power_state(fake_ansible_module, fake_xenapi_ref('VM'), power_state_desired)
 
     # Beside VM.get_power_state() no other method should have been
     # called additionally.
@@ -302,6 +300,8 @@ def test_set_vm_power_state_no_transition(mocker, fake_ansible_module, power_sta
                          ids=testcase_set_vm_power_state_transitions['ids'])
 def test_set_vm_power_state_transition(mocker,
                                        fake_ansible_module,
+                                       XenAPI,
+                                       xenserver,
                                        power_state_desired,
                                        power_state_current,
                                        power_state_resulting,
@@ -315,7 +315,7 @@ def test_set_vm_power_state_transition(mocker,
 
     mocked_xenapi.configure_mock(**mocked_returns)
 
-    result = set_vm_power_state(fake_ansible_module, fake_xenapi_refs['vm'], power_state_desired, timeout=0)
+    result = xenserver.set_vm_power_state(fake_ansible_module, fake_xenapi_ref('VM'), power_state_desired, timeout=0)
 
     mocked_xenapi_method = mocked_xenapi
 
@@ -337,6 +337,8 @@ def test_set_vm_power_state_transition(mocker,
                          ids=testcase_set_vm_power_state_transitions_async['ids'])
 def test_set_vm_power_state_transition_async(mocker,
                                              fake_ansible_module,
+                                             XenAPI,
+                                             xenserver,
                                              power_state_desired,
                                              power_state_current,
                                              power_state_resulting,
@@ -349,14 +351,14 @@ def test_set_vm_power_state_transition_async(mocker,
 
     mocked_returns = {
         "VM.get_power_state.return_value": power_state_current,
-        "%s.return_value" % activated_xenapi_method: fake_xenapi_refs['task'],
+        "%s.return_value" % activated_xenapi_method: fake_xenapi_ref('task'),
     }
 
     mocked_xenapi.configure_mock(**mocked_returns)
 
     mocker.patch('ansible.module_utils.xenserver.wait_for_task', return_value="")
 
-    result = set_vm_power_state(fake_ansible_module, fake_xenapi_refs['vm'], power_state_desired, timeout=1)
+    result = xenserver.set_vm_power_state(fake_ansible_module, fake_xenapi_ref('VM'), power_state_desired, timeout=1)
 
     mocked_xenapi_method = mocked_xenapi
 
@@ -378,6 +380,8 @@ def test_set_vm_power_state_transition_async(mocker,
                          ids=testcase_set_vm_power_state_transitions['ids'])
 def test_set_vm_power_state_transition_check_mode(mocker,
                                                   fake_ansible_module,
+                                                  XenAPI,
+                                                  xenserver,
                                                   power_state_desired,
                                                   power_state_current,
                                                   power_state_resulting,
@@ -392,7 +396,7 @@ def test_set_vm_power_state_transition_check_mode(mocker,
     mocked_xenapi.configure_mock(**mocked_returns)
 
     fake_ansible_module.check_mode = True
-    result = set_vm_power_state(fake_ansible_module, fake_xenapi_refs['vm'], power_state_desired, timeout=0)
+    result = xenserver.set_vm_power_state(fake_ansible_module, fake_xenapi_ref('VM'), power_state_desired, timeout=0)
 
     mocked_xenapi_method = mocked_xenapi
 

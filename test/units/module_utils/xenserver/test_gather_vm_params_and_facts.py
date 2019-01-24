@@ -8,11 +8,9 @@ __metaclass__ = type
 
 
 import pytest
-import XenAPI
 
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
 from .common import testcase_bad_xenapi_refs
-from ansible.module_utils.xenserver import gather_vm_params, gather_vm_facts
 
 
 testcase_gather_vm_params_and_facts = {
@@ -30,22 +28,22 @@ testcase_gather_vm_params_and_facts = {
 
 
 @pytest.mark.parametrize('vm_ref', testcase_bad_xenapi_refs['params'], ids=testcase_bad_xenapi_refs['ids'])
-def test_gather_vm_params_bad_vm_ref(fake_ansible_module, vm_ref):
+def test_gather_vm_params_bad_vm_ref(fake_ansible_module, xenserver, vm_ref):
     """Tests return of empty dict on bad vm_ref."""
-    assert gather_vm_params(fake_ansible_module, vm_ref) == {}
+    assert xenserver.gather_vm_params(fake_ansible_module, vm_ref) == {}
 
 
-def test_gather_vm_facts_no_vm_params(fake_ansible_module):
+def test_gather_vm_facts_no_vm_params(fake_ansible_module, xenserver):
     """Tests return of empty facts dict when vm_params is not available"""
-    assert gather_vm_facts(fake_ansible_module, None) == {}
-    assert gather_vm_facts(fake_ansible_module, {}) == {}
+    assert xenserver.gather_vm_facts(fake_ansible_module, None) == {}
+    assert xenserver.gather_vm_facts(fake_ansible_module, {}) == {}
 
 
 @pytest.mark.parametrize('fixture_data_from_file',
                          testcase_gather_vm_params_and_facts['params'],
                          ids=testcase_gather_vm_params_and_facts['ids'],
                          indirect=True)
-def test_gather_vm_params_and_facts(mocker, fake_ansible_module, fixture_data_from_file):
+def test_gather_vm_params_and_facts(mocker, fake_ansible_module, XenAPI, xenserver, fixture_data_from_file):
     """Tests proper parsing of VM parameters and facts."""
     mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
 
@@ -74,4 +72,4 @@ def test_gather_vm_params_and_facts(mocker, fake_ansible_module, fixture_data_fr
 
     vm_ref = list(fixture_data_from_file[params_file]['VM'].keys())[0]
 
-    assert gather_vm_facts(fake_ansible_module, gather_vm_params(fake_ansible_module, vm_ref)) == fixture_data_from_file[facts_file]
+    assert xenserver.gather_vm_facts(fake_ansible_module, xenserver.gather_vm_params(fake_ansible_module, vm_ref)) == fixture_data_from_file[facts_file]

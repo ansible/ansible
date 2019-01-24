@@ -10,14 +10,13 @@ __metaclass__ = type
 import pytest
 
 from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-from ansible.module_utils.xenserver import xapi_to_module_vm_power_state, module_to_xapi_vm_power_state
 
 
-def test_xapi_to_module_vm_power_state_bad_power_state():
+def test_xapi_to_module_vm_power_state_bad_power_state(xenserver):
     """Tests that None is returned on bad power state."""
-    assert xapi_to_module_vm_power_state("bad") is None
+    assert xenserver.xapi_to_module_vm_power_state("bad") is None
 
 
-def test_module_to_xapi_vm_power_state_bad_power_state():
+def test_module_to_xapi_vm_power_state_bad_power_state(xenserver):
     """Tests that None is returned on bad power state."""
-    assert xapi_to_module_vm_power_state("bad") is None
+    assert xenserver.module_to_xapi_vm_power_state("bad") is None
