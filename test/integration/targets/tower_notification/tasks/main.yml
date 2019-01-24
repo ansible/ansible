@@ -142,7 +142,7 @@
     color: red
     rooms:
       - room-A
-    notify: my_channel
+    notify: yes
     state: present
   register: result
 

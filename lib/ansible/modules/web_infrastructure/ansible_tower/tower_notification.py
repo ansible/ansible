@@ -235,7 +235,7 @@ EXAMPLES = '''
     color: red
     rooms:
       - room-A
-    notify: my_channel
+    notify: yes
     state: present
     tower_config_file: "~/tower_cli.cfg"
 
@@ -303,8 +303,8 @@ def main():
         message_from=dict(required=False),
         api_url=dict(required=False),
         color=dict(required=False, choices=['yellow', 'green', 'red', 'purple', 'gray', 'random']),
-        rooms=dict(required=False),
-        notify=dict(required=False),
+        rooms=dict(required=False, type='list'),
+        notify=dict(required=False, type='bool'),
         url=dict(required=False),
         headers=dict(required=False, type='dict', default={}),
         server=dict(required=False),
