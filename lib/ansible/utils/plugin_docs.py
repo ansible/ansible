@@ -97,7 +97,7 @@ def add_fragments(doc, filename, fragment_loader):
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
     """
-    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the module_docs_fragments directory.
+    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
