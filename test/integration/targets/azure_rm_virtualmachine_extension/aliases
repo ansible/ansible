@@ -1,4 +1,4 @@
 cloud/azure
 shippable/azure/group5
 destructive
-azure_rm_virtualmachineextension
+azure_rm_virtualmachineextension_facts
