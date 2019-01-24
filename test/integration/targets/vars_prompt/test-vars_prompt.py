@@ -111,10 +111,9 @@ tests = [
          r'testhost.*ok=1']},
 
     # Test play unsafe toggle
-    # https://github.com/ansible/ansible/issues/37984
     {'playbook': 'unsafe.yml',
      'test_spec': [
-         [('prompting for variable:', '{{whole}}')],
+         [('prompting for variable:', '{{whole}}\r')],
          r'testhost.*ok=2']},
 ]
 
