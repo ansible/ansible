@@ -387,7 +387,7 @@ try {
     if ([system.uri]::IsWellFormedUriString($repo,[System.UriKind]::Absolute)) {
         # http/https repositories doesn't need Ssh handle
         # fix to avoid wrong usage of CheckSshKnownHosts CheckSshIdentity for http/https
-        Set-Attr $result.win_git "valid_url" "$repo is valid url"
+        Set-Attr $result "git_msg" "$repo is valid url"
     } else {
         CheckSshKnownHosts
         CheckSshIdentity
