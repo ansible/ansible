@@ -236,45 +236,57 @@ def main():
 def ensure_ip_address_present(nb, nb_endpoint, data):
     """
     :returns dict(ip_address, msg, changed): dictionary resulting of the request,
-    where 'prefix' is the serialized device fetched or newly created in Netbox
+    where 'ip_address' is the serialized ip fetched or newly created in Netbox
     """
     data = find_ids(nb, data)
     if not isinstance(data, dict):
         changed = False
         return {"msg": data, "changed": changed}
 
-    if data.get('vrf'):
-        if data.get("status"):
-            data["status"] = IP_ADDRESS_STATUS.get(data["status"].lower())
-        if data.get("role"):
-            data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
-
-        if not isinstance(data["vrf"], int):
-            raise ValueError("%s does not exist - Please create VRF" % (data["vrf"]))
-        else:
-            try:
-                ip_addr = nb_endpoint.get(address=data["address"], vrf_id=data['vrf'])
-            except ValueError:
-                changed = False
-                return {"msg": "Returned more than result", "changed": changed}
-
-    else:
-        try:
-            ip_addr = nb_endpoint.get(address=data["address"])
-        except ValueError:
-            changed = False
-            return {"msg": "Returned more than one result - Try specifying VRF.", "changed": changed}
+    try:
+        ip_addr = _search_ip(nb_endpoint, data)
+    except ValueError:
+        return _error_multiple_ip_results(data)
 
     if not ip_addr:
         ip_addr = nb_endpoint.create(data).serialize()
         changed = True
-        msg = "IP Addresses %s create" % (data["address"])
+        msg = "IP Addresses %s created" % (data["address"])
     else:
         ip_addr = ip_addr.serialize()
         changed = False
         msg = "IP Address %s already exists" % (data["address"])
 
     return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def _search_ip(nb_endpoint, data):
+    if data.get("vrf") and not isinstance(data["vrf"], int):
+        raise ValueError(
+            "%s does not exist - Please create VRF" % (data["vrf"])
+        )
+    if data.get("status"):
+        data["status"] = IP_ADDRESS_STATUS.get(data["status"].lower())
+    if data.get("role"):
+        data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
+
+    get_query_params = {"address": data["address"]}
+    if data.get("vrf"):
+        get_query_params["vrf_id"] = data["vrf"]
+
+    ip_addr = nb_endpoint.get(**get_query_params)
+    return ip_addr
+
+
+def _error_multiple_ip_results(data):
+    changed = False
+    if data.get("vrf"):
+        return {"msg": "Returned more than result", "changed": changed}
+    else:
+        return {
+            "msg": "Returned more than one result - Try specifying VRF.",
+            "changed": changed
+        }
 
 
 def ensure_ip_address_absent(nb, nb_endpoint, data):
@@ -286,18 +298,10 @@ def ensure_ip_address_absent(nb, nb_endpoint, data):
         changed = False
         return {"msg": data, "changed": changed}
 
-    if data.get('vrf'):
-        try:
-            ip_addr = nb_endpoint.get(address=data["address"], vrf_id=data['vrf'])
-        except ValueError:
-            changed = False
-            return {"msg": "Returned more than result", "changed": changed}
-
-    else:
-        try:
-            ip_addr = nb_endpoint.get(address=data["address"])
-        except ValueError:
-            return {"msg": "Returned more than one result - Try specifying VRF.", "changed": changed}
+    try:
+        ip_addr = _search_ip(nb_endpoint, data)
+    except ValueError:
+        return _error_multiple_ip_results(data)
 
     if ip_addr:
         ip_addr.delete()
