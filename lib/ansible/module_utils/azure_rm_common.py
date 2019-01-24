@@ -57,7 +57,7 @@ AZURE_API_PROFILES = {
         'ComputeManagementClient': dict(
             default_api_version='2018-10-01',
             resource_skus='2018-10-01',
-            disks='2018-10-01',
+            disks='2018-06-01',
             snapshots='2018-10-01',
             virtual_machine_run_commands='2018-10-01'
         ),
@@ -204,7 +204,7 @@ AZURE_PKG_VERSIONS = {
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
-        'expected_version': '4.3.1'
+        'expected_version': '4.4.0'
     },
     'ContainerInstanceManagementClient': {
         'package_name': 'containerinstance',
@@ -826,13 +826,13 @@ class AzureRMModuleBase(object):
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-03-30')
+                                                            api_version='2018-06-01')
         return self._compute_client
 
     @property
     def compute_models(self):
         self.log("Getting compute models")
-        return ComputeManagementClient.models("2017-03-30")
+        return ComputeManagementClient.models("2018-06-01")
 
     @property
     def dns_client(self):
