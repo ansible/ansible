@@ -33,9 +33,6 @@ options:
     name:
         description:
             - The name of the virtual machine extension.
-    tags:
-        description:
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -119,12 +116,6 @@ extensions:
             returned: always
             type: bool
             sample: true
-        tags:
-            description:
-                - Resource tags
-            returned: always
-            type: complex
-            sample: "{ mytag: abc }"
         provisioning_state:
             description:
                 - Provisioning state of the extension
@@ -157,9 +148,6 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
             ),
             name=dict(
                 type='str'
-            ),
-            tags=dict(
-                type='list'
             )
         )
         # store the results of the module operation
@@ -169,7 +157,6 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
         self.resource_group = None
         self.vmss_name = None
         self.name = None
-        self.tags = None
         super(AzureRMVirtualMachineScaleSetExtensionFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -194,7 +181,7 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine Extension.')
 
-        if response and self.has_tags(response.tags, self.tags):
+        if response:
             results.append(self.format_response(response))
 
         return results
@@ -211,8 +198,7 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
 
         if response is not None and response.value is not None:
             for item in response.value:
-                if self.has_tags(item.tags, self.tags):
-                    results.append(self.format_response(item))
+                results.append(self.format_response(item))
 
         return results
 
@@ -228,7 +214,6 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
             'type': d.get('type'),
             'settings': d.get('settings'),
             'auto_upgrade_minor_version': d.get('auto_upgrade_minor_version'),
-            'tags': d.get('tags', None),
             'provisioning_state': d.get('provisioning_state')
         }
         return d
