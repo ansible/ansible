@@ -184,7 +184,6 @@ class SourcesList(object):
             for n, valid, enabled, source, comment in sources:
                 if valid:
                     yield file, n, enabled, source, comment
-        raise StopIteration
 
     def _expand_path(self, filename):
         if '/' in filename:

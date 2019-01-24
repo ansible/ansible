@@ -1,0 +1,6 @@
+bugfixes:
+- consul_kv - minor error-handling bugfix under Python 3.7 (https://github.com/ansible/ansible/pull/47219)
+- cnos_backup - fixed syntax error (https://github.com/ansible/ansible/pull/47219)
+- cnos_image - fixed syntax error (https://github.com/ansible/ansible/pull/47219)
+- apt_repository - fixed failure under Python 3.7 (https://github.com/ansible/ansible/pull/47219)
+- netapp_e_storagepool - fixed failure under Python 3.7 (https://github.com/ansible/ansible/pull/47219)
