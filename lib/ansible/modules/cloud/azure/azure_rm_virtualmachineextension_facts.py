@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_computevirtualmachineextension_facts
+module: azure_rm_virtualmachineextension_facts
 version_added: "2.8"
 short_description: Get Azure Virtual Machine Extension facts.
 description:
@@ -47,13 +47,13 @@ author:
 
 EXAMPLES = '''
   - name: Get information on specific Virtual Machine Extension
-    azure_rm_computevirtualmachineextension_facts:
+    azure_rm_virtualmachineextension_facts:
       resource_group: myrg
       virtual_machine_name: myvm
       name: myextension
 
   - name: List installed Virtual Machine Extensions
-    azure_rm_computevirtualmachineextension_facts:
+    azure_rm_virtualmachineextension_facts:
       resource_group: myrg
       virtual_machine_name: myvm
 '''
@@ -136,7 +136,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.compute import ComputeManagementClient
     from msrest.serialization import Model
 except ImportError:
     # This is handled in azure_rm_common
@@ -166,7 +165,6 @@ class AzureRMVirtualMachineExtensionFacts(AzureRMModuleBase):
         self.results = dict(
             changed=False
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.virtual_machine_name = None
         self.name = None
@@ -176,8 +174,6 @@ class AzureRMVirtualMachineExtensionFacts(AzureRMModuleBase):
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(ComputeManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name is not None:
             self.results['extensions'] = self.get()
@@ -190,9 +186,9 @@ class AzureRMVirtualMachineExtensionFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.virtual_machine_extensions.get(resource_group_name=self.resource_group,
-                                                                       vm_name=self.virtual_machine_name,
-                                                                       vm_extension_name=self.name)
+            response = self.compute_client.virtual_machine_extensions.get(resource_group_name=self.resource_group,
+                                                                          vm_name=self.virtual_machine_name,
+                                                                          vm_extension_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine Extension.')
@@ -206,8 +202,8 @@ class AzureRMVirtualMachineExtensionFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.virtual_machine_extensions.list(resource_group_name=self.resource_group,
-                                                                        vm_name=self.virtual_machine_name)
+            response = self.compute_client.virtual_machine_extensions.list(resource_group_name=self.resource_group,
+                                                                           vm_name=self.virtual_machine_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine Extension.')
