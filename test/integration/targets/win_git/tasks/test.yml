@@ -29,6 +29,16 @@
 
 - name: clone repo using http
   block:
+    - name: Get stats of existing directory for http clone      
+      win_stat:
+       path: "{{ temp_path }}\\repo_http"
+      register: http_clone_path
+    
+    - name: remove any existing directory for http clone    
+      win_file:
+       name: "{{ temp_path }}\\repo_http"
+       state: absent
+
     - name: clone the http repo
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
