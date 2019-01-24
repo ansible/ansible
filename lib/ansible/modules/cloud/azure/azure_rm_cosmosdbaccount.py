@@ -90,6 +90,7 @@ options:
     is_virtual_network_filter_enabled:
         description:
             - Flag to indicate whether to enable/disable Virtual Network ACL rules.
+        type: bool
     enable_automatic_failover:
         description:
             - "Enables automatic failover of the write region in the rare event that the region is unavailable due to an outage. Automatic failover will
@@ -254,7 +255,7 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
                 type='str'
             ),
             is_virtual_network_filter_enabled=dict(
-                type='str'
+                type='bool'
             ),
             enable_automatic_failover=dict(
                 type='bool'
