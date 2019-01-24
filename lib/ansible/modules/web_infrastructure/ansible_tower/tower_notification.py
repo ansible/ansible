@@ -166,6 +166,16 @@ extends_documentation_fragment: tower
 
 
 EXAMPLES = '''
+- name: Add Slack notification
+  tower_notification:
+    name: slack notification
+    notification_type: slack
+    channels:
+      - general
+    token: cefda9e2be1f21d11cdd9452f5b7f97fda977f42
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+
 - name: Add webhook notification
   tower_notification:
     name: webhook notification
@@ -176,13 +186,65 @@ EXAMPLES = '''
     state: present
     tower_config_file: "~/tower_cli.cfg"
 
-- name: Add Slack notification
+- name: Add email notification
   tower_notification:
-    name: slack notification
-    notification_type: slack
-    channels:
-      - general
-    token: cefda9e2be1f21d11cdd9452f5b7f97fda977f42
+    name: email notification
+    notification_type: email
+    username: user
+    password: s3cr3t
+    sender: tower@example.com
+    recipients:
+      - user1@example.com
+    host: smtp.example.com
+    port: 25
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+
+- name: Add twilio notification
+  tower_notification:
+    name: notification4
+    notification_type: twilio
+    account_token: a_token
+    from_number: '+15551112222'
+    to_numbers:
+      - '+15553334444'
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+
+- name: Add PagerDuty notification
+  tower_notification:
+    name: notification5
+    notification_type: pagerduty
+    token: a_token
+    subdomain: sub
+    service_key: a_key
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+
+- name: Add HipChat notification
+  tower_notification:
+    name: notification6
+    notification_type: hipchat
+    token: a_token
+    message_from: user1
+    api_url: https://hipchat.example.com
+    color: red
+    rooms:
+      - room-A
+    notify: my_channel
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+
+- name: Add IRC notification
+  tower_notification:
+    name: notification7
+    notification_type: irc
+    password: s3cr3t
+    port: 8080
+    server: irc.example.com
+    nickname: tower
+    target:
+      - user1
     state: present
     tower_config_file: "~/tower_cli.cfg"
 
