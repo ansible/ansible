@@ -633,11 +633,10 @@ _PLUGIN_FILTERS = _load_plugin_filter()
 # doc fragments first
 fragment_loader = PluginLoader(
     'ModuleDocFragment',
-    'ansible.utils.module_docs_fragments',
-    os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
-    '',
+    'ansible.plugins.doc_fragments',
+    C.DOC_FRAGMENT_PLUGIN_PATH,
+    'doc_fragments',
 )
-
 
 action_loader = PluginLoader(
     'ActionModule',
