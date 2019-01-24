@@ -1087,7 +1087,6 @@ class Connection(ConnectionBase):
             elif method == 'scp':
                 scp = self.get_option('scp_executable')
 
-                # FIXME: shlex_quote breaks compat with Windows as single quote are not argv quotes on Windows
                 if sftp_action == 'get':
                     cmd = self._build_command(scp, u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
                 else:
@@ -1150,12 +1149,11 @@ class Connection(ConnectionBase):
             # Become method 'runas' is done in the wrapper that is executed,
             # need to disable sudoable so the bare_run is not waiting for a
             # prompt that will not occur
-            if sudoable:
-                sudoable = False
+            sudoable = False
 
             # Make sure our first command is to set the console encoding to
             # utf-8, this must be done to get unicode output chars instead of ?
-            cmd_parts = ["chcp.com", "65001", ">NUL", "2>&1", "&&"]
+            cmd_parts = ["chcp.com", "65001", self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]
             cmd_parts.extend(self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False))
             cmd = ' '.join(cmd_parts)
 

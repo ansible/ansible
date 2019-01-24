@@ -80,6 +80,9 @@ class ShellModule(ShellBase):
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'powershell'
 
+    _SHELL_REDIRECT_ALLNULL = '> $null'
+    _SHELL_AND = ';'
+
     env = dict()
 
     # We're being overly cautious about which keys to accept (more so than
