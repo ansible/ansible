@@ -251,6 +251,7 @@ EXAMPLES = '''
 - name: Delete notification
   tower_notification:
     name: old notification
+    notification_type: email
     state: absent
     tower_config_file: "~/tower_cli.cfg"
 '''

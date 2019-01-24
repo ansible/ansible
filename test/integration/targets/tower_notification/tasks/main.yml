@@ -15,6 +15,7 @@
 - name: Delete Slack notification
   tower_notification:
     name: notification1
+    notification_type: slack
     state: absent
   register: result
 
@@ -39,6 +40,7 @@
 - name: Delete webhook notification
   tower_notification:
     name: notification2
+    notification_type: webhook
     state: absent
   register: result
 
@@ -67,6 +69,7 @@
 - name: Delete email notification
   tower_notification:
     name: notification3
+    notification_type: email
     state: absent
   register: result
 
@@ -92,6 +95,7 @@
 - name: Delete twilio notification
   tower_notification:
     name: notification4
+    notification_type: twilio
     state: absent
   register: result
 
@@ -116,6 +120,7 @@
 - name: Delete PagerDuty notification
   tower_notification:
     name: notification5
+    notification_type: pagerduty
     state: absent
   register: result
 
@@ -144,6 +149,7 @@
 - name: Delete HipChat notification
   tower_notification:
     name: notification6
+    notification_type: hipchat
     state: absent
   register: result
 
@@ -171,6 +177,7 @@
 - name: Delete IRC notification
   tower_notification:
     name: notification7
+    notification_type: irc
     state: absent
   register: result
 
