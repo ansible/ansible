@@ -826,7 +826,7 @@ class AzureRMModuleBase(object):
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2018-10-01')
+                                                            api_version='2018-04-01')
         return self._compute_client
 
     @property
