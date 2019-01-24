@@ -61,10 +61,12 @@ function FindGit {
     param()
     $p = Find-Command "git.exe"
     if ($p -ne $null){
+        Set-Attr $result "git_msg" "Git path $p."
         return $p
     }
     $a = Find-Command "C:\Program Files\Git\bin\git.exe"
     if ($a -ne $null){
+        Set-Attr $result "git_msg" "Git path $a."
         return $a
     }
     Fail-Json -obj $result -message "git.exe is not installed. It must be installed (use chocolatey)"
@@ -269,7 +271,7 @@ function clone {
        $git_opts += $depth
     } 
 
-    Set-Attr $result "git_opts" "$git_opts"
+    #Set-Attr $result "git_opts" "$git_opts"
 
     #Only clone if $dest does not exist and not in check mode    
     if( -Not $check_mode) {    
