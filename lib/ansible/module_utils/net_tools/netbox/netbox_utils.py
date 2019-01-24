@@ -42,6 +42,7 @@ CONVERT_TO_ID = dict(
     nat_inside="ip_addresses",
     nat_outside="ip_addresses",
     platform="platforms",
+    prefix="prefixes",
     primary_ip="ip_addresses",
     primary_ip4="ip_addresses",
     primary_ip6="ip_addresses",
@@ -125,6 +126,17 @@ def find_ids(nb, data):
 
             if k == "interface":
                 query_id = nb_endpoint.get(**{"name": v["name"], "device": v["device"]})
+            elif k == "prefix":
+                query_params = {"prefix": v["prefix"]}
+                if data.get("vrf_id"):
+                    query_params["vrf_id"] = data["vrf_id"]
+                elif data.get("vrf"):
+                    vrf_id = nb.ipam.vrfs.get(**{"name": v["vrf"]})
+                    if not vrf_id:
+                        raise ValueError("%s does not exist - Please create VRF" % (data["vrf"]))
+                    query_params["vrf_id"] = vrf_id
+
+                query_id = nb_endpoint.prefixes.get(**query_params)
             elif k == "nat_inside":
                 if v.get("vrf"):
                     vrf_id = nb.ipam.vrfs.get(**{"name": v["vrf"]})

@@ -219,26 +219,52 @@ def main():
     nb_endpoint = getattr(nb_app, endpoint)
     norm_data = normalize_data(data)
     try:
-        if 'present' in state:
+        norm_data = _check_and_adapt_data(nb, norm_data)
+        if state == "present":
             return module.exit_json(
-                **ensure_ip_address_present(nb, nb_endpoint, norm_data)
+                **ensure_ip_address_present(nb_endpoint, norm_data)
+            )
+        elif state == "new":
+            if norm_data.get("address"):
+                return module.exit_json(
+                    **create_ip_address(nb_endpoint, norm_data)
+                )
+            else:
+                return module.exit_json(
+                    **get_new_available_ip_address(nb_app, norm_data)
+                )
+        elif state == "absent":
+            return module.exit_json(
+                **ensure_ip_address_absent(nb_endpoint, norm_data)
             )
         else:
-            return module.exit_json(
-                **ensure_ip_address_absent(nb, nb_endpoint, norm_data)
-            )
+            return module.fail_json(msg="Unvalid state %s" % state)
     except pynetbox.RequestError as e:
         return module.fail_json(msg=json.loads(e.error))
     except ValueError as e:
         return module.fail_json(msg=str(e))
 
 
-def ensure_ip_address_present(nb, nb_endpoint, data):
+def _check_and_adapt_data(nb, data):
+    data = find_ids(nb, data)
+
+    if data.get("vrf") and not isinstance(data["vrf"], int):
+        raise ValueError(
+            "%s does not exist - Please create VRF" % (data["vrf"])
+        )
+    if data.get("status"):
+        data["status"] = IP_ADDRESS_STATUS.get(data["status"].lower())
+    if data.get("role"):
+        data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
+
+    return data
+
+
+def ensure_ip_address_present(nb_endpoint, data):
     """
     :returns dict(ip_address, msg, changed): dictionary resulting of the request,
     where 'ip_address' is the serialized ip fetched or newly created in Netbox
     """
-    data = find_ids(nb, data)
     if not isinstance(data, dict):
         changed = False
         return {"msg": data, "changed": changed}
@@ -249,27 +275,16 @@ def ensure_ip_address_present(nb, nb_endpoint, data):
         return _error_multiple_ip_results(data)
 
     if not ip_addr:
-        ip_addr = nb_endpoint.create(data).serialize()
-        changed = True
-        msg = "IP Addresses %s created" % (data["address"])
+        return create_ip_address(nb_endpoint, data)
     else:
         ip_addr = ip_addr.serialize()
         changed = False
         msg = "IP Address %s already exists" % (data["address"])
 
-    return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+        return {"ip_address": ip_addr, "msg": msg, "changed": changed}
 
 
 def _search_ip(nb_endpoint, data):
-    if data.get("vrf") and not isinstance(data["vrf"], int):
-        raise ValueError(
-            "%s does not exist - Please create VRF" % (data["vrf"])
-        )
-    if data.get("status"):
-        data["status"] = IP_ADDRESS_STATUS.get(data["status"].lower())
-    if data.get("role"):
-        data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
-
     get_query_params = {"address": data["address"]}
     if data.get("vrf"):
         get_query_params["vrf_id"] = data["vrf"]
@@ -280,7 +295,7 @@ def _search_ip(nb_endpoint, data):
 
 def _error_multiple_ip_results(data):
     changed = False
-    if data.get("vrf"):
+    if "vrf" in data:
         return {"msg": "Returned more than result", "changed": changed}
     else:
         return {
@@ -289,11 +304,31 @@ def _error_multiple_ip_results(data):
         }
 
 
-def ensure_ip_address_absent(nb, nb_endpoint, data):
+def create_ip_address(nb_endpoint, data):
+    if not isinstance(data, dict):
+        changed = False
+        return {"msg": data, "changed": changed}
+
+    ip_addr = nb_endpoint.create(data).serialize()
+    changed = True
+    msg = "IP Addresses %s created" % (data["address"])
+
+    return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def get_new_available_ip_address(nb_app, data):
+    prefix = nb_app.prefixes.get(data["prefix"])
+    ip_addr = prefix.available_ips.create(data).serialize()
+    changed = True
+    msg = "IP Addresses %s created" % (ip_addr["address"])
+
+    return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def ensure_ip_address_absent(nb_endpoint, data):
     """
     :returns dict(msg, changed)
     """
-    data = find_ids(nb, data)
     if not isinstance(data, dict):
         changed = False
         return {"msg": data, "changed": changed}
