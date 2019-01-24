@@ -721,6 +721,12 @@ class DevuanHostname(Hostname):
     strategy_class = DebianStrategy
 
 
+class RaspbianHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Raspbian gnu/linux'
+    strategy_class = DebianStrategy
+
+
 class GentooHostname(Hostname):
     platform = 'Linux'
     distribution = 'Gentoo base system'
