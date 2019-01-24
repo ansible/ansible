@@ -247,10 +247,12 @@ There are a few common errors that one might run into when trying to execute Ans
 
     zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
 
-.. error::
+* Start of python fails with ``The module libpython2.7.so was not found.``
+
+  .. error::
     EE3501S The module libpython2.7.so was not found.
 
-On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
+  On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
 
     zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
 
