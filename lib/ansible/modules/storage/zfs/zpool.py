@@ -82,7 +82,6 @@ options:
     default: present
 author:
 - Remy Mudingay (@rmudingay)
-#- Stephane Armanet
 '''
 
 EXAMPLES = r'''
@@ -228,7 +227,7 @@ class Zpool(object):
             return False
 
     def dev_exists(self):
-        cmd = [self.zpool_cmd, "list -v", self.name, "|", self.zpool_awk, "'$0 !~ /mirror|spare|log|cache/ { print $1 }'"]
+        cmd = [self.zpool_cmd, "list -v"]
         (rc, out, err) = self.module.run_command(' '.join(cmd), use_unsafe_shell=True)
         if rc == 0:
             return out
@@ -236,10 +235,13 @@ class Zpool(object):
             return False
 
     def opt_exists(self):
-        cmd = [self.zpool_cmd, "get all ", self.name, "|", self.zpool_grep, "auto | ", self.zpool_awk, "'{ print $2 $3 }'"]
+        cmd = self.zpool_cmd, "get all ", self.name
         (rc, out, err) = self.module.run_command(' '.join(cmd), use_unsafe_shell=True)
         if rc == 0:
-            return out
+            col1 = [col.split()[1] for col in out.splitlines()]
+            col2 = [col.split()[2] for col in out.splitlines()]
+            output = col1 + col2
+            return output
         else:
             return False
 
