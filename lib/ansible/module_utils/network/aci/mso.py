@@ -99,7 +99,7 @@ def mso_subnet_spec():
     return dict(
         ip=dict(type='str', required=True),
         description=dict(type='str'),
-        scope=dict(type='str'),
+        scope=dict(type='str', choices=['private', 'public']),
         shared=dict(type='bool'),
         no_default_gateway=dict(type='bool'),
     )
