@@ -63,7 +63,7 @@ options:
   parent:
     description:
       - Allow to create subgroups
-      - Must contain the full path of the parent.
+      - Id or Full path of parent group in the form of group/name
     version_added: "2.8"
   visibility:
     description:
@@ -142,6 +142,8 @@ except Exception:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+
+from ansible.module_utils.gitlab import findGroup
 
 
 class GitLabGroup(object):
@@ -242,19 +244,9 @@ class GitLabGroup(object):
     @param name Name of the groupe
     @param full_path Complete path of the Group including parent group path. <parent_path>/<group_path>
     '''
-    def findGroup(self, name, full_path):
-        groups = self._gitlab.groups.list(search=name)
-        for group in groups:
-            if (group.full_path == full_path):
-                return group
-
-    '''
-    @param name Name of the groupe
-    @param full_path Complete path of the Group including parent group path. <parent_path>/<group_path>
-    '''
-    def existsGroup(self, name, full_path):
+    def existsGroup(self, project_identifier):
         # When group/user exists, object will be stored in self.groupObject.
-        group = self.findGroup(name, full_path)
+        group = findGroup(self._gitlab, project_identifier)
         if group:
             self.groupObject = group
             return True
@@ -298,11 +290,8 @@ def main():
     group_path = module.params['path']
     description = module.params['description']
     state = module.params['state']
-    parent_path = module.params['parent']
+    parent_identifier = module.params['parent']
     group_visibility = module.params['visibility']
-
-    parent_name = parent_path.split('/').pop()
-    group_full_path = os.path.join(parent_path, group_path)
 
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
@@ -322,7 +311,16 @@ def main():
         group_path = group_name.replace(" ", "_")
 
     gitlab_group = GitLabGroup(module, gitlab_instance)
-    group_exists = gitlab_group.existsGroup(group_name, group_full_path)
+
+    parent_group = None
+    if parent_identifier:
+        parent_group = findGroup(gitlab_instance, parent_identifier)
+        if not parent_group:
+            module.fail_json(msg="Failed create Gitlab group: Parent group doesn't exists")
+
+        group_exists = gitlab_group.existsGroup(parent_group.full_path + '/' + group_path)
+    else:
+        group_exists = gitlab_group.existsGroup(group_path)
 
     if state == 'absent':
         if group_exists:
@@ -332,12 +330,6 @@ def main():
             module.exit_json(changed=False, result="Group deleted or does not exists")
 
     if state == 'present':
-        parent_group = None
-        if parent_path:
-            parent_group = gitlab_group.findGroup(parent_name, parent_path)
-            if not parent_group:
-                module.fail_json(msg="Failed create Gitlab group: Parent group doesn't exists")
-
         if gitlab_group.createOrUpdateGroup(group_name, parent_group, {
                                             "path": group_path,
                                             "description": description,

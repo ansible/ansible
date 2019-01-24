@@ -71,7 +71,7 @@ options:
       - ssh_key
   group:
     description:
-      - The full path of the group.
+      - Id or Full path of parent group in the form of group/name
       - Add user as an member to this group.
   access_level:
     description:
@@ -163,6 +163,7 @@ user:
 '''
 
 import os
+import re
 
 try:
     import gitlab
@@ -172,6 +173,8 @@ except Exception:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+
+from ansible.module_utils.gitlab import findGroup
 
 
 class GitLabUser(object):
@@ -244,16 +247,6 @@ class GitLabUser(object):
         return None
 
     '''
-    @param name Name of the groupe
-    @param full_path Complete path of the Group including parent group path. <parent_path>/<group_path>
-    '''
-    def findGroup(self, name, full_path):
-        groups = self._gitlab.groups.list(search=name)
-        for group in groups:
-            if (group.full_path == full_path):
-                return group
-
-    '''
     @param user User object
     @param sshkey_name Name of the ssh key
     '''
@@ -317,7 +310,7 @@ class GitLabUser(object):
     '''
     def assignUserToGroup(self, user, group_path, access_level):
         group_name = group_path.split('/').pop()
-        group = self.findGroup(group_name, group_path)
+        group = findGroup(self._gitlab, group_path)
 
         if self._module.check_mode:
             return True
@@ -431,7 +424,7 @@ def main():
         supports_check_mode=True
     )
 
-    server_url = module.params['server_url']
+    server_url = re.sub('/api.*', '', module.params['server_url'])
     verify_ssl = module.params['verify_ssl']
     login_user = module.params['login_user']
     login_password = module.params['login_password']

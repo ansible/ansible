@@ -37,6 +37,8 @@ options:
       - Your private token to interact with the GitLab API.
     required: True
     type: str
+    aliases:
+      - private_token
   verify_ssl:
     description:
       - When using https if SSL certificate needs to be verified.
@@ -74,6 +76,8 @@ options:
       - The GitLab URL including the API v4 path and http or https.
     required: False
     type: str
+    aliases:
+      - url
   active:
     description:
       - Define if the runners is immediately active after creation.
@@ -291,11 +295,11 @@ class GitLabRunner(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, type='str'),
+            server_url=dict(required=True, type='str', aliases=['url']),
             verify_ssl=dict(required=False, default=True, type='bool', aliases=['validate_certs']),
             login_user=dict(required=False, no_log=True, type='str'),
             login_password=dict(required=False, no_log=True, type='str'),
-            login_token=dict(required=False, no_log=True, type='str'),
+            login_token=dict(required=False, no_log=True, type='str', aliases=['private_token']),
             description=dict(required=True, type='str', aliases=['name']),
             active=dict(required=False, type='bool', default=True),
             tag_list=dict(required=False, type='list', default=[]),

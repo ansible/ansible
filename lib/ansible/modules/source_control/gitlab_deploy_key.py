@@ -24,6 +24,8 @@ options:
       - Url of Gitlab server, with protocol (http or https).
     required: true
     version_added: "2.8"
+    aliases:
+      - api_url
   verify_ssl:
     description:
       - When using https if SSL certificate needs to be verified.
@@ -45,9 +47,11 @@ options:
     description:
       - Gitlab token for logging in.
     version_added: "2.8"
+    aliases:
+      - private_token
   project:
     description:
-      - Full path of project in the form of group/name
+      - Id or Full path of project in the form of group/name
     required: true
   title:
     description:
@@ -126,6 +130,7 @@ deployKey:
 '''
 
 import os
+import re
 
 try:
     import gitlab
@@ -135,6 +140,8 @@ except Exception:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+
+from ansible.module_utils.gitlab import findProject
 
 
 class GitLabDeployKey(object):
@@ -228,16 +235,6 @@ class GitLabDeployKey(object):
             return True
         return False
 
-    '''
-    @param name Name of the project
-    @param full_path Full path of the project
-    '''
-    def findProject(self, name, full_path):
-        projects = self._gitlab.projects.list(search=name, as_list=False)
-        for project in projects:
-            if (project.path_with_namespace == full_path):
-                return self._gitlab.projects.get(project.id)
-
     def deleteDeployKey(self):
         if self._module.check_mode:
                 self._module.exit_json(changed=True, result="DeployKey should have been deleted.")
@@ -248,11 +245,11 @@ class GitLabDeployKey(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True),
+            server_url=dict(required=True, aliases=['api_url']),
             verify_ssl=dict(required=False, default=True, type='bool', aliases=['enable_ssl_verification', 'validate_certs']),
             login_user=dict(required=False, no_log=True),
             login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True),
+            login_token=dict(required=False, no_log=True, aliases=['private_token']),
             state=dict(default="present", choices=["present", 'absent']),
             project=dict(required=True),
             key=dict(required=True),
@@ -272,18 +269,16 @@ def main():
         supports_check_mode=True
     )
 
-    server_url = module.params['server_url']
+    server_url = re.sub('/api.*', '', module.params['server_url'])
     verify_ssl = module.params['verify_ssl']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']
     state = module.params['state']
-    project_path = module.params['project']
+    project_identifier = module.params['project']
     key_title = module.params['title']
     key_keyfile = module.params['key']
     key_can_push = module.params['can_push']
-
-    project_name = project_path.split('/').pop()
 
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
@@ -300,10 +295,10 @@ def main():
 
     gitlab_deploy_key = GitLabDeployKey(module, gitlab_instance)
 
-    project = gitlab_deploy_key.findProject(project_name, project_path)
+    project = findProject(gitlab_instance, project_identifier)
 
     if project is None:
-        module.fail_json(msg="Failed to create project: project %s doesn't exists" % project_path)
+        module.fail_json(msg="Failed to create project: project %s doesn't exists" % project_identifier)
 
     deployKey_exists = gitlab_deploy_key.existsDeployKey(project, key_title)
 

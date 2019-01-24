@@ -3,6 +3,7 @@
 # (c) 2018, Marcus Watkins <marwatk@marcuswatkins.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import
 import json
 
 from ansible.module_utils.urls import fetch_url
@@ -35,3 +36,21 @@ def request(module, api_url, project, path, access_token, private_token, rawdata
         return True, json.loads(content)
     else:
         return False, str(status) + ": " + content
+
+
+def findProject(gitlab_instance, identifier):
+    try:
+        project = gitlab_instance.projects.get(identifier)
+    except Exception as e:
+        return None
+
+    return project
+
+
+def findGroup(gitlab_instance, identifier):
+    try:
+        project = gitlab_instance.groups.get(identifier)
+    except Exception as e:
+        return None
+
+    return project

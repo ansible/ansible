@@ -45,7 +45,7 @@ options:
       - Gitlab token for logging in.
   group:
     description:
-      - The full path of the group of which this projects belongs to.
+      - Id or The full path of the group of which this projects belongs to.
   name:
     description:
       - The name of the project
@@ -164,6 +164,8 @@ except Exception:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+from ansible.module_utils.gitlab import findGroup, findProject
+
 
 class GitLabProject(object):
     def __init__(self, module, gitlab_instance):
@@ -255,32 +257,12 @@ class GitLabProject(object):
         return project.delete()
 
     '''
-    @param name Name of the groupe
-    @param full_path Complete path of the Group including parent group path. <parent_path>/<group_path>
-    '''
-    def findGroup(self, name, full_path):
-        groups = self._gitlab.groups.list(search=name)
-        for group in groups:
-            if (group.full_path == full_path):
-                return group
-
-    '''
     @param namespace User/Group object
     @param name Name of the project
     '''
-    def findProject(self, namespace, name):
-        projects = namespace.projects.list(search=name)
-        for project in projects:
-            if (project.name == name):
-                return self._gitlab.projects.get(project.id)
-
-    '''
-    @param namespace User/Group object
-    @param name Name of the project
-    '''
-    def existsProject(self, namespace, name):
+    def existsProject(self, namespace, path):
         # When project exists, object will be stored in self.projectObject.
-        project = self.findProject(namespace, name)
+        project = findProject(self._gitlab, namespace.full_path + '/' + path)
         if project:
             self.projectObject = project
             return True
@@ -325,7 +307,7 @@ def main():
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']
-    group_path = module.params['group']
+    group_identifier = module.params['group']
     project_name = module.params['name']
     project_path = module.params['path']
     project_description = module.params['description']
@@ -336,9 +318,6 @@ def main():
     visibility = module.params['visibility']
     import_url = module.params['import_url']
     state = module.params['state']
-
-    if group_path:
-        group_name = group_path.split('/').pop()
 
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
@@ -359,15 +338,15 @@ def main():
 
     gitlab_project = GitLabProject(module, gitlab_instance)
 
-    if group_path:
-        namespace = gitlab_project.findGroup(group_name, group_path)
+    if group_identifier:
+        namespace = findGroup(gitlab_instance, group_identifier)
         if namespace is None:
-            module.fail_json(msg="Failed to create project: group %s doesn't exists" % group_path)
+            module.fail_json(msg="Failed to create project: group %s doesn't exists" % group_identifier)
 
-        project_exists = gitlab_project.existsProject(namespace, project_name)
+        project_exists = gitlab_project.existsProject(namespace, project_path)
     else:
         namespace = gitlab_instance.users.list(username=gitlab_instance.user.username)[0]
-        project_exists = gitlab_project.existsProject(namespace, project_name)
+        project_exists = gitlab_project.existsProject(namespace, project_path)
 
     if state == 'absent':
         if project_exists:
