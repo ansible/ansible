@@ -86,12 +86,6 @@ extensions:
             returned: always
             type: str
             sample: myextension
-        location:
-            description:
-                - Location
-            returned: always
-            type: str
-            sample: eastus
         publisher:
             description:
                 - Extension publisher
@@ -203,19 +197,18 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
         return results
 
     def format_response(self, item):
+        id_template = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Compute/virtualMachineScaleSets/{2}/extensions/{3}"
         d = item.as_dict()
         d = {
-            'id': d.get('id', None),
+            'id': id_template.format(self.subscription_id, self.resource_group, self.vmss_name, d.get('name')),
             'resource_group': self.resource_group,
             'vmss_name': self.vmss_name,
-            'location': d.get('location'),
             'name': d.get('name'),
             'publisher': d.get('publisher'),
             'type': d.get('type'),
             'settings': d.get('settings'),
             'auto_upgrade_minor_version': d.get('auto_upgrade_minor_version'),
-            'provisioning_state': d.get('provisioning_state'),
-            'all': d
+            'provisioning_state': d.get('provisioning_state')
         }
         return d
 

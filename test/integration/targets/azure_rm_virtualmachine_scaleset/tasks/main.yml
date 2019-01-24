@@ -304,7 +304,6 @@
       - results.extensions[0]['resource_group'] != None
       - results.extensions[0]['vmss_name'] != None
       - results.extensions[0]['name'] != None
-      - results.extensions[0]['location'] != None
       - results.extensions[0]['publisher'] != None
       - results.extensions[0]['type'] != None
       - results.extensions[0]['settings'] != None
@@ -324,7 +323,6 @@
       - results.extensions[0]['resource_group'] != None
       - results.extensions[0]['vmss_name'] != None
       - results.extensions[0]['name'] != None
-      - results.extensions[0]['location'] != None
       - results.extensions[0]['publisher'] != None
       - results.extensions[0]['type'] != None
       - results.extensions[0]['settings'] != None
