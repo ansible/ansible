@@ -132,10 +132,12 @@ options:
       description:
         - HipChat rooms to send the notification to. Required if I(notification_type=hipchat).
       required: False
+      type: list
     notify:
       description:
         - The notify channel trigger. Required if I(notification_type=hipchat).
       required: False
+      type: bool
     url:
       description:
         - The target URL. Required if I(notification_type=webhook).
