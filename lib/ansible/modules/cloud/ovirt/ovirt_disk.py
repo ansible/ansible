@@ -75,6 +75,12 @@ options:
             - Specify format of the disk.
             - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
         choices: ['raw', 'cow']
+    content_type:
+        description:
+            - Specify if the disk is a data disk or ISO image
+        choices: ['data', 'iso']
+        default: 'data'
+        version_added: "2.8"
     sparse:
         required: False
         type: bool
@@ -247,6 +253,18 @@ EXAMPLES = '''
     storage_domain: data
     description: somedescriptionhere
     quota_id: "{{ ovirt_quotas[0]['id'] }}"
+
+# Upload an ISO image
+# Since Ansible 2.8
+-  ovirt_disk:
+     name: myiso
+     upload_image_path: /path/to/iso/image
+     storage_domain: data
+     size: 4 GiB
+     wait: true
+     bootable: true
+     format: raw
+     content_type: iso
 '''
 
 
@@ -448,6 +466,9 @@ class DisksModule(BaseModule):
             format=otypes.DiskFormat(
                 self._module.params.get('format')
             ) if self._module.params.get('format') else None,
+            content_type=otypes.DiskContentType(
+                self._module.params.get('content_type')
+            ) if self._module.params.get('content_type') else None,
             sparse=self._module.params.get(
                 'sparse'
             ) if self._module.params.get(
@@ -593,6 +614,7 @@ def main():
         profile=dict(default=None),
         quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
+        content_type=dict(default='data', choices=['data', 'iso']),
         sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
