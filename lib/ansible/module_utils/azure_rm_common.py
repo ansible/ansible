@@ -57,7 +57,7 @@ AZURE_API_PROFILES = {
         'ComputeManagementClient': dict(
             default_api_version='2018-10-01',
             resource_skus='2018-10-01',
-            disks='2018-10-01',
+            disks='2018-06-01',
             snapshots='2018-10-01',
             virtual_machine_run_commands='2018-10-01'
         ),
