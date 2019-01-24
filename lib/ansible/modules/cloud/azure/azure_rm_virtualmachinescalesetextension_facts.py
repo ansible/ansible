@@ -189,7 +189,7 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
         try:
             response = self.compute_client.virtual_machine_scale_set_extensions.get(resource_group_name=self.resource_group,
                                                                                     vm_scale_set_name=self.vmss_name,
-                                                                                    vm_extension_name=self.name)
+                                                                                    vmss_extension_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine Extension.')
