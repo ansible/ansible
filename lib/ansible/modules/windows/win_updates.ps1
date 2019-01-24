@@ -16,22 +16,27 @@ $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched"
 $blacklist = Get-AnsibleParam -obj $params -name "blacklist" -type "list"
 $whitelist = Get-AnsibleParam -obj $params -name "whitelist" -type "list"
+$serverselection = Get-AnsibleParam -obj $params -name "serverselection" -type "int"
 
-# For backwards compatibility
-Function Get-CategoryMapping ($category_name) {
-    switch -exact ($category_name) {
-        "CriticalUpdates"   {return "Critical Updates"}
-        "DefinitionUpdates" {return "Definition Updates"}
-        "DeveloperKits"     {return "Developer Kits"}
-        "FeaturePacks"      {return "Feature Packs"}
-        "SecurityUpdates"   {return "Security Updates"}
-        "ServicePacks"      {return "Service Packs"}
-        "UpdateRollups"     {return "Update Rollups"}
-        default             {return $category_name}
+Function Get-CategoryGuid($category_name) {
+    $guid = switch -exact ($category_name) {
+        "Application" {"5C9376AB-8CE6-464A-B136-22113DD69801"}
+        "Connectors" {"434DE588-ED14-48F5-8EED-A15E09A991F6"}
+        "CriticalUpdates" {"E6CF1350-C01B-414D-A61F-263D14D133B4"}
+        "DefinitionUpdates" {"E0789628-CE08-4437-BE74-2495B842F43B"}
+        "DeveloperKits" {"E140075D-8433-45C3-AD87-E72345B36078"}
+        "FeaturePacks" {"B54E7D24-7ADD-428F-8B75-90A396FA584F"}
+        "Guidance" {"9511D615-35B2-47BB-927F-F73D8E9260BB"}
+        "SecurityUpdates" {"0FA1201D-4330-4FA8-8AE9-B877473B6441"}
+        "ServicePacks" {"68C5B0A3-D1A6-4553-AE49-01D3A7827828"}
+        "Tools" {"B4832BD8-E735-4761-8DAF-37F882276DAB"}
+        "UpdateRollups" {"28BC880E-0592-4CBF-8F95-C79B17911D5F"}
+        "Updates" {"CD5FFD1E-E932-4E3A-BF74-18BF0B1BBD83"}
+        default { Fail-Json -message "Unknown category_name $category_name, must be one of (Application,Connectors,CriticalUpdates,DefinitionUpdates,DeveloperKits,FeaturePacks,Guidance,SecurityUpdates,ServicePacks,Tools,UpdateRollups,Updates)" }
     }
+    return $guid
 }
-
-$category_names = $category_names | ForEach-Object { Get-CategoryMapping -category_name $_ }
+$category_guids = $category_names | ForEach-Object { Get-CategoryGuid -category_name $_ }
 
 $common_functions = {
     Function Write-DebugLog($msg) {
@@ -55,11 +60,12 @@ $update_script_block = {
 
     Function Start-Updates {
         Param(
-            $category_names,
+            $category_guids,
             $log_path,
             $state,
             $blacklist,
-            $whitelist
+            $whitelist,
+            $serverselection
         )
 
         $result = @{
@@ -86,12 +92,30 @@ $update_script_block = {
             return $result
         }
 
-        Write-DebugLog -msg "Searching for updates to install"
+        if ($serverselection -in 0..3) {
+            Write-DebugLog -msg "Setting Windows Update searcher to use alternate update source (serverselection: $serverselection)..."
+            try {
+                $searcher.ServerSelection = $serverselection
+            } catch {
+                $result.failed = $true
+                $result.msg = "Failed to update Windows Update search source: $($_.Exception.Message)"
+                return $result
+            }
+       }
+
+        # OR is only allowed at the top-level, so we have to repeat base criteria inside
+        # FUTURE: change this to client-side filtered?
+        $criteria_base = "IsInstalled = 0"
+        $criteria_list = $category_guids | ForEach-Object { "($criteria_base AND CategoryIds contains '$_') " }
+        $criteria = [string]::Join(" OR", $criteria_list)
+        Write-DebugLog -msg "Search criteria: $criteria"
+
+        Write-DebugLog -msg "Searching for updates to install in category Ids $category_guids..."
         try {
-            $search_result = $searcher.Search("IsInstalled = 0")
+            $search_result = $searcher.Search($criteria)
         } catch {
             $result.failed = $true
-            $result.msg = "Failed to search for updates: $($_.Exception.Message)"
+            $result.msg = "Failed to search for updates with criteria '$criteria': $($_.Exception.Message)"
             return $result
         }
         Write-DebugLog -msg "Found $($search_result.Updates.Count) updates"
@@ -112,10 +136,10 @@ $update_script_block = {
                 kb = $update.KBArticleIDs
                 id = $update.Identity.UpdateId
                 installed = $false
-                categories = @($update.Categories | ForEach-Object { $_.Name })
             }
 
-            # validate update again blacklist/whitelist/post_category_names/hidden
+            # validate update again blacklist/whitelist
+            $skipped = $false
             $whitelist_match = $false
             foreach ($whitelist_entry in $whitelist) {
                 if ($update_info.title -imatch $whitelist_entry) {
@@ -131,51 +155,32 @@ $update_script_block = {
             }
             if ($whitelist.Length -gt 0 -and -not $whitelist_match) {
                 Write-DebugLog -msg "Skipping update $($update_info.id) - $($update_info.title) as it was not found in the whitelist"
-                $update_info.filtered_reason = "whitelist"
-                $result.filtered_updates[$update_info.id] = $update_info
-                continue
+                $skipped = $true
             }
 
-            $blacklist_match = $false
-            foreach ($blacklist_entry in $blacklist) {
-                if ($update_info.title -imatch $blacklist_entry) {
-                    $blacklist_match = $true
-                    break
+            foreach ($kb in $update_info.kb) {
+                if ("KB$kb" -imatch $blacklist_entry) {
+                    $kb_match = $true
                 }
-                foreach ($kb in $update_info.kb) {
-                    if ("KB$kb" -imatch $blacklist_entry) {
-                        $blacklist_match = $true
+                foreach ($blacklist_entry in $blacklist) {
+                    $kb_match = $false
+                    foreach ($kb in $update_info.kb) {
+                        if ("KB$kb" -imatch $blacklist_entry) {
+                            $kb_match = $true
+                        }
+                    }
+                    if ($kb_match -or $update_info.title -imatch $blacklist_entry) {
+                        Write-DebugLog -msg "Skipping update $($update_info.id) - $($update_info.title) as it was found in the blacklist"
+                        $skipped = $true
                         break
                     }
                 }
             }
-            if ($blacklist_match) {
-                Write-DebugLog -msg "Skipping update $($update_info.id) - $($update_info.title) as it was found in the blacklist"
-                $update_info.filtered_reason = "blacklist"
+            if ($skipped) {
                 $result.filtered_updates[$update_info.id] = $update_info
                 continue
             }
 
-            if ($update.IsHidden) {
-                Write-DebugLog -msg "Skipping update $($update_info.title) as it was hidden"
-                $update_info.filtered_reason = "skip_hidden"
-                $result.filtered_updates[$update_info.id] = $update_info
-                continue
-            }
-
-            $category_match = $false
-            foreach ($match_cat in $category_names) {
-                if ($update_info.categories -ieq $match_cat) {
-                    $category_match = $true
-                    break
-                }
-            }
-            if ($category_names.Length -gt 0 -and -not $category_match) {
-                Write-DebugLog -msg "Skipping update $($update_info.id) - $($update_info.title) as it was not found in the category names filter"
-                $update_info.filtered_reason = "category_names"
-                $result.filtered_updates[$update_info.id] = $update_info
-                continue
-            }
 
             if (-not $update.EulaAccepted) {
                 Write-DebugLog -msg "Accepting EULA for $($update_info.id)"
@@ -186,6 +191,11 @@ $update_script_block = {
                     $result.msg = "Failed to accept EULA for update $($update_info.id) - $($update_info.title)"
                     return $result
                 }
+            }
+
+            if ($update.IsHidden) {
+                Write-DebugLog -msg "Skipping hidden update $($update_info.title)"
+                continue
             }
 
             Write-DebugLog -msg "Adding update $($update_info.id) - $($update_info.title)"
@@ -219,7 +229,7 @@ $update_script_block = {
                 $result.msg = "A reboot is required before more updates can be installed"
                 return $result
             }
-            Write-DebugLog -msg "No reboot is pending..."    
+            Write-DebugLog -msg "No reboot is pending..."
         } else {
             # no updates to install exit here
             return $result
@@ -278,8 +288,8 @@ $update_script_block = {
         }
 
         Write-DebugLog -msg "Installing updates..."
-        # install as a batch so the reboot manager will suppress intermediate reboots
 
+        # install as a batch so the reboot manager will suppress intermediate reboots
         Write-DebugLog -msg "Creating installer object..."
         try {
             $installer = $session.CreateUpdateInstaller()
@@ -383,6 +393,7 @@ $update_script_block = {
 }
 
 Function Start-Natively($common_functions, $script) {
+
     $runspace_pool = [RunspaceFactory]::CreateRunspacePool()
     $runspace_pool.Open()
 
@@ -396,12 +407,13 @@ Function Start-Natively($common_functions, $script) {
         # add the update script block and required parameters
         $ps_pipeline.AddStatement().AddScript($script) > $null
         $ps_pipeline.AddParameter("arguments", @{
-            category_names = $category_names
+            category_guids = $category_guids
             log_path = $log_path
             state = $state
             blacklist = $blacklist
             whitelist = $whitelist
             check_mode = $check_mode
+            serverselection = $serverselection
         }) > $null
 
         $output = $ps_pipeline.Invoke()
@@ -441,13 +453,12 @@ Function Remove-ScheduledJob($name) {
             $task_to_stop.Stop()
         }
 
-        <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job 
-        and/or polling will block forever, since the killed job object in the parent 
+        <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job
+        and/or polling will block forever, since the killed job object in the parent
         session doesn't know it's been killed :( #>
         Unregister-ScheduledJob -Name $name
     }
 }
-
 Function Start-AsScheduledTask($common_functions, $script) {
     $job_name = "ansible-win-updates"
     Remove-ScheduledJob -name $job_name
@@ -457,12 +468,13 @@ Function Start-AsScheduledTask($common_functions, $script) {
         Name = $job_name
         ArgumentList = @(
             @{
-                category_names = $category_names
+                category_guids = $category_guids
                 log_path = $log_path
                 state = $state
                 blacklist = $blacklist
                 whitelist = $whitelist
                 check_mode = $check_mode
+                serverselection = $serverselection
             }
         )
         ErrorAction = "Stop"
@@ -521,7 +533,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
         $ret.Output = $job.Output.job_output # sub-object returned, can only be accessed as a property for some reason
     }
 
-    try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling... 
+    try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling...
         Unregister-ScheduledJob -Name $job_name -Force -ErrorAction Continue
     } catch {
         Write-DebugLog "Error unregistering job after execution: $($_.Exception.ToString()) $($_.ScriptStackTrace)"
@@ -560,4 +572,3 @@ if ($wua_available) {
 }
 
 Exit-Json -obj $result
-
