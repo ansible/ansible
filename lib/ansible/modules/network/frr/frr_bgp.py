@@ -322,8 +322,8 @@ commands:
   sample:
     - router bgp 64496
     - bgp router-id 192.0.2.1
-    - neighbor 192.51.100.1 remote-as 64497 
-    - neighbor 192.51.100.1 timers 120 360 
+    - neighbor 192.51.100.1 remote-as 64497
+    - neighbor 192.51.100.1 timers 120 360
     - neighbor 198.51.100.2 remote-as 64498
     - address-family ipv4 unicast
     - redistribute ospf 223 metric 10
