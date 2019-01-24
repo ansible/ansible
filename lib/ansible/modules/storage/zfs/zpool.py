@@ -215,8 +215,6 @@ class Zpool(object):
         self.l2arc = l2arc
         self.changed = False
         self.zpool_cmd = module.get_bin_path('zpool', True)
-        self.zpool_grep = module.get_bin_path('grep', True)
-        self.zpool_awk = module.get_bin_path('awk', True)
 
     def exists(self):
         cmd = [self.zpool_cmd, 'list', self.name]
