@@ -1,7 +1,8 @@
 #!/usr/bin/python
-# (c) 2018, Marcus Watkins <marwatk@marcuswatkins.net>
+# Copyright: (c) 2019, Guillaume Martinez (guillaume.lunik@gmail.com)
+# Copyright: (c) 2018, Marcus Watkins <marwatk@marcuswatkins.net>
 # Based on code:
-# (c) 2013, Phillip Gentry <phillip@cx.com>
+# Copyright: (c) 2013, Phillip Gentry <phillip@cx.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
