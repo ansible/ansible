@@ -229,7 +229,7 @@ There are a few common errors that one might run into when trying to execute Ans
 
 * Version 2.7.6 of python for z/OS will not work with Ansible because it represents strings internally as EBCDIC.
 
-To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ascii.  Version 2.7.13 is verified to work.
+  To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
 
 When `pipelining = False` in `/etc/ansible/ansible.cfg` then Ansible modules are transfered in binary mode via sftp however execution of python fails with 
 
