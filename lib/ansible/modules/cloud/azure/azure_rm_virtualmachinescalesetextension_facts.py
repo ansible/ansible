@@ -214,7 +214,8 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
             'type': d.get('type'),
             'settings': d.get('settings'),
             'auto_upgrade_minor_version': d.get('auto_upgrade_minor_version'),
-            'provisioning_state': d.get('provisioning_state')
+            'provisioning_state': d.get('provisioning_state'),
+            'all': d
         }
         return d
 
