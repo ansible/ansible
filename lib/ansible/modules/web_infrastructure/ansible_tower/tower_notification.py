@@ -154,10 +154,11 @@ options:
       description:
         - The IRC nickname. Required if I(notification_type=irc).
       required: False
-    target:
+    targets:
       description:
         - The destination channels or users. Required if I(notification_type=irc).
       required: False
+      type: list
     state:
       description:
         - Desired state of the resource.
@@ -247,7 +248,7 @@ EXAMPLES = '''
     notification_type: irc
     nickname: tower
     password: s3cr3t
-    target:
+    targets:
       - user1
     port: 8080
     server: irc.example.com

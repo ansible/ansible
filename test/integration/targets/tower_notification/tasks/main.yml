@@ -167,7 +167,7 @@
     notification_type: irc
     nickname: tower
     password: s3cr3t
-    target:
+    targets:
       - user1
     port: 8080
     server: irc.example.com
