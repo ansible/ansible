@@ -294,7 +294,7 @@ def del_facl(path, acl_tag, acl_qualifier=None):
     if acl_tag not in ('u', 'g', 'o', 'm'):
         raise ValueError('acl_tag must be one of "u", "g", "o", or "m"')
 
-    if not acl_qualifier:
+    if acl_qualifier in (None, ''):
         if acl_tag == 'u':
             raise ValueError('acl_qualifier must be set to a username or userid when acl_tag is "u"')
         if acl_tag == 'g':
