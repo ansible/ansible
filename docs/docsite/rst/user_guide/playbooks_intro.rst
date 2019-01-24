@@ -250,7 +250,7 @@ When running the playbook, which runs top to bottom, hosts with failed tasks are
 taken out of the rotation for the entire playbook.  If things fail, simply correct the playbook file and rerun.
 
 The goal of each task is to execute a module, with very specific arguments.
-Variables, as mentioned above, can be used in arguments to modules.
+Variables can be used in arguments to modules.
 
 Modules should be idempotent, that is, running a module multiple times
 in a sequence should have the same effect as running it just once. One
