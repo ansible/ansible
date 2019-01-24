@@ -100,7 +100,8 @@ $result = @{
 }
 if ($state -in @("present", "pure")) {
     $result.added = @()
-} elseif ($state -in @("absent", "pure")) {
+}
+if ($state -in @("absent", "pure")) {
     $result.removed = @()
 }
 
