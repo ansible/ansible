@@ -239,7 +239,7 @@ There are a few common errors that one might run into when trying to execute Ans
 To fix it set `pipelining = True` in `/etc/ansible/ansible.cfg`.
 
   .. error::
-    /usr/bin/python: EDC5129I No such file or directory
+      /usr/bin/python: EDC5129I No such file or directory
 
 To fix this set the path to the python installation in your inventory like so::
 
