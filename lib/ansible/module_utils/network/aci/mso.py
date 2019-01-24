@@ -87,6 +87,24 @@ def mso_argument_spec():
     )
 
 
+def mso_reference_spec():
+    return dict(
+        name=dict(type='str', required=True),
+        schema=dict(type='str'),
+        template=dict(type='str'),
+    )
+
+
+def mso_subnet_spec():
+    return dict(
+        ip=dict(type='str', required=True),
+        description=dict(type='str'),
+        scope=dict(type='str'),
+        shared=dict(type='bool'),
+        no_default_gateway=dict(type='bool'),
+    )
+
+
 class MSOModule(object):
 
     def __init__(self, module):
@@ -104,6 +122,7 @@ class MSOModule(object):
         self.sent = dict()
 
         # debug output
+        self.has_modified = False
         self.filter_string = ''
         self.method = None
         self.path = None
@@ -177,11 +196,19 @@ class MSOModule(object):
         self.response = info['msg']
         self.status = info['status']
 
+        # self.result['info'] = info
+
+        # Get change status from HTTP headers
+        if 'modified' in info:
+            self.has_modified = True
+            if info['modified'] == 'false':
+                self.result['changed'] = False
+            elif info['modified'] == 'true':
+                self.result['changed'] = True
+
         # 200: OK, 201: Created, 202: Accepted, 204: No Content
         if self.status in (200, 201, 202, 204):
             output = resp.read()
-#            if self.method in ('DELETE', 'PATCH', 'POST', 'PUT') and self.status in (200, 201, 204):
-#                self.result['changed'] = True
             if output:
                 return json.loads(output)
 
@@ -194,9 +221,13 @@ class MSOModule(object):
         # 500: Internal Server Error, 501: Not Implemented
         elif self.status >= 400:
             try:
-                payload = json.loads(resp.read())
-            except Exception:
-                payload = json.loads(info['body'])
+                output = resp.read()
+                payload = json.loads(output)
+            except (ValueError, AttributeError):
+                try:
+                    payload = json.loads(info['body'])
+                except Exception:
+                    self.fail_json(msg='MSO Error:', data=data, info=info)
             if 'code' in payload:
                 self.fail_json(msg='MSO Error {code}: {message}'.format(**payload), data=data, info=info, payload=payload)
             else:
@@ -209,8 +240,14 @@ class MSOModule(object):
         found = []
         objs = self.request(path, method='GET')
 
+        if objs == {}:
+            return found
+
         if key is None:
             key = path
+
+        if key not in objs:
+            self.fail_json(msg="Key '%s' missing from data", data=objs)
 
         for obj in objs[key]:
             for kw_key, kw_value in kwargs.items():
@@ -273,6 +310,18 @@ class MSOModule(object):
             ids.append(dict(siteId=s['id'], securityDomains=[]))
         return ids
 
+    def lookup_tenant(self, tenant):
+        ''' Look up a tenant and return its id '''
+        if tenant is None:
+            return tenant
+
+        t = self.get_obj('tenants', key='tenants', name=tenant)
+        if not t:
+            self.module.fail_json(msg="Tenant '%s' is not valid." % tenant)
+        if 'id' not in t:
+                self.module.fail_json(msg="Tenant lookup failed for '%s': %s" % (tenant, t))
+        return t['id']
+
     def lookup_users(self, users):
         ''' Look up users and return their ids '''
         if users is None:
@@ -307,17 +356,72 @@ class MSOModule(object):
             ids.append(l['id'])
         return ids
 
-    def sanitize(self, updates, collate=False, required_keys=None):
+    def make_reference(self, data, reftype, schema_id, template):
+        ''' Create a reference from a dictionary '''
+        # Removes entry from payload
+        if data is None:
+            return None
+
+        if data.get('schema') is not None:
+            schema_obj = self.get_obj('schemas', displayName=data['schema'])
+            if not schema_obj:
+                self.fail_json(msg="Referenced schema '{schema}' in {reftype}ref does not exist".format(reftype=reftype, **data))
+            schema_id = schema_obj['id']
+
+        if data.get('template') is not None:
+            template = data['template']
+
+        refname = '%sName' % reftype
+
+        return {
+            refname: data['name'],
+            'schemaId': schema_id,
+            'templateName': template,
+        }
+
+    def make_subnets(self, data):
+        ''' Create a subnets list from input '''
+        if data is None:
+            return None
+
+        subnets = []
+        for subnet in data:
+            subnets.append(dict(
+                ip=subnet['ip'],
+                description=subnet.get('description', subnet['ip']),
+                scope=subnet.get('scope', 'private'),
+                shared=subnet.get('shared', False),
+                noDefaultGateway=subnet.get('no_default_gateway', False),
+            ))
+
+        return subnets
+
+    def sanitize(self, updates, collate=False, required=None, unwanted=None):
         ''' Clean up unset keys from a request payload '''
-        if required_keys is None:
-            required_keys = []
+        if required is None:
+            required = []
+        if unwanted is None:
+            unwanted = []
         self.proposed = deepcopy(self.existing)
         self.sent = deepcopy(self.existing)
+
+        for key in self.existing:
+            # Remove References
+            if key.endswith('Ref'):
+                del(self.proposed[key])
+                del(self.sent[key])
+                continue
+
+            # Removed unwanted keys
+            elif key in unwanted:
+                del(self.proposed[key])
+                del(self.sent[key])
+                continue
 
         # Clean up self.sent
         for key in updates:
             # Always retain 'id'
-            if key in required_keys:
+            if key in required:
                 pass
 
             # Remove unspecified values
@@ -344,7 +448,8 @@ class MSOModule(object):
         if self.params['state'] in ('absent', 'present'):
             if self.params['output_level'] in ('debug', 'info'):
                 self.result['previous'] = self.previous
-            if self.previous != self.existing:
+            # FIXME: Modified header only works for PATCH
+            if not self.has_modified and self.previous != self.existing:
                 self.result['changed'] = True
 
         # Return the gory details when we need it
@@ -360,7 +465,7 @@ class MSOModule(object):
 
         self.result['current'] = self.existing
 
-        if self.module._diff:
+        if self.module._diff and self.result['changed'] is True:
             self.result['diff'] = dict(
                 before=self.previous,
                 after=self.existing,
@@ -375,7 +480,8 @@ class MSOModule(object):
         if self.params['state'] in ('absent', 'present'):
             if self.params['output_level'] in ('debug', 'info'):
                 self.result['previous'] = self.previous
-            if self.previous != self.existing:
+            # FIXME: Modified header only works for PATCH
+            if not self.has_modified and self.previous != self.existing:
                 self.result['changed'] = True
 
         # Return the gory details when we need it
