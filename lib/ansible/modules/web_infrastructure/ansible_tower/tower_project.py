@@ -62,6 +62,11 @@ options:
         - Before an update to the local repository before launching a job with this project.
       type: bool
       default: 'no'
+    job_timeout:
+      description:
+        - The timeout before which a project is not is not checked for an update.
+      type: int
+      default: 0
     organization:
       description:
         - Primary key of organization for project.
@@ -108,7 +113,7 @@ def main():
         scm_delete_on_update=dict(type='bool', default=False),
         scm_update_on_launch=dict(type='bool', default=False),
         local_path=dict(),
-
+        job_timeout=dict(type='int', default=0),
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
@@ -127,6 +132,7 @@ def main():
     scm_clean = module.params.get('scm_clean')
     scm_delete_on_update = module.params.get('scm_delete_on_update')
     scm_update_on_launch = module.params.get('scm_update_on_launch')
+    job_timeout = module.params.get('job_timeout')
     state = module.params.get('state')
 
     json_output = {'project': name, 'state': state}
@@ -161,6 +167,7 @@ def main():
                                         scm_branch=scm_branch, scm_clean=scm_clean, credential=scm_credential,
                                         scm_delete_on_update=scm_delete_on_update,
                                         scm_update_on_launch=scm_update_on_launch,
+                                        job_template=job_template,
                                         create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
