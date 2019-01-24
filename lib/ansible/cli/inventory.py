@@ -39,6 +39,25 @@ INTERNAL_VARS = frozenset(['ansible_diff_mode',
                            'omit',
                            'playbook_dir', ])
 
+BOX_DRAWINGS = {
+    'ascii': {
+        'light_horizontal': '-',
+        'light_left_and_heavy_right': '-',
+        'light_up_and_right': '`',
+        'light_vertical': '|',
+        'light_vertical_and_right': '+',
+        'right_heavy_and_left_down_light': '+',
+    },
+    'unicode': {
+        'light_horizontal': '\u2500',
+        'light_left_and_heavy_right': '\u257c',
+        'light_up_and_right': '\u2514',
+        'light_vertical_and_right': '\u251c',
+        'light_vertical': '\u2502',
+        'right_heavy_and_left_down_light': '\u252e',
+    },
+}
+
 
 class InventoryCLI(CLI):
     ''' used to display or dump the configured inventory as Ansible sees it '''
@@ -81,6 +100,8 @@ class InventoryCLI(CLI):
                                help='Use TOML format instead of default JSON, ignored for --graph')
         self.parser.add_option("--vars", action="store_true", default=False, dest='show_vars',
                                help='Add vars to graph display, ignored unless used with --graph')
+        self.parser.add_option("-u", "--unicode", action="store_true", default=False, dest='use_unicode',
+                               help='Use unicode symbols for the tree drawing, ignored unless used with --graph')
 
         # list
         self.parser.add_option("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
@@ -245,34 +266,111 @@ class InventoryCLI(CLI):
             if x in dump and not dump[x]:
                 del dump[x]
 
-    @staticmethod
-    def _show_vars(dump, depth):
+    def _show_vars(self, dump, depth, levels):
         result = []
-        InventoryCLI._remove_internal(dump)
+
+        self._remove_internal(dump)
+
         if context.CLIARGS['show_vars']:
-            for (name, val) in sorted(dump.items()):
-                result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
+            sorted_vars = sorted(dump.items())
+
+            for item in sorted_vars:
+                levels[-1] = (item == sorted_vars[-1])
+
+                result.append(self._graph_name(
+                    '%s%s{ %s = %s }' % (
+                        self._get_symbol('light_horizontal') * 2,
+                        self._get_symbol('light_left_and_heavy_right'),
+                        item[0], item[1]),
+                    depth, levels))
+
         return result
 
     @staticmethod
-    def _graph_name(name, depth=0):
+    def _get_symbol(name):
+        ret = None
+
+        if context.CLIARGS['use_unicode']:
+            box_charset = 'unicode'
+        else:
+            box_charset = 'ascii'
+
+        if name in BOX_DRAWINGS[box_charset]:
+            ret = BOX_DRAWINGS[box_charset][name]
+
+        return ret
+
+    def _graph_name(self, name, depth=0, levels=None):
+        ret = ''
+
+        if levels is None:
+            levels = []
+
         if depth:
-            name = "  |" * (depth) + "--%s" % name
-        return name
+            levels_len = len(levels)
 
-    def _graph_group(self, group, depth=0):
+            for i, last in enumerate(levels):
+                if i < levels_len - 1:
+                    if last:
+                        ret += "   "
+                    else:
+                        ret += "  %s" % self._get_symbol('light_vertical')
+                else:
+                    if last:
+                        ret += "  %s%s" % (self._get_symbol('light_up_and_right'), name)
+                    else:
+                        ret += "  %s%s" % (self._get_symbol('light_vertical_and_right'), name)
+        else:
+            ret = name
 
-        result = [self._graph_name('@%s:' % group.name, depth)]
+        return ret
+
+    def _graph_group(self, group, depth=0, levels=None):
+        if levels is None:
+            levels = []
+
+        if group.child_groups or group.hosts or self._get_group_variables(group):
+            last_deco_bit = self._get_symbol('right_heavy_and_left_down_light')
+        else:
+            last_deco_bit = self._get_symbol('light_left_and_heavy_right')
+
+        decorated_group_name = '%s%s @%s:' % (self._get_symbol('light_horizontal') * 2, last_deco_bit, group.name)
+        result = [self._graph_name(decorated_group_name, depth, levels)]
         depth = depth + 1
-        for kid in sorted(group.child_groups, key=attrgetter('name')):
-            result.extend(self._graph_group(kid, depth))
+        levels.append(None)
+
+        sorted_child_groups = sorted(group.child_groups, key=attrgetter('name'))
+
+        for kid in sorted_child_groups:
+            if kid == sorted_child_groups[-1] and not self._get_group_variables(group):
+                levels[-1] = True
+            else:
+                levels[-1] = False
+
+            result.extend(self._graph_group(kid, depth, list(levels)))
 
         if group.name != 'all':
-            for host in sorted(group.hosts, key=attrgetter('name')):
-                result.append(self._graph_name(host.name, depth))
-                result.extend(self._show_vars(host.get_vars(), depth + 1))
+            sorted_hosts = sorted(group.hosts, key=attrgetter('name'))
 
-        result.extend(self._show_vars(self._get_group_variables(group), depth))
+            for host in sorted_hosts:
+                levels[-1] = (host == sorted_hosts[-1])
+
+                host_vars = dict(host.get_vars())
+                self._remove_internal(host_vars)
+
+                if host_vars:
+                    last_deco_bit = self._get_symbol('right_heavy_and_left_down_light')
+                else:
+                    last_deco_bit = self._get_symbol('light_left_and_heavy_right')
+
+                decorated_host_name = "%s%s %s" % (
+                    self._get_symbol('light_horizontal') * 2,
+                    last_deco_bit,
+                    host.name)
+                result.append(self._graph_name(decorated_host_name, depth, levels))
+                result.extend(self._show_vars(host.get_vars(), depth + 1, levels + [False]))
+
+        result.extend(self._show_vars(self._get_group_variables(group), depth, levels))
 
         return result
 
