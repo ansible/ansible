@@ -176,13 +176,13 @@ class AzureRMVirtualMachineExtensionFacts(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         if self.name is not None:
-            self.results['extensions'] = self.get()
+            self.results['extensions'] = self.get_extensions()
         else:
-            self.results['extensions'] = self.list()
+            self.results['extensions'] = self.list_extensions()
 
         return self.results
 
-    def get(self):
+    def get_extensions(self):
         response = None
         results = []
         try:
@@ -198,7 +198,7 @@ class AzureRMVirtualMachineExtensionFacts(AzureRMModuleBase):
 
         return results
 
-    def list(self):
+    def list_extensions(self):
         response = None
         results = []
         try:
