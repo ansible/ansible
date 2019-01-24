@@ -190,8 +190,8 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
         except CloudError as e:
             self.log('Could not get facts for Virtual Machine Extension.')
 
-        if response is not None and response.value is not None:
-            for item in response.value:
+        if response is not None:
+            for item in response:
                 results.append(self.format_response(item))
 
         return results
