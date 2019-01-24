@@ -151,7 +151,7 @@
         - appliance
         - switch
       timezone: America/Chicago
-      disable_my_meraki: yes
+      enable_my_meraki: no
     delegate_to: localhost
     register: create_net_combined
 
@@ -161,7 +161,7 @@
       state: present
       org_name: '{{test_org_name}}'
       net_name: IntTestNetworkCombined
-      disable_my_meraki: no
+      enable_my_meraki: yes
     delegate_to: localhost
     register: enable_meraki_com
 
@@ -171,7 +171,7 @@
       state: present
       org_name: '{{test_org_name}}'
       net_name: IntTestNetworkCombined
-      disable_remote_status_page: no
+      enable_remote_status_page: no
     delegate_to: localhost
     register: disable_remote_status
 
@@ -188,7 +188,7 @@
       state: present
       org_name: '{{test_org_name}}'
       net_name: IntTestNetworkCombined
-      disable_remote_status_page: yes
+      enable_remote_status_page: yes
     delegate_to: localhost
     register: enable_remote_status
 
@@ -206,8 +206,8 @@
       state: present
       org_name: '{{test_org_name}}'
       net_name: IntTestNetworkCombined
-      disable_my_meraki: no
-      disable_remote_status_page: yes
+      enable_my_meraki: no
+      enable_remote_status_page: yes
     delegate_to: localhost
     register: status_exclusivity
     ignore_errors: yes

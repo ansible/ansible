@@ -69,15 +69,15 @@ options:
         type: bool
         version_added: '2.9'
     disable_my_meraki:
-        description: >
+        description:
             - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
             U[wired.meraki.com](wired.meraki.com))
         type: bool
         version_added: '2.7'
     disable_remote_status_page:
-        description: >
+        description:
             - Disables access to the device status page (U(http://device LAN IP)).
-            - Can only be set if disableMyMerakiCom is set to false.
+            - Can only be set if C(disable_my_meraki:) is set to C(no).
         type: bool
         version_added: '2.8'
 
@@ -221,9 +221,9 @@ def main():
         timezone=dict(type='str'),
         net_name=dict(type='str', aliases=['name', 'network']),
         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
-        disable_my_meraki=dict(type='bool'),
         enable_vlans=dict(type='bool'),
-        disable_remote_status_page=dict(type='bool'),
+        enable_my_meraki=dict(type='bool'),
+        enable_remote_status_page=dict(type='bool'),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -259,8 +259,8 @@ def main():
     if not meraki.params['net_name'] and not meraki.params['net_id']:
         if meraki.params['enable_vlans']:
             meraki.fail_json(msg="The parameter 'enable_vlans' requires 'net_name' or 'net_id' to be specified")
-    if meraki.params['disable_my_meraki'] is False and meraki.params['disable_remote_status_page'] is True:
-        meraki.fail_json(msg='disable_my_meraki must be true when setting disable_remote_status_page')
+    if meraki.params['enable_my_meraki'] is True and meraki.params['enable_remote_status_page'] is False:
+        meraki.fail_json(msg='enable_my_meraki must be true when setting enable_remote_status_page')
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -279,10 +279,16 @@ def main():
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:
             payload['timeZone'] = meraki.params['timezone']
-        if meraki.params['disable_my_meraki'] is not None:
-            payload['disableMyMerakiCom'] = meraki.params['disable_my_meraki']
-        if meraki.params['disable_remote_status_page'] is not None:
-            payload['disableRemoteStatusPage'] = meraki.params['disable_remote_status_page']
+        if meraki.params['enable_my_meraki'] is not None:
+            if meraki.params['enable_my_meraki'] is True:
+                payload['disableMyMerakiCom'] = False
+            else:
+                payload['disableMyMerakiCom'] = True
+        if meraki.params['enable_remote_status_page'] is not None:
+            if meraki.params['enable_remote_status_page'] is True:
+                payload['disableRemoteStatusPage'] = False
+            else:
+                payload['disableRemoteStatusPage'] = True
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
