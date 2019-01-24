@@ -80,7 +80,7 @@ class Task(Base, Conditional, Taggable, Become):
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=10)
-    _register = FieldAttribute(isa='string')
+    _register = FieldAttribute(isa='string', static=True)
     _retries = FieldAttribute(isa='int', default=3)
     _until = FieldAttribute(isa='list', default=list)
 
