@@ -614,7 +614,7 @@ def main():
         profile=dict(default=None),
         quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
-        content_type=dict(default='data', choices=['data','iso']),
+        content_type=dict(default='data', choices=['data', 'iso']),
         sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
