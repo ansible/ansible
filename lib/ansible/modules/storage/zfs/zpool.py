@@ -300,7 +300,7 @@ def main():
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             raid_level=dict(type='str', required=False, choices=['raid0', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3']),
-            vdevs=dict(aliases='vdev', type='int', require=False),
+            vdevs=dict(aliases=['vdev'], type='int', require=False),
             devices=dict(type='list'),
             spare=dict(type='list'),
             add=dict(type='bool', default=False),
