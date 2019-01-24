@@ -6,6 +6,7 @@
         repo: 'git@github.com:{{ github_repo_name }}'
         dest: "{{ temp_path }}\\repo_ssh"
       register: fail_clone
+      ignore_errors: yes
 
 - name: assert repo cloned failed using ssh
   assert:

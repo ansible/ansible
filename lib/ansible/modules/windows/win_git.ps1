@@ -284,7 +284,11 @@ function clone {
             if ($LASTEXITCODE -eq 0) {
                $result.changed = $true           
                Set-Attr $result "git_msg" "Successfully cloned $repo into $dest."    
-            }                    
+            }
+            else {
+               $result.changed = $false
+               Set-Attr $result "git_msg" "Failed to clone $repo into $dest."                   
+            }
      
         }    
         else {
@@ -402,7 +406,7 @@ try {
     }
 }
 catch {
-    $ErrorMessage = $_.Exception.Message
+    $ErrorMessage = $_.Exception.Message    
     Fail-Json $result "Error cloning $repo Msg: $ErrorMessage - $git_output"
 }
 
