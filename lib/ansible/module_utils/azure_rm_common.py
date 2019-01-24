@@ -832,7 +832,7 @@ class AzureRMModuleBase(object):
     @property
     def compute_models(self):
         self.log("Getting compute models")
-        return ComputeManagementClient.models("2018-03-30")
+        return ComputeManagementClient.models("2017-03-30")
 
     @property
     def dns_client(self):
