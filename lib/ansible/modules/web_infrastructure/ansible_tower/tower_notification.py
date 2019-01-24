@@ -289,7 +289,7 @@ def main():
         host=dict(required=False),
         use_ssl=dict(required=False, type='bool'),
         password=dict(required=False, no_log=True),
-        port=dict(required=False),
+        port=dict(required=False, type='int'),
         channels=dict(required=False, type='list'),
         token=dict(required=False, no_log=True),
         account_token=dict(required=False, no_log=True),
