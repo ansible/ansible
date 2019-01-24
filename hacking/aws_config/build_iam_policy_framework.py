@@ -291,7 +291,7 @@ def combine_actions_and_dependent_actions(resources):
     for resource in resources:
         for action in resources[resource]:
             aws_actions.append('{0}:{1}'.format(resource, action))
-    return aws_actions
+    return set(aws_actions)
 
 
 def get_actions_restricted_by_arn(aws_actions):
