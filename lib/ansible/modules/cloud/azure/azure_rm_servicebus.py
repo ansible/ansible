@@ -91,6 +91,14 @@ duration_spec_map = dict(
 )
 
 
+sas_policy_spec = dict(
+    state=dict(type='str', default='present', choices=['present', 'absent']),
+    name=dict(type='str', required=True),
+    regenerate_key=dict(type='bool'),
+    rights=dict(type='str', choices=['manage', 'listen', 'send', 'listen_send'])
+)
+
+
 class AzureRMServiceBus(AzureRMModuleBase):
 
     def __init__(self):
@@ -119,7 +127,8 @@ class AzureRMServiceBus(AzureRMModuleBase):
             duplicate_detection_time_in_seconds=dict(type='int'),
             status=dict(type='str',
                         choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unkown']),
-            support_ordering=dict(type='bool')
+            support_ordering=dict(type='bool'),
+            sas_policies=dict(type='list', elements='dict',  options=sas_policy_spec, default=[])
         )
 
         required_if = [
@@ -150,6 +159,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
         self.status = None
         self.support_ordering = None
         self.location = None
+        self.sas_policies = None
 
         self.results = dict(
             changed=False,
@@ -157,8 +167,8 @@ class AzureRMServiceBus(AzureRMModuleBase):
         )
 
         super(AzureRMServiceBus, self).__init__(self.module_arg_spec,
-                                           required_if=required_if,
-                                           supports_check_mode=True)
+                                                required_if=required_if,
+                                                supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
@@ -208,9 +218,39 @@ class AzureRMServiceBus(AzureRMModuleBase):
             if changed and not self.check_mode:
                 result = self.create_or_update(instance)
             self.results = self.to_dict(result, instance_type)
-        elif original and not self.check_mode:
-            self.delete()
-            self.results['deleted'] = True
+
+            # handle SAS policies, subscription should use topic to do such management
+            if self.type != 'subscription':
+                rules = self.get_auth_rules()
+                for policy in self.sas_policies:
+                    original_policy = rules.get(policy['name'])
+                    if policy['state'] == 'present':
+                        # whether create or update the policy
+                        policy_changed = False
+                        if original_policy and policy.get('rights') and policy['rights'] != original_policy['rights']:
+                            policy_changed = True
+                        elif not original_policy:
+                            policy_changed = True
+                        if policy_changed and not self.check_mode:
+                            rules[policy['name']] =  self.create_sas_policy(policy)
+                        # get the original key or regenerate one
+                        if policy.get('regenerate_key'):
+                            policy_changed = True
+                            self.regenerate_sas_key(policy['name'])
+                        changed = changed | policy_changed
+                    elif original_policy:
+                        changed = True
+                        if not self.check_mode:
+                            rules.pop(policy['name'])
+                            self.delete_sas_policy(policy['name'])
+                for name in rules.keys():
+                    rules[name]['keys'] = self.get_sas_key(name)
+                self.results['sas_policies'] = rules
+        elif original:
+            changed = True
+            if not self.check_mode:
+                self.delete()
+                self.results['deleted'] = True
 
         self.results['changed'] = changed
         return self.results
@@ -234,7 +274,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
     def create_or_update(self, param):
         try:
             self.create_ns_if_not_exist()
-            client = getattr(self.servicebus_client, '{0}s'.format(self.type))
+            client = self._get_client()
             if self.type == 'subscription':
                 return client.create_or_update(self.resource_group, self.namespace, self.subscription_topic_name, self.name, param)
             else:  
@@ -244,7 +284,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
 
     def delete(self):
         try:
-            client = getattr(self.servicebus_client, '{0}s'.format(self.type))
+            client = self._get_client()
             if self.type == 'subscription':
                 client.delete(self.resource_group, self.namespace, self.subscription_topic_name, self.name)
             else:  
@@ -253,9 +293,12 @@ class AzureRMServiceBus(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting route {0} - {1}".format(self.name, str(exc)))
 
+    def _get_client(self):
+        return getattr(self.servicebus_client, '{0}s'.format(self.type))
+
     def get(self):
         try:
-            client = getattr(self.servicebus_client, '{0}s'.format(self.type))
+            client = self._get_client()
             if self.type == 'subscription':
                 return client.get(self.resource_group, self.namespace, self.subscription_topic_name, self.name)
             else:  
@@ -286,6 +329,71 @@ class AzureRMServiceBus(AzureRMModuleBase):
                 result[attribute] = value
         return result
 
+    # SAS policy
+    def get_auth_rules(self):
+        result = dict()
+        try:
+            client = self._get_client()
+            rules = client.list_authorization_rules(self.resource_group, self.namespace, self.name)
+            while True:
+                rule = rules.next()
+                result[rule.name] = self.policy_to_dict(rule)
+        except StopIteration:
+            pass
+        except Exception as exc:
+            self.fail('Error when getting SAS policies for {0} {1}: {2}'.format(self.type, self.name, exc.message or str(exc)))
+        return result
+
+    def create_sas_policy(self, policy):
+        if policy['rights'] == 'listen_send':
+            rights = ['Listen', 'Send']
+        elif policy['rights'] == 'manage':
+            rights = ['Listen', 'Send', 'Manage']
+        else:
+            rights = [str.capitalize(policy['rights'])]
+        try:
+            client = self._get_client()
+            rule = client.create_or_update_authorization_rule(self.resource_group, self.namespace, self.name, policy['name'], rights)
+            return self.policy_to_dict(rule)
+        except Exception as exc:
+            self.fail('Error when creating or updating SAS policy {0} - {1}'.format(policy['name'], exc.message or str(exc)))
+        return None
+
+    def delete_sas_policy(self, name):
+        try:
+            client = self._get_client()
+            client.delete_authorization_rule(self.resource_group, self.namespace, self.name, name)
+            return True
+        except Exception as exc:
+            self.fail('Error when deleting SAS policy {0} - {1}'.format(name, exc.message or str(exc)))
+
+    def regenerate_sas_key(self, name):
+        try:
+            client = self._get_client()
+            client.regenerate_keys(self.resource_group, self.namespace, self.name, name, 'PrimaryKey')
+            client.regenerate_keys(self.resource_group, self.namespace, self.name, name, 'SecondaryKey')
+        except Exception as exc:
+            self.fail('Error when generating SAS policy {0}\'s key - {1}'.format(name, exc.message or str(exc)))
+        return None
+
+    def get_sas_key(self, name):
+        try:
+            client = self._get_client()
+            return client.list_keys(self.resource_group, self.namespace, self.name, name).as_dict()
+        except Exception as exc:
+            self.fail('Error when getting SAS policy {0}\'s key - {1}'.format(name, exc.message or str(exc)))
+        return None
+
+    def policy_to_dict(self, rule):
+        result = rule.as_dict()
+        rights = result['rights']
+        if 'Manage' in rights:
+            result['rights'] = 'manage'
+        elif 'Listen' in rights and 'Send' in rights:
+            result['rights'] = 'listen_send'
+        else:
+            result['rights'] = rights[0].lower()
+        return result
 
 def is_valid_timedelta(value):
     if value == timedelta(10675199, 10085, 477581):
