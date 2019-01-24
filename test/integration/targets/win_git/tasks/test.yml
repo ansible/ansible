@@ -38,7 +38,7 @@
       win_file:
        name: "{{ temp_path }}\\repo_http"
        state: absent
-    when:  http_clone_path.stat.exits
+      when:  http_clone_path.stat.exits
 
     - name: clone the http repo
       win_git:
