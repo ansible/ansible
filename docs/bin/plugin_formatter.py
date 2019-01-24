@@ -599,11 +599,11 @@ def process_support_levels(plugin_info, categories, templates, output_dir, plugi
                                           'blurb': "These are :doc:`modules maintained by the"
                                                    " Ansible Core Team<core_maintained>` and will always ship"
                                                    " with Ansible itself."},
-                    'Ansible Network Team': {'slug': 'network_supported',
+                    'Ansible Network and Security Teams': {'slug': 'network_supported',
                                              'modules': [],
                                              'output': 'network_maintained.rst',
                                              'blurb': "These are :doc:`modules maintained by the"
-                                                      " Ansible Network Team<network_maintained>` in"
+                                                      " Ansible Network and Security Teams<network_maintained>` in"
                                                       " a relationship similar to how the Ansible Core Team"
                                                       " maintains the Core modules."},
                     'Ansible Partners': {'slug': 'certified_supported',
@@ -647,7 +647,7 @@ These modules are currently shipped with Ansible, but will most likely be shippe
         if info['metadata']['supported_by'] == 'core':
             supported_by['Ansible Core Team']['modules'].append(module)
         elif info['metadata']['supported_by'] == 'network':
-            supported_by['Ansible Network Team']['modules'].append(module)
+            supported_by['Ansible Network and Security Teams']['modules'].append(module)
         elif info['metadata']['supported_by'] == 'certified':
             supported_by['Ansible Partners']['modules'].append(module)
         elif info['metadata']['supported_by'] == 'community':
