@@ -73,7 +73,7 @@ ENCODING_STRING = u'# -*- coding: utf-8 -*-'
 b_ENCODING_STRING = b'# -*- coding: utf-8 -*-'
 
 # module_common is relative to module_utils, so fix the path
-_MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
+_MODULE_UTILS_PATH = to_bytes(os.path.join(os.path.dirname(__file__), '..', 'module_utils'))
 
 # ******************************************************************************
 
@@ -567,7 +567,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     # Exclude paths that match with paths we've already processed
     # (Have to exclude them a second time once the paths are processed)
 
-    module_utils_paths = [p for p in module_utils_loader._get_paths(subdirs=False) if os.path.isdir(p)]
+    module_utils_paths = module_utils_loader._get_paths(subdirs=False)
     module_utils_paths.append(_MODULE_UTILS_PATH)
     for py_module_name in finder.submodules.difference(py_module_names):
         module_info = None
@@ -581,7 +581,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
         elif py_module_name[0] == '_six':
             # Special case the python six library because it messes up the
             # import process in an incompatible way
-            module_info = imp.find_module('_six', [os.path.join(p, 'six') for p in module_utils_paths])
+            module_info = imp.find_module('_six', [os.path.join(p, b'six') for p in module_utils_paths])
             py_module_name = ('six', '_six')
             idx = 0
         elif py_module_name[0] == 'ansible_collections':
@@ -605,8 +605,8 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 if len(py_module_name) < idx:
                     break
                 try:
-                    module_info = imp.find_module(py_module_name[-idx],
-                                                  [os.path.join(p, *py_module_name[:-idx]) for p in module_utils_paths])
+                    sub = to_bytes(py_module_name[:-idx] or '')
+                    module_info = imp.find_module(py_module_name[-idx], [os.path.join(p, sub) for p in module_utils_paths])
                     break
                 except ImportError:
                     continue

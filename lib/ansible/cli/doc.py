@@ -19,7 +19,7 @@ from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
@@ -184,7 +184,7 @@ class DocCLI(CLI):
 
         return dict(
             name=plugin_name,
-            namespace=DocCLI.namespace_from_plugin_filepath(filename, plugin_name, loader.package_path),
+            namespace=DocCLI.namespace_from_plugin_filepath(filename, plugin_name, to_text(loader.package_path)),
             description=doc.get('short_description', "UNKNOWN"),
             version_added=doc.get('version_added', "UNKNOWN")
         )
@@ -213,7 +213,7 @@ class DocCLI(CLI):
                 display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
                 return
 
-            if any(filename.endswith(x) for x in C.BLACKLIST_EXTS):
+            if any(filename.endswith(to_bytes(x)) for x in C.BLACKLIST_EXTS):
                 return
 
             try:
@@ -394,7 +394,7 @@ class DocCLI(CLI):
         ret = []
         for i in finder._get_paths(subdirs=False):
             if i not in ret:
-                ret.append(i)
+                ret.append(to_text(i))
         return os.pathsep.join(ret)
 
     @staticmethod
