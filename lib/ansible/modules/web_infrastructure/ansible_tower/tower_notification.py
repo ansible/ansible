@@ -312,7 +312,7 @@ def main():
         headers=dict(required=False, type='dict', default={}),
         server=dict(required=False),
         nickname=dict(required=False),
-        target=dict(required=False),
+        targets=dict(required=False, type='list'),
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
