@@ -270,7 +270,7 @@ class MerakiModule(object):
             built_path = built_path.format(org_id=org_id, net_id=net_id)
         return built_path
 
-    def request(self, path, method=None, payload=None):
+    def request(self, path, method=None, payload=None, description=None):
         """Generic HTTP method for Meraki requests."""
         self.path = path
         self.define_protocol()
@@ -286,7 +286,10 @@ class MerakiModule(object):
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'],
                                )
-        self.metrics['request'] = datetime.datetime.utc() - start
+        if description:
+            self.metrics['request'][description] = datetime.datetime.utc() - start
+        else:
+            self.metrics['request'] = datetime.datetime.utc() - start
         self.response = info['msg']
         self.status = info['status']
 
