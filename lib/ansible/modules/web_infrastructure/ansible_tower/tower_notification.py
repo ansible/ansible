@@ -349,7 +349,7 @@ def main():
     headers = module.params.get('headers')
     server = module.params.get('server')
     nickname = module.params.get('nickname')
-    target = module.params.get('target')
+    targets = module.params.get('targets')
     state = module.params.get('state')
 
     json_output = {'notification': name, 'state': state}
@@ -376,7 +376,7 @@ def main():
                                                       client_name=client_name, message_from=message_from,
                                                       api_url=api_url, color=color, rooms=rooms, notify=notify,
                                                       url=url, headers=headers, server=server, nickname=nickname,
-                                                      target=target, create_on_missing=True)
+                                                      targets=targets, create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = notification_template.delete(name=name)
