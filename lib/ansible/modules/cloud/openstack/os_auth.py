@@ -41,6 +41,17 @@ EXAMPLES = '''
     var: service_catalog
 '''
 
+RETURN = '''
+auth_token:
+    description: Openstack API Auth Token
+    returned: success
+    type: str
+service_catalog:
+    description: A dictionary of available API endpoints
+    returned: success
+    type: dict
+'''
+
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
