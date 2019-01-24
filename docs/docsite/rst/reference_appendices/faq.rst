@@ -243,7 +243,7 @@ There are a few common errors that one might run into when trying to execute Ans
   .. error::
       /usr/bin/python: EDC5129I No such file or directory
 
-To fix this set the path to the python installation in your inventory like so::
+  To fix this set the path to the python installation in your inventory like so::
 
     zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
 
