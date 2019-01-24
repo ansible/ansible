@@ -193,9 +193,13 @@ Create a file named ``scaleway_inventory.yml`` with the following content:
 This inventory means that we want all hosts that got the tag ``web_server`` on the zones ``ams1`` and ``par1``.
 Once you have configured this file, you can get the information using the following command:
 
-::
+.. code-block:: bash
 
     $ ansible-inventory --list -i scaleway_inventory.yml
+
+The output will be:
+
+.. code-block:: yaml
 
     {
         "_meta": {
@@ -251,7 +255,7 @@ As the Scaleway API is S3 compatible, Ansible supports it natively through the m
 
 You can find many examples in ``./test/legacy/roles/scaleway_s3``
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     - hosts: myserver
       vars:

@@ -170,7 +170,9 @@ you can use escapes::
 
 The list of allowed escapes can be found in the YAML Specification under "Escape Sequences" (YAML 1.1) or "Escape Characters" (YAML 1.2).
 
-The following is invalid YAML::
+The following is invalid YAML:
+
+.. code-block:: text
 
     foo: "an escaped \' single quote"
 
