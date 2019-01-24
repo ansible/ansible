@@ -18,7 +18,7 @@
 
 - name: Create a temp directory
   win_file:
-    name: {{ temp_path }}
+    name: "{{ temp_path }}"
     state: directory
 
 - block:
