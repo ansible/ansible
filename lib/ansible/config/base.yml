@@ -352,6 +352,14 @@ LOCALHOST_WARNING:
   - {key: localhost_warning, section: defaults}
   type: boolean
   version_added: "2.6"
+DOC_FRAGMENT_PLUGIN_PATH:
+  name: documentation fragment plugins path
+  default: ~/.ansible/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments
+  description: Colon separated paths in which Ansible will search for Documentation Fragments Plugins.
+  env: [{name: ANSIBLE_DOC_FRAGMENT_PLUGINS}]
+  ini:
+  - {key: doc_fragment_plugins, section: defaults}
+  type: pathspec
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
   default: ~/.ansible/plugins/action:/usr/share/ansible/plugins/action
