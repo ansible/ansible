@@ -959,7 +959,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
-        if (sudoable and self._connection.become and
+        if (sudoable and self._connection.transport != 'network_cli' and self._connection.become and
                 (C.BECOME_ALLOW_SAME_USER or
                  self.get_become_option('become_user') != self._get_remote_user())):
             display.debug("_low_level_execute_command(): using become for this command")
