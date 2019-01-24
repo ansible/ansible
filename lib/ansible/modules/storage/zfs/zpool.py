@@ -35,7 +35,7 @@ options:
       - The RAID level of the pool.
     type: str
     choices: [ raid0, mirror, raidz, raidz1, raidz2, raidz3 ]
-  vdev:
+  vdevs:
     description:
       - The number of devices in a vdev.
     type: int
@@ -58,6 +58,7 @@ options:
     description:
       - Automatically replace a bad device in pool using a spare device.
     type: bool
+    default: false
   autoexpand:
     description:
       - Whether to enable or disable automatic pool expansion when a larger disk replaces a smaller disk.
@@ -94,7 +95,7 @@ EXAMPLES = r'''
       - /dev/sde
     raid_level: raidz
     zil: mirror /dev/sdf /dev/sdg
-    vdev: 3
+    vdevs: 3
     state: present
 
 - name: Create a new raid 0 stripe zpool
@@ -108,7 +109,7 @@ EXAMPLES = r'''
       - /dev/sdf
     raid_level: raid0
     l2arc: /dev/sdg
-    vdev: 5
+    vdevs: 5
     ashift: 12
     state: present
 
@@ -128,7 +129,7 @@ EXAMPLES = r'''
     l2arc: /dev/sdj
     autoreplace: true
     ashift: 12
-    vdev: 2
+    vdevs: 2
     state: present
 
 - name: Create a new mirror zpool with a spare drive
@@ -138,7 +139,7 @@ EXAMPLES = r'''
       - /dev/sdc
       - /dev/sdd
     raid_level: mirror
-    vdev: 2
+    vdevs: 2
     autoreplace: true
     autoexpand: true
     spare:
@@ -154,7 +155,7 @@ EXAMPLES = r'''
     - /dev/sdg
     raid_level: mirror
     autoexpand: true
-    vdev: 2
+    vdevs: 2
     state: present
 
 - name: Add spare dev to an existing zpool
@@ -198,7 +199,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 class Zpool(object):
 
-    def __init__(self, module, name, state, raid_level, devices, spare, add, vdev, ashift, sets, autoreplace, autoexpand, zil, l2arc):
+    def __init__(self, module, name, state, raid_level, devices, spare, add, vdevs, ashift, sets, autoreplace, autoexpand, zil, l2arc):
         self.module = module
         self.name = name
         self.raid_level = raid_level
@@ -206,7 +207,7 @@ class Zpool(object):
         self.spare = spare
         self.state = state
         self.add = add
-        self.vdev = vdev
+        self.vdevs = vdevs
         self.ashift = ashift
         self.sets = sets
         self.autoreplace = autoreplace
@@ -299,7 +300,7 @@ def main():
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             raid_level=dict(type='str', required=False, choices=['raid0', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3']),
-            vdev=dict(type='int', require=False),
+            vdevs=dict(aliases='vdev', type='int', require=False),
             devices=dict(type='list'),
             spare=dict(type='list'),
             add=dict(type='bool', default=False),
@@ -311,7 +312,7 @@ def main():
             l2arc=dict(type='str'),
         ),
         supports_check_mode=True,
-        required_together=[['raid_level', 'devices'], ['devices', 'vdev']],
+        required_together=[['raid_level', 'devices'], ['devices', 'vdevs']],
         mutually_exclusive=[['add', 'sets']]
     )
 
@@ -321,7 +322,7 @@ def main():
     raid_level = module.params.get('raid_level')
     devices = module.params.get('devices')
     spare = module.params.get('spare')
-    vdev = module.params.get('vdev')
+    vdevs = module.params.get('vdevs')
     ashift = module.params.get('ashift')
     sets = module.params.get('sets')
     autoreplace = module.params.get('autoreplace')
@@ -366,10 +367,10 @@ def main():
     if not devices:
         devices = ''
     else:
-        if vdev > 1:
+        if vdevs > 1:
             device = ''
-            for i in range(0, len(devices), vdev):
-                temp = ' ' + raid_level + ' ' + ' '.join(devices[i:i + vdev])
+            for i in range(0, len(devices), vdevs):
+                temp = ' ' + raid_level + ' ' + ' '.join(devices[i:i + vdevs])
                 device += temp
             devices = device
     if not spare:
@@ -383,7 +384,7 @@ def main():
         raid_level=raid_level,
         devices=devices,
         spare=spare,
-        vdev=vdev,
+        vdevs=vdevs,
         sets=sets,
         ashift=ashift,
         autoreplace=autoreplace,
@@ -392,7 +393,7 @@ def main():
         l2arc=l2arc,
     )
 
-    zpool = Zpool(module, name, state, raid_level, devices, spare, add, vdev, ashift, sets, autoreplace, autoexpand, zil, l2arc)
+    zpool = Zpool(module, name, state, raid_level, devices, spare, add, vdevs, ashift, sets, autoreplace, autoexpand, zil, l2arc)
 
     if state == 'present':
         if (zpool.exists() and add) or (zpool.exists() and sets) or (zpool.exists() is False):
