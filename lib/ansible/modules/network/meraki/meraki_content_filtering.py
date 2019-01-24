@@ -85,19 +85,19 @@ EXAMPLES = r'''
       blocked_categories:
         - "Adult and Pornography"
 
-    - name: Remove match patterns and categories
-      meraki_content_filtering:
-        auth_key: abc123
-        org_name: YourOrg
-        net_name: YourMXNet
-        state: present
-        category_list_size: full list
-        allowed_urls:
-          -
-        blocked_urls:
-          -
-        blocked_categories:
-          -
+  - name: Remove match patterns and categories
+    meraki_content_filtering:
+      auth_key: abc123
+      org_name: YourOrg
+      net_name: YourMXNet
+      state: present
+      category_list_size: full list
+      allowed_urls:
+        -
+      blocked_urls:
+        -
+      blocked_categories:
+        -
 '''
 
 RETURN = r'''
@@ -121,12 +121,9 @@ from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argu
 
 
 def get_category_dict(meraki, full_list, category):
-    # meraki.fail_json(msg="Category dictionary builder", category=category, full_list=full_list)
     for i in full_list['categories']:
-        # meraki.fail_json(msg="Item", i=i)
         if i['name'] == category:
-            # meraki.fail_json(msg="Category found!")
-            return i
+            return i['id']
     meraki.fail_json(msg="{0} is not a valid content filtering category".format(category))
 
 
@@ -202,7 +199,6 @@ def main():
                     payload['blockedUrlCategories'].append(get_category_dict(meraki,
                                                                              categories,
                                                                              category))
-                # meraki.fail_json(msg='Payload', payload=payload)
         if meraki.params['category_list_size']:
             if meraki.params['category_list_size'].lower() == 'top sites':
                 payload['urlCategoryListSize'] = "topSites"
