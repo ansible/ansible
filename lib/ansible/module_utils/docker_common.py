@@ -90,7 +90,6 @@ DOCKER_COMMON_ARGS = dict(
 )
 
 DOCKER_MUTUALLY_EXCLUSIVE = [
-    ['tls', 'tls_verify']
 ]
 
 DOCKER_REQUIRED_TOGETHER = [
