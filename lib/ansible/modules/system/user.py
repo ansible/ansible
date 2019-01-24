@@ -847,13 +847,7 @@ class User(object):
         # It's output cannot be used to determine whether or not an account exists locally.
         # It returns True if the account exists locally or in the directory, so instead
         # look in the local PASSWORD file for an existing account.
-        if not self.local:
-            try:
-                if pwd.getpwnam(self.name):
-                    return True
-            except KeyError:
-                return False
-        else:
+        if self.local:
             if not os.path.exists(self.PASSWORDFILE):
                 self.module.fail_json(msg="'local: true' specified but unable to find local account file {0} to parse.".format(self.PASSWORDFILE))
 
@@ -871,6 +865,13 @@ class User(object):
                 "The local user account may already exist if the local account database exists somewhere other than {file}.".format(file=self.PASSWORDFILE))
 
             return exists
+
+        else:
+            try:
+                if pwd.getpwnam(self.name):
+                    return True
+            except KeyError:
+                return False
 
     def get_pwd_info(self):
         if not self.user_exists():
