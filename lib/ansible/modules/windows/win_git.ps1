@@ -401,7 +401,7 @@ try {
 }
 catch {
     $ErrorMessage = $_.Exception.Message
-    #Fail-Json $result "Error cloning $repo Msg: $ErrorMessage - $git_output"
+    Fail-Json $result "Error cloning $repo Msg: $ErrorMessage - $git_output"
 }
 
 Exit-Json $result
