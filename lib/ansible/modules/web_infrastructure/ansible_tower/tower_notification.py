@@ -220,6 +220,7 @@ EXAMPLES = '''
     notification_type: pagerduty
     token: a_token
     subdomain: sub
+    client_name: client
     service_key: a_key
     state: present
     tower_config_file: "~/tower_cli.cfg"
