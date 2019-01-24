@@ -170,6 +170,12 @@ except Exception:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
+try:
+    cmp
+except NameError:
+    def cmp(a, b):
+        return (a > b) - (a < b)
+
 
 class GitLabRunner(object):
     def __init__(self, module, gitlab_instance):
