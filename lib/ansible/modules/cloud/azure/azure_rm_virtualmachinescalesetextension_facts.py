@@ -46,13 +46,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get information on specific Virtual Machine Extension
+  - name: Get information on specific Virtual Machine Scale Set Extension
     azure_rm_virtualmachineextension_facts:
       resource_group: myrg
       vmss_name: myvmss
       name: myextension
 
-  - name: List installed Virtual Machine Extensions
+  - name: List installed Virtual Machine Scale Set Extensions
     azure_rm_virtualmachineextension_facts:
       resource_group: myrg
       vmss_name: myvmss
