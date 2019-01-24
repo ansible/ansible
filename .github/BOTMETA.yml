@@ -1061,6 +1061,7 @@ files:
   $plugins/doc_fragments/vultr.py: *vultr
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
+  $plugins/doc_fragments/hpe3par.py: *hpe3par
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -1252,25 +1253,6 @@ files:
     keywords:
       - jinja
       - jinja2
-  lib/ansible/utils/module_docs_fragments/:
-    support: community
-  lib/ansible/utils/module_docs_fragments/aci.py: *aci
-  lib/ansible/utils/module_docs_fragments/acme.py:
-    maintainers: resmo felixfontein
-  lib/ansible/utils/module_docs_fragments/docker.py:
-    support: community
-    maintainers: $team_docker
-    supershipit: felixfontein
-  lib/ansible/utils/module_docs_fragments/mso.py: *aci
-  lib/ansible/utils/module_docs_fragments/xenserver.py:
-    maintainers: bvitnik
-  lib/ansible/utils/module_docs_fragments/cloudstack.py:
-    maintainers: $team_cloudstack
-    labels: cloudstack
-  lib/ansible/utils/module_docs_fragments/vultr.py:
-    maintainers: $team_vultr
-    labels: cloud
-  lib/ansible/utils/module_docs_fragments/hpe3par.py: *hpe3par
   test/sanity/validate-modules:
     notified:
       - mattclay
