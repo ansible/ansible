@@ -41,7 +41,7 @@ def meraki_argument_spec():
                 use_proxy=dict(type='bool', default=False),
                 use_https=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),
-                output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
+                output_level=dict(type='str', default='normal', choices=['normal', 'debug', 'performance']),
                 timeout=dict(type='int', default=30),
                 org_name=dict(type='str', aliases=['organization']),
                 org_id=dict(type='str'),
@@ -77,6 +77,9 @@ class MerakiModule(object):
         self.response = None
         self.status = None
         self.url = None
+
+        if self.params['output_level'] == 'performance':
+            self.metrics = dict()
 
         # If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary
         self.get_urls = {'organizations': '/organizations',
@@ -275,6 +278,7 @@ class MerakiModule(object):
         if method is not None:
             self.method = method
         self.url = '{protocol}://{host}/api/v0/{path}'.format(path=self.path.lstrip('/'), **self.params)
+        start = datetime.datetime.utc()
         resp, info = fetch_url(self.module, self.url,
                                headers=self.headers,
                                data=payload,
@@ -282,6 +286,7 @@ class MerakiModule(object):
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'],
                                )
+        self.metrics['request'] = datetime.datetime.utc() - start
         self.response = info['msg']
         self.status = info['status']
 
@@ -316,6 +321,8 @@ class MerakiModule(object):
             if self.url is not None:
                 self.result['method'] = self.method
                 self.result['url'] = self.url
+        elif self.params['output_level'] == 'performance':
+            self.result['performance'] = self.metrics
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
