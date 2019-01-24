@@ -165,8 +165,8 @@ def main():
             ["state", "present", ["pn_name", "pn_scope"]],
             ["state", "absent", ["pn_name"]],
             ["state", "update", ["pn_name"]],
-            ),
-        )
+        ),
+    )
 
     # Accessing the arguments
     cliswitch = module.params['pn_cliswitch']
@@ -210,8 +210,8 @@ def main():
     if command == 'role-create':
         if ROLE_EXISTS is True:
             module.exit_json(
-                 skipped=True,
-                 msg='Role with name %s already exists' % name
+                skipped=True,
+                msg='Role with name %s already exists' % name
             )
 
         if scope:

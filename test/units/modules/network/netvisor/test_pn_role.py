@@ -70,7 +70,7 @@ class TestRoleModule(TestNvosModule):
 
     def test_role_update(self):
         set_module_args({'pn_cliswitch': 'sw01', 'pn_name': 'foo',
-                         'pn_access': 'read-write', 'pn_sudo': True, 'pn_shell':True, 'state': 'update'})
+                         'pn_access': 'read-write', 'pn_sudo': True, 'pn_shell': True, 'state': 'update'})
         result = self.execute_module(changed=True, state='update')
         expected_cmd = '/usr/bin/cli --quiet -e --no-login-prompt  switch sw01 role-modify name foo  access read-write shell  sudo '
         self.assertEqual(result['cli_cmd'], expected_cmd)
