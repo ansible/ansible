@@ -69,7 +69,8 @@ extensions:
                 - Resource Id
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myrg/providers/Microsoft.Compute/virtualMachineScaleSets/myvmss/extensions/myextension
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myrg/providers/Microsoft.Compute/virtualMachineScaleSets/
+                     myvmss/extensions/myextension"
         resource_group:
             description:
                 - Resource group name
