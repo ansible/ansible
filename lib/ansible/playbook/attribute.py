@@ -41,6 +41,7 @@ class Attribute:
         alias=None,
         extend=False,
         prepend=False,
+        static=False,
     ):
 
         """
@@ -86,6 +87,7 @@ class Attribute:
         self.alias = alias
         self.extend = extend
         self.prepend = prepend
+        self.static = static
 
         if default is not None and self.isa in _CONTAINERS and not callable(default):
             raise TypeError('defaults for FieldAttribute may not be mutable, please provide a callable instead')
