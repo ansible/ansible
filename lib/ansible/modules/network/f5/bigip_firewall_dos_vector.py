@@ -312,47 +312,47 @@ blacklist_duration:
 attack_ceiling:
   description: The new Attack Ceiling EPS setting.
   returned: changed
-  type: string
+  type: str
   sample: infinite
 attack_floor:
   description: The new Attack Floor EPS setting.
   returned: changed
-  type: string
+  type: str
   sample: infinite
 blacklist_category:
   description: The new Category Name setting.
   returned: changed
-  type: string
+  type: str
   sample: /Common/cloud_provider_networks
 per_source_ip_detection_threshold:
   description: The new Per Source IP Detection Threshold EPS setting.
   returned: changed
-  type: string
+  type: str
   sample: 23
 per_source_ip_mitigation_threshold:
   description: The new Per Source IP Mitigation Threshold EPS setting.
   returned: changed
-  type: string
+  type: str
   sample: infinite
 detection_threshold_percent:
   description: The new Detection Threshold Percent setting.
   returned: changed
-  type: string
+  type: str
   sample: infinite
 detection_threshold_eps:
   description: The new Detection Threshold EPS setting.
   returned: changed
-  type: string
+  type: str
   sample: infinite
 mitigation_threshold_eps:
   description: The new Mitigation Threshold EPS setting.
   returned: changed
-  type: string
+  type: str
   sample: infinite
 threshold_mode:
   description: The new Mitigation Threshold EPS setting.
   returned: changed
-  type: string
+  type: str
   sample: infinite
 simulate_auto_threshold:
   description: The new Simulate Auto Threshold setting.
@@ -362,7 +362,7 @@ simulate_auto_threshold:
 state:
   description: The new state of the vector.
   returned: changed
-  type: string
+  type: str
   sample: mitigate
 '''
 

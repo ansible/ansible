@@ -88,7 +88,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:
@@ -146,7 +146,11 @@ def main():
                 if scm_credential:
                     try:
                         cred_res = tower_cli.get_resource('credential')
-                        cred = cred_res.get(name=scm_credential)
+                        try:
+                            cred = cred_res.get(name=scm_credential)
+                        except (tower_cli.exceptions.MultipleResults) as multi_res_excinfo:
+                            module.warn('Multiple credentials found for {0}, falling back looking in project organization'.format(scm_credential))
+                            cred = cred_res.get(name=scm_credential, organization=org['id'])
                         scm_credential = cred['id']
                     except (exc.NotFound) as excinfo:
                         module.fail_json(msg='Failed to update project, credential not found: {0}'.format(scm_credential), changed=False)

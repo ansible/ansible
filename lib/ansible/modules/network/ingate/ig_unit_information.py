@@ -46,47 +46,47 @@ unit-information:
     installid:
       description: The installation identifier
       returned: success
-      type: string
+      type: str
       sample: any
     interfaces:
       description: List of interface names
       returned: success
-      type: string
+      type: str
       sample: eth0 eth1 eth2 eth3 eth4 eth5
     lang:
       description: The unit's language
       returned: success
-      type: string
+      type: str
       sample: en
     lic_email:
       description: License email information
       returned: success
-      type: string
+      type: str
       sample: example@example.com
     lic_mac:
       description: License MAC information
       returned: success
-      type: string
+      type: str
       sample: any
     lic_name:
       description: License name information
       returned: success
-      type: string
+      type: str
       sample: Example Inc
     macaddr:
       description: The MAC address of the first interface
       returned: success
-      type: string
+      type: str
       sample: 52:54:00:4c:e2:07
     mode:
       description: Operational mode of the unit
       returned: success
-      type: string
+      type: str
       sample: Siparator
     modules:
       description: Installed module licenses
       returned: success
-      type: string
+      type: str
       sample: failover vpn sip qturn ems qos rsc voipsm
     patches:
       description: Installed patches on the unit
@@ -96,27 +96,27 @@ unit-information:
     product:
       description: The product name
       returned: success
-      type: string
+      type: str
       sample: Software SIParator/Firewall
     serial:
       description: The serial number of the unit
       returned: success
-      type: string
+      type: str
       sample: IG-200-839-2008-0
     systemid:
       description: The system identifier of the unit
       returned: success
-      type: string
+      type: str
       sample: IG-200-839-2008-0
     unitname:
       description: The name of the unit
       returned: success
-      type: string
+      type: str
       sample: Testname
     version:
       description: Firmware version
       returned: success
-      type: string
+      type: str
       sample: 6.2.0-beta2
 '''
 

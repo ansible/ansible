@@ -128,15 +128,15 @@ result:
     The resource that was created, changed, or otherwise determined to be present.
     In the case of a deletion, this is the response from the delete request.
   returned: success
-  type: string
+  type: str
 url:
   description: The URL to the requested resource.
   returned: success
-  type: string
+  type: str
 method:
   description: The HTTP method that was used to take action upon the resource
   returned: success
-  type: string
+  type: str
 ...
 '''
 

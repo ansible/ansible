@@ -26,6 +26,13 @@ description:
       provides a simple way to generate the required certificates."
    - "The C(tls-alpn-01) implementation is based on
       L(the draft-05 version of the specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05)."
+seealso:
+  - name: Automatic Certificate Management Environment (ACME)
+    description: The current draft specification of the ACME protocol.
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
+  - name: ACME TLS ALPN Challenge Extension
+    description: The current draft specification of the C(tls-alpn-01) challenge.
+    link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
 requirements:
    - "cryptography >= 1.3"
 options:
@@ -97,12 +104,12 @@ domain:
   description:
     - "The domain the challenge is for."
   returned: always
-  type: string
+  type: str
 challenge_certificate:
   description:
     - "The challenge certificate in PEM format."
   returned: always
-  type: string
+  type: str
 regular_certificate:
   description:
     - "A self-signed certificate for the challenge domain."
@@ -110,7 +117,7 @@ regular_certificate:
        https in the first place if that is needed for providing
        the challenge."
   returned: always
-  type: string
+  type: str
 '''
 
 from ansible.module_utils.acme import (

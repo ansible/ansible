@@ -123,7 +123,7 @@ RETURN = '''
 lambda_policy_action:
     description: describes what action was taken
     returned: success
-    type: string
+    type: str
 '''
 
 import json

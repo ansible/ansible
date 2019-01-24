@@ -29,16 +29,17 @@ description:
 - This module is also supported for Windows targets.
 notes:
 - This module is also supported for Windows targets.
-- See also M(copy) and M(template).
 version_added: '0.5'
 options:
   src:
     description:
     - An already existing directory full of source files.
+    type: path
     required: true
   dest:
     description:
     - A file to create using the concatenation of all of the source files.
+    type: path
     required: true
   backup:
     description:
@@ -50,13 +51,14 @@ options:
   delimiter:
     description:
     - A delimiter to separate the file contents.
+    type: str
     version_added: '1.4'
   remote_src:
     description:
     - If C(no), it will search for src at originating/master machine.
     - If C(yes), it will go to the remote/target machine for the src.
     type: bool
-    default: yes
+    default: no
     version_added: '1.4'
   regexp:
     description:
@@ -64,6 +66,7 @@ options:
     - If not set, all files are assembled.
     - Every "\" (backslash) must be escaped as "\\" to comply to YAML syntax.
     - Uses L(Python regular expressions,http://docs.python.org/2/library/re.html).
+    type: str
   ignore_hidden:
     description:
     - A boolean that controls if files that start with a '.' will be included or not.
@@ -75,15 +78,17 @@ options:
     - The validation command to run before copying into place.
     - The path to the file to validate is passed in via '%s' which must be present as in the sshd example below.
     - The command is passed securely so shell features like expansion and pipes won't work.
+    type: str
     version_added: '2.0'
 seealso:
 - module: copy
+- module: template
 - module: win_copy
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
-- files
 - decrypt
+- files
 '''
 
 EXAMPLES = r'''
@@ -102,7 +107,7 @@ EXAMPLES = r'''
   assemble:
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
-    validate: '/usr/sbin/sshd -t -f %s'
+    validate: /usr/sbin/sshd -t -f %s
 '''
 
 import codecs
@@ -128,7 +133,8 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
         fragment = os.path.join(src_path, f)
         if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
-        fragment_content = open(fragment, 'rb').read()
+        with open(fragment, 'rb') as fragment_fh:
+            fragment_content = fragment_fh.read()
 
         # always put a newline between fragments if the previous fragment didn't end with a newline.
         if add_newline:
@@ -172,14 +178,14 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
-            src=dict(required=True, type='path'),
-            delimiter=dict(required=False),
-            dest=dict(required=True, type='path'),
-            backup=dict(default=False, type='bool'),
-            remote_src=dict(default=False, type='bool'),
-            regexp=dict(required=False),
-            ignore_hidden=dict(default=False, type='bool'),
-            validate=dict(required=False, type='str'),
+            src=dict(type='path', required=True),
+            delimiter=dict(type='str'),
+            dest=dict(type='path', required=True),
+            backup=dict(type='bool', default=False),
+            remote_src=dict(type='bool', default=False),
+            regexp=dict(type='str'),
+            ignore_hidden=dict(type='bool', default=False),
+            validate=dict(type='str'),
         ),
         add_file_common_args=True,
     )

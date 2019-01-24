@@ -195,22 +195,22 @@ RETURN = r'''
 presented_id_type:
   description: The new Presented ID Type value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: address
 verified_id_type:
   description: The new Verified ID Type value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: address
 phase1_auth_method:
   description: The new IKE Phase 1 Credentials Authentication Method value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: rsa-signature
 remote_address:
   description: The new Remote Address value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.2.1
 version:
   description: The new list of IKE versions.
@@ -220,27 +220,27 @@ version:
 phase1_encryption_algorithm:
   description: The new IKE Phase 1 Encryption Algorithm.
   returned: changed
-  type: string
+  type: str
   sample: 3des
 phase1_hash_algorithm:
   description: The new IKE Phase 1 Authentication Algorithm.
   returned: changed
-  type: string
+  type: str
   sample: sha256
 phase1_perfect_forward_secrecy:
   description: The new IKE Phase 1 Perfect Forward Secrecy.
   returned: changed
-  type: string
+  type: str
   sample: modp1024
 phase1_cert:
   description: The new IKE Phase 1 Certificate Credentials.
   returned: changed
-  type: string
+  type: str
   sample: /Common/cert1.crt
 phase1_key:
   description: The new IKE Phase 1 Key Credentials.
   returned: changed
-  type: string
+  type: str
   sample: /Common/cert1.key
 phase1_verify_peer_cert:
   description: The new IKE Phase 1 Key Verify Peer Certificate setting.
@@ -250,12 +250,12 @@ phase1_verify_peer_cert:
 verified_id_value:
   description: The new Verified ID Value setting for the Verified ID Type.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.3.1
 presented_id_value:
   description: The new Presented ID Value setting for the Presented ID Type.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.3.1
 '''
 

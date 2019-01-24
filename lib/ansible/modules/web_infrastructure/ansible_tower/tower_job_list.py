@@ -47,8 +47,8 @@ EXAMPLES = '''
   tower_job_list:
     status: running
     query: {"playbook": "testing.yml"}
-    register: testing_jobs
     tower_config_file: "~/tower_cli.cfg"
+  register: testing_jobs
 '''
 
 RETURN = '''
@@ -82,7 +82,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:

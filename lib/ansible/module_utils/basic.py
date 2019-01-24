@@ -165,11 +165,9 @@ from ansible.module_utils.common.file import (
     get_flags_from_attributes,
 )
 from ansible.module_utils.common.sys_info import (
-    get_platform,
     get_distribution,
     get_distribution_version,
-    load_platform_subclass,
-    get_all_subclasses,
+    get_platform_subclass,
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
@@ -184,6 +182,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
 
@@ -274,6 +273,42 @@ if not _PY_MIN:
         '"msg": "Ansible requires a minimum of Python2 version 2.6 or Python3 version 3.5. Current version: %s"}' % ''.join(sys.version.splitlines())
     )
     sys.exit(1)
+
+
+#
+# Deprecated functions
+#
+
+def get_platform():
+    '''
+    **Deprecated** Use :py:func:`platform.system` directly.
+
+    :returns: Name of the platform the module is running on in a native string
+
+    Returns a native string that labels the platform ("Linux", "Solaris", etc). Currently, this is
+    the result of calling :py:func:`platform.system`.
+    '''
+    return platform.system()
+
+# End deprecated functions
+
+
+#
+# Compat shims
+#
+
+def load_platform_subclass(cls, *args, **kwargs):
+    """**Deprecated**: Use ansible.module_utils.common.sys_info.get_platform_subclass instead"""
+    platform_cls = get_platform_subclass(cls)
+    return super(cls, platform_cls).__new__(platform_cls)
+
+
+def get_all_subclasses(cls):
+    """**Deprecated**: Use ansible.module_utils.common._utils.get_all_subclasses instead"""
+    return list(_get_all_subclasses(cls))
+
+
+# End compat shims
 
 
 def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
@@ -2605,7 +2640,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, raise_timeouts=False):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -2655,9 +2690,6 @@ class AnsibleModule(object):
             after ``Popen`` object will be created
             but before communicating to the process.
             (``Popen`` object will be passed to callback as a first argument)
-        :kw raise_timeouts: This is a boolean, which when True, will allow the
-            caller to deal with timeout exceptions. When false we use the previous
-            behaviour of having run_command directly call fail_json when they occur.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2831,12 +2863,6 @@ class AnsibleModule(object):
             cmd.stderr.close()
 
             rc = cmd.returncode
-        except TimeoutError as e:
-            self.log("Timeout Executing CMD:%s Timeout :%s" % (self._clean_args(args), to_native(e)))
-            if raise_timeouts:
-                raise e
-            else:
-                self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
         except (OSError, IOError) as e:
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=self._clean_args(args))
@@ -2892,3 +2918,7 @@ class AnsibleModule(object):
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
+
+
+def get_timestamp():
+    return datetime.datetime.now().replace(microsecond=0).isoformat()

@@ -440,7 +440,7 @@ aliases:
 arn:
   description: Amazon Resource Name of the distribution
   returned: always
-  type: string
+  type: str
   sample: arn:aws:cloudfront::123456789012:distribution/E1234ABCDEFGHI
 cache_behaviors:
   description: Cloudfront cache behaviors
@@ -509,7 +509,7 @@ cache_behaviors:
                 forward:
                   description: Which cookies to forward to the origin for this cache behavior
                   returned: always
-                  type: string
+                  type: str
                   sample: none
                 whitelisted_names:
                   description: The names of the cookies to forward to the origin for this cache behavior
@@ -592,7 +592,7 @@ cache_behaviors:
         path_pattern:
           description: Path pattern that determines this cache behavior
           returned: always
-          type: string
+          type: str
           sample: /path/to/files/*
         smooth_streaming:
           description: Whether smooth streaming is enabled
@@ -602,7 +602,7 @@ cache_behaviors:
         target_origin_id:
           description: Id of origin reference by this cache behavior
           returned: always
-          type: string
+          type: str
           sample: origin_abcd
         trusted_signers:
           description: Trusted signers
@@ -622,7 +622,7 @@ cache_behaviors:
         viewer_protocol_policy:
           description: Policy of how to handle http/https
           returned: always
-          type: string
+          type: str
           sample: redirect-to-https
     quantity:
       description: Count of cache behaviors
@@ -633,12 +633,12 @@ cache_behaviors:
 caller_reference:
   description: Idempotency reference given when creating cloudfront distribution
   returned: always
-  type: string
+  type: str
   sample: '1484796016700'
 comment:
   description: Any comments you want to include about the distribution
   returned: always
-  type: string
+  type: str
   sample: 'my first cloudfront distribution'
 custom_error_responses:
   description: Custom error responses to use for error handling
@@ -663,12 +663,12 @@ custom_error_responses:
         response_code:
           description: Response code to return to the requester
           returned: always
-          type: string
+          type: str
           sample: '500'
         response_page_path:
           description: Path that contains the error page to display
           returned: always
-          type: string
+          type: str
           sample: /errors/5xx.html
     quantity:
       description: Count of custom error response items
@@ -737,7 +737,7 @@ default_cache_behavior:
             forward:
               description: Which cookies to forward to the origin for this cache behavior
               returned: always
-              type: string
+              type: str
               sample: none
             whitelisted_names:
               description: The names of the cookies to forward to the origin for this cache behavior
@@ -820,7 +820,7 @@ default_cache_behavior:
     path_pattern:
       description: Path pattern that determines this cache behavior
       returned: always
-      type: string
+      type: str
       sample: /path/to/files/*
     smooth_streaming:
       description: Whether smooth streaming is enabled
@@ -830,7 +830,7 @@ default_cache_behavior:
     target_origin_id:
       description: Id of origin reference by this cache behavior
       returned: always
-      type: string
+      type: str
       sample: origin_abcd
     trusted_signers:
       description: Trusted signers
@@ -850,13 +850,13 @@ default_cache_behavior:
     viewer_protocol_policy:
       description: Policy of how to handle http/https
       returned: always
-      type: string
+      type: str
       sample: redirect-to-https
 default_root_object:
   description: The object that you want CloudFront to request from your origin (for example, index.html)
     when a viewer requests the root URL for your distribution
   returned: always
-  type: string
+  type: str
   sample: ''
 diff:
   description: Difference between previous configuration and new configuration
@@ -866,7 +866,7 @@ diff:
 domain_name:
   description: Domain name of cloudfront distribution
   returned: always
-  type: string
+  type: str
   sample: d1vz8pzgurxosf.cloudfront.net
 enabled:
   description: Whether the cloudfront distribution is enabled or not
@@ -876,12 +876,12 @@ enabled:
 http_version:
   description: Version of HTTP supported by the distribution
   returned: always
-  type: string
+  type: str
   sample: http2
 id:
   description: Cloudfront distribution ID
   returned: always
-  type: string
+  type: str
   sample: E123456ABCDEFG
 in_progress_invalidation_batches:
   description: The number of invalidation batches currently in progress
@@ -896,7 +896,7 @@ is_ipv6_enabled:
 last_modified_time:
   description: Date and time distribution was last modified
   returned: always
-  type: string
+  type: str
   sample: '2017-10-13T01:51:12.656000+00:00'
 logging:
   description: Logging information
@@ -906,7 +906,7 @@ logging:
     bucket:
       description: S3 bucket logging destination
       returned: always
-      type: string
+      type: str
       sample: logs-example-com.s3.amazonaws.com
     enabled:
       description: Whether logging is enabled
@@ -921,7 +921,7 @@ logging:
     prefix:
       description: Prefix added to logging object names
       returned: always
-      type: string
+      type: str
       sample: cloudfront/test
 origins:
   description: Origins in the cloudfront distribution
@@ -966,7 +966,7 @@ origins:
             origin_protocol_policy:
               description: Policy of which protocols are supported
               returned: always
-              type: string
+              type: str
               sample: https-only
             origin_read_timeout:
               description: Timeout for reads to the origin
@@ -994,17 +994,17 @@ origins:
         domain_name:
           description: Domain name of the origin
           returned: always
-          type: string
+          type: str
           sample: test-origin.example.com
         id:
           description: ID of the origin
           returned: always
-          type: string
+          type: str
           sample: test-origin.example.com
         origin_path:
           description: Subdirectory to prefix the request from the S3 or HTTP origin
           returned: always
-          type: string
+          type: str
           sample: ''
     quantity:
       description: Count of origins
@@ -1014,7 +1014,7 @@ origins:
 price_class:
   description: Price class of cloudfront distribution
   returned: always
-  type: string
+  type: str
   sample: PriceClass_All
 restrictions:
   description: Restrictions in use by Cloudfront
@@ -1039,12 +1039,12 @@ restrictions:
         restriction_type:
           description: Type of restriction
           returned: always
-          type: string
+          type: str
           sample: blacklist
 status:
   description: Status of the cloudfront distribution
   returned: always
-  type: string
+  type: str
   sample: InProgress
 tags:
   description: Distribution tags
@@ -1060,32 +1060,32 @@ viewer_certificate:
     acm_certificate_arn:
       description: ARN of ACM certificate
       returned: when certificate comes from ACM
-      type: string
+      type: str
       sample: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-1234-1234-abcd-123456abcdef
     certificate:
       description: Reference to certificate
       returned: always
-      type: string
+      type: str
       sample: arn:aws:acm:us-east-1:123456789012:certificate/abcd1234-1234-1234-abcd-123456abcdef
     certificate_source:
       description: Where certificate comes from
       returned: always
-      type: string
+      type: str
       sample: acm
     minimum_protocol_version:
       description: Minimum SSL/TLS protocol supported by this distribution
       returned: always
-      type: string
+      type: str
       sample: TLSv1
     ssl_support_method:
       description: Support for pre-SNI browsers or not
       returned: always
-      type: string
+      type: str
       sample: sni-only
 web_acl_id:
   description: ID of Web Access Control List (from WAF service)
   returned: always
-  type: string
+  type: str
   sample: abcd1234-1234-abcd-abcd-abcd12345678
 '''
 

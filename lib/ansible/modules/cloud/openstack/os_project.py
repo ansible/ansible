@@ -82,15 +82,15 @@ project:
     contains:
         id:
             description: Project ID
-            type: string
+            type: str
             sample: "f59382db809c43139982ca4189404650"
         name:
             description: Project name
-            type: string
+            type: str
             sample: "demoproject"
         description:
             description: Project description
-            type: string
+            type: str
             sample: "demodescription"
         enabled:
             description: Boolean to indicate if project is enabled

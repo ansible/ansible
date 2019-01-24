@@ -20,8 +20,9 @@ import os
 import platform
 import re
 
+from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
+    get_distribution_codename
 from ansible.module_utils.facts.utils import get_file_content
-
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -93,6 +94,8 @@ class DistributionFiles:
         'Archlinux': 'Arch Linux'
     }
 
+    STRIP_QUOTES = r'\'\"\\'
+
     def __init__(self, module):
         self.module = module
 
@@ -109,9 +112,10 @@ class DistributionFiles:
 
     def _parse_dist_file(self, name, dist_file_content, path, collected_facts):
         dist_file_dict = {}
+        dist_file_content = dist_file_content.strip(DistributionFiles.STRIP_QUOTES)
         if name in self.SEARCH_STRING:
             # look for the distribution string in the data and replace according to RELEASE_NAME_MAP
-            # only the distribution name is set, the version is assumed to be correct from platform.dist()
+            # only the distribution name is set, the version is assumed to be correct from distro.linux_distribution()
             if self.SEARCH_STRING[name] in dist_file_content:
                 # this sets distribution=RedHat if 'Red Hat' shows up in data
                 dist_file_dict['distribution'] = name
@@ -152,12 +156,15 @@ class DistributionFiles:
 
     def _guess_distribution(self):
         # try to find out which linux distribution this is
-        dist = platform.dist()
+        dist = (get_distribution(), get_distribution_version(), get_distribution_codename())
         distribution_guess = {}
-        distribution_guess['distribution'] = dist[0].capitalize() or 'NA'
+        distribution_guess['distribution'] = dist[0] or 'NA'
         distribution_guess['distribution_version'] = dist[1] or 'NA'
-        distribution_guess['distribution_major_version'] = dist[1].split('.')[0] or 'NA'
-        distribution_guess['distribution_release'] = dist[2] or 'NA'
+        distribution_guess['distribution_major_version'] = \
+            distribution_guess['distribution_version'].split('.')[0] or 'NA'
+        # distribution_release can be the empty string
+        distribution_guess['distribution_release'] = 'NA' if dist[2] is None else dist[2]
+
         return distribution_guess
 
     def process_dist_files(self):
@@ -318,9 +325,14 @@ class DistributionFiles:
         elif 'SteamOS' in data:
             debian_facts['distribution'] = 'SteamOS'
             # nothing else to do, SteamOS gets correct info from python functions
+        elif path == '/etc/lsb-release' and 'Kali' in data:
+            debian_facts['distribution'] = 'Kali'
+            release = re.search('DISTRIB_RELEASE=(.*)', data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
         elif 'Devuan' in data:
             debian_facts['distribution'] = 'Devuan'
-            release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+            release = re.search(r"PRETTY_NAME=\"?[^(\"]+ \(?([^) \"]+)\)?", data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
             version = re.search(r"VERSION_ID=\"(.*)\"", data)
@@ -362,8 +374,7 @@ class DistributionFiles:
     def parse_distribution_file_Coreos(self, name, data, path, collected_facts):
         coreos_facts = {}
         # FIXME: pass in ro copy of facts for this kind of thing
-        dist = platform.dist()
-        distro = dist[0]
+        distro = get_distribution()
 
         if distro.lower() == 'coreos':
             if not data:
@@ -443,7 +454,7 @@ class Distribution(object):
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint', 'SteamOS', 'Devuan'],
+                                'Linux Mint', 'SteamOS', 'Devuan', 'Kali'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],

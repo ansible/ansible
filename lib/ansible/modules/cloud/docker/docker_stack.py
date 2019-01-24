@@ -35,14 +35,12 @@ options:
         -   present
         -   absent
     compose:
-        required: true
         default: []
         description:
         -   List of compose definitions. Any element may be a string
             referring to the path of the compose file on the target host
             or the YAML contents of a compose file nested as dictionary.
     prune:
-        required: false
         default: false
         description:
         -   If true will add the C(--prune) option to the C(docker stack deploy) command.
@@ -50,21 +48,18 @@ options:
             current stack definition.
         type: bool
     with_registry_auth:
-        required: false
         default: false
         description:
         -   If true will add the C(--with-registry-auth) option to the C(docker stack deploy) command.
             This will have docker send registry authentication details to Swarm agents.
         type: bool
     resolve_image:
-        required: false
         choices: ["always", "changed", "never"]
         description:
         -   If set will add the C(--resolve-image) option to the C(docker stack deploy) command.
             This will have docker query the registry to resolve image digest and
             supported platforms. If not set, docker use "always" by default.
     absent_retries:
-        required: false
         default: 0
         description:
         -   If C(>0) and C(state==absent) the module will retry up to
@@ -73,7 +68,6 @@ options:
             If the last try still reports the stack as not completely
             removed the module will fail.
     absent_retries_interval:
-        required: false
         default: 1
         description:
         -   Interval in seconds between C(absent_retries)
@@ -119,6 +113,7 @@ EXAMPLES = '''
 
 -   name: deprovision 'stack1'
     docker_stack:
+        name: stack1
         state: absent
 '''
 

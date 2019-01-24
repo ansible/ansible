@@ -75,7 +75,7 @@ RETURN = '''
 recource_type:
   description: Type of the resource
   returned: success
-  type: string
+  type: str
   sample: instance
 limit:
   description: Maximum number of the resource.
@@ -85,17 +85,17 @@ limit:
 domain:
   description: Domain the resource is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the resource is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Project the resource is related to.
   returned: success
-  type: string
+  type: str
   sample: example project
 '''
 

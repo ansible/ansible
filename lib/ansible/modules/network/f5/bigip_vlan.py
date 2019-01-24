@@ -224,7 +224,7 @@ RETURN = r'''
 description:
   description: The description set on the VLAN.
   returned: changed
-  type: string
+  type: str
   sample: foo VLAN
 interfaces:
   description: Interfaces that the VLAN is assigned to.
@@ -234,7 +234,7 @@ interfaces:
 partition:
   description: The partition that the VLAN was created on.
   returned: changed
-  type: string
+  type: str
   sample: Common
 tag:
   description: The ID of the VLAN.
@@ -244,12 +244,12 @@ tag:
 cmp_hash:
   description: New traffic disaggregation method.
   returned: changed
-  type: string
+  type: str
   sample: source-address
 dag_tunnel:
   description: The new DAG tunnel setting.
   returned: changed
-  type: string
+  type: str
   sample: outer
 source_check:
   description: The new Source Check setting.
@@ -269,7 +269,7 @@ fail_safe_timeout:
 fail_safe_action:
   description: The new Fail Safe Action setting.
   returned: changed
-  type: string
+  type: str
   sample: reboot
 sflow_poll_interval:
   description: The new sFlow Polling Interval setting.

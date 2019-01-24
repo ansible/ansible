@@ -70,15 +70,15 @@ openstack_domains:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the domain.
             returned: success
-            type: string
+            type: str
         description:
             description: Description of the domain.
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the domain is enabled.
             returned: success

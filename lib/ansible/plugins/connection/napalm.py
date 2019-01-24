@@ -112,6 +112,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
@@ -119,7 +121,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
@@ -131,19 +133,13 @@ options:
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.connection import NetworkConnectionBase
-from ansible.utils.display import Display
 
 try:
     from napalm import get_network_driver
     from napalm.base import ModuleImportError
     HAS_NAPALM = True
 except ImportError:
-    raise AnsibleError(
-        'Napalm is required to use the napalm connection type.\n'
-        'Please run pip install napalm'
-    )
-
-display = Display()
+    HAS_NAPALM = False
 
 
 class Connection(NetworkConnectionBase):
@@ -158,6 +154,11 @@ class Connection(NetworkConnectionBase):
         self.napalm = None
 
     def _connect(self):
+        if not HAS_NAPALM:
+            raise AnsibleError(
+                'Napalm is required to use the napalm connection type.\n'
+                'Please run pip install napalm'
+            )
         super(Connection, self)._connect()
 
         if not self.connected:
@@ -166,7 +167,7 @@ class Connection(NetworkConnectionBase):
                     'Unable to automatically determine host network os. Please '
                     'manually configure ansible_network_os value for this host'
                 )
-            display.display('network_os is set to %s' % self._network_os, log_only=True)
+            self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
             try:
                 driver = get_network_driver(self._network_os)
@@ -184,7 +185,7 @@ class Connection(NetworkConnectionBase):
             self.napalm.open()
 
             self._sub_plugin = {'type': 'external', 'name': 'napalm', 'obj': self.napalm}
-            display.vvvv('created napalm device for network_os %s' % self._network_os, host=host)
+            self.queue_message('vvvv', 'created napalm device for network_os %s' % self._network_os)
             self._connected = True
 
     def close(self):

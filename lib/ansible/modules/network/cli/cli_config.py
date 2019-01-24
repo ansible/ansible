@@ -45,6 +45,17 @@ options:
         Use I(net_put) or I(nxos_file_copy) module to copy the flat file
         to remote device and then use set the fullpath to this argument.
     type: 'str'
+  backup:
+    description:
+      - This argument will cause the module to create a full backup of
+        the current running config from the remote device before any
+        changes are made.  The backup file is written to the C(backup)
+        folder in the playbook root directory or role root directory, if
+        playbook is part of an ansible role. If the directory does not exist,
+        it is created.
+    type: bool
+    default: 'no'
+    version_added: "2.8"
   rollback:
     description:
       - The C(rollback) argument instructs the module to rollback the
@@ -140,6 +151,11 @@ commands:
   returned: always
   type: list
   sample: ['interface Loopback999', 'no shutdown']
+backup_path:
+  description: The full path to the backup file
+  returned: when backup is yes
+  type: str
+  sample: /playbooks/ansible/backup/hostname_config.2016-07-16@22:28:34
 """
 
 import json
@@ -185,14 +201,13 @@ def validate_args(module, capabilities):
         module.fail_json(msg='diff_ignore_lines is not supported on this platform')
 
 
-def run(module, capabilities, connection, candidate, running):
+def run(module, capabilities, connection, candidate, running, rollback_id):
     result = {}
     resp = {}
     config_diff = []
     banner_diff = {}
 
     replace = module.params['replace']
-    rollback_id = module.params['rollback']
     commit_comment = module.params['commit_comment']
     multiline_delimiter = module.params['multiline_delimiter']
     diff_replace = module.params['diff_replace']
@@ -284,6 +299,7 @@ def main():
     """main entry point for execution
     """
     argument_spec = dict(
+        backup=dict(default=False, type='bool'),
         config=dict(type='str'),
         commit=dict(type='bool'),
         replace=dict(type='str'),
@@ -297,7 +313,7 @@ def main():
     )
 
     mutually_exclusive = [('config', 'rollback')]
-    required_one_of = [['config', 'rollback']]
+    required_one_of = [['backup', 'config', 'rollback']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
@@ -320,13 +336,19 @@ def main():
     else:
         flags = []
 
-    candidate = to_text(module.params['config'])
+    candidate = module.params['config']
+    candidate = to_text(candidate, errors='surrogate_then_replace') if candidate else None
     running = connection.get_config(flags=flags)
+    rollback_id = module.params['rollback']
 
-    try:
-        result.update(run(module, capabilities, connection, candidate, running))
-    except Exception as exc:
-        module.fail_json(msg=to_text(exc))
+    if module.params['backup']:
+        result['__backup__'] = running
+
+    if candidate or rollback_id:
+        try:
+            result.update(run(module, capabilities, connection, candidate, running, rollback_id))
+        except Exception as exc:
+            module.fail_json(msg=to_text(exc))
 
     module.exit_json(**result)
 

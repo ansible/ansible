@@ -99,15 +99,15 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    type: string
+    type: str
     description: The asserted state of the repository (present, absent)
     returned: always
 created:
-    type: boolean
+    type: bool
     description: If true, the repository was created
     returned: always
 name:
-    type: string
+    type: str
     description: The name of the repository
     returned: "when state == 'absent'"
 repository:

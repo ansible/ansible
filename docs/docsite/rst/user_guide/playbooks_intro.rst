@@ -407,7 +407,7 @@ As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can n
         - name: restart apache
           service:
             name: apache
-            state:restarted
+            state: restarted
           listen: "restart web services"
 
     tasks:
@@ -502,7 +502,7 @@ can do this::
        Learn how to extend Ansible by writing your own modules
    :ref:`intro_patterns`
        Learn about how to select hosts
-   `Github examples directory <https://github.com/ansible/ansible-examples>`_
+   `GitHub examples directory <https://github.com/ansible/ansible-examples>`_
        Complete end-to-end playbook examples
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

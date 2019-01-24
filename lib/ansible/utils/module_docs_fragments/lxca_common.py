@@ -53,7 +53,7 @@ options:
       lxca https full web address
     required: true
 
-requirement:
+requirements:
   - pylxca
 
 notes:

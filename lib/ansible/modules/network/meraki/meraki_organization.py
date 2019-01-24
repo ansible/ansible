@@ -95,7 +95,7 @@ data:
     name:
       description: Name of organization
       returned: success
-      type: string
+      type: str
       sample: YourOrg
 
 '''

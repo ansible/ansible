@@ -58,11 +58,7 @@ import json
 import os
 import uuid
 
-try:
-    from __main__ import cli
-except ImportError:
-    cli = None
-
+from ansible import context
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
@@ -86,8 +82,6 @@ class CallbackModule(CallbackBase):
     def __init__(self, display=None):
 
         super(CallbackModule, self).__init__(display=display)
-
-        self._options = cli.options
 
         if not HAS_PRETTYTABLE:
             self.disabled = True
@@ -145,13 +139,14 @@ class CallbackModule(CallbackBase):
         title = [
             '*Playbook initiated* (_%s_)' % self.guid
         ]
+
         invocation_items = []
-        if self._options and self.show_invocation:
-            tags = self._options.tags
-            skip_tags = self._options.skip_tags
-            extra_vars = self._options.extra_vars
-            subset = self._options.subset
-            inventory = [os.path.abspath(i) for i in self._options.inventory]
+        if context.CLIARGS and self.show_invocation:
+            tags = context.CLIARGS['tags']
+            skip_tags = context.CLIARGS['skip_tags']
+            extra_vars = context.CLIARGS['extra_vars']
+            subset = context.CLIARGS['subset']
+            inventory = [os.path.abspath(i) for i in context.CLIARGS['inventory']]
 
             invocation_items.append('Inventory:  %s' % ', '.join(inventory))
             if tags and tags != ['all']:
@@ -164,7 +159,7 @@ class CallbackModule(CallbackBase):
                 invocation_items.append('Extra Vars: %s' %
                                         ' '.join(extra_vars))
 
-            title.append('by *%s*' % self._options.remote_user)
+            title.append('by *%s*' % context.CLIARGS['remote_user'])
 
         title.append('\n\n*%s*' % self.playbook_name)
         msg_items = [' '.join(title)]

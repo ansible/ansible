@@ -179,7 +179,7 @@ description:
     - The new description of the policy.
     - This value is only returned for BIG-IP devices >= 12.1.0.
   returned: changed and success
-  type: string
+  type: str
   sample: This is my description
 rules:
   description: List of the rules, and their order, applied to the policy.

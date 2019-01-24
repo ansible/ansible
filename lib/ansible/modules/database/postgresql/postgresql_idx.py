@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {
 }
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: postgresql_idx
 short_description: Creates or drops indexes from a PostgreSQL database.
@@ -25,27 +25,34 @@ options:
   idxname:
     description:
       - Name of the index to create or drop.
+    type: str
     required: true
   db:
     description:
       - Name of database where the index will be created/dropped.
+    type: str
   port:
     description:
       - Database port to connect.
+    type: int
     default: 5432
   login_user:
     description:
       - User (role) used to authenticate with PostgreSQL.
+    type: str
     default: postgres
   login_password:
     description:
       - Password used to authenticate with PostgreSQL.
+    type: str
   login_host:
     description:
       - Host running PostgreSQL.
+    type: str
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
+    type: str
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection
@@ -53,36 +60,43 @@ options:
       - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
         more information on the modes.
       - Default of C(prefer) matches libpq default.
+    type: str
     default: prefer
-    choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
   ssl_rootcert:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA)
         certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
+    type: str
   state:
     description:
       - Index state.
+    type: str
     default: present
     choices: ["present", "absent"]
   table:
     description:
       - Table to create index on it.
+    type: str
     required: true
   columns:
     description:
       - List of index columns.
+    type: str
   cond:
     description:
       - Index conditions.
+    type: str
   idxtype:
     description:
       - Index type (like btree, gist, gin, etc.).
+    type: str
   concurrent:
     description:
       - Enable or disable concurrent mode (CREATE / DROP INDEX CONCURRENTLY).
-    default: yes
     type: bool
+    default: yes
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -113,7 +127,7 @@ EXAMPLES = '''
     idxname: test_gist_idx
 
 # Create gin index gin0_idx not concurrently on column comment of table test
-# (Note: pg_trgm extention must be installed for gin_trgm_ops)
+# (Note: pg_trgm extension must be installed for gin_trgm_ops)
 - postgresql_idx:
     idxname: gin0_idx
     table: test
@@ -140,7 +154,6 @@ RETURN = ''' # '''
 
 
 import traceback
-from hashlib import md5
 
 try:
     import psycopg2
@@ -203,9 +216,6 @@ def index_create(cursor, module, idxname, tblname, idxtype,
     else:
         condition = 'WHERE %s' % cond
 
-    if cond is not None:
-        cond = " WHERE %s" % cond
-
     for column in columns.split(','):
         column.strip()
 
@@ -226,7 +236,6 @@ def index_create(cursor, module, idxname, tblname, idxtype,
             # ERROR:  cannot execute ALTER ROLE in a read-only transaction
             changed = False
             module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
-            return changed
         else:
             raise psycopg2.InternalError(e)
     return changed
@@ -252,7 +261,6 @@ def index_drop(cursor, module, idxname, concurrent=True):
             # ERROR:  cannot execute ALTER ROLE in a read-only transaction
             changed = False
             module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
-            return changed
         else:
             raise psycopg2.InternalError(e)
     return changed
@@ -266,17 +274,17 @@ def index_drop(cursor, module, idxname, concurrent=True):
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
-        idxname=dict(required=True, aliases=['idxname']),
-        db=dict(default=''),
-        ssl_mode=dict(default='prefer', choices=[
-            'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(default=None),
-        state=dict(default="present", choices=["absent", "present"]),
-        concurrent=dict(type=bool, default="yes"),
-        table=dict(default=None),
-        idxtype=dict(default=None),
-        columns=dict(default=None),
-        cond=dict(default=None)
+        idxname=dict(type='str', required=True, aliases=['idxname']),
+        db=dict(type='str', default=''),
+        ssl_mode=dict(type='str', default='prefer', choices=[
+            'allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ssl_rootcert=dict(type='str'),
+        state=dict(type='str', default="present", choices=["absent", "present"]),
+        concurrent=dict(type='bool', default=True),
+        table=dict(type='str'),
+        idxtype=dict(type='str'),
+        columns=dict(type='str'),
+        cond=dict(type='str')
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -284,7 +292,6 @@ def main():
     )
 
     idxname = module.params["idxname"]
-    db = module.params["db"]
     state = module.params["state"]
     concurrent = module.params["concurrent"]
     table = module.params["table"]
@@ -363,6 +370,7 @@ def main():
 
     if state == 'present' and index_exists(cursor, idxname):
         kw['changed'] = False
+        del kw['login_password']
         module.exit_json(**kw)
 
     changed = False
@@ -405,6 +413,7 @@ def main():
             module.fail_json(msg="Index %s is invalid!" % idxname)
 
     kw['changed'] = changed
+    del kw['login_password']
     module.exit_json(**kw)
 
 

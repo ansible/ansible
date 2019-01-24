@@ -108,7 +108,7 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
+  type: str
   sample: "Template Applied."
 '''
 

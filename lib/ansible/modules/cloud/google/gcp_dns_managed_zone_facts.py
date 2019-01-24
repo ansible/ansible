@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -103,6 +102,11 @@ items:
       - This is in RFC3339 text format.
       returned: success
       type: str
+    labels:
+      description:
+      - A set of key/value label pairs to assign to this ManagedZone.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
@@ -117,11 +121,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            dns_name=dict(type='list', elements='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(dns_name=dict(type='list', elements='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/ndev.clouddns.readwrite']
@@ -131,9 +131,7 @@ def main():
         items = items.get('managedZones')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 

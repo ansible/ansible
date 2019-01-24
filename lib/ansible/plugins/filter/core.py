@@ -213,7 +213,7 @@ def rand(environment, end, start=None, step=None, seed=None):
             start = 0
         if not step:
             step = 1
-        return r.randrange(start, end + 1, step)
+        return r.randrange(start, end, step)
     elif hasattr(end, '__iter__'):
         if start or step:
             raise AnsibleFilterError('start and step can only be used with integer values')
@@ -274,7 +274,7 @@ def mandatory(a):
             name = "'%s' " % to_text(a._undefined_name)
         else:
             name = ''
-        raise AnsibleFilterError("Mandatory variable %snot defined." % name)
+        raise AnsibleFilterError("Mandatory variable %s not defined." % name)
     return a
 
 

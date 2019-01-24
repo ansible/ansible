@@ -79,7 +79,7 @@ suboption_schema = Schema(
         'version_added': Any(float, *string_types),
         'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'str', 'list', 'dict', 'bool', 'int', 'float', 'path', 'raw', 'jsonarg', 'json', 'bytes', 'bits'),
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'str'),
         # Recursive suboptions
         'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
     },
@@ -100,7 +100,7 @@ option_schema = Schema(
         'default': Any(None, float, int, bool, list, dict, *string_types),
         'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'str', 'list', 'dict', 'bool', 'int', 'float', 'path', 'raw', 'jsonarg', 'json', 'bytes', 'bits'),
+        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'str'),
     },
     extra=PREVENT_EXTRA
 )
@@ -129,7 +129,7 @@ return_schema = Any(
                 any_string_types: {
                     Required('description'): Any(list_string_types, *string_types),
                     Required('returned'): Any(*string_types),
-                    Required('type'): Any('string', 'list', 'boolean', 'dict', 'complex', 'bool', 'float', 'int', 'dictionary', 'str'),
+                    Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
                     'version_added': Any(float, *string_types),
                     'sample': Any(None, list, dict, int, float, *string_types),
                     'example': Any(None, list, dict, int, float, *string_types),

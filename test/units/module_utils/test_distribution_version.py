@@ -7,7 +7,10 @@ __metaclass__ = type
 
 from itertools import product
 
+import mock
 import pytest
+
+from ansible.module_utils.six.moves import builtins
 
 # the module we are actually testing (sort of)
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector
@@ -507,6 +510,26 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
         }
     },
     {
+        'name': "Devuan",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux ascii"
+NAME="Devuan GNU/Linux"
+ID=devuan
+HOME_URL="https://www.devuan.org/"
+SUPPORT_URL="https://devuan.org/os/community"
+BUG_REPORT_URL="https://bugs.devuan.org/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': u'Devuan',
+            'distribution_major_version': u'NA',
+            'distribution_release': u'ascii',
+            'os_family': 'Debian',
+            'distribution_version': u'NA'
+        }
+    },
+    {
         "platform.dist": [
             "Ubuntu",
             "16.04",
@@ -597,6 +620,31 @@ VERSION_ID="12.04"
                    'distribution_release': u'precise',
                    "os_family": "Debian",
                    'distribution_version': u'12.04'}
+    },
+    {
+        'name': 'Kali 2019.1',
+        'input': {
+            '/etc/os-release': ("PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2019.1\"\n"
+                                "VERSION_ID=\"2019.1\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.kali.org/\"\n"
+                                "SUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\n"),
+            '/etc/lsb-release': ("DISTRIB_ID=Kali\nDISTRIB_RELEASE=kali-rolling\nDISTRIB_CODENAME=kali-rolling\n"
+                                 "DISTRIB_DESCRIPTION=\"Kali GNU/Linux Rolling\"\n"),
+            '/usr/lib/os-release': ("PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2019.1\"\n"
+                                    "VERSION_ID=\"2019.1\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.kali.org/\"\n"
+                                    "SUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\n")
+        },
+        'platform.dist': [
+            'kali',
+            '2019.1',
+            ''
+        ],
+        'result': {
+            'distribution': 'Kali',
+            'distribution_version': '2019.1',
+            'distribution_release': 'kali-rolling',
+            'distribution_major_version': '2019',
+            'os_family': 'Debian'
+        }
     },
     {
         "platform.dist": [
@@ -1044,7 +1092,7 @@ def test_distribution_version(am, mocker, testcase):
     * input files that are faked
       * those should be complete and also include "irrelevant" files that might be mistaken as coming from other distributions
       * all files that are not listed here are assumed to not exist at all
-    * the output of pythons platform.dist()
+    * the output of ansible.module_utils.distro.linux_distribution() [called platform.dist() for historical reasons]
     * results for the ansible variables distribution* and os_family
 
     """
@@ -1081,13 +1129,42 @@ def test_distribution_version(am, mocker, testcase):
     def mock_platform_version():
         return testcase.get('platform.version', '')
 
+    def mock_distro_name():
+        return testcase['platform.dist'][0]
+
+    def mock_distro_version():
+        return testcase['platform.dist'][1]
+
+    def mock_distro_codename():
+        return testcase['platform.dist'][2]
+
+    def mock_open(filename, mode='r'):
+        if filename in testcase['input']:
+            file_object = mocker.mock_open(read_data=testcase['input'][filename]).return_value
+            file_object.__iter__.return_value = testcase['input'][filename].splitlines(True)
+        else:
+            file_object = real_open(filename, mode)
+        return file_object
+
+    def mock_os_path_is_file(filename):
+        if filename in testcase['input']:
+            return True
+        return False
+
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
     mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
-    mocker.patch('platform.dist', lambda: testcase['platform.dist'])
+    mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
+    mocker.patch('ansible.module_utils.distro.id', mock_distro_name)
+    mocker.patch('ansible.module_utils.distro.version', mock_distro_version)
+    mocker.patch('ansible.module_utils.distro.codename', mock_distro_codename)
+    mocker.patch('os.path.isfile', mock_os_path_is_file)
     mocker.patch('platform.system', mock_platform_system)
     mocker.patch('platform.release', mock_platform_release)
     mocker.patch('platform.version', mock_platform_version)
+
+    real_open = builtins.open
+    mocker.patch.object(builtins, 'open', new=mock_open)
 
     # run Facts()
     distro_collector = DistributionFactCollector()

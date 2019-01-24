@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: memset_server_facts
-author: "Simon Weald (@analbeard)"
+author: "Simon Weald (@glitchcrab)"
 version_added: "2.8"
 short_description: Retrieve server information.
 notes:
@@ -53,22 +53,22 @@ memset_api:
     backups:
       description: Whether this server has a backup service.
       returned: always
-      type: boolean
+      type: bool
       sample: true
     control_panel:
       description: Whether the server has a control panel (i.e. cPanel).
       returned: always
-      type: string
+      type: str
       sample: 'cpanel'
     data_zone:
       description: The data zone the server is in.
       returned: always
-      type: string
+      type: str
       sample: 'Memset Public Cloud'
     expiry_date:
       description: Current expiry date of the server.
       returned: always
-      type: string
+      type: str
       sample: '2018-08-10'
     firewall_rule_group:
       description: Details about the firewall group this server is in.
@@ -102,17 +102,17 @@ memset_api:
     firewall_type:
       description: The type of firewall the server has (i.e. self-managed, managed).
       returned: always
-      type: string
+      type: str
       sample: 'managed'
     host_name:
       description: The server's hostname.
       returned: always
-      type: string
+      type: str
       sample: 'testyaa1.miniserver.com'
     ignore_monitoring_off:
       description: When true, Memset won't remind the customer that monitoring is disabled.
       returned: always
-      type: boolean
+      type: bool
       sample: true
     ips:
       description: List of dictionaries of all IP addresses assigned to the server.
@@ -130,17 +130,17 @@ memset_api:
     monitor:
       description: Whether the server has monitoring enabled.
       returned: always
-      type: boolean
+      type: bool
       sample: true
     monitoring_level:
       description: The server's monitoring level (i.e. basic).
       returned: always
-      type: string
+      type: str
       sample: 'basic'
     name:
       description: Server name (same as the service name).
       returned: always
-      type: string
+      type: str
       sample: 'testyaa1'
     network_zones:
       description: The network zone(s) the server is in.
@@ -150,72 +150,72 @@ memset_api:
     nickname:
       description: Customer-set nickname for the server.
       returned: always
-      type: string
+      type: str
       sample: 'database server'
     no_auto_reboot:
       description: Whether or not to reboot the server if monitoring detects it down.
       returned: always
-      type: boolean
+      type: bool
       sample: true
     no_nrpe:
       description: Whether Memset should use NRPE to monitor this server.
       returned: always
-      type: boolean
+      type: bool
       sample: true
     os:
       description: The server's Operating System.
       returned: always
-      type: string
+      type: str
       sample: 'debian_stretch_64'
     penetration_patrol:
       description: Intrusion detection support level for this server.
       returned: always
-      type: string
+      type: str
       sample: 'managed'
     penetration_patrol_alert_level:
       description: The alert level at which notifications are sent.
       returned: always
-      type: integer
+      type: int
       sample: 10
     primary_ip:
       description: Server's primary IP.
       returned: always
-      type: string
+      type: str
       sample: '1.2.3.4'
     renewal_price_amount:
       description: Renewal cost for the server.
       returned: always
-      type: string
+      type: str
       sample: '30.00'
     renewal_price_currency:
       description: Currency for renewal payments.
       returned: always
-      type: string
+      type: str
       sample: 'GBP'
     renewal_price_vat:
       description: VAT rate for renewal payments
       returned: always
-      type: string
+      type: str
       sample: '20'
     start_date:
       description: Server's start date.
       returned: always
-      type: string
+      type: str
       sample: '2013-04-10'
     status:
       description: Current status of the server (i.e. live, onhold).
       returned: always
-      type: string
+      type: str
       sample: 'LIVE'
     support_level:
       description: Support level included with the server.
       returned: always
-      type: string
+      type: str
       sample: 'managed'
     type:
       description: What this server is (i.e. dedicated)
       returned: always
-      type: string
+      type: str
       sample: 'miniserver'
     vlans:
       description: Dictionary of tagged and untagged VLANs this server is in.
@@ -228,7 +228,7 @@ memset_api:
     vulnscan:
       description: Vulnerability scanning level.
       returned: always
-      type: string
+      type: str
       sample: 'basic'
 '''
 

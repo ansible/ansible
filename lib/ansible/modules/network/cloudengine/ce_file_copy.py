@@ -87,22 +87,22 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 transfer_result:
     description: information about transfer result.
     returned: always
-    type: string
+    type: str
     sample: 'The local file has been successfully transferred to the device.'
 local_file:
     description: The path of the local file.
     returned: always
-    type: string
+    type: str
     sample: '/usr/work/vrpcfg.zip'
 remote_file:
     description: The path of the remote file.
     returned: always
-    type: string
+    type: str
     sample: '/vrpcfg.zip'
 '''
 

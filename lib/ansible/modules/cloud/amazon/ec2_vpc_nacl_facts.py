@@ -68,15 +68,15 @@ nacls:
         nacl_id:
             description: The ID of the Network Access Control List.
             returned: always
-            type: string
+            type: str
         vpc_id:
             description: The ID of the VPC that the NACL is attached to.
             returned: always
-            type: string
+            type: str
         is_default:
             description: True if the NACL is the default for its VPC.
             returned: always
-            type: boolean
+            type: bool
         tags:
             description: A dict of tags associated with the NACL.
             returned: always

@@ -12,7 +12,7 @@ DOCUMENTATION = '''
 module: zabbix_map
 author:
     - "Antony Alekseyev (@Akint)"
-short_description: Zabbix map creates/updates/deletes
+short_description: Create/update/delete Zabbix maps
 description:
     - "This module allows you to create, modify and delete Zabbix map entries,
       using Graphviz binaries and text description written in DOT language.

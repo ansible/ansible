@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: dellemc_idrac_firmware
 short_description: Firmware update from a repository on a network share (CIFS, NFS).
@@ -32,42 +32,45 @@ description:
     - This feature is available only with iDRAC Enterprise License.
 options:
     idrac_ip:
-        required: True
         description: iDRAC IP Address.
+        type: str
+        required: True
     idrac_user:
-        required: True
         description: iDRAC username.
-    idrac_pwd:
+        type: str
         required: True
+    idrac_pwd:
         description: iDRAC user password.
+        type: str
+        required: True
     idrac_port:
-        required: False
         description: iDRAC port.
+        type: int
         default: 443
     share_name:
-        required: True
         description: CIFS or NFS Network share.
+        type: str
+        required: True
     share_user:
-        required: False
         description: Network share user in the format 'user@domain' or 'domain\\user' if user is
             part of a domain else 'user'. This option is mandatory for CIFS Network Share.
+        type: str
     share_pwd:
-        required: False
         description: Network share user password. This option is mandatory for CIFS Network Share.
+        type: str
     share_mnt:
-        required: True
         description: Local mount path of the network share with read-write permission for ansible user.
             This option is mandatory for Network Share.
+        type: str
+        required: True
     reboot:
-        required: False
         description: Whether to reboots after applying the updates or not.
-        default: False
         type: bool
+        default: false
     job_wait:
-        required: False
         description: Whether to wait for job completion or not.
         type: bool
-        default: True
+        default: true
     catalog_file_name:
         required: False
         description: Catalog file name relative to the I(share_name).
@@ -78,7 +81,7 @@ requirements:
     - "omsdk"
     - "python >= 2.7.5"
 author: "Rajeev Arakkal (@rajeevarakkal)"
-"""
+'''
 
 EXAMPLES = """
 ---
@@ -99,7 +102,7 @@ EXAMPLES = """
 RETURN = """
 ---
 msg:
-  type: string
+  type: str
   description: Over all firmware update status.
   returned: always
   sample: "Successfully updated the firmware."
@@ -176,19 +179,19 @@ def update_firmware(idrac, module):
 def main():
     module = AnsibleModule(
         argument_spec={
-            "idrac_ip": {"required": True, "type": str},
-            "idrac_user": {"required": True, "type": str},
-            "idrac_pwd": {"required": True, "type": str, "no_log": True},
-            "idrac_port": {"required": False, "default": 443, "type": int},
+            "idrac_ip": {"required": True, "type": 'str'},
+            "idrac_user": {"required": True, "type": 'str'},
+            "idrac_pwd": {"required": True, "type": 'str', "no_log": True},
+            "idrac_port": {"required": False, "default": 443, "type": 'int'},
 
-            "share_name": {"required": True, "type": str},
-            "share_user": {"required": False, "type": str},
-            "share_pwd": {"required": False, "type": str, "no_log": True},
-            "share_mnt": {"required": True, "type": str},
+            "share_name": {"required": True, "type": 'str'},
+            "share_user": {"required": False, "type": 'str'},
+            "share_pwd": {"required": False, "type": 'str', "no_log": True},
+            "share_mnt": {"required": True, "type": 'str'},
 
-            "catalog_file_name": {"required": False, "type": str, "default": "Catalog.xml"},
-            "reboot": {"required": False, "type": bool, "default": False},
-            "job_wait": {"required": False, "type": bool, "default": True},
+            "catalog_file_name": {"required": False, "type": 'str', "default": "Catalog.xml"},
+            "reboot": {"required": False, "type": 'bool', "default": False},
+            "job_wait": {"required": False, "type": 'bool', "default": True},
         },
 
         supports_check_mode=False)

@@ -182,14 +182,14 @@ changed:
 currentConfigBlock:
   description: The current config block for the user specified interface
   returned: when action = show
-  type: string
+  type: str
   sample: |
     interface Ethernet4
     !
 newConfigBlock:
   description: The new config block for the user specified interface
   returned: when action = add or remove
-  type: string
+  type: str
   sample: |
     interface Ethernet3
         description example
@@ -199,14 +199,14 @@ oldConfigBlock:
   description: The current config block for the user specified interface
                before any changes are made
   returned: when action = add or remove
-  type: string
+  type: str
   sample: |
     interface Ethernet3
     !
 fullConfig:
   description: The full config of the configlet after being updated
   returned: when action = add or remove
-  type: string
+  type: str
   sample: |
     !
     interface Ethernet3
@@ -216,7 +216,7 @@ fullConfig:
 updateConfigletResponse:
   description: Response returned from CVP when configlet update is triggered
   returned: when action = add or remove and configuration changes
-  type: string
+  type: str
   sample: "Configlet veos1-server successfully updated and task initiated."
 portConfigurable:
   description: Signifies if the user specified port has an entry in the
@@ -233,7 +233,7 @@ switchConfigurable:
 switchInfo:
   description: Information from CVP describing the switch being configured
   returned: success
-  type: dictionary
+  type: dict
   sample: {"architecture": "i386",
            "bootupTimeStamp": 1491264298.21,
            "complianceCode": "0000",
@@ -283,7 +283,7 @@ taskId:
   description: The task ID created by CVP because of changes to configlet
   returned: when action = add or remove, and auto_run = true or false,
             and configuration changes
-  type: string
+  type: str
   sample: "500"
 '''
 

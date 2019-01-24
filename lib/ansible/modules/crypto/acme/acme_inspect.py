@@ -21,7 +21,7 @@ version_added: "2.8"
 short_description: Send direct requests to an ACME server
 description:
    - "Allows to send direct requests to an ACME server with the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
       which is supported by CAs such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module can be used to debug failed certificate request attempts,
       for example when M(acme_certificate) fails or encounters a problem which
@@ -39,6 +39,13 @@ notes:
       acme_directory=https://acme-v02.api.letsencrypt.org/directory acme_version=2
       account_uri=https://acme-v02.api.letsencrypt.org/acme/acct/1 method=get
       url=https://acme-v02.api.letsencrypt.org/acme/acct/1\")"
+seealso:
+  - name: Automatic Certificate Management Environment (ACME)
+    description: The current draft specification of the ACME protocol.
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
+  - name: ACME TLS ALPN Challenge Extension
+    description: The current draft specification of the C(tls-alpn-01) challenge.
+    link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
 extends_documentation_fragment:
   - acme
 options:
@@ -116,7 +123,7 @@ EXAMPLES = r'''
   vars:
     account_info:
       # For valid values, see
-      # https://tools.ietf.org/html/draft-ietf-acme-acme-16#section-7.3
+      # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
       contact:
       - mailto:me@example.com
 
@@ -224,7 +231,7 @@ headers:
 output_text:
   description: The raw text output
   returned: always
-  type: string
+  type: str
   sample: "{\\n  \\\"id\\\": 12345,\\n  \\\"key\\\": {\\n    \\\"kty\\\": \\\"RSA\\\",\\n ..."
 output_json:
   description: The output parsed as JSON

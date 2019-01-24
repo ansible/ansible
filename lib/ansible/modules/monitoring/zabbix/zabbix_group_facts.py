@@ -29,7 +29,7 @@ description:
    - This module allows you to search for Zabbix hostgroup entries.
 version_added: "2.6"
 author:
-    - "Michael Miko (@redwhitemiko)"
+    - "Michael Miko (@RedWhiteMiko)"
 requirements:
     - "python >= 2.6"
     - zabbix-api

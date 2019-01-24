@@ -133,8 +133,16 @@ class Connection(ConnectionBase):
                 result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
         if 'messages' in result:
-            for msg in result.get('messages'):
-                display.vvvv('%s' % msg, host=self._play_context.remote_addr)
+            for level, message in result['messages']:
+                if level == 'log':
+                    display.display(message, log_only=True)
+                elif level in ('debug', 'v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'vvvvvv'):
+                    getattr(display, level)(message, host=self._play_context.remote_addr)
+                else:
+                    if hasattr(display, level):
+                        getattr(display, level)(message)
+                    else:
+                        display.vvvv(message, host=self._play_context.remote_addr)
 
         if 'error' in result:
             if self._play_context.verbosity > 2:

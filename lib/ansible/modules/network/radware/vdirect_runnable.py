@@ -121,7 +121,7 @@ RETURN = '''
 result:
     description: Message detailing run result
     returned: success
-    type: string
+    type: str
     sample: "Workflow action run completed."
 '''
 

@@ -21,11 +21,14 @@ version_added: "2.7"
 short_description: Retrieves information on ACME accounts
 description:
    - "Allows to retrieve information on accounts a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
       such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module only works with the ACME v2 protocol."
 notes:
    - "The M(acme_account) module allows to modify, create and delete ACME accounts."
+seealso:
+  - module: acme_account
+    description: Allows to create, modify or delete an ACME account.
 extends_documentation_fragment:
   - acme
 '''
@@ -66,7 +69,7 @@ exists:
 account_uri:
   description: ACME account URI, or None if account does not exist.
   returned: always
-  type: string
+  type: str
 
 account:
   description: The account information, as retrieved from the ACME server.

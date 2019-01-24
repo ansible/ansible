@@ -17,7 +17,7 @@ Prerequisites for using the rax modules are minimal.  In addition to ansible its
 all of the modules require and are tested against pyrax 1.5 or higher. 
 You'll need this Python module installed on the execution host.  
 
-pyrax is not currently available in many operating system 
+``pyrax`` is not currently available in many operating system
 package repositories, so you will likely need to install it via pip:
 
 .. code-block:: bash
@@ -55,7 +55,7 @@ The `rax.py` inventory script and all `rax` modules support a standard `pyrax` c
     username = myraxusername
     api_key = d41d8cd98f00b204e9800998ecf8427e
 
-Setting the environment parameter RAX_CREDS_FILE to the path of this file will help Ansible find how to load
+Setting the environment parameter ``RAX_CREDS_FILE`` to the path of this file will help Ansible find how to load
 this information.
 
 More information about this credentials file can be found at 
@@ -163,7 +163,7 @@ In Ansible it is quite possible to use multiple dynamic inventory plugins along 
 rax.py
 ++++++
 
-To use the rackspace dynamic inventory script, copy ``rax.py`` into your inventory directory and make it executable. You can specify a credentials file for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
+To use the Rackspace dynamic inventory script, copy ``rax.py`` into your inventory directory and make it executable. You can specify a credentials file for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
 
 .. note:: Dynamic inventory scripts (like ``rax.py``) are saved in ``/usr/share/ansible/inventory`` if Ansible has been installed globally.  If installed to a virtualenv, the inventory scripts are installed to ``$VIRTUALENV/share/inventory``.
 

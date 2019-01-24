@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: memset_memstore_facts
-author: "Simon Weald (@analbeard)"
+author: "Simon Weald (@glitchcrab)"
 version_added: "2.8"
 short_description: Retrieve Memstore product usage information.
 notes:
@@ -58,32 +58,32 @@ memset_api:
         bytes_out:
           description: Outbound CDN bandwidth for the last 24 hours in bytes
           returned: always
-          type: integer
+          type: int
           sample: 1000
         requests:
           description: Number of requests in the last 24 hours
           returned: always
-          type: integer
+          type: int
           sample: 10
         bytes_in:
           description: Inbound CDN bandwidth for the last 24 hours in bytes
           returned: always
-          type: integer
+          type: int
           sample: 1000
     containers:
       description: Number of containers
       returned: always
-      type: integer
+      type: int
       sample: 10
     bytes:
       description: Space used in bytes
       returned: always
-      type: integer
+      type: int
       sample: 3860997965
     objs:
       description: Number of objects
       returned: always
-      type: integer
+      type: int
       sample: 1000
     bandwidth:
       description: Dictionary of CDN bandwidth facts
@@ -93,17 +93,17 @@ memset_api:
         bytes_out:
           description: Outbound bandwidth for the last 24 hours in bytes
           returned: always
-          type: integer
+          type: int
           sample: 1000
         requests:
           description: Number of requests in the last 24 hours
           returned: always
-          type: integer
+          type: int
           sample: 10
         bytes_in:
           description: Inbound bandwidth for the last 24 hours in bytes
           returned: always
-          type: integer
+          type: int
           sample: 1000
 '''
 

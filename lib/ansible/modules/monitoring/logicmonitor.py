@@ -13,7 +13,7 @@ RETURN = '''
 success:
     description: flag indicating that execution was successful
     returned: success
-    type: boolean
+    type: bool
     sample: True
 ...
 '''

@@ -137,7 +137,7 @@ task:
 RETURN = '''
 role_result:
     description: the IAM.role dict returned by Boto
-    type: string
+    type: str
     returned: if iam_type=role and state=present
     sample: {
                 "arn": "arn:aws:iam::A1B2C3D4E5F6:role/my-new-role",

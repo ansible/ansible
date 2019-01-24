@@ -87,17 +87,17 @@ RETURN = r'''
 file:
   description: Local path to ASM policy file.
   returned: changed
-  type: string
+  type: str
   sample: /root/some_policy.xml
 inline:
   description: Contents of policy as an inline string
   returned: changed
-  type: string
+  type: str
   sample: <xml>foobar contents</xml>
 name:
   description: Name of the ASM policy to be created/overwritten
   returned: changed
-  type: string
+  type: str
   sample: Asm_APP1_Transparent
 force:
   description: Set when overwriting an existing policy
@@ -270,7 +270,9 @@ class ModuleManager(object):
             self.client.provider['server_port'],
         )
 
-        query = '?$filter=name+eq+{0}+and+partition+eq+{1}&$select=name'.format(self.want.name, self.want.partition)
+        query = "?$filter=contains(name,'{0}')+and+contains(partition,'{1}')&$select=name,partition".format(
+            self.want.name, self.want.partition
+        )
         resp = self.client.api.get(uri + query)
 
         try:
@@ -299,7 +301,9 @@ class ModuleManager(object):
             self.client.provider['server_port'],
         )
 
-        query = '?$filter=name+eq+{0}+and+partition+eq+{1}&$select=name'.format(self.want.name, self.want.partition)
+        query = "?$filter=contains(name,'{0}')+and+contains(partition,'{1}')&$select=name,partition".format(
+            self.want.name, self.want.partition
+        )
         resp = self.client.api.get(uri + query)
 
         try:

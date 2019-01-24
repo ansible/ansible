@@ -1,0 +1,2 @@
+bugfixes:
+- icinga2_host - fixed the issue with not working ``use_proxy`` option of the module.

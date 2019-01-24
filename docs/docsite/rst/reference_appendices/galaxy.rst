@@ -168,6 +168,8 @@ Content of the *webserver.yml* file:
     - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
+.. _galaxy_dependencies:
+
 Dependencies
 ============
 
@@ -380,7 +382,7 @@ The following shows authenticating with the Galaxy website using a GitHub userna
 
     Use --github-token if you do not want to enter your password.
 
-    Github Username: dsmith
+    GitHub Username: dsmith
     Password for dsmith:
     Successfully logged into Galaxy as dsmith
 

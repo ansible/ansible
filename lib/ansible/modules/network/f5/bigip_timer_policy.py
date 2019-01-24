@@ -139,7 +139,7 @@ RETURN = r'''
 description:
   description: The new description of the timer policy.
   returned: changed
-  type: string
+  type: str
   sample: true
 '''
 

@@ -21,9 +21,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: s3_bucket
-short_description: Manage S3 buckets in AWS, Ceph, Walrus and FakeS3
+short_description: Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
 description:
-    - Manage S3 buckets in AWS, Ceph, Walrus and FakeS3
+    - Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
 version_added: "2.0"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
@@ -43,7 +43,7 @@ options:
       - The JSON policy as a string.
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc.
+      - S3 URL endpoint for usage with DigitalOcean, Ceph, Eucalyptus and fakes3 etc.
       - Assumes AWS if not specified.
       - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
@@ -58,7 +58,7 @@ options:
       - With Requester Pays buckets, the requester instead of the bucket owner pays the cost
         of the request and the data download from the bucket.
     type: bool
-    default: 'no'
+    default: False
   state:
     description:
       - Create or remove the s3 bucket
@@ -110,6 +110,11 @@ EXAMPLES = '''
     tags:
       example: tag1
       another: tag2
+
+# Create a simple DigitalOcean Spaces bucket using their provided regional endpoint
+- s3_bucket:
+    name: mydobucket
+    s3_url: 'https://nyc3.digitaloceanspaces.com'
 
 '''
 
@@ -197,7 +202,7 @@ def create_or_update_bucket(s3_client, module, location):
         if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays is not None:
             module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     else:
-        if requester_pays is not None:
+        if requester_pays:
             payer = 'Requester' if requester_pays else 'BucketOwner'
             if requester_pays_status != payer:
                 put_bucket_request_payment(s3_client, name, payer)
@@ -545,7 +550,7 @@ def main():
             force=dict(required=False, default='no', type='bool'),
             policy=dict(required=False, default=None, type='json'),
             name=dict(required=True, type='str'),
-            requester_pays=dict(default='no', type='bool'),
+            requester_pays=dict(default=False, type='bool'),
             s3_url=dict(aliases=['S3_URL'], type='str'),
             state=dict(default='present', type='str', choices=['present', 'absent']),
             tags=dict(required=False, default=None, type='dict'),

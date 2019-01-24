@@ -245,7 +245,7 @@ EXAMPLES = '''
     grafana_user: "admin"
     grafana_password: "xxxxxx"
     org_id: "1"
-    ds_type: "elasticisearch"
+    ds_type: "elasticsearch"
     ds_url: "https://elastic.company.com:9200"
     database: "[logstash_]YYYY.MM.DD"
     basic_auth_user: "grafana"
@@ -305,7 +305,7 @@ RETURN = '''
 name:
   description: name of the datasource created.
   returned: success
-  type: string
+  type: str
   sample: test-ds
 id:
   description: Id of the datasource

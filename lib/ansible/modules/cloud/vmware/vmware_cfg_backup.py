@@ -75,7 +75,7 @@ RETURN = '''
 dest_file:
     description: The full path of where the file holding the ESXi configurations was stored
     returned: changed
-    type: string
+    type: str
     sample: /tmp/configBundle-esxi.host.domain.tgz
 '''
 

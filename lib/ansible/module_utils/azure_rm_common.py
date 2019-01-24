@@ -212,7 +212,7 @@ AZURE_PKG_VERSIONS = {
     },
     'NetworkManagementClient': {
         'package_name': 'network',
-        'expected_version': '2.2.1'
+        'expected_version': '2.3.0'
     },
     'ResourceManagementClient': {
         'package_name': 'resource',
@@ -220,7 +220,7 @@ AZURE_PKG_VERSIONS = {
     },
     'DnsManagementClient': {
         'package_name': 'dns',
-        'expected_version': '1.2.0'
+        'expected_version': '2.1.0'
     },
     'WebSiteManagementClient': {
         'package_name': 'web',
@@ -546,7 +546,7 @@ class AzureRMModuleBase(object):
             self.fail("Error creating blob service client for storage account {0} - {1}".format(storage_account_name,
                                                                                                 str(exc)))
 
-    def create_default_pip(self, resource_group, location, public_ip_name, allocation_method='Dynamic'):
+    def create_default_pip(self, resource_group, location, public_ip_name, allocation_method='Dynamic', sku=None):
         '''
         Create a default public IP address <public_ip_name> to associate with a network interface.
         If a PIP address matching <public_ip_name> exists, return it. Otherwise, create one.
@@ -555,6 +555,7 @@ class AzureRMModuleBase(object):
         :param location: a valid azure location
         :param public_ip_name: base name to assign the public IP address
         :param allocation_method: one of 'Static' or 'Dynamic'
+        :param sku: sku
         :return: PIP object
         '''
         pip = None
@@ -574,6 +575,7 @@ class AzureRMModuleBase(object):
         params = self.network_models.PublicIPAddress(
             location=location,
             public_ip_allocation_method=allocation_method,
+            sku=sku
         )
         self.log('Creating default public IP {0}'.format(public_ip_name))
         try:
@@ -837,8 +839,14 @@ class AzureRMModuleBase(object):
         self.log('Getting dns client')
         if not self._dns_client:
             self._dns_client = self.get_mgmt_svc_client(DnsManagementClient,
-                                                        base_url=self._cloud_environment.endpoints.resource_manager)
+                                                        base_url=self._cloud_environment.endpoints.resource_manager,
+                                                        api_version='2018-05-01')
         return self._dns_client
+
+    @property
+    def dns_models(self):
+        self.log("Getting dns models...")
+        return DnsManagementClient.models('2018-05-01')
 
     @property
     def web_client(self):

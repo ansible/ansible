@@ -148,12 +148,12 @@ RETURN = r'''
 description:
   description: Description of the profile.
   returned: changed
-  type: string
+  type: str
   sample: My profile
 insert_header_name:
   description: Specifies the name of the HTTP2 header
   returned: changed
-  type: string
+  type: str
   sample: X-HTTP2
 streams:
   description: The number of outstanding concurrent requests allowed on a single HTTP/2 connection

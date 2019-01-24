@@ -233,7 +233,7 @@ class InventoryData(object):
             g.remove_host(host)
 
     def set_variable(self, entity, varname, value):
-        ''' sets a varible for an inventory object '''
+        ''' sets a variable for an inventory object '''
 
         if entity in self.groups:
             inv_object = self.groups[entity]

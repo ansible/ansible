@@ -246,7 +246,7 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
     # show all the hosts matching the pattern, ie all but the group www
     - debug:
         msg: "{{ item }}"
-      loop: "{{ query('inventory_hostnames', 'all!www') }}"
+      loop: "{{ query('inventory_hostnames', 'all:!www') }}"
 
 More information on the patterns can be found on :doc:`intro_patterns`
 

@@ -126,7 +126,7 @@ Only the common ones are described as each connection/become/shell/etc plugin ca
 ansible_become_user
     The user Ansible 'becomes' after using privilege escalation. This must be available to the 'login user'.
 
-ansible_connecion
+ansible_connection
     The connection plugin actually used for the task on the target host.
 
 ansible_host

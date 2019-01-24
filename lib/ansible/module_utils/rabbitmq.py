@@ -88,11 +88,10 @@ class RabbitClient():
     ''' Consider some file size limits here '''
     def _read_file(self, path):
         try:
-            fh = open(path, "rb").read()
+            with open(path, "rb") as file_handle:
+                return file_handle.read()
         except IOError as e:
             self.module.fail_json(msg="Unable to open file %s: %s" % (path, to_native(e)))
-
-        return fh
 
     @staticmethod
     def _check_file_mime_type(path):

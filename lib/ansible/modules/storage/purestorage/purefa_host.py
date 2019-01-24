@@ -329,12 +329,12 @@ def main():
     if not HAS_PURESTORAGE:
         module.fail_json(msg='purestorage sdk is required for this module in host')
 
+    array = get_system(module)
     api_version = array._list_available_rest_versions()
     if module.params['nqn'] is not None and NVMEF_API_VERSION not in api_version:
         module.fail_json(msg='NVMeF protocol not supported. Please upgrade your array.')
     state = module.params['state']
     protocol = module.params['protocol']
-    array = get_system(module)
     host = get_host(module, array)
     if module.params['lun'] and not 1 <= module.params['lun'] <= 4095:
         module.fail_json(msg='LUN ID of {0} is out of range (1 to 4095)'.format(module.params['lun']))

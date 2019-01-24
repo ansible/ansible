@@ -66,22 +66,22 @@ RETURN = '''
   channel:
     description: The channel specified in the module parameters
     returned: success
-    type: string
+    type: str
     sample: "xsettings"
   property:
     description: The property specified in the module parameters
     returned: success
-    type: string
+    type: str
     sample: "/Xft/DPI"
   value_type:
     description: The type of the value that was changed
     returned: success
-    type: string
+    type: str
     sample: "int"
   value:
     description: The value of the preference key after executing the module
     returned: success
-    type: string
+    type: str
     sample: "192"
 ...
 '''

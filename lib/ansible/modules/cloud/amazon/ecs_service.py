@@ -199,7 +199,7 @@ service:
         clusterArn:
             description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
             returned: always
-            type: string
+            type: str
         desiredCount:
             description: The desired number of instantiations of the task definition to keep running on the service.
             returned: always
@@ -212,11 +212,11 @@ service:
                 loadBalancerName:
                     description: the name
                     returned: always
-                    type: string
+                    type: str
                 containerName:
                     description: The name of the container to associate with the load balancer.
                     returned: always
-                    type: string
+                    type: str
                 containerPort:
                     description: The port on the container to associate with the load balancer.
                     returned: always
@@ -234,19 +234,19 @@ service:
                          of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example,
                          arn:aws:ecs:region :012345678910 :service/my-service .
             returned: always
-            type: string
+            type: str
         serviceName:
             description: A user-generated string used to identify the service
             returned: always
-            type: string
+            type: str
         status:
             description: The valid values are ACTIVE, DRAINING, or INACTIVE.
             returned: always
-            type: string
+            type: str
         taskDefinition:
             description: The ARN of a task definition to use for tasks in the service.
             returned: always
-            type: string
+            type: str
         deployments:
             description: list of service deployments
             returned: always
@@ -276,12 +276,12 @@ service:
                 type:
                     description: The type of constraint. Valid values are distinctInstance and memberOf.
                     returned: always
-                    type: string
+                    type: str
                 expression:
                     description: A cluster query language expression to apply to the constraint. Note you cannot specify an expression if the constraint type is
                                  distinctInstance.
                     returned: always
-                    type: string
+                    type: str
         placementStrategy:
             description: List of placement strategy objects
             returned: always
@@ -290,13 +290,13 @@ service:
                 type:
                     description: The type of placement strategy. Valid values are random, spread and binpack.
                     returned: always
-                    type: string
+                    type: str
                 field:
                     description: The field to apply the placement strategy against. For the spread placement strategy, valid values are instanceId
                                  (or host, which has the same effect), or any platform or custom attribute that is applied to a container instance,
                                  such as attribute:ecs.availability-zone. For the binpack placement strategy, valid values are CPU and MEMORY.
                     returned: always
-                    type: string
+                    type: str
 ansible_facts:
     description: Facts about deleted service.
     returned: when deleting a service

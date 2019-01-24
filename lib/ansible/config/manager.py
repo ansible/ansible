@@ -55,17 +55,25 @@ def ensure_type(value, value_type, origin=None):
     :arg value: The value to ensure correct typing of
     :kwarg value_type: The type of the value.  This can be any of the following strings:
         :boolean: sets the value to a True or False value
+        :bool: Same as 'boolean'
         :integer: Sets the value to an integer or raises a ValueType error
+        :int: Same as 'integer'
         :float: Sets the value to a float or raises a ValueType error
         :list: Treats the value as a comma separated list.  Split the value
             and return it as a python list.
         :none: Sets the value to None
         :path: Expands any environment variables and tilde's in the value.
-        :tmp_path: Create a unique temporary directory inside of the directory
+        :tmppath: Create a unique temporary directory inside of the directory
             specified by value and return its path.
+        :temppath: Same as 'tmppath'
+        :tmp: Same as 'tmppath'
         :pathlist: Treat the value as a typical PATH string.  (On POSIX, this
             means colon separated strings.)  Split the value and then expand
             each part for environment variables and tildes.
+        :pathspec: Treat the value as a PATH string. Expands any environment variables
+            tildes's in the value.
+        :str: Sets the value to string types.
+        :string: Same as 'str'
     '''
 
     basedir = None
@@ -125,7 +133,7 @@ def ensure_type(value, value_type, origin=None):
 
 # FIXME: see if this can live in utils/path
 def resolve_path(path, basedir=None):
-    ''' resolve relative or 'varaible' paths '''
+    ''' resolve relative or 'variable' paths '''
     if '{{CWD}}' in path:  # allow users to force CWD using 'magic' {{CWD}}
         path = path.replace('{{CWD}}', os.getcwd())
 
@@ -178,7 +186,7 @@ def find_ini_config_file(warnings=None):
     path_from_env = os.getenv("ANSIBLE_CONFIG", SENTINEL)
     if path_from_env is not SENTINEL:
         path_from_env = unfrackpath(path_from_env, follow=False)
-        if os.path.isdir(path_from_env):
+        if os.path.isdir(to_bytes(path_from_env)):
             path_from_env = os.path.join(path_from_env, "ansible.cfg")
         potential_paths.append(path_from_env)
 
@@ -206,7 +214,7 @@ def find_ini_config_file(warnings=None):
     potential_paths.append("/etc/ansible/ansible.cfg")
 
     for path in potential_paths:
-        if os.path.exists(path):
+        if os.path.exists(to_bytes(path)):
             break
     else:
         path = None
@@ -246,7 +254,7 @@ class ConfigManager(object):
 
         # consume configuration
         if self._config_file:
-            if os.path.exists(self._config_file):
+            if os.path.exists(to_bytes(self._config_file)):
                 # initialize parser and read config
                 self._parse_config_file()
 
@@ -280,7 +288,7 @@ class ConfigManager(object):
         if cfile is not None:
             if ftype == 'ini':
                 self._parsers[cfile] = configparser.ConfigParser()
-                with open(cfile, 'rb') as f:
+                with open(to_bytes(cfile), 'rb') as f:
                     try:
                         cfg_text = to_text(f.read(), errors='surrogate_or_strict')
                     except UnicodeError as e:

@@ -20,6 +20,7 @@ options:
   name:
     description:
       - Name of the local group to manage membership on.
+    type: str
     required: yes
   members:
     description:
@@ -29,11 +30,12 @@ options:
       - Accepts service users as NT AUTHORITY\username.
       - Accepts all local, domain and service user types as username,
         favoring domain lookups when in a domain.
-    required: yes
     type: list
+    required: yes
   state:
     description:
       - Desired state of the members in the group.
+    type: str
     choices: [ absent, present ]
     default: present
 seealso:
@@ -66,7 +68,7 @@ RETURN = r'''
 name:
     description: The name of the target local group.
     returned: always
-    type: string
+    type: str
     sample: Administrators
 added:
     description: A list of members added when C(state) is C(present); this is

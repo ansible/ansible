@@ -268,7 +268,7 @@ connection_limit:
 description:
   description: The new description of pool member.
   returned: changed
-  type: string
+  type: str
   sample: My pool member
 ratio:
   description: The new pool member ratio weight.
@@ -288,12 +288,12 @@ fqdn_auto_populate:
 fqdn:
   description: The FQDN of the pool member.
   returned: changed
-  type: string
+  type: str
   sample: foo.bar.com
 address:
   description: The address of the pool member.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.3.4
 monitors:
   description: The new list of monitors for the resource.
@@ -669,6 +669,22 @@ class ApiParameters(Parameters):
         if matches is None:
             return None
         return matches.group('least')
+
+    @property
+    def fqdn_auto_populate(self):
+        if self._values['fqdn'] is None:
+            return None
+        if 'autopopulate' in self._values['fqdn']:
+            if self._values['fqdn']['autopopulate'] == 'enabled':
+                return True
+            return False
+
+    @property
+    def fqdn(self):
+        if self._values['fqdn'] is None:
+            return None
+        if 'tmName' in self._values['fqdn']:
+            return self._values['fqdn']['tmName']
 
 
 class NodeApiParameters(Parameters):

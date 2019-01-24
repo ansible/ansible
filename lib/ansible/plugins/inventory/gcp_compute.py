@@ -48,6 +48,9 @@ DOCUMENTATION = '''
             description:
                 - An optional service account email address if machineaccount is selected
                   and the user does not wish to use the default email.
+        vars_prefix:
+            description: prefix to apply to host variables, does not include facts nor params
+            default: ''
 '''
 
 EXAMPLES = '''
@@ -111,7 +114,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         hostname = self._get_hostname(item)
         self.inventory.add_host(hostname)
         for key in item:
-            self.inventory.set_variable(hostname, key, item[key])
+            try:
+                self.inventory.set_variable(hostname, self.get_option('vars_prefix') + key, item[key])
+            except (ValueError, TypeError) as e:
+                self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (hostname, key, to_native(e)))
         self.inventory.add_child('all', hostname)
 
     def verify_file(self, path):
@@ -330,6 +336,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not isinstance(config_data['projects'], list):
             raise AnsibleParserError("Projects must be a list in GCP inventory YAML files")
+
+        # add in documented defaults
+        if 'filters' not in config_data:
+            config_data['filters'] = None
 
         projects = config_data['projects']
         zones = config_data.get('zones')

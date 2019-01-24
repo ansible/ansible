@@ -298,8 +298,8 @@ if($gather_subset.Contains('memory')) {
     $win32_os = Get-LazyCimInstance Win32_OperatingSystem
     $ansible_facts += @{
         # Win32_PhysicalMemory is empty on some virtual platforms
-        ansible_memtotal_mb = ([math]::round($win32_cs.TotalPhysicalMemory / 1024 / 1024))
-        ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024 / 1024))
+        ansible_memtotal_mb = ([math]::ceiling($win32_cs.TotalPhysicalMemory / 1024 / 1024))
+        ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024))
     }
 }
 

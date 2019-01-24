@@ -50,7 +50,7 @@ RETURN = '''
 cert:
     description: The certificate retrieved from the port
     returned: success
-    type: string
+    type: str
 expired:
     description: Boolean indicating if the cert is expired
     returned: success
@@ -66,19 +66,19 @@ issuer:
 not_after:
     description: Expiration date of the cert
     returned: success
-    type: string
+    type: str
 not_before:
     description: Issue date of the cert
     returned: success
-    type: string
+    type: str
 serial_number:
     description: The serial number of the cert
     returned: success
-    type: string
+    type: str
 signature_algorithm:
     description: The algorithm used to sign the cert
     returned: success
-    type: string
+    type: str
 subject:
     description: Information about the subject of the cert (OU, CN, etc)
     returned: success
@@ -86,7 +86,7 @@ subject:
 version:
     description: The version number of the certificate
     returned: success
-    type: string
+    type: str
 '''
 
 EXAMPLES = '''

@@ -96,7 +96,7 @@ RETURN = '''
 msg:
     description: Success or failure message
     returned: always
-    type: string
+    type: str
     sample: "Success"
 
 result:
@@ -107,7 +107,7 @@ result:
 error:
     description: the error message returned by the Gitlab API
     returned: failed
-    type: string
+    type: str
     sample: "400: key is already in use"
 
 previous_version:

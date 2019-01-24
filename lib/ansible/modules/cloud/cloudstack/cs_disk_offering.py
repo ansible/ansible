@@ -128,7 +128,7 @@ RETURN = '''
 id:
   description: UUID of the disk offering
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 disk_size:
   description: Size of the disk offering in GB
@@ -168,17 +168,17 @@ iops_write_rate:
 created:
   description: Date the offering was created
   returned: success
-  type: string
+  type: str
   sample: 2017-11-19T10:48:59+0000
 display_text:
   description: Display text of the offering
   returned: success
-  type: string
+  type: str
   sample: Small 10GB
 domain:
   description: Domain the offering is into
   returned: success
-  type: string
+  type: str
   sample: ROOT
 storage_tags:
   description: List of storage tags
@@ -193,17 +193,17 @@ customized:
 name:
   description: Name of the system offering
   returned: success
-  type: string
+  type: str
   sample: Micro
 provisioning_type:
   description: Provisioning type used to create volumes
   returned: success
-  type: string
+  type: str
   sample: thin
 storage_type:
   description: Storage type used to create volumes
   returned: success
-  type: string
+  type: str
   sample: shared
 display_offering:
   description: Whether to display the offering to the end user or not.

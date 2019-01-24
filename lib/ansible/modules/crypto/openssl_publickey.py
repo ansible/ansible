@@ -97,17 +97,17 @@ RETURN = '''
 privatekey:
     description: Path to the TLS/SSL private key the public key was generated from
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/private/ansible.com.pem
 format:
     description: The format of the public key (PEM, OpenSSH, ...)
     returned: changed or success
-    type: string
+    type: str
     sample: PEM
 filename:
     description: Path to the generated TLS/SSL public key file
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/public/ansible.com.pem
 fingerprint:
     description: The fingerprint of the public key. Fingerprint will be generated for each hashlib.algorithms available.
@@ -170,7 +170,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
         if not self.check(module, perms_required=False) or self.force:
             try:
                 if self.format == 'OpenSSH':
-                    privatekey_content = open(self.privatekey_path, 'rb').read()
+                    with open(self.privatekey_path, 'rb') as private_key_fh:
+                        privatekey_content = private_key_fh.read()
                     key = crypto_serialization.load_pem_private_key(privatekey_content,
                                                                     password=self.privatekey_passphrase,
                                                                     backend=default_backend())
@@ -212,7 +213,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 return False
 
             try:
-                publickey_content = open(self.path, 'rb').read()
+                with open(self.path, 'rb') as public_key_fh:
+                    publickey_content = public_key_fh.read()
                 if self.format == 'OpenSSH':
                     current_publickey = crypto_serialization.load_ssh_public_key(publickey_content, backend=default_backend())
                     publickey_content = current_publickey.public_bytes(crypto_serialization.Encoding.PEM,
@@ -269,7 +271,7 @@ def main():
     if not pyopenssl_found:
         module.fail_json(msg='the python pyOpenSSL module is required')
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

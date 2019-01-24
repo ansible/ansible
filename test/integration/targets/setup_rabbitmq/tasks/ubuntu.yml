@@ -1,16 +1,15 @@
 ---
-
 # https://www.rabbitmq.com/install-debian.html#apt-pinning
 - name: Pin erlang version that rabbitmq supports
   copy:
     dest: /etc/apt/preferences.d/erlang
     content: |
         Package: erlang*
-        Pin: version 1:20.1-1
+        Pin: version 1:20.3.8.14-1
         Pin-Priority: 1000
 
         Package: esl-erlang
-        Pin: version 1:20.1.7
+        Pin: version 1:20.3.6
         Pin-Priority: 1000
 
 - name: Install https transport for apt
@@ -38,8 +37,8 @@
 
 - name: Add RabbitMQ repository
   apt_repository:
-    repo: 'deb https://dl.bintray.com/rabbitmq/debian {{ ansible_distribution_release }} main'
-    filename: 'rabbitmq'
+    repo: "deb https://dl.bintray.com/rabbitmq/debian {{ ansible_distribution_release }} main"
+    filename: rabbitmq
     state: present
     update_cache: yes
 
@@ -52,6 +51,21 @@
   apt:
     name: rabbitmq-server
     state: latest
+
+- name: Install RabbitMQ TLS dependencies
+  apt:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - erlang-asn1
+    - erlang-crypto
+    - erlang-public-key
+    - erlang-ssl
+
+- name: Ensure TLS config
+  copy:
+    src: rabbitmq.conf
+    dest: /etc/rabbitmq/rabbitmq.conf
 
 - name: Start RabbitMQ service
   service:

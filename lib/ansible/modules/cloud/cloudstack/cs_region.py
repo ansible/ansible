@@ -78,12 +78,12 @@ id:
 name:
   description: Name of the region.
   returned: success
-  type: string
+  type: str
   sample: local
 endpoint:
   description: Endpoint of the region.
   returned: success
-  type: string
+  type: str
   sample: http://cloud.example.com
 gslb_service_enabled:
   description: Whether the GSLB service is enabled or not.

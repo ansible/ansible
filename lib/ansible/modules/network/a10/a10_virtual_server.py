@@ -95,7 +95,7 @@ RETURN = '''
 content:
   description: the full info regarding the slb_virtual
   returned: success
-  type: string
+  type: str
   sample: "mynewvirtualserver"
 '''
 import json

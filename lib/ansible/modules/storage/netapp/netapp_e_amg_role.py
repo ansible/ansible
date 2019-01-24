@@ -78,7 +78,7 @@ RETURN = """
 msg:
     description: Failure message
     returned: failure
-    type: string
+    type: str
     sample: "No Async Mirror Group with the name."
 """
 import json

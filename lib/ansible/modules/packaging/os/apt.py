@@ -243,7 +243,7 @@ RETURN = '''
 cache_updated:
     description: if the cache was updated or not
     returned: success, in some cases
-    type: boolean
+    type: bool
     sample: True
 cache_update_time:
     description: time of the last cache update (0 if unknown)
@@ -253,12 +253,12 @@ cache_update_time:
 stdout:
     description: output from apt
     returned: success, when needed
-    type: string
+    type: str
     sample: "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following extra packages will be installed:\n  apache2-bin ..."
 stderr:
     description: error output from apt
     returned: success, when needed
-    type: string
+    type: str
     sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
 '''  # NOQA
 
@@ -1056,8 +1056,8 @@ def main():
 
     use_apt_get = p['force_apt_get']
 
-    if not use_apt_get and not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
-        module.warn("Could not find aptitude. Using apt-get instead.")
+    if not use_apt_get and not APTITUDE_CMD:
+        module.warn("Could not find aptitude. Using apt-get instead")
         use_apt_get = True
 
     updated_cache = False

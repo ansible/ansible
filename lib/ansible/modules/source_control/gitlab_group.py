@@ -199,7 +199,6 @@ def main():
         group_path = group_name.replace(" ", "_")
 
     group = GitLabGroup(module, git)
-    group_name = group_name.lower()
     group_exists = group.existsGroup(group_name)
 
     if group_exists and state == "absent":

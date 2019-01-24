@@ -116,6 +116,21 @@ EXAMPLES = r'''
     ovf: /path/to/ubuntu-16.04-amd64.ovf
     wait_for_ip_address: true
   delegate_to: localhost
+
+# Deploys a new VM named 'NewVM' in specific datacenter/cluster, with network mapping taken from variable and using ova template from an absolute path
+- vmware_deploy_ovf:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: Datacenter1
+    cluster: Cluster1
+    datastore: vsandatastore
+    name: NewVM
+    networks: "{u'VM Network':u'{{ ProvisioningNetworkLabel }}'}"
+    validate_certs: no
+    power_on: no
+    ovf: /absolute/path/to/template/mytemplate.ova
+  delegate_to: localhost
 '''
 
 

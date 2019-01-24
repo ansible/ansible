@@ -62,7 +62,7 @@ RETURN = '''
 ipify_public_ip:
   description: Public IP of the internet gateway.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 '''
 

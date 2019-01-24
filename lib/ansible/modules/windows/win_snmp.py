@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_snmp
 version_added: '2.8'
@@ -33,13 +33,14 @@ options:
           empty list for either C(community_strings) or C(permitted_managers)
           will result in the respective lists being removed entirely.
         - C(remove) will remove SNMP community strings and/or SNMP managers
-        default: set
+        type: str
         choices: [ add, set, remove ]
+        default: set
 author:
     - Michael Cassaniti (@mcassaniti)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ---
   - hosts: Windows
     tasks:
@@ -61,16 +62,16 @@ EXAMPLES = '''
           action: set
 '''
 
-RETURN = '''
+RETURN = r'''
 community_strings:
-    description: The list of community strings for this machine
+    description: The list of community strings for this machine.
     type: list
     returned: always
     sample:
       - public
       - snmp-ro
 permitted_managers:
-    description: The list of permitted managers for this machine
+    description: The list of permitted managers for this machine.
     type: list
     returned: always
     sample:

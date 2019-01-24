@@ -28,11 +28,13 @@ options:
   group:
     description:
       - Which notification group to add the notification to.
+    type: str
     default: Powershell
   msg:
     description:
       - The message to appear inside the notification.
       - May include \n to format the message to appear within the Action Center.
+    type: str
     default: Hello, World!
   popup:
     description:
@@ -42,10 +44,12 @@ options:
   tag:
     description:
       - The tag to add to the notification.
+    type: str
     default: Ansible
   title:
     description:
       - The notification title, which appears in the pop up..
+    type: str
     default: Notification HH:mm
 notes:
    - This module must run on a windows 10 or Server 2016 host, so ensure your play targets windows hosts, or delegates to a windows host.
@@ -73,17 +77,17 @@ RETURN = r'''
 expire_at_utc:
     description: Calculated utc date time when the notification expires.
     returned: allways
-    type: string
+    type: str
     sample: 07 July 2017 04:50:54
 no_toast_sent_reason:
     description: Text containing the reason why a notification was not sent.
     returned: when no logged in users are detected
-    type: string
+    type: str
     sample: No logged in users to notify
 sent_localtime:
     description: local date time when the notification was sent.
     returned: allways
-    type: string
+    type: str
     sample: 07 July 2017 05:45:54
 time_taken:
     description: How long the module took to run on the remote windows host in seconds.
@@ -93,6 +97,6 @@ time_taken:
 toast_sent:
     description: Whether the module was able to send a toast notification or not.
     returned: allways
-    type: boolean
+    type: bool
     sample: false
 '''

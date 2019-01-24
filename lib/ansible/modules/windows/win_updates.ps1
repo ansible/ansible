@@ -112,7 +112,7 @@ $update_script_block = {
                 kb = $update.KBArticleIDs
                 id = $update.Identity.UpdateId
                 installed = $false
-                categories = ($update.Categories | ForEach-Object { $_.Name })
+                categories = @($update.Categories | ForEach-Object { $_.Name })
             }
 
             # validate update again blacklist/whitelist/post_category_names/hidden
@@ -349,6 +349,10 @@ $update_script_block = {
         $result.reboot_required = (New-Object -ComObject Microsoft.Update.SystemInfo).RebootRequired
         $result.installed_update_count = $update_success_count
         $result.failed_update_count = $update_fail_count
+
+        if ($updates_success_count -gt 0) {
+            $result.changed = $true
+        }
 
         if ($update_fail_count -gt 0) {
             $result.failed = $true

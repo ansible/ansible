@@ -118,11 +118,11 @@ RETURN = '''
 changed:
     description: If module has modified record
     returned: success
-    type: string
+    type: str
 record:
     description: DNS record
     returned: success
-    type: string
+    type: str
     sample: 'ansible'
 ttl:
     description: DNS record TTL
@@ -132,7 +132,7 @@ ttl:
 type:
     description: DNS record type
     returned: success
-    type: string
+    type: str
     sample: 'CNAME'
 value:
     description: DNS record value(s)
@@ -142,7 +142,7 @@ value:
 zone:
     description: DNS record zone
     returned: success
-    type: string
+    type: str
     sample: 'example.org.'
 dns_rc:
     description: dnspython return code
@@ -152,7 +152,7 @@ dns_rc:
 dns_rc_str:
     description: dnspython return code (string representation)
     returned: always
-    type: string
+    type: str
     sample: 'REFUSED'
 '''
 

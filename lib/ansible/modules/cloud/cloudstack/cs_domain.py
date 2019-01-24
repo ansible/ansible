@@ -85,27 +85,27 @@ RETURN = '''
 id:
   description: UUID of the domain.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 name:
   description: Name of the domain.
   returned: success
-  type: string
+  type: str
   sample: customers
 path:
   description: Domain path.
   returned: success
-  type: string
+  type: str
   sample: /ROOT/customers
 parent_domain:
   description: Parent domain of the domain.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 network_domain:
   description: Network domain of the domain.
   returned: success
-  type: string
+  type: str
   sample: example.local
 '''
 

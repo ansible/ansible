@@ -137,7 +137,7 @@ RETURN = '''
 image_id:
   description: AMI ID of the copied AMI
   returned: always
-  type: string
+  type: str
   sample: ami-e689729e
 '''
 

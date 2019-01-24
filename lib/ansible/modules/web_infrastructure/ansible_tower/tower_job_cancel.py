@@ -50,7 +50,7 @@ id:
 status:
     description: status of the cancel request
     returned: success
-    type: string
+    type: str
     sample: canceled
 '''
 
@@ -59,7 +59,7 @@ from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, t
 
 try:
     import tower_cli
-    import tower_cli.utils.exceptions as exc
+    import tower_cli.exceptions as exc
 
     from tower_cli.conf import settings
 except ImportError:

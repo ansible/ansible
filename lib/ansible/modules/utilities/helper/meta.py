@@ -45,6 +45,7 @@ options:
 notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
     - This module is also supported for Windows targets.
+    - "C(clear_facts) will remove the persistent facts from ``set_fact: cacheable=True``, but not the current host variable it creates for the current run."
 author:
     - "Ansible Core Team"
 '''

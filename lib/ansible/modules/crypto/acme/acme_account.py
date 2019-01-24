@@ -21,16 +21,24 @@ version_added: "2.6"
 short_description: Create, modify or delete ACME accounts
 description:
    - "Allows to create, modify or delete accounts with a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
       such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module only works with the ACME v2 protocol."
 notes:
-   - "Facts about an ACME account can be retrieved with the M(acme_account_facts)
-      module."
    - "The M(acme_certificate) module also allows to do basic account management.
       When using both modules, it is recommended to disable account management
       for M(acme_certificate). For that, use the C(modify_account) option of
       M(acme_certificate)."
+seealso:
+  - name: Automatic Certificate Management Environment (ACME)
+    description: The current draft specification of the ACME protocol.
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
+  - module: acme_account_facts
+    description: Retrieves facts about an ACME account.
+  - module: openssl_privatekey
+    description: Can be used to create a private account key.
+  - module: acme_inspect
+    description: Allows to debug problems.
 extends_documentation_fragment:
   - acme
 options:
@@ -55,7 +63,7 @@ options:
     description:
       - "A list of contact URLs."
       - "Email addresses must be prefixed with C(mailto:)."
-      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.1.2
+      - "See https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.1.2
          for what is allowed."
       - "Must be specified when state is C(present). Will be ignored
          if state is C(absent) or C(changed_key)."
@@ -114,7 +122,7 @@ RETURN = '''
 account_uri:
   description: ACME account URI, or None if account does not exist.
   returned: always
-  type: string
+  type: str
 '''
 
 from ansible.module_utils.acme import (
@@ -230,7 +238,7 @@ def main():
             # Now we can start the account key rollover
             if not module.check_mode:
                 # Compose inner signed message
-                # https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3.6
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.5
                 url = account.directory['keyChange']
                 protected = {
                     "alg": new_key_data['alg'],

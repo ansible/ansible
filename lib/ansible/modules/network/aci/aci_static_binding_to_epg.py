@@ -100,7 +100,7 @@ options:
     - When C(interface_type) is C(switch_port), C(port_channel), or C(fex), then C(leafs) is a string of the leaf ID.
     - When C(interface_type) is C(vpc), then C(leafs) is a list with both leaf IDs.
     - The C(leafs) value is usually something like '101' or '101-102' depending on C(connection_type).
-    type: str
+    type: list
     aliases: [ leaves, nodes, paths, switches ]
   interface:
     description:
@@ -206,7 +206,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -255,17 +255,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -275,7 +275,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

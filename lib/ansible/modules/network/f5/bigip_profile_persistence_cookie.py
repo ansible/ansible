@@ -154,22 +154,22 @@ RETURN = r'''
 cookie_name:
   description: The new Cookie Name value.
   returned: changed
-  type: string
+  type: str
   sample: cookie1
 cookie_method:
   description: The new Cookie Method.
   returned: changed
-  type: string
+  type: str
   sample: insert
 parent:
   description: The parent profile.
   returned: changed
-  type: string
+  type: str
   sample: /Common/cookie
 cookie_encryption:
   description: The new Cookie Encryption type.
   returned: changed
-  type: string
+  type: str
   sample: preferred
 match_across_pools:
   description: The new Match Across Pools value.
@@ -209,7 +209,7 @@ http_only:
 description:
   description: The new description.
   returned: changed
-  type: string
+  type: str
   sample: My description
 secure:
   description: The new Secure Cookie value.

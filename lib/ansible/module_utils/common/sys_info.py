@@ -1,83 +1,120 @@
+# Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
+# Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import os
 import platform
 
+from ansible.module_utils import distro
+from ansible.module_utils.common._utils import get_all_subclasses
 
-def get_platform():
-    '''
-    :rtype: NativeString
-    :returns: Name of the platform the module is running on
-    '''
-    return platform.system()
+
+__all__ = ('get_distribution', 'get_distribution_version', 'get_platform_subclass')
 
 
 def get_distribution():
     '''
+    Return the name of the distribution the module is running on
+
     :rtype: NativeString or None
     :returns: Name of the distribution the module is running on
+
+    This function attempts to determine what Linux distribution the code is running on and return
+    a string representing that value.  If the distribution cannot be determined, it returns
+    ``OtherLinux``.  If not run on Linux it returns None.
     '''
     distribution = None
-    additional_linux = ('alpine', 'arch', 'devuan')
-    supported_dists = platform._supported_dists + additional_linux
 
     if platform.system() == 'Linux':
-        try:
-            distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
-            if not distribution and os.path.isfile('/etc/system-release'):
-                distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
-                if 'Amazon' in distribution:
-                    distribution = 'Amazon'
-                else:
-                    distribution = 'OtherLinux'
-        except Exception:
-            # FIXME: MethodMissing, I assume?
-            distribution = platform.dist()[0].capitalize()
+        distribution = distro.name().capitalize()
+
+        # FIXME: Would we need to normalize these if we used: id() instead of name()?
+        distribution_words = distribution.split()
+        if 'Amazon' in distribution_words:
+            distribution = 'Amazon'
+        elif not distribution:
+            distribution = 'OtherLinux'
+
     return distribution
 
 
 def get_distribution_version():
     '''
+    Get the version of the Linux distribution the code is running on
+
     :rtype: NativeString or None
-    :returns: A string representation of the version of the distribution
+    :returns: A string representation of the version of the distribution. If it cannot determine
+        the version, it returns empty string. If this is not run on a Linux machine it returns None
     '''
-    distribution_version = None
+    version = None
     if platform.system() == 'Linux':
-        try:
-            distribution_version = platform.linux_distribution()[1]
-            if not distribution_version and os.path.isfile('/etc/system-release'):
-                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
-        except Exception:
-            # FIXME: MethodMissing, I assume?
-            distribution_version = platform.dist()[1]
-    return distribution_version
+        version = distro.version()
+    return version
 
 
-def get_all_subclasses(cls):
+def get_distribution_codename():
     '''
-    used by modules like Hardware or Network fact classes to recursively retrieve all
-    subclasses of a given class not only the direct sub classes.
+    Return the code name for this Linux Distribution
+
+    :rtype: NativeString or None
+    :returns: A string representation of the distribution's codename or None if not a Linux distro
     '''
-    # Retrieve direct subclasses
-    subclasses = cls.__subclasses__()
-    to_visit = list(subclasses)
-    # Then visit all subclasses
-    while to_visit:
-        for sc in to_visit:
-            # The current class is now visited, so remove it from list
-            to_visit.remove(sc)
-            # Appending all subclasses to visit and keep a reference of available class
-            for ssc in sc.__subclasses__():
-                subclasses.append(ssc)
-                to_visit.append(ssc)
-    return subclasses
+    codename = None
+    if platform.system() == 'Linux':
+        # Until this gets merged and we update our bundled copy of distro:
+        # https://github.com/nir0s/distro/pull/230
+        # Fixes Fedora 28+ not having a code name and Ubuntu Xenial Xerus needing to be "xenial"
+        os_release_info = distro.os_release_info()
+        codename = os_release_info.get('version_codename')
+
+        if codename is None:
+            codename = os_release_info.get('ubuntu_codename')
+
+        if codename is None and distro.id() == 'ubuntu':
+            lsb_release_info = distro.lsb_release_info()
+            codename = lsb_release_info.get('codename')
+
+        if codename is None:
+            codename = distro.codename()
+            if codename == u'':
+                codename = None
+
+    return codename
 
 
-def load_platform_subclass(cls, *args, **kwargs):
+def get_platform_subclass(cls):
     '''
-    used by modules like User to have different implementations based on detected platform.  See User
-    module for an example.
+    Finds a subclass implementing desired functionality on the platform the code is running on
+
+    :arg cls: Class to find an appropriate subclass for
+    :returns: A class that implements the functionality on this platform
+
+    Some Ansible modules have different implementations depending on the platform they run on.  This
+    function is used to select between the various implementations and choose one.  You can look at
+    the implementation of the Ansible :ref:`User module<user_module>` module for an example of how to use this.
+
+    This function replaces ``basic.load_platform_subclass()``.  When you port code, you need to
+    change the callers to be explicit about instantiating the class.  For instance, code in the
+    Ansible User module changed from::
+
+    .. code-block:: python
+
+        # Old
+        class User:
+            def __new__(cls, args, kwargs):
+                return load_platform_subclass(User, args, kwargs)
+
+        # New
+        class User:
+            def __new__(cls, args, kwargs):
+                new_cls = get_platform_subclass(User)
+                return super(cls, new_cls).__new__(new_cls, args, kwargs)
     '''
 
-    this_platform = get_platform()
+    this_platform = platform.system()
     distribution = get_distribution()
     subclass = None
 
@@ -93,4 +130,4 @@ def load_platform_subclass(cls, *args, **kwargs):
     if subclass is None:
         subclass = cls
 
-    return super(cls, subclass).__new__(subclass)
+    return subclass

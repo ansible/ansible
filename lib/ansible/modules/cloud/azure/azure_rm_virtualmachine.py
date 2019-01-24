@@ -152,6 +152,7 @@ options:
             - Managed OS disk type
         choices:
             - Standard_LRS
+            - StandardSSD_LRS
             - Premium_LRS
         version_added: "2.4"
     os_disk_name:
@@ -197,6 +198,7 @@ options:
                     - Managed data disk type
                 choices:
                     - Standard_LRS
+                    - StandardSSD_LRS
                     - Premium_LRS
                 version_added: "2.4"
             storage_account_name:
@@ -305,6 +307,11 @@ options:
         type: bool
         default: false
         version_added: "2.7"
+    zones:
+        description:
+            - A list of Availability Zones for your virtual machine
+        type: list
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -498,13 +505,23 @@ EXAMPLES = '''
     remove_on_absent:
         - network_interfaces
         - virtual_storage
+
+- name: Create a VM with an Availability Zone
+  azure_rm_virtualmachine:
+    resource_group: Testing
+    name: testvm001
+    vm_size: Standard_DS1_v2
+    admin_username: adminUser
+    admin_password: password01
+    image: customimage001
+    zones: [1]
 '''
 
 RETURN = '''
 powerstate:
     description: Indicates if the state is running, stopped, deallocated, generalized
     returned: always
-    type: string
+    type: str
     example: running
 deleted_vhd_uris:
     description: List of deleted Virtual Hard Disk URIs.
@@ -720,7 +737,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
                                  default='ReadOnly'),
             os_disk_size_gb=dict(type='int'),
-            managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
+            managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'Premium_LRS']),
             os_disk_name=dict(type='str'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
@@ -737,7 +754,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             generalized=dict(type='bool', default=False),
             data_disks=dict(type='list'),
             plan=dict(type='dict'),
-            accept_terms=dict(type='bool', default=False)
+            accept_terms=dict(type='bool', default=False),
+            zones=dict(type='list')
         )
 
         self.resource_group = None
@@ -778,6 +796,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.data_disks = None
         self.plan = None
         self.accept_terms = None
+        self.zones = None
 
         self.results = dict(
             changed=False,
@@ -796,6 +815,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         # make sure options are lower case
         self.remove_on_absent = set([resource.lower() for resource in self.remove_on_absent])
+
+        # convert elements to ints
+        self.zones = [int(i) for i in self.zones] if self.zones else None
 
         changed = False
         powerstate_change = None
@@ -968,6 +990,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     changed = True
                     powerstate_change = 'generalized'
 
+                vm_dict['zones'] = [int(i) for i in vm_dict['zones']] if 'zones' in vm_dict and vm_dict['zones'] else None
+                if self.zones != vm_dict['zones']:
+                    self.log("CHANGED: virtual machine {0} zones".format(self.name))
+                    differences.append('Zones')
+                    changed = True
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -1013,6 +1041,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         availability_set = self.get_availability_set(parsed_availability_set.get('resource_group', self.resource_group),
                                                                      parsed_availability_set.get('name'))
                         availability_set_resource = self.compute_models.SubResource(id=availability_set.id)
+
+                        if self.zones:
+                            self.fail("Parameter error: you can't use Availability Set and Availability Zones at the same time")
 
                     # Get defaults
                     if not self.network_interface_names:
@@ -1081,7 +1112,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                             network_interfaces=nics
                         ),
                         availability_set=availability_set_resource,
-                        plan=plan
+                        plan=plan,
+                        zones=self.zones,
                     )
 
                     if self.admin_password:
@@ -1205,12 +1237,36 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         # pass if the availability set is not set
                         pass
 
-                    vm_resource = self.compute_models.VirtualMachine(
-                        location=vm_dict['location'],
-                        os_profile=self.compute_models.OSProfile(
+                    if 'imageReference' in vm_dict['properties']['storageProfile'].keys():
+                        if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys():
+                            image_reference = self.compute_models.ImageReference(
+                                id=vm_dict['properties']['storageProfile']['imageReference']['id']
+                            )
+                        else:
+                            image_reference = self.compute_models.ImageReference(
+                                publisher=vm_dict['properties']['storageProfile']['imageReference'].get('publisher'),
+                                offer=vm_dict['properties']['storageProfile']['imageReference'].get('offer'),
+                                sku=vm_dict['properties']['storageProfile']['imageReference'].get('sku'),
+                                version=vm_dict['properties']['storageProfile']['imageReference'].get('version')
+                            )
+                    else:
+                        image_reference = None
+
+                    # You can't change a vm zone
+                    if vm_dict['zones'] != self.zones:
+                        self.fail("You can't change the Availability Zone of a virtual machine (have: {0}, want: {1})".format(vm_dict['zones'], self.zones))
+
+                    if 'osProfile' in vm_dict['properties']:
+                        os_profile = self.compute_models.OSProfile(
                             admin_username=vm_dict['properties'].get('osProfile', {}).get('adminUsername'),
                             computer_name=vm_dict['properties'].get('osProfile', {}).get('computerName')
-                        ),
+                        )
+                    else:
+                        os_profile = None
+
+                    vm_resource = self.compute_models.VirtualMachine(
+                        location=vm_dict['location'],
+                        os_profile=os_profile,
                         hardware_profile=self.compute_models.HardwareProfile(
                             vm_size=vm_dict['properties']['hardwareProfile'].get('vmSize')
                         ),
@@ -1224,14 +1280,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                 caching=vm_dict['properties']['storageProfile']['osDisk'].get('caching'),
                                 disk_size_gb=vm_dict['properties']['storageProfile']['osDisk'].get('diskSizeGB')
                             ),
-                            image_reference=self.compute_models.ImageReference(
-                                id=vm_dict['properties']['storageProfile']['imageReference']['id'],
-                            ) if 'id' in vm_dict['properties']['storageProfile']['imageReference'].keys() else self.compute_models.ImageReference(
-                                publisher=vm_dict['properties']['storageProfile']['imageReference'].get('publisher'),
-                                offer=vm_dict['properties']['storageProfile']['imageReference'].get('offer'),
-                                sku=vm_dict['properties']['storageProfile']['imageReference'].get('sku'),
-                                version=vm_dict['properties']['storageProfile']['imageReference'].get('version')
-                            ),
+                            image_reference=image_reference
                         ),
                         availability_set=availability_set_resource,
                         network_profile=self.compute_models.NetworkProfile(
@@ -1243,17 +1292,17 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         vm_resource.tags = vm_dict['tags']
 
                     # Add custom_data, if provided
-                    if vm_dict['properties']['osProfile'].get('customData'):
+                    if vm_dict['properties'].get('osProfile', {}).get('customData'):
                         custom_data = vm_dict['properties']['osProfile']['customData']
                         # Azure SDK (erroneously?) wants native string type for this
                         vm_resource.os_profile.custom_data = to_native(base64.b64encode(to_bytes(custom_data)))
 
                     # Add admin password, if one provided
-                    if vm_dict['properties']['osProfile'].get('adminPassword'):
+                    if vm_dict['properties'].get('osProfile', {}).get('adminPassword'):
                         vm_resource.os_profile.admin_password = vm_dict['properties']['osProfile']['adminPassword']
 
                     # Add linux configuration, if applicable
-                    linux_config = vm_dict['properties']['osProfile'].get('linuxConfiguration')
+                    linux_config = vm_dict['properties'].get('osProfile', {}).get('linuxConfiguration')
                     if linux_config:
                         ssh_config = linux_config.get('ssh', None)
                         vm_resource.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
@@ -1797,8 +1846,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         pip = None
         if self.public_ip_allocation_method != 'Disabled':
             self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
-            pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
-            pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid)
+            sku = self.network_models.PublicIPAddressSku(name="Standard") if self.zones else None
+            pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method, sku=sku)
+            pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid, sku=sku)
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name + '01', self.os_type,

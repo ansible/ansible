@@ -317,7 +317,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         new_result['state'] = 'present'
         new_result['location'] = vm.location
         new_result['vm_size'] = result['properties']['hardwareProfile']['vmSize']
-        new_result['admin_username'] = result['properties']['osProfile']['adminUsername']
+        os_profile = result['properties'].get('osProfile')
+        if os_profile is not None:
+            new_result['admin_username'] = os_profile.get('adminUsername')
         image = result['properties']['storageProfile'].get('imageReference')
         if image is not None:
             if image.get('publisher', None) is not None:

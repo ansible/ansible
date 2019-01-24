@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -115,7 +114,7 @@ items:
       - The network this subnet belongs to.
       - Only networks that are in the distributed mode can have subnetworks.
       returned: success
-      type: dict
+      type: str
     enableFlowLogs:
       description:
       - Whether to enable flow logging for this subnetwork.
@@ -176,12 +175,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            filters=dict(type='list', elements='str'),
-            region=dict(required=True, type='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), region=dict(required=True, type='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
@@ -191,9 +185,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 

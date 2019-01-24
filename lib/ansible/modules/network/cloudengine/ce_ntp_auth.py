@@ -173,7 +173,7 @@ end_state:
 state:
     description: state as sent in from the playbook
     returned: always
-    type: string
+    type: str
     sample: "present"
 updates:
     description: command sent to the device
@@ -187,7 +187,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

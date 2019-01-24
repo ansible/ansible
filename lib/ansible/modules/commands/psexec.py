@@ -74,7 +74,7 @@ options:
     description:
     - The timeout in seconds to wait when receiving the initial SMB negotiate
       response from the server.
-    type: str
+    type: int
     default: 60
   executable:
     description:

@@ -31,6 +31,7 @@
 #                     https://github.com/ansible/ansible/labels?q=support for full list
 #           labels - list of GitHub labels to apply. Path components of 'file' parent key
 #                    which are valid GitHub labels are automatically added.
+#           supershipit - supershipiteers can turn a shipit into a supershipit
 #
 
 automerge: True
@@ -86,8 +87,12 @@ files:
   $modules/cloud/amazon/iam_group.py: willthames
   $modules/cloud/amazon/iam_managed_policy.py: willthames
   $modules/cloud/amazon/iam_policy.py: $team_ansible
+  $modules/cloud/amazon/rds.py:
+    ignored: bpennypacker
   $modules/cloud/amazon/rds_param_group.py: scottanderson42
   $modules/cloud/amazon/rds_subnet_group.py: scottanderson42
+  $modules/cloud/amazon/route53.py:
+    ignored: bpennypacker
   $modules/cloud/amazon/route53_health_check.py: willthames
   $modules/cloud/amazon/sns.py: willthames
   $modules/cloud/amazon/sns_topic.py: willthames
@@ -98,23 +103,30 @@ files:
   $modules/cloud/azure/azure_rm_dnsrecordset.py:
     ignored: ozboms
   $modules/cloud/centurylink/: clc-runner
-  $modules/cloud/cloudstack/: $team_cloudstack
+  $modules/cloud/cloudscale/:
+    maintainers: $team_cloudscale
+    labels: cloud
+  $modules/cloud/cloudstack/:
+    maintainers: $team_cloudstack
+    labels: cloudstack
   $modules/cloud/digital_ocean/: BondAnthony
-  $modules/cloud/digital_ocean/digital_ocean.py: alukovenko
+  $modules/cloud/digital_ocean/_digital_ocean.py: alukovenko
   $modules/cloud/digital_ocean/digital_ocean_domain.py: alukovenko
   $modules/cloud/digital_ocean/digital_ocean_sshkey.py: alukovenko mgregson
   $modules/cloud/dimensiondata/dimensiondata_network.py: tintoy
   $modules/cloud/docker/:
     ignored: ThomasSteinbach
     maintainers: $team_docker
+    supershipit: felixfontein
   $modules/cloud/docker/docker_network.py: olsaki
   $modules/cloud/google/:
-    maintainers: rambleraptor erjohnso
+    supershipit: $team_google
+    maintainers: $team_google
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
-  $modules/cloud/memset/: analbeard
+  $modules/cloud/memset/: glitchcrab
   $modules/cloud/misc/ovirt.py:
     ignored: vincentvdk skvidal
     maintainers: joshainglis karmab machacekondra mwperina
@@ -129,14 +141,19 @@ files:
     ignored: sivel angstwad
   $modules/cloud/scaleway/scaleway_volume.py:
     ignored: hekonsek
-  $modules/cloud/univention/: 2-b
+  $modules/cloud/smartos/: &solaris
+    labels: solaris
+    maintainers: $team_solaris
+  $modules/cloud/univention/: keachi
   $modules/cloud/vmware/:
     maintainers: $team_vmware
     ignored: cigamit jcpowermac mtnbikenc
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/_vsphere_guest.py: dagwieers
-  $modules/cloud/vultr/: $team_vultr
+  $modules/cloud/vultr/:
+    maintainers: $team_vultr
+    labels: cloud
   $modules/cloud/webfaction/: quentinsf
   $modules/cloud/xenserver/xenserver_guest.py: bvitnik
   $modules/clustering/k8s/:
@@ -168,6 +185,8 @@ files:
   $modules/files/file.py: $team_ansible
   $modules/files/find.py: $team_ansible
   $modules/files/lineinfile.py: $team_ansible samdoran
+  $modules/files/stat.py:
+    ignored: bpennypacker
   $modules/files/synchronize.py: $team_ansible
   $modules/files/template.py: $team_ansible
   $modules/files/unarchive.py:
@@ -188,11 +207,15 @@ files:
     maintainers: $team_ansible
   $modules/inventory/group_by.py: $team_ansible
   $modules/messaging/rabbitmq/: $team_rabbitmq
+  $modules/monitoring/airbrake_deployment.py:
+    ignored: bpennypacker
   $modules/monitoring/datadog_event.py:
     ignored: arturaz
   $modules/monitoring/logentries.py:
     ignored: ivanvanderbyl
   $modules/monitoring/monit.py: brian-brazil
+  $modules/monitoring/pagerduty.py:
+    ignored: bpennypacker
   $modules/monitoring/zabbix/: eikef D3DeFi
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
@@ -233,7 +256,7 @@ files:
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
   $modules/network/fortimanager/: $team_fortimanager
-  $modules/network/illumos/: xen0l
+  $modules/network/illumos/: *solaris
   $modules/network/interface/: $team_networking
   $modules/network/ios/: rcarrillocruz
   $modules/network/iosxr/: rcarrillocruz gdpak
@@ -265,7 +288,10 @@ files:
   $modules/network/system/: $team_networking
   $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos samdoran NilashishC
-  $modules/notification/_osx_say.py: $team_ansible
+  $modules/notification/_osx_say.py: &macos
+    ignored: frenck
+    labels: macos
+    maintainers: $team_macos
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
     maintainers: Deepakkothandan
@@ -282,20 +308,31 @@ files:
     maintainers: tdtrask
   $modules/packaging/os/apt.py: $team_ansible
   $modules/packaging/os/apt_repository.py: $team_ansible
+  $modules/packaging/os/openbsd_pkg.py: &bsd
+    ignored: bleader
+    labels: bsd
+    maintainers: $team_bsd
+  $modules/packaging/os/homebrew.py: *macos
+  $modules/packaging/os/homebrew_: *macos
+  $modules/packaging/os/macports.py: *macos
   $modules/packaging/os/package.py: $team_ansible
   $modules/packaging/os/pacman.py:
     ignored: elasticdog
-  $modules/packaging/os/pkgin.py: troy2914
-  $modules/packaging/os/pkgng.py:
-    ignored: bleader
-    maintainers: JoergFiedler
-  $modules/packaging/os/pkgutil.py: scathatheworm
+  $modules/packaging/os/pkg5: *solaris
+  $modules/packaging/os/pkgin.py: *solaris
+  $modules/packaging/os/pkgng.py: *bsd
+  $modules/packaging/os/pkgutil.py: *solaris
   $modules/packaging/os/portage.py:
     ignored: sayap
+  $modules/packaging/os/portinstall.py: *bsd
   $modules/packaging/os/redhat_subscription.py: alikins kahowell
   $modules/packaging/os/rhn_channel.py: alikins
   $modules/packaging/os/rhn_register.py: $team_rhn
   $modules/packaging/os/snap.py: angristan
+  $modules/packaging/os/svr4pkg.py: *solaris
+  $modules/packaging/os/swdepot.py: &hpux
+    labels: hpux
+    maintainers: $team_hpux
   $modules/packaging/os/swupd.py: hnanni
   $modules/packaging/os/yum.py:
     maintainers: $team_ansible kustodian
@@ -315,6 +352,9 @@ files:
   $modules/source_control/git.py: $team_ansible
   $modules/source_control/github_key.py:
     ignored: erydo
+  $modules/source_control/gitlab_: &gitlab
+    labels: gitlab
+    maintainers: $team_gitlab
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
   $modules/storage/purestorage/:
@@ -322,24 +362,28 @@ files:
     labels: pure_storage
   $modules/storage/glusterfs/: devyanikota
   $modules/storage/ibm/: tzurE
+  $modules/storage/zfs/: *solaris
+  $modules/system/aix: &aix
+    labels: aix
+    maintainers: $team_aix
   $modules/system/alternatives.py:
     ignored: DavidWittman
   $modules/system/at.py: $team_ansible
   $modules/system/authorized_key.py: $team_ansible
+  $modules/system/beadm.py: *solaris
   $modules/system/facter.py: $team_ansible
   $modules/system/filesystem.py: pilou-
   $modules/system/gconftool2.py: Akasurde
   $modules/system/group.py: $team_ansible
   $modules/system/interfaces_file.py: obourdon
+  $modules/system/mksysb.py: *aix
   $modules/system/modprobe.py:
     ignored: stygstra
   $modules/system/mount.py:
     maintainers: $team_ansible jtyr
     ignored: skvidal
   $modules/system/ohai.py: $team_ansible
-  $modules/system/osx_defaults.py:
-    ignored: frenck
-    maintainers: $team_ansible
+  $modules/system/osx_defaults.py: *macos
   $modules/system/pam_limits.py:
     ignored: usawa
     maintainers: giovannisciortino
@@ -351,6 +395,7 @@ files:
   $modules/system/setup.py:
     ignored: david_obrien
     maintainers: $team_ansible
+  $modules/system/solaris: *solaris
   $modules/system/sysctl.py: Akasurde
   $modules/system/systemd.py: $team_ansible
   $modules/system/user.py: $team_ansible samdoran
@@ -397,7 +442,9 @@ files:
     labels:
       - cloud
     support: community
-  contrib/inventory/docker: $team_docker
+  contrib/inventory/docker:
+    maintainers: $team_docker
+    supershipit: felixfontein
   contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
@@ -479,6 +526,36 @@ files:
     maintainers: resmo felixfontein
   $module_utils/basic.py:
     support: core
+  $module_utils/urls.py:
+    support: core
+  $module_utils/six:
+    support: core
+  $module_utils/common:
+    support: core
+  $module_utils/compat:
+    support: core
+  $module_utils/_text.py:
+    support: core
+  $module_utils/parsing:
+    support: core
+  $module_utils/splitter.py:
+    support: core
+  $module_utils/yumdnf.py:
+    support: core
+  $module_utils/ansible_release.py:
+    support: core
+  $module_utils/distro:
+    support: core
+  $module_utils/ismount.py:
+    support: core
+  $module_utils/json_utils.py:
+    support: core
+  $module_utils/pycompat24.py:
+    support: core
+  $module_utils/service.py:
+    support: core
+  $module_utils/cloudscale.py:
+    maintainers: $team_cloudscale
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
@@ -492,6 +569,7 @@ files:
       - windows
   $module_utils/docker_common.py:
     maintainers: $team_docker
+    supershipit: felixfontein
   $module_utils/ec2.py:
     support: core
     labels:
@@ -499,6 +577,33 @@ files:
       - cloud
   $module_utils/facts:
     support: core
+  $module_utils/facts/hardware/aix.py: *aix
+  $module_utils/facts/hardware/darwin.py: *macos
+  $module_utils/facts/hardware/dragonfly.py: *bsd
+  $module_utils/facts/hardware/freebsd.py: *bsd
+  $module_utils/facts/hardware/hpux.py: *hpux
+  $module_utils/facts/hardware/netbsd.py: *bsd
+  $module_utils/facts/hardware/openbsd.py: *bsd
+  $module_utils/facts/hardware/sunos.py: *solaris
+  $module_utils/facts/network/aix.py: *aix
+  $module_utils/facts/network/darwin.py: *macos
+  $module_utils/facts/network/dragonfly.py: *bsd
+  $module_utils/facts/network/freebsd.py: *bsd
+  $module_utils/facts/network/generic_bsd.py: *bsd
+  $module_utils/facts/network/hpux.py: *hpux
+  $module_utils/facts/network/netbsd.py: *bsd
+  $module_utils/facts/network/openbsd.py: *bsd
+  $module_utils/facts/network/sunos.py: *solaris
+  $module_utils/facts/virtual/dragonfly.py: *bsd
+  $module_utils/facts/virtual/freebsd.py: *bsd
+  $module_utils/facts/virtual/hpux.py: *hpux
+  $module_utils/facts/virtual/netbsd.py: *bsd
+  $module_utils/facts/virtual/openbsd.py: *bsd
+  $module_utils/facts/virtual/sunos.py: *solaris
+  $module_utils/gcp_utils.py:
+    maintainers: $team_google
+    supershipit: $team_google
+  $module_utils/gitlab.py: *gitlab
   $module_utils/ipa.py:
     maintainers: $team_ipa
   $module_utils/k8s:
@@ -648,7 +753,7 @@ files:
   $module_utils/vmware:
     maintainers: $team_vmware
   $module_utils/memset.py:
-    maintainers: analbeard
+    maintainers: glitchcrab
     labels: cloud
   $module_utils/scaleway.py: &scaleway
     maintainers: $team_scaleway
@@ -829,6 +934,7 @@ files:
     support: core
   $plugins/callback/oneline:
     support: core
+  $plugins/callback/osx_say.py: *macos
   $plugins/callback/profile:
     support: core
   $plugins/callback/stderr.py:
@@ -891,6 +997,7 @@ files:
   $plugins/connection/docker.py:
     support: community
     maintainers: $team_docker
+    supershipit: felixfontein
   $plugins/connection/httpapi.py:
     support: network
     maintainers: $team_networking
@@ -946,6 +1053,9 @@ files:
 # plugins/inventory
   $plugins/inventory/__init__.py:
     support: core
+  $plugins/inventory/gcp_compute.py:
+    maintainers: $team_google
+    supershipit: $team_google
   $plugins/inventory/ini.py:
     support: core
   $plugins/inventory/k8s.py:
@@ -1092,19 +1202,33 @@ files:
 ##############################
 # other lib
 
+  lib/ansible/executor/powershell:
+    labels:
+    - windows
+    maintainers: $team_windows_core
+    support: core
   lib/ansible/template:
     keywords:
       - jinja
       - jinja2
   lib/ansible/utils/module_docs_fragments/:
     support: community
+  lib/ansible/utils/module_docs_fragments/aci.py: *aci
   lib/ansible/utils/module_docs_fragments/acme.py:
     maintainers: resmo felixfontein
   lib/ansible/utils/module_docs_fragments/docker.py:
     support: community
     maintainers: $team_docker
+    supershipit: felixfontein
+  lib/ansible/utils/module_docs_fragments/mso.py: *aci
   lib/ansible/utils/module_docs_fragments/xenserver.py:
     maintainers: bvitnik
+  lib/ansible/utils/module_docs_fragments/cloudstack.py:
+    maintainers: $team_cloudstack
+    labels: cloudstack
+  lib/ansible/utils/module_docs_fragments/vultr.py:
+    maintainers: $team_vultr
+    labels: cloud
   test/sanity/validate-modules:
     notified:
       - mattclay
@@ -1121,14 +1245,16 @@ files:
   docs/:
     maintainers:
       - acozine
-  docs/docsite/:
-    labels: docsite
+  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
   docs/docsite/rst/network/:
     labels: networking
     maintainers:
       - samccann
   docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
-  docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
+  docs/docsite/rst/scenario_guides/guide_docker.rst:
+    maintainers: $team_docker
+    labels: docker
+  docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
 ###############################
 # 'test' is a component path, then 'test' label will be automatically added
   test/runner/:
@@ -1138,9 +1264,21 @@ files:
   test/utils/shippable/:
     notified: mattclay
   test/integration/targets/aci: *aci
-  test/integration/targets/docker: $team_docker
+  test/integration/targets/aix: *aix
+  test/integration/targets/cloudscale:
+    maintainers: $team_cloudscale
+    labels: cloud
+  test/integration/targets/cs_:
+    maintainers: $team_cloudstack
+    labels: cloudstack
+  test/integration/targets/docker:
+    maintainers: $team_docker
+    supershipit: felixfontein
+  test/integration/targets/gcp:
+    maintainers: $team_google
+    supershipit: $team_google
   test/integration/targets/meraki: *meraki
-  test/integration/targets/msc: *aci
+  test/integration/targets/mso: *aci
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
@@ -1153,12 +1291,18 @@ files:
     maintainers: $team_ucs
     labels:
       - remote_management
+  test/integration/targets/vultr:
+    maintainers: $team_vultr
+    labels: cloud
   test/legacy/:
     notified: mattclay
   test/legacy/scaleway:
     <<: *scaleway
     support: community
-  test/units/modules/cloud/docker: $team_docker
+  test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
+  test/units/modules/cloud/docker:
+    maintainers: $team_docker
+    supershipit: felixfontein
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
@@ -1166,6 +1310,7 @@ files:
     maintainers: $team_nxos
     labels:
       - networking
+  test/units/modules/source_control/test_gitlab_: *gitlab
   test/sanity/pep8/legacy-files.txt:
     notified: mattclay
   hacking/report.py:
@@ -1179,17 +1324,26 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers jmcgill298 schunduri
+  team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo molekuul MorrisA wtcross
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
+  team_bsd: bcoca dagwieers jasperla JoergFiedler AMDmi3 overhacked tuxillo
+  team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
   team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet
+  team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
+  team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
+  team_gitlab: dagwieers marwatk Shaps waheedi
+  team_google: rambleraptor erjohnso
+  team_hpux: bcoca dagwieers
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
+  team_macos: dagwieers
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
@@ -1207,11 +1361,10 @@ macros:
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
+  team_solaris: bcoca dagwieers jpdasma jasperla scathatheworm troy2914 xen0l
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
-  team_e_spirit: MatrixCrawler getjack
   team_vmware: Akasurde dav1x warthog9 ckotte
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
-  team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse

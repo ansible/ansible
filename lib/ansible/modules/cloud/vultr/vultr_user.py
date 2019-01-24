@@ -96,7 +96,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -111,7 +111,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_user:
   description: Response from Vultr API
@@ -121,22 +121,22 @@ vultr_user:
     id:
       description: ID of the user.
       returned: success
-      type: string
+      type: str
       sample: 5904bc6ed9234
     api_key:
       description: API key of the user.
       returned: only after resource was created
-      type: string
+      type: str
       sample: 567E6K567E6K567E6K567E6K567E6K
     name:
       description: Name of the user.
       returned: success
-      type: string
+      type: str
       sample: john
     email:
       description: Email of the user.
       returned: success
-      type: string
+      type: str
       sample: "john@exmaple.com"
     api_enabled:
       description: Whether the API is enabled or not.

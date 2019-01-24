@@ -1,8 +1,11 @@
+---
+
 service_expected_output:
   args: [sleep, '1800']
   configs: null
   constraints: []
   container_labels: {}
+  command: null
   dns: []
   dns_options: []
   dns_search: []
@@ -19,9 +22,10 @@ service_expected_output:
   mode: global
   mounts: []
   networks: []
+  placement_preferences: null
   publish:
-  - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
-  - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
+    - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
+    - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
   replicas: null
   reserve_cpu: 0.0
   reserve_memory: 0

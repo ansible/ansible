@@ -10,6 +10,7 @@ def main():
         '__init__',  # action plugin base class, not an actual action plugin
         'net_base',  # base class for other net_* action plugins which have a matching module
         'normal',  # default action plugin for modules without a dedicated action plugin
+        'network',  # base class for network action plugins
 
         # The following action plugins existed without modules to document them before this test was put in place.
         # They should either be removed, have a module added to document them, or have the exception documented here.

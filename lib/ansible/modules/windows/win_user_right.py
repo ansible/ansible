@@ -25,6 +25,7 @@ options:
     - The name of the User Right as shown by the C(Constant Name) value from
       U(https://technet.microsoft.com/en-us/library/dd349804.aspx).
     - The module will return an error if the right is invalid.
+    type: str
     required: yes
   users:
     description:
@@ -34,13 +35,14 @@ options:
     - For local users/groups it can be in the form user-group, .\user-group,
       SERVERNAME\user-group where SERVERNAME is the name of the remote server.
     - You can also add special local accounts like SYSTEM and others.
-    required: yes
     type: list
+    required: yes
   action:
     description:
     - C(add) will add the users/groups to the existing right.
     - C(remove) will remove the users/groups from the existing right.
     - C(set) will replace the users/groups of the existing right.
+    type: str
     default: set
     choices: [ add, remove, set ]
 notes:
@@ -56,7 +58,7 @@ author:
 
 EXAMPLES = r'''
 ---
-- name: replace the entries of Deny log on locally
+- name: Replace the entries of Deny log on locally
   win_user_right:
     name: SeDenyInteractiveLogonRight
     users:
@@ -64,7 +66,7 @@ EXAMPLES = r'''
     - Users
     action: set
 
-- name: add account to Log on as a service
+- name: Add account to Log on as a service
   win_user_right:
     name: SeServiceLogonRight
     users:
@@ -72,7 +74,7 @@ EXAMPLES = r'''
     - '{{ansible_hostname}}\local-user'
     action: add
 
-- name: remove accounts who can create Symbolic links
+- name: Remove accounts who can create Symbolic links
   win_user_right:
     name: SeCreateSymbolicLinkPrivilege
     users:

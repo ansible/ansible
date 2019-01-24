@@ -99,7 +99,7 @@ EXAMPLES = """
 RETURN = '''
 sns_arn:
     description: The ARN of the topic you are modifying
-    type: string
+    type: str
     returned: always
     sample: "arn:aws:sns:us-east-2:111111111111:my_topic_name"
 sns_topic:
@@ -120,36 +120,36 @@ sns_topic:
     delivery_policy:
       description: Delivery policy for the SNS topic
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: >
         {"http":{"defaultHealthyRetryPolicy":{"minDelayTarget":20,"maxDelayTarget":20,"numRetries":3,"numMaxDelayRetries":0,
         "numNoDelayRetries":0,"numMinDelayRetries":0,"backoffFunction":"linear"},"disableSubscriptionOverrides":false}}
     display_name:
       description: Display name for SNS topic
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: My topic name
     name:
       description: Topic name
       returned: always
-      type: string
+      type: str
       sample: ansible-test-dummy-topic
     owner:
       description: AWS account that owns the topic
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: '111111111111'
     policy:
       description: Policy for the SNS topic
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: >
         {"Version":"2012-10-17","Id":"SomePolicyId","Statement":[{"Sid":"ANewSid","Effect":"Allow","Principal":{"AWS":"arn:aws:iam::111111111111:root"},
         "Action":"sns:Subscribe","Resource":"arn:aws:sns:us-east-2:111111111111:ansible-test-dummy-topic","Condition":{"StringEquals":{"sns:Protocol":"email"}}}]}
     state:
       description: whether the topic is present or absent
       returned: always
-      type: string
+      type: str
       sample: present
     subscriptions:
       description: List of subscribers to the topic in this AWS account
@@ -184,7 +184,7 @@ sns_topic:
     subscriptions_pending:
       description: Count of pending subscriptions
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: '0'
     subscriptions_purge:
       description: Whether or not purge_subscriptions was set
@@ -194,7 +194,7 @@ sns_topic:
     topic_arn:
       description: ARN of the SNS topic (equivalent to sns_arn)
       returned: when topic is owned by this AWS account
-      type: string
+      type: str
       sample: arn:aws:sns:us-east-2:111111111111:ansible-test-dummy-topic
     topic_created:
       description: Whether the topic was created

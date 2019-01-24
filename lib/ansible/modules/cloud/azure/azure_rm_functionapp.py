@@ -66,11 +66,13 @@ EXAMPLES = '''
   azure_rm_functionapp:
       resource_group: ansible-rg
       name: myfunctionapp
+      storage_account: mystorageaccount
 
 - name: create a function app with app settings
   azure_rm_functionapp:
       resource_group: ansible-rg
       name: myfunctionapp
+      storage_account: mystorageaccount
       app_settings:
           setting1: value1
           setting2: value2

@@ -99,6 +99,64 @@ Because the log files are verbose, you can use grep to look for specific informa
 
   grep "p=28990" $ANSIBLE_LOG_PATH
 
+
+Enabling Networking device interaction logging
+----------------------------------------------
+
+**Platforms:** Any
+
+Ansible 2.8 features added logging of device interaction in log file to help diagnose and troubleshoot
+issues regarding Ansible Networking modules. The messages are logged in file pointed by ``log_path`` configuration
+option in Ansible configuration file or by set :envvar:`ANSIBLE_LOG_PATH` as mentioned in above section.
+
+.. warning::
+  The device interaction messages consist of command executed on target device and the returned response, as this
+  log data can contain sensitive information including passwords in plain text it is disabled by default.
+  Additionally, in order to prevent accidental leakage of data, a warning will be shown on every task with this
+  setting eneabled specifying which host has it enabled and where the data is being logged.
+
+Be sure to fully understand the security implications of enabling this option. The device interaction logging can be enabled either globally by setting in configuration file or by setting environment or enabled on per task basis by passing special variable to task.
+
+Before running ``ansible-playbook`` run the following commands to enable logging::
+
+   # Specify the location for the log file
+   export ANSIBLE_LOG_PATH=~/ansible.log
+
+
+Enable device interaction logging for a given task
+
+.. code-block:: yaml
+
+  - name: get version information
+    ios_command:
+      commands:
+        - show version
+    vars:
+      ansible_persistent_log_messages: True
+
+
+To make this a global setting, add the following to your ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [persistent_connection]
+   log_messages = True
+
+or enable environment variable `ANSIBLE_PERSISTENT_LOG_MESSAGES`
+
+   # Enable device interaction logging
+   export ANSIBLE_PERSISTENT_LOG_MESSAGES=True
+
+If the task is failing at the time on connection initialization itself it is recommended to enable this option
+globally else if an individual task is failing intermittently this option can be enabled for that task itself to
+find the root cause.
+
+After Ansible has finished running you can inspect the log file which has been created on the ansible-controller
+
+.. note:: Be sure to fully understand the security implications of enabling this option as it can log sensitive
+          information in log file thus creating security vulnerability.
+
+
 Isolating an error
 ------------------
 
@@ -182,7 +240,7 @@ If the identified error message from the log file is:
 
 .. code-block:: yaml
 
-   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 30 secs
 
 or
 
@@ -254,7 +312,7 @@ For example:
 
 Suggestions to resolve:
 
-* If you are using the ``provider:`` options ensure that it's suboption ``host:`` is set correctly.
+* If you are using the ``provider:`` options ensure that its suboption ``host:`` is set correctly.
 * If you are not using ``provider:`` nor top-level arguments ensure your inventory file is correct.
 
 
@@ -414,7 +472,7 @@ For example:
 
 .. code-block:: yaml
 
-   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 30 secs
 
 Suggestions to resolve:
 
@@ -423,14 +481,14 @@ Increase value of command timeout in configuration file or by setting environmen
 
 .. code-block:: yaml
 
-   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=30
+   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=60
 
 To make this a permanent change, add the following to your ``ansible.cfg`` file:
 
 .. code-block:: ini
 
    [persistent_connection]
-   command_timeout = 30
+   command_timeout = 60
 
 Option 2 (Per task command timeout setting):
 Increase command timeout per task basis. All network modules support a
@@ -464,11 +522,11 @@ Suggestions to resolve:
       ios_command:
         commands: copy running-config startup-config
       vars:
-        ansible_command_timeout: 30
+        ansible_command_timeout: 60
 
-Some operations take longer than the default 10 seconds to complete.  One good
+Some operations take longer than the default 30 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value from the default 10 seconds to 30
+In this case, changing the timeout value from the default 30 seconds to 60
 seconds will prevent the task from failing before the command completes
 successfully.
 

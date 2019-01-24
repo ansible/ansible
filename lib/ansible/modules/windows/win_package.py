@@ -32,6 +32,7 @@ options:
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
       with msiexec.
+    type: str
   chdir:
     description:
     - Set the specified path as the current working directory before installing
@@ -50,6 +51,7 @@ options:
     - Will check the existing of the service specified and use the result to
       determine whether the package is already installed.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
+    type: str
     version_added: '2.4'
   creates_version:
     description:
@@ -57,12 +59,13 @@ options:
       use the result to determine whether the package is already installed.
     - C(creates_path) MUST be set and is a file.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
+    type: str
     version_added: '2.4'
   expected_return_code:
     description:
     - One or more return codes from the package installation that indicates
       success.
-    - Before Ansible 2.4 this was just 0 but since 2.4 this is both C(0) and
+    - Before Ansible 2.4 this was just 0 but since Ansible 2.4 this is both C(0) and
       C(3010).
     - A return code of C(3010) usually means that a reboot is required, the
       C(reboot_required) return value is set if the return code is C(3010).
@@ -71,6 +74,7 @@ options:
   password:
     description:
     - The password for C(user_name), must be set when C(user_name) is.
+    type: str
     aliases: [ user_password ]
   path:
     description:
@@ -85,6 +89,7 @@ options:
     - If C(state=present) then this value MUST be set.
     - If C(state=absent) then this value does not need to be set if
       C(product_id) is.
+    type: str
   product_id:
     description:
     - The product id of the installed packaged.
@@ -98,12 +103,15 @@ options:
     - This SHOULD be set when the package is not an MSI, or the path is a url
       or a network share and credential delegation is not being used. The
       C(creates_*) options can be used instead but is not recommended.
+    type: str
     aliases: [ productid ]
   state:
     description:
     - Whether to install or uninstall the package.
     - The module uses C(product_id) and whether it exists at the registry path
       to see whether it needs to install or uninstall the package.
+    type: str
+    choices: [ absent, present ]
     default: present
     aliases: [ ensure ]
   username:
@@ -112,6 +120,7 @@ options:
       file share.
     - This is only needed if the WinRM transport is over an auth method that
       does not support credential delegation like Basic or NTLM.
+    type: str
     aliases: [ user_name ]
   validate_certs:
     description:
@@ -119,10 +128,9 @@ options:
       used on personally controlled sites using self-signed certificates.
     - Before Ansible 2.4 this defaulted to C(no).
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.4'
 notes:
-- For non Windows targets, use the M(package) module instead.
 - When C(state=absent) and the product is an exe, the path may be different
   from what was used to install the package originally. If path is not set then
   the path used will be what is set under C(UninstallString) in the registry
@@ -240,7 +248,7 @@ reboot_required:
     to true if the executable return code is 3010.
   returned: always
   type: bool
-  sample: True
+  sample: true
 stdout:
   description: The stdout stream of the package process.
   returned: failure during install or uninstall
