@@ -918,7 +918,7 @@ class TaskExecutor:
         return options
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
-
+        # Some plugins are assigned to private attrs, ``become`` is not
         plugin = getattr(
             self._connection, '_%s' % plugin_type,
             getattr(self._connection, plugin_type, None)
@@ -937,7 +937,10 @@ class TaskExecutor:
         PRESERVE_ORIG = ('inventory_hostname',)
 
         # create copy with delegation built in
-        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
+        final_vars = combine_vars(
+            variables,
+            variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+        )
 
         # grab list of usable vars for this plugin
         option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
@@ -956,12 +959,12 @@ class TaskExecutor:
                 if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
                     options['_extras'][k] = templar.template(final_vars[k])
 
-        # FIXME, this should take list of options from plugin config and create subset dict from task attributes
-        task_keys = dict((x, getattr(self._task, x)) for x in getattr(self._task, '_attributes'))
+        task_keys = self._task.dump_attrs()
 
         # set options with 'templated vars' specific to this plugin and dependant ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
         self._set_plugin_options('shell', final_vars, templar, task_keys)
+
         if self._connection.become is not None:
             # FIXME: find alternate route to provide passwords, keep out of play objects to avoid accidental disclosure
             task_keys['become_pass'] = self._play_context.become_pass

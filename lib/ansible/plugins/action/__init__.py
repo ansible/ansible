@@ -108,6 +108,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return result
 
+    def get_plugin_option(self, plugin, option, default=None):
+        try:
+            return plugin.get_option(option)
+        except (AttributeError, KeyError):
+            return default
+
+    def get_become_option(self, option, default=None):
+        return self.get_plugin_option(self._connection.become, option, default=default)
+
+    def get_connection_option(self, option, default=None):
+        return self.get_plugin_option(self._connection, option, default=default)
+
+    def get_shell_option(self, option, default=None):
+        return self.get_plugin_option(self._connection._shell, option, default=default)
+
     def _remote_file_exists(self, path):
         cmd = self._connection._shell.exists(path)
         result = self._low_level_execute_command(cmd=cmd, sudoable=True)
@@ -241,12 +256,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Returns a list of admin users that are configured for the current shell
         plugin
         '''
-        try:
-            admin_users = self._connection._shell.get_option('admin_users')
-        except (AttributeError, KeyError):
-            # fallback for old custom plugins w/o get_option
-            admin_users = ['root']
-        return admin_users
+
+        return self.get_shell_option('admin_users', ['root'])
 
     def _get_remote_user(self):
         ''' consistently get the 'remote_user' for the action plugin '''
@@ -277,7 +288,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # we need to return become_unprivileged as True
         admin_users = self._get_admin_users()
         remote_user = self._get_remote_user()
-        return bool(self._connection.become.get_option('become_user') not in admin_users + [remote_user])
+        return bool(self.get_become_option('become_user') not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
         '''
@@ -285,10 +296,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         become_unprivileged = self._is_become_unprivileged()
-        try:
-            remote_tmp = self._connection._shell.get_option('remote_tmp')
-        except AttributeError:
-            remote_tmp = '~/.ansible/tmp'
+        remote_tmp = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
@@ -444,7 +452,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # start to we'll have to fix this.
                 setfacl_mode = 'r-X'
 
-            res = self._remote_set_user_facl(remote_paths, self._connection.become.get_option('become_user'), setfacl_mode)
+            res = self._remote_set_user_facl(remote_paths, self.get_become_option('become_user'), setfacl_mode)
             if res['rc'] != 0:
                 # File system acls failed; let's try to use chown next
                 # Set executable bit first as on some systems an
@@ -454,7 +462,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
-                res = self._remote_chown(remote_paths, self._connection.become.get_option('become_user'))
+                res = self._remote_chown(remote_paths, self.get_become_option('become_user'))
                 if res['rc'] != 0 and remote_user in self._get_admin_users():
                     # chown failed even if remote_user is administrator/root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
@@ -591,10 +599,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
             # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
             # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
+            become_user = self.get_become_option('become_user')
             if getattr(self._connection, '_remote_is_local', False):
                 pass
-            elif sudoable and self._play_context.become and self._connection.become.get_option('become_user'):
-                expand_path = '~%s' % self._connection.become.get_option('become_user')
+            elif sudoable and self._play_context.become and become_user:
+                expand_path = '~%s' % become_user
             else:
                 # use remote user instead, if none set default to current user
                 expand_path = '~%s' % (self._get_remote_user() or '')
@@ -685,11 +694,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
 
         # make sure the remote_tmp value is sent through in case modules needs to create their own
-        try:
-            module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
-        except AttributeError:
-            # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
-            module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
+        module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
         '''
@@ -745,11 +750,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
                 # from the shell option and temporarily add to the environment
                 # list for async_wrapper to pick up
-                try:
-                    async_dir = self._connection._shell.get_option('async_dir')
-                except (AttributeError, KeyError):
-                    # in case 3rd party plugin has not set this, use the default
-                    async_dir = "~/.ansible_async"
+                async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
                 remove_async_dir = len(self._task.environment)
                 self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
 
@@ -960,7 +961,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if (sudoable and self._connection.become and
                 (C.BECOME_ALLOW_SAME_USER or
-                 self._connection.become.get_option('become_user') != self._get_remote_user())):
+                 self.get_become_option('become_user') != self._get_remote_user())):
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 

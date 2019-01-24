@@ -378,19 +378,26 @@ class PlayContext(Base):
 
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
-        display.deprecated("PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead", version="2.13")
+        display.deprecated(
+            "PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead",
+            version="2.13"
+        )
 
         if not cmd or not self.become:
             return cmd
 
+        become_method = self.become_method
+
         # load/call become plugins here
-        plugin = become_loader.get(self.become_method)
+        plugin = become_loader.get(become_method)
 
         if plugin:
-            options = {'become_exe': self.become_exe or getattr(self, '%s_exe' % self.become_method, self.become_method) or self.become_method,
-                       'become_flags': self.become_flags or getattr(self, '%s_flags' % self.become_method, '') or '',
-                       'become_user': self.become_user,
-                       'become_pass': self.become_pass}
+            options = {
+                'become_exe': self.become_exe or getattr(self, '%s_exe' % become_method, become_method) or become_method,
+                'become_flags': self.become_flags or getattr(self, '%s_flags' % become_method, '') or '',
+                'become_user': self.become_user,
+                'become_pass': self.become_pass
+            }
             plugin.set_options(direct=options)
 
             if not executable:
@@ -401,7 +408,7 @@ class PlayContext(Base):
             # for backwards compat:
             self.prompt = plugin.prompt
         else:
-            raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
+            raise AnsibleError("Privilege escalation method not found: %s" % become_method)
 
         return cmd
 

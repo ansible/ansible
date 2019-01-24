@@ -27,8 +27,6 @@ from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
 
-_option_map = {'check': 'check_mode'}
-
 
 def _generic_g(prop_name, self):
     try:
@@ -522,7 +520,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Dumps all attributes to a dictionary
         '''
-        attrs = dict()
+        attrs = {}
         for (name, attribute) in iteritems(self._valid_attrs):
             attr = getattr(self, name)
             if attribute.isa == 'class' and attr is not None and hasattr(attr, 'serialize'):

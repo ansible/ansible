@@ -95,7 +95,7 @@ class ConnectionBase(AnsiblePlugin):
 
         self.become = become_loader.get(name)
         if not self.become:
-            raise AnsibleError("Invalid become method specified, could not find matching plugin: %s\n"
+            raise AnsibleError("Invalid become method specified, could not find matching plugin: '%s'. "
                                "You can use `ansible-doc -t become -l` to list available plugins." % name)
 
         if self.become.require_tty and not getattr(self, 'has_tty', False):
