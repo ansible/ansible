@@ -413,7 +413,7 @@ class Connection(ConnectionBase):
 
         try:
             chan.exec_command(cmd)
-            if self.become and self.become.prompt:
+            if getattr(self.become, 'prompt', None):
                 passprompt = False
                 become_sucess = False
                 while not (become_sucess or passprompt):

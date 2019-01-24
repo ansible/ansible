@@ -809,7 +809,7 @@ class Connection(ConnectionBase):
 
         state = states.index('ready_to_send')
         if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
-            if self.become and self.become.prompt:
+            if getattr(self.become, 'prompt', None):
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
