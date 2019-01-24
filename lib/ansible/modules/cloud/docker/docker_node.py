@@ -24,7 +24,7 @@ options:
         description:
             - The hostname or ID of node as registered in Swarm.
             - If more than one node is registered using the same hostname the ID must be used,
-              otherwise task will fail.
+              otherwise module will fail.
         required: true
         type: str
     labels:
@@ -32,23 +32,26 @@ options:
         type: dict
     labels_state:
         description:
-            - Defines the operation on the labels assigned to node.
+            - It defines the operation on the labels assigned to node and labels specified in I(labels) option.
             - Set to C(merge) to combine labels provided in I(labels) with those already assigned to the node.
-              If no labels are assigned then it will add listed labels. The I(labels) must be specified.
-            - If set as C(merge) for labels that are assigned to node will update their values as specified in I(labels).
-            - If set as C(merge) labels assigned to node that are not specified in I(labels) will remain unchanged.
-            - If set as C(merge) will add new labels specified in I(labels) if labels are not assigned to node.
-            - Set to C(replace) to replace assigned labels with provided ones. The I(labels) must be specified.
-            - Set to C(remove) to remove labels specified in I(labels). If I(labels) is not provided then will remove
-              all labels assigned to the node. If I(labels) is specified it will remove only the listed labels.
-              Unassigned labels from I(labels) are ignored.
+              If no labels are assigned then it will add listed labels. For labels that are already assigned
+              to the node, it will update their values. The labels not specified in I(labels) will remain unchanged. 
+              If I(labels) is empty then no changes will be made.
+            - Set to C(replace) to replace all assigned labels with provided ones. If I(labels) is empty then
+              all labels assigned to the node will be removed.
         choices:
           - merge
           - replace
-          - remove
         default: 'merge'
         required: false
         type: str
+    labels_to_remove:
+        description:
+            - List of labels that will be removed from the node configuration. If label specified on the list is 
+              not assigned to the node then no action will be performed. The remaining labels assigned to the
+              node remains unchanged. The list have to contain only label names, not their values.
+        required: false
+        type: list
     availability:
         description: Node availability to assign. If not provided then node availability remains unchanged.
         choices:
@@ -77,7 +80,7 @@ requirements:
        be installed at the same time. Also note that when both modules are installed
        and one of them is uninstalled, the other might no longer function and a
        reinstall of it is required."
-    - "The docker server >= 1.10.0"
+    - Docker API >= 1.25
 author:
   - Piotr Wojciechowski (@wojciechowskipiotr)
   - Thierry Bouvet (@tbouvet)
@@ -188,12 +191,7 @@ class SwarmNodeManager(DockerBaseClass):
             self.client.fail(msg="This node is not part of a swarm.")
             return
 
-        try:
-            status_down = self.client.check_if_swarm_node_is_down()
-        except APIError:
-            self.client.fail(msg="Can not check the state of node.")
-
-        if status_down:
+        if self.client.check_if_swarm_node_is_down():
             self.client.fail(msg="Can not update the node. The status node is down.")
 
         try:
@@ -262,6 +260,7 @@ def main():
         hostname=dict(type='str', required=True),
         labels=dict(type='dict'),
         labels_state=dict(type='str', choices=['merge', 'replace', 'remove'], default='merge'),
+        labels_to_remove=dict(type='list', elements='str'),
         availability=dict(type='str', choices=['active', 'pause', 'drain']),
         role=dict(type='str', choices=['worker', 'manager']),
     )
