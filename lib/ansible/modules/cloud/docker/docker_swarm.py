@@ -373,7 +373,8 @@ class SwarmManager(DockerBaseClass):
             self.parameters.name = spec['Name']
 
         if (self.parameters.labels is None):
-            self.parameters.labels = spec['Labels']
+            if (spec['Labels'] is not None):
+                self.parameters.labels = spec['Labels']
 
         if 'LogDriver' in spec['TaskDefaults']:
             self.parameters.log_driver = spec['TaskDefaults']['LogDriver']
