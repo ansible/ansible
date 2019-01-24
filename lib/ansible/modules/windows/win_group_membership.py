@@ -80,13 +80,13 @@ name:
     type: str
     sample: Administrators
 added:
-    description: A list of members added when C(state) is C(present) or 
+    description: A list of members added when C(state) is C(present) or
       C(pure); this is empty if no members are added.
     returned: success and C(state) is C(present)
     type: list
     sample: ["SERVERNAME\\NewLocalAdmin", "DOMAIN\\TestUser"]
 removed:
-    description: A list of members removed when C(state) is C(absent) or 
+    description: A list of members removed when C(state) is C(absent) or
       C(pure); this is empty if no members are removed.
     returned: success and C(state) is C(absent)
     type: list
