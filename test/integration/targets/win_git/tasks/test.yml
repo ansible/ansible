@@ -118,6 +118,22 @@
     that:      
       - http_update is changed     
       - "'Successfully updated' in http_update.status"
+     
+- name: update the repo back using previous branch 
+  block:
+    - name: update the repo
+      win_git:
+        repo: 'https://github.com/{{ github_repo_name }}'
+        dest: "{{ temp_path }}\\repo_branch"
+        version: '{{ github_repo_branch }}'
+        update: yes
+      register: http_update      
+
+- name: assert repo updated back from master using previous branch
+  assert:
+    that:      
+      - http_update is changed     
+      - "'Successfully updated' in http_update.status"      
       
 - name: clean the destination before cloning
   block:
@@ -126,7 +142,7 @@
         repo: 'https://github.com/{{ github_repo_name }}'
         dest: "{{ temp_path }}\\repo_http"
         version: 'tags/{{ github_repo_tag }}'
-        relace_dest: true
+        replace_dest: yes
       register: http_clean
 
 - name: assert clean repo cloned
