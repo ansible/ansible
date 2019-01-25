@@ -50,7 +50,7 @@
   assert:
     that:      
       - http_clone is changed      
-      - "'Failed to clone' not in http_clone.git_msg"
+      - "'Failed' not in http_clone.status"
 
 - name: clone repo using git protocol
   block:
@@ -64,7 +64,7 @@
   assert:
     that:    
       - git_clone is changed        
-      - "'Failed to clone' not in git_clone.git_msg"
+      - "'Failed' not in git_clone.status"
 
 - name: clone repo using a branch
   block:
@@ -79,7 +79,7 @@
   assert:
     that:      
       - http_clone_branch is changed     
-      - "'Successfully cloned' in http_clone_branch.git_msg"      
+      - "'Successfully cloned' in http_clone_branch.status"      
       
 - name: update the repo using master branch 
   block:
@@ -95,7 +95,7 @@
   assert:
     that:      
       - http_update is changed     
-      - "'Successfully updated' in http_update.git_msg"
+      - "'Successfully updated' in http_update.status"
       
 - name: clean the destination before cloning
   block:
