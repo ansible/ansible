@@ -78,7 +78,7 @@ function PrepareDestination {
     if ( -Not $check_mode) {
        if (Test-Path $dest) { 
             try {
-                Remove-Item $dest -Recurse | Out-Null                            
+                Remove-Item $dest -Force -Recurse | Out-Null                            
                 Set-Attr $result "status" "Successfully replaced $dest"
                 Set-Attr $result "changed" $true            
             } catch {
