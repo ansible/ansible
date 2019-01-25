@@ -271,7 +271,7 @@ backup_path:
   sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
 filename:
   description: The name of the backup file
-  returned: when backup is yes
+  returned: when backup is yes and filename is not specified in backup options
   type: str
   sample: eos_config.2016-07-16@22:28:34
 shortname:
