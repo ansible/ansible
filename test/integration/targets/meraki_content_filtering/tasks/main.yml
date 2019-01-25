@@ -116,7 +116,7 @@
         - blocked_cateogry.data.urlCategoryListSize == "fullList"
 
   always:
-    - name: Set blocked URL category
+    - name: Reset policies
       meraki_content_filtering:
         auth_key: '{{auth_key}}'
         org_name: '{{test_org_name}}'
@@ -127,7 +127,6 @@
           -
         blocked_urls:
           -
-        blocked_categories:
-          -
+        # blocked_categories:
+        #   -
         category_list_size: top sites
-      register: blocked_cateogry
