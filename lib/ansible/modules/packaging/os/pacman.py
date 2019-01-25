@@ -175,6 +175,7 @@ def get_version(pacman_output):
             return line.split(':')[1].strip()
     return None
 
+
 def get_name(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the package name"""
     lines = pacman_output.split('\n')
@@ -182,6 +183,7 @@ def get_name(pacman_output):
         if 'Name' in line:
             return line.split(':')[1].strip()
     return None
+
 
 def query_package(module, pacman_path, name, state="present"):
     """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second
@@ -194,11 +196,11 @@ def query_package(module, pacman_path, name, state="present"):
             # package is not installed locally
             return False, False, False
         else:
-          # a non-zero exit code doesn't always mean the package is installed
-          # for example, if the package name queried is "provided" by another package
-          installed_name = get_name(lstdout)
-          if installed_name != name:
-            return False, False, False
+            # a non-zero exit code doesn't always mean the package is installed
+            # for example, if the package name queried is "provided" by another package
+            installed_name = get_name(lstdout)
+            if installed_name != name:
+                return False, False, False
 
         # get the version installed locally (if any)
         lversion = get_version(lstdout)
