@@ -54,6 +54,17 @@
 
 - name: clone repo using git protocol
   block:
+    - name: Get stats of existing directory for git clone      
+      win_stat:
+       path: "{{ temp_path }}\\repo_git"
+      register: git_clone_path
+    
+    - name: remove any existing directory for git clone    
+      win_file:
+       name: "{{ temp_path }}\\repo_git"
+       state: absent
+      when:  git_clone_path.stat.exists
+
     - name: clone the git repo
       win_git:
         repo: 'git://github.com/{{ github_repo_name }}'
@@ -68,6 +79,17 @@
 
 - name: clone repo using a branch
   block:
+    - name: Get stats of existing directory for branch clone      
+      win_stat:
+       path: "{{ temp_path }}\\repo_branch"
+      register: branch_clone_path
+    
+    - name: remove any existing directory for branch clone    
+      win_file:
+       name: "{{ temp_path }}\\repo_branch"
+       state: absent
+      when:  branch_clone_path.stat.exists
+
     - name: clone the repo using branch
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
