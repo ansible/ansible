@@ -32,10 +32,10 @@
 
 from base64 import b64encode
 from email.utils import formatdate
-from six.moves.urllib.parse import urlparse, urlencode, quote
 import re
 import json
 import hashlib
+from ansible.module_utils.six.moves.urllib.parse import urlparse, urlencode, quote
 
 try:
     from cryptography.hazmat.primitives import serialization, hashes
@@ -151,7 +151,7 @@ class IntersightModule():
 
         auth_str = auth_str + " " + "keyId=\"" + self.public_key + "\"," + "algorithm=\"" + self.digest_algorithm + "\"," + "headers=\"(request-target)"
 
-        for key, _ in hdrs.items():
+        for key, dummy in hdrs.items():
             auth_str = auth_str + " " + key.lower()
         auth_str = auth_str + "\""
 
@@ -202,8 +202,7 @@ class IntersightModule():
 
         return api_response.json()
 
-
-    def intersight_call(self, http_method="", resource_path="", query_params={}, body={}, moid=None, name=None):
+    def intersight_call(self, http_method="", resource_path="", query_params=None, body=None, moid=None, name=None):
         """
         Invoke the Intersight API
 
@@ -230,11 +229,11 @@ class IntersightModule():
             raise TypeError('The *resource_path* value is required and must be of type "<str>"')
 
         # Verify the query parameters isn't empy & is a valid <dict> object
-        if(query_params != {} and not isinstance(query_params, dict)):
+        if(query_params is not None and not isinstance(query_params, dict)):
             raise TypeError('The *query_params* value must be of type "<dict>"')
 
         # Verify the body isn't empy & is a valid <dict> object
-        if(body != {} and not isinstance(body, dict)):
+        if(body is not None and not isinstance(body, dict)):
             raise TypeError('The *body* value must be of type "<dict>"')
 
         if self.use_proxy:
@@ -248,7 +247,7 @@ class IntersightModule():
             raise ValueError('Invalid *moid* value!')
 
         # Check for query_params, encode, and concatenate onto URL
-        if query_params != {}:
+        if query_params is not None:
             query_path = "?" + urlencode(query_params).replace('+', '%20')
 
         # Handle PATCH/DELETE by Object "name" instead of "moid"

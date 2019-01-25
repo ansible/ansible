@@ -50,6 +50,22 @@ EXAMPLES = r'''
   when: ansible_facts.intersight_servers[0] is defined
 '''
 
+RETURN = r'''
+intersight_servers:
+  description: A list of Intersight Servers.  See L(Cisco Intersight,https://intersight.com/apidocs) for details.
+  returned: always
+  type: complex
+  contains:
+    Name:
+      description: The name of the server.
+      returned: always
+      sample: SJC18-L14-UCS1-1
+    Moid:
+      description: The unique identifier of this Managed Object instance.
+      returned: always
+      sample: 5978bea36ad4b000018d63dc
+'''
+
 from ansible.module_utils.remote_management.intersight import IntersightModule, intersight_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
