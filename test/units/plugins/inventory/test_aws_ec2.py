@@ -30,7 +30,7 @@ botocore = pytest.importorskip('botocore')
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list
-from ansible.plugins.inventory.aws_ec2 import InventoryModule
+from ansible.plugins.loader import inventory_loader
 from ansible.plugins.inventory.aws_ec2 import instance_data_filter_to_boto_attr
 
 instances = {
@@ -114,9 +114,7 @@ instances = {
 
 @pytest.fixture(scope="module")
 def inventory():
-    i = InventoryModule()
-    setattr(i, '_load_name', 'aws_ec2')
-    return i
+    return inventory_loader.get('aws_ec2')
 
 
 def test_compile_values(inventory):
