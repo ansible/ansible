@@ -83,6 +83,7 @@ import pwd
 import platform
 import errno
 import datetime
+import warnings
 from collections import deque
 from itertools import chain, repeat
 
@@ -184,6 +185,7 @@ from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.common.warnings import AnsibleWarning, AnsibleDeprecationWarning
 
 
 # Note: When getting Sequence from collections, it matches with strings.  If
@@ -751,6 +753,9 @@ class AnsibleModule(object):
         and :ref:`developing_program_flow_modules` for more detailed explanation.
         '''
 
+        self._catch_warnings = warnings.catch_warnings(record=True)
+        self._global_warnings = self._catch_warnings.__enter__()
+
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
@@ -861,6 +866,9 @@ class AnsibleModule(object):
             self.deprecate('Setting check_invalid_arguments is deprecated and will be removed.'
                            ' Update the code for this module  In the future, AnsibleModule will'
                            ' always check for invalid arguments.', version='2.9')
+
+    def __del__(self):
+        self._catch_warnings.__exit__(tuple())
 
     @property
     def tmpdir(self):
@@ -2260,6 +2268,12 @@ class AnsibleModule(object):
     def _return_formatted(self, kwargs):
 
         self.add_path_info(kwargs)
+
+        for w in self._global_warnings:
+            if w.category is AnsibleWarning:
+                self.warn(w.message.msg)
+            elif w.category is AnsibleDeprecationWarning:
+                self.deprecate(w.message.msg, version=w.message.version)
 
         if 'invocation' not in kwargs:
             kwargs['invocation'] = {'module_args': self.params}
