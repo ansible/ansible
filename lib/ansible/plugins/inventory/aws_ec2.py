@@ -50,16 +50,24 @@ DOCUMENTATION = '''
         regions:
           description: A list of regions in which to describe EC2 instances. By default this is all regions except us-gov-west-1
               and cn-north-1.
+          type: list
+          default: []
         hostnames:
           description: A list in order of precedence for hostname variables. You can use the options specified in
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
               use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
+          type: list
+          default: []
         filters:
           description: A dictionary of filter value pairs. Available filters are listed here
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
+          type: dict
+          default: {}
         strict_permissions:
           description: By default if a 403 (Forbidden) is encountered this plugin will fail. You can set strict_permissions to
               False in the inventory config file which will allow 403 errors to be gracefully skipped.
+          type: bool
+          default: True
 '''
 
 EXAMPLES = '''
@@ -315,6 +323,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             Generator that yields a boto3 client and the region
         '''
 
+        if not regions:
+            try:
+                # as per https://boto3.amazonaws.com/v1/documentation/api/latest/guide/ec2-example-regions-avail-zones.html
+                client = boto3.client('ec2')
+                resp = conn.describe_regions()
+                regions = resp.get('Regions', [])
+            Exception botocore.exceptions.NoRegionError:
+                # above seems to fail depending on boto3 version
+                pass
+
+        # fallback to local list hardcoded in boto3 if still no regions
+        if not regions:
+            session = boto3.Session()
+            regions = session.get_available_regions('ec2')
+
         credentials = self._get_credentials()
 
         for region in regions:
@@ -486,30 +509,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         display.debug("aws_ec2 inventory filename must end with 'aws_ec2.yml' or 'aws_ec2.yaml'")
         return False
 
-    def _get_query_options(self, config_data):
-        '''
-            :param config_data: contents of the inventory config file
-            :return A list of regions to query,
-                    a list of boto3 filter dicts,
-                    a list of possible hostnames in order of preference
-                    a boolean to indicate whether to fail on permission errors
-        '''
-        options = {'regions': {'type_to_be': list, 'value': config_data.get('regions', [])},
-                   'filters': {'type_to_be': dict, 'value': config_data.get('filters', {})},
-                   'hostnames': {'type_to_be': list, 'value': config_data.get('hostnames', [])},
-                   'strict_permissions': {'type_to_be': bool, 'value': config_data.get('strict_permissions', True)}}
-
-        # validate the options
-        for name in options:
-            options[name]['value'] = self._validate_option(name, options[name]['type_to_be'], options[name]['value'])
-
-        regions = options['regions']['value']
-        filters = ansible_dict_to_boto3_filter_list(options['filters']['value'])
-        hostnames = options['hostnames']['value']
-        strict_permissions = options['strict_permissions']['value']
-
-        return regions, filters, hostnames, strict_permissions
-
     def _validate_option(self, name, desired_type, option_value):
         '''
             :param name: the option name
@@ -536,7 +535,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self._set_credentials()
 
         # get user specifications
-        regions, filters, hostnames, strict_permissions = self._get_query_options(config_data)
+        regions = self.get_option('regions')
+        filters = self.get_option('filters')
+        hostnames = self.get_option('hostnames')
+        strict_permissions = self.get_option('strict_permissions')
 
         cache_key = self.get_cache_key(path)
         # false when refresh_cache or --flush-cache is used
