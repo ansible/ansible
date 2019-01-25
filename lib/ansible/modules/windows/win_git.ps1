@@ -27,11 +27,12 @@ $key_file = Get-AnsibleParam -obj $params -name "key_file" -type "str"
 $result = @{      
     changed = $false    
     dest = $null        
-    git_msg =  $null      
+    status =  $null      
     git_output = $null
     return_code = $null
     method = $null
     branch_status = "master"
+    git_opts = $null
 }
 
 # Add Git to PATH variable
@@ -64,14 +65,9 @@ function FindGit {
     if ($p -ne $null){
         $path=((Get-Command git.exe).Path | Split-Path)
         $env:Path += ";" + $path
-        Set-Attr $result "git_msg" "Git found in $path."
+        Set-Attr $result "result" "Git found in $path."
         return $p
     }
-    # $a = Find-Command "C:\Program Files\Git\bin\git.exe"
-    # if ($a -ne $null){
-    #     Set-Attr $result "git_msg" "Git path $a."
-    #     return $a
-    # }
     Fail-Json -obj $result -message "git.exe is not installed. It must be installed (use chocolatey)"
 }
 
@@ -85,7 +81,7 @@ function PrepareDestination {
             if (-Not (Test-Path($dest))) {
                New-Item -ItemType directory -Path $dest      
             }
-            Set-Attr $result "git_msg" "Successfully replaced dir $dest."
+            Set-Attr $result "status" "Successfully replaced dir $dest."
             Set-Attr $result "changed" $true            
         } catch {
             $ErrorMessage = $_.Exception.Message
@@ -125,7 +121,7 @@ function CheckSshKnownHosts {
         if ([string]::IsNullOrEmpty($key_search)) {
             try {  
                 [System.IO.File]::AppendAllText($sshKnownHostsPath, $sshHostKey, $(New-Object System.Text.UTF8Encoding $False))
-                Set-Attr $result "git_msg" "Successfully updated $sshKnownHostsPath."
+                Set-Attr $result "status" "Successfully updated $sshKnownHostsPath."
             }
             catch {
                $ErrorMessage = $_.Exception.Message
@@ -133,7 +129,7 @@ function CheckSshKnownHosts {
             }               
         }  
         else {
-            Set-Attr $result "git_msg" "No update to $sshKnownHostsPath. $key_search exits"
+            Set-Attr $result "status" "No update to $sshKnownHostsPath. $key_search exits"
         }    
     }
     else {
@@ -154,7 +150,7 @@ function CheckSshKnownHosts {
             try {
               [System.IO.File]::AppendAllText($sshConfigPath, "Host $gitServer`n", $(New-Object System.Text.UTF8Encoding $False))
               [System.IO.File]::AppendAllText($sshConfigPath, "IdentityFile $key_file", $(New-Object System.Text.UTF8Encoding $False))       
-              Set-Attr $result "git_msg" "Successfully updated $sshConfigPath."
+              Set-Attr $result "status" "Successfully updated $sshConfigPath."
             }
             catch {
                 $ErrorMessage = $_.Exception.Message
@@ -162,7 +158,7 @@ function CheckSshKnownHosts {
             }            
         }   
         else {
-            Set-Attr $result "git_msg" "No update to $sshConfigPath. $key_search exits"
+            Set-Attr $result "status" "No update to $sshConfigPath. $key_search exits"
         }         
         & cmd /c start-ssh-agent.cmd | Out-Null
         & cmd /c $gitKeyAddPath $env:Userprofile\.ssh\id_rsa      
@@ -274,7 +270,7 @@ function clone {
        $git_opts += $depth
     } 
 
-    #Set-Attr $result "git_opts" "$git_opts"
+    Set-Attr $result "git_opts" [string]$git_opts
 
     #Only clone if $dest does not exist and not in check mode    
     if( -Not $check_mode) {    
@@ -288,16 +284,16 @@ function clone {
             
             if ($LASTEXITCODE -eq 0) {
                $result.changed = $true           
-               Set-Attr $result "git_msg" "Successfully cloned $repo into $dest."    
+               Set-Attr $result "status" "Successfully cloned $repo into $dest."    
             }
             else {
                $result.changed = $false
-               Set-Attr $result "git_msg" "Failed to clone $repo into $dest."                   
+               Set-Attr $result "status" "Failed to clone $repo into $dest."                   
             }
      
         }    
         else {
-            Set-Attr $result "git_msg" "Failed to clone $repo into $dest. It is either not empty or does not exist"    
+            Set-Attr $result "status" "Failed to clone $repo into $dest. It is either not empty or does not exist"    
         }
 
         Set-Attr $result "return_code" $LASTEXITCODE
@@ -306,7 +302,7 @@ function clone {
     else {
         $Return.rc = 0
         $Return.git_output = $git_output        
-        Set-Attr $result "git_msg" "Check Mode - Skipping clone of $repo"
+        Set-Attr $result "status" "Check Mode - Skipping clone of $repo"
     }
 
     # Check if branch is the correct one
@@ -342,7 +338,7 @@ function update {
        $git_opts += $version
     } 
 
-    #Set-Attr $result "git_opts" $git_opts
+    Set-Attr $result "git_opts" [string]$git_opts
     #Only update if $dest does exist and not in check mode
     if(-Not $check_mode) {
         # move into correct branch before pull
@@ -353,7 +349,7 @@ function update {
         $Return.git_output = $git_output
         if ($LASTEXITCODE -eq 0) {
             Set-Attr $result "changed" $true
-            Set-Attr $result "git_msg" "Successfully updated $repo to $version."
+            Set-Attr $result "status" "Successfully updated $repo to $version."
         }  
         #TODO: handle correct status change when using update        
         Set-Attr $result "return_code" $LASTEXITCODE
@@ -361,7 +357,7 @@ function update {
     } else {
         $Return.rc = 0
         $Return.git_output =  $git_output
-        Set-Attr $result "git_msg" "Check Mode - Skipping update of $repo"
+        Set-Attr $result "status" "Check Mode - Skipping update of $repo"
     }
 
     return $Return
@@ -398,7 +394,7 @@ try {
     if ([system.uri]::IsWellFormedUriString($repo,[System.UriKind]::Absolute)) {
         # http/https repositories doesn't need Ssh handle
         # fix to avoid wrong usage of CheckSshKnownHosts CheckSshIdentity for http/https
-        Set-Attr $result "git_msg" "$repo is valid url"
+        Set-Attr $result "status" "$repo is valid url"
     } else {
         CheckSshKnownHosts
         CheckSshIdentity

@@ -118,7 +118,7 @@ dest:
   returned: always
   type: str
   sample: /tmp/hellogitworld
-git_msg:
+status:
   description: success or error message
   returned: always
   type: str
