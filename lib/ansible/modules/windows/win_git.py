@@ -127,7 +127,7 @@ branch_status:
   description: branch name
   returned: always
   type: str
-  sample: master  
+  sample: master
 return_code:
   description: return code of running git command
   returned: always
@@ -136,8 +136,8 @@ return_code:
 git_opts:
   description: git command options
   returned: always
-  type: list
-  sample: [ "--no-pager", "clone" ]
+  type: str
+  sample:  "--no-pager clone"
 git_output:
   description: raw git output
   returned: always

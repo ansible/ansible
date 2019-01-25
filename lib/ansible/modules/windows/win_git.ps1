@@ -75,18 +75,20 @@ function FindGit {
 function PrepareDestination {
     [CmdletBinding()]
     param()
-    if ((Test-Path $dest) -And (-Not $check_mode)) {
-        try {
-            Remove-Item $dest -Force -Recurse | Out-Null            
-            if (-Not (Test-Path($dest))) {
-               New-Item -ItemType directory -Path $dest      
+    if ( -Not $check_mode) {
+       if (Test-Path $dest) { 
+            try {
+                Remove-Item $dest -Recurse | Out-Null                            
+                Set-Attr $result "status" "Successfully replaced $dest"
+                Set-Attr $result "changed" $true            
+            } catch {
+                $ErrorMessage = $_.Exception.Message
+                Fail-Json $result "Error removing $dest - $ErrorMessage"
             }
-            Set-Attr $result "status" "Successfully replaced dir $dest"
-            Set-Attr $result "changed" $true            
-        } catch {
-            $ErrorMessage = $_.Exception.Message
-            Fail-Json $result "Error removing $dest - $ErrorMessage"
-        }
+       } 
+    }
+    else{
+        Set-Attr $result "status" "Check Mode - Skipping removal of $dest"
     }
 }
 
@@ -270,7 +272,7 @@ function clone {
        $git_opts += $depth
     } 
 
-    Set-Attr $result "git_opts" $git_opts
+    Set-Attr $result "git_opts" "$git_opts"
 
     #Only clone if $dest does not exist and not in check mode    
     if( -Not $check_mode) {    
@@ -293,7 +295,8 @@ function clone {
      
         }    
         else {
-            Set-Attr $result "status" "Failed to clone $repo into $dest. It is either not empty or does not exist"    
+            $result.changed = $false
+            Set-Attr $result "status" "Error clone - Path either not empty or does not exist"    
         }
 
         Set-Attr $result "return_code" $LASTEXITCODE
@@ -338,7 +341,7 @@ function update {
        $git_opts += $version
     } 
 
-    Set-Attr $result "git_opts" $git_opts
+    Set-Attr $result "git_opts" "$git_opts"
     #Only update if $dest does exist and not in check mode
     if(-Not $check_mode) {
         # move into correct branch before pull
