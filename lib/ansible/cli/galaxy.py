@@ -236,6 +236,7 @@ class GalaxyCLI(CLI):
             in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
             dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
+            symlinks = []
             for f in files:
                 filename, ext = os.path.splitext(f)
                 if any(r.match(os.path.join(rel_root, f)) for r in skeleton_ignore_re):
@@ -246,12 +247,21 @@ class GalaxyCLI(CLI):
                     template_env.get_template(src_template).stream(inject_data).dump(dest_file)
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), role_skeleton)
-                    shutil.copyfile(os.path.join(root, f), os.path.join(role_path, f_rel_path))
+                    f_src = os.path.join(root, f)
+                    f_dest = os.path.join(role_path, f_rel_path)
+                    if os.path.islink(f_src):
+                        symlinks.append((f_src, f_dest))
+                    else:
+                        shutil.copyfile(f_src, f_dest)
 
             for d in dirs:
                 dir_path = os.path.join(role_path, rel_root, d)
                 if not os.path.exists(dir_path):
                     os.makedirs(dir_path)
+
+            for symlink in symlinks:
+                linkto = os.readlink(symlink[0])
+                os.symlink(linkto, symlink[1])
 
         display.display("- %s was created successfully" % role_name)
 

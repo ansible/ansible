@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-galaxy now has a 'collection' type template
