@@ -440,7 +440,6 @@ In this example, if both groups have the same priority, the result would normall
 
 .. note:: ``ansible_group_priority`` can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars.
 
-
 .. _using_multiple_inventory_sources:
 
 Using multiple inventory sources
