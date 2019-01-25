@@ -62,6 +62,18 @@ options:
         - Before an update to the local repository before launching a job with this project.
       type: bool
       default: 'no'
+    scm_update_cache_timeout:
+      description:
+        - Cache Timeout to cache prior project syncs for a certain number of seconds.
+            Only valid if scm_update_on_launch is to True, otherwise ignored.
+      default: 0
+    job_timeout:
+      description:
+        - The amount of time (in seconds) to run before the SCM Update is canceled.
+      default: 0 (no timeout)
+    custom_virtualenv:
+      description:
+        - Local absolute file path containing a custom Python virtualenv to use
     organization:
       description:
         - Primary key of organization for project.
@@ -80,6 +92,17 @@ EXAMPLES = '''
     name: "Foo"
     description: "Foo bar project"
     organization: "test"
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+
+- name: Add Tower Project with cache timeout and custom virtualenv
+  tower_project:
+    name: "Foo"
+    description: "Foo bar project"
+    organization: "test"
+    scm_update_on_launch: True
+    scm_update_cache_timeout: 60
+    custom_virtualenv: "/var/lib/awx/venv/ansible-2.2"
     state: present
     tower_config_file: "~/tower_cli.cfg"
 '''
@@ -107,10 +130,10 @@ def main():
         scm_clean=dict(type='bool', default=False),
         scm_delete_on_update=dict(type='bool', default=False),
         scm_update_on_launch=dict(type='bool', default=False),
-        scm_update_cache_timeout=dict(type='int'),
-        job_timeout=dict(type='int'),
+        scm_update_cache_timeout=dict(type='int', default=0),
+        job_timeout=dict(type='int', default=0),
+        custom_virtualenv=dict(),
         local_path=dict(),
-
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
@@ -131,6 +154,7 @@ def main():
     scm_update_on_launch = module.params.get('scm_update_on_launch')
     scm_update_cache_timeout = module.params.get('scm_update_cache_timeout')
     job_timeout = module.params.get('job_timeout')
+    custom_virtualenv = module.params.get('custom_virtualenv')
     state = module.params.get('state')
 
     json_output = {'project': name, 'state': state}
@@ -170,6 +194,7 @@ def main():
                                         scm_update_on_launch=scm_update_on_launch,
                                         scm_update_cache_timeout=scm_update_cache_timeout,
                                         job_timeout=job_timeout,
+                                        custom_virtualenv=custom_virtualenv,
                                         create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
