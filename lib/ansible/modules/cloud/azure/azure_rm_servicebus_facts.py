@@ -34,6 +34,12 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    namespace:
+        description:
+            - Servicebus namespace name.
+            - A namespace is a scoping container for all messaging components.
+            - Multiple queues and topics can reside within a single namespace, and namespaces often serve as application containers.
+            - Required when C(type) is not C(namespace).
 
 extends_documentation_fragment:
     - azure
@@ -60,40 +66,146 @@ EXAMPLES = '''
           - foo:bar
 '''
 RETURN = '''
+
 id:
-    description: Resource id.
-    returned: success
-    type: str
+    description:
+      -  Resource Id
 name:
-    description: Name of the resource.
-    returned: success
-    type: str
-resource_group:
-    description: Resource group of the servicebus.
-    returned: success
-    type: str
-disable_bgp_route_propagation:
-    description: Whether the routes learned by BGP on that servicebus disabled.
-    returned: success
-    type: bool
+    description:
+      -  Resource name
+location:
+    description:
+      -  The Geo-location where the resource lives 
+namespace:
+    description:
+      - Namespace name of the queue or topic, subscription.
+topic:
+    description:
+      - Topic name of a subscription.
 tags:
-    description: Tags of the servicebus.
-    returned: success
-    type: list
-routes:
-    description: Current routes of the servicebus.
-    returned: success
-    type: list
-    sample: [
-        {
-          "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.ServiceBus/namespaces/foobar/queues/route",
-          "name": "route",
-          "resource_group": "Testing",
-          "servicebuss": "foobar",
-          "address_prefix": "192.0.0.1",
-          "next_hop_type": "virtual_networkGateway"
-        }
-    ]
+    description:
+      -  Resource tags 
+sku:
+    description:
+      -  Porperties of Sku 
+provisioning_state:
+    description:
+      -  Provisioning state of the namespace.
+service_bus_endpoint:
+    description:
+      -  Endpoint you can use to perform Service Bus operations.
+metric_id:
+    description:
+      -  Identifier for Azure Insights metrics
+type:
+    description:
+      - Resource type
+      - Namespace is a scoping container for all messaging components.
+      - Queue enables you to store messages until the receiving application is available to receive and process them.
+      - Topic and subscriptions enable 1:n relationships between publishers and subscribers.
+    sample: "Microsoft.ServiceBus/Namespaces/Topics"
+size_in_bytes:
+    description:
+      - Size of the topic, in bytes.
+created_at:
+    description:
+      - Exact time the message was created.
+    sample: "2019-01-25 02:46:55.543953+00:00"
+updated_at:
+    description:
+      - The exact time the message was updated.
+    sample: "2019-01-25 02:46:55.543953+00:00"
+accessed_at:
+    description:
+      - Last time the message was sent, or a request was received, for this topic.
+    sample: "2019-01-25 02:46:55.543953+00:00"
+subscription_count:
+    description:
+      - Number of subscriptions.
+count_details:
+    description:
+        - Message count deatils.
+    contains:
+        active_message_count:
+            description:
+               - Number of active messages in the queue, topic, or subscription.
+        dead_letter_message_count:
+            description:
+               - Number of messages that are dead lettered.
+        scheduled_message_count:
+            description:
+               - Number of scheduled messages.
+        transfer_message_count:
+            description:
+               - Number of messages transferred to another queue, topic, or subscription.
+        transfer_dead_letter_message_count:
+            description:
+               - Number of messages transferred into dead letters.
+support_ordering:
+    description:
+      - Value that indicates whether the topic supports ordering.
+status:
+    description:
+      - The status of a messaging entity.
+requires_session:
+    description:
+      - A value that indicates whether the  queue or topic supports the concept of sessions.
+requires_duplicate_detection:
+    description:
+      - A value indicating if this queue or topic requires duplicate detection.
+max_size_in_mb:
+    description:
+      - Maximum size of the queue or topic in megabytes, which is the size of the memory allocated for the topic.
+max_delivery_count:
+    description:
+      - The maximum delivery count.
+      - A message is automatically deadlettered after this number of deliveries.
+lock_duration_in_seconds:
+    description:
+      - ISO 8601 timespan duration of a peek-lock.
+      - The amount of time that the message is locked for other receivers.
+      - The maximum value for LockDuration is 5 minutes.
+forward_to:
+    description:
+      - Queue or topic name to forward the messages
+forward_dead_lettered_messages_to:
+    description:
+      - Queue or topic name to forward the Dead Letter message
+enable_partitioning:
+    description:
+      - Value that indicates whether the queue or topic to be partitioned across multiple message brokers is enabled.
+enable_express:
+    description:
+      - Value that indicates whether Express Entities are enabled.
+      - An express topic holds a message in memory temporarily before writing it to persistent storage.
+enable_batched_operations:
+    description:
+      - Value that indicates whether server-side batched operations are enabled.
+duplicate_detection_time_in_seconds:
+    description:
+      - ISO 8601 timeSpan structure that defines the duration of the duplicate detection history.
+default_message_time_to_live_seconds:
+    description:
+      - ISO 8061 Default message timespan to live value.
+      - This is the duration after which the message expires, starting from when the message is sent to Service Bus.
+      - This is the default value used when TimeToLive is not set on a message itself.
+dead_lettering_on_message_expiration:
+    description:
+      - A value that indicates whether this  queue or topic has dead letter support when a message expires.
+dead_lettering_on_filter_evaluation_exceptions:
+    description:
+      - Value that indicates whether a subscription has dead letter support on filter evaluation exceptions.
+auto_delete_on_idle_in_seconds:
+    description:
+      - ISO 8061 timeSpan idle interval after which the  queue or topic is automatically deleted.
+      - The minimum duration is 5 minutes.
+size_in_bytes:
+    description:
+      - The size of the queue or topic, in bytes.
+message_count:
+    description:
+      - Number of messages.
+
 '''
 
 try:
@@ -202,6 +314,10 @@ class AzureRMServiceBusFacts(AzureRMModuleBase):
             for name in policies.keys():
                 policies[name] = self.get_sas_key(name)
             result['sas_policies'] = policies
+        if self.namespace:
+            result['namespace'] = self.namespace
+        if self.topic:
+            result['topic'] = self.topic
         return  result
 
     def _get_client(self):
