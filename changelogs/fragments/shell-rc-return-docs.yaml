@@ -1,0 +1,2 @@
+bugfixes:
+  - 'shell - clarify documentation on when ``rc`` is returned and to use ``reboot`` or ``win_reboot`` module for performing system reboots (https://github.com/ansible/ansible/issues/15741)'

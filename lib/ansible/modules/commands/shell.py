@@ -87,6 +87,7 @@ notes:
     do not include evil things like semicolons.
   - An alternative to using inline shell scripts with this module is to use
     the M(script) module possibly together with the M(template) module.
+  - For rebooting systems, use the M(reboot) or M(win_reboot) module.
 seealso:
 - module: command
 - module: raw
@@ -185,8 +186,8 @@ cmd:
     type: str
     sample: 'rabbitmqctl join_cluster rabbit@master'
 rc:
-    description: The command return code (0 means success)
-    returned: always
+    description: The command return code (0 means success). Not returned if run in check mode or unexpected failure occurs.
+    returned: on success
     type: int
     sample: 0
 stdout_lines:
