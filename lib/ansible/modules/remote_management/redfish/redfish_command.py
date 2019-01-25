@@ -142,7 +142,7 @@ from ansible.module_utils._text import to_native
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["PowerOn", "PowerForceOff", "PowerGracefulRestart",
                 "PowerGracefulShutdown", "SetOneTimeBoot",
-                "CreateBiosConfigJob"],
+                "CreateBiosConfigJob", "UpdateFirmware"],
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
                  "UpdateUserRole", "UpdateUserPassword"],
     "Manager": ["GracefulRestart", "ClearLogs"],
@@ -231,6 +231,8 @@ def main():
                 if result['ret'] is False:
                     module.fail_json(msg=to_native(result['msg']))
                 result = rf_utils.create_bios_config_job()
+            elif command == "UpdateFirmware":
+                result = rf_utils.update_firmware_simple(module.params['uri'])
 
     elif category == "Manager":
         MANAGER_COMMANDS = {

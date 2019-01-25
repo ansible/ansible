@@ -512,6 +512,14 @@ class RedfishUtils(object):
         result["entries"] = firmware
         return result
 
+    def update_firmware_simple(self, image_uri: str):
+        uri = self.root_uri + self.firmware_uri + "/Actions/UpdateService.SimpleUpdate"
+        payload = {"ImageURI", image_uri}
+        response = self.post_request(uri, payload, HEADERS)
+        if response['ret'] is False:
+            return response
+        return {'ret': True}
+
     def get_manager_attributes(self):
         result = {}
         manager_attributes = {}
