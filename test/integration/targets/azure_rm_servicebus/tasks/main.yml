@@ -1,0 +1,86 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: Create a topic (check mode)
+  azure_rm_servicebus:
+      name: "topic{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      duplicate_detection_time_in_seconds: 600
+      type: topic
+      sas_policies:
+        - name: testpolicy
+          rights: manage
+  check_mode: yes
+  register: output
+
+- assert:
+      that:
+          - output.changed
+
+- name: Create a topic
+  azure_rm_servicebus:
+      name: "topic{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      duplicate_detection_time_in_seconds: 600
+      type: topic
+      sas_policies:
+        - name: testpolicy
+          rights: manage
+  register: output
+
+- assert:
+      that:
+          - output.changed
+          - output.id
+          - "'subscription_count' not in output"
+
+- name: Create a topic (idempontent)
+  azure_rm_servicebus:
+      name: "topic{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      duplicate_detection_time_in_seconds: 600
+      type: topic
+      sas_policies:
+        - name: testpolicy
+          rights: manage
+  register: output
+
+- assert:
+      that:
+          - not output.changed
+
+- name: Create a subscription
+  azure_rm_servicebus:
+      name: "subs{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      type: subscription
+      subscription_topic_name: "topic{{ rpfx }}"
+  register: subs
+
+- assert:
+      that:
+          - subs.id
+          - subs.changed
+
+- name: Retrive topic
+  azure_rm_servicebus_facts:
+      name: "topic{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      type: topic
+      show_sas_policies: yes
+  register: facts
+
+- assert:
+      that:
+         - "facts.servicebuses | length == 1"
+         - facts.servicebuses[0].id == output.id
+         - facts.servicebuses[0].subscription_count == 1
+         - facts.servicebuses[0].sas_policies.testpolicy
+         - facts.servicebuses[0].sas_policies.testpolicy.rights == 'manage'

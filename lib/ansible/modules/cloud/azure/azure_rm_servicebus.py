@@ -311,6 +311,8 @@ class AzureRMServiceBus(AzureRMModuleBase):
         attribute_map = instance_type._attribute_map
         for attribute in attribute_map.keys():
             value = getattr(instance, attribute)
+            if not value:
+                continue
             if attribute_map[attribute]['type'] == 'duration':
                 if is_valid_timedelta(value):
                     key = duration_spec_map.get(attribute) or attribute
@@ -338,10 +340,8 @@ class AzureRMServiceBus(AzureRMModuleBase):
             while True:
                 rule = rules.next()
                 result[rule.name] = self.policy_to_dict(rule)
-        except StopIteration:
+        except Exception:
             pass
-        except Exception as exc:
-            self.fail('Error when getting SAS policies for {0} {1}: {2}'.format(self.type, self.name, exc.message or str(exc)))
         return result
 
     def create_sas_policy(self, policy):
@@ -380,8 +380,8 @@ class AzureRMServiceBus(AzureRMModuleBase):
         try:
             client = self._get_client()
             return client.list_keys(self.resource_group, self.namespace, self.name, name).as_dict()
-        except Exception as exc:
-            self.fail('Error when getting SAS policy {0}\'s key - {1}'.format(name, exc.message or str(exc)))
+        except Exception:
+            pass
         return None
 
     def policy_to_dict(self, rule):
