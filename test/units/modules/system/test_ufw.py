@@ -34,11 +34,10 @@ user_rules_with_ipv6 = """### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251
 # result of
 # sudo ufw allow in from ff02::fb port 5353 proto udp
 # ufw allow in from 224.0.0.251 port 5353 proto udp
-ufw_status_verbose_with_ipv6 = """sudo ufw status verbose
-État : actif
-Journalisation : on (full)
-Par défaut : allow (incoming), allow (outgoing), deny (routed)
-Nouveaux profils : skip
+ufw_status_verbose_with_ipv6 = """Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), deny (routed)
+New profiles: skip
 
 Vers                       Action      De
 ----                       ------      --
