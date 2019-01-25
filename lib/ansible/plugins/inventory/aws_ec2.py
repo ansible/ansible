@@ -138,7 +138,7 @@ compose:
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import string_types
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
 from ansible.utils.display import Display
@@ -327,16 +327,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 # as per https://boto3.amazonaws.com/v1/documentation/api/latest/guide/ec2-example-regions-avail-zones.html
                 client = boto3.client('ec2')
-                resp = conn.describe_regions()
+                resp = client.describe_regions()
                 regions = resp.get('Regions', [])
-            Exception botocore.exceptions.NoRegionError:
-                # above seems to fail depending on boto3 version
+            except botocore.exceptions.NoRegionError:
+                # above seems to fail depending on boto3 version, ignore and lets try something else
                 pass
 
         # fallback to local list hardcoded in boto3 if still no regions
         if not regions:
             session = boto3.Session()
             regions = session.get_available_regions('ec2')
+
+        # I give up, now you MUST give me regions
+        if not regions:
+            raise AnsibleError('Unable to get regions list from available methods, you must specify the "regions" option to continue.')
 
         credentials = self._get_credentials()
 
