@@ -63,15 +63,18 @@ options:
       type: bool
       default: 'no'
     scm_update_cache_timeout:
+      version_added: "2.8"
       description:
         - Cache Timeout to cache prior project syncs for a certain number of seconds.
             Only valid if scm_update_on_launch is to True, otherwise ignored.
       default: 0
     job_timeout:
+      version_added: "2.8"
       description:
-        - The amount of time (in seconds) to run before the SCM Update is canceled.
-      default: 0 (no timeout)
+        - The amount of time (in seconds) to run before the SCM Update is canceled. A value of 0 means no timeout.
+      default: 0
     custom_virtualenv:
+      version_added: "2.8"
       description:
         - Local absolute file path containing a custom Python virtualenv to use
     organization:
