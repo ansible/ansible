@@ -219,7 +219,7 @@ from datetime import datetime, timedelta
 duration_spec_map = dict(
     default_message_time_to_live='default_message_time_to_live_seconds',
     duplicate_detection_history_time_window='duplicate_detection_time_in_seconds',
-    auto_delete_on_idle='c',
+    auto_delete_on_idle='auto_delete_on_idle_in_seconds',
     lock_duration='lock_duration_in_seconds'
 )
 
@@ -261,7 +261,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             status=dict(type='str',
                         choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unkown']),
             support_ordering=dict(type='bool'),
-            sas_policies=dict(type='list', elements='dict',  options=sas_policy_spec, default=[])
+            sas_policies=dict(type='list', elements='dict', options=sas_policy_spec, default=[])
         )
 
         required_if = [
@@ -365,7 +365,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
                         elif not original_policy:
                             policy_changed = True
                         if policy_changed and not self.check_mode:
-                            rules[policy['name']] =  self.create_sas_policy(policy)
+                            rules[policy['name']] = self.create_sas_policy(policy)
                         # get the original key or regenerate one
                         if policy.get('regenerate_key'):
                             policy_changed = True
@@ -410,7 +410,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             client = self._get_client()
             if self.type == 'subscription':
                 return client.create_or_update(self.resource_group, self.namespace, self.subscription_topic_name, self.name, param)
-            else:  
+            else:
                 return client.create_or_update(self.resource_group, self.namespace, self.name, param)
         except Exception as exc:
             self.fail("Error creating or updating route {0} - {1}".format(self.name, str(exc)))
@@ -420,8 +420,8 @@ class AzureRMServiceBus(AzureRMModuleBase):
             client = self._get_client()
             if self.type == 'subscription':
                 client.delete(self.resource_group, self.namespace, self.subscription_topic_name, self.name)
-            else:  
-               client.delete(self.resource_group, self.namespace, self.name)
+            else:
+                client.delete(self.resource_group, self.namespace, self.name)
             return True
         except Exception as exc:
             self.fail("Error deleting route {0} - {1}".format(self.name, str(exc)))
@@ -434,7 +434,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             client = self._get_client()
             if self.type == 'subscription':
                 return client.get(self.resource_group, self.namespace, self.subscription_topic_name, self.name)
-            else:  
+            else:
                 return client.get(self.resource_group, self.namespace, self.name)
         except Exception:
             return None
@@ -527,6 +527,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
         else:
             result['rights'] = rights[0].lower()
         return result
+
 
 def is_valid_timedelta(value):
     if value == timedelta(10675199, 10085, 477581):

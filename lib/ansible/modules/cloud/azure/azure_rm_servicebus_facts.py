@@ -101,7 +101,7 @@ name:
       -  Resource name
 location:
     description:
-      -  The Geo-location where the resource lives 
+      -  The Geo-location where the resource lives.
 namespace:
     description:
       - Namespace name of the queue or topic, subscription.
@@ -110,10 +110,10 @@ topic:
       - Topic name of a subscription.
 tags:
     description:
-      -  Resource tags 
+      -  Resource tags.
 sku:
     description:
-      -  Porperties of Sku 
+      -  Porperties of Sku.
 provisioning_state:
     description:
       -  Provisioning state of the namespace.
@@ -267,7 +267,7 @@ class AzureRMServiceBusFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            type=dict(type='str',required=True, choices=['namespace', 'topic', 'queue', 'subscription']),
+            type=dict(type='str', required=True, choices=['namespace', 'topic', 'queue', 'subscription']),
             namespace=dict(type='str'),
             topic=dict(type='str'),
             show_sas_policies=dict(type='bool')
@@ -346,7 +346,7 @@ class AzureRMServiceBusFacts(AzureRMModuleBase):
             result['namespace'] = self.namespace
         if self.topic:
             result['topic'] = self.topic
-        return  result
+        return result
 
     def _get_client(self):
         return getattr(self.servicebus_client, '{0}s'.format(self.type))
