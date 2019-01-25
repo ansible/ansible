@@ -22,7 +22,7 @@ These modules are integral to the basic foundations of the Ansible distribution.
 Network
 -------
 
-:ref:`Network Maintained<network_supported>` modules are are maintained by the Ansible Network Team. Please note there are additional networking modules that are categorized as Certified or Community not maintained by Ansible.
+:ref:`Network and Security Maintained<network_supported>` modules are are maintained by the Ansible Network and Security Teams. Please note there are additional networking modules that are categorized as Certified or Community not maintained by Ansible.
 
 
 Certified
@@ -33,7 +33,7 @@ Certified
 Community
 ---------
 
-:ref:`Community Maintained<community_supported>` modules are submitted and maintained by the Ansible community.  These modules are not maintained by Ansible, and are included as a convenience.
+:ref:`Community Maintained<community_supported>` modules are submitted and maintained by the Ansible community.  These modules are not maintained by Ansible, and are included as a convenience. See `Certified <https://access.redhat.com/articles/3642632>`_ for some community modules that are maintained by Ansible Partners.
 
 Issue Reporting
 ===============
