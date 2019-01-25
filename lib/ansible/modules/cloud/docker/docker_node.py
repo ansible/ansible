@@ -28,7 +28,11 @@ options:
         required: true
         type: str
     labels:
-        description: User-defined key/value metadata. If not provided then labels assigned to node remains unchanged.
+        description:
+            - User-defined key/value metadata that will be assigned as node attribute. The actual state of labels
+              assigned to the node when module completes its work depends on I(labels_state) and I(labels_to_remove)
+              parameters values. See description below.
+        required: false
         type: dict
     labels_state:
         description:
@@ -47,9 +51,13 @@ options:
         type: str
     labels_to_remove:
         description:
-            - List of labels that will be removed from the node configuration. If label specified on the list is
-              not assigned to the node then no action will be performed. The remaining labels assigned to the
-              node remains unchanged. The list have to contain only label names, not their values.
+            - List of labels that will be removed from the node configuration. The list has to contain only label
+              names, not their values.
+            - If the label provided on the list is not assigned to the node, the entry is ignored.
+            - If the label is both on the I(labels_to_remove) and I(labels), then value provided in I(labels) remains
+              assigned to the node.
+            - If I(labels_state) is C(replace) and I(labels) is not provided or empty then all labels assigned to
+              node are removed and I(labels_to_remove) is ignored.
         required: false
         type: list
     availability:
@@ -269,7 +277,7 @@ def main():
 
     required_if = [
         ('labels_state', 'merge', ['hostname']),
-        ('labels_state', 'replace', ['hostname', 'labels']),
+        ('labels_state', 'replace', ['hostname']),
     ]
 
     option_minimal_versions = dict(
