@@ -715,7 +715,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         :return: AKS instance kubeconfig
         '''
-        access_profile = self.containerservice_client.managed_clusters.get_access_profile(self.resource_group, self.name, "clusterUser")
+        access_profile = self.containerservice_client.managed_clusters.get_access_profile(resource_group_name=self.resource_group,
+                                                                                          resource_name=self.name,
+                                                                                          role_name="clusterUser")
         return access_profile.kube_config.decode('utf-8')
 
     def create_agent_pool_profile_instance(self, agentpoolprofile):
