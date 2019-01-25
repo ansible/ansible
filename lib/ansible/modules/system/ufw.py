@@ -213,6 +213,53 @@ from operator import itemgetter
 from ansible.module_utils.basic import AnsibleModule
 
 
+def filter_line_that_not_start_with(pattern, content):
+    return ''.join([line for line in content.splitlines(True) if line.startswith(pattern)])
+
+
+def filter_line_that_contains(pattern, content):
+    return [line for line in content.splitlines(True) if pattern in line]
+
+
+def filter_line_that_not_contains(pattern, content):
+    return ''.join([line for line in content.splitlines(True) if not line.contains(pattern)])
+
+
+def filter_line_that_match_func(match_func, content):
+    return ''.join([line for line in content.splitlines(True) if match_func(line)])
+
+
+# validation pattern provided by :
+# https://stackoverflow.com/questions/53497/regular-expression-that-matches-
+# valid-ipv6-addresses#answer-17871737
+def filter_line_that_contains_ipv4(content):
+    return filter_line_that_match_func(containsIpv4, content)
+
+
+def filter_line_that_contains_ipv6(content):
+    return filter_line_that_match_func(containsIpv6, content)
+
+
+def containsIpv4(ip):
+    regexp = r"((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}"
+    regexp += r"(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
+    return re.search(regexp, ip)
+
+
+def containsIpv6(ip):
+    r = r"(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:"
+    r += r"|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}"
+    r += r"(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4})"
+    r += r"{1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]"
+    r += r"{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]"
+    r += r"{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4})"
+    r += r"{0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]"
+    r += r"|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}"
+    r += r"[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}"
+    r += r"[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))"
+    return re.search(r, ip)
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -246,7 +293,7 @@ def main():
         cmd = ' '.join(map(itemgetter(-1), filter(itemgetter(0), cmd)))
 
         cmds.append(cmd)
-        (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "en_US"})
+        (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "C"})
 
         if rc != 0 and not ignore_error:
             module.fail_json(msg=err or out, commands=cmds)
@@ -289,9 +336,6 @@ def main():
 
         return major, minor, rev
 
-    def filter_line_that_not_start_with(pattern, content):
-        return ''.join([line for line in content.splitlines(True) if line.startswith(pattern)])
-
     params = module.params
 
     # Ensure at least one of the command arguments are given
@@ -314,7 +358,7 @@ def main():
 
     changed = False
 
-    # Execute commands
+    # Execute filter
     for (command, value) in commands.items():
 
         cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
@@ -394,14 +438,35 @@ def main():
             rules_dry = execute(cmd)
 
             if module.check_mode:
-                if module.boolean(params['delete']):
-                    # delete rules with --dry-run doesn't display "Rules updated" messages
-                    # we compare ## tupple
+                # if module.boolean(params['delete']):
+                # delete rules with --dry-run doesn't display "Rules updated" messages
+                # we compare only ## tupple
+                # also, ipv4 change
+
+                nb_skipping_line = len(filter_line_that_contains("Skipping", rules_dry))
+
+                if not (nb_skipping_line > 0 and nb_skipping_line == len(rules_dry.splitlines(True))):
                     rules_dry = filter_line_that_not_start_with("### tuple", rules_dry)
-                    if rules_dry != pre_rules:
-                        changed = True
-                elif rules_dry.find("Rules updated") != -1:
-                    changed = True
+
+                    keys = ['from_ip', 'to_ip']
+                    for key in keys:
+                        if key not in params:
+                            key.remove(key)
+
+                    if len(keys) > 0:
+                        # ufw dry-run doesn't send all rules so have to compare ipv4 or ipv6 rules
+                        if containsIpv4(params['from_ip']) or containsIpv4(params['to_ip']):
+                            if filter_line_that_contains_ipv4(pre_rules) != rules_dry:
+                                changed = True
+                        else:  # ipv6
+                            if filter_line_that_contains_ipv6(pre_rules) != rules_dry:
+                                changed = True
+                    else:
+                        if pre_rules != rules_dry:
+                            changed = True
+
+                # elif rules_dry.find("Rules updated") != -1:
+                #    changed = True
 
     # Get the new state
     if module.check_mode:
