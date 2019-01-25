@@ -251,8 +251,7 @@ def main():
             l2UnknownUnicast=layer2_unknown_unicast,
             l2Stretch=layer2_stretch,
             l3MCast=layer3_multicast,
-            # FIXME
-            subnets=[],
+            subnets=subnets,
             vrfRef=vrf_ref,
         )
 
