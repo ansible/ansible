@@ -290,6 +290,46 @@
   assert:
     that: not results.changed
 
+- name: Query extension
+  azure_rm_virtualmachinescalesetextension_facts:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['vmss_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+- name: List extensions
+  azure_rm_virtualmachinescalesetextension_facts:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['vmss_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+
 - name: Delete VMSS Extension
   azure_rm_virtualmachinescalesetextension:
     resource_group: "{{ resource_group }}"
