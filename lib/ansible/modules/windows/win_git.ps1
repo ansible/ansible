@@ -314,12 +314,14 @@ function clone {
     # Check if branch is the correct one
     if ($version -ne "HEAD") {
         Set-Location $dest; &git status --short --branch $version | Tee-Object -Variable branch_status | Out-Null
-        $branch_status = $branch_status.split("/")[1]
-        Set-Attr $result "branch_status" "$branch_status"
+        if ($branch_status) {
+            $branch_status = $branch_status.split("/")[1]
+            Set-Attr $result "branch_status" "$branch_status"
 
-            if ( $branch_status -ne "$version" ) {
-                Fail-Json $result "Branch $branch_status is not $branch"
-            }
+                if ( $branch_status -ne "$version" ) {
+                    Fail-Json $result "Branch $branch_status is not $branch"
+                }
+        }        
     }     
 
     return $Return
