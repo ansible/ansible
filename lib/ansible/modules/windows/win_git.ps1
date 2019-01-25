@@ -400,7 +400,9 @@ try {
         CheckSshIdentity
     }
     if ($clone) {
+      if (-Not $update) {
         clone
+      }        
     }
     if ($update) {
         update
