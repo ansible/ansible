@@ -78,7 +78,10 @@ function PrepareDestination {
     if ( -Not $check_mode) {
        if (Test-Path $dest) { 
             try {
-                Remove-Item $dest -Force -Recurse | Out-Null                            
+                Remove-Item $dest -Force -Recurse | Out-Null
+                New-Item -ItemType directory -Path $dest
+                Get-ChildItem -Path $dest -Recurse | Remove-Item -Force | Out-Null
+                                            
                 Set-Attr $result "status" "Successfully replaced $dest"
                 Set-Attr $result "changed" $true            
             } catch {
@@ -378,7 +381,7 @@ if ($dest -eq $null){
 } 
 
 if (-Not (Test-Path($dest))) {
-    New-Item -ItemType directory -Path $dest      
+    New-Item -ItemType directory -Path $dest          
  }
 
 
