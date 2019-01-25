@@ -251,7 +251,7 @@ data:
 
 '''
 
-import os
+import os, datetime
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
@@ -265,7 +265,8 @@ def get_admins(meraki, org_id):
             function='admin',
             org_id=org_id
         ),
-        method='GET'
+        method='GET',
+        description='get_admins'
     )
     if meraki.status == 200:
         return admins
@@ -371,6 +372,7 @@ def create_admin(meraki, org_id, name, email):
 def main():
     # define the available arguments/parameters that a user can pass to
     # the module
+    start = datetime.datetime.utcnow()
     argument_spec = meraki_argument_spec()
     argument_spec.update(state=dict(type='str', choices=['present', 'query', 'absent'], required=True),
                          name=dict(type='str'),
@@ -433,6 +435,8 @@ def main():
     if module.check_mode:
         return result
 
+    meraki.metrics['instantiate'] = str(datetime.datetime.utcnow() - start)
+
     # execute checks for argument completeness
     if meraki.params['state'] == 'query':
         meraki.mututally_exclusive = ['name', 'email']
@@ -481,6 +485,7 @@ def main():
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
+    meraki.metrics['complete'] = str(datetime.datetime.utcnow() - start)
     meraki.exit_json(**meraki.result)
 
 

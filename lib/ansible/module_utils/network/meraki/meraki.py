@@ -29,7 +29,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import os
+import os, datetime
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native, to_bytes, to_text
@@ -78,8 +78,7 @@ class MerakiModule(object):
         self.status = None
         self.url = None
 
-        if self.params['output_level'] == 'performance':
-            self.metrics = dict()
+        self.metrics = dict()
 
         # If URLs need to be modified or added for specific purposes, use .update() on the url_catalog dictionary
         self.get_urls = {'organizations': '/organizations',
@@ -278,7 +277,7 @@ class MerakiModule(object):
         if method is not None:
             self.method = method
         self.url = '{protocol}://{host}/api/v0/{path}'.format(path=self.path.lstrip('/'), **self.params)
-        start = datetime.datetime.utc()
+        start = datetime.datetime.utcnow()
         resp, info = fetch_url(self.module, self.url,
                                headers=self.headers,
                                data=payload,
@@ -287,9 +286,10 @@ class MerakiModule(object):
                                use_proxy=self.params['use_proxy'],
                                )
         if description:
-            self.metrics['request'][description] = datetime.datetime.utc() - start
+            self.metrics['request'] = dict()
+            self.metrics['request'][description] = str(datetime.datetime.utcnow() - start)
         else:
-            self.metrics['request'] = datetime.datetime.utc() - start
+            self.metrics['request'] = str(datetime.datetime.utcnow() - start)
         self.response = info['msg']
         self.status = info['status']
 
@@ -311,6 +311,8 @@ class MerakiModule(object):
         if self.params['output_level'] == 'debug':
             self.result['method'] = self.method
             self.result['url'] = self.url
+        if self.params['output_level'] == 'performance':
+            self.result['performance'] = self.metrics
 
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
