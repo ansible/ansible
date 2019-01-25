@@ -137,11 +137,11 @@
       
 - name: clean the destination before cloning
   block:
-    - name: clean the existing repo path
+    - name: clean the existing repo path before clone
       win_git:
         repo: 'https://github.com/{{ github_repo_name }}'
         dest: "{{ temp_path }}\\repo_http"
-        version: '{{ github_repo_tag }}'
+        version: '{{ github_repo_branch }}'
         replace_dest: yes
       register: http_clean
 

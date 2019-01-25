@@ -383,7 +383,8 @@ if ($dest -eq $null){
 } 
 
 if (-Not (Test-Path($dest))) {
-    New-Item -ItemType directory -Path $dest          
+    New-Item -ItemType directory -Path $dest     
+    Get-ChildItem -Path $dest -Recurse | Remove-Item -Force | Out-Null     
  }
 
 
