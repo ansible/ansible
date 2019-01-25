@@ -65,7 +65,7 @@ function FindGit {
     if ($p -ne $null){
         $path=((Get-Command git.exe).Path | Split-Path)
         $env:Path += ";" + $path
-        Set-Attr $result "result" "Git found in $path."
+        Set-Attr $result "status" "Git found in $path"
         return $p
     }
     Fail-Json -obj $result -message "git.exe is not installed. It must be installed (use chocolatey)"
@@ -81,7 +81,7 @@ function PrepareDestination {
             if (-Not (Test-Path($dest))) {
                New-Item -ItemType directory -Path $dest      
             }
-            Set-Attr $result "status" "Successfully replaced dir $dest."
+            Set-Attr $result "status" "Successfully replaced dir $dest"
             Set-Attr $result "changed" $true            
         } catch {
             $ErrorMessage = $_.Exception.Message
@@ -121,7 +121,7 @@ function CheckSshKnownHosts {
         if ([string]::IsNullOrEmpty($key_search)) {
             try {  
                 [System.IO.File]::AppendAllText($sshKnownHostsPath, $sshHostKey, $(New-Object System.Text.UTF8Encoding $False))
-                Set-Attr $result "status" "Successfully updated $sshKnownHostsPath."
+                Set-Attr $result "status" "Successfully updated $sshKnownHostsPath"
             }
             catch {
                $ErrorMessage = $_.Exception.Message
@@ -150,7 +150,7 @@ function CheckSshKnownHosts {
             try {
               [System.IO.File]::AppendAllText($sshConfigPath, "Host $gitServer`n", $(New-Object System.Text.UTF8Encoding $False))
               [System.IO.File]::AppendAllText($sshConfigPath, "IdentityFile $key_file", $(New-Object System.Text.UTF8Encoding $False))       
-              Set-Attr $result "status" "Successfully updated $sshConfigPath."
+              Set-Attr $result "status" "Successfully updated $sshConfigPath"
             }
             catch {
                 $ErrorMessage = $_.Exception.Message
@@ -270,7 +270,7 @@ function clone {
        $git_opts += $depth
     } 
 
-    Set-Attr $result "git_opts" [string]$git_opts
+    Set-Attr $result "git_opts" $git_opts
 
     #Only clone if $dest does not exist and not in check mode    
     if( -Not $check_mode) {    
@@ -284,11 +284,11 @@ function clone {
             
             if ($LASTEXITCODE -eq 0) {
                $result.changed = $true           
-               Set-Attr $result "status" "Successfully cloned $repo into $dest."    
+               Set-Attr $result "status" "Successfully cloned $repo into $dest"    
             }
             else {
                $result.changed = $false
-               Set-Attr $result "status" "Failed to clone $repo into $dest."                   
+               Set-Attr $result "status" "Failed to clone $repo into $dest"                   
             }
      
         }    
@@ -338,7 +338,7 @@ function update {
        $git_opts += $version
     } 
 
-    Set-Attr $result "git_opts" [string]$git_opts
+    Set-Attr $result "git_opts" $git_opts
     #Only update if $dest does exist and not in check mode
     if(-Not $check_mode) {
         # move into correct branch before pull
@@ -349,7 +349,7 @@ function update {
         $Return.git_output = $git_output
         if ($LASTEXITCODE -eq 0) {
             Set-Attr $result "changed" $true
-            Set-Attr $result "status" "Successfully updated $repo to $version."
+            Set-Attr $result "status" "Successfully updated $repo to $version"
         }  
         #TODO: handle correct status change when using update        
         Set-Attr $result "return_code" $LASTEXITCODE
@@ -408,7 +408,7 @@ try {
 }
 catch {
     $ErrorMessage = $_.Exception.Message        
-    Fail-Json $result "Error cloning $repo Msg: $ErrorMessage"
+    Fail-Json $result "$ErrorMessage"
 }
 
 Exit-Json $result
