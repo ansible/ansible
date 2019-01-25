@@ -49,4 +49,3 @@
   - assert:
       that:
         - delete_tag.changed == True
-        - delete_tag_idempotent.changed == False
