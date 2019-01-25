@@ -88,8 +88,8 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: query_result
 
-- name: Query all BDs
-  mso_schema_template_bd:
+- name: Query all VRFs
+  mso_schema_template_vrf:
     host: mso_host
     username: admin
     password: SomeSecretPassword
