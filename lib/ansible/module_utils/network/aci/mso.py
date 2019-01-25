@@ -281,7 +281,7 @@ class MSOModule(object):
         if not s:
             self.module.fail_json(msg="Schema '%s' is not a valid schema name." % schema)
         if 'id' not in s:
-            self.module.fail_json(msg="Schema lookup failed for '%s': %s" % (schema, s))
+            self.module.fail_json(msg="Schema lookup failed for schema '%s': %s" % (schema, s))
         return s['id']
 
     def lookup_domain(self, domain):
@@ -293,7 +293,7 @@ class MSOModule(object):
         if not d:
             self.module.fail_json(msg="Domain '%s' is not a valid domain name." % domain)
         if 'id' not in d:
-            self.module.fail_json(msg="Domain lookup failed for '%s': %s" % (domain, d))
+            self.module.fail_json(msg="Domain lookup failed for domain '%s': %s" % (domain, d))
         return d['id']
 
     def lookup_roles(self, roles):
@@ -305,11 +305,23 @@ class MSOModule(object):
         for role in roles:
             r = self.get_obj('roles', name=role)
             if not r:
-                self.module.fail_json(msg="Role '%s' is not a valid role." % role)
+                self.module.fail_json(msg="Role '%s' is not a valid role name." % role)
             if 'id' not in r:
-                self.module.fail_json(msg="Role lookup failed for '%s': %s" % (role, r))
+                self.module.fail_json(msg="Role lookup failed for role '%s': %s" % (role, r))
             ids.append(dict(roleId=r['id']))
         return ids
+
+    def lookup_site(self, site):
+        ''' Look up a site and return its id '''
+        if site is None:
+            return site
+
+        s = self.get_obj('sites', name=site)
+        if not s:
+            self.module.fail_json(msg="Site '%s' is not a valid site name." % site)
+        if 'id' not in s:
+            self.module.fail_json(msg="Site lookup failed for site '%s': %s" % (site, s))
+        return s['id']
 
     def lookup_sites(self, sites):
         ''' Look up sites and return their ids '''
@@ -320,9 +332,9 @@ class MSOModule(object):
         for site in sites:
             s = self.get_obj('sites', name=site)
             if not s:
-                self.module.fail_json(msg="Site '%s' is not valid." % site)
+                self.module.fail_json(msg="Site '%s' is not a valid site name." % site)
             if 'id' not in s:
-                self.module.fail_json(msg="Site lookup failed for '%s': %s" % (site, s))
+                self.module.fail_json(msg="Site lookup failed for site '%s': %s" % (site, s))
             ids.append(dict(siteId=s['id'], securityDomains=[]))
         return ids
 
@@ -333,9 +345,9 @@ class MSOModule(object):
 
         t = self.get_obj('tenants', key='tenants', name=tenant)
         if not t:
-            self.module.fail_json(msg="Tenant '%s' is not valid." % tenant)
+            self.module.fail_json(msg="Tenant '%s' is not valid tenant name." % tenant)
         if 'id' not in t:
-                self.module.fail_json(msg="Tenant lookup failed for '%s': %s" % (tenant, t))
+                self.module.fail_json(msg="Tenant lookup failed for tenant '%s': %s" % (tenant, t))
         return t['id']
 
     def lookup_users(self, users):
@@ -347,9 +359,9 @@ class MSOModule(object):
         for user in users:
             u = self.get_obj('users', username=user)
             if not u:
-                self.module.fail_json(msg="User '%s' is not valid." % user)
+                self.module.fail_json(msg="User '%s' is not a valid user name." % user)
             if 'id' not in u:
-                self.module.fail_json(msg="User lookup failed for '%s': %s" % (user, u))
+                self.module.fail_json(msg="User lookup failed for user '%s': %s" % (user, u))
             ids.append(dict(userId=u['id']))
         return ids
 
@@ -368,7 +380,7 @@ class MSOModule(object):
             if not l:
                 l = self.create_label(label, label_type)
             if 'id' not in l:
-                self.module.fail_json(msg="Label lookup failed for '%s': %s" % (label, l))
+                self.module.fail_json(msg="Label lookup failed for label '%s': %s" % (label, l))
             ids.append(l['id'])
         return ids
 
