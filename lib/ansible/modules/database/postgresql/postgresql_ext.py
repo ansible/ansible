@@ -107,10 +107,9 @@ def ext_delete(cursor, ext):
 
 def ext_create(cursor, ext, schema):
     if not ext_exists(cursor, ext):
-        query_fragments = ['CREATE EXTENSION "%s"' % ext]
+        query = 'CREATE EXTENSION "%s"' % ext
         if schema:
-            query_fragments.append(' WITH SCHEMA "%s"' % schema)
-        query = ''.join(query_fragments)
+            query += ' WITH SCHEMA "%s"' % schema
         cursor.execute(query)
         return True
     else:
