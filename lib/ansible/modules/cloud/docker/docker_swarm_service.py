@@ -1138,7 +1138,11 @@ class DockerServiceManager():
         self.client.remove_service(name)
 
     def get_image_digest(self, name):
-        if not name or self.client.docker_py_version < LooseVersion('1.30'):
+        if (
+            not name
+            or self.client.docker_py_version < LooseVersion('3.2')
+            or self.client.docker_api_version < LooseVersion('1.30')
+        ):
             return name
         repo, tag = parse_repository_tag(name)
         if not tag:
