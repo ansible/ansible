@@ -114,7 +114,9 @@ instances = {
 
 @pytest.fixture(scope="module")
 def inventory():
-    return inventory_loader.get('aws_ec2')
+    i = inventory_loader.get('aws_ec2')
+    i.set_options(direct={'plugin': 'aws_ec2'})
+    return i
 
 
 def test_compile_values(inventory):
