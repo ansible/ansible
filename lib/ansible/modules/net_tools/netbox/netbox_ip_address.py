@@ -47,6 +47,20 @@ options:
       address:
         description:
           - Required if state is C(present)
+      prefix:
+        description:
+          - |
+            With state C(present), if an interface is given, it will ensure
+            that an IP inside this prefix (and vrf, if given) is attached
+            to this interface. Otherwise, it will get the next available IP
+            of this prefix and attach it.
+
+            With state C(new), it will force to get the next available IP in
+            this prefix. If an interface is given, it will also force to attach
+            it.
+
+            Required if state is C(present) or C(new) when no address is given.
+            Unused if an address is specified.
       vrf:
         description:
           - VRF that IP address is associated with
@@ -75,7 +89,10 @@ options:
           - CARP
       interface:
         description:
-          - The name and device of the interface that the IP address should be assigned to
+          - |
+            The name and device of the interface that the IP address should be assigned to
+
+            Required if state is C(present) and a prefix specified.
       description:
         description:
           - The description of the interface
@@ -91,7 +108,12 @@ options:
     required: true
   state:
     description:
-      - Use C(present) or C(absent) for adding or removing.
+      - |
+        Use C(present), C(new) or C(absent) for adding, force adding or removing.
+
+        C(present) will check if the IP is already created, and return it if
+        true. C(new) will force to create it anyway (useful for anycasts, for
+        example).
     choices: [ absent, new, present ]
     default: present
   validate_certs:
@@ -115,6 +137,22 @@ EXAMPLES = r'''
         data:
           address: 192.168.1.10
         state: present
+
+    - name: Force to create (even if it already exists) the IP
+      netbox_ip_address:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          address: 192.168.1.10
+        state: new
+
+    - name: Get a new available IP inside 192.168.1.0/24
+      netbox_ip_address:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          prefix: 192.168.1.0/24
+        state: new
 
     - name: Delete IP address within netbox
       netbox_ip_address:
@@ -154,6 +192,30 @@ EXAMPLES = r'''
           interface:
             name: GigabitEthernet1
             device: test100
+
+    - name: Ensure that an IP inside 192.168.1.0/24 is attached to GigabitEthernet1
+      netbox_ip_address:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          prefix: 192.168.1.0/24
+          vrf: Test
+          interface:
+            name: GigabitEthernet1
+            device: test100
+        state: present
+
+    - name: Attach a new available IP of 192.168.1.0/24 to GigabitEthernet1
+      netbox_ip_address:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          prefix: 192.168.1.0/24
+          vrf: Test
+          interface:
+            name: GigabitEthernet1
+            device: test100
+        state: new
 '''
 
 RETURN = r'''
