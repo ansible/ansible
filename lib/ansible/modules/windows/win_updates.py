@@ -62,14 +62,14 @@ options:
         description:
         - If set, C(serverselection) will define the update service that the
           Windows Update Agent will operate against.
-        - C(serverselection=0) ssDefault: Indicates that the search call should
+        - C(serverselection=0) [ssDefault] Indicates that the search call should
           search the default server.
-        - C(serverselection=1) ssManagedServer: Indicates the managed server, in
+        - C(serverselection=1) [ssManagedServer] Indicates the managed server, in
           an environment that uses Windows Server Update Services or a similar
           corporate update server to manage the computer.
-        - C(serverselection=2) ssWindowsUpdate: Indicates the Windows Update
+        - C(serverselection=2) [ssWindowsUpdate] Indicates the Windows Update
           service.
-        - C(serverselection=3) ssOthers: Indicates some update service other
+        - C(serverselection=3) [ssOthers] Indicates some update service other
           than those listed previously. If the ServerSelection property of a
           Windows Update Agent API object is set to ssOthers, then the ServiceID
           property of the object contains the ID of the service.
