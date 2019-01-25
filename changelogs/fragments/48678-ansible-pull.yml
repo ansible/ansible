@@ -1,0 +1,11 @@
+---
+
+deprecated_features:
+  - ansible-pull - --full CLI argument is deprecated in favor of using depth or export in --module-args (https://github.com/ansible/ansible/issues/48678)
+  - ansible-pull - -C and --checkout CLI arguments are deprecated, use --module-args 'version=<checkout>' or --module-args 'revision=<checkout>' (https://github.com/ansible/ansible/issues/48678)
+  - ansible-pull - --accept-host-key CLI argument is deprecated, use --module-args 'accept_hostkey=yes' (https://github.com/ansible/ansible/issues/48678)
+  - ansible-pull - --verify-commit CLI argument is deprecated, use --module-args 'verify_commit=yes' (https://github.com/ansible/ansible/issues/48678)
+  - ansible-pull - --track-subs CLI argument is deprecated, use --module-args 'track_submodules=yes' (https://github.com/ansible/ansible/issues/48678)
+
+minor_changes:
+  - ansible-pull - Adds -a and --module-args arguments for creating a generic method to pass arguments to the underlying SCM module (https://github.com/ansible/ansible/issues/48678)
