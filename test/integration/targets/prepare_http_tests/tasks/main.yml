@@ -37,7 +37,7 @@
     - name: Get client cert/key
       get_url:
         url: "http://ansible.http.tests/{{ item }}"
-        dest: "{{ output_dir }}/{{ item }}"
+        dest: "{{ remote_tmp_dir }}/{{ item }}"
       when: ansible_os_family != 'Windows'
       with_items:
         - client.pem
