@@ -27,12 +27,12 @@ $key_file = Get-AnsibleParam -obj $params -name "key_file" -type "str"
 $result = @{      
     changed = $false    
     dest = $null        
-    status =  $null      
-    git_output = $null
-    return_code = $null
     method = $null
-    branch_status = "master"
+    branch_status = "master"    
+    return_code = $null    
     git_opts = $null
+    git_output = $null
+    status =  $null     
 }
 
 # Add Git to PATH variable
@@ -85,7 +85,7 @@ function PrepareDestination {
             Set-Attr $result "changed" $true            
         } catch {
             $ErrorMessage = $_.Exception.Message
-            Fail-Json $result "Error removing $dest! Msg: $ErrorMessage"
+            Fail-Json $result "Error removing $dest - $ErrorMessage"
         }
     }
 }
@@ -125,7 +125,7 @@ function CheckSshKnownHosts {
             }
             catch {
                $ErrorMessage = $_.Exception.Message
-               Fail-Json $result "Error updating $sshKnownHostsPath Msg: $ErrorMessage"               
+               Fail-Json $result "Error updating $sshKnownHostsPath - $ErrorMessage"               
             }               
         }  
         else {
@@ -349,7 +349,7 @@ function update {
         $Return.git_output = $git_output
         if ($LASTEXITCODE -eq 0) {
             Set-Attr $result "changed" $true
-            Set-Attr $result "status" "Successfully updated $repo to $version"
+            Set-Attr $result "status" "Successfully updated $repo to $version."
         }  
         #TODO: handle correct status change when using update        
         Set-Attr $result "return_code" $LASTEXITCODE
@@ -408,7 +408,7 @@ try {
 }
 catch {
     $ErrorMessage = $_.Exception.Message        
-    Fail-Json $result "$ErrorMessage"
+    Fail-Json $result "Error - $ErrorMessage"
 }
 
 Exit-Json $result

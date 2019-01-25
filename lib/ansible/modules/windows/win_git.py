@@ -118,24 +118,34 @@ dest:
   returned: always
   type: str
   sample: /tmp/hellogitworld
-status:
-  description: success or error message
-  returned: always
-  type: str
-  sample: Successfuly updated
-git_output:
-  description: raw git output
-  returned: always
-  type: str
-  sample: error occured while cloning
 method:
   description: git method used
   returned: always
   type: str
   sample: pull
+branch_status:
+  description: branch name
+  returned: always
+  type: str
+  sample: master  
 return_code:
   description: return code of running git command
   returned: always
   type: int
   sample: 0
+git_opts:
+  description: git command options
+  returned: always
+  type: list
+  sample: [ "--no-pager", "clone" ]
+git_output:
+  description: raw git output
+  returned: always
+  type: str
+  sample: error occured while cloning
+status:
+  description: success or error message
+  returned: always
+  type: str
+  sample: Successfuly updated
 '''
