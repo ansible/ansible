@@ -29,9 +29,7 @@ boto3 = pytest.importorskip('boto3')
 botocore = pytest.importorskip('botocore')
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list
-from ansible.plugins.loader import inventory_loader
-from ansible.plugins.inventory.aws_ec2 import instance_data_filter_to_boto_attr
+from ansible.plugins.inventory.aws_ec2 import InventoryModule, instance_data_filter_to_boto_attr
 
 instances = {
     u'Instances': [
@@ -114,9 +112,7 @@ instances = {
 
 @pytest.fixture(scope="module")
 def inventory():
-    i = inventory_loader.get('aws_ec2')
-    i.set_options(direct={'plugin': 'aws_ec2'})
-    return i
+    return InventoryModule()
 
 
 def test_compile_values(inventory):
@@ -177,32 +173,6 @@ def test_insufficient_credentials(inventory):
     with pytest.raises(AnsibleError) as error_message:
         inventory._set_credentials()
         assert "Insufficient boto credentials found" in error_message
-
-
-def test_empty_config_query_options(inventory):
-    inventory.set_options(direct={})
-    regions = inventory.get_option('regions')
-    filters = inventory.get_option('filters')
-    hostnames = inventory.get_option('hostnames')
-    strict_permissions = inventory.get_option('strict_permissions')
-    assert filters == {}
-    assert regions == hostnames == ansible_dict_to_boto3_filter_list(filters) == []
-    assert strict_permissions is True
-
-
-def test_conig_query_options(inventory):
-    inventory.set_options(direct={'regions': ['us-east-1', 'us-east-2'],
-                                  'filters': {'tag:Environment': ['dev', 'prod']},
-                                  'hostnames': 'ip-address',
-                                  'strict_permissions': False})
-    regions = inventory.get_option('regions')
-    filters = ansible_dict_to_boto3_filter_list(inventory.get_option('filters'))
-    hostnames = inventory.get_option('hostnames')
-    strict_permissions = inventory.get_option('strict_permissions')
-    assert regions == ['us-east-1', 'us-east-2']
-    assert filters == [{'Name': 'tag:Environment', 'Values': ['dev', 'prod']}]
-    assert hostnames == ['ip-address']
-    assert strict_permissions is False
 
 
 def test_verify_file_bad_config(inventory):
