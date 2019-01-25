@@ -224,6 +224,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 return result
             else:
                 # Delete the object
+                result['changed'] = True
                 if not self.check_mode:
                     try:
                         k8s_obj = resource.delete(**params)
@@ -231,12 +232,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                     except DynamicApiError as exc:
                         self.fail_json(msg="Failed to delete object: {0}".format(exc.body),
                                        error=exc.status, status=exc.status, reason=exc.reason)
-                result['changed'] = True
-                if wait:
-                    success, resource, duration = self.wait(resource, definition, wait_timeout, 'absent')
-                    result['duration'] = duration
-                    if not success:
-                        self.fail_json(msg="Resource deletion timed out", **result)
+                    if wait:
+                        success, resource, duration = self.wait(resource, definition, wait_timeout, 'absent')
+                        result['duration'] = duration
+                        if not success:
+                            self.fail_json(msg="Resource deletion timed out", **result)
                 return result
         else:
             if not existing:
@@ -259,7 +259,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         self.fail_json(msg=msg, error=exc.status, status=exc.status, reason=exc.reason)
                 success = True
                 result['result'] = k8s_obj
-                if wait:
+                if wait and not self.check_mode:
                     success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout)
                 result['changed'] = True
                 result['method'] = 'create'
