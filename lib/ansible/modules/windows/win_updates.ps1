@@ -16,6 +16,7 @@ $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched"
 $blacklist = Get-AnsibleParam -obj $params -name "blacklist" -type "list"
 $whitelist = Get-AnsibleParam -obj $params -name "whitelist" -type "list"
+$serverselection = Get-AnsibleParam -obj $params -name "serverselection" -type "int"
 
 # For backwards compatibility
 Function Get-CategoryMapping ($category_name) {
@@ -59,7 +60,8 @@ $update_script_block = {
             $log_path,
             $state,
             $blacklist,
-            $whitelist
+            $whitelist,
+            $serverselection
         )
 
         $result = @{
@@ -85,6 +87,17 @@ $update_script_block = {
             $result.msg = "Failed to create Windows Update search from session: $($_.Exception.Message)"
             return $result
         }
+
+        if ($serverselection -in 0..3) {
+            Write-DebugLog -msg "Setting Windows Update searcher to use alternate update source (serverselection: $serverselection)..."
+            try {
+                $searcher.ServerSelection = $serverselection
+            } catch {
+                $result.failed = $true
+                $result.msg = "Failed to update Windows Update search source: $($_.Exception.Message)"
+                return $result
+            }
+       }
 
         Write-DebugLog -msg "Searching for updates to install"
         try {
@@ -219,7 +232,7 @@ $update_script_block = {
                 $result.msg = "A reboot is required before more updates can be installed"
                 return $result
             }
-            Write-DebugLog -msg "No reboot is pending..."    
+            Write-DebugLog -msg "No reboot is pending..."
         } else {
             # no updates to install exit here
             return $result
@@ -402,6 +415,7 @@ Function Start-Natively($common_functions, $script) {
             blacklist = $blacklist
             whitelist = $whitelist
             check_mode = $check_mode
+            serverselection = $serverselection
         }) > $null
 
         $output = $ps_pipeline.Invoke()
@@ -441,8 +455,8 @@ Function Remove-ScheduledJob($name) {
             $task_to_stop.Stop()
         }
 
-        <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job 
-        and/or polling will block forever, since the killed job object in the parent 
+        <# FUTURE: add a global waithandle for this to release any other waiters. Wait-Job
+        and/or polling will block forever, since the killed job object in the parent
         session doesn't know it's been killed :( #>
         Unregister-ScheduledJob -Name $name
     }
@@ -463,6 +477,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
                 blacklist = $blacklist
                 whitelist = $whitelist
                 check_mode = $check_mode
+                serverselection = $serverselection
             }
         )
         ErrorAction = "Stop"
@@ -521,7 +536,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
         $ret.Output = $job.Output.job_output # sub-object returned, can only be accessed as a property for some reason
     }
 
-    try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling... 
+    try { # this shouldn't be fatal, but can fail with both Powershell errors and COM Exceptions, hence the dual error-handling...
         Unregister-ScheduledJob -Name $job_name -Force -ErrorAction Continue
     } catch {
         Write-DebugLog "Error unregistering job after execution: $($_.Exception.ToString()) $($_.ScriptStackTrace)"
@@ -560,4 +575,3 @@ if ($wua_available) {
 }
 
 Exit-Json -obj $result
-
