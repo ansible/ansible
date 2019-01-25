@@ -77,7 +77,7 @@ def ensure_type(value, value_type, origin=None):
     '''
 
     basedir = None
-    if origin and os.path.isabs(origin) and os.path.exists(origin):
+    if origin and os.path.isabs(origin) and os.path.exists(to_bytes(origin)):
         basedir = origin
 
     if value_type:
