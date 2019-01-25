@@ -57,6 +57,7 @@ options:
             - Whether to show the SAS policies.
             - Not support when C(type) is C(subscription).
             - Note if enable this option, the facts module will raise two more HTTP call for each resources, need more network overhead.
+        type: bool
 extends_documentation_fragment:
     - azure
 
@@ -92,146 +93,186 @@ EXAMPLES = '''
     topic: sbtopic
 '''
 RETURN = '''
-
-id:
-    description:
-      -  Resource Id
-name:
-    description:
-      -  Resource name
-location:
-    description:
-      -  The Geo-location where the resource lives.
-namespace:
-    description:
-      - Namespace name of the queue or topic, subscription.
-topic:
-    description:
-      - Topic name of a subscription.
-tags:
-    description:
-      -  Resource tags.
-sku:
-    description:
-      -  Porperties of Sku.
-provisioning_state:
-    description:
-      -  Provisioning state of the namespace.
-service_bus_endpoint:
-    description:
-      -  Endpoint you can use to perform Service Bus operations.
-metric_id:
-    description:
-      -  Identifier for Azure Insights metrics
-type:
-    description:
-      - Resource type
-      - Namespace is a scoping container for all messaging components.
-      - Queue enables you to store messages until the receiving application is available to receive and process them.
-      - Topic and subscriptions enable 1:n relationships between publishers and subscribers.
-    sample: "Microsoft.ServiceBus/Namespaces/Topics"
-size_in_bytes:
-    description:
-      - Size of the topic, in bytes.
-created_at:
-    description:
-      - Exact time the message was created.
-    sample: "2019-01-25 02:46:55.543953+00:00"
-updated_at:
-    description:
-      - The exact time the message was updated.
-    sample: "2019-01-25 02:46:55.543953+00:00"
-accessed_at:
-    description:
-      - Last time the message was sent, or a request was received, for this topic.
-    sample: "2019-01-25 02:46:55.543953+00:00"
-subscription_count:
-    description:
-      - Number of subscriptions.
-count_details:
-    description:
-        - Message count deatils.
+servicebuses:
+    description: List of servicebus dicts.
+    returned: always
+    type: list
     contains:
-        active_message_count:
+        id:
             description:
-               - Number of active messages in the queue, topic, or subscription.
-        dead_letter_message_count:
+                -  Resource Id
+            type: str
+        name:
             description:
-               - Number of messages that are dead lettered.
-        scheduled_message_count:
+                -  Resource name
+            type: str
+        location:
             description:
-               - Number of scheduled messages.
-        transfer_message_count:
+                -  The Geo-location where the resource lives.
+            type: str
+        namespace:
             description:
-               - Number of messages transferred to another queue, topic, or subscription.
-        transfer_dead_letter_message_count:
+                - Namespace name of the queue or topic, subscription.
+            type: str
+        topic:
             description:
-               - Number of messages transferred into dead letters.
-support_ordering:
-    description:
-      - Value that indicates whether the topic supports ordering.
-status:
-    description:
-      - The status of a messaging entity.
-requires_session:
-    description:
-      - A value that indicates whether the  queue or topic supports the concept of sessions.
-requires_duplicate_detection:
-    description:
-      - A value indicating if this queue or topic requires duplicate detection.
-max_size_in_mb:
-    description:
-      - Maximum size of the queue or topic in megabytes, which is the size of the memory allocated for the topic.
-max_delivery_count:
-    description:
-      - The maximum delivery count.
-      - A message is automatically deadlettered after this number of deliveries.
-lock_duration_in_seconds:
-    description:
-      - ISO 8601 timespan duration of a peek-lock.
-      - The amount of time that the message is locked for other receivers.
-      - The maximum value for LockDuration is 5 minutes.
-forward_to:
-    description:
-      - Queue or topic name to forward the messages
-forward_dead_lettered_messages_to:
-    description:
-      - Queue or topic name to forward the Dead Letter message
-enable_partitioning:
-    description:
-      - Value that indicates whether the queue or topic to be partitioned across multiple message brokers is enabled.
-enable_express:
-    description:
-      - Value that indicates whether Express Entities are enabled.
-      - An express topic holds a message in memory temporarily before writing it to persistent storage.
-enable_batched_operations:
-    description:
-      - Value that indicates whether server-side batched operations are enabled.
-duplicate_detection_time_in_seconds:
-    description:
-      - ISO 8601 timeSpan structure that defines the duration of the duplicate detection history.
-default_message_time_to_live_seconds:
-    description:
-      - ISO 8061 Default message timespan to live value.
-      - This is the duration after which the message expires, starting from when the message is sent to Service Bus.
-      - This is the default value used when TimeToLive is not set on a message itself.
-dead_lettering_on_message_expiration:
-    description:
-      - A value that indicates whether this  queue or topic has dead letter support when a message expires.
-dead_lettering_on_filter_evaluation_exceptions:
-    description:
-      - Value that indicates whether a subscription has dead letter support on filter evaluation exceptions.
-auto_delete_on_idle_in_seconds:
-    description:
-      - ISO 8061 timeSpan idle interval after which the  queue or topic is automatically deleted.
-      - The minimum duration is 5 minutes.
-size_in_bytes:
-    description:
-      - The size of the queue or topic, in bytes.
-message_count:
-    description:
-      - Number of messages.
-
+                - Topic name of a subscription.
+            type: str
+        tags:
+            description:
+                -  Resource tags.
+            type: str
+        sku:
+            description:
+                -  Porperties of Sku.
+            type: str
+        provisioning_state:
+            description:
+                -  Provisioning state of the namespace.
+            type: str
+        service_bus_endpoint:
+            description:
+                -  Endpoint you can use to perform Service Bus operations.
+            type: str
+        metric_id:
+            description:
+                -  Identifier for Azure Insights metrics
+            type: str
+        type:
+            description:
+                - Resource type
+                - Namespace is a scoping container for all messaging components.
+                - Queue enables you to store messages until the receiving application is available to receive and process them.
+                - Topic and subscriptions enable 1:n relationships between publishers and subscribers.
+            sample: "Microsoft.ServiceBus/Namespaces/Topics"
+            type: str
+        created_at:
+            description:
+                - Exact time the message was created.
+            sample: "2019-01-25 02:46:55.543953+00:00"
+            type: str
+        updated_at:
+            description:
+                - The exact time the message was updated.
+            type: str
+            sample: "2019-01-25 02:46:55.543953+00:00"
+        accessed_at:
+            description:
+                - Last time the message was sent, or a request was received, for this topic.
+            type: str
+            sample: "2019-01-25 02:46:55.543953+00:00"
+        subscription_count:
+            description:
+                - Number of subscriptions.
+            type: int
+        count_details:
+            description:
+                - Message count deatils.
+            type: dict
+            contains:
+                active_message_count:
+                    description:
+                        - Number of active messages in the queue, topic, or subscription.
+                    type: int
+                dead_letter_message_count:
+                    description:
+                        - Number of messages that are dead lettered.
+                    type: int
+                scheduled_message_count:
+                    description:
+                        - Number of scheduled messages.
+                    type: int
+                transfer_message_count:
+                    description:
+                        - Number of messages transferred to another queue, topic, or subscription.
+                    type: int
+                transfer_dead_letter_message_count:
+                    description:
+                        - Number of messages transferred into dead letters.
+                    type: int
+        support_ordering:
+            description:
+                - Value that indicates whether the topic supports ordering.
+            type: bool
+        status:
+            description:
+              - The status of a messaging entity.
+            type: str
+        requires_session:
+            description:
+                - A value that indicates whether the  queue or topic supports the concept of sessions.
+            type: bool
+        requires_duplicate_detection:
+            description:
+               - A value indicating if this queue or topic requires duplicate detection.
+            type: bool
+        max_size_in_mb:
+            description:
+                - Maximum size of the queue or topic in megabytes, which is the size of the memory allocated for the topic.
+            type: int
+        max_delivery_count:
+            description:
+                - The maximum delivery count.
+                - A message is automatically deadlettered after this number of deliveries.
+            type: int
+        lock_duration_in_seconds:
+            description:
+                - ISO 8601 timespan duration of a peek-lock.
+                - The amount of time that the message is locked for other receivers.
+                - The maximum value for LockDuration is 5 minutes.
+            type: int
+        forward_to:
+            description:
+                - Queue or topic name to forward the messages
+            type: str
+        forward_dead_lettered_messages_to:
+            description:
+                - Queue or topic name to forward the Dead Letter message
+            type: str
+        enable_partitioning:
+            description:
+                - Value that indicates whether the queue or topic to be partitioned across multiple message brokers is enabled.
+            type: bool
+        enable_express:
+            description:
+                - Value that indicates whether Express Entities are enabled.
+                - An express topic holds a message in memory temporarily before writing it to persistent storage.
+            type: bool
+        enable_batched_operations:
+            description:
+                - Value that indicates whether server-side batched operations are enabled.
+            type: bool
+        duplicate_detection_time_in_seconds:
+            description:
+                - ISO 8601 timeSpan structure that defines the duration of the duplicate detection history.
+            type: int
+        default_message_time_to_live_seconds:
+            description:
+                - ISO 8061 Default message timespan to live value.
+                - This is the duration after which the message expires, starting from when the message is sent to Service Bus.
+                - This is the default value used when TimeToLive is not set on a message itself.
+            type: int
+        dead_lettering_on_message_expiration:
+            description:
+                - A value that indicates whether this  queue or topic has dead letter support when a message expires.
+            type: int
+        dead_lettering_on_filter_evaluation_exceptions:
+            description:
+                - Value that indicates whether a subscription has dead letter support on filter evaluation exceptions.
+            type: int
+        auto_delete_on_idle_in_seconds:
+            description:
+                - ISO 8061 timeSpan idle interval after which the  queue or topic is automatically deleted.
+                - The minimum duration is 5 minutes.
+            type: int
+        size_in_bytes:
+            description:
+                - The size of the queue or topic, in bytes.
+            type: int
+        message_count:
+            description:
+                - Number of messages.
+            type: int
 '''
 
 try:
