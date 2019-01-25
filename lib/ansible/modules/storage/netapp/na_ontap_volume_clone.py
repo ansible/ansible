@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -16,7 +16,7 @@ short_description: NetApp ONTAP manage volume clones.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
 - Create NetApp ONTAP volume clones.
 - A FlexClone License is required to use this module
@@ -55,20 +55,24 @@ options:
     description:
     - The volume-type setting which should be used for the volume clone.
     choices: ['rw', 'dp']
+  junction_path:
+    description:
+    - Junction path of the volume.
 '''
 
 EXAMPLES = """
     - name: create volume clone
       na_ontap_volume_clone:
-        state=present
-        username=admin
-        password=netapp1!
-        hostname=10.193.74.27
-        vserver=vs_hack
-        parent_volume=normal_volume
-        volume=clone_volume_7
-        space_reserve=none
-        parent_snapshot=backup1
+        state: present
+        username: "{{ netapp username }}"
+        password: "{{ netapp password }}"
+        hostname: "{{ netapp hostname }}"
+        vserver: vs_hack
+        parent_volume: normal_volume
+        volume: clone_volume_7
+        space_reserve: none
+        parent_snapshot: backup1
+        junction_path: /clone_volume_7
 """
 
 RETURN = """
@@ -100,6 +104,7 @@ class NetAppOntapVolumeClone(object):
             qos_policy_group_name=dict(required=False, type='str', default=None),
             space_reserve=dict(required=False, choices=['volume', 'none'], default=None),
             volume_type=dict(required=False, choices=['rw', 'dp']),
+            junction_path=dict(required=False, type='str', default=None)
         ))
 
         self.module = AnsibleModule(
@@ -119,6 +124,7 @@ class NetAppOntapVolumeClone(object):
         self.volume = parameters['volume']
         self.volume_type = parameters['volume_type']
         self.vserver = parameters['vserver']
+        self.junction_path = parameters['junction_path']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -143,6 +149,8 @@ class NetAppOntapVolumeClone(object):
             clone_obj.add_new_child("parent-vserver", self.parent_vserver)
         if self.volume_type:
             clone_obj.add_new_child("volume-type", self.volume_type)
+        if self.junction_path:
+            clone_obj.add_new_child("junction-path", self.junction_path)
         self.server.invoke_successfully(clone_obj, True)
 
     def does_volume_clone_exists(self):
@@ -150,7 +158,7 @@ class NetAppOntapVolumeClone(object):
         clone_obj.add_new_child("volume", self.volume)
         try:
             results = self.server.invoke_successfully(clone_obj, True)
-        except Exception:
+        except:
             return False
         attributes = results.get_child_by_name('attributes')
         info = attributes.get_child_by_name('volume-clone-info')
