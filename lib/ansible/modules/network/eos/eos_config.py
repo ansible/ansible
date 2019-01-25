@@ -276,7 +276,7 @@ filename:
   sample: eos_config.2016-07-16@22:28:34
 shortname:
   description: The full path to the backup file excluding the timestamp
-  returned: when backup is yes
+  returned: when backup is yes and filename is not specified in backup options
   type: str
   sample: /playbooks/ansible/backup/eos_config
 date:

@@ -100,7 +100,6 @@ class ActionModule(_ActionModule):
                                                                 loader=self._loader,
                                                                 templar=self._templar,
                                                                 shared_loader_obj=self._shared_loader_obj)
-
         copy_result = copy_action.run(task_vars=task_vars)
         if copy_result.get('failed'):
             result['failed'] = copy_result['failed']
