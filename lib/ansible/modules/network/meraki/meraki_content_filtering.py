@@ -96,8 +96,6 @@ EXAMPLES = r'''
         -
       blocked_urls:
         -
-      blocked_categories:
-        -
 '''
 
 RETURN = r'''
