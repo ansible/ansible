@@ -63,6 +63,33 @@
         that:
           - ds.result.status.currentNumberScheduled == ds.result.status.desiredNumberScheduled
 
+    - name: update a daemonset in check_mode
+      k8s:
+        definition:
+          apiVersion: extensions/v1beta1
+          kind: DaemonSet
+          metadata:
+            name: wait-daemonset
+            namespace: "{{ wait_namespace }}"
+          spec:
+            selector:
+              matchLabels:
+                app: "{{ wait_pod_name }}"
+            updateStrategy:
+              type: RollingUpdate
+            template: "{{ wait_pod_template }}"
+        wait: yes
+        wait_timeout: 180
+      vars:
+        wait_pod_name: wait-ds
+        wait_pod_image: gcr.io/kuar-demo/kuard-amd64:2
+      register: update_ds_check_mode
+
+    - name: check that check_mode returned changed
+      assert:
+        that:
+          - update_ds_check_mode is changed
+
     - name: update a daemonset
       k8s:
         definition:
