@@ -301,14 +301,12 @@ class AzureRMServiceBusFacts(AzureRMModuleBase):
                 result['status'] = _camel_to_snake(value)
             elif isinstance(value, self.servicebus_models.MessageCountDetails):
                 result[attribute] = value.as_dict()
-            elif isinstance(value, datetime):
-                result[attribute] = str(value)
             elif isinstance(value, str):
                 result[attribute] = to_native(value)
             elif attribute == 'max_size_in_megabytes':
                 result['max_size_in_mb'] = value
             else:
-                result[attribute] = value
+                result[attribute] = str(value)
         if self.show_sas_policies and self.type != 'subscription':
             policies = self.get_auth_rules()
             for name in policies.keys():
