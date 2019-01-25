@@ -352,7 +352,7 @@ options:
       - Connect the container to a network. Choices are "bridge", "host", "none" or "container:<name|id>"
   userns_mode:
      description:
-       - Set the usernamespace mode for the container. Only valid value is "host".
+       - Set the user namespace mode for the container. Currently, the only valid value is C(host).
      version_added: "2.5"
   networks:
      description:
