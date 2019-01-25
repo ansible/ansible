@@ -161,47 +161,43 @@ def main():
             mso.fail_json(msg="ANP '{anp}' not found".format(anp=anp))
         mso.exit_json()
 
+    anps_path = '/templates/{0}/anps'.format(template)
+    anp_path = '/templates/{0}/anps/{1}'.format(template, anp)
+    ops = []
+
     mso.previous = mso.existing
     if state == 'absent':
         if mso.existing:
             mso.sent = mso.existing = {}
-            operation = [dict(
-                op='remove',
-                path='/templates/{template}/anps/{anp}'.format(template=template, anp=anp),
-            )]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operation)
+            ops.append(dict(op='remove', path=anp_path))
 
     elif state == 'present':
+
         if display_name is None and not mso.existing:
             display_name = anp
+
+        epgs = []
+        if mso.existing:
+            epgs = None
 
         payload = dict(
             name=anp,
             displayName=display_name,
-            # FIXME: This may cause your existing EPGs to be removed
-            epgs=[],
+            epgs=epgs,
         )
 
         mso.sanitize(payload, collate=True)
 
         if mso.existing:
-            operation = [dict(
-                op='replace',
-                path='/templates/{template}/anps/{anp}'.format(template=template, anp=anp),
-                value=mso.sent,
-            )]
-
+            if display_name is not None:
+                ops.append(dict(op='replace', path=anp_path + '/displayName', value=display_name))
         else:
-            operation = [dict(
-                op='add',
-                path='/templates/{template}/anps/-'.format(template=template),
-                value=mso.sent,
-            )]
+            ops.append(dict(op='add', path=anps_path + '/-', value=mso.sent))
 
         mso.existing = mso.proposed
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=operation)
+
+    if not module.check_mode:
+        mso.request(path, method='PATCH', data=ops)
 
     mso.exit_json()
 
