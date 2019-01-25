@@ -35,7 +35,7 @@ options:
             - It defines the operation on the labels assigned to node and labels specified in I(labels) option.
             - Set to C(merge) to combine labels provided in I(labels) with those already assigned to the node.
               If no labels are assigned then it will add listed labels. For labels that are already assigned
-              to the node, it will update their values. The labels not specified in I(labels) will remain unchanged. 
+              to the node, it will update their values. The labels not specified in I(labels) will remain unchanged.
               If I(labels) is empty then no changes will be made.
             - Set to C(replace) to replace all assigned labels with provided ones. If I(labels) is empty then
               all labels assigned to the node will be removed.
@@ -47,7 +47,7 @@ options:
         type: str
     labels_to_remove:
         description:
-            - List of labels that will be removed from the node configuration. If label specified on the list is 
+            - List of labels that will be removed from the node configuration. If label specified on the list is
               not assigned to the node then no action will be performed. The remaining labels assigned to the
               node remains unchanged. The list have to contain only label names, not their values.
         required: false
@@ -121,13 +121,14 @@ EXAMPLES = '''
 - name: Remove all labels assigned to node
   docker_node:
     hostname: mynode
-    labels:
     labels_state: replace
 
-- name: Remove node labels
+- name: Remove selected labels from the node
   docker_node:
     hostname: mynode
-    labels_state: remove
+    labels_to_remove:
+      - key1
+      - key2
 '''
 
 RETURN = '''
@@ -161,6 +162,7 @@ class TaskParameters(DockerBaseClass):
         self.name = None
         self.labels = None
         self.labels_state = None
+        self.labels_to_remove = None
 
         # Node
         self.availability = None
@@ -213,34 +215,34 @@ class SwarmNodeManager(DockerBaseClass):
             node_spec['Availability'] = node_info['Spec']['Availability']
 
         if self.parameters.labels_state == 'replace':
-            node_spec['Labels'] = self.parameters.labels
-            changed = True
-
-        if self.parameters.labels_state == 'remove':
-            node_spec['Labels'] = node_info['Spec']['Labels']
-
-            if self.parameters.labels is None and not node_info['Spec']['Labels']:
-                node_spec['Labels'] = None
+            if self.parameters.labels is None:
+                node_spec['Labels'] = {}
+                if node_info['Spec']['Labels'] is not None:
+                    changed = True
+            else:
+                node_spec['Labels'] = self.parameters.labels
                 changed = True
-            elif self.parameters.labels is not None and node_info['Spec']['Labels'] is not None:
-                for key in self.parameters.labels:
-                    if key in node_info['Spec']['Labels']:
-                        node_spec['Labels'].pop(key)
-                        changed = True
 
         if self.parameters.labels_state == 'merge':
             node_spec['Labels'] = node_info['Spec']['Labels']
-
-            for next_key in self.parameters.labels:
-                if next_key in node_info['Spec']['Labels']:
-                    if self.parameters.labels.get(next_key) == node_info['Spec']['Labels'][next_key]:
-                        pass
+            if self.parameters.labels is not None:
+                for key in self.parameters.labels:
+                    if key in node_info['Spec']['Labels']:
+                        if self.parameters.labels.get(key) == node_info['Spec']['Labels'][key]:
+                            pass
+                        else:
+                            node_spec['Labels'][key] = self.parameters.labels.get(key)
+                            changed = True
                     else:
-                        node_spec['Labels'][next_key] = self.parameters.labels.get(next_key)
+                        node_spec['Labels'][key] = self.parameters.labels.get(key)
                         changed = True
-                else:
-                    node_spec['Labels'][next_key] = self.parameters.labels.get(next_key)
-                    changed = True
+
+            if self.parameters.labels_to_remove is not None:
+                for key in self.parameters.labels_to_remove:
+                    if not self.parameters.labels.get(key):
+                        if node_spec['Labels'].get(key):
+                            node_spec['Labels'].pop(key)
+                            changed = True
 
         if changed is True:
             try:
@@ -259,14 +261,14 @@ def main():
     argument_spec = dict(
         hostname=dict(type='str', required=True),
         labels=dict(type='dict'),
-        labels_state=dict(type='str', choices=['merge', 'replace', 'remove'], default='merge'),
+        labels_state=dict(type='str', choices=['merge', 'replace'], default='merge'),
         labels_to_remove=dict(type='list', elements='str'),
         availability=dict(type='str', choices=['active', 'pause', 'drain']),
         role=dict(type='str', choices=['worker', 'manager']),
     )
 
     required_if = [
-        ('labels_state', 'merge', ['hostname', 'labels']),
+        ('labels_state', 'merge', ['hostname']),
         ('labels_state', 'replace', ['hostname', 'labels']),
     ]
 
