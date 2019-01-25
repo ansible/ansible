@@ -44,14 +44,21 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent']
+  timeout:
+    description:
+      - Specify if a timeout is desired
+    required: false
+    default: null
 '''
 
 EXAMPLES = '''
 # Set the global parameter 'cluster_name' to a value of 'mq-cluster' (in quotes)
+# Time out if it takes longer than 10 seconds to complete
 - rabbitmq_global_parameter:
     name: cluster_name
     value: "{{ 'mq-cluster' | to_json }}"
     state: present
+    timeout: 10
 '''
 
 RETURN = '''
@@ -72,11 +79,12 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class RabbitMqGlobalParameter(object):
-    def __init__(self, module, name, value, node):
+    def __init__(self, module, name, value, node, timeout):
         self.module = module
         self.name = name
         self.value = value
         self.node = node
+        self.timeout = timeout
 
         self._value = None
 
@@ -85,6 +93,8 @@ class RabbitMqGlobalParameter(object):
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
             cmd = [self._rabbitmqctl, '-q', '-n', self.node]
+            if self.timeout is not None:
+                cmd = cmd + ['-t', self.timeout]
             rc, out, err = self.module.run_command(cmd + args, check_rc=True)
             return out.splitlines()
         return list()
@@ -117,7 +127,8 @@ def main():
         name=dict(type='str', required=True),
         value=dict(type='str', default=None),
         state=dict(default='present', choices=['present', 'absent']),
-        node=dict(type='str', default='rabbit')
+        node=dict(type='str', default='rabbit'),
+        timeout=dict(type='int', default=None)
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
@@ -130,9 +141,11 @@ def main():
         value = json.loads(value)
     state = module.params['state']
     node = module.params['node']
+    timeout = module.params['timeout']
 
     result = dict(changed=False)
-    rabbitmq_global_parameter = RabbitMqGlobalParameter(module, name, value, node)
+    rabbitmq_global_parameter = RabbitMqGlobalParameter(module, name, value,
+                                                        node, timeout)
 
     if rabbitmq_global_parameter.get():
         if state == 'absent':
