@@ -180,6 +180,10 @@ class MSOModule(object):
         if method is not None:
             self.method = method
 
+        # If we PATCH with empty operations, return
+        if method == 'PATCH' and not data:
+            return {}
+
         self.url = urljoin(self.baseuri, path)
 
         if qs is not None:
