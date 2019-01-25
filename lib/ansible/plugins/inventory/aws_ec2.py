@@ -138,7 +138,7 @@ compose:
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import string_types
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
 from ansible.utils.display import Display
@@ -513,25 +513,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         display.debug("aws_ec2 inventory filename must end with 'aws_ec2.yml' or 'aws_ec2.yaml'")
         return False
 
-    def _validate_option(self, name, desired_type, option_value):
-        '''
-            :param name: the option name
-            :param desired_type: the class the option needs to be
-            :param option: the value the user has provided
-            :return The option of the correct class
-        '''
-
-        if isinstance(option_value, string_types) and desired_type == list:
-            option_value = [option_value]
-
-        if option_value is None:
-            option_value = desired_type()
-
-        if not isinstance(option_value, desired_type):
-            raise AnsibleParserError("The option %s (%s) must be a %s" % (name, option_value, desired_type))
-
-        return option_value
-
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
 
@@ -540,7 +521,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # get user specifications
         regions = self.get_option('regions')
-        filters = self.get_option('filters')
+        filters = ansible_dict_to_boto3_filter_list(self.get_option('filters'))
         hostnames = self.get_option('hostnames')
         strict_permissions = self.get_option('strict_permissions')
 

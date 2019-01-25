@@ -28,7 +28,8 @@ import datetime
 boto3 = pytest.importorskip('boto3')
 botocore = pytest.importorskip('botocore')
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list
 from ansible.plugins.inventory.aws_ec2 import InventoryModule
 from ansible.plugins.inventory.aws_ec2 import instance_data_filter_to_boto_attr
 
@@ -176,31 +177,26 @@ def test_insufficient_credentials(inventory):
         assert "Insufficient boto credentials found" in error_message
 
 
-def test_validate_option(inventory):
-    assert ['us-east-1'] == inventory._validate_option('regions', list, 'us-east-1')
-    assert ['us-east-1'] == inventory._validate_option('regions', list, ['us-east-1'])
-
-
-def test_illegal_option(inventory):
-    bad_filters = [{'tag:Environment': 'dev'}]
-    with pytest.raises(AnsibleParserError) as error_message:
-        inventory._validate_option('filters', dict, bad_filters)
-        assert "The option filters ([{'tag:Environment': 'dev'}]) must be a <class 'dict'>" == error_message
-
-
 def test_empty_config_query_options(inventory):
-    regions, filters, hostnames, strict_permissions = inventory._get_query_options({})
-    assert regions == filters == hostnames == []
+    inventory.set_options(direct={})
+    regions = inventory.get_option('regions')
+    filters = inventory.get_option('filters')
+    hostnames = inventory.get_option('hostnames')
+    strict_permissions = inventory.get_option('strict_permissions')
+    assert filters == {}
+    assert regions == hostnames == ansible_dict_to_boto3_filter_list(filters) == []
     assert strict_permissions is True
 
 
 def test_conig_query_options(inventory):
-    regions, filters, hostnames, strict_permissions = inventory._get_query_options(
-        {'regions': ['us-east-1', 'us-east-2'],
-         'filters': {'tag:Environment': ['dev', 'prod']},
-         'hostnames': 'ip-address',
-         'strict_permissions': False}
-    )
+    inventory.set_options(direct={'regions': ['us-east-1', 'us-east-2'],
+                                  'filters': {'tag:Environment': ['dev', 'prod']},
+                                  'hostnames': 'ip-address',
+                                  'strict_permissions': False})
+    regions = inventory.get_option('regions')
+    filters = ansible_dict_to_boto3_filter_list(inventory.get_option('filters'))
+    hostnames = inventory.get_option('hostnames')
+    strict_permissions = inventory.get_option('strict_permissions')
     assert regions == ['us-east-1', 'us-east-2']
     assert filters == [{'Name': 'tag:Environment', 'Values': ['dev', 'prod']}]
     assert hostnames == ['ip-address']
