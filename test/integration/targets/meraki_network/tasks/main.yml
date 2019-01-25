@@ -4,48 +4,48 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - block:
-  - name: Create network without type
-    meraki_network:
-      auth_key: '{{ auth_key }}'
-      state: present
-      org_name: '{{test_org_name}}'
-      net_name: IntTestNetwork
-      timezone: America/Chicago
-    delegate_to: localhost
-    register: create_net_no_type
-    ignore_errors: yes
+  # - name: Create network without type
+  #   meraki_network:
+  #     auth_key: '{{ auth_key }}'
+  #     state: present
+  #     org_name: '{{test_org_name}}'
+  #     net_name: IntTestNetwork
+  #     timezone: America/Chicago
+  #   delegate_to: localhost
+  #   register: create_net_no_type
+  #   ignore_errors: yes
 
-  - name: Create network without organization
-    meraki_network:
-      auth_key: '{{ auth_key }}'
-      state: present
-      net_name: IntTestNetwork
-      timezone: America/Chicago
-    delegate_to: localhost
-    register: create_net_no_org
-    ignore_errors: yes
+  # - name: Create network without organization
+  #   meraki_network:
+  #     auth_key: '{{ auth_key }}'
+  #     state: present
+  #     net_name: IntTestNetwork
+  #     timezone: America/Chicago
+  #   delegate_to: localhost
+  #   register: create_net_no_org
+  #   ignore_errors: yes
 
-  - name: Create network with type switch
-    meraki_network:
-      auth_key: '{{ auth_key }}'
-      state: present
-      org_name: '{{test_org_name}}'
-      net_name: IntTestNetworkSwitch
-      type: switch
-      timezone: America/Chicago
-    delegate_to: localhost
-    register: create_net_switch
+  # - name: Create network with type switch
+  #   meraki_network:
+  #     auth_key: '{{ auth_key }}'
+  #     state: present
+  #     org_name: '{{test_org_name}}'
+  #     net_name: IntTestNetworkSwitch
+  #     type: switch
+  #     timezone: America/Chicago
+  #   delegate_to: localhost
+  #   register: create_net_switch
     
-  - name: Create network with type switch by org ID
-    meraki_network:
-      auth_key: '{{ auth_key }}'
-      state: present
-      org_id: '{{test_org_id}}'
-      net_name: IntTestNetworkSwitchOrgID
-      type: switch
-      timezone: America/Chicago
-    delegate_to: localhost
-    register: create_net_switch_org_id  
+  # - name: Create network with type switch by org ID
+  #   meraki_network:
+  #     auth_key: '{{ auth_key }}'
+  #     state: present
+  #     org_id: '{{test_org_id}}'
+  #     net_name: IntTestNetworkSwitchOrgID
+  #     type: switch
+  #     timezone: America/Chicago
+  #   delegate_to: localhost
+  #   register: create_net_switch_org_id  
     
   - name: Create network with type appliance and no timezone
     meraki_network:
@@ -165,22 +165,14 @@
     delegate_to: localhost
     register: enable_meraki_com
 
-  - name: Disable remote status page
+  - name: Disable my.meraki.com for next test
     meraki_network:
       auth_key: '{{ auth_key }}'
       state: present
       org_name: '{{test_org_name}}'
       net_name: IntTestNetworkCombined
-      enable_remote_status_page: no
+      enable_my_meraki: no
     delegate_to: localhost
-    register: disable_remote_status
-
-  - debug:
-      msg: '{{disable_remote_status}}'
-
-  - assert:
-      that:
-        - disable_remote_status.data.disableRemoteStatusPage == False
 
   - name: Enable remote status page
     meraki_network:
@@ -190,6 +182,23 @@
       net_name: IntTestNetworkCombined
       enable_remote_status_page: yes
     delegate_to: localhost
+    register: disable_remote_status
+
+  - debug:
+      msg: '{{disable_remote_status}}'
+
+  - assert:
+      that:
+        - disable_remote_status.data.disableRemoteStatusPage == True
+
+  - name: Disable remote status page
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      enable_remote_status_page: no
+    delegate_to: localhost
     register: enable_remote_status
 
   - debug:
@@ -197,7 +206,7 @@
 
   - assert:
       that:
-        - enable_remote_status.data.disableRemoteStatusPage == True
+        - enable_remote_status.data.disableRemoteStatusPage == False
 
 
   - name: Test status pages are mutually exclusive when on
