@@ -277,12 +277,12 @@ def map_obj_to_commands(updates, module):
                     if len(address) == 2:
                         ipv4 = '{0} {1}'.format(
                             address[0], to_netmask(address[1]))
-                    commands.append('no ip address {}'.format(ipv4))
+                    commands.append('no ip address %s' % ipv4)
                 else:
                     commands.append('no ip address')
             if obj_in_have['ipv6']:
                 if ipv6:
-                    commands.append('no ipv6 address {}'.format(ipv6))
+                    commands.append('no ipv6 address %s' % ipv6)
                 else:
                     commands.append('no ipv6 address')
                     if 'dhcp' in obj_in_have['ipv6']:
@@ -295,11 +295,11 @@ def map_obj_to_commands(updates, module):
                     if len(address) == 2:
                         ipv4 = '{0} {1}'.format(
                             address[0], to_netmask(address[1]))
-                    commands.append('ip address {}'.format(ipv4))
+                    commands.append('ip address %s' % ipv4)
 
             if ipv6:
                 if obj_in_have is None or obj_in_have.get('ipv6') is None or ipv6.lower() not in [addr.lower() for addr in obj_in_have['ipv6']]:
-                    commands.append('ipv6 address {}'.format(ipv6))
+                    commands.append('ipv6 address %s' % ipv6)
         if commands[-1] == interface:
             commands.pop(-1)
 
