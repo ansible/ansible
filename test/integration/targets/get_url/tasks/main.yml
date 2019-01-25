@@ -33,8 +33,8 @@
 
 - name: Define test files for file schema
   set_fact:
-    geturl_srcfile: "{{ output_dir }}/aurlfile.txt"
-    geturl_dstfile: "{{ output_dir }}/aurlfile_copy.txt"
+    geturl_srcfile: "{{ remote_tmp_dir }}/aurlfile.txt"
+    geturl_dstfile: "{{ remote_tmp_dir }}/aurlfile_copy.txt"
 
 - name: Create source file
   copy:
@@ -69,7 +69,7 @@
 - name: test HTTP HEAD request for file in check mode
   get_url:
     url: "https://{{ httpbin_host }}/get"
-    dest: "{{ output_dir }}/get_url_check.txt"
+    dest: "{{ remote_tmp_dir }}/get_url_check.txt"
     force: yes
   check_mode: True
   register: result
@@ -83,7 +83,7 @@
 - name: test HTTP HEAD for nonexistent URL in check mode
   get_url:
     url: "https://{{ httpbin_host }}/DOESNOTEXIST"
-    dest: "{{ output_dir }}/shouldnotexist.html"
+    dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
     force: yes
   check_mode: True
   register: result
@@ -95,7 +95,7 @@
       - result is failed
 
 - name: test https fetch
-  get_url: url="https://{{ httpbin_host }}/get" dest={{output_dir}}/get_url.txt force=yes
+  get_url: url="https://{{ httpbin_host }}/get" dest={{remote_tmp_dir}}/get_url.txt force=yes
   register: result
 
 - name: assert the get_url call was successful
@@ -107,12 +107,12 @@
 - name: test https fetch to a site with mismatched hostname and certificate
   get_url:
     url: "https://{{ badssl_host }}/"
-    dest: "{{ output_dir }}/shouldnotexist.html"
+    dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
 
 - stat:
-    path: "{{ output_dir }}/shouldnotexist.html"
+    path: "{{ remote_tmp_dir }}/shouldnotexist.html"
   register: stat_result
 
 - name: Assert that the file was not downloaded
@@ -125,12 +125,12 @@
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   get_url:
     url: "https://{{ badssl_host }}/"
-    dest: "{{ output_dir }}/get_url_no_validate.html"
+    dest: "{{ remote_tmp_dir }}/get_url_no_validate.html"
     validate_certs: no
   register: result
 
 - stat:
-    path: "{{ output_dir }}/get_url_no_validate.html"
+    path: "{{ remote_tmp_dir }}/get_url_no_validate.html"
   register: stat_result
 
 - name: Assert that the file was downloaded
@@ -144,11 +144,11 @@
 - name: Test that SNI works
   get_url:
     url: 'https://{{ sni_host }}/'
-    dest: "{{ output_dir }}/sni.html"
+    dest: "{{ remote_tmp_dir }}/sni.html"
   register: get_url_result
   ignore_errors: True
 
-- command: "grep '{{ sni_host }}' {{ output_dir}}/sni.html"
+- command: "grep '{{ sni_host }}' {{ remote_tmp_dir}}/sni.html"
   register: data_result
   when: python_has_ssl_context
 
@@ -173,11 +173,11 @@
 - name: Test that SNI works
   get_url:
     url: 'https://{{ sni_host }}/'
-    dest: "{{ output_dir }}/sni.html"
+    dest: "{{ remote_tmp_dir }}/sni.html"
   register: get_url_result
   ignore_errors: True
 
-- command: "grep '{{ sni_host }}' {{ output_dir}}/sni.html"
+- command: "grep '{{ sni_host }}' {{ remote_tmp_dir}}/sni.html"
   register: data_result
   when: python_has_ssl_context
 
@@ -202,17 +202,17 @@
 - name: Test get_url with redirect
   get_url:
     url: 'https://{{ httpbin_host }}/redirect/6'
-    dest: "{{ output_dir }}/redirect.json"
+    dest: "{{ remote_tmp_dir }}/redirect.json"
 
 - name: Test that setting file modes work
   get_url:
     url: 'https://{{ httpbin_host }}/'
-    dest: '{{ output_dir }}/test'
+    dest: '{{ remote_tmp_dir }}/test'
     mode: '0707'
   register: result
 
 - stat:
-    path: "{{ output_dir }}/test"
+    path: "{{ remote_tmp_dir }}/test"
   register: stat_result
 
 - name: Assert that the file has the right permissions
@@ -224,12 +224,12 @@
 - name: Test that setting file modes on an already downlaoded file work
   get_url:
     url: 'https://{{ httpbin_host }}/'
-    dest: '{{ output_dir }}/test'
+    dest: '{{ remote_tmp_dir }}/test'
     mode: '0070'
   register: result
 
 - stat:
-    path: "{{ output_dir }}/test"
+    path: "{{ remote_tmp_dir }}/test"
   register: stat_result
 
 - name: Assert that the file has the right permissions
@@ -242,13 +242,13 @@
 - name: Change mode on an already downloaded file and specify checksum
   get_url:
     url: 'https://{{ httpbin_host }}/get'
-    dest: '{{ output_dir }}/test'
+    dest: '{{ remote_tmp_dir }}/test'
     checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
     mode: '0775'
   register: result
 
 - stat:
-    path: "{{ output_dir }}/test"
+    path: "{{ remote_tmp_dir }}/test"
   register: stat_result
 
 - name: Assert that file permissions on already downloaded file were changed
@@ -260,7 +260,7 @@
 - name: Get a file that already exists
   get_url:
     url: 'https://{{ httpbin_host }}/get'
-    dest: '{{ output_dir }}/test'
+    dest: '{{ remote_tmp_dir }}/test'
   register: result
 
 - name: Assert that we didn't re-download unnecessarily
@@ -273,7 +273,7 @@
 - name: set role facts
   set_fact:
     http_port: 27617
-    files_dir: '{{ output_dir }}/files'
+    files_dir: '{{ remote_tmp_dir }}/files'
 
 - name: create files_dir
   file:
@@ -326,44 +326,44 @@
 
 - copy:
     src: "testserver.py"
-    dest: "{{ output_dir }}/testserver.py"
+    dest: "{{ remote_tmp_dir }}/testserver.py"
 
 - name: start SimpleHTTPServer for issues 27617
-  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
   async: 90
   poll: 0
 
 - name: download src with sha1 checksum url
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
-    dest: '{{ output_dir }}'
+    dest: '{{ remote_tmp_dir }}'
     checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
   register: result_sha1
 
 - stat:
-    path: "{{ output_dir }}/27617.txt"
+    path: "{{ remote_tmp_dir }}/27617.txt"
   register: stat_result_sha1
 
 - name: download src with sha256 checksum url
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
-    dest: '{{ output_dir }}/27617sha256.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256.txt'
     checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
   register: result_sha256
 
 - stat:
-    path: "{{ output_dir }}/27617.txt"
+    path: "{{ remote_tmp_dir }}/27617.txt"
   register: stat_result_sha256
 
 - name: download src with sha256 checksum url with dot leading paths
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
-    dest: '{{ output_dir }}/27617sha256_with_dot.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_dot.txt'
     checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
   register: result_sha256_with_dot
 
 - stat:
-    path: "{{ output_dir }}/27617sha256_with_dot.txt"
+    path: "{{ remote_tmp_dir }}/27617sha256_with_dot.txt"
   register: stat_result_sha256_with_dot
 
 - name: Assert that the file was downloaded
@@ -380,25 +380,30 @@
 - name: Test url split with no filename
   get_url:
     url: https://{{ httpbin_host }}
-    dest: "{{ output_dir }}"
+    dest: "{{ remote_tmp_dir }}"
 
 - name: Test headers string
   get_url:
     url: https://{{ httpbin_host }}/headers
     headers: Foo:bar,Baz:qux
-    dest: "{{ output_dir }}/headers_string.json"
+    dest: "{{ remote_tmp_dir }}/headers_string.json"
+
+- name: Get downloaded file
+  slurp:
+    src: "{{ remote_tmp_dir }}/headers_string.json"
+  register: result
 
 - name: Test headers string
   assert:
     that:
-      - (lookup('file', output_dir ~ '/headers_string.json')|from_json).headers.get('Foo') == 'bar'
-      - (lookup('file', output_dir ~ '/headers_string.json')|from_json).headers.get('Baz') == 'qux'
+      - (result["content"] | b64decode | from_json).headers.get('Foo') == 'bar'
+      - (result["content"] | b64decode | from_json).headers.get('Baz') == 'qux'
 
 - name: Test headers string invalid format
   get_url:
     url: https://{{ httpbin_host }}/headers
     headers: Foo
-    dest: "{{ output_dir }}/headers_string_invalid.json"
+    dest: "{{ remote_tmp_dir }}/headers_string_invalid.json"
   register: invalid_string_headers
   failed_when:
     - invalid_string_headers is successful
@@ -410,24 +415,34 @@
     headers:
       Foo: bar
       Baz: qux
-    dest: "{{ output_dir }}/headers_dict.json"
+    dest: "{{ remote_tmp_dir }}/headers_dict.json"
+
+- name: Get downloaded file
+  slurp:
+    src: "{{ remote_tmp_dir }}/headers_dict.json"
+  register: result
 
 - name: Test headers dict
   assert:
     that:
-      - (lookup('file', output_dir ~ '/headers_dict.json')|from_json).headers.get('Foo') == 'bar'
-      - (lookup('file', output_dir ~ '/headers_dict.json')|from_json).headers.get('Baz') == 'qux'
+      - (result["content"] | b64decode | from_json).headers.get('Foo') == 'bar'
+      - (result["content"] | b64decode | from_json).headers.get('Baz') == 'qux'
 
 - name: Test client cert auth, with certs
   get_url:
     url: "https://ansible.http.tests/ssl_client_verify"
-    client_cert: "{{ output_dir }}/client.pem"
-    client_key: "{{ output_dir }}/client.key"
-    dest: "{{ output_dir }}/ssl_client_verify"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
+    dest: "{{ remote_tmp_dir }}/ssl_client_verify"
   when: has_httptester
+
+- name: Get downloaded file
+  slurp:
+    src: "{{ remote_tmp_dir }}/ssl_client_verify"
+  register: result
 
 - name: Assert that the ssl_client_verify file contains the correct content
   assert:
     that:
-      - 'lookup("file", "{{ output_dir }}/ssl_client_verify") == "ansible.http.tests:SUCCESS"'
+      - '(result["content"] | b64decode) == "ansible.http.tests:SUCCESS"'
   when: has_httptester

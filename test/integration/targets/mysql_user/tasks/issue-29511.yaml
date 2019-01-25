@@ -18,11 +18,19 @@
     - foo
     - bar
 
+- name: Copy SQL scripts to remote
+  copy:
+    src: "{{ item }}"
+    dest: "{{ remote_tmp_dir }}/{{ item | basename }}"
+  with_items:
+    - create-function.sql
+    - create-procedure.sql
+
 - name: Create function for test
-  shell: "mysql < {{ role_path }}/files/create-function.sql"
+  shell: "mysql < {{ remote_tmp_dir }}/create-function.sql"
 
 - name: Create procedure for test
-  shell: "mysql < {{ role_path }}/files/create-procedure.sql"
+  shell: "mysql < {{ remote_tmp_dir }}/create-procedure.sql"
 
 - name: Create user with FUNCTION and PROCEDURE privileges
   mysql_user:

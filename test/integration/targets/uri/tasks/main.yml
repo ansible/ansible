@@ -285,7 +285,7 @@
   pip:
     name: "{{ item }}"
     state: latest
-    extra_args: "-c {{ role_path }}/../../../runner/requirements/constraints.txt"
+    extra_args: "-c {{ remote_constraints }}"
   with_items:
     - urllib3
     - PyOpenSSL
@@ -402,8 +402,8 @@
 - name: Test client cert auth, with certs
   uri:
     url: "https://ansible.http.tests/ssl_client_verify"
-    client_cert: "{{ output_dir }}/client.pem"
-    client_key: "{{ output_dir }}/client.key"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
     return_content: true
   register: result
   failed_when: result.content != "ansible.http.tests:SUCCESS"
@@ -412,8 +412,8 @@
 - name: Test client cert auth, with no validation
   uri:
     url: "https://fail.ansible.http.tests/ssl_client_verify"
-    client_cert: "{{ output_dir }}/client.pem"
-    client_key: "{{ output_dir }}/client.key"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
     return_content: true
     validate_certs: no
   register: result
@@ -423,8 +423,8 @@
 - name: Test client cert auth, with validation and ssl mismatch
   uri:
     url: "https://fail.ansible.http.tests/ssl_client_verify"
-    client_cert: "{{ output_dir }}/client.pem"
-    client_key: "{{ output_dir }}/client.key"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
     return_content: true
     validate_certs: yes
   register: result
@@ -445,16 +445,13 @@
 - name: Write out netrc template
   template:
     src: netrc.j2
-    dest: "{{ output_dir }}/netrc"
-
-- debug:
-    msg: "{{ lookup('file', output_dir ~ '/netrc') }}"
+    dest: "{{ remote_tmp_dir }}/netrc"
 
 - name: Test netrc with port
   uri:
     url: "https://{{ httpbin_host }}:443/basic-auth/user/passwd"
   environment:
-    NETRC: "{{ output_dir|expanduser }}/netrc"
+    NETRC: "{{ remote_tmp_dir }}/netrc"
 
 - name: Test JSON POST with src
   uri:
@@ -470,10 +467,15 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
+- name: Copy file pass0.json to remote
+  copy:
+    src: "{{ role_path }}/files/pass0.json"
+    dest: "{{ remote_tmp_dir }}/pass0.json"
+
 - name: Test JSON POST with src and remote_src=True
   uri:
     url: "https://{{ httpbin_host}}/post"
-    src: "{{ role_path }}/files/pass0.json"
+    src: "{{ remote_tmp_dir }}/pass0.json"
     remote_src: true
     method: POST
     return_content: true
