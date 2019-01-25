@@ -600,12 +600,12 @@ def process_support_levels(plugin_info, categories, templates, output_dir, plugi
                                                    " Ansible Core Team<core_maintained>` and will always ship"
                                                    " with Ansible itself."},
                     'Ansible Network and Security Teams': {'slug': 'network_supported',
-                                             'modules': [],
-                                             'output': 'network_maintained.rst',
-                                             'blurb': "These are :doc:`modules maintained by the"
-                                                      " Ansible Network and Security Teams<network_maintained>` in"
-                                                      " a relationship similar to how the Ansible Core Team"
-                                                      " maintains the Core modules."},
+                                                           'modules': [],
+                                                           'output': 'network_maintained.rst',
+                                                           'blurb': "These are :doc:`modules maintained by the"
+                                                                    " Ansible Network and Security Teams<network_maintained>`"
+                                                                    " in a relationship similar to how the Ansible Core Team"
+                                                                    " maintains the Core modules."},
                     'Ansible Partners': {'slug': 'certified_supported',
                                          'modules': [],
                                          'output': 'partner_maintained.rst',
