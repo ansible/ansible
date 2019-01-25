@@ -77,7 +77,7 @@ options:
     disable_remote_status_page:
         description:
             - Disables access to the device status page (U(http://device LAN IP)).
-            - Can only be set if C(disable_my_meraki:) is set to C(no).
+            - Can only be set if C(enable_my_meraki:) is set to C(yes).
         type: bool
         version_added: '2.8'
 
