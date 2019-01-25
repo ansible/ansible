@@ -40,7 +40,23 @@ options:
             - A namespace is a scoping container for all messaging components.
             - Multiple queues and topics can reside within a single namespace, and namespaces often serve as application containers.
             - Required when C(type) is not C(namespace).
-
+    type:
+        description:
+            - Type of the resource.
+        choices:
+            - namespace
+            - queue
+            - topic
+            - subscription
+    topic:
+        description:
+            - Topic name.
+            - Required when C(type) is C(subscription).
+    show_sas_policies:
+        description:
+            - Whether to show the SAS policies.
+            - Not support when C(type) is C(subscription).
+            - Note if enable this option, the facts module will raise two more HTTP call for each resources, need more network overhead.
 extends_documentation_fragment:
     - azure
 
@@ -50,20 +66,30 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Get facts for one servicebus
-      azure_rm_servicebus_facts:
-        name: Testing
-        resource_group: foo
+- name: Get all namespaces under a resource group
+  azure_rm_servicebus_facts:
+    resource_group: foo
+    type: namespace
 
-    - name: Get facts for all servicebuss
-      azure_rm_servicebus_facts:
-        resource_group: foo
+- name: Get all topics under a namespace
+  azure_rm_servicebus_facts:
+    resource_group: foo
+    namespace: bar
+    type: topic
 
-    - name: Get facts by tags
-      azure_rm_servicebus_facts:
-        tags:
-          - testing
-          - foo:bar
+- name: Get a single queue with SAS policies
+  azure_rm_servicebus_facts:
+    resource_group: foo
+    namespace: bar
+    type: queue
+    name: sbqueue
+    show_sas_policies: true
+
+- name: Get all subscriptions under a resource group
+  azure_rm_servicebus_facts:
+    resource_group: foo
+    namespace: bar
+    topic: sbtopic
 '''
 RETURN = '''
 

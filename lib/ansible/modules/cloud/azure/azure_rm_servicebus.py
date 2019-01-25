@@ -178,20 +178,24 @@ author:
 '''
 
 EXAMPLES = '''
-    - name: Create a route
-      azure_rm_route:
-        name: foobar
-        resource_group: Testing
-        address_prefix: 10.1.0.0/16
-        next_hop_type: virtual_network_gateway
-        route_table_name: table
+- name: Create a topic
+  azure_rm_servicebus:
+      name: sbtopic
+      resource_group: foo
+      namespace: bar
+      duplicate_detection_time_in_seconds: 600
+      type: topic
+      sas_policies:
+        - name: testpolicy
+          rights: manage
 
-    - name: Delete a route
-      azure_rm_route:
-        name: foobar
-        resource_group: Testing
-        route_table_name: table
-        state: absent
+- name: Create a subscription
+  azure_rm_servicebus:
+      name: sbsub
+      resource_group: foo
+      namespace: bar
+      type: subscription
+      subscription_topic_name: sbtopic
 '''
 RETURN = '''
 id:
