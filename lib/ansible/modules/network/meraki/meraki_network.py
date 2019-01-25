@@ -68,15 +68,16 @@ options:
         - Requires C(net_name) or C(net_id) to be specified.
         type: bool
         version_added: '2.9'
-    disable_my_meraki:
-        description:
-            - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
-            U[wired.meraki.com](wired.meraki.com))
+    enable_my_meraki:
+        description: >
+            - Enables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
+            U[wired.meraki.com](wired.meraki.com)).
+            - Ansible 2.7 had this parameter as C(disable_my_meraki).
         type: bool
-        version_added: '2.7'
-    disable_remote_status_page:
+        version_added: '2.8'
+    enable_remote_status_page:
         description:
-            - Disables access to the device status page (U(http://device LAN IP)).
+            - Enables access to the device status page (U(http://device LAN IP)).
             - Can only be set if C(enable_my_meraki:) is set to C(yes).
         type: bool
         version_added: '2.8'
