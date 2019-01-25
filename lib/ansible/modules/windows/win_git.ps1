@@ -62,14 +62,16 @@ function FindGit {
     param()
     $p = Find-Command "git.exe"
     if ($p -ne $null){
-        Set-Attr $result "git_msg" "Git path $p."
+        $path=((Get-Command git.exe).Path | Split-Path)
+        $env:Path += ";" + $path
+        Set-Attr $result "git_msg" "Git found in $path."
         return $p
     }
-    $a = Find-Command "C:\Program Files\Git\bin\git.exe"
-    if ($a -ne $null){
-        Set-Attr $result "git_msg" "Git path $a."
-        return $a
-    }
+    # $a = Find-Command "C:\Program Files\Git\bin\git.exe"
+    # if ($a -ne $null){
+    #     Set-Attr $result "git_msg" "Git path $a."
+    #     return $a
+    # }
     Fail-Json -obj $result -message "git.exe is not installed. It must be installed (use chocolatey)"
 }
 

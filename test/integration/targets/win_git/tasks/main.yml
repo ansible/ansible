@@ -13,7 +13,7 @@
 - name: Install git if not installed
   win_chocolatey:
     name: git
-    version: 2.20.1
+    version: 2.20.0
   when: git_client.rc !=  0 
 
 - name: Create a temp directory
