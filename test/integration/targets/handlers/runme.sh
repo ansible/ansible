@@ -2,6 +2,10 @@
 
 set -eux
 
+export ANSIBLE_FORCE_HANDLERS
+
+ANSIBLE_FORCE_HANDLERS=false
+
 # simple handler test
 ansible-playbook test_handlers.yml -i inventory.handlers -v "$@" --tags scenario1
 
