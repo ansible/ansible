@@ -220,19 +220,10 @@ def main():
     norm_data = normalize_data(data)
     try:
         norm_data = _check_and_adapt_data(nb, norm_data)
-        if state == "present":
-            return module.exit_json(
-                **ensure_ip_address_present(nb_endpoint, norm_data)
+        if state in ("new", "present"):
+            return _handle_state_new_present(
+                module, state, nb_app, nb_endpoint, norm_data
             )
-        elif state == "new":
-            if norm_data.get("address"):
-                return module.exit_json(
-                    **create_ip_address(nb_endpoint, norm_data)
-                )
-            else:
-                return module.exit_json(
-                    **get_new_available_ip_address(nb_app, norm_data)
-                )
         elif state == "absent":
             return module.exit_json(
                 **ensure_ip_address_absent(nb_endpoint, norm_data)
@@ -258,6 +249,27 @@ def _check_and_adapt_data(nb, data):
         data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
 
     return data
+
+
+def _handle_state_new_present(module, state, nb_app, nb_endpoint, data):
+    if data.get("address"):
+        if state == "present":
+            return module.exit_json(
+                **ensure_ip_address_present(nb_endpoint, data)
+            )
+        elif state == "new":
+            return module.exit_json(
+                **create_ip_address(nb_endpoint, data)
+            )
+    else:
+        if state == "present":
+            return module.exit_json(
+                **ensure_ip_in_prefix_present_on_netif(nb_endpoint, data)
+            )
+        elif state == "new":
+            return module.exit_json(
+                **get_new_available_ip_address(nb_app, data)
+            )
 
 
 def ensure_ip_address_present(nb_endpoint, data):
@@ -314,6 +326,35 @@ def create_ip_address(nb_endpoint, data):
     msg = "IP Addresses %s created" % (data["address"])
 
     return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def ensure_ip_in_prefix_present_on_netif(nb_endpoint, data):
+    """
+    :returns dict(ip_address, msg, changed): dictionary resulting of the request,
+    where 'ip_address' is the serialized ip fetched or newly created in Netbox
+    """
+    if not isinstance(data, dict):
+        changed = False
+        return {"msg": data, "changed": changed}
+
+    if not data.get("interface") or not data.get("prefix"):
+        raise ValueError("A prefix and interface are required")
+
+    get_query_params = {
+        "interface_id": data["interface"], "prefix": data["prefix"],
+    }
+    if data.get("vrf"):
+        get_query_params["vrf_id"] = data["vrf"]
+
+    attached_ips = nb_endpoint.get(**get_query_params)
+    if attached_ips:
+        ip_addr = attached_ips[-1]
+        changed = False
+        msg = "IP Address %s already attached" % (ip_addr["address"])
+
+        return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+    else:
+        return create_ip_address(nb_endpoint, data)
 
 
 def get_new_available_ip_address(nb_app, data):
