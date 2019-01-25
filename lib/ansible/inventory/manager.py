@@ -553,7 +553,13 @@ class InventoryManager(object):
 
         # Display warning if specified host pattern did not match any groups or hosts
         if not results and not matching_groups and pattern != 'all':
-            display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
+            msg = "Could not match supplied host pattern, ignoring: %s" % pattern
+            display.debug(msg)
+            if C.HOST_PATTERN_MISMATCH == 'warning':
+                display.warning(msg)
+            elif C.HOST_PATTERN_MISMATCH == 'error':
+                raise AnsibleOptionsError(msg)
+            # no need to write 'ignore' state
 
         return results
 
