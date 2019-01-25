@@ -288,10 +288,7 @@ files:
   $modules/network/system/: $team_networking
   $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos samdoran NilashishC
-  $modules/notification/_osx_say.py: &macos
-    ignored: frenck
-    labels: macos
-    maintainers: $team_macos
+  $modules/notification/_osx_say.py: $team_ansible
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
     maintainers: Deepakkothandan
@@ -312,7 +309,10 @@ files:
     ignored: bleader
     labels: bsd
     maintainers: $team_bsd
-  $modules/packaging/os/homebrew.py: *macos
+  $modules/packaging/os/homebrew.py: &macos
+    ignored: frenck
+    labels: macos
+    maintainers: $team_macos
   $modules/packaging/os/homebrew_: *macos
   $modules/packaging/os/macports.py: *macos
   $modules/packaging/os/package.py: $team_ansible
