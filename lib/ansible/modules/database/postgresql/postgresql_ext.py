@@ -66,6 +66,7 @@ EXAMPLES = '''
 - postgresql_ext:
     name: postgis
     db: acme
+    schema: extensions
 '''
 import traceback
 
