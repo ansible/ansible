@@ -87,4 +87,3 @@ class TestCnosL3InterfaceModule(TestCnosModule):
                 'changed': True
             }
         )
-
