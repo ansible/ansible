@@ -92,7 +92,7 @@ options:
   state:
     description:
       - Use C(present) or C(absent) for adding or removing.
-    choices: [ absent, present ]
+    choices: [ absent, new, present ]
     default: present
   validate_certs:
     description:
@@ -168,6 +168,8 @@ msg:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.compat import ipaddress
+from ansible.module_utils._text import to_text
 from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, IP_ADDRESS_ROLE, IP_ADDRESS_STATUS
 import json
 
@@ -186,7 +188,7 @@ def main():
         netbox_url=dict(type="str", required=True),
         netbox_token=dict(type="str", required=True, no_log=True),
         data=dict(type="dict", required=True),
-        state=dict(required=False, default='present', choices=['present', 'absent']),
+        state=dict(required=False, default='present', choices=['present', 'new', 'absent']),
         validate_certs=dict(type="bool", default=True)
     )
 
@@ -264,7 +266,9 @@ def _handle_state_new_present(module, state, nb_app, nb_endpoint, data):
     else:
         if state == "present":
             return module.exit_json(
-                **ensure_ip_in_prefix_present_on_netif(nb_endpoint, data)
+                **ensure_ip_in_prefix_present_on_netif(
+                    nb_app, nb_endpoint, data
+                )
             )
         elif state == "new":
             return module.exit_json(
@@ -328,7 +332,7 @@ def create_ip_address(nb_endpoint, data):
     return {"ip_address": ip_addr, "msg": msg, "changed": changed}
 
 
-def ensure_ip_in_prefix_present_on_netif(nb_endpoint, data):
+def ensure_ip_in_prefix_present_on_netif(nb_app, nb_endpoint, data):
     """
     :returns dict(ip_address, msg, changed): dictionary resulting of the request,
     where 'ip_address' is the serialized ip fetched or newly created in Netbox
@@ -341,29 +345,55 @@ def ensure_ip_in_prefix_present_on_netif(nb_endpoint, data):
         raise ValueError("A prefix and interface are required")
 
     get_query_params = {
-        "interface_id": data["interface"], "prefix": data["prefix"],
+        "interface_id": data["interface"], "parent": data["prefix"],
     }
     if data.get("vrf"):
         get_query_params["vrf_id"] = data["vrf"]
 
-    attached_ips = nb_endpoint.get(**get_query_params)
+    attached_ips = nb_endpoint.filter(**get_query_params)
     if attached_ips:
-        ip_addr = attached_ips[-1]
+        ip_addr = attached_ips[-1].serialize()
         changed = False
         msg = "IP Address %s already attached" % (ip_addr["address"])
 
         return {"ip_address": ip_addr, "msg": msg, "changed": changed}
     else:
-        return create_ip_address(nb_endpoint, data)
+        return get_new_available_ip_address(nb_app, data)
 
 
 def get_new_available_ip_address(nb_app, data):
-    prefix = nb_app.prefixes.get(data["prefix"])
-    ip_addr = prefix.available_ips.create(data).serialize()
+    prefix_query = {"prefix": data["prefix"]}
+    if data.get("vrf"):
+        prefix_query["vrf_id"] = data["vrf"]
+
+    prefix = nb_app.prefixes.get(**prefix_query)
+    ip_addr = prefix.available_ips.create(data)
     changed = True
     msg = "IP Addresses %s created" % (ip_addr["address"])
 
     return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def _get_prefix_id(nb_app, prefix, vrf_id=None):
+    ipaddr_prefix = ipaddress.ip_network(prefix)
+    network = to_text(ipaddr_prefix.network_address)
+    mask = ipaddr_prefix.prefixlen
+
+    prefix_query_params = {
+        "prefix": network,
+        "mask_length": mask
+    }
+    if vrf_id:
+        prefix_query_params["vrf_id"] = vrf_id
+
+    prefix_id = nb_app.prefixes.get(prefix_query_params)
+    if not prefix_id:
+        if vrf_id:
+            raise ValueError("Prefix %s does not exist in VRF %s - Please create it" % (prefix, vrf_id))
+        else:
+            raise ValueError("Prefix %s does not exist - Please create it" % (prefix))
+
+    return prefix_id
 
 
 def ensure_ip_address_absent(nb_endpoint, data):
