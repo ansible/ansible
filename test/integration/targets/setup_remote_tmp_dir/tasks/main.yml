@@ -1,0 +1,10 @@
+- name: make sure we have the ansible_os_family and ansible_distribution_version facts
+  setup:
+    gather_subset: distribution
+  when: ansible_facts == {}
+
+- include_tasks: "{{ lookup('first_found', files)}}"
+  vars:
+    files:
+      - "{{ ansible_os_family | lower }}.yml"
+      - "default.yml"

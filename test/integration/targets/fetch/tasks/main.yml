@@ -17,10 +17,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: create a file that we can use to fetch
-  copy: content="test" dest={{ output_dir }}/orig
+  copy: content="test" dest={{ remote_tmp_dir }}/orig
 
 - name: fetch the motd
-  fetch: src={{ output_dir }}/orig dest={{ output_dir }}/fetched
+  fetch: src={{ remote_tmp_dir }}/orig dest={{ output_dir }}/fetched
   register: fetched
 
 - debug: var=fetched
@@ -31,22 +31,14 @@
       - 'fetched["changed"] == True'
       - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
       - 'fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig") == "test"'
 
 # TODO: check the become and non-become forms of fetch because in one form we'll do
 # the get method of the connection plugin and in the become case we'll use the
 # fetch module.
 
-- name: diff what we fetched with the original file
-  shell: diff {{ output_dir }}/orig {{ output_dir }}/fetched/{{inventory_hostname}}{{ output_dir | expanduser }}/orig
-  register: diff
-
-- name: check the diff to make sure they are the same
-  assert:
-    that:
-      'diff.stdout == ""'
-
 - name: fetch a second time to show idempotence
-  fetch: src={{ output_dir }}/orig dest={{ output_dir }}/fetched
+  fetch: src={{ remote_tmp_dir }}/orig dest={{ output_dir }}/fetched
   register: fetched
 
 - name: Assert that the file was not fetched the second time
@@ -56,7 +48,7 @@
       - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
 
 - name: attempt to fetch a non-existent file - do not fail on missing
-  fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=False
+  fetch: src={{ remote_tmp_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=False
   register: fetch_missing_nofail
 
 - name: check fetch missing no fail result
@@ -66,7 +58,7 @@
       - "fetch_missing_nofail is not changed"
 
 - name: attempt to fetch a non-existent file - fail on missing
-  fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=yes
+  fetch: src={{ remote_tmp_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=yes
   register: fetch_missing
   ignore_errors: true
 
@@ -78,7 +70,7 @@
       - "fetch_missing is not changed"
 
 - name: attempt to fetch a non-existent file - fail on missing implicit
-  fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched
+  fetch: src={{ remote_tmp_dir }}/doesnotexist dest={{ output_dir }}/fetched
   register: fetch_missing_implicit
   ignore_errors: true
 
@@ -90,7 +82,7 @@
       - "fetch_missing_implicit is not changed"
 
 - name: attempt to fetch a directory - should not fail but return a message
-  fetch: src={{ output_dir }} dest={{ output_dir }}/somedir fail_on_missing=False
+  fetch: src={{ remote_tmp_dir }} dest={{ output_dir }}/somedir fail_on_missing=False
   register: fetch_dir
 
 - name: check fetch directory result
@@ -100,7 +92,7 @@
       - "fetch_dir.msg"
 
 - name: attempt to fetch a directory - should fail
-  fetch: src={{ output_dir }} dest={{ output_dir }}/somedir fail_on_missing=True
+  fetch: src={{ remote_tmp_dir }} dest={{ output_dir }}/somedir fail_on_missing=True
   register: failed_fetch_dir
   ignore_errors: true
 
@@ -112,32 +104,31 @@
 
 - name: create symlink to a file that we can fetch
   file:
-    path: "{{ output_dir }}/link"
-    src: "{{ output_dir }}/orig"
+    path: "{{ remote_tmp_dir }}/link"
+    src: "{{ remote_tmp_dir }}/orig"
     state: "link"
 
 - name: fetch the file via a symlink
-  fetch: src={{ output_dir }}/link dest={{ output_dir }}/fetched-link
+  fetch: src={{ remote_tmp_dir }}/link dest={{ output_dir }}/fetched-link
   register: fetched
 
 - debug: var=fetched
+
+- name: Assert that we fetched correctly
+  assert:
+    that:
+      - 'fetched["changed"] == True'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'lookup("file", output_dir + "/fetched-link/" + inventory_hostname + remote_tmp_dir + "/link") == "test"'
 
 # TODO: check the become and non-become forms of fetch because in one form we'll do
 # the get method of the connection plugin and in the become case we'll use the
 # fetch module.
 
-- name: diff what we fetched with the original file
-  shell: diff {{ output_dir }}/orig {{ output_dir }}/fetched-link/{{inventory_hostname}}{{ output_dir | expanduser }}/link
-  register: diff
-
-- name: check the diff to make sure they are the same
-  assert:
-    that:
-      'diff.stdout == ""'
-
 - name: dest is an existing directory name without trailing slash and flat=yes, should fail
   fetch:
-    src: "{{ output_dir }}/orig"
+    src: "{{ remote_tmp_dir }}/orig"
     dest: "{{ output_dir }}"
     flat: yes
   register: failed_fetch_dest_dir
