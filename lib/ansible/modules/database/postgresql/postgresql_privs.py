@@ -86,7 +86,8 @@ options:
       Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   target_roles:
     description:
-      - Comma separated list of role (user/group) names to set as the default permissions.
+      - Comma-separated list of existing role (user/group) names to set as the
+        default permissions for database objects subsequently created by them.
     version_added: 2.8
   grant_option:
     description:
@@ -306,6 +307,36 @@ EXAMPLES = """
     roles: caller
     objs: ALL_IN_SCHEMA
     schema: common
+
+# Available since version 2.8
+# ALTER DEFAULT PRIVILEGES FOR ROLE librarian IN SCHEMA library GRANT SELECT ON TABLES TO reader
+# GRANT SELECT privileges for new TABLES objects created by librarian as
+# default to the role reader.
+# For specific
+- postgresql_privs:
+    db: library
+    schema: library
+    objs: TABLES
+    privs: SELECT
+    type: default_privs
+    role: reader
+    target_roles: librarian
+
+# Available since version 2.8
+# ALTER DEFAULT PRIVILEGES FOR ROLE librarian IN SCHEMA library REVOKE SELECT ON TABLES FROM reader
+# REVOKE SELECT privileges for new TABLES objects created by librarian as
+# default from the role reader.
+# For specific
+- postgresql_privs:
+    db: library
+    state: absent
+    schema: library
+    objs: TABLES
+    privs: SELECT
+    type: default_privs
+    role: reader
+    target_roles: librarian
+
 """
 
 import traceback
@@ -542,13 +573,8 @@ class Connection(object):
 
     # Manipulating privileges
 
-<<<<<<< HEAD
-    def manipulate_privs(self, obj_type, privs, objs, roles,
-                         state, grant_option, schema_qualifier=None, fail_on_role=True):
-=======
     def manipulate_privs(self, obj_type, privs, objs, roles, target_roles,
-                         state, grant_option, schema_qualifier=None):
->>>>>>> #50877:
+                         state, grant_option, schema_qualifier=None, fail_on_role=True):
         """Manipulate database object privileges.
 
         :param obj_type: Type of database object to grant/revoke
@@ -650,6 +676,7 @@ class Connection(object):
 
             for_whom = ','.join(for_whom)
 
+        # as_who:
         if target_roles:
             as_who = ','.join(pg_quote_identifier(r, 'role') for r in target_roles)
         else:
@@ -927,6 +954,12 @@ def main():
 
                 else:
                     module.warn("Role '%s' does not exist, nothing to do" % roles[0].strip())
+
+        # check if target_roles is set with type: default_privs
+        if p.target_roles and not p.type == 'default_privs':
+            module.fail_json(
+                msg='Invalid usage of target_roles. target_roles is only available with type: default_privs'
+            )
 
         # target roles
         if p.target_roles:
