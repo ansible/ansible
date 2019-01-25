@@ -75,6 +75,7 @@ options:
           property of the object contains the ID of the service.
         type: int
         choices: [ 0, 1, 2, 3 ]
+        version_added: '2.8'
     state:
         description:
         - Controls whether found updates are returned as a list or actually installed.
