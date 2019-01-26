@@ -48,7 +48,7 @@ options:
     choices: [ absent, present, query ]
     default: present
 notes:
-- This module cannot create empty schemas (i.e. schemas without templates).
+- Due to restrictions of the MSO REST API this module cannot create empty schemas (i.e. schemas without templates).
   Use the M(mso_schema_template) to automatically create schemas with templates.
 seealso:
 - module: mso_schema_site

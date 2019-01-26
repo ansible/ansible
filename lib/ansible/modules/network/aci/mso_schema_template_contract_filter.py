@@ -30,10 +30,12 @@ options:
     description:
     - The name of the template.
     type: list
+    required: yes
   contract:
     description:
     - The name of the contract to manage.
     type: str
+    required: yes
   contract_display_name:
     description:
     - The name as displayed on the MSO web interface.
@@ -78,6 +80,11 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+seealso:
+- module: mso_schema_template_filter_entry
+notes:
+- Due to restrictions of the MSO REST API this module creates contracts when needed, and removes them when the last filter has been removed.
+- Due to restrictions of the MSO REST API concurrent modifications to contract filters can be dangerous and corrupt data.
 extends_documentation_fragment: mso
 '''
 
@@ -209,7 +216,7 @@ def main():
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
-    path = 'schemas/{id}'.format(id=schema_id)
+    schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
     templates = [t['name'] for t in schema_obj['templates']]
@@ -230,6 +237,8 @@ def main():
         filter_ref = mso.filter_ref(filter_schema_id, filter_template, filter_name)
         if filter_ref in filters:
             filter_idx = filters.index(filter_ref)
+            # FIXME: Changes based on index are DANGEROUS
+            filter_path = '/templates/{0}/contracts/{1}/{2}/{3}'.format(template, contract, filter_key, filter_idx)
             mso.existing = schema_obj['templates'][template_idx]['contracts'][contract_idx][filter_key][filter_idx]
 
     if state == 'query':
@@ -244,8 +253,7 @@ def main():
 
     ops = []
     contract_path = '/templates/{0}/contracts/{1}'.format(template, contract)
-    # FIXME: Removing based on index is DANGEROUS
-    filter_path = '/templates/{0}/contracts/{1}/{2}/{3}'.format(template, contract, filter_key, filter_idx)
+    filters_path = '/templates/{0}/contracts/{1}/{2}'.format(template, contract, filter_key)
 
     mso.previous = mso.existing
     if state == 'absent':
@@ -266,9 +274,6 @@ def main():
             mso.existing = {}
             ops.append(dict(op='remove', path=filter_path))
 
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=ops)
-
     elif state == 'present':
 
         payload = dict(
@@ -282,11 +287,6 @@ def main():
 
         mso.sanitize(payload, collate=True)
         mso.existing = mso.sent
-        ops = []
-        contract_path = '/templates/{0}/contracts/{1}'.format(template, contract)
-        filters_path = '/templates/{0}/contracts/{1}/{2}'.format(template, contract, filter_key)
-        # FIXME: Updating based on index is DANGEROUS
-        filter_path = '/templates/{0}/contracts/{1}/{2}/{3}'.format(template, contract, filter_key, filter_idx)
 
         if contract_idx is None:
             # COntract does not exist, so we have to create it
@@ -322,8 +322,8 @@ def main():
             # Filter exists, we have to update it
             ops.append(dict(op='replace', path=filter_path, value=mso.sent))
 
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=ops)
+    if not module.check_mode:
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 

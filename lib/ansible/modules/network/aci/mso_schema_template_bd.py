@@ -30,6 +30,7 @@ options:
     description:
     - The name of the template.
     type: list
+    required: yes
   bd:
     description:
     - The name of the BD to manage.
@@ -41,11 +42,11 @@ options:
     type: str
   vrf:
     description:
-    - The VRF associated to this ANP.
+    - The VRF associated to this BD.
     type: str
   subnets:
     description:
-    - The subnets associated to this ANP.
+    - The subnets associated to this BD.
     type: list
     suboptions:
       ip:
@@ -203,7 +204,7 @@ def main():
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
-    path = 'schemas/{id}'.format(id=schema_id)
+    schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
     templates = [t['name'] for t in schema_obj['templates']]
@@ -225,16 +226,15 @@ def main():
             mso.fail_json(msg="BD '{bd}' not found".format(bd=bd))
         mso.exit_json()
 
+    bds_path = '/templates/{0}/bds'.format(template)
+    bd_path = '/templates/{0}/bds/{1}'.format(template, bd)
+    ops = []
+
     mso.previous = mso.existing
     if state == 'absent':
         if mso.existing:
             mso.sent = mso.existing = {}
-            operation = [dict(
-                op='remove',
-                path='/templates/{template}/bds/{bd}'.format(template=template, bd=bd),
-            )]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operation)
+            ops.append(dict(op='remove', path=bd_path))
 
     elif state == 'present':
         vrf_ref = mso.make_reference(vrf, 'vrf', schema_id, template)
@@ -242,6 +242,8 @@ def main():
 
         if display_name is None and not mso.existing:
             display_name = bd
+        if subnets is None and not mso.existing:
+            subnets = []
 
         payload = dict(
             name=bd,
@@ -255,25 +257,17 @@ def main():
             vrfRef=vrf_ref,
         )
 
-        mso.sanitize(payload, collate=True, unwanted=['bdRef', 'vrfRef'])
+        mso.sanitize(payload, collate=True)
 
         if mso.existing:
-            operation = [dict(
-                op='replace',
-                path='/templates/{template}/bds/{bd}'.format(template=template, bd=bd),
-                value=mso.sent,
-            )]
-
+            ops.append(dict(op='replace', path=bd_path, value=mso.sent))
         else:
-            operation = [dict(
-                op='add',
-                path='/templates/{template}/bds/-'.format(template=template),
-                value=mso.sent,
-            )]
+            ops.append(dict(op='add', path=bds_path + '/-', value=mso.sent))
 
         mso.existing = mso.proposed
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=operation)
+
+    if not module.check_mode:
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 
