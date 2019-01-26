@@ -114,10 +114,10 @@ def main():
         ),
     )
     # Build up the invocation of `make` we are going to use
-    # for non linux OS, prefer gmake (GNU make) over make
+    # For non-Linux OSes, prefer gmake (GNU make) over make
     make_path = module.get_bin_path('gmake', required=False)
     if not make_path:
-        # Fallback to make
+        # Fall back to system make
         make_path = module.get_bin_path('make', required=True)
     make_target = module.params['target']
     if module.params['params'] is not None:
