@@ -30,6 +30,7 @@ options:
     description:
     - The name of the template.
     type: list
+    required: yes
   vrf:
     description:
     - The name of the VRF to manage.
@@ -138,12 +139,10 @@ def main():
 
     # Get schema_id
     schema_obj = mso.get_obj('schemas', displayName=schema)
-    if schema_obj:
-        schema_id = schema_obj['id']
-    else:
+    if not schema_obj:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
-    path = 'schemas/{id}'.format(id=schema_id)
+    schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
     templates = [t['name'] for t in schema_obj['templates']]
@@ -165,16 +164,15 @@ def main():
             mso.fail_json(msg="VRF '{vrf}' not found".format(vrf=vrf))
         mso.exit_json()
 
+    vrfs_path = '/templates/{0}/vrfs'.format(template)
+    vrf_path = '/templates/{0}/vrfs/{1}'.format(template, vrf)
+    ops = []
+
     mso.previous = mso.existing
     if state == 'absent':
         if mso.existing:
             mso.sent = mso.existing = {}
-            operation = [dict(
-                op='remove',
-                path='/templates/{template}/vrfs/{vrf}'.format(template=template, vrf=vrf),
-            )]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operation)
+            ops.append(dict(op='remove', path=vrf_path))
 
     elif state == 'present':
         if display_name is None and not mso.existing:
@@ -191,22 +189,14 @@ def main():
         mso.sanitize(payload, collate=True)
 
         if mso.existing:
-            operation = [dict(
-                op='replace',
-                path='/templates/{template}/vrfs/{vrf}'.format(template=template, vrf=vrf),
-                value=mso.sent,
-            )]
-
+            ops.append(dict(op='replace', path=vrf_path, value=mso.sent))
         else:
-            operation = [dict(
-                op='add',
-                path='/templates/{template}/vrfs/-'.format(template=template),
-                value=mso.sent,
-            )]
+            ops.append(dict(op='add', path=vrfs_path + '/-', value=mso.sent))
 
         mso.existing = mso.proposed
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=operation)
+
+    if not module.check_mode:
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 

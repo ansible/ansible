@@ -30,6 +30,7 @@ options:
     description:
     - The name of the template.
     type: list
+    required: yes
   anp:
     description:
     - The name of the ANP to manage.
@@ -134,12 +135,10 @@ def main():
 
     # Get schema_id
     schema_obj = mso.get_obj('schemas', displayName=schema)
-    if schema_obj:
-        schema_id = schema_obj['id']
-    else:
+    if not schema_obj:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
-    path = 'schemas/{id}'.format(id=schema_id)
+    schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
     templates = [t['name'] for t in schema_obj['templates']]
@@ -197,7 +196,7 @@ def main():
         mso.existing = mso.proposed
 
     if not module.check_mode:
-        mso.request(path, method='PATCH', data=ops)
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 

@@ -30,10 +30,12 @@ options:
     description:
     - The name of the template.
     type: list
+    required: yes
   filter:
     description:
     - The name of the filter to manage.
     type: str
+    required: yes
   filter_display_name:
     description:
     - The name as displayed on the MSO web interface.
@@ -106,6 +108,10 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+seealso:
+- module: mso_schema_template_contract_filter
+notes:
+- Due to restrictions of the MSO REST API this module creates filters when needed, and removes them when the last entry has been removed.
 extends_documentation_fragment: mso
 '''
 
@@ -168,9 +174,9 @@ def main():
     argument_spec.update(
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True),
-        filter=dict(type='str', required=True),  # This parameter is not required for querying all objects
+        filter=dict(type='str', required=True),
         filter_display_name=dict(type='str', aliases=['filter_display_name']),
-        entry=dict(type='str', required=True, aliases=['name']),
+        entry=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
         description=dict(type='str', aliases=['entry_description']),
         display_name=dict(type='str', aliases=['entry_display_name']),
         ethertype=dict(type='str', choices=['arp', 'fcoe', 'ip', 'ipv4', 'ipv6', 'mac-security', 'mpls-unicast', 'trill', 'unspecified']),
@@ -216,14 +222,12 @@ def main():
 
     mso = MSOModule(module)
 
-    # Get schema_id
+    # Get schema
     schema_obj = mso.get_obj('schemas', displayName=schema)
-    if schema_obj:
-        schema_id = schema_obj['id']
-    else:
+    if not schema_obj:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
-    path = 'schemas/{id}'.format(id=schema_id)
+    schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
     templates = [t['name'] for t in schema_obj['templates']]
@@ -247,10 +251,18 @@ def main():
 
     if state == 'query':
         if entry is None:
+            if filter_idx is None:
+                mso.fail_json(msg="Filter '{filter}' not found".format(filter=filter_name))
             mso.existing = schema_obj['templates'][template_idx]['filters'][filter_idx]['entries']
         elif not mso.existing:
             mso.fail_json(msg="Entry '{entry}' not found".format(entry=entry))
         mso.exit_json()
+
+    filters_path = '/templates/{0}/filters'.format(template)
+    filter_path = '/templates/{0}/filters/{1}'.format(template, filter_name)
+    entries_path = '/templates/{0}/filters/{1}/entries'.format(template, filter_name)
+    entry_path = '/templates/{0}/filters/{1}/entries/{2}'.format(template, filter_name, entry)
+    ops = []
 
     mso.previous = mso.existing
     if state == 'absent':
@@ -265,18 +277,11 @@ def main():
         elif len(entries) == 1:
             # There is only one entry, remove filter
             mso.existing = {}
-            operations = [
-                dict(op='remove', path='/templates/{template}/filters/{filter}'.format(template=template, filter=filter_name)),
-            ]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operations)
+            ops.append(dict(op='remove', path=filter_path))
+
         else:
             mso.existing = {}
-            operations = [
-                dict(op='remove', path='/templates/{template}/filters/{filter}/entries/{entry}'.format(template=template, filter=filter_name, entry=entry)),
-            ]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operations)
+            ops.append(dict(op='remove', path=entry_path))
 
     elif state == 'present':
 
@@ -322,7 +327,6 @@ def main():
         )
 
         mso.sanitize(payload, collate=True)
-        mso.existing = mso.sent
 
         if filter_idx is None:
             # Filter does not exist, so we have to create it
@@ -335,37 +339,31 @@ def main():
                 entries=[mso.sent],
             )
 
-            operations = [
-                dict(op='add', path='/templates/{template}/filters/-'.format(template=template), value=payload),
-            ]
+            ops.append(dict(op='add', path=filters_path + '/-', value=payload))
 
         elif entry_idx is None:
             # Entry does not exist, so we have to add it
-            operations = [
-                dict(op='add', path='/templates/{template}/filters/{filter}/entries/-'.format(template=template, filter=filter_name), value=mso.sent)
-            ]
+            ops.append(dict(op='add', path=entries_path + '/-', value=mso.sent))
 
         else:
             # Entry exists, we have to update it
-            alias = '/templates/{template}/filters/{filter}/entries/{entry}'.format(template=template, filter=filter_name, entry=entry)
-            operations = [
-                dict(op='replace', path='{alias}/name'.format(alias=alias), value=entry),
-                dict(op='replace', path='{alias}/displayName'.format(alias=alias), value=display_name),
-                dict(op='replace', path='{alias}/description'.format(alias=alias), value=description),
-                dict(op='replace', path='{alias}/etherType'.format(alias=alias), value=ethertype),
-                dict(op='replace', path='{alias}/ipProtocol'.format(alias=alias), value=ip_protocol),
-                dict(op='replace', path='{alias}/tcpSessionRules'.format(alias=alias), value=tcp_session_rules),
-                dict(op='replace', path='{alias}/sourceFrom'.format(alias=alias), value=source_from),
-                dict(op='replace', path='{alias}/sourceTo'.format(alias=alias), value=source_to),
-                dict(op='replace', path='{alias}/destinationFrom'.format(alias=alias), value=destination_from),
-                dict(op='replace', path='{alias}/destinationTo'.format(alias=alias), value=destination_to),
-                dict(op='replace', path='{alias}/arpFlag'.format(alias=alias), value=arp_flag),
-                dict(op='replace', path='{alias}/stateful'.format(alias=alias), value=stateful),
-                dict(op='replace', path='{alias}/matchOnlyFragments'.format(alias=alias), value=fragments_only),
-            ]
+            ops.append(dict(op='replace', path=entry_path + '/displayName', value=display_name))
+            ops.append(dict(op='replace', path=entry_path + '/description', value=description))
+            ops.append(dict(op='replace', path=entry_path + '/etherType', value=ethertype))
+            ops.append(dict(op='replace', path=entry_path + '/ipProtocol', value=ip_protocol))
+            ops.append(dict(op='replace', path=entry_path + '/tcpSessionRules', value=tcp_session_rules))
+            ops.append(dict(op='replace', path=entry_path + '/sourceFrom', value=source_from))
+            ops.append(dict(op='replace', path=entry_path + '/sourceTo', value=source_to))
+            ops.append(dict(op='replace', path=entry_path + '/destinationFrom', value=destination_from))
+            ops.append(dict(op='replace', path=entry_path + '/destinationTo', value=destination_to))
+            ops.append(dict(op='replace', path=entry_path + '/arpFlag', value=arp_flag))
+            ops.append(dict(op='replace', path=entry_path + '/stateful', value=stateful))
+            ops.append(dict(op='replace', path=entry_path + '/matchOnlyFragments', value=fragments_only))
 
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=operations)
+        mso.existing = mso.proposed
+
+    if not module.check_mode:
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 
