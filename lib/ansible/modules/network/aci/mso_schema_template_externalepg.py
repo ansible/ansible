@@ -30,6 +30,7 @@ options:
     description:
     - The name of the template.
     type: list
+    required: yes
   externalepg:
     description:
     - The name of the external EPG to manage.
@@ -143,7 +144,7 @@ def main():
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
-    path = 'schemas/{id}'.format(id=schema_id)
+    schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
     templates = [t['name'] for t in schema_obj['templates']]
@@ -165,16 +166,15 @@ def main():
             mso.fail_json(msg="External EPG '{externalepg}' not found".format(externalepg=externalepg))
         mso.exit_json()
 
+    eepgs_path = '/templates/{0}/externalEpgs'.format(template)
+    eepg_path = '/templates/{0}/externalEpgs/{1}'.format(template, externalepg)
+    ops = []
+
     mso.previous = mso.existing
     if state == 'absent':
         if mso.existing:
             mso.sent = mso.existing = {}
-            operation = [dict(
-                op='remove',
-                path='/templates/{template}/externalEpgs/{externalepg}'.format(template=template, externalepg=externalepg),
-            )]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operation)
+            ops.append(dict(op='remove', path=eepg_path))
 
     elif state == 'present':
         vrf_ref = mso.make_reference(vrf, 'vrf', schema_id, template)
@@ -194,22 +194,14 @@ def main():
         mso.sanitize(payload, collate=True)
 
         if mso.existing:
-            operation = [dict(
-                op='replace',
-                path='/templates/{template}/externalEpgs/{externalepg}'.format(template=template, externalepg=externalepg),
-                value=mso.sent,
-            )]
-
+            ops.append(dict(op='replace', path=eepg_path, value=mso.sent))
         else:
-            operation = [dict(
-                op='add',
-                path='/templates/{template}/externalEpgs/-'.format(template=template),
-                value=mso.sent,
-            )]
+            ops.append(dict(op='add', path=eepgs_path + '/-', value=mso.sent))
 
         mso.existing = mso.proposed
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=operation)
+
+    if not module.check_mode:
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 

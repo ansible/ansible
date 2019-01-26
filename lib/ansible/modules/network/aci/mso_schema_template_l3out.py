@@ -30,6 +30,7 @@ options:
     description:
     - The name of the template.
     type: list
+    required: yes
   l3out:
     description:
     - The name of the l3out to manage.
@@ -41,7 +42,7 @@ options:
     type: str
   vrf:
     description:
-    - The VRF associated to this ANP.
+    - The VRF associated to this L3out.
     type: str
   state:
     description:
@@ -143,7 +144,7 @@ def main():
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
-    path = 'schemas/{id}'.format(id=schema_id)
+    schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
     templates = [t['name'] for t in schema_obj['templates']]
@@ -165,16 +166,15 @@ def main():
             mso.fail_json(msg="L3out '{l3out}' not found".format(l3out=l3out))
         mso.exit_json()
 
+    l3outs_path = '/templates/{0}/intersiteL3outs'.format(template)
+    l3out_path = '/templates/{0}/intersiteL3outs/{1}'.format(template, l3out)
+    ops = []
+
     mso.previous = mso.existing
     if state == 'absent':
         if mso.existing:
             mso.sent = mso.existing = {}
-            operation = [dict(
-                op='remove',
-                path='/templates/{template}/intersiteL3outs/{l3out}'.format(template=template, l3out=l3out),
-            )]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operation)
+            ops.append(dict(op='remove', path=l3out_path))
 
     elif state == 'present':
         vrf_ref = mso.make_reference(vrf, 'vrf', schema_id, template)
@@ -191,22 +191,14 @@ def main():
         mso.sanitize(payload, collate=True)
 
         if mso.existing:
-            operation = [dict(
-                op='replace',
-                path='/templates/{template}/intersiteL3outs/{l3out}'.format(template=template, l3out=l3out),
-                value=mso.sent,
-            )]
-
+            ops.append(dict(op='replace', path=l3out_path, value=mso.sent))
         else:
-            operation = [dict(
-                op='add',
-                path='/templates/{template}/intersiteL3outs/-'.format(template=template),
-                value=mso.sent,
-            )]
+            ops.append(dict(op='add', path=l3outs_path + '/-', value=mso.sent))
 
         mso.existing = mso.proposed
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=operation)
+
+    if not module.check_mode:
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 

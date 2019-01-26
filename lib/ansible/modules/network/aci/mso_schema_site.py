@@ -135,7 +135,6 @@ def main():
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     # Schema exists
-    schema_id = schema_obj['id']
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get site
@@ -159,16 +158,16 @@ def main():
                 mso.existing = []
         mso.exit_json()
 
+    sites_path = '/sites'
+    site_path = '/sites/{0}'.format(site)
     ops = []
 
     mso.previous = mso.existing
     if state == 'absent':
-        mso.proposed = mso.sent = {}
-
         if mso.existing:
             # Remove existing site
-            mso.existing = {}
-            ops.append(dict(op='remove', path='/sites/{0}'.format(site_idx)))
+            mso.sent = mso.existing = {}
+            ops.append(dict(op='remove', path=site_path))
 
     elif state == 'present':
         if not mso.existing:
@@ -187,8 +186,9 @@ def main():
 
             mso.sanitize(payload, collate=True)
 
-            mso.existing = mso.proposed = mso.sent
-            ops.append(dict(op='add', path='/sites/-', value=mso.sent))
+            ops.append(dict(op='add', path=sites_path + '/-', value=mso.sent))
+
+            mso.existing = mso.proposed
 
     if not module.check_mode:
         mso.request(schema_path, method='PATCH', data=ops)
