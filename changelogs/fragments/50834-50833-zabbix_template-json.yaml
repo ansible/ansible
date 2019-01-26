@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - zabbix_template - Module no longer requires ``template_name`` to be provided when importing with ``template_json`` option (https://github.com/ansible/ansible/issues/50833)
+bugfixes:
+  - zabbix_template - Fixed cryptic error when ``template_groups`` option wasn't provided (https://github.com/ansible/ansible/issues/50834)
+  - zabbix_template - Failed template import will no longer leave empty templates configured on Zabbix server

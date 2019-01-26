@@ -30,7 +30,8 @@ options:
     template_name:
         description:
             - Name of Zabbix template.
-        required: true
+            - Required when I(template_json) is not used.
+        required: false
     template_json:
         description:
             - JSON dump of template to import.
@@ -38,6 +39,7 @@ options:
     template_groups:
         description:
             - List of template groups to create or delete.
+            - Required when I(template_name) is used and C(state=present).
         required: false
     link_templates:
         description:
@@ -253,12 +255,14 @@ class Template(object):
                      child_template_ids, macros):
         if self._module.check_mode:
             self._module.exit_json(changed=True)
-        self._zapi.template.create({'host': template_name,
-                                    'groups': group_ids,
-                                    'templates': child_template_ids,
-                                    'macros': macros})
+
         if template_json:
             self.import_template(template_json, template_name)
+        else:
+            self._zapi.template.create({'host': template_name,
+                                        'groups': group_ids,
+                                        'templates': child_template_ids,
+                                        'macros': macros})
 
     def update_template(self, templateids, template_json,
                         group_ids, child_template_ids,
@@ -448,7 +452,7 @@ def main():
             http_login_password=dict(type='str', required=False,
                                      default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            template_name=dict(type='str', required=True),
+            template_name=dict(type='str', required=False),
             template_json=dict(type='json', required=False),
             template_groups=dict(type='list', required=False),
             link_templates=dict(type='list', required=False),
@@ -458,6 +462,7 @@ def main():
                                                    'dump']),
             timeout=dict(type='int', default=10)
         ),
+        required_one_of=[['template_name', 'template_json']],
         supports_check_mode=True
     )
 
@@ -492,6 +497,13 @@ def main():
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     template = Template(module, zbx)
+    if template_json and not template_name:
+        # Ensure template_name is not empty for safety check in import_template
+        template_loaded = template.load_json_template(template_json)
+        template_name = template_loaded['zabbix_export']['templates'][0]['template']
+    elif template_name and not template_groups and state == 'present':
+        module.fail_json(msg="Option template_groups is required when template_json is not used")
+
     template_ids = template.get_template_ids([template_name])
     existing_template_json = None
     if template_ids:
