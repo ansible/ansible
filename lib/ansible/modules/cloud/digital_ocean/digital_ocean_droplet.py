@@ -123,7 +123,7 @@ EXAMPLES = '''
   register: my_droplet
 
 - debug:
-    msg: "ID is {{ my_droplet.droplet.id }}"
+    msg: "ID is {{ my_droplet.data.droplet.id }}, IP is {{ my_droplet.data.ip_address }}"
 
 - name: ensure a droplet is present
   digital_ocean_droplet:
