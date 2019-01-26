@@ -1,6 +1,6 @@
 ---
 # Run withhout --check
-- hosts: localhost
+- hosts: testhost
   gather_facts: False
   tasks:
   - command: 'echo ran'
@@ -12,7 +12,7 @@
       that:
       - '"ran" in command_out["stdout"]'
 
-- hosts: localhost
+- hosts: testhost
   gather_facts: False
   check_mode: True
   tasks:
@@ -24,7 +24,7 @@
       that:
       - '"check mode" in command_out["msg"]'
 
-- hosts: localhost
+- hosts: testhost
   gather_facts: False
   tasks:
   - command: 'echo ran'

@@ -61,7 +61,6 @@
     unique: no
     delimiter: ';'
   register: users_nonunique
-  delegate_to: localhost
 
 - assert:
     that:
@@ -96,7 +95,6 @@
       dag,500,500,Dag Wieërs
       jeroen,501,500,Jeroen Hoekx
     dest: users_noheader.csv
-  delegate_to: localhost
 
 # Read a CSV file and access user 'dag'
 - name: Read users from CSV file and return a dictionary
