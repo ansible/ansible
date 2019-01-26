@@ -131,7 +131,7 @@ try:
             break
     if algorithms is None:
         # python 2.5+
-        algorithms = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
+        algorithms = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
     for algorithm in algorithms:
         AVAILABLE_HASH_ALGORITHMS[algorithm] = getattr(hashlib, algorithm)
 
@@ -139,7 +139,7 @@ try:
     try:
         hashlib.md5()
     except ValueError:
-        algorithms.pop('md5', None)
+        algorithms.remove('md5')
 except Exception:
     import sha
     AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
