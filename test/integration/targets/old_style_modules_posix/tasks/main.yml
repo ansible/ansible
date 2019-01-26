@@ -27,8 +27,13 @@
     that:
       - 'goodbye_ansible.msg == "Goodbye, Ansible!"'
 
+- name: Copy module to remote
+  copy:
+    src: "{{ role_path }}/library/helloworld.sh"
+    dest: "{{ remote_tmp_dir }}/helloworld.sh"
+
 - name: Execute module directly
-  command: '/bin/sh {{ role_path }}/library/helloworld.sh'
+  command: '/bin/sh {{ remote_tmp_dir }}/helloworld.sh'
   register: direct
   ignore_errors: true
 

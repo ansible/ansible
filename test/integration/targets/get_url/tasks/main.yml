@@ -396,8 +396,8 @@
 - name: Test headers string
   assert:
     that:
-      - (result["content"] | b64decode | from_json).headers.get('Foo') == 'bar'
-      - (result["content"] | b64decode | from_json).headers.get('Baz') == 'qux'
+      - (result.content | b64decode | from_json).headers.get('Foo') == 'bar'
+      - (result.content | b64decode | from_json).headers.get('Baz') == 'qux'
 
 - name: Test headers string invalid format
   get_url:
@@ -425,8 +425,8 @@
 - name: Test headers dict
   assert:
     that:
-      - (result["content"] | b64decode | from_json).headers.get('Foo') == 'bar'
-      - (result["content"] | b64decode | from_json).headers.get('Baz') == 'qux'
+      - (result.content | b64decode | from_json).headers.get('Foo') == 'bar'
+      - (result.content | b64decode | from_json).headers.get('Baz') == 'qux'
 
 - name: Test client cert auth, with certs
   get_url:
@@ -444,5 +444,5 @@
 - name: Assert that the ssl_client_verify file contains the correct content
   assert:
     that:
-      - '(result["content"] | b64decode) == "ansible.http.tests:SUCCESS"'
+      - '(result.content | b64decode) == "ansible.http.tests:SUCCESS"'
   when: has_httptester

@@ -2,9 +2,9 @@
 # There have been regressions where included tasks and
 # nested blocks ran out of order...
 
-- shell:  printf one.{{ item }}. >> {{ temppath.stdout }}
+- shell:  printf one.{{ item }}. >> {{ temppath }}
 - block:
-  - shell: printf two.{{ item }}. >> {{ temppath.stdout }}
+  - shell: printf two.{{ item }}. >> {{ temppath }}
   - block:
-    - shell: printf three.{{ item }}. >> {{ temppath.stdout }}
-- shell: printf four.{{ item }}. >> {{ temppath.stdout }}
+    - shell: printf three.{{ item }}. >> {{ temppath }}
+- shell: printf four.{{ item }}. >> {{ temppath }}
