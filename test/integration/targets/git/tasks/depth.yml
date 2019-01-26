@@ -169,7 +169,7 @@
 - name: DEPTH | check update arrived
   assert:
     that:
-      - "{{ a_file['content'] | b64decode | trim }} == 3"
+      - "{{ a_file.content | b64decode | trim }} == 3"
       - git_fetch is changed
 
 - name: DEPTH | clear checkout_dir
