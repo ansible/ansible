@@ -182,7 +182,7 @@ def get_name(pacman_output):
     for line in lines:
         if 'Name' in line:
             return line.split(':')[1].strip()
-    return None
+    module.fail_json(msg="get_name: fail to retrieve package name from pacman output")
 
 
 def query_package(module, pacman_path, name, state="present"):
