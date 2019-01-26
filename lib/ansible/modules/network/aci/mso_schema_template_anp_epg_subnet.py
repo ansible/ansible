@@ -30,14 +30,17 @@ options:
     description:
     - The name of the template to change.
     type: list
+    required: yes
   anp:
     description:
     - The name of the ANP.
     type: str
+    required: yes
   epg:
     description:
     - The name of the EPG to manage.
     type: str
+    required: yes
   ip:
     description:
     - The IP range in CIDR notation.
@@ -67,6 +70,8 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+notes:
+- Due to restrictions of the MSO REST API concurrent modifications to EPG subnets can be dangerous and corrupt data.
 extends_documentation_fragment: mso
 '''
 
@@ -164,14 +169,12 @@ def main():
 
     mso = MSOModule(module)
 
-    # Get schema_id
+    # Get schema
     schema_obj = mso.get_obj('schemas', displayName=schema)
-    if schema_obj:
-        schema_id = schema_obj['id']
-    else:
+    if not schema_obj:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
-    path = 'schemas/{id}'.format(id=schema_id)
+    schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
     templates = [t['name'] for t in schema_obj['templates']]
@@ -196,7 +199,8 @@ def main():
     subnets = [s['ip'] for s in schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets']]
     if ip in subnets:
         ip_idx = subnets.index(ip)
-        # FIXME: Forced to use index here
+        # FIXME: Changes based on index are DANGEROUS
+        subnet_path = '/templates/{0}/anps/{1}/epgs/{2}/subnets/{3}'.format(template, anp, epg, ip_idx)
         mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets'][ip_idx]
 
     if state == 'query':
@@ -206,17 +210,14 @@ def main():
             mso.fail_json(msg="Subnet '{ip}' not found".format(ip=ip))
         mso.exit_json()
 
+    subnets_path = '/templates/{0}/anps/{1}/epgs/{2}/subnets'.format(template, anp, epg)
+    ops = []
+
     mso.previous = mso.existing
     if state == 'absent':
         if mso.existing:
-            mso.sent = mso.existing = {}
-            operation = [dict(
-                op='remove',
-                # FIXME: Forced to use index here
-                path='/templates/{template}/anps/{anp}/epgs/{epg}/subnets/{ip}'.format(template=template, anp=anp, epg=epg, ip=ip_idx),
-            )]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operation)
+            mso.existing = {}
+            ops.append(dict(op='remove', path=subnet_path))
 
     elif state == 'present':
         if description is None and not mso.existing:
@@ -239,22 +240,14 @@ def main():
         mso.sanitize(payload, collate=True)
 
         if mso.existing:
-            operation = [dict(
-                op='replace',
-                # FIXME: Forced to use index here
-                path='/templates/{template}/anps/{anp}/epgs/{epg}/subnets/{ip}'.format(template=template, anp=anp, epg=epg, ip=ip_idx),
-                value=mso.sent,
-            )]
+            ops.append(dict(op='replace', path=subnet_path, value=mso.sent))
         else:
-            operation = [dict(
-                op='add',
-                path='/templates/{template}/anps/{anp}/epgs/{epg}/subnets/-'.format(template=template, anp=anp, epg=epg),
-                value=mso.sent,
-            )]
+            ops.append(dict(op='add', path=subnets_path + '/-', value=mso.sent))
 
         mso.existing = mso.proposed
-        if not module.check_mode:
-            mso.request(path, method='PATCH', data=operation)
+
+    if not module.check_mode:
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 

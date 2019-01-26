@@ -21,6 +21,11 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'
 options:
+  tenant:
+    description:
+    - The tenant used for this template.
+    type: str
+    required: yes
   schema:
     description:
     - The name of the schema.
@@ -31,10 +36,6 @@ options:
     - The name of the template.
     type: str
     aliases: [ name ]
-  tenant:
-    description:
-    - The tenant used for this template.
-    type: str
   display_name:
     description:
     - The name as displayed on the MSO web interface.
@@ -47,7 +48,7 @@ options:
     choices: [ absent, present, query ]
     default: present
 notes:
-- This module creates schemas when needed, and removes them when the last template has been removed.
+- Due to restrictions of the MSO REST API this module creates schemas when needed, and removes them when the last template has been removed.
 seealso:
 - module: mso_schema
 - module: mso_schema_site
@@ -137,29 +138,33 @@ def main():
 
     # Get schema
     schema_obj = mso.get_obj('schemas', displayName=schema)
+
+    mso.existing = {}
     if schema_obj:
         # Schema exists
-        path = 'schemas/{id}'.format(**schema_obj)
+        schema_path = 'schemas/{id}'.format(**schema_obj)
 
         # Get template
         templates = [t['name'] for t in schema_obj['templates']]
-        if template is None:
+        if template:
+            if template in templates:
+                template_idx = templates.index(template)
+                mso.existing = schema_obj['templates'][template_idx]
+        else:
             mso.existing = schema_obj['templates']
-        elif template in templates:
-            template_idx = templates.index(template)
-            mso.existing = schema_obj['templates'][template_idx]
-        else:
-            mso.existing = {}
     else:
-        path = 'schemas'
-
-        if template is None:
-            mso.existing = []
-        else:
-            mso.existing = {}
+        schema_path = 'schemas'
 
     if state == 'query':
+        if not mso.existing:
+            if template:
+                mso.fail_json(msg="Template '{0}' not found".format(template))
+            else:
+                mso.existing = []
         mso.exit_json()
+
+    template_path = '/templates/{0}'.format(template)
+    ops = []
 
     mso.previous = mso.existing
     if state == 'absent':
@@ -172,15 +177,11 @@ def main():
             # There is only one tenant, remove schema
             mso.existing = {}
             if not module.check_mode:
-                mso.request(path, method='DELETE')
+                mso.request(schema_path, method='DELETE')
         elif mso.existing:
             # Remove existing template
             mso.existing = {}
-            operation = [
-                dict(op='remove', path='/templates/{template}'.format(template=template)),
-            ]
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operation)
+            ops.append(dict(op='remove', path=template_path))
         else:
             # There was no template to begin with
             pass
@@ -206,7 +207,7 @@ def main():
             mso.existing = payload['templates'][0]
 
             if not module.check_mode:
-                mso.request(path, method='POST', data=payload)
+                mso.request(schema_path, method='POST', data=payload)
 
         elif mso.existing:
             # Template exists, so we have to update it
@@ -218,14 +219,10 @@ def main():
 
             mso.sanitize(payload, collate=True)
 
-            mso.existing = payload
-            operations = [
-                dict(op='replace', path='/templates/{template}/displayName'.format(template=template), value=display_name),
-                dict(op='replace', path='/templates/{template}/tenantId'.format(template=template), value=tenant_id),
-            ]
+            ops.append(dict(op='replace', path=template_path + '/displayName', value=display_name))
+            ops.append(dict(op='replace', path=template_path + '/tenantId', value=tenant_id))
 
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operations)
+            mso.existing = mso.proposed
         else:
             # Template does not exist, so we have to add it
             payload = dict(
@@ -234,13 +231,14 @@ def main():
                 tenantId=tenant_id,
             )
 
-            mso.existing = payload
-            operations = [
-                dict(op='add', path='/templates/-', value=payload),
-            ]
+            mso.sanitize(payload, collate=True)
 
-            if not module.check_mode:
-                mso.request(path, method='PATCH', data=operations)
+            ops.append(dict(op='add', path='/templates/-', value=payload))
+
+            mso.existing = mso.proposed
+
+    if not module.check_mode:
+        mso.request(schema_path, method='PATCH', data=ops)
 
     mso.exit_json()
 
