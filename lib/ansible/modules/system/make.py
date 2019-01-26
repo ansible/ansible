@@ -114,7 +114,11 @@ def main():
         ),
     )
     # Build up the invocation of `make` we are going to use
-    make_path = module.get_bin_path('make', True)
+    # For non-Linux OSes, prefer gmake (GNU make) over make
+    make_path = module.get_bin_path('gmake', required=False)
+    if not make_path:
+        # Fall back to system make
+        make_path = module.get_bin_path('make', required=True)
     make_target = module.params['target']
     if module.params['params'] is not None:
         make_parameters = [k + '=' + str(v) for k, v in iteritems(module.params['params'])]
