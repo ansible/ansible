@@ -47,7 +47,7 @@
 - name: LOCALMODS | check update arrived
   assert:
     that:
-      - "{{ a_file['content'] | b64decode | trim }} == 2"
+      - "{{ a_file.content | b64decode | trim }} == 2"
       - git_fetch_force is changed
 
 - name: LOCALMODS | clear checkout_dir
@@ -105,7 +105,7 @@
 - name: LOCALMODS | check update arrived
   assert:
     that:
-      - "{{ a_file['content'] | b64decode | trim }} == 2"
+      - "{{ a_file.content | b64decode | trim }} == 2"
       - git_fetch_force is changed
 
 - name: LOCALMODS | clear checkout_dir
