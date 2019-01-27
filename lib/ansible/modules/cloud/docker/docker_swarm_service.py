@@ -517,7 +517,6 @@ from ansible.module_utils.docker_common import (
     AnsibleDockerClient,
     DifferenceTracker,
     DockerBaseClass,
-    docker_version,
 )
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
