@@ -494,14 +494,6 @@
 ## endpoint_mode ###################################################
 ####################################################################
 
-# FIXME: endpoint_mode_2 is not marked as changed
-#fatal: [testhost]: FAILED! => {
-#    "assertion": "endpoint_mode_2 is not changed",
-#    "changed": false,
-#    "evaluated_to": false,
-#    "msg": "Assertion failed"
-#}
-
 - name: endpoint_mode
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -509,19 +501,19 @@
     endpoint_mode: "dnsrr"
   register: endpoint_mode_1
 
-#- name: endpoint_mode (idempotency)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    endpoint_mode: "dnsrr"
-#  register: endpoint_mode_2
+- name: endpoint_mode (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    endpoint_mode: "dnsrr"
+  register: endpoint_mode_2
 
-#- name: endpoint_mode (changes)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    endpoint_mode: "vip"
-#  register: endpoint_mode_3
+- name: endpoint_mode (changes)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    endpoint_mode: "vip"
+  register: endpoint_mode_3
 
 - name: cleanup
   docker_swarm_service:
@@ -532,8 +524,8 @@
 - assert:
     that:
       - endpoint_mode_1 is changed
-#      - endpoint_mode_2 is not changed
-#      - endpoint_mode_3 is changed
+      - endpoint_mode_2 is not changed
+      - endpoint_mode_3 is changed
 
 ####################################################################
 ## env #############################################################
