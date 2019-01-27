@@ -586,6 +586,7 @@ except ImportError:
     pass
 
 from random import randint
+from distutils.version import StrictVersion
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
@@ -852,6 +853,7 @@ class PyVmomiHelper(PyVmomi):
         self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.customspec = None
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
+        self.vcenter_version = StrictVersion(self.content.about.version)
 
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
@@ -1279,7 +1281,7 @@ class PyVmomiHelper(PyVmomi):
 
         return network_devices
 
-    def configure_network(self, vm_obj):
+    def configure_network(self, vm_obj, relospec=None):
         # Ignore empty networks, this permits to keep networks when deploying a template/cloning a VM
         if len(self.params['networks']) == 0:
             return
@@ -1325,10 +1327,14 @@ class PyVmomiHelper(PyVmomi):
                     if not isinstance(nic.device, device_class):
                         self.module.fail_json(msg="Changing the device type is not possible when interface is already present. "
                                                   "The failing device type is %s" % network_devices[key]['device_type'])
-                # Changing mac address has no effect when editing interface
-                if 'mac' in network_devices[key] and nic.device.macAddress != current_net_devices[key].macAddress:
-                    self.module.fail_json(msg="Changing MAC address has not effect when interface is already present. "
-                                              "The failing new MAC address is %s" % nic.device.macAddress)
+                if 'mac' in network_devices[key] and nic.device.macAddress != network_devices[key]['mac']:
+                    if not PyVmomiDeviceHelper.is_valid_mac_addr(network_devices[key]['mac']):
+                        self.module.fail_json(msg="Device MAC address '%s' is invalid."
+                                                  " Please provide correct MAC address." % network_devices[key]['mac'])
+
+                    nic.device.addressType = 'manual'
+                    nic.device.macAddress = network_devices[key]['mac']
+                    nic_change_detected = True
 
             else:
                 # Default device type is vmxnet3, VMWare best practice
@@ -1408,6 +1414,9 @@ class PyVmomiHelper(PyVmomi):
                 # VMs cloned from a template with opaque network will get disconnected
                 # Replacing deprecated config parameter with relocation Spec
                 if isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
+                    self.relospec.deviceChange.append(nic)
+
+                if self.vcenter_version >= StrictVersion("6.0"):
                     self.relospec.deviceChange.append(nic)
                 else:
                     self.configspec.deviceChange.append(nic)
@@ -2145,6 +2154,10 @@ class PyVmomiHelper(PyVmomi):
         else:
             (datastore, datastore_name) = self.select_datastore(vm_obj)
 
+        relospec = None
+        if self.params['template']:
+            relospec = vim.vm.RelocateSpec()
+
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
         # create the relocation spec
@@ -2155,7 +2168,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_hardware_params(vm_obj=vm_obj)
         self.configure_resource_alloc_info(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
-        self.configure_network(vm_obj=vm_obj)
+        self.configure_network(vm_obj=vm_obj, relospec=relospec)
         self.configure_cdrom(vm_obj=vm_obj)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)
