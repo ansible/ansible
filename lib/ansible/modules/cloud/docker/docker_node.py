@@ -29,9 +29,9 @@ options:
         type: str
     labels:
         description:
-            - User-defined key/value metadata that will be assigned as node attribute. The actual state of labels
-              assigned to the node when module completes its work depends on I(labels_state) and I(labels_to_remove)
-              parameters values. See description below.
+            - User-defined key/value metadata that will be assigned as node attribute.
+            - The actual state of labels assigned to the node when module completes its work depends on
+              I(labels_state) and I(labels_to_remove) parameters values. See description below.
         required: false
         type: dict
     labels_state:
@@ -118,13 +118,6 @@ EXAMPLES = '''
     hostname: mynode
     labels:
       key: value
-
-- name: Merge node labels and new labels
-  docker_node:
-    hostname: mynode
-    labels:
-      key: value
-    labels_state: merge
 
 - name: Remove all labels assigned to node
   docker_node:
@@ -233,24 +226,18 @@ class SwarmNodeManager(DockerBaseClass):
         if self.parameters.labels_state == 'replace':
             if self.parameters.labels is None:
                 node_spec['Labels'] = {}
-                if node_info['Spec']['Labels'] is not None:
+                if node_info['Spec']['Labels']:
                     changed = True
             else:
-                node_spec['Labels'] = self.parameters.labels
-                changed = True
-
-        if self.parameters.labels_state == 'merge':
-            node_spec['Labels'] = node_info['Spec']['Labels']
+                if node_info['Spec']['Labels'].items() != self.parameters.labels.items():
+                    node_spec['Labels'] = self.parameters.labels
+                    changed = True
+        elif self.parameters.labels_state == 'merge':
+            node_spec['Labels'] = dict(node_info['Spec']['Labels'] or {})
             if self.parameters.labels is not None:
-                for key in self.parameters.labels:
-                    if key in node_info['Spec']['Labels']:
-                        if self.parameters.labels.get(key) == node_info['Spec']['Labels'][key]:
-                            pass
-                        else:
-                            node_spec['Labels'][key] = self.parameters.labels.get(key)
-                            changed = True
-                    else:
-                        node_spec['Labels'][key] = self.parameters.labels.get(key)
+                for key, value in self.parameters.labels.items():
+                    if node_info['Spec']['Labels'].get(key) != value:
+                        node_spec['Labels'][key] = value
                         changed = True
 
             if self.parameters.labels_to_remove is not None:
@@ -259,6 +246,10 @@ class SwarmNodeManager(DockerBaseClass):
                         if node_spec['Labels'].get(key):
                             node_spec['Labels'].pop(key)
                             changed = True
+                    else:
+                        self.client.module.warn(
+                            "Label %s listed both in 'labels' and 'labels_to_remove'. Keeping the assigned label value."
+                            % to_native(key))
 
         if changed is True:
             if not self.check_mode:
@@ -284,24 +275,11 @@ def main():
         role=dict(type='str', choices=['worker', 'manager']),
     )
 
-    required_if = [
-        ('labels_state', 'merge', ['hostname']),
-        ('labels_state', 'replace', ['hostname']),
-    ]
-
-    option_minimal_versions = dict(
-        signing_ca_cert=dict(docker_api_version='1.30'),
-        signing_ca_key=dict(docker_api_version='1.30'),
-        ca_force_rotate=dict(docker_api_version='1.30'),
-    )
-
     client = AnsibleDockerSwarmClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if,
         min_docker_version='1.10.0',
-        min_docker_api_version='1.24',
-        option_minimal_versions=option_minimal_versions,
+        min_docker_api_version='1.25',
     )
 
     results = dict(
