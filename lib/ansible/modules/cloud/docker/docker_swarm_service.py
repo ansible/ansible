@@ -1244,7 +1244,7 @@ class DockerServiceManager(object):
 
         raw_data_endpoint_spec = raw_data['Spec'].get('EndpointSpec')
         if raw_data_endpoint_spec:
-            ds.endpoint_mode = raw_data_endpoint_spec.get('Mode', 'vip')
+            ds.endpoint_mode = raw_data_endpoint_spec.get('Mode')
             raw_data_ports = raw_data_endpoint_spec.get('Ports')
             if raw_data_ports:
                 ds.publish = []
