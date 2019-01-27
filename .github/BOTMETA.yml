@@ -1328,11 +1328,11 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers jmcgill298 schunduri
-  team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo molekuul MorrisA wtcross
+  team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister molekuul MorrisA wtcross
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
-  team_bsd: bcoca dagwieers jasperla JoergFiedler AMDmi3 overhacked tuxillo
+  team_bsd: AMDmi3 bcoca dagwieers jasperla JoergFiedler opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
@@ -1343,11 +1343,11 @@ macros:
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_gitlab: dagwieers dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
-  team_hpux: bcoca dagwieers
+  team_hpux: bcoca dagwieers davx8342
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
-  team_macos: dagwieers
+  team_macos: dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
