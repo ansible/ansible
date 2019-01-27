@@ -46,8 +46,7 @@ options:
   args:
     required: false
     description:
-      - List comprised of the command and the arguments to be run inside
-      - the container
+      - List arguments to be passed to the container.
   command:
     required: false
     description:
