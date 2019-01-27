@@ -1176,6 +1176,11 @@ class DockerService(DockerBaseClass):
 
 class DockerServiceManager(object):
 
+    def __init__(self, client):
+        self.client = client
+        self.retries = 2
+        self.diff_tracker = None
+
     def get_networks_names_ids(self):
         return [{'name': n['Name'], 'id': n['Id']} for n in self.client.networks()]
 
@@ -1373,11 +1378,6 @@ class DockerServiceManager(object):
         distribution_data = self.client.inspect_distribution(name)
         digest = distribution_data['Descriptor']['digest']
         return '%s@%s' % (name, digest)
-
-    def __init__(self, client):
-        self.client = client
-        self.retries = 2
-        self.diff_tracker = None
 
     def run(self):
         self.diff_tracker = DifferenceTracker()
