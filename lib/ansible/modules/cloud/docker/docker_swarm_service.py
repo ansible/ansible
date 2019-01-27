@@ -607,11 +607,10 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 
 try:
-    from distutils.version import LooseVersion
     from docker import types
     from docker.utils import parse_repository_tag
     from docker.errors import APIError, DockerException
-except Exception:
+except ImportError:
     # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
