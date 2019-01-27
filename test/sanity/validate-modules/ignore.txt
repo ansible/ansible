@@ -790,7 +790,6 @@ lib/ansible/modules/packaging/os/yum_repository.py E324
 lib/ansible/modules/packaging/os/zypper.py E326
 lib/ansible/modules/remote_management/foreman/foreman.py E322
 lib/ansible/modules/remote_management/foreman/foreman.py E325
-lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E324
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_power.py E326
