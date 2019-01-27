@@ -575,7 +575,6 @@ class DockerService(DockerBaseClass):
         self.replicas = -1
         self.service_id = False
         self.service_version = False
-        self.resolve_image = None
         self.restart_policy = None
         self.restart_policy_attempts = None
         self.restart_policy_delay = None
