@@ -597,6 +597,9 @@ EXAMPLES = '''
 import time
 import shlex
 import operator
+
+from distutils.version import LooseVersion
+
 from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DifferenceTracker,
