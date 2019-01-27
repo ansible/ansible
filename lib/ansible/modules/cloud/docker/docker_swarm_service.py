@@ -260,9 +260,9 @@ options:
         description:
           - GID of the secret file's group.
       mode:
-        type: str
+        type: int
         required: false
-        default: "0o444"
+        default: 0o444
         description:
           - File access mode inside the container.
   configs:
@@ -802,8 +802,8 @@ class DockerService(DockerBaseClass):
             s.mounts = []
             for param_m in ap['mounts']:
                 service_m = {}
-                service_m['readonly'] = bool(param_m.get('readonly', False))
-                service_m['type'] = param_m.get('type', 'bind')
+                service_m['readonly'] = param_m['readonly']
+                service_m['type'] = param_m['type']
                 service_m['source'] = param_m['source']
                 service_m['target'] = param_m['target']
                 s.mounts.append(service_m)
@@ -813,11 +813,11 @@ class DockerService(DockerBaseClass):
             for param_m in ap['configs']:
                 service_c = {}
                 service_c['config_id'] = param_m['config_id']
-                service_c['config_name'] = str(param_m['config_name'])
-                service_c['filename'] = param_m.get('filename', service_c['config_name'])
-                service_c['uid'] = int(param_m.get('uid', "0"))
-                service_c['gid'] = int(param_m.get('gid', "0"))
-                service_c['mode'] = param_m.get('mode', 0o444)
+                service_c['config_name'] = param_m['config_name']
+                service_c['filename'] = param_m['filename'] or service_c['config_name']
+                service_c['uid'] = param_m['uid']
+                service_c['gid'] = param_m['gid']
+                service_c['mode'] = param_m['mode']
                 s.configs.append(service_c)
 
         if ap['secrets'] is not None:
@@ -825,11 +825,11 @@ class DockerService(DockerBaseClass):
             for param_m in ap['secrets']:
                 service_s = {}
                 service_s['secret_id'] = param_m['secret_id']
-                service_s['secret_name'] = str(param_m['secret_name'])
-                service_s['filename'] = param_m.get('filename', service_s['secret_name'])
-                service_s['uid'] = int(param_m.get('uid', "0"))
-                service_s['gid'] = int(param_m.get('gid', "0"))
-                service_s['mode'] = param_m.get('mode', 0o444)
+                service_s['secret_name'] = param_m['secret_name']
+                service_s['filename'] = param_m['filename'] or service_s['secret_name']
+                service_s['uid'] = param_m['uid']
+                service_s['gid'] = param_m['gid']
+                service_s['mode'] = param_m['mode']
                 s.secrets.append(service_s)
         return s
 
@@ -1494,10 +1494,34 @@ def main():
     argument_spec = dict(
         name=dict(required=True),
         image=dict(type='str'),
-        state=dict(default="present", choices=['present', 'absent']),
-        mounts=dict(default=None, type='list'),
-        configs=dict(default=None, type='list'),
-        secrets=dict(default=None, type='list'),
+        state=dict(default='present', choices=['present', 'absent']),
+        mounts=dict(default=None, type='list', elements='dict', options=dict(
+            source=dict(type='str', required=True),
+            target=dict(type='str', required=True),
+            type=dict(
+                default='bind',
+                type='str',
+                required=False,
+                choices=['bind', 'volume', 'tmpfs']
+            ),
+            readonly=dict(default=False, type='bool', required=False),
+        )),
+        configs=dict(default=None, type='list', elements='dict', options=dict(
+            config_id=dict(type='str', required=True),
+            config_name=dict(type='str', required=True),
+            filename=dict(default=None, type='str', required=False),
+            uid=dict(default=0, type='int', required=False),
+            gid=dict(default=0, type='int', required=False),
+            mode=dict(default=0o444, type='int', required=False),
+        )),
+        secrets=dict(default=None, type='list', elements='dict', options=dict(
+            secret_id=dict(type='str', required=True),
+            secret_name=dict(type='str', required=True),
+            filename=dict(default=None, type='str', required=False),
+            uid=dict(default=0, type='int', required=False),
+            gid=dict(default=0, type='int', required=False),
+            mode=dict(default=0o444, type='int', required=False),
+        )),
         networks=dict(default=None, type='list'),
         command=dict(default=None, type='raw'),
         args=dict(default=None, type='list'),
