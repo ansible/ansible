@@ -217,7 +217,7 @@ def _flatpak_command(module, noop, command):
         return ""
 
     process = subprocess.Popen(
-        command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     stdout_data, stderr_data = process.communicate()
     result['rc'] = process.returncode
     result['command'] = command
