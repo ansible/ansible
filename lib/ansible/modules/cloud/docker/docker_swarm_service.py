@@ -629,7 +629,6 @@ class DockerService(DockerBaseClass):
     def from_ansible_params(ap, old_service, image_digest):
         s = DockerService()
         s.image = image_digest
-        s.resolve_image = ap['resolve_image']
         s.constraints = ap['constraints']
         s.placement_preferences = ap['placement_preferences']
         s.args = ap['args']
