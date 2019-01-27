@@ -53,7 +53,7 @@ options:
     required: false
     description:
       - Command to execute when the container starts.
-        A command may be either a string or a list or a list of strings.
+      - A command may be either a string or a list or a list of strings.
     version_added: 2.8
   constraints:
     required: false
@@ -430,7 +430,7 @@ options:
     description:
       - Sets the username or UID used for the specified command.
       - Before Ansible 2.8, the default value for this option was C(root).
-        The default has been removed so that the user defined in the image is used if no user is specified here.
+      - The default has been removed so that the user defined in the image is used if no user is specified here.
 extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
