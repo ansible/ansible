@@ -24,7 +24,6 @@ options:
     description:
       - Service name
   image:
-    type: str
     required: true
     type: str
     description:
@@ -61,7 +60,7 @@ options:
     type: list
     description:
       - List of the service constraints.
-      - Maps docker service --constraint option.
+      - Maps docker service C(--constraint) option.
   placement_preferences:
     required: false
     type: list
@@ -74,36 +73,36 @@ options:
     required: false
     type: str
     description:
-      - Container hostname
-      - Maps docker service --hostname option.
+      - Container hostname.
+      - Maps docker service C(--hostname) option.
       - Requires API version >= 1.25.
   tty:
     required: false
     type: bool
     description:
-      - Allocate a pseudo-TTY
-      - Maps docker service --tty option.
+      - Allocate a pseudo-TTY.
+      - Maps docker service C(--tty) option.
       - Requires API version >= 1.25.
   dns:
     required: false
     type: list
     description:
       - List of custom DNS servers.
-      - Maps docker service --dns option.
+      - Maps docker service C(--dns) option.
       - Requires API version >= 1.25.
   dns_search:
     required: false
     type: list
     description:
       - List of custom DNS search domains.
-      - Maps docker service --dns-search option.
+      - Maps docker service C(--dns-search) option.
       - Requires API version >= 1.25.
   dns_options:
     required: false
     type: list
     description:
       - List of custom DNS options.
-      - Maps docker service --dns-option option.
+      - Maps docker service C(--dns-option) option.
       - Requires API version >= 1.25.
   force_update:
     required: false
@@ -111,26 +110,26 @@ options:
     default: false
     description:
       - Force update even if no changes require it.
-      - Maps to docker service update --force option.
+      - Maps to docker service update C(--force) option.
       - Requires API version >= 1.25.
   labels:
     required: false
     type: dict
     description:
       - Dictionary of key value pairs.
-      - Maps docker service --label option.
+      - Maps docker service C(--label) option.
   container_labels:
     required: false
     type: dict
     description:
       - Dictionary of key value pairs.
-      - Maps docker service --container-label option.
+      - Maps docker service C(--container-label) option.
   endpoint_mode:
     required: false
     type: str
     description:
       - Service endpoint mode.
-      - Maps docker service --endpoint-mode option.
+      - Maps docker service C(--endpoint-mode) option.
       - Requires API version >= 1.25.
     choices:
       - vip
@@ -145,23 +144,23 @@ options:
     required: false
     type: str
     description:
-      - Configure the logging driver for a service
+      - Configure the logging driver for a service.
   log_driver_options:
     required: false
     type: dict
     description:
-      - Options for service logging driver
+      - Options for service logging driver.
   limit_cpu:
     required: false
     type: float
     description:
-      - Service CPU limit. 0 equals no limit.
-      - Maps docker service --limit-cpu option.
+      - Service CPU limit. C(0) equals no limit.
+      - Maps docker service C(--limit-cpu) option.
   reserve_cpu:
     required: false
     type: float
     description:
-      - Service CPU reservation. 0 equals no reservation.
+      - Service CPU reservation. C(0) equals no reservation.
       - Maps docker service --reserve-cpu option.
   limit_memory:
     required: false
@@ -170,9 +169,9 @@ options:
       - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
-      - 0 equals no limit.
+      - C(0) equals no limit.
       - Omitting the unit defaults to bytes.
-      - Maps docker service --limit-memory option.
+      - Maps docker service C(--limit-memory) option.
   reserve_memory:
     required: false
     type: str
@@ -180,23 +179,22 @@ options:
       - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
-      - 0 equals no reservation.
+      - C(0) equals no reservation.
       - Omitting the unit defaults to bytes.
-      - Maps docker service --reserve-memory option.
+      - Maps docker service C(--reserve-memory) option.
   mode:
     required: false
     type: str
     default: replicated
     description:
       - Service replication mode.
-      - Maps docker service --mode option.
+      - Maps docker service C(--mode) option.
   mounts:
     required: false
     type: list
     description:
       - List of dictionaries describing the service mounts.
-      - Every item must be a dictionary exposing the keys source, target, type (defaults to 'bind'), readonly (defaults to false)
-      - Maps docker service --mount option.
+      - Maps docker service C(--mount) option.
     suboptions:
       source:
         type: str
@@ -229,7 +227,7 @@ options:
     type: list
     description:
       - List of dictionaries describing the service secrets.
-      - Maps docker service --secret option.
+      - Maps docker service C(--secret) option.
       - Requires API version >= 1.25.
     suboptions:
       secret_id:
@@ -246,7 +244,7 @@ options:
         type: str
         required: false
         description:
-          - Name of the file containing the secret. Defaults to the secret's name if not specified.
+          - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
       uid:
         type: int
         required: false
@@ -270,7 +268,7 @@ options:
     type: list
     description:
       - List of dictionaries describing the service configs.
-      - Maps docker service --config option.
+      - Maps docker service C(--config) option.
       - Requires API version >= 1.30.
     suboptions:
       config_id:
@@ -287,7 +285,7 @@ options:
         type: str
         required: true
         description:
-          - Name of the file containing the config. Defaults to the config's name if not specified.
+          - Name of the file containing the config. Defaults to the I(config_name) if not specified.
       uid:
         type: int
         required: false
@@ -311,7 +309,7 @@ options:
     type: list
     description:
       - List of the service networks names.
-      - Maps docker service --network option.
+      - Maps docker service C(--network) option.
   publish:
     required: false
     type: list
@@ -353,15 +351,15 @@ options:
     default: -1
     description:
       - Number of containers instantiated in the service. Valid only if I(mode) is C(replicated).
-      - If set to -1, and service is not present, service replicas will be set to 1.
-      - If set to -1, and service is present, service replicas will be unchanged.
-      - Maps docker service --replicas option.
+      - If set to C(-1), and service is not present, service replicas will be set to C(1).
+      - If set to C(-1), and service is present, service replicas will be unchanged.
+      - Maps docker service C(--replicas) option.
   restart_policy:
     required: false
     type: str
     description:
       - Restart condition of the service.
-      - Maps docker service --restart-condition option.
+      - Maps docker service C(--restart-condition) option.
     choices:
       - none
       - on-failure
@@ -371,37 +369,37 @@ options:
     type: int
     description:
       - Maximum number of service restarts.
-      - Maps docker service --restart-max-attempts option.
+      - Maps docker service C(--restart-max-attempts) option.
   restart_policy_delay:
     required: false
     type: int
     description:
       - Delay between restarts.
-      - Maps docker service --restart-delay option.
+      - Maps docker service C(--restart-delay) option.
   restart_policy_window:
     required: false
     type: int
     description:
       - Restart policy evaluation window.
-      - Maps docker service --restart-window option.
+      - Maps docker service C(--restart-window) option.
   update_delay:
     required: false
     type: int
     description:
       - Rolling update delay
-      - Maps docker service --update-delay option.
+      - Maps docker service C(--update-delay) option.
   update_parallelism:
     required: false
     type: int
     description:
       - Rolling update parallelism
-      - Maps docker service --update-parallelism option.
+      - Maps docker service C(--update-parallelism) option.
   update_failure_action:
     required: false
     type: int
     description:
       - Action to take in case of container failure.
-      - Maps to docker service --update-failure-action option.
+      - Maps to docker service C(--update-failure-action) option.
     choices:
       - continue
       - pause
@@ -410,21 +408,21 @@ options:
     type: int
     description:
       - Time to monitor updated tasks for failures, in nanoseconds.
-      - Maps to docker service --update-monitor option.
+      - Maps to docker service C(--update-monitor option).
       - Requires API version >= 1.25.
   update_max_failure_ratio:
     required: false
     type: float
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
-      - Maps to docker service --update-max-failure-ratio.
+      - Maps to docker service C(--update-max-failure-ratio).
       - Requires API version >= 1.25.
   update_order:
     required: false
     type: str
     description:
       - Specifies the order of operations when rolling out an updated task.
-      - Maps to docker service --update-order.
+      - Maps to docker service C(--update-order).
       - Requires API version >= 1.29.
   user:
     type: str
