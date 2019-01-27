@@ -624,7 +624,6 @@ class DockerService(DockerBaseClass):
         s.image = image_digest
         s.constraints = ap['constraints']
         s.placement_preferences = ap['placement_preferences']
-        s.image = ap['image']
         s.args = ap['args']
         s.endpoint_mode = ap['endpoint_mode']
         s.dns = ap['dns']
