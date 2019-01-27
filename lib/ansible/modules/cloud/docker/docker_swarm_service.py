@@ -20,11 +20,13 @@ version_added: "2.7"
 options:
   name:
     required: true
+    type: str
     description:
       - Service name
   image:
     type: str
     required: true
+    type: str
     description:
       - Service image path and tag.
         Maps docker service IMAGE parameter.
@@ -37,6 +39,7 @@ options:
     version_added: 2.8
   state:
     required: true
+    type: str
     default: present
     description:
       - Service state.
@@ -55,6 +58,7 @@ options:
     version_added: 2.8
   constraints:
     required: false
+    type: list
     description:
       - List of the service constraints.
       - Maps docker service --constraint option.
@@ -68,6 +72,7 @@ options:
     version_added: 2.8
   hostname:
     required: false
+    type: str
     description:
       - Container hostname
       - Maps docker service --hostname option.
@@ -81,18 +86,21 @@ options:
       - Requires API version >= 1.25.
   dns:
     required: false
+    type: list
     description:
       - List of custom DNS servers.
       - Maps docker service --dns option.
       - Requires API version >= 1.25.
   dns_search:
     required: false
+    type: list
     description:
       - List of custom DNS search domains.
       - Maps docker service --dns-search option.
       - Requires API version >= 1.25.
   dns_options:
     required: false
+    type: list
     description:
       - List of custom DNS options.
       - Maps docker service --dns-option option.
@@ -118,8 +126,8 @@ options:
       - Dictionary of key value pairs.
       - Maps docker service --container-label option.
   endpoint_mode:
-    type: str
     required: false
+    type: str
     description:
       - Service endpoint mode.
       - Maps docker service --endpoint-mode option.
@@ -129,29 +137,35 @@ options:
       - dnsrr
   env:
     required: false
+    type: list
     description:
       - List of the service environment variables.
       - Maps docker service --env option.
   log_driver:
     required: false
+    type: str
     description:
       - Configure the logging driver for a service
   log_driver_options:
     required: false
+    type: dict
     description:
       - Options for service logging driver
   limit_cpu:
     required: false
+    type: float
     description:
       - Service CPU limit. 0 equals no limit.
       - Maps docker service --limit-cpu option.
   reserve_cpu:
     required: false
+    type: float
     description:
       - Service CPU reservation. 0 equals no reservation.
       - Maps docker service --reserve-cpu option.
   limit_memory:
     required: false
+    type: str
     description:
       - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
@@ -161,6 +175,7 @@ options:
       - Maps docker service --limit-memory option.
   reserve_memory:
     required: false
+    type: str
     description:
       - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
@@ -170,18 +185,21 @@ options:
       - Maps docker service --reserve-memory option.
   mode:
     required: false
+    type: str
     default: replicated
     description:
       - Service replication mode.
       - Maps docker service --mode option.
   mounts:
     required: false
+    type: list
     description:
       - List of dictionaries describing the service mounts.
       - Every item must be a dictionary exposing the keys source, target, type (defaults to 'bind'), readonly (defaults to false)
       - Maps docker service --mount option.
   secrets:
     required: false
+    type: list
     description:
       - List of dictionaries describing the service secrets.
       - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
@@ -189,6 +207,7 @@ options:
       - Requires API version >= 1.25.
   configs:
     required: false
+    type: list
     description:
       - List of dictionaries describing the service configs.
       - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
@@ -196,12 +215,13 @@ options:
       - Requires API version >= 1.30.
   networks:
     required: false
+    type: list
     description:
       - List of the service networks names.
       - Maps docker service --network option.
   publish:
-    type: list
     required: false
+    type: list
     description:
       - List of dictionaries describing the service published ports.
       - Requires API version >= 1.25.
@@ -236,6 +256,7 @@ options:
           - host
   replicas:
     required: false
+    type: int
     default: -1
     description:
       - Number of containers instantiated in the service. Valid only if I(mode) is C(replicated).
@@ -244,6 +265,7 @@ options:
       - Maps docker service --replicas option.
   restart_policy:
     required: false
+    type: str
     description:
       - Restart condition of the service.
       - Maps docker service --restart-condition option.
@@ -253,31 +275,37 @@ options:
       - any
   restart_policy_attempts:
     required: false
+    type: int
     description:
       - Maximum number of service restarts.
       - Maps docker service --restart-max-attempts option.
   restart_policy_delay:
     required: false
+    type: int
     description:
       - Delay between restarts.
       - Maps docker service --restart-delay option.
   restart_policy_window:
     required: false
+    type: int
     description:
       - Restart policy evaluation window.
       - Maps docker service --restart-window option.
   update_delay:
     required: false
+    type: int
     description:
       - Rolling update delay
       - Maps docker service --update-delay option.
   update_parallelism:
     required: false
+    type: int
     description:
       - Rolling update parallelism
       - Maps docker service --update-parallelism option.
   update_failure_action:
     required: false
+    type: int
     description:
       - Action to take in case of container failure.
       - Maps to docker service --update-failure-action option.
@@ -286,19 +314,21 @@ options:
       - pause
   update_monitor:
     required: false
+    type: int
     description:
       - Time to monitor updated tasks for failures, in nanoseconds.
       - Maps to docker service --update-monitor option.
       - Requires API version >= 1.25.
   update_max_failure_ratio:
     required: false
+    type: float
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
       - Maps to docker service --update-max-failure-ratio.
       - Requires API version >= 1.25.
   update_order:
     required: false
-    default: null
+    type: str
     description:
       - Specifies the order of operations when rolling out an updated task.
       - Maps to docker service --update-order.
