@@ -780,7 +780,7 @@ class DockerService(DockerBaseClass):
                 try:
                     setattr(s, param_name, human_to_bytes(ap[param_name]))
                 except ValueError as exc:
-                    raise Exception("Failed to convert %s to bytes: %s" % (param_name, exc))
+                    raise Exception('Failed to convert %s to bytes: %s' % (param_name, exc))
 
         if ap['publish'] is not None:
             s.publish = []
@@ -1129,7 +1129,7 @@ class DockerService(DockerBaseClass):
                 if network_id:
                     networks.append({'Target': network_id})
                 else:
-                    raise Exception("no docker networks named: %s" % network_name)
+                    raise Exception('no docker networks named: %s' % network_name)
         return networks
 
     def build_endpoint_spec(self):
@@ -1229,7 +1229,7 @@ class DockerServiceManager(object):
             for preference in placement.get('Preferences', []):
                 placement_preferences.append(
                     dict(
-                        (key.lower(), value["SpreadDescriptor"])
+                        (key.lower(), value['SpreadDescriptor'])
                         for key, value in preference.items()
                     )
                 )
@@ -1288,7 +1288,7 @@ class DockerServiceManager(object):
         elif 'Global' in mode.keys():
             ds.mode = 'global'
         else:
-            raise Exception("Unknown service mode: %s" % mode)
+            raise Exception('Unknown service mode: %s' % mode)
 
         raw_data_mounts = task_template_data['ContainerSpec'].get('Mounts')
         if raw_data_mounts:
@@ -1397,7 +1397,7 @@ class DockerServiceManager(object):
             current_service = self.get_service(module.params['name'])
         except Exception as e:
             return module.fail_json(
-                msg="Error looking for service named %s: %s" %
+                msg='Error looking for service named %s: %s' %
                     (module.params['name'], e))
         try:
             new_service = DockerService.from_ansible_params(
@@ -1407,7 +1407,7 @@ class DockerServiceManager(object):
             )
         except Exception as e:
             return module.fail_json(
-                msg="Error parsing module parameters: %s" % e)
+                msg='Error parsing module parameters: %s' % e)
 
         changed = False
         msg = 'noop'
