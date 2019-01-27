@@ -5,7 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: waapm
-    version_added: "2.4"
+    version_added: "2.8"
     short_description: get secrets from WALLIX Bastion
     requirements:
       - WALLIX Application-to-Application (waapm) installed
@@ -101,4 +101,3 @@ class LookupModule(LookupBase):
         else:
             waapm = WAAPM(account=terms, **kwargs)
             return waapm.get()
-
