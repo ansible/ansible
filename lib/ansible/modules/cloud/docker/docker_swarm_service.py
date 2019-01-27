@@ -788,14 +788,8 @@ class DockerService(DockerBaseClass):
                 service_p = {}
                 service_p['protocol'] = param_p['protocol']
                 service_p['mode'] = param_p['mode']
-                service_p['published_port'] = int(param_p['published_port'])
-                service_p['target_port'] = int(param_p['target_port'])
-                if service_p['protocol'] not in ['tcp', 'udp']:
-                    raise ValueError("got publish.protocol '%s', valid values:'tcp', 'udp'" %
-                                     service_p['protocol'])
-                if service_p['mode'] not in [None, 'ingress', 'host']:
-                    raise ValueError("got publish.mode '%s', valid values:'ingress', 'host'" %
-                                     service_p['mode'])
+                service_p['published_port'] = param_p['published_port']
+                service_p['target_port'] = param_p['target_port']
                 s.publish.append(service_p)
 
         if ap['mounts'] is not None:
