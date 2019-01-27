@@ -117,11 +117,10 @@ options:
     - Dictionary of key value pairs.
     - Maps docker service --container-label option.
   endpoint_mode:
-    required: false
+    type: str
     description:
     - Service endpoint mode.
     - Maps docker service --endpoint-mode option.
-    default: vip
     choices:
     - vip
     - dnsrr
@@ -542,7 +541,7 @@ class DockerService(DockerBaseClass):
         self.image = ""
         self.command = None
         self.args = []
-        self.endpoint_mode = "vip"
+        self.endpoint_mode = None
         self.dns = []
         self.hostname = ""
         self.tty = False
@@ -755,7 +754,7 @@ class DockerService(DockerBaseClass):
         differences = DifferenceTracker()
         needs_rebuild = False
         force_update = False
-        if self.endpoint_mode != os.endpoint_mode:
+        if self.endpoint_mode is not None and self.endpoint_mode != os.endpoint_mode:
             differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
         if self.env != os.env:
             differences.add('env', parameter=self.env, active=os.env)
@@ -1072,17 +1071,15 @@ class DockerServiceManager():
             ds.restart_policy_attempts = restart_policy_data.get('MaxAttempts')
             ds.restart_policy_window = restart_policy_data.get('Window')
 
-        raw_data_endpoint = raw_data.get('Endpoint', None)
-        if raw_data_endpoint:
-            raw_data_endpoint_spec = raw_data_endpoint.get('Spec', None)
-            if raw_data_endpoint_spec:
-                ds.endpoint_mode = raw_data_endpoint_spec.get('Mode', 'vip')
-                for port in raw_data_endpoint_spec.get('Ports', []):
-                    ds.publish.append({
-                        'protocol': port['Protocol'],
-                        'mode': port.get('PublishMode', None),
-                        'published_port': int(port['PublishedPort']),
-                        'target_port': int(port['TargetPort'])})
+        raw_data_endpoint_spec = raw_data['Spec'].get('EndpointSpec')
+        if raw_data_endpoint_spec:
+            ds.endpoint_mode = raw_data_endpoint_spec.get('Mode')
+            for port in raw_data_endpoint_spec.get('Ports', []):
+                ds.publish.append({
+                    'protocol': port['Protocol'],
+                    'mode': port.get('PublishMode', None),
+                    'published_port': int(port['PublishedPort']),
+                    'target_port': int(port['TargetPort'])})
 
         if 'Resources' in task_template_data.keys():
             if 'Limits' in task_template_data['Resources'].keys():
@@ -1288,7 +1285,7 @@ def main():
         container_labels=dict(default={}, type='dict'),
         mode=dict(default="replicated"),
         replicas=dict(default=-1, type='int'),
-        endpoint_mode=dict(default='vip', choices=['vip', 'dnsrr']),
+        endpoint_mode=dict(default=None, choices=['vip', 'dnsrr']),
         restart_policy=dict(default='none', choices=['none', 'on-failure', 'any']),
         limit_cpu=dict(default=0, type='float'),
         limit_memory=dict(default=0, type='str'),
