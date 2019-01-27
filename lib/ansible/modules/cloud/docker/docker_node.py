@@ -229,14 +229,14 @@ class SwarmNodeManager(DockerBaseClass):
                 if node_info['Spec']['Labels']:
                     changed = True
             else:
-                if node_info['Spec']['Labels'].items() != self.parameters.labels.items():
+                if node_info['Spec']['Labels'] != self.parameters.labels:
                     node_spec['Labels'] = self.parameters.labels
                     changed = True
         elif self.parameters.labels_state == 'merge':
             node_spec['Labels'] = dict(node_info['Spec']['Labels'] or {})
             if self.parameters.labels is not None:
                 for key, value in self.parameters.labels.items():
-                    if node_info['Spec']['Labels'].get(key) != value:
+                    if node_spec['Labels'].get(key) != value:
                         node_spec['Labels'][key] = value
                         changed = True
 
@@ -248,7 +248,8 @@ class SwarmNodeManager(DockerBaseClass):
                             changed = True
                     else:
                         self.client.module.warn(
-                            "Label %s listed both in 'labels' and 'labels_to_remove'. Keeping the assigned label value."
+                            "Label '%s' listed both in 'labels' and 'labels_to_remove'. "
+                            "Keeping the assigned label value."
                             % to_native(key))
 
         if changed is True:
