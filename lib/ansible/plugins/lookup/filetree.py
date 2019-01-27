@@ -171,6 +171,19 @@ def file_props(root, path):
 
 
 class LookupModule(LookupBase):
+    def run(self, terms, variables=None, **kwargs):
+        ret = []
+        for term in terms:
+            display.debug("Walking '{0}'".format(term))
+            if isinstance(term, list):
+                display.debug("List found, walking recursively")
+                for term_l in term:
+                    ret += self.lookup_term(term_l, variables, **kwargs)
+            else:
+                ret += self.lookup_term(term, variables, **kwargs)
+
+        return ret
+
     def lookup_term(self, term, variables=None, **kwargs):
         basedir = self.get_basedir(variables)
         term_file = os.path.basename(term)
@@ -189,17 +202,4 @@ class LookupModule(LookupBase):
                     if props is not None:
                         display.debug("  found '{0}'".format(os.path.join(path, relpath)))
                         ret.append(props)
-        return ret
-
-    def run(self, terms, variables=None, **kwargs):
-        ret = []
-        for term in terms:
-            display.debug("Walking '{0}'".format(term))
-            if isinstance(term, list):
-                display.debug("List found, walking recursively")
-                for term_l in term:
-                    ret += self.lookup_term(term_l, variables, **kwargs)
-            else:
-                ret += self.lookup_term(term, variables, **kwargs)
-
         return ret
