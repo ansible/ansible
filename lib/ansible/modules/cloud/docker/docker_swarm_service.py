@@ -698,7 +698,8 @@ class DockerService(DockerBaseClass):
             'update_failure_action': self.update_failure_action,
             'update_monitor': self.update_monitor,
             'update_max_failure_ratio': self.update_max_failure_ratio,
-            'update_order': self.update_order}
+            'update_order': self.update_order
+        }
 
     @staticmethod
     def from_ansible_params(ap, old_service, image_digest):
@@ -951,7 +952,8 @@ class DockerService(DockerBaseClass):
             'configs': self.configs,
             'secrets': self.secrets,
             'networks': self.networks,
-            'replicas': self.replicas})
+            'replicas': self.replicas
+        })
 
     def build_container_spec(self):
         mounts = None
@@ -959,10 +961,12 @@ class DockerService(DockerBaseClass):
             mounts = []
             for mount_config in self.mounts:
                 mounts.append(
-                    types.Mount(target=mount_config['target'],
-                                source=mount_config['source'],
-                                type=mount_config['type'],
-                                read_only=mount_config['readonly'])
+                    types.Mount(
+                        target=mount_config['target'],
+                        source=mount_config['source'],
+                        type=mount_config['type'],
+                        read_only=mount_config['readonly']
+                    )
                 )
 
         configs = None
@@ -1427,23 +1431,29 @@ class DockerServiceManager(object):
                     if need_rebuild:
                         if not module.check_mode:
                             self.remove_service(module.params['name'])
-                            self.create_service(module.params['name'],
-                                                new_service)
+                            self.create_service(
+                                module.params['name'],
+                                new_service
+                            )
                         msg = 'Service rebuilt'
                         rebuilt = True
                     else:
                         if not module.check_mode:
-                            self.update_service(module.params['name'],
-                                                current_service,
-                                                new_service)
+                            self.update_service(
+                                module.params['name'],
+                                current_service,
+                                new_service
+                            )
                         msg = 'Service updated'
                         rebuilt = False
                 else:
                     if force_update:
                         if not module.check_mode:
-                            self.update_service(module.params['name'],
-                                                current_service,
-                                                new_service)
+                            self.update_service(
+                                module.params['name'],
+                                current_service,
+                                new_service
+                            )
                         msg = 'Service forcefully updated'
                         rebuilt = False
                         changed = True
@@ -1555,7 +1565,8 @@ def main():
         update_monitor=dict(default=None, type='int'),
         update_max_failure_ratio=dict(default=None, type='float'),
         update_order=dict(default=None, type='str'),
-        user=dict(type='str'))
+        user=dict(type='str')
+    )
 
     option_minimal_versions = dict(
         dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
