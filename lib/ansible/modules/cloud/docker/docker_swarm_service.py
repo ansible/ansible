@@ -1072,7 +1072,6 @@ class DockerServiceManager():
             ds.restart_policy_window = restart_policy_data.get('Window')
 
         raw_data_endpoint_spec = raw_data['Spec'].get('EndpointSpec')
-
         if raw_data_endpoint_spec:
             ds.endpoint_mode = raw_data_endpoint_spec.get('Mode')
             for port in raw_data_endpoint_spec.get('Ports', []):
