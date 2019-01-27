@@ -23,10 +23,18 @@ options:
     description:
     - Service name
   image:
+    type: str
     required: true
     description:
     - Service image path and tag.
       Maps docker service IMAGE parameter.
+  resolve_image:
+    type: bool
+    required: false
+    default: true
+    description:
+      - If the current image digest should be resolved from registry and updated if changed.
+    version_added: 2.8
   state:
     required: true
     default: present
@@ -335,6 +343,9 @@ requirements:
    (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
    Version 2.1.0 or newer is only available with the C(docker) module."
 - "Docker API >= 1.24"
+notes:
+  - "Images will only resolve to the latest digest when using Docker API >= 1.30 and docker-py >= 3.2.0.
+     When using older versions use C(force_update: true) to trigger the swarm to resolve a new image."
 '''
 
 RETURN = '''
@@ -519,9 +530,9 @@ import time
 import shlex
 import operator
 from ansible.module_utils.docker_common import (
-    DockerBaseClass,
     AnsibleDockerClient,
     DifferenceTracker,
+    DockerBaseClass,
 )
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.six import string_types
@@ -530,6 +541,8 @@ from ansible.module_utils._text import to_text
 try:
     from distutils.version import LooseVersion
     from docker import types
+    from docker.utils import parse_repository_tag
+    from docker.errors import DockerException
 except Exception:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -622,11 +635,11 @@ class DockerService(DockerBaseClass):
             'update_order': self.update_order}
 
     @staticmethod
-    def from_ansible_params(ap, old_service):
+    def from_ansible_params(ap, old_service, image_digest):
         s = DockerService()
+        s.image = image_digest
         s.constraints = ap['constraints']
         s.placement_preferences = ap['placement_preferences']
-        s.image = ap['image']
         s.args = ap['args']
         s.endpoint_mode = ap['endpoint_mode']
         s.dns = ap['dns']
@@ -818,8 +831,9 @@ class DockerService(DockerBaseClass):
             differences.add('update_max_failure_ratio', parameter=self.update_max_failure_ratio, active=os.update_max_failure_ratio)
         if self.update_order is not None and self.update_order != os.update_order:
             differences.add('update_order', parameter=self.update_order, active=os.update_order)
-        if self.image != os.image.split('@')[0]:
-            differences.add('image', parameter=self.image, active=os.image.split('@')[0])
+        has_image_changed, change = self.has_image_changed(os.image)
+        if has_image_changed:
+            differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
         if self.dns != os.dns:
@@ -856,6 +870,11 @@ class DockerService(DockerBaseClass):
             if filtered_publish_item != filtered_old_publish_item:
                 return True
         return False
+
+    def has_image_changed(self, old_image):
+        if '@' not in self.image:
+            old_image = old_image.split('@')[0]
+        return self.image != old_image, old_image
 
     def __str__(self):
         return str({
@@ -1172,12 +1191,38 @@ class DockerServiceManager():
     def remove_service(self, name):
         self.client.remove_service(name)
 
+    def get_image_digest(self, name, resolve=True):
+        if (
+            not name
+            or not resolve
+            or self.client.docker_py_version < LooseVersion('3.2')
+            or self.client.docker_api_version < LooseVersion('1.30')
+        ):
+            return name
+        repo, tag = parse_repository_tag(name)
+        if not tag:
+            tag = 'latest'
+        name = repo + ':' + tag
+        distribution_data = self.client.inspect_distribution(name)
+        digest = distribution_data['Descriptor']['digest']
+        return '%s@%s' % (name, digest)
+
     def __init__(self, client):
         self.client = client
         self.diff_tracker = DifferenceTracker()
 
     def run(self):
         module = self.client.module
+
+        image = module.params['image']
+        try:
+            image_digest = self.get_image_digest(
+                name=image,
+                resolve=module.params['resolve_image']
+            )
+        except DockerException as e:
+            return module.fail_json(
+                msg="Error looking for an image named %s: %s" % (image, e))
         try:
             current_service = self.get_service(module.params['name'])
         except Exception as e:
@@ -1185,7 +1230,11 @@ class DockerServiceManager():
                 msg="Error looking for service named %s: %s" %
                     (module.params['name'], e))
         try:
-            new_service = DockerService.from_ansible_params(module.params, current_service)
+            new_service = DockerService.from_ansible_params(
+                module.params,
+                current_service,
+                image_digest
+            )
         except Exception as e:
             return module.fail_json(
                 msg="Error parsing module parameters: %s" % e)
@@ -1291,6 +1340,7 @@ def main():
         limit_memory=dict(default=0, type='str'),
         reserve_cpu=dict(default=0, type='float'),
         reserve_memory=dict(default=0, type='str'),
+        resolve_image=dict(default=True, type='bool'),
         restart_policy_delay=dict(default=0, type='int'),
         restart_policy_attempts=dict(default=0, type='int'),
         restart_policy_window=dict(default=0, type='int'),

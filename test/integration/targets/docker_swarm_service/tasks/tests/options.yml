@@ -1270,6 +1270,43 @@
       - reserve_memory_3 is changed
 
 ###################################################################
+# resolve_image ###################################################
+###################################################################
+
+- name: resolve_image (false)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: false
+  register: resolve_image_1
+
+- name: resolve_image (false idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: false
+  register: resolve_image_2
+
+- name: resolve_image (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: true
+  register: resolve_image_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - resolve_image_1 is changed
+      - resolve_image_2 is not changed
+      - resolve_image_3 is changed
+
+###################################################################
 # restart_policy ##################################################
 ###################################################################
 
