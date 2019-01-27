@@ -28,6 +28,12 @@ options:
     description:
     - Service image path and tag.
       Maps docker service IMAGE parameter.
+  resolve_image:
+    type: bool
+    required: false
+    default: true
+    description:
+      - If the current image digest should be resolved from registry and updated if changed.
   state:
     required: true
     default: present
@@ -568,6 +574,7 @@ class DockerService(DockerBaseClass):
         self.replicas = -1
         self.service_id = False
         self.service_version = False
+        self.resolve_image = None
         self.restart_policy = None
         self.restart_policy_attempts = None
         self.restart_policy_delay = None
@@ -622,6 +629,7 @@ class DockerService(DockerBaseClass):
     def from_ansible_params(ap, old_service, image_digest):
         s = DockerService()
         s.image = image_digest
+        s.resolve_image = ap['resolve_image']
         s.constraints = ap['constraints']
         s.placement_preferences = ap['placement_preferences']
         s.args = ap['args']
@@ -1138,9 +1146,10 @@ class DockerServiceManager():
     def remove_service(self, name):
         self.client.remove_service(name)
 
-    def get_image_digest(self, name):
+    def get_image_digest(self, name, resolve=True):
         if (
             not name
+            or not resolve
             or self.client.docker_py_version < LooseVersion('3.2')
             or self.client.docker_api_version < LooseVersion('1.30')
         ):
@@ -1162,7 +1171,10 @@ class DockerServiceManager():
 
         image = module.params['image']
         try:
-            image_digest = self.get_image_digest(image)
+            image_digest = self.get_image_digest(
+                name=image,
+                resolve=module.params['resolve_image']
+            )
         except DockerException as e:
             return module.fail_json(
                 msg="Error looking for an image named %s: %s" % (image, e))
@@ -1282,6 +1294,7 @@ def main():
         limit_memory=dict(default=0, type='str'),
         reserve_cpu=dict(default=0, type='float'),
         reserve_memory=dict(default=0, type='str'),
+        resolve_image=dict(default=True, type='bool'),
         restart_policy_delay=dict(default=0, type='int'),
         restart_policy_attempts=dict(default=0, type='int'),
         restart_policy_window=dict(default=0, type='int'),

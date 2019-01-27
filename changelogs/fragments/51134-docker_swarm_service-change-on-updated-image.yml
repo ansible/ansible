@@ -1,2 +1,2 @@
-bugfixes:
-  - "docker_swarm_service - Trigger a change when an image changes in a service."
+minor_changes:
+  - "docker_swarm_service - Resolve image digest from registry to detect and deploy changed images. This behaviour can be turned of by using the new option ``resolve_image: false``"
