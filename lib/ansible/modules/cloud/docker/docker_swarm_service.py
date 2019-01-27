@@ -331,6 +331,9 @@ requirements:
    (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
    Version 2.1.0 or newer is only available with the C(docker) module."
 - "Docker API >= 1.24"
+notes:
+- Images will only resolve to the latest digest when using Docker API >= 1.30 and docker-py >= 3.2.0. 
+  When using older versions use `force_update: true` to trigger the swarm to resolve a new image.
 '''
 
 RETURN = '''
