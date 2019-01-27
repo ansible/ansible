@@ -239,7 +239,7 @@ options:
     required: false
     default: -1
     description:
-      - Number of containers instantiated in the service. Valid only if ``mode=='replicated'``.
+      - Number of containers instantiated in the service. Valid only if I(mode) is C(replicated).
       - If set to -1, and service is not present, service replicas will be set to 1.
       - If set to -1, and service is present, service replicas will be unchanged.
       - Maps docker service --replicas option.
