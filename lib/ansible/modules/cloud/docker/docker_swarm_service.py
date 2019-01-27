@@ -197,22 +197,115 @@ options:
       - List of dictionaries describing the service mounts.
       - Every item must be a dictionary exposing the keys source, target, type (defaults to 'bind'), readonly (defaults to false)
       - Maps docker service --mount option.
+    suboptions:
+      source:
+        type: str
+        required: true
+        description:
+          - Mount source (e.g. a volume name or a host path).
+      target:
+        type: str
+        required: true
+        description:
+          - Container path.
+      type:
+        type: str
+        required: false
+        default: bind
+        choices:
+          - bind
+          - volume
+          - tmpfs
+        description:
+          - The mount type.
+      readonly:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether the mount should be read-only.
   secrets:
     required: false
     type: list
     description:
       - List of dictionaries describing the service secrets.
-      - Every item must be a dictionary exposing the keys secret_id, secret_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
       - Maps docker service --secret option.
       - Requires API version >= 1.25.
+    suboptions:
+      secret_id:
+        type: str
+        required: true
+        description:
+          - Secret's ID.
+      secret_name:
+        type: str
+        required: true
+        description:
+          - Secret's name as defined at its creation.
+      filename:
+        type: str
+        required: false
+        description:
+          - Name of the file containing the secret. Defaults to the secret's name if not specified.
+      uid:
+        type: int
+        required: false
+        default: 0
+        description:
+          - UID of the secret file's owner.
+      gid:
+        type: int
+        required: false
+        default: 0
+        description:
+          - GID of the secret file's group.
+      mode:
+        type: str
+        required: false
+        default: "0o444"
+        description:
+          - File access mode inside the container.
   configs:
     required: false
     type: list
     description:
       - List of dictionaries describing the service configs.
-      - Every item must be a dictionary exposing the keys config_id, config_name, filename, uid (defaults to 0), gid (defaults to 0), mode (defaults to 0o444)
       - Maps docker service --config option.
       - Requires API version >= 1.30.
+    suboptions:
+      config_id:
+        type: str
+        required: true
+        description:
+          - Config's ID.
+      config_name:
+        type: str
+        required: true
+        description:
+          - Config's name as defined at its creation.
+      filename:
+        type: str
+        required: true
+        description:
+          - Name of the file containing the config. Defaults to the config's name if not specified.
+      uid:
+        type: int
+        required: false
+        default: 0
+        description:
+          - UID of the config file's owner.
+      gid:
+        type: int
+        required: false
+        default: 0
+        description:
+          - GID of the config file's group.
+      mode:
+        type: str
+        required: false
+        default: "0o444"
+        description:
+          - File access mode inside the container.
   networks:
     required: false
     type: list
