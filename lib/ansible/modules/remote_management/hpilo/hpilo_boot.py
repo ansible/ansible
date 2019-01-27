@@ -39,7 +39,6 @@ options:
   media:
     description:
     - The boot media to boot the system from
-    default: network
     choices: [ "cdrom", "floppy", "hdd", "network", "normal", "usb" ]
   image:
     description:
