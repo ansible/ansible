@@ -90,6 +90,7 @@
     - include: boot_firmware_d1_c1_f0.yml
     - include: clone_with_convert.yml
     - include: clone_customize_guest_test.yml
+    - include: clone_set_manual_mac_address.yml
   always:
     - name: Remove VM
       vmware_guest:
@@ -114,3 +115,5 @@
         - eagerzeroedthick_DC0_H0_VM1
         - net_customize_DC0_H0_VM0
         - net_customize_DC0_H0_VM1
+        - mac_manual_DC0_H0_VM0
+        - mac_manual_DC0_H0_VM1
