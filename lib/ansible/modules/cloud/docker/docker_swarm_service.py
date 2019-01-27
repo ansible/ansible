@@ -34,6 +34,7 @@ options:
     default: true
     description:
       - If the current image digest should be resolved from registry and updated if changed.
+    version_added: 2.8      
   state:
     required: true
     default: present
