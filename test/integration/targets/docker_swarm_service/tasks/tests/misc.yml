@@ -86,10 +86,14 @@
         published_port: 60001
         target_port: 60001
 
+- name: fake image key as it is not predictable
+  set_fact:
+    ansible_docker_service_output: "{{ output.ansible_docker_service|combine({'image': 'busybox'}) }}"
+
 - name: assert service matches expectations
   assert:
     that:
-      - output.ansible_docker_service == service_expected_output
+      - ansible_docker_service_output == service_expected_output
 
 - name: delete sample service
   register: output
