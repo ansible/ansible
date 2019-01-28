@@ -95,10 +95,6 @@ class BecomeModule(BecomeBase):
     # messages for detecting prompted password issues
     fail = ('Authentication failure',)
 
-    # Prompt handling for ``su`` is more complicated, this
-    # is used to satisfy the connection plugin
-    prompt = True
-
     SU_PROMPT_LOCALIZATIONS = [
         'Password',
         '암호',
@@ -147,6 +143,10 @@ class BecomeModule(BecomeBase):
     def build_become_command(self, cmd, shell):
 
         super(BecomeModule, self).build_become_command(cmd, shell)
+
+        # Prompt handling for ``su`` is more complicated, this
+        # is used to satisfy the connection plugin
+        self.prompt = True
 
         if cmd:
             exe = self.get_option('become_exe') or self.name

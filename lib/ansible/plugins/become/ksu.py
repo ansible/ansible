@@ -95,10 +95,6 @@ class BecomeModule(BecomeBase):
     fail = ('Password incorrect',)
     missing = ('No password given',)
 
-    # Prompt handling for ``ksu`` is more complicated, this
-    # is used to satisfy the connection plugin
-    prompt = True
-
     def check_password_prompt(self, b_output):
         ''' checks if the expected passwod prompt exists in b_output '''
 
@@ -110,6 +106,10 @@ class BecomeModule(BecomeBase):
     def build_become_command(self, cmd, shell):
 
         super(BecomeModule, self).build_become_command(cmd, shell)
+
+        # Prompt handling for ``ksu`` is more complicated, this
+        # is used to satisfy the connection plugin
+        self.prompt = True
 
         if cmd:
             exe = self.get_option('become_exe') or self.name
