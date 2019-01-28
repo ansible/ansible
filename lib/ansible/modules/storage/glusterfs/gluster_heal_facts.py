@@ -52,19 +52,19 @@ RETURN = '''
 name:
     description: GlusterFS volume name
     returned: always
-    type: string
+    type: str
 status_filter:
     description: Whether self-heal or rebalance status is to be returned
     returned: always
-    type: string
+    type: str
 heal_info:
     description: List of files that still need healing process
     returned: On success
-    type: string
+    type: list
 rebalance_status:
     description: Status of rebalance operation
     returned: On success
-    type: string
+    type: list
 '''
 
 import traceback
@@ -114,7 +114,23 @@ def get_self_heal_status(name):
 
 def get_rebalance_status(name):
     out = run_gluster(['volume', 'rebalance', name, 'status'])
-    return out
+    raw_out = out.split("\n")
+    rebalance_status = []
+    # return the files that are either still 'in progress' state or 'completed'.
+    for line in raw_out:
+        node_dict = {}
+        line = " ".join(line.split())
+        line_vals = line.split(" ")
+        node_dict['node'] = line_vals[0]
+        node_dict['rebalanced_files'] = line_vals[1]
+        node_dict['failures'] = line_vals[4]
+        if 'in progress' in line:
+            node_dict['status'] = line_vals[5] + line_vals[6]
+            rebalance_status.append(node_dict)
+        elif 'completed' in line:
+            node_dict['status'] = line_vals[5]
+            rebalance_status.append(node_dict)
+    return rebalance_status
 
 
 def is_invalid_gluster_version(module, required_version):
@@ -133,7 +149,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True, aliases=['volume']),
-            status_filter=dict(default='self-heal', choices=['self-heal', 'rebalance']),
+            status_filter=dict(type='str', default='self-heal', choices=['self-heal', 'rebalance']),
         ),
     )
 
