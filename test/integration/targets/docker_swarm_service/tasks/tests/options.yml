@@ -471,10 +471,6 @@
       - "attempts:1"
   register: dns_search_3
 
-- name: give service a while to finish updating
-  pause:
-    seconds: 2
-
 - name: dns_search (changed elements)
   docker_swarm_service:
     name: "{{ service_name }}"
