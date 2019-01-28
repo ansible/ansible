@@ -138,7 +138,7 @@ class BecomeModule(BecomeBase):
         ''' checks if the expected passwod prompt exists in b_output '''
 
         prompts = self.get_option('prompt_l10n') or self.SU_PROMPT_LOCALIZATIONS
-        b_password_string = b"|".join([br'(\w+\'s )?' + to_bytes(x) for x in prompts])
+        b_password_string = b"|".join((br'(\w+\'s )?' + to_bytes(p)) for p in prompts)
         # Colon or unicode fullwidth colon
         b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
         b_su_prompt_localizations_re = re.compile(b_password_string, flags=re.IGNORECASE)
