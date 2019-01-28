@@ -82,6 +82,26 @@ options:
       - The state of the language for the selected database
     default: present
     choices: [ "present", "absent" ]
+  login_unix_socket:
+    description:
+      - Path to a Unix domain socket for local connections.
+    version_added: '2.8'
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection
+        will be negotiated with the server.
+      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
+        more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    default: prefer
+    choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+    version_added: '2.8'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA)
+        certificate(s). If the file exists, the server's certificate will be
+        verified to be signed by one of these authorities.
+    version_added: '2.8'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -92,7 +112,9 @@ notes:
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
 requirements: [ psycopg2 ]
-author: "Jens Depuydt (@jensdepuydt)"
+author:
+    - "Jens Depuydt (@jensdepuydt)"
+    - "Thomas O'Donnell (@andytom)"
 '''
 
 EXAMPLES = '''
@@ -139,6 +161,7 @@ else:
     postgresqldb_found = True
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 
@@ -195,6 +218,7 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default="", no_log=True),
             login_host=dict(default=""),
+            login_unix_socket=dict(default=""),
             db=dict(required=True),
             port=dict(default='5432'),
             lang=dict(required=True),
@@ -203,6 +227,9 @@ def main():
             force_trust=dict(type='bool', default='no'),
             cascade=dict(type='bool', default='no'),
             fail_on_drop=dict(type='bool', default='yes'),
+            ssl_mode=dict(default='prefer', choices=[
+                          'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_rootcert=dict(default=None),
         ),
         supports_check_mode=True
     )
@@ -214,24 +241,46 @@ def main():
     force_trust = module.params["force_trust"]
     cascade = module.params["cascade"]
     fail_on_drop = module.params["fail_on_drop"]
+    sslrootcert = module.params["ssl_rootcert"]
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
 
+    # To use defaults values, keyword arguments must be absent, so
+    # check which values are empty and don't include in the **kw
+    # dictionary
     params_map = {
         "login_host": "host",
         "login_user": "user",
         "login_password": "password",
         "port": "port",
-        "db": "database"
+        "db": "database",
+        "ssl_mode": "sslmode",
+        "ssl_rootcert": "sslrootcert"
     }
-    kw = dict((params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != "")
+    kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
+              if k in params_map and v != "" and v is not None)
+
+    # If a login_unix_socket is specified, incorporate it here.
+    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
+    if is_localhost and module.params["login_unix_socket"] != "":
+        kw["host"] = module.params["login_unix_socket"]
+
+    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
+
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
     changed = False
     kw = {'db': db, 'lang': lang, 'trust': trust}
 
