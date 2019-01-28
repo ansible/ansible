@@ -33,7 +33,8 @@ description:
        files/directories.
 version_added: "2.8"
 requirements: [ pywhdfs ]
-author: "Yassine Azzouz"
+author:
+    - Yassine Azzouz (@yassineazzouz)
 options:
   path:
     description:
