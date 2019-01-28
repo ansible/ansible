@@ -32,6 +32,13 @@ author: "Samy Coenen (@SamyCoenen)"
 requirements:
   - python-gitlab python module
 options:
+  server_url:
+    description:
+      - The URL of the Gitlab server, with protocol (i.e. http or https).
+    required: False
+    type: str
+    aliases:
+      - url
   login_token:
     description:
       - Your private token to interact with the GitLab API.
@@ -39,13 +46,11 @@ options:
     type: str
     aliases:
       - private_token
-  verify_ssl:
+  validate_certs:
     description:
       - When using https if SSL certificate needs to be verified.
     type: bool
-    default: 'yes'
-    aliases:
-      - validate_certs
+    default: yes
   login_user:
     description:
       - Gitlab user name.
@@ -71,18 +76,11 @@ options:
       - The registration token is used to register new runners.
     required: True
     type: str
-  server_url:
-    description:
-      - The GitLab URL including the API v4 path and http or https.
-    required: False
-    type: str
-    aliases:
-      - url
   active:
     description:
       - Define if the runners is immediately active after creation.
     required: False
-    default: True
+    default: yes
     type: bool
   locked:
     description:
@@ -107,7 +105,7 @@ options:
     description:
       - Run untagged jobs or not.
     required: False
-    default: True
+    default: yes
     type: bool
   tag_list:
     description: The tags that apply to the runner.
@@ -295,20 +293,20 @@ class GitLabRunner(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, type='str', aliases=['url']),
-            verify_ssl=dict(required=False, default=True, type='bool', aliases=['validate_certs']),
-            login_user=dict(required=False, no_log=True, type='str'),
-            login_password=dict(required=False, no_log=True, type='str'),
-            login_token=dict(required=False, no_log=True, type='str', aliases=['private_token']),
-            description=dict(required=True, type='str', aliases=['name']),
-            active=dict(required=False, type='bool', default=True),
-            tag_list=dict(required=False, type='list', default=[]),
-            run_untagged=dict(required=False, type='bool', default=True),
-            locked=dict(required=False, type='bool', default=False),
-            access_level=dict(required=False, type='str', default='ref_protected', choices=["ref_protected", "not_protected"]),
-            maximum_timeout=dict(required=False, type='int', default=3600),
-            registration_token=dict(required=True, type='str'),
-            state=dict(required=False, type='str', default="present", choices=["present", "absent"])
+            server_url=dict(type='str', required=True, aliases=["url"]),
+            validate_certs=dict(type='bool', default=True),
+            login_user=dict(type='str', no_log=True),
+            login_password=dict(type='str', no_log=True),
+            login_token=dict(type='str', no_log=True, aliases=["private_token"]),
+            description=dict(type='str', required=True, aliases=["name"]),
+            active=dict(type='bool', default=True),
+            tag_list=dict(type='list', default=[]),
+            run_untagged=dict(type='bool', default=True),
+            locked=dict(type='bool', default=False),
+            access_level=dict(type='str', default='ref_protected', choices=["not_protected", "ref_protected"]),
+            maximum_timeout=dict(type='int', default=3600),
+            registration_token=dict(type='str', required=True),
+            state=dict(type='str', default="present", choices=["absent", "present"]),
         ),
         mutually_exclusive=[
             ['login_user', 'login_token'],
@@ -320,11 +318,11 @@ def main():
         required_one_of=[
             ['login_user', 'login_token']
         ],
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     server_url = module.params['server_url']
-    verify_ssl = module.params['verify_ssl']
+    verify_ssl = module.params['validate_certs']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']

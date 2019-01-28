@@ -25,15 +25,15 @@ requirements:
 options:
   server_url:
     description:
-      - Url of Gitlab server, with protocol (http or https).
+      - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
-  verify_ssl:
+  validate_certs:
     description:
       - When using https if SSL certificate needs to be verified.
     type: bool
-    default: 'yes'
+    default: yes
     aliases:
-      - validate_certs
+      - verify_ssl
   login_user:
     description:
       - Gitlab user name.
@@ -62,25 +62,25 @@ options:
       - Whether you want to create issues or not.
       - Possible values are true and false.
     type: bool
-    default: 'yes'
+    default: yes
   merge_requests_enabled:
     description:
       - If merge requests can be made or not.
       - Possible values are true and false.
     type: bool
-    default: 'yes'
+    default: yes
   wiki_enabled:
     description:
       - If an wiki for this project should be available or not.
       - Possible values are true and false.
     type: bool
-    default: 'yes'
+    default: yes
   snippets_enabled:
     description:
       - If creating snippets should be available or not.
       - Possible values are true and false.
     type: bool
-    default: 'yes'
+    default: yes
   visibility:
     description:
       - Private. Project access must be granted explicitly for each user.
@@ -272,22 +272,22 @@ class GitLabProject(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True),
-            verify_ssl=dict(required=False, default=True, type='bool', aliases=['validate_certs']),
-            login_user=dict(required=False, no_log=True),
-            login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True),
-            group=dict(required=False),
-            name=dict(required=True),
-            path=dict(required=False),
-            description=dict(required=False),
-            issues_enabled=dict(default=True, type='bool'),
-            merge_requests_enabled=dict(default=True, type='bool'),
-            wiki_enabled=dict(default=True, type='bool'),
+            server_url=dict(type='str', required=True),
+            validate_certs=dict(type='bool', default=True, aliases=["verify_ssl"]),
+            login_user=dict(type='str', no_log=True),
+            login_password=dict(rtype='str', no_log=True),
+            login_token=dict(type='str', no_log=True),
+            group=dict(type='str'),
+            name=dict(type='str', required=True),
+            path=dict(type='str'),
+            description=dict(type='str'),
+            issues_enabled=dict(type='bool', default=True),
+            merge_requests_enabled=dict(type='bool', default=True),
+            wiki_enabled=dict(type='bool', default=True),
             snippets_enabled=dict(default=True, type='bool'),
-            visibility=dict(default="private", choices=["private", "internal", "public"], aliases=["visibility_level"]),
-            import_url=dict(required=False),
-            state=dict(default="present", choices=["present", "absent"]),
+            visibility=dict(type='str', default="private", choices=["internal", "private", "public"], aliases=["visibility_level"]),
+            import_url=dict(type='str'),
+            state=dict(type='str', default="present", choices=["absent", "present"]),
         ),
         mutually_exclusive=[
             ['login_user', 'login_token'],
@@ -299,11 +299,11 @@ def main():
         required_one_of=[
             ['login_user', 'login_token']
         ],
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     server_url = module.params['server_url']
-    verify_ssl = module.params['verify_ssl']
+    verify_ssl = module.params['validate_certs']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']

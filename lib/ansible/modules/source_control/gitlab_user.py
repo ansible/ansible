@@ -26,15 +26,15 @@ requirements:
 options:
   server_url:
     description:
-      - Url of Gitlab server, with protocol (http or https).
+      - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
-  verify_ssl:
+  validate_certs:
     description:
       - When using https if SSL certificate needs to be verified.
     type: bool
-    default: 'yes'
+    default: yes
     aliases:
-      - validate_certs
+      - verify_ssl
   login_user:
     description:
       - Gitlab user name.
@@ -67,8 +67,6 @@ options:
   sshkey_file:
     description:
       - The ssh key itself.
-    aliases:
-      - ssh_key
   group:
     description:
       - Id or Full path of parent group in the form of group/name
@@ -94,19 +92,19 @@ options:
     description:
       - Require confirmation.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "2.4"
   isadmin:
     description:
       - Grant admin privilieges to the user
     type: bool
-    default: 'false'
+    default: no
     version_added: "2.8"
   external:
     description:
       - Define external parameter for this user
     type: bool
-    default: 'false'
+    default: no
     version_added: "2.8"
 '''
 
@@ -393,23 +391,23 @@ class GitLabUser(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, type='str'),
-            verify_ssl=dict(required=False, default=True, type='bool', aliases=['validate_certs']),
-            login_user=dict(required=False, no_log=True, type='str'),
-            login_password=dict(required=False, no_log=True, type='str'),
-            login_token=dict(required=False, no_log=True, type='str'),
-            name=dict(required=True, type='str'),
-            state=dict(required=False, default="present", choices=["present", "absent"]),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
-            email=dict(required=True),
-            sshkey_name=dict(required=False),
-            sshkey_file=dict(required=False, aliases=['ssh_key']),
-            group=dict(required=False),
-            access_level=dict(required=False, default="guest", choices=["guest", "reporter", "developer", "master", "maintainer", "owner"]),
-            confirm=dict(required=False, default=True, type='bool'),
-            isadmin=dict(required=False, default=False, type='bool'),
-            external=dict(required=False, default=False, type='bool')
+            server_url=dict(type='str', required=True),
+            validate_certs=dict(type='bool', default=True, aliases=["verify_ssl"]),
+            login_user=dict(type='str', no_log=True),
+            login_password=dict(type='str', no_log=True),
+            login_token=dict(type='str', no_log=True),
+            name=dict(type='str', required=True),
+            state=dict(type='str', default="present", choices=["absent", "present"]),
+            username=dict(type='str', required=True),
+            password=dict(type='str', required=True, no_log=True),
+            email=dict(type='str', required=True),
+            sshkey_name=dict(type='str'),
+            sshkey_file=dict(type='str'),
+            group=dict(type='str'),
+            access_level=dict(type='str', default="guest", choices=["developer", "guest", "maintainer", "master", "owner", "reporter"]),
+            confirm=dict(type='bool', default=True),
+            isadmin=dict(type='bool', default=False),
+            external=dict(type='bool', default=False),
         ),
         mutually_exclusive=[
             ['login_user', 'login_token'],
@@ -421,11 +419,11 @@ def main():
         required_one_of=[
             ['login_user', 'login_token']
         ],
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     server_url = re.sub('/api.*', '', module.params['server_url'])
-    verify_ssl = module.params['verify_ssl']
+    verify_ssl = module.params['validate_certs']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']

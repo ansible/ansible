@@ -24,15 +24,15 @@ requirements:
 options:
   server_url:
     description:
-      - Url of Gitlab server, with protocol (http or https).
+      - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
-  verify_ssl:
+  validate_certs:
     description:
       - When using https if SSL certificate needs to be verified.
     type: bool
-    default: 'yes'
+    default: yes
     aliases:
-      - validate_certs
+      - verify_ssl
   login_user:
     description:
       - Gitlab user name.
@@ -256,17 +256,17 @@ class GitLabGroup(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, type='str'),
-            verify_ssl=dict(required=False, default=True, type='bool', aliases=['validate_certs']),
-            login_user=dict(required=False, no_log=True, type='str'),
-            login_password=dict(required=False, no_log=True, type='str'),
-            login_token=dict(required=False, no_log=True, type='str'),
-            name=dict(required=True, type='str'),
-            path=dict(required=False, type='str'),
-            description=dict(required=False, default="", type='str'),
-            state=dict(required=False, default="present", choices=["present", "absent"]),
-            parent=dict(required=False, default="", type="str"),
-            visibility=dict(required=False, default="private", choices=["private", "internal", "public"])
+            server_url=dict(type='str', required=True),
+            validate_certs=dict(type='bool', default=True, aliases=["verify_ssl"]),
+            login_user=dict(type='str', no_log=True),
+            login_password=dict(type='str', no_log=True),
+            login_token=dict(type='str', no_log=True),
+            name=dict(type='str', required=True),
+            path=dict(type='str'),
+            description=dict(type='str'),
+            state=dict(type='str', default="present", choices=["absent", "present"]),
+            parent=dict(type='str'),
+            visibility=dict(type='str', default="private", choices=["internal", "private", "public"]),
         ),
         mutually_exclusive=[
             ['login_user', 'login_token'],
@@ -278,11 +278,11 @@ def main():
         required_one_of=[
             ['login_user', 'login_token']
         ],
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     server_url = module.params['server_url']
-    verify_ssl = module.params['verify_ssl']
+    verify_ssl = module.params['validate_certs']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']

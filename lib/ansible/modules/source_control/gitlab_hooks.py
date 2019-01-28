@@ -24,18 +24,16 @@ version_added: "2.6"
 options:
   server_url:
     description:
-      - Url of Gitlab server, with protocol (http or https).
+      - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
     version_added: "2.8"
     aliases:
       - api_url
-  verify_ssl:
+  validate_certs:
     description:
       - When using https if SSL certificate needs to be verified.
     type: bool
-    default: 'yes'
-    aliases:
-      - validate_certs
+    default: yes
     version_added: "2.8"
   login_user:
     description:
@@ -63,53 +61,53 @@ options:
     description:
       - When C(present) the hook will be updated to match the input or created if it doesn't exist. When C(absent) it will be deleted if it exists.
     required: true
-    default: present
+    default: "present"
     choices: [ "present", "absent" ]
   push_events:
     description:
       - Trigger hook on push events
-    type: bool
-    default: 'yes'
+    type: "bool"
+    default: yes
   issues_events:
     description:
       - Trigger hook on issues events
-    type: bool
-    default: 'no'
+    type: "bool"
+    default: no
   merge_requests_events:
     description:
       - Trigger hook on merge requests events
-    type: bool
-    default: 'no'
+    type: "bool"
+    default: no
   tag_push_events:
     description:
       - Trigger hook on tag push events
-    type: bool
-    default: 'no'
+    type: "bool"
+    default: no
   note_events:
     description:
       - Trigger hook on note events
-    type: bool
-    default: 'no'
+    type: "bool"
+    default: no
   job_events:
     description:
       - Trigger hook on job events
-    type: bool
-    default: 'no'
+    type: "bool"
+    default: no
   pipeline_events:
     description:
       - Trigger hook on pipeline events
-    type: bool
-    default: 'no'
+    type: "bool"
+    default: no
   wiki_page_events:
     description:
       - Trigger hook on wiki events
-    type: bool
-    default: 'no'
+    type: "bool"
+    default: no
   enable_ssl_verification:
     description:
       - Whether GitLab will do SSL verification when triggering the hook
-    type: bool
-    default: 'no'
+    type: "bool"
+    default: no
   token:
     description:
       - Secret token to validate hook messages at the receiver.
@@ -300,24 +298,24 @@ class GitLabHook(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, aliases=['api_url']),
-            verify_ssl=dict(required=False, default=True, type='bool', aliases=['validate_certs']),
-            login_user=dict(required=False, no_log=True),
-            login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True, aliases=['private_token']),
-            state=dict(default="present", choices=["present", 'absent']),
-            project=dict(required=True),
-            hook_url=dict(required=True),
-            push_events=dict(default=True, type='bool'),
-            issues_events=dict(default=False, type='bool'),
-            merge_requests_events=dict(default=False, type='bool'),
-            tag_push_events=dict(default=False, type='bool'),
-            note_events=dict(default=False, type='bool'),
-            job_events=dict(default=False, type='bool'),
-            pipeline_events=dict(default=False, type='bool'),
-            wiki_page_events=dict(default=False, type='bool'),
-            enable_ssl_verification=dict(default=False, type='bool'),
-            token=dict(required=False, no_log=True)
+            server_url=dict(type='str', required=True, aliases=["api_url"]),
+            validate_certs=dict(type='bool', default=True),
+            login_user=dict(type='str', no_log=True),
+            login_password=dict(type='str', no_log=True),
+            login_token=dict(type='str', no_log=True, aliases=["private_token"]),
+            state=dict(type='str', default="present", choices=["absent", "present"]),
+            project=dict(type='str', required=True),
+            hook_url=dict(type='str', required=True),
+            push_events=dict(type='bool', default=True),
+            issues_events=dict(type='bool', default=False),
+            merge_requests_events=dict(type='bool', default=False),
+            tag_push_events=dict(type='bool', default=False),
+            note_events=dict(type='bool', default=False),
+            job_events=dict(type='bool', default=False),
+            pipeline_events=dict(type='bool', default=False),
+            wiki_page_events=dict(type='bool', default=False),
+            enable_ssl_verification=dict(type='bool', default=False),
+            token=dict(type='str', no_log=True),
         ),
         mutually_exclusive=[
             ['login_user', 'login_token'],
@@ -329,11 +327,11 @@ def main():
         required_one_of=[
             ['login_user', 'login_token']
         ],
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     server_url = re.sub('/api.*', '', module.params['server_url'])
-    verify_ssl = module.params['verify_ssl']
+    verify_ssl = module.params['validate_certs']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']

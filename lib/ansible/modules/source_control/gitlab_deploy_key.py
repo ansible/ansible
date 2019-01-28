@@ -21,19 +21,16 @@ version_added: "2.6"
 options:
   server_url:
     description:
-      - Url of Gitlab server, with protocol (http or https).
+      - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
     version_added: "2.8"
     aliases:
       - api_url
-  verify_ssl:
+  validate_certs:
     description:
       - When using https if SSL certificate needs to be verified.
     type: bool
-    default: 'yes'
-    aliases:
-      - validate_certs
-      - enable_ssl_verification
+    default: yes
     version_added: "2.8"
   login_user:
     description:
@@ -65,13 +62,13 @@ options:
     description:
       - Whether this key can push to the project
     type: bool
-    default: 'no'
+    default: no
   state:
     description:
       - When C(present) the deploy key added to the project if it doesn't exist.
       - When C(absent) it will be removed from the project if it exists
     required: true
-    default: present
+    default: "present"
     choices: [ "present", "absent" ]
 author: "Marcus Watkins (@marwatk)"
 '''
@@ -245,16 +242,16 @@ class GitLabDeployKey(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True, aliases=['api_url']),
-            verify_ssl=dict(required=False, default=True, type='bool', aliases=['enable_ssl_verification', 'validate_certs']),
-            login_user=dict(required=False, no_log=True),
-            login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True, aliases=['private_token']),
-            state=dict(default="present", choices=["present", 'absent']),
-            project=dict(required=True),
-            key=dict(required=True),
-            can_push=dict(default=False, type='bool'),
-            title=dict(required=True),
+            server_url=dict(type='str', required=True, aliases=["api_url"]),
+            validate_certs=dict(type='bool', default=True),
+            login_user=dict(type='str', no_log=True),
+            login_password=dict(type='str', no_log=True),
+            login_token=dict(type='str', no_log=True, aliases=["private_token"]),
+            state=dict(type='str', default="present", choices=["absent", "present"]),
+            project=dict(type='str', required=True),
+            key=dict(type='str', required=True),
+            can_push=dict(type='bool', default=False),
+            title=dict(type='str', required=True),
         ),
         mutually_exclusive=[
             ['login_user', 'login_token'],
@@ -266,11 +263,11 @@ def main():
         required_one_of=[
             ['login_user', 'login_token']
         ],
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     server_url = re.sub('/api.*', '', module.params['server_url'])
-    verify_ssl = module.params['verify_ssl']
+    verify_ssl = module.params['validate_certs']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']
