@@ -75,6 +75,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
 
     def __init__(self, k8s_kind=None, *args, **kwargs):
         self.client = None
+        self.warnings = []
 
         mutually_exclusive = [
             ('resource_definition', 'src'),
