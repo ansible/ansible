@@ -147,11 +147,13 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.hdfsbase import HDFSAnsibleModule, hdfs_argument_spec, hdfs_required_together, hdfs_mutually_exclusive, hdfs_required_if
 
+
 # recursive,spacequota and namequota  options requires state to be 'directory'
 def invalid_if():
     return [ ('state', 'file', ['recursive','spacequota','namequota']),
              ('state', 'touch', ['recursive','spacequota','namequota']),
              ('state', 'absent', ['recursive','spacequota','namequota']) ]
+
 
 def main():
 
@@ -276,6 +278,7 @@ def main():
             module.exit_json(dest=path, changed=True)
 
     hdfs.hdfs_fail_json(path=path, msg='unexpected position reached')
+
 
 if __name__ == '__main__':
     main()

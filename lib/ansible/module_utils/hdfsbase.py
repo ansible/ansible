@@ -97,6 +97,7 @@ def _check_required_if(module, spec):
             if len(missing) > 0:
                 hdfs_fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
+
 def _check_invalid_if(module, spec):
         ''' ensure that parameters which conditionally required are present '''
         if spec is None:
@@ -111,6 +112,7 @@ def _check_invalid_if(module, spec):
             if len(invalids) > 0:
                 hdfs_fail_json(msg="%s is %s but the following are present: %s" % (key, val, ','.join(invalids)))
 
+
 def _check_required_one_of_if(module, spec):
         ''' ensure that parameters which conditionally required are present '''
         if spec is None:
@@ -124,6 +126,7 @@ def _check_required_one_of_if(module, spec):
                         missing.append(check)
             if len(missing) == 1:
                 hdfs_fail_json(msg="%s is %s but one of the following are missing: %s" % (key, val, ','.join(missing)))
+
 
 def hdfs_argument_spec():
     return dict(
@@ -154,23 +157,29 @@ def hdfs_argument_spec():
         root= dict(required=False, default=None),
     )
 
+
 def hdfs_required_together():
     return []
+
 
 def hdfs_mutually_exclusive():
     return [['password', 'keytab'],['user', 'principal'],['token', 'principal'],['token', 'user'],['token', 'password'],['token', 'keytab']]
 
+
 def hdfs_required_one_of_if():
     return [ ('authentication', 'kerberos', ['password','keytab']) ]
 
+
 def hdfs_required_if():
     return [ ('authentication', 'kerberos', ['principal']),('authentication', 'token', ['token'])  ]
+
 
 def hdfs_invalid_if():
     return [('verify', False, ['truststore']),
             ('authentication', 'none', ['principal','password','keytab','token']),
             ('authentication', 'token', ['principal','password','keytab','user']),
             ('authentication', 'kerberos', ['token','user'])]
+
 
 def kinit(principal,password=None,keytab=None):
     kinit = '/usr/bin/kinit'
@@ -192,6 +201,7 @@ def kinit(principal,password=None,keytab=None):
     else:
         raise ValueError("Kerberos authentication need either a password or a keytab.")
 
+
 def kdestroy():
     try:
         kdestroy = '/usr/bin/kdestroy'
@@ -200,6 +210,7 @@ def kdestroy():
         kdestroy.wait()
     except Exception:
         raise
+
 
 class HDFSAnsibleModule(object):
 
