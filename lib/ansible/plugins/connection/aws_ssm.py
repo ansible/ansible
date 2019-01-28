@@ -44,6 +44,12 @@ options:
     type: integer
     vars:
     - name: ansible_ssm_retries
+  timeout:
+    description: Connection timeout seconds.
+    default: 60
+    type: integer
+    vars:
+    - name: ansible_ssm_timeout
 """
 
 import os
@@ -209,8 +215,20 @@ class Connection(ConnectionBase):
         # Read stdout between the markers
         stdout = ''
         begin = False
+        stop_time = int(round(time.time())) + self.get_option('timeout')
         while session.poll() is None:
-            line = self._stdin_readline()
+            remaining = stop_time - int(round(time.time()))
+            if remaining < 1:
+                self._timeout = True
+                raise AnsibleConnectionFailure("SSM exec_command timeout on host: %s"
+                                           % self.get_option('instance_id'))
+            if self._poll_stdout.poll(1000):
+                line = self._session.stdout.readline()
+                display.vvvv(u"EXEC stdout line: {0}".format(to_text(line)), host=self.host)
+            else:
+                display.vvvv(u"EXEC remaining: {0}".format(remaining), host=self.host)
+                continue
+
             if mark_start in line:
                 begin = True
                 continue
@@ -229,7 +247,7 @@ class Connection(ConnectionBase):
         return (int(returncode), stdout, stderr)
 
     def _stdin_readline(self):
-        poll_timeout = self._play_context.timeout * 1000
+        poll_timeout = self.get_option('timeout') * 1000
         if self._poll_stdout.poll(poll_timeout):
             line = self._session.stdout.readline()
             display.vvvv(u"stdout line: {0}".format(to_text(line)), host=self.host)
