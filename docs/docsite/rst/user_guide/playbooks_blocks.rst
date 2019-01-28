@@ -5,7 +5,6 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
 
 
 .. code-block:: YAML
- :emphasize-lines: 3
  :caption: Block example with named tasks inside the block
 
   tasks:
@@ -47,7 +46,6 @@ Blocks only deal with 'failed' status of a task. A bad task definition, an undef
 
 .. _block_rescue:
 .. code-block:: YAML
- :emphasize-lines: 3,10
  :caption: Block error handling example
 
   tasks:
@@ -69,7 +67,6 @@ There is also an ``always`` section, that will run no matter what the task statu
 
 .. _block_always:
 .. code-block:: YAML
- :emphasize-lines: 2,9
  :caption: Block with always section
 
   - name: Always do X
@@ -87,7 +84,6 @@ There is also an ``always`` section, that will run no matter what the task statu
 They can be added all together to do complex error handling.
 
 .. code-block:: YAML
- :emphasize-lines: 2,9,16
  :caption: Block with all sections
 
  - name: Attempt and graceful roll back demo
@@ -119,7 +115,6 @@ this means it won't trigger ``max_fail_percentage`` nor ``any_errors_fatal`` con
 Another example is how to run handlers after an error occurred :
 
 .. code-block:: YAML
- :emphasize-lines: 6,10
  :caption: Block run handlers in error handling
 
 
