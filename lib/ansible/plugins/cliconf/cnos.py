@@ -65,7 +65,7 @@ class Cliconf(CliconfBase):
         return "NA"
 
     @enable_mode
-    def get_config(self, source='running', format='text'):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             msg = "fetching configuration from %s is not supported"
             return self.invalid_params(msg % source)
@@ -84,8 +84,5 @@ class Cliconf(CliconfBase):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
