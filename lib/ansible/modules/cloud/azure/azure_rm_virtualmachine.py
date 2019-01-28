@@ -276,9 +276,9 @@ options:
         description:
             - "When removing a VM using state 'absent', also remove associated resources."
             - "It can be 'all' or 'all_autocreated' or  a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']."
-            - "To remove all resources referred by VM use 'all'".
-            - "To remove all resources that were automatically created while provisioning VM use 'all_autocreated'".
-            - Any other input will be ignored
+            - "To remove all resources referred by VM use 'all'."
+            - "To remove all resources that were automatically created while provisioning VM use 'all_autocreated'."
+            - Any other input will be ignored.
         default: ['all']
     plan:
         description:
