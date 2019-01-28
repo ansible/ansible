@@ -71,7 +71,7 @@ options:
     version_added: "2.8"
   strip_empty_ends:
     description:
-      - Strim empty lines from the end of stdout/stderr in result.
+      - Strip empty lines from the end of stdout/stderr in result.
     version_added: "2.8"
     type: bool
     default: yes
