@@ -210,8 +210,7 @@ options:
         description:
             - Custom data for using cloud-init for your VM.
             - Refer to U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init).
-        aliases:
-            - subnet
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
