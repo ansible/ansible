@@ -35,6 +35,7 @@ version_added: "2.8"
 requirements: [ pywhdfs ]
 author:
     - Yassine Azzouz (@yassineazzouz)
+    - Alex Willmer (@moreati)
 options:
   path:
     description:
