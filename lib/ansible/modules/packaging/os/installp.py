@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017, Kairo Araujo <kairo@kairo.eti.br>
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -139,8 +138,8 @@ def _check_installed_pkg(module, package, repository_path):
     """
 
     lslpp_cmd = module.get_bin_path('lslpp', True)
-
     rc, lslpp_result, err = module.run_command("%s -lcq %s*" % (lslpp_cmd, package))
+    
     if rc == 1:
         package_state = ' '.join(err.split()[-2:])
         if package_state == 'not installed.':
@@ -148,19 +147,16 @@ def _check_installed_pkg(module, package, repository_path):
         else:
             module.fail_json(msg="Failed to run lslpp.", rc=rc, err=err)
 
-    elif rc != 0:
+    if rc != 0:
         module.fail_json(msg="Failed to run lslpp.", rc=rc, err=err)
 
-    else:
-        pkg_data = {}
-        full_pkg_data = lslpp_result.splitlines()
-        for line in full_pkg_data:
-            pkg_name = line.split(':')[0]
-            fileset = line.split(':')[1]
-            level = line.split(':')[2]
-            pkg_data[pkg_name] = fileset, level
+    pkg_data = {}
+    full_pkg_data = lslpp_result.splitlines()
+    for line in full_pkg_data:
+        pkg_name, fileset, level = line.split(':')[0:3]
+        pkg_data[pkg_name] = fileset, level
 
-        return True, pkg_data
+    return True, pkg_data
 
 
 def remove(module, installp_cmd, packages):
