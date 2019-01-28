@@ -105,6 +105,7 @@ EXAMPLES = '''
     path: "/user/yassine"
     urls: "{{namenodes_urls}}"
     mode: "u=rw,g=r,o=rwX"
+
 - name: "Create subdirectory"
   hdfsfile:
     authentication: "kerberos"
@@ -118,6 +119,7 @@ EXAMPLES = '''
     group: "supergroup"
     mode: 0766
     urls: "{{namenodes_urls}}"
+
 - name: "Remove directory"
   hdfsfile:
     authentication: "kerberos"
