@@ -11,6 +11,7 @@
       org_name: '{{test_org_name}}'
       net_name: IntTestNetwork
       timezone: America/Chicago
+      output_level: performance
     delegate_to: localhost
     register: create_net_no_type
     ignore_errors: yes
@@ -21,6 +22,7 @@
       state: present
       net_name: IntTestNetwork
       timezone: America/Chicago
+      output_level: performance
     delegate_to: localhost
     register: create_net_no_org
     ignore_errors: yes
@@ -33,8 +35,12 @@
       net_name: IntTestNetworkSwitch
       type: switch
       timezone: America/Chicago
+      output_level: performance
     delegate_to: localhost
     register: create_net_switch
+
+  - debug:
+      var: create_net_switch
     
   - name: Create network with type switch by org ID
     meraki_network:

@@ -156,10 +156,12 @@ class MerakiModule(object):
 
     def get_orgs(self):
         """Downloads all organizations for a user."""
-        response = self.request('/organizations', method='GET')
+        start = datetime.datetime.utcnow()
+        response = self.request('/organizations', method='GET', description="get_orgs")
         if self.status != 200:
             self.fail_json(msg='Organization lookup failed')
         self.orgs = response
+        self.metrics['get_orgs'] = str(datetime.datetime.utcnow() - start)
         return self.orgs
 
     def is_org_valid(self, data, org_name=None, org_id=None):
@@ -204,10 +206,10 @@ class MerakiModule(object):
         if org_name:
             org_id = self.get_org_id(org_name)
         path = self.construct_path('get_all', org_id=org_id, function='network')
-        r = self.request(path, method='GET')
+        r = self.request(path, method='GET', description="get_nets")
         if self.status != 200:
             self.fail_json(msg='Network lookup failed')
-        self.nets = r
+        self.nets = self.request(path, method='GET', description="get_nets")
         templates = self.get_config_templates(org_id)
         for t in templates:
             self.nets.append(t)
