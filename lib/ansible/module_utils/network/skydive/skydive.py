@@ -27,16 +27,12 @@
 #
 
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.six import iterkeys
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from skydive.graph import Node, Edge
     from skydive.rest.client import RESTClient
-    from skydive.websocket.client import WSClient
-    from skydive.websocket.client import WSClientDebugProtocol
-    from skydive.websocket.client import WSMessage
-    from skydive.websocket.client import NodeAddedMsgType, EdgeAddedMsgType
     HAS_SKYDIVE_CLIENT = True
 except ImportError:
     HAS_SKYDIVE_CLIENT = False
@@ -45,32 +41,32 @@ except ImportError:
 SKYDIVE_LOOKUP_QUERY = 'G.V().Has'
 
 SKYDIVE_PROVIDER_SPEC = {
-    'host': dict(fallback=(env_fallback, ['SKYDIVE_HOST'])),
+    'endpoint': dict(fallback=(env_fallback, ['SKYDIVE_HOST'])),
     'username': dict(fallback=(env_fallback, ['SKYDIVE_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['SKYDIVE_PASSWORD']), no_log=True),
     'ssl_verify': dict(type='bool', default=False, fallback=(env_fallback, ['SKYDIVE_SSL_VERIFY']))
 }
 
 
-class skydive_base(object):
+class skydive_restclient(object):
     ''' Base class for implementing Skydive Rest API '''
     provider_spec = {'provider': dict(type='dict', options=SKYDIVE_PROVIDER_SPEC)}
 
-    def __init__(self, host="localhost:8082", username="admin", password="password"):
+    def __init__(self, endpoint="localhost:8082", username="admin", password="password"):
         try:
-            self.restclient_object = RESTClient(host, username=username, password=password)
-            self.websocketclient_object = WSClient(host, username=username, password=password)
+            self.restclient_object = RESTClient(endpoint, username=username, password=password)
         except TypeError as err:
             raise err
 
 
-class skydive_lookup(skydive_base):
+class skydive_lookup(skydive_restclient):
+    provider_spec = {'provider': dict(type='dict', options=SKYDIVE_PROVIDER_SPEC)}
 
     def __init__(self, provider):
-        host = provider['host']
+        endpoint = provider['host']
         username = provider['username']
         password = provider['password']
-        super(skydive_lookup, self).__init__(host, username, password)
+        super(skydive_lookup, self).__init__(endpoint, username, password)
         self.query_str = ""
 
     def lookup_query(self, filter_data):
@@ -80,17 +76,17 @@ class skydive_lookup(skydive_base):
         return nodes[0].__dict__
 
 
-class skydive_flow_topology(skydive_base):
+class skydive_flow_topology(skydive_restclient):
     ''' Implements Skydive Flow capture modules '''
     def __init__(self, module):
         self.module = module
         provider = module.params['provider']
 
-        host = provider['host']
+        endpoint = provider['host']
         username = provider['username']
         password = provider['password']
 
-        super(skydive_flow_topology, self).__init__(host, username, password)
+        super(skydive_flow_topology, self).__init__(endpoint, username, password)
 
     def run(self, ib_spec):
         state = self.module.params['state']
@@ -101,7 +97,7 @@ class skydive_flow_topology(skydive_base):
         obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
 
         proposed_object = {}
-        for key, value in iteritems(ib_spec):
+        for key in iterkeys(ib_spec):
             if self.module.params[key] is not None:
                 proposed_object[key] = self.module.params[key]
 
@@ -136,36 +132,6 @@ class skydive_flow_topology(skydive_base):
                     self.restclient_object.capture_delete(uuid)
             except Exception:
                 self.module.fail_json(msg="Capture UUID for the input Gremlin query is not found!")
-            result['changed'] = True
-
-        return result
-
-
-class skydive_graph_engine(skydive_base):
-    ''' Implements Skydive Graph event bus modules '''
-    def __init__(self, module):
-        self.module = module
-        super(skydive_graph_engine, self).__init__()
-
-    def run(self, ib_spec):
-        state = self.module.params['state']
-        if state not in ('present', 'absent'):
-            self.module.fail_json(msg='state must be one of `present`, `absent`, got `%s`' % state)
-
-        result = {'changed': False}
-        obj_filter = dict([(k, self.module.params[k]) for k, v in iteritems(ib_spec) if v.get('ib_req')])
-
-        proposed_object = {}
-        for key, value in iteritems(ib_spec):
-            if self.module.params[key] is not None:
-                proposed_object[key] = self.module.params[key]
-
-        if state == 'present':
-            name = obj_filter.keys()[0]
-            capture_type = obj_filter.keys()[1]
-            flow_str = SKYDIVE_LOOKUP_QUERY + "('" + name + "' , '" + obj_filter[
-                name] + "' '" + capture_type + "', '" + obj_filter[capture_type] + "' )"
-            self.restclient_object.capture_create(flow_str)
             result['changed'] = True
 
         return result
