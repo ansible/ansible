@@ -314,6 +314,26 @@ backup_path:
   returned: when backup is yes
   type: str
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: ios_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/ios_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 import json
 
