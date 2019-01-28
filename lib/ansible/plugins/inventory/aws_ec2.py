@@ -48,8 +48,9 @@ DOCUMENTATION = '''
               - name: AWS_SESSION_TOKEN
               - name: EC2_SECURITY_TOKEN
         regions:
-          description: A list of regions in which to describe EC2 instances. By default this is all regions except us-gov-west-1
-              and cn-north-1.
+          description:
+            - A list of regions in which to describe EC2 instances.
+            - If empty (the default) default this will include all regions, except possibly restricted ones like us-gov-west-1 and cn-north-1.
           type: list
           default: []
         hostnames:
@@ -135,9 +136,8 @@ compose:
   ansible_host: private_ip_address
 '''
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
@@ -328,7 +328,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 # as per https://boto3.amazonaws.com/v1/documentation/api/latest/guide/ec2-example-regions-avail-zones.html
                 client = boto3.client('ec2')
                 resp = client.describe_regions()
-                regions = resp.get('Regions', [])
+                regions = [x['RegionName'] for x in resp.get('Regions', [])]
             except botocore.exceptions.NoRegionError:
                 # above seems to fail depending on boto3 version, ignore and lets try something else
                 pass
