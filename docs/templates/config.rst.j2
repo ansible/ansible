@@ -77,7 +77,7 @@ appropriate steps to mitigate the security concerns above before doing so.
 Relative paths
 --------------
 
-Many configuration options allow for relative paths being specified, in most of those cases the path used will be relative to the ansible.cfg file used for the current execution. If you need a path relative to your current working directory you can use the `{{CWD}}` macro to specify such, this is not recommended as usind your CWD can be a security risk. i.e ``cd /tmp; secureinfo=./newrootpassword ansilbe-playbook ~/safestuff/change_root_pwd.yml``.
+Many configuration options allow for relative paths being specified, in most of those cases the path used will be relative to the ansible.cfg file used for the current execution. If you need a path relative to your current working directory you can use the ``{{CWD}}`` macro to specify such, this is not recommended as using your CWD can be a security risk. i.e ``cd /tmp; secureinfo=./newrootpassword ansible-playbook ~/safestuff/change_root_pwd.yml``.
 
 
 Common Options
