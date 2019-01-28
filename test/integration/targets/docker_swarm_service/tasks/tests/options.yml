@@ -342,23 +342,23 @@
       - 8.8.8.8
   register: dns_2
 
-#- name: dns_servers (changed order)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    dns:
-#      - 8.8.8.8
-#      - 1.1.1.1
-#  register: dns_3
-#
-#- name: dns_servers (changed elements)
-#  docker_swarm_service:
-#    name: "{{ service_name }}"
-#    image: alpine:3.8
-#    dns:
-#      - 8.8.8.8
-#      - 9.9.9.9
-#  register: dns_4
+- name: dns_servers (changed order)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+  register: dns_3
+
+- name: dns_servers (changed elements)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    dns:
+      - 8.8.8.8
+      - 9.9.9.9
+  register: dns_4
 
 - name: cleanup
   docker_swarm_service:
@@ -370,8 +370,8 @@
     that:
       - dns_1 is changed
       - dns_2 is not changed
-#      - dns_3 is changed
-#      - dns_4 is changed
+      - dns_3 is changed
+      - dns_4 is changed
   when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
