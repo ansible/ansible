@@ -123,6 +123,9 @@ EXAMPLES = '''
   docker_host_facts:
     disk_usage: true
   register: result
+  
+- debug:
+    var: result.docker_host_facts
 
 '''
 
@@ -135,27 +138,27 @@ docker_host_facts:
 docker_volumes_list:
     description:
       - List of volumes with basic information about each. Matches the C(docker volumes ls) output.
-    returned: on success
+    returned: When I(volumes) is C(yes)
     type: dict
 docker_networks_list:
     description:
       - List of networks with basic information about each. Matches the C(docker volumes ls) output.
-    returned: on success
+    returned: When I(networks) is C(yes)
     type: dict
 docker_containers_list:
     description:
       - List of containers with basic information about each. Matches the C(docker volumes ls) output.
-    returned: on success
+    returned: When I(containers) is C(yes)
     type: dict
 docker_images_list:
     description:
       - List of images with basic information about each. Matches the C(docker image ls) output.
-    returned: on success
+    returned: When I(images) is C(yes)
     type: dict
 docker_disk_usage:
     description:
-      - Facts representing the current state of the docker host. Matches the C(docker system info) output.
-    returned: on success
+      - Information on summary disk usage by images, containers and volumes on docker host.
+    returned: When I(disk_usage) is C(yes)
     type: int
 
 '''
@@ -189,11 +192,11 @@ class DockerHostManager(DockerBaseClass):
 
         self.results['docker_host_facts'] = self.get_docker_host_facts()
 
-        if self.client.module.params['disk_usage'] is True:
+        if self.client.module.params['disk_usage']:
             self.results['docker_disk_usage'] = self.get_docker_disk_usage_facts()
 
         for docker_object in listed_objects:
-            if self.client.module.params[docker_object] is True:
+            if self.client.module.params[docker_object]:
                 returned_name = "docker_" + docker_object + "_list"
                 filter_name = docker_object + "_filters"
                 filters = clean_dict_booleans_for_docker_api(client.module.params.get(filter_name))
@@ -223,11 +226,11 @@ class DockerHostManager(DockerBaseClass):
         try:
             if docker_object == 'containers':
                 items = self.client.containers(filters=filters)
-            if docker_object == 'networks':
+            elif docker_object == 'networks':
                 items = self.client.networks(filters=filters)
-            if docker_object == 'images':
+            elif docker_object == 'images':
                 items = self.client.images(filters=filters)
-            if docker_object == 'volumes':
+            elif docker_object == 'volumes':
                 items = self.client.volumes(filters=filters)
         except APIError as exc:
             self.client.fail_json(msg="Error inspecting docker host: %s" % to_native(exc))
