@@ -131,9 +131,6 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-changed:
-    description: True if the file state has changed.
-    type: bool
 path:
     description: HDFS Path of the target file.
     returned: always
