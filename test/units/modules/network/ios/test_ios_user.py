@@ -128,3 +128,16 @@ class TestIosUserModule(TestIosModule):
         ]
         result = self.execute_module(changed=True, commands=commands)
         self.assertEqual(result['commands'], commands)
+
+    def test_ios_user_set_sshkey_multiple(self):
+        set_module_args(dict(name='ansible', sshkey=['dGVzdA==', 'eHWacB2==']))
+        commands = [
+            'ip ssh pubkey-chain',
+            'username ansible',
+            'key-hash ssh-rsa 098F6BCD4621D373CADE4E832627B4F6',
+            'key-hash ssh-rsa A019918340A1E9183388D9A675603036',
+            'exit',
+            'exit'
+        ]
+        result = self.execute_module(changed=True, commands=commands)
+        self.assertEqual(result['commands'], commands)
