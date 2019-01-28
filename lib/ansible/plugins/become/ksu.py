@@ -63,7 +63,7 @@ DOCUMENTATION = """
               - name: ansible_become_password
             env:
               - name: ANSIBLE_BECOME_PASS
-              - name: ANSIBLE_KSU_pass
+              - name: ANSIBLE_KSU_PASS
             ini:
               - section: ksu_become_plugin
                 key: password
@@ -83,6 +83,7 @@ DOCUMENTATION = """
 
 import re
 
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.become import BecomeBase
 
 
@@ -94,9 +95,17 @@ class BecomeModule(BecomeBase):
     fail = ('Password incorrect',)
     missing = ('No password given',)
 
+    # Prompt handling for ``ksu`` is more complicated, this
+    # is used to satisfy the connection plugin
+    prompt = True
+
     def check_password_prompt(self, b_output):
         ''' checks if the expected passwod prompt exists in b_output '''
-        return re.match(b"Kerberos password for .*@.*:", b_output)
+
+        prompts = self.get_option('prompt_l10n') or ["Kerberos password for .*@.*:"]
+        b_prompt = b"|".join(to_bytes(p) for p in prompts)
+
+        return bool(re.match(b_prompt, b_output))
 
     def build_become_command(self, cmd, shell):
 
