@@ -1047,7 +1047,7 @@ class DockerServiceManager():
         update_config_data = raw_data['Spec']['UpdateConfig']
 
         ds.image = task_template_data['ContainerSpec']['Image']
-        ds.user = task_template_data['ContainerSpec'].get('User', 'root')
+        ds.user = task_template_data['ContainerSpec'].get('User', None)
         ds.env = task_template_data['ContainerSpec'].get('Env', [])
         ds.command = task_template_data['ContainerSpec'].get('Command')
         ds.args = task_template_data['ContainerSpec'].get('Args', [])
