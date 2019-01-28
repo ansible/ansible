@@ -1,0 +1,4 @@
+        "Type": "1GE",
+        "Feature":      ["Base Product", "Layer3", "OpenFlow", "Cluster Controller"],
+        "Support End Date":     "2019-12-31",
+        "Hardware ID":  "036A-FAE5-DAE6-1A34"
