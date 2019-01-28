@@ -23,7 +23,7 @@ Before you start coding
 
 Although it's tempting to get straight into coding, there are a few things to be aware of first. This list of prerequisites is designed to help ensure that you develop high-quality modules that flow easily through the review process and get into Ansible more quickly.
 
-* Read though all the pages linked off :doc:`developing_modules`; paying particular focus to the :doc:`developing_modules_checklist`.
+* Read through all the pages linked off :ref:`developing_modules`; paying particular focus to the :ref:`developing_modules_checklist`.
 * New modules must be PEP 8 compliant. See :doc:`testing_pep8` for more information.
 * Starting with Ansible version 2.7, all new modules must :ref:`support Python 2.7+ and Python 3.5+ <developing_python_3>`. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
 * Have a look at the existing modules and how they've been named in the :ref:`all_modules`, especially in the same functional area (such as cloud, networking, databases).
@@ -45,10 +45,9 @@ Each module should have the above (or similar) prefix; see existing :ref:`all_mo
 
 **Note:**
 
-* File and directory names are always in lower case
-* Words are separated with an underscore (``_``) character
-* Module names should be in the singular, rather than plural, eg ``command`` not ``commands``
-
+* File and directory names are always in lower case.
+* Words are separated with an underscore (``_``) character.
+* Module names should be in the singular, rather than plural, eg ``command`` not ``commands``.
 
 Speak to us
 ===========
@@ -104,6 +103,54 @@ If you need further advice, consider join the ``#ansible-devel`` IRC channel (se
 
 We have a ``ansibullbot`` helper that comments on GitHub Issues and PRs which should highlight important information.
 
+Example: Adding a group of modules
+==================================
+
+For example, to add a group of modules under a new category (e.g. security), you would follow these steps:
+
+#. Create the new category directory in ``lib/ansible/modules`` and add an empty ``__init__.py`` file:
+
+    .. code-block:: bash
+
+      $ ls lib/ansible/modules/security
+         __init__.py
+
+#. Create the topic for this new group of modules under that new category and add an empty ``__init__.py`` file:
+
+    .. code-block:: bash
+
+       $ ls lib/ansible/modules/security/checkpoint
+          __init__.py
+
+#. Add your module python file:
+
+    .. code-block:: bash
+
+       $ ls lib/ansible/modules/security/checkpoint
+         checkpoint_access_rule.py      __init__.py
+
+#. Create the new category directory in ``test/units/modules`` and add an empty ``__init__.py`` file:
+
+    .. code-block:: bash
+
+       $ ls test/units/modules/security
+           __init__.py
+
+#. Create the topic for this new group of modules under that new category and add an empty ``__init__.py`` file:
+
+    .. code-block:: bash
+
+       $ ls test/units/modules/security/checkpoint
+          __init__.py
+
+#. Add your test python file:
+
+    .. code-block:: bash
+
+       $ ls test/units/modules/security/checkpoint
+         __init__.py         test_checkpoint_access_rule.py
+
+See :ref:`developing_testing` for details on developing these unit tests for your new modules.
 
 Subsequent PRs
 ==============
