@@ -553,9 +553,7 @@ namespace Ansible.Basic
                 {
                     string msg = String.Format("argument spec entry contains an invalid key '{0}', valid keys: {1}",
                         key, String.Join(", ", specDefaults.Keys));
-                    if (optionsContext.Count > 0)
-                        msg += String.Format(" - found in {0}.", String.Join(" -> ", optionsContext));
-                    throw new ArgumentException(msg);
+                    throw new ArgumentException(FormatOptionsContext(msg, " - "));
                 }
 
                 // ensure the value is casted to the type we expect
@@ -597,9 +595,7 @@ namespace Ansible.Basic
                     {
                         string msg = String.Format("argument spec for '{0}' did not match expected type {1}: actual type {2}",
                             key, optionType.FullName, actualType.FullName);
-                        if (optionsContext.Count > 0)
-                            msg += String.Format(" - found in {0}.", String.Join(" -> ", optionsContext));
-                        throw new ArgumentException(msg);
+                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
                     }
                 }
 
@@ -626,18 +622,14 @@ namespace Ansible.Basic
                         if (!optionTypes.ContainsKey(typeValue))
                         {
                             string msg = String.Format("{0} '{1}' is unsupported", key, typeValue);
-                            if (optionsContext.Count > 0)
-                                msg += String.Format(" - found in {0}", String.Join(" -> ", optionsContext));
-                            msg += String.Format(". Valid types are: {0}", String.Join(", ", optionTypes.Keys));
+                            msg = String.Format("{0}. Valid types are: {1}", FormatOptionsContext(msg, " - "), String.Join(", ", optionTypes.Keys));
                             throw new ArgumentException(msg);
                         }
                     }
                     else if (!(entry.Value is Delegate))
                     {
                         string msg = String.Format("{0} must either be a string or delegate, was: {1}", key, valueType.FullName);
-                        if (optionsContext.Count > 0)
-                            msg += String.Format(" - found in {0}", String.Join(" -> ", optionsContext));
-                        throw new ArgumentException(msg);
+                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
                     }
                 }
             }
@@ -755,34 +747,43 @@ namespace Ansible.Basic
                     {
                         string msg = String.Format("argument for {0} is of type {1} and we were unable to convert to {2}: {3}",
                             k, value.GetType(), type, e.InnerException.Message);
-                        if (optionsContext.Count > 0)
-                            msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                        FailJson(msg);
+                        FailJson(FormatOptionsContext(msg));
                     }
 
                     // ensure it matches the choices if there are choices set
-                    List<object> choices = (List<object>)v["choices"];
+                    List<string> choices = ((List<object>)v["choices"]).Select(x => x.ToString()).Cast<string>().ToList();
                     if (choices.Count > 0)
                     {
-                        // allow one or more when type="list" param with choices
+                        List<string> values;
+                        string choiceMsg;
                         if (type == "list")
                         {
-                            var diffList = ((List<object>)value).Except(choices).ToList();
-                            if (diffList.Count > 0)
-                            {
-                                string msg = String.Format("value of {0} must be one or more of: {1}. Got no match for: {2}",
-                                    k, String.Join(", ", choices), String.Join(", ", diffList));
-                                if (optionsContext.Count > 0)
-                                    msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                                FailJson(msg);
-                            }
+                            values = ((List<object>)value).Select(x => x.ToString()).Cast<string>().ToList();
+                            choiceMsg = "one or more of";
                         }
-                        else if (!choices.Contains(value))
+                        else
                         {
-                            string msg = String.Format("value of {0} must be one of: {1}, got: {2}", k, String.Join(", ", choices), value);
-                            if (optionsContext.Count > 0)
-                                msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                            FailJson(msg);
+                            values = new List<string>() { value.ToString() };
+                            choiceMsg = "one of";
+                        }
+
+                        List<string> diffList = values.Except(choices, StringComparer.OrdinalIgnoreCase).ToList();
+                        List<string> caseDiffList = values.Except(choices).ToList();
+                        if (diffList.Count > 0)
+                        {
+                            string msg = String.Format("value of {0} must be {1}: {2}. Got no match for: {3}",
+                                                       k, choiceMsg, String.Join(", ", choices), String.Join(", ", diffList));
+                            FailJson(FormatOptionsContext(msg));
+                        }
+                        else if (caseDiffList.Count > 0)
+                        {
+                            // For backwards compatibility with Legacy.psm1 we need to be matching choices that are not case sensitive.
+                            // We will warn the user it was case insensitive and tell them this will become case sensitive in the future.
+                            string msg = String.Format(
+                                "value of {0} was a case insensitive match of {1}: {2}. Checking of choices will be case sensitive in a future Ansible release. Case insensitive matches were: {3}",
+                                k, choiceMsg, String.Join(", ", choices), String.Join(", ", caseDiffList.Select(x => RemoveNoLogValues(x, noLogValues)))
+                            );
+                            Warn(FormatOptionsContext(msg));
                         }
                     }
                 }
@@ -848,9 +849,7 @@ namespace Ansible.Basic
             {
                 legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
                 string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedParameters));
-                if (optionsContext.Count > 0)
-                    msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                msg += String.Format(". Supported parameters include: {0}", String.Join(", ", legalInputs));
+                msg = String.Format("{0}. Supported parameters include: {1}", FormatOptionsContext(msg), String.Join(", ", legalInputs));
                 FailJson(msg);
             }
         }
@@ -871,9 +870,7 @@ namespace Ansible.Basic
                 if (count > 1)
                 {
                     string msg = String.Format("parameters are mutually exclusive: {0}", String.Join(", ", mutualCheck));
-                    if (optionsContext.Count > 0)
-                        msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                    FailJson(msg);
+                    FailJson(FormatOptionsContext(msg));
                 }
             }
         }
@@ -899,9 +896,7 @@ namespace Ansible.Basic
             if (missing.Count > 0)
             {
                 string msg = String.Format("missing required arguments: {0}", String.Join(", ", missing));
-                if (optionsContext.Count > 0)
-                    msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                FailJson(msg);
+                FailJson(FormatOptionsContext(msg));
             }
         }
 
@@ -923,9 +918,7 @@ namespace Ansible.Basic
                 if (found.Contains(true) && found.Contains(false))
                 {
                     string msg = String.Format("parameters are required together: {0}", String.Join(", ", requiredCheck));
-                    if (optionsContext.Count > 0)
-                        msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                    FailJson(msg);
+                    FailJson(FormatOptionsContext(msg));
                 }
             }
         }
@@ -946,9 +939,7 @@ namespace Ansible.Basic
                 if (count == 0)
                 {
                     string msg = String.Format("one of the following is required: {0}", String.Join(", ", requiredCheck));
-                    if (optionsContext.Count > 0)
-                        msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                    FailJson(msg);
+                    FailJson(FormatOptionsContext(msg));
                 }
             }
         }
@@ -993,9 +984,7 @@ namespace Ansible.Basic
                 {
                     string msg = String.Format("{0} is {1} but {2} of the following are missing: {3}",
                         key, val.ToString(), term, String.Join(", ", missing));
-                    if (optionsContext.Count > 0)
-                        msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                    FailJson(msg);
+                    FailJson(FormatOptionsContext(msg));
                 }
             }
         }
@@ -1036,9 +1025,7 @@ namespace Ansible.Basic
                         {
                             string msg = String.Format("argument for list entry {0} is of type {1} and we were unable to convert to {2}: {3}",
                                 key, element.GetType(), elements, e.Message);
-                            if (optionsContext.Count > 0)
-                                msg += String.Format(" found in {0}", String.Join(" -> ", optionsContext));
-                            FailJson(msg);
+                            FailJson(FormatOptionsContext(msg));
                         }
                     }
                 }
@@ -1214,6 +1201,13 @@ namespace Ansible.Basic
                     Directory.Delete(path, true);
             }
             cleanupFiles = new List<string>();
+        }
+
+        private string FormatOptionsContext(string msg, string prefix = " ")
+        {
+            if (optionsContext.Count > 0)
+                msg += String.Format("{0}found in {1}", prefix, String.Join(" -> ", optionsContext));
+            return msg;
         }
 
         [DllImport("kernel32.dll")]
