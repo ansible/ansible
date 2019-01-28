@@ -177,34 +177,34 @@
   azure_rm_postgresqlconfiguration_facts:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
-    configuration_name: deadlock_timeout
+    setting_name: deadlock_timeout
   register: output
 - name: Assert that facts are returned
   assert:
     that:
       - output.changed == False
-      - output.configurations.deadlock_timeout.id != None
-      - output.configurations.deadlock_timeout.name != None
-      - output.configurations.deadlock_timeout.type != None
-      - output.configurations.deadlock_timeout.value != None
-      - output.configurations.deadlock_timeout.description != None
-      - output.configurations.deadlock_timeout.source != None
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | lenght == 1
 
 - name: Gather facts PostgreSQL Configuration
   azure_rm_postgresqlconfiguration_facts:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
   register: output
-- name: Assert that facts are returned
+- name: Get all settings
   assert:
     that:
       - output.changed == False
-      - output.configurations.deadlock_timeout.id != None
-      - output.configurations.deadlock_timeout.name != None
-      - output.configurations.deadlock_timeout.type != None
-      - output.configurations.deadlock_timeout.value != None
-      - output.configurations.deadlock_timeout.description != None
-      - output.configurations.deadlock_timeout.source != None
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | lenght > 1
 
 #
 # azure_rm_postgresqldatabase tests below
