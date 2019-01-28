@@ -1494,7 +1494,7 @@ MAX_FILE_SIZE_FOR_DIFF:
   - {key: max_diff_size, section: defaults}
   type: int
 MODULE_DEFAULTS_MERGE:
-  name: Allow module_defaults to be merged instead of overwritten
+  name: Allow arguments defined for modules/groups using module_defaults to be merged instead of overwritten
   default: False
   description:
     - If module_defaults are set for a play or set of tasks, setting module_defaults on any inner tasks

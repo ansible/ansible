@@ -599,6 +599,9 @@ class TaskExecutor:
         module_defaults = {}
         for default in self._task.module_defaults:
             if self._task.module_defaults_merge:
+                # This block merges the parent and child defaults one level deeper in the structure
+                # for the purpose of merging arguments for individual modules/groups rather than
+                # overwriting at the module/group level.
                 for group in default:
                     if group in module_defaults:
                         module_defaults[group].update(default[group])
