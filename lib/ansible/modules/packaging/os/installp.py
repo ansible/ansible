@@ -139,7 +139,7 @@ def _check_installed_pkg(module, package, repository_path):
 
     lslpp_cmd = module.get_bin_path('lslpp', True)
     rc, lslpp_result, err = module.run_command("%s -lcq %s*" % (lslpp_cmd, package))
-    
+
     if rc == 1:
         package_state = ' '.join(err.split()[-2:])
         if package_state == 'not installed.':
@@ -226,11 +226,11 @@ def install(module, installp_cmd, packages, repository_path, accept_license):
 
             else:
                 if not module.check_mode:
-                    rc, install_out, err = module.run_command("%s -a %s -X -d %s %s" % (installp_cmd, accept_license_param[accept_license], repository_path, package))
+                    rc, out, err = module.run_command("%s -a %s -X -d %s %s" % (installp_cmd, accept_license_param[accept_license], repository_path, package))
                     if rc != 0:
                         module.fail_json(msg="Failed to run installp", rc=rc, err=err)
                 installed_pkgs.append(package)
-                        
+
         else:
             not_found_pkgs.append(package)
 
