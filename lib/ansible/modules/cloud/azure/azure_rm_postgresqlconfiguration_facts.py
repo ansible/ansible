@@ -47,7 +47,7 @@ EXAMPLES = '''
     azure_rm_postgresqlconfiguration_facts:
       resource_group: testrg
       server_name: testpostgresqlserver
-      setting_name: 
+      setting_name: deadlock_timeout
 
   - name: List instances of PostgreSQL Configuration
     azure_rm_postgresqlconfiguration_facts:
@@ -63,29 +63,29 @@ settings:
     contains:
         id:
             description:
-                - Resource ID
+                - Setting resource ID
             returned: always
             type: str
             sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/testrg/providers/Microsoft.DBforPostgreSQL/servers/testpostgresqlser
-                     ver/configurations/array_nulls"
+                     ver/configurations/deadlock_timeout"
         name:
             description:
-                - Resource name.
+                - Setting name.
             returned: always
             type: str
-            sample: array_nulls
+            sample: deadlock_timeout
         value:
             description:
-                - Value of the configuration.
+                - Setting value.
             returned: always
-            type: str
-            sample: on
+            type: raw
+            sample: 1000
         description:
             description:
                 - Description of the configuration.
             returned: always
             type: str
-            sample: Enable input of NULL elements in arrays.
+            sample: Deadlock timeout.
         source:
             description:
                 - Source of the configuration.
@@ -200,7 +200,10 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         }
         return d
 
+
 def main():
     AzureRMPostgreSQLConfigurationFacts()
+
+
 if __name__ == '__main__':
     main()
