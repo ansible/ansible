@@ -918,11 +918,11 @@ class TaskExecutor:
         return options
 
     def _set_plugin_options(self, plugin_type, variables, templar, task_keys):
-        # Some plugins are assigned to private attrs, ``become`` is not
-        plugin = getattr(
-            self._connection, '_%s' % plugin_type,
-            getattr(self._connection, plugin_type, None)
-        )
+        try:
+            plugin = getattr(self._connection, '_%s' % plugin_type)
+        except AttributeError:
+            # Some plugins are assigned to private attrs, ``become`` is not
+            plugin = getattr(self._connection, plugin_type)
         option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
         options = {}
         for k in option_vars:
@@ -966,7 +966,8 @@ class TaskExecutor:
         self._set_plugin_options('shell', final_vars, templar, task_keys)
 
         if self._connection.become is not None:
-            # FIXME: find alternate route to provide passwords, keep out of play objects to avoid accidental disclosure
+            # FIXME: find alternate route to provide passwords,
+            # keep out of play objects to avoid accidental disclosure
             task_keys['become_pass'] = self._play_context.become_pass
             self._set_plugin_options('become', final_vars, templar, task_keys)
 

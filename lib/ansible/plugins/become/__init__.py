@@ -10,7 +10,7 @@ from string import ascii_lowercase
 from gettext import dgettext
 
 from ansible.module_utils.six.moves import shlex_quote
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes
 from ansible.plugins import AnsiblePlugin
 
 
@@ -34,9 +34,7 @@ class BecomeBase(AnsiblePlugin):
     prompt = ''
 
     def __init__(self):
-
         super(BecomeBase, self).__init__()
-
         self._id = ''
         self.success = ''
 
@@ -50,9 +48,8 @@ class BecomeBase(AnsiblePlugin):
 
     @abstractmethod
     def build_become_command(self, cmd, shell):
-
         self._id = _gen_id()
-        self.success = to_text('BECOME-SUCCESS-%s' % self._id)
+        self.success = 'BECOME-SUCCESS-%s' % self._id
 
     def check_success(self, b_output):
         b_success = to_bytes(self.success)

@@ -151,7 +151,6 @@ class PlayIterator:
         self._variable_manager = variable_manager
 
         # Default options to gather
-        # use getattr here as making it fieldattribute default has issues with containers
         gather_subset = self._play.gather_subset
         gather_timeout = self._play.gather_timeout
         fact_path = self._play.fact_path
