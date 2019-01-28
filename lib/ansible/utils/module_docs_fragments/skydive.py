@@ -26,10 +26,10 @@ options:
     description:
       - A dict object containing connection details.
     suboptions:
-      host:
+      endpoint:
         description:
-          - Specifies the host name or address for connecting to the remote
-            instance of SKYDIVE client over REST
+          - Specifies the hostname/address along with the port as C(localhost:8082)for
+            connecting to the remote instance of SKYDIVE client over REST
         required: true
       user:
         description:
@@ -39,6 +39,12 @@ options:
         description:
           - Specifies the password to use to authenticate the connection to
             the remote instance of SKYDIVE client.
+      verify_ssl:
+        description:
+          - Specifies the ssl parameter which decide the connection type shall be
+            http/https.
+        type: bool
+        default: false
 notes:
   - "This module must be run locally, which can be achieved by specifying C(connection: local)."
 """
