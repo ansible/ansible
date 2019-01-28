@@ -682,6 +682,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # let module know about filesystems that selinux treats specially
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
+        # what to do when parameter values are converted to strings
+        module_args['_ansible_string_conversion_action'] = C.STRING_CONVERSION_ACTION
+
         # give the module the socket for persistent connections
         module_args['_ansible_socket'] = getattr(self._connection, 'socket_path')
         if not module_args['_ansible_socket']:
