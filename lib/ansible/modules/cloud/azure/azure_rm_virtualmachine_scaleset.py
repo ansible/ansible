@@ -508,7 +508,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             self.location = resource_group.location
 
         if self.custom_data:
-            self.custom_data = base64.b64encode(to_bytes(self.custom_data))
+            self.custom_data =  to_native(base64.b64encode(to_bytes(self.custom_data)))
 
         if self.state == 'present':
             # Verify parameters and resolve any defaults
