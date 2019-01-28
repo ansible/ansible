@@ -12,23 +12,24 @@ DOCUMENTATION = '''
 ---
 module: drive_append_to_sheet
 
-short_description: Archive variables in a Google Sheet
+short_description: Append columns in a Google Sheet
 
 version_added: "2.8"
 
 description:
-    - "Using this module it is possible to archive variables in a playbook run into a Google Sheet.
-      This is especially interesting if you are trying to gather facts across lots of servers and
+    - Using this module it is possible to write columns into a Google Sheet.
+    - This is especially interesting if you are trying to gather facts across lots of servers and
       you will want to do some statistical analysis on that data later on.
-      A Google account and the Python client library for Google APIs are requirements.
-      Also you must have the Google Sheets API activated and valid credentials for this handy.
-      The necessary API steps can be done here:
-      https://developers.google.com/sheets/api/quickstart/python#step_1_turn_on_the"
+    - You must have the Google Sheets API activated and valid credentials for this handy
+seealso:
+    - name: Activate Google OAuth for Sheets
+      description: Quickstart guide describing how to activate the Google OAuth API for Sheets
+      link: https://developers.google.com/sheets/api/quickstart/python#step_1_turn_on_the
 
 options:
     columns:
         description:
-            - This is the variable that should be appended to the GSheet
+            - This is a list of columns that should be appended to the GSheet
         required: true
         aliases: [ 'name' ]
     sheetID:
@@ -38,7 +39,7 @@ options:
     client_id:
         description:
             - This is the Google OAuth client_id
-              It ends with .apps.googleusercontent.com
+            - It ends with C(.apps.googleusercontent.com)
         required: true
     client_secret:
         description:
@@ -64,16 +65,14 @@ author:
 '''
 
 EXAMPLES = '''
-# Append one row with three columns
-- name: Write stuff to GSheet
+- name: Append one row with three columns
   drive_append_to_sheet:
     name: ["column A", "column B", "column C"]
     sheetID: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
     client_id: teststestst.apps.googleusercontent.com
     client_secret: S3CR3T
 
-# Append one row with three variables
-- name: Write stuff to GSheet
+- name: Append one row with three variables
   drive_append_to_sheet:
     columns: ["{{ ansible_fqdn }}", "{{ ansible_kernel }}", "{{ ansible_lsb.release }}"]
     sheetID: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
@@ -86,7 +85,7 @@ new_columns:
     description: The columns that were appended
     returned: success
     type: list
-message:
+msg:
     description: The response we got from the Google API
     returned: success
     type: dict
@@ -114,11 +113,11 @@ def main():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         columns=dict(type='list', required=True, aliases=['name']),
-        sheetID=dict(required=True),
-        client_id=dict(required=True),
-        client_secret=dict(no_log=True, required=True),
-        sheetName=dict(),
-        range=dict(default='A1:A1'))
+        sheetID=dict(type='str', required=True),
+        client_id=dict(type='str', required=True),
+        client_secret=dict(type='str', no_log=True, required=True),
+        sheetName=dict(type='str', ),
+        range=dict(type='str', default='A1:A1'))
 
     module = AnsibleModule(argument_spec=module_args, bypass_checks=True)
 
@@ -127,7 +126,7 @@ def main():
         pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib ')
 
     columns = module.params.get('columns')
-    result = dict(changed=False, columns=columns, message='')
+    result = dict(changed=False, columns=columns, msg='')
 
     if not isinstance(columns, (list, )):
         module.fail_json(msg='The name needs to be a list containing the values for columns')
@@ -194,7 +193,7 @@ def main():
         module.fail_json(msg='Did not get response after append:')
 
     result['changed'] = True
-    result['message'] = response
+    result['msg'] = response
     module.exit_json(**result)
     # TODO: Handle response properly
 
