@@ -382,6 +382,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, format_resource_id
+from ansible.module_utils.basic import to_native, to_bytes
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachineScaleSet'
@@ -644,7 +645,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         differences.append('custom_data')
                         changed = True
                         vmss_dict['properties']['virtualMachineProfile']['osProfile']['customData'] = self.custom_data
-                   
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -716,7 +717,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             os_profile=self.compute_models.VirtualMachineScaleSetOSProfile(
                                 admin_username=self.admin_username,
                                 computer_name_prefix=self.short_hostname,
-                                custom_data = self.custom_data
+                                custom_data=self.custom_data
                             ),
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
                                 os_disk=self.compute_models.VirtualMachineScaleSetOSDisk(
