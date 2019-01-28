@@ -200,11 +200,9 @@ def core(module):
         elif module.params['default'] is True:  # Get information about default project
             response = rest.get('projects/default')
         else:  # Get information about all projects
-            # response = rest.get('projects')
             response = rest.get_paginated_data(base_url='projects?', data_key_name='projects')
     else:
         if module.params['default'] is True:  # Get information about default project resources
-            # response = rest.get('projects/default/resources')
             response = rest.get_paginated_data(base_url='projects/default/resources?', data_key_name='resources')
         elif module.params['default'] is None or module.params['default'] is False:  # Get information about specific project resources
             response = rest.get_paginated_data(base_url='/projects/{0}/resources?'.format(pid), data_key_name='resources')
