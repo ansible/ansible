@@ -59,7 +59,9 @@ def load_fixture(name, content='xml'):
 class TestJunosModule(ModuleTestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False, format='text'):
+
         self.load_fixtures(commands, format, changed=changed)
+
         if failed:
             result = self.failed()
             self.assertTrue(result['failed'], result)
