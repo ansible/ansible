@@ -95,6 +95,10 @@ class BecomeModule(BecomeBase):
     # messages for detecting prompted password issues
     fail = ('Authentication failure',)
 
+    # Prompt handling for ``su`` is more complicated, this
+    # is used to satisfy the connection plugin
+    prompt = True
+
     SU_PROMPT_LOCALIZATIONS = [
         'Password',
         '암호',
