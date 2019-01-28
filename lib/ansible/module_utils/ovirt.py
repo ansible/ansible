@@ -527,6 +527,7 @@ class BaseModule(object):
         fail_condition=lambda e: False,
         search_params=None,
         update_params=None,
+        _wait=None,
         **kwargs
     ):
         """
@@ -602,12 +603,11 @@ class BaseModule(object):
 
                 def state_condition(entity):
                     return entity and entity.status == result_state
-
             wait(
                 service=entity_service,
                 condition=state_condition,
                 fail_condition=fail_condition,
-                wait=self._module.params['wait'],
+                wait=_wait if _wait is not None else self._module.params['wait'],
                 timeout=self._module.params['timeout'],
                 poll_interval=self._module.params['poll_interval'],
             )
