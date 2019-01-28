@@ -35,7 +35,7 @@ options:
         description:
         - Set amount of debug output during module execution.
         type: str
-        choices: [ debug, normal ]
+        choices: [ normal, debug, performance ]
         default: normal
     timeout:
         description:
