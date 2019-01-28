@@ -278,6 +278,22 @@ class CliconfBase(AnsiblePlugin):
             }
         :return: capability as json string
         """
+        result = {}
+        result['rpc'] = self.get_base_rpc()
+        result['device_info'] = self.get_device_info()
+        result['network_api'] = 'cliconf'
+        return result
+
+    @abstractmethod
+    def get_device_info(self):
+        """Returns basic information about the network device.
+
+        This method will provide basic information about the device such as OS version and model
+        name. This data is expected to be used to fill the 'device_info' key in get_capabilities()
+        above.
+
+        :return: dictionary of device information
+        """
         pass
 
     def commit(self, comment=None):

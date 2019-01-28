@@ -195,43 +195,27 @@ from ansible.module_utils.connection import Connection
 from ansible.module_utils._text import to_text
 
 
-def validate_args(module, capabilities):
+def validate_args(module, device_operations):
     """validate param if it is supported on the platform
     """
-    if (module.params['replace'] and
-            not capabilities['device_operations']['supports_replace']):
-        module.fail_json(msg='replace is not supported on this platform')
+    feature_list = [
+        'replace', 'rollback', 'commit_comment', 'defaults', 'multiline_delimiter',
+        'diff_replace', 'diff_match', 'diff_ignore_lines',
+    ]
 
-    if (module.params['rollback'] is not None and
-            not capabilities['device_operations']['supports_rollback']):
-        module.fail_json(msg='rollback is not supported on this platform')
-
-    if (module.params['commit_comment'] and
-            not capabilities['device_operations']['supports_commit_comment']):
-        module.fail_json(msg='commit_comment is not supported on this platform')
-
-    if (module.params['defaults'] and
-            not capabilities['device_operations']['supports_defaults']):
-        module.fail_json(msg='defaults is not supported on this platform')
-
-    if (module.params['multiline_delimiter'] and
-            not capabilities['device_operations']['supports_multiline_delimiter']):
-        module.fail_json(msg='multiline_delimiter is not supported on this platform')
-
-    if (module.params['diff_replace'] and
-            not capabilities['device_operations']['supports_diff_replace']):
-        module.fail_json(msg='diff_replace is not supported on this platform')
-
-    if (module.params['diff_match'] and
-            not capabilities['device_operations']['supports_diff_match']):
-        module.fail_json(msg='diff_match is not supported on this platform')
-
-    if (module.params['diff_ignore_lines'] and
-            not capabilities['device_operations']['supports_diff_ignore_lines']):
-        module.fail_json(msg='diff_ignore_lines is not supported on this platform')
+    for feature in feature_list:
+        if module.params[feature]:
+            supports_feature = device_operations.get('supports_%s' % feature)
+            if supports_feature is None:
+                module.fail_json(
+                    "This platform does not specify whether %s is supported or not. "
+                    "Please report an issue against this platform's cliconf plugin." % feature
+                )
+            elif not supports_feature:
+                module.fail_json(msg='Option %s is not supported on this platform' % feature)
 
 
-def run(module, capabilities, connection, candidate, running, rollback_id):
+def run(module, device_operations, connection, candidate, running, rollback_id):
     result = {}
     resp = {}
     config_diff = []
@@ -256,7 +240,7 @@ def run(module, capabilities, connection, candidate, running, rollback_id):
         if 'diff' in resp:
             result['changed'] = True
 
-    elif capabilities['device_operations']['supports_onbox_diff']:
+    elif device_operations.get('supports_onbox_diff'):
         if diff_replace:
             module.warn('diff_replace is ignored as the device supports onbox diff')
         if diff_match:
@@ -274,7 +258,7 @@ def run(module, capabilities, connection, candidate, running, rollback_id):
         if 'diff' in resp:
             result['changed'] = True
 
-    elif capabilities['device_operations']['supports_generate_diff']:
+    elif device_operations.get('supports_generate_diff'):
         kwargs = {'candidate': candidate, 'running': running}
         if diff_match:
             kwargs.update({'diff_match': diff_match})
@@ -361,7 +345,10 @@ def main():
     capabilities = module.from_json(connection.get_capabilities())
 
     if capabilities:
-        validate_args(module, capabilities)
+        device_operations = capabilities.get('device_operations', dict())
+        validate_args(module, device_operations)
+    else:
+        device_operations = dict()
 
     if module.params['defaults']:
         if 'get_default_flag' in capabilities.get('rpc'):
@@ -381,7 +368,7 @@ def main():
 
     if candidate or rollback_id:
         try:
-            result.update(run(module, capabilities, connection, candidate, running, rollback_id))
+            result.update(run(module, device_operations, connection, candidate, running, rollback_id))
         except Exception as exc:
             module.fail_json(msg=to_text(exc))
 
