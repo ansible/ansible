@@ -62,7 +62,6 @@ class MockONTAPConnection(object):
     def invoke_successfully(self, xml, enable_tunneling):  # pylint: disable=unused-argument
         ''' mock invoke_successfully returning xml data '''
         self.xml_in = xml
-        print (self.kind)
         if self.kind == 'policy':
             xml = self.build_policy_group_info(self.params)
         if self.kind == 'error':
