@@ -19,8 +19,8 @@ Core
 :ref:`Core Maintained<core_supported>` modules are maintained by the Ansible Engineering Team.
 These modules are integral to the basic foundations of the Ansible distribution.
 
-Network
--------
+Network and Security
+--------------------
 
 :ref:`Network and Security Maintained<network_supported>` modules are are maintained by the Ansible Network and Security Teams. Please note there are additional networking modules that are categorized as Certified or Community not maintained by Ansible.
 
