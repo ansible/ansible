@@ -105,6 +105,15 @@ def mso_subnet_spec():
     )
 
 
+def mso_contractref_spec():
+    return dict(
+        name=dict(type='str', required=True),
+        schema=dict(type='str'),
+        template=dict(type='str'),
+        type=dict(type='str', required=True, choices=['consumer', 'provider']),
+    )
+
+
 class MSOModule(object):
 
     def __init__(self, module):
@@ -383,6 +392,10 @@ class MSOModule(object):
                 self.module.fail_json(msg="Label lookup failed for label '%s': %s" % (label, l))
             ids.append(l['id'])
         return ids
+
+    def contract_ref(self, contract):
+        ''' Create contractRef string '''
+        return '/schemas/{schema_id}/templates/{template}/contracts/{name}'.format(**contract)
 
     def filter_ref(self, schema_id, template, filter_name):
         ''' Create a filterRef string '''
