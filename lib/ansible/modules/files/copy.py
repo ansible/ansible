@@ -307,7 +307,8 @@ def del_facl(path, acl_tag, acl_qualifier=None):
     setfacl = get_bin_path('setfacl', True)
     # Like: ['/usr/bin/setfacl', '-x', 'u:1000:', '/etc/config.cfg']
     acl_command = [setfacl, '-x', acl_string, path]
-    rc, out, err = module.run_command(acl_command)
+    b_acl_command = [to_bytes(x) for x in acl_command]
+    rc, out, err = module.run_command(b_acl_command)
     if rc != 0:
         raise RuntimeError('Error running setfacl: stdout: {0}; stderr: {1}'.format(out, err))
 
