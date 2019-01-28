@@ -23,7 +23,7 @@ description:
   - This module manages flow capture on interfaces. The Gremlin
     expression is continuously evaluated which means that it is
     possible to define a capture on nodes that do not exist yet.
-  - It useful when you want to start a capture on all OpenvSwitch
+  - It is useful when you want to start a capture on all OpenvSwitch
     whatever the number of Skydive agents you will start.
   - While starting the capture, user can specify the capture name,
     capture description and capture type optionally.
@@ -33,11 +33,11 @@ extends_documentation_fragment: skydive
 options:
   name:
     description:
-      - To define flow capture name
+      - To define flow capture name.
     required: true
   capture_type:
     description:
-      - To define flow capture type
+      - To define flow capture type.
     required: false
   description:
     description:
@@ -45,17 +45,17 @@ options:
         of this object.
   extra_tcp_metric:
     description:
-      - To define flow capture ExtraTCPMetric
+      - To define flow capture ExtraTCPMetric.
     type: bool
     default: false
   ip_defrag:
     description:
-      - To define flow capture IPDefrag
+      - To define flow capture IPDefrag.
     type: bool
     default: false
   reassemble_tcp:
     description:
-      - To define flow capture ReassembleTCP
+      - To define flow capture ReassembleTCP.
     type: bool
     default: false
   state:
@@ -69,7 +69,7 @@ options:
 """
 
 EXAMPLES = """
-- name: add a new new node with connected link
+- name: add a skydive capture
   skydive_capture:
     name: Node1
     capture_type: myhost
@@ -83,7 +83,7 @@ EXAMPLES = """
       username: admin
       password: admin
 
-- name: remove node
+- name: remove a skydive capture
   skydive_capture:
     name: Node1
     capture_type: myhost
