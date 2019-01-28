@@ -22,7 +22,7 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.modules.network.checkpoint import checkpoint_host
+from ansible.modules.security.checkpoint import checkpoint_host
 
 OBJECT = {'name': 'foo', 'ipv4-address': '192.168.0.15'}
 CREATE_PAYLOAD = {'name': 'foo', 'ip_address': '192.168.0.15'}
@@ -39,18 +39,18 @@ class TestCheckpointHost(object):
 
     @pytest.fixture
     def connection_mock(self, mocker):
-        connection_class_mock = mocker.patch('ansible.modules.network.checkpoint.checkpoint_host.Connection')
+        connection_class_mock = mocker.patch('ansible.modules.security.checkpoint.checkpoint_host.Connection')
         return connection_class_mock.return_value
 
     @pytest.fixture
     def get_host_200(self, mocker):
-        mock_function = mocker.patch('ansible.modules.network.checkpoint.checkpoint_host.get_host')
+        mock_function = mocker.patch('ansible.modules.security.checkpoint.checkpoint_host.get_host')
         mock_function.return_value = (200, OBJECT)
         return mock_function.return_value
 
     @pytest.fixture
     def get_host_404(self, mocker):
-        mock_function = mocker.patch('ansible.modules.network.checkpoint.checkpoint_host.get_host')
+        mock_function = mocker.patch('ansible.modules.security.checkpoint.checkpoint_host.get_host')
         mock_function.return_value = (404, 'Object not found')
         return mock_function.return_value
 

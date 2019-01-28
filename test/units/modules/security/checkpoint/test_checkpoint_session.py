@@ -22,7 +22,7 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.modules.network.checkpoint import checkpoint_session
+from ansible.modules.security.checkpoint import checkpoint_session
 
 OBJECT = {'uid': '1234'}
 PAYLOAD = {}
@@ -37,12 +37,12 @@ class TestCheckpointAccessRule(object):
 
     @pytest.fixture
     def connection_mock(self, mocker):
-        connection_class_mock = mocker.patch('ansible.modules.network.checkpoint.checkpoint_session.Connection')
+        connection_class_mock = mocker.patch('ansible.modules.security.checkpoint.checkpoint_session.Connection')
         return connection_class_mock.return_value
 
     @pytest.fixture
     def get_session_200(self, mocker):
-        mock_function = mocker.patch('ansible.modules.network.checkpoint.checkpoint_session.get_session')
+        mock_function = mocker.patch('ansible.modules.security.checkpoint.checkpoint_session.get_session')
         mock_function.return_value = (200, OBJECT)
         return mock_function.return_value
 

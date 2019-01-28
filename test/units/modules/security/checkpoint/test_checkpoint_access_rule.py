@@ -22,7 +22,7 @@ import pytest
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.modules.network.checkpoint import checkpoint_access_rule
+from ansible.modules.security.checkpoint import checkpoint_access_rule
 
 OBJECT = {'layer': 'foo', 'position': 'bar', 'name': 'baz',
           'source': [{'name': 'lol'}], 'destination': [{'name': 'Any'}],
@@ -39,18 +39,18 @@ class TestCheckpointAccessRule(object):
 
     @pytest.fixture
     def connection_mock(self, mocker):
-        connection_class_mock = mocker.patch('ansible.modules.network.checkpoint.checkpoint_access_rule.Connection')
+        connection_class_mock = mocker.patch('ansible.modules.security.checkpoint.checkpoint_access_rule.Connection')
         return connection_class_mock.return_value
 
     @pytest.fixture
     def get_access_rule_200(self, mocker):
-        mock_function = mocker.patch('ansible.modules.network.checkpoint.checkpoint_access_rule.get_access_rule')
+        mock_function = mocker.patch('ansible.modules.security.checkpoint.checkpoint_access_rule.get_access_rule')
         mock_function.return_value = (200, OBJECT)
         return mock_function.return_value
 
     @pytest.fixture
     def get_access_rule_404(self, mocker):
-        mock_function = mocker.patch('ansible.modules.network.checkpoint.checkpoint_access_rule.get_access_rule')
+        mock_function = mocker.patch('ansible.modules.security.checkpoint.checkpoint_access_rule.get_access_rule')
         mock_function.return_value = (404, 'Object not found')
         return mock_function.return_value
 
