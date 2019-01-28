@@ -90,7 +90,7 @@ requirements:
        reinstall of it is required."
     - Docker API >= 1.25
 author:
-  - Piotr Wojciechowski (@wojciechowskipiotr)
+  - Piotr Wojciechowski (@WojciechowskiPiotr)
   - Thierry Bouvet (@tbouvet)
 
 '''
@@ -229,7 +229,7 @@ class SwarmNodeManager(DockerBaseClass):
                 if node_info['Spec']['Labels']:
                     changed = True
             else:
-                if node_info['Spec']['Labels'] != self.parameters.labels:
+                if (node_info['Spec']['Labels'] or {}) != self.parameters.labels:
                     node_spec['Labels'] = self.parameters.labels
                     changed = True
         elif self.parameters.labels_state == 'merge':
