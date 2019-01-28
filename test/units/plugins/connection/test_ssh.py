@@ -134,6 +134,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         pc.prompt = True
         conn.become.prompt = True
+
+        def get_option(option):
+            if option == 'become_pass':
+                return 'password'
+            return None
+
+        conn.become.get_option = get_option
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\nfoo\nline 3\nthis should be the remainder', False)
         self.assertEqual(output, b'line 1\nline 2\nline 3\n')
         self.assertEqual(unprocessed, b'this should be the remainder')
