@@ -165,7 +165,7 @@ def remove(module, installp_cmd, packages):
     removed_pkgs = []
     not_found_pkg = []
     for package in packages:
-        pkg_check, _ = _check_installed_pkg(module, package, repository_path)
+        pkg_check, dummy = _check_installed_pkg(module, package, repository_path)
 
         if pkg_check:
             if not module.check_mode:
