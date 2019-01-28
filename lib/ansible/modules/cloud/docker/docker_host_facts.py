@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: docker_host_facts
 
-short_description: Retrieves facts about docker host and lists of objects of the services
+short_description: Retrieves facts about docker host and lists of objects of the services.
 
 description:
   - Retrieves facts about a docker host.
@@ -94,7 +94,7 @@ extends_documentation_fragment:
     - docker
 
 author:
-    - Piotr Wojciechowski (@wojciechowskipiotr)
+    - Piotr Wojciechowski (@WojciechowskiPiotr)
 
 requirements:
     - "python >= 2.6"
