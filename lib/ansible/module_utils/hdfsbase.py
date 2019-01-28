@@ -78,10 +78,9 @@ except ImportError:
 
 from ansible.module_utils.pycompat24 import get_exception
 
-# Can't use 07777 on Python 3, can't use 0o7777 on Python 2.4
-PERM_BITS = int('07777', 8)      # file mode permission bits
-EXEC_PERM_BITS = int('00111', 8) # execute permission bits
-DEFAULT_PERM = int('0666', 8)    # default file permission bits
+PERM_BITS = 0o7777          # file mode permission bits
+EXEC_PERM_BITS = 0o0111     # execute permission bits
+DEFAULT_PERM = 0o666        # default file permission bits
 
 def _check_required_if(module, spec):
         ''' ensure that parameters which conditionally required are present '''
