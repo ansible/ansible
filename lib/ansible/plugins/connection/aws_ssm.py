@@ -221,7 +221,7 @@ class Connection(ConnectionBase):
             if remaining < 1:
                 self._timeout = True
                 raise AnsibleConnectionFailure("SSM exec_command timeout on host: %s"
-                                           % self.get_option('instance_id'))
+                                               % self.get_option('instance_id'))
             if self._poll_stdout.poll(1000):
                 line = self._session.stdout.readline()
                 display.vvvv(u"EXEC stdout line: {0}".format(to_text(line)), host=self.host)
