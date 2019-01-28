@@ -39,7 +39,7 @@ import os.path as osp
 from subprocess import call, Popen, PIPE
 
 try:
-    from pywhdfs.client import *
+    from pywhdfs.client import WebHDFSClient
     from pywhdfs.utils.utils import HdfsError
 except ImportError:
     has_pywhdfs = False
