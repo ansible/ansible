@@ -1,6 +1,7 @@
 # Copyright (c) 2019, Matt Martz <matt@sivel.net>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
+
 class AnsibleWarning(Warning):
     def __init__(self, msg):
         self.msg = msg
