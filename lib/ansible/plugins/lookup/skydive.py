@@ -27,7 +27,7 @@ version_added: "2.8"
 short_description: Query Skydive objects
 description:
   - Uses the Skydive python REST client to return the queried object from
-    Skydive network analyser.
+    Skydive network analyzer.
 requirements:
   - skydive-client
 extends_documentation_fragment: skydive
