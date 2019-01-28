@@ -541,7 +541,7 @@
     name: "{{ vm_name3 }}01"
   register: output_pip
 
-- name: Assert that facts module returned the second vm
+- name: Assert that autocreated resources were deleted
   assert:
     that: 
       - output_nic.ansible_facts.azure_networkinterfaces | length == 0
