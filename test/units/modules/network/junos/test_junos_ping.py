@@ -24,8 +24,8 @@ from ansible.modules.network.junos import junos_ping
 from units.modules.utils import set_module_args
 from .junos_module import TestJunosModule, load_fixture
 
-class TestJunosPingModule(TestJunosModule):
 
+class TestJunosPingModule(TestJunosModule):
     module = junos_ping
 
     def setUp(self):
@@ -34,11 +34,9 @@ class TestJunosPingModule(TestJunosModule):
         self.mock_conn = patch('ansible.modules.network.junos.junos_ping.Connection')
         self.conn = self.mock_conn.start()
 
-
     def tearDown(self):
         super(TestJunosPingModule, self).tearDown()
         self.mock_conn.stop()
-
 
     def load_fixtures(self, commands=None, format=None, changed=None):
         def load_from_file(*args, **kwargs):
