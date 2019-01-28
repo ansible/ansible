@@ -269,7 +269,7 @@ class HDFSAnsibleModule(object):
             except Exception:
                 self.hdfs_fail_json(msg="Kerberos authentication failed: %s." % str(get_exception()))
 
-        ## Get the client
+        # Get the client
         try:
             self.client = self.get_client()
         except Exception:
