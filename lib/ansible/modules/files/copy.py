@@ -688,7 +688,6 @@ def main():
                         # setfacl failed.
                         # FIXME: separate out the following cases and do the appropriate thing:
                         # * If any of the following raise errors, they can be ignored
-                        #   * If the filesystem we're copying to does not support facls
                         #   * If we're running on python2 therefore the facls were not copied
                         #   * If there were no facls to clear (because we we're not becoming an
                         #     unprivileged user, for instance)
@@ -708,7 +707,10 @@ def main():
                         #   * Does the source file have acls?
                         #   * Does the destination file have acls for the default acl and nothing
                         #     else?
-                        pass
+                        if 'Operation not supported' in to_native(e):
+                            pass
+                        else:
+                            raise
 
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
