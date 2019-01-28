@@ -868,7 +868,10 @@ class AnsibleModule(object):
                            ' always check for invalid arguments.', version='2.9')
 
     def __del__(self):
-        self._catch_warnings.__exit__(tuple())
+        try:
+            self._catch_warnings.__exit__(tuple())
+        except AttributeError:
+            pass
 
     @property
     def tmpdir(self):
