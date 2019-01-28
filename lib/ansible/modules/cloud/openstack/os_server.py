@@ -395,7 +395,7 @@ EXAMPLES = '''
         flavor: 4
         scheduler_hints:
           group: f5c8c61a-9230-400a-8ed2-3b023c190a7f
-          
+
 # Deletes an instance via its ID
 - name: remove an instance
   hosts: localhost
