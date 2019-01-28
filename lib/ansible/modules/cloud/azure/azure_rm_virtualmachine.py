@@ -272,19 +272,11 @@ options:
             - If the subnet is in another resource group, specific resource group by C(virtual_network_resource_group).
         aliases:
             - subnet
-    remove_autocreated:
-        description:
-            - "Set this option when removing a VM using state 'absent' to trigger automatic deletion of all autocreated resources."
-            - "Use this option during creation of a VM to make sure all the resources are removed in case of VM creation failure."
-            - "Following resources will be removed: network interface, network security group, public IP address, storage account."
-        type: bool
-        version_added: "2.8"
     remove_on_absent:
         description:
             - "When removing a VM using state 'absent', also remove associated resources"
-            - "It can be 'all' or a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
+            - "It can be 'all' or 'all_autocreated' or  a list with any of the following: ['network_interfaces', 'virtual_storage', 'public_ips']"
             - Any other input will be ignored
-            - Please note that this option will be deprecated in 2.10 and 'remove_autocreated' will be enabled by default.
         default: ['all']
     plan:
         description:
@@ -517,7 +509,7 @@ EXAMPLES = '''
   azure_rm_virtualmachine:
     resource_group: Testing
     name: testvm002
-    remove_autocreated: yes
+    remove_on_absent: all_autocreated
     state: absent
 '''
 
@@ -748,7 +740,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces'], elements='raw'),
-            remove_autocreated=dict(type='bool', default=False),
             remove_on_absent=dict(type='list', default=['all']),
             virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
@@ -785,7 +776,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.managed_disk_type = None
         self.os_disk_name = None
         self.network_interface_names = None
-        self.remove_autocreated = None
         self.remove_on_absent = set()
         self.tags = None
         self.force = None
@@ -824,9 +814,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         # convert elements to ints
         self.zones = [int(i) for i in self.zones] if self.zones else None
-
-        if self.state == 'absent' and self.remove_on_absent:
-            self.deprecate("Option 'remove_on_absent' will be deprecated and 'remove_autocreated' will be enabled by default", version='2.10')
 
         changed = False
         powerstate_change = None
@@ -1219,7 +1206,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                        "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
-                    self.create_or_update_vm(vm_resource, self.remove_autocreated)
+                    self.create_or_update_vm(vm_resource, self.remove_on_absent == 'all_autocreated')
 
                 elif self.differences and len(self.differences) > 0:
                     # Update the VM based on detected config differences
@@ -1522,7 +1509,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         nic_names = []
         pip_names = []
 
-        if not self.remove_autocreated:
+        if self.remove_on_absent != 'all_autocreated':
             if self.remove_on_absent.intersection(set(['all', 'virtual_storage'])):
                 # store the attached vhd info so we can nuke it after the VM is gone
                 if(vm.storage_profile.os_disk.managed_disk):
@@ -1574,7 +1561,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except Exception as exc:
             self.fail("Error deleting virtual machine {0} - {1}".format(self.name, str(exc)))
 
-        if self.remove_autocreated:
+        if self.remove_on_absent == 'all_autocreated':
             self.remove_autocreated_resources(vm.tags)
         else:
             # TODO: parallelize nic, vhd, and public ip deletions with begin_deleting

@@ -520,7 +520,7 @@
   azure_rm_virtualmachine:
     resource_group: "{{ resource_group }}"
     name: "{{ vm_name3 }}"
-    remove_autocreated: yes
+    remove_on_absent: all_autocreated
     state: absent
 
 - name: Query NIC
