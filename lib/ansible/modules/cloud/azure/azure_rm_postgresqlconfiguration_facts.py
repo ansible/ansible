@@ -49,7 +49,7 @@ EXAMPLES = '''
       server_name: testpostgresqlserver
       setting_name: deadlock_timeout
 
-  - name: List instances of PostgreSQL Configuration
+  - name: Get all settings of PostgreSQL Configuration
     azure_rm_postgresqlconfiguration_facts:
       resource_group: resource_group_name
       server_name: server_name
