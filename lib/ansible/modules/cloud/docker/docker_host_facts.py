@@ -81,7 +81,15 @@ options:
       - The output is a sum of images, volumes, containers and build cache.
     type: bool
     default: no
-
+  verbose_output:
+    description:
+      - When set to C(yes) and I(networks), I(volumes), I(images), I(containers) or I(disk_usage) is set to C(yes)
+        then output will contain verbose information about objects matching the full output of API method.
+        For details see the documentation of your version of Docker API at L(https://docs.docker.com/engine/api/).
+      - The verbose output in this module contains only subset of information returned by I(_facts) module
+        for each type of the objects.
+    type: bool
+    default: no
 extends_documentation_fragment:
     - docker
 
@@ -109,21 +117,27 @@ EXAMPLES = '''
 
 - name: Get info on docker host and list images
   docker_host_facts:
-    images: true
+    images: yes
   register: result
 
 - name: Get info on docker host and list images matching the filter
   docker_host_facts:
-    images: true
+    images: yes
     images_filters:
       label: "mylabel"
   register: result
 
+- name: Get info on docker host and verbose list images
+  docker_host_facts:
+    images: yes
+    verbose_output: yes
+  register: result
+
 - name: Get info on docker host and used disk space
   docker_host_facts:
-    disk_usage: true
+    disk_usage: yes
   register: result
-  
+
 - debug:
     var: result.docker_host_facts
 
@@ -137,27 +151,36 @@ docker_host_facts:
     type: dict
 docker_volumes_list:
     description:
-      - List of volumes with basic information about each. Matches the C(docker volumes ls) output.
+      - List of dict objects containing the basic information about each volume.
+        Keys matches the C(docker volume ls) output unless I(verbose_output=yes).
+        See description for I(verbose_output).
     returned: When I(volumes) is C(yes)
     type: dict
 docker_networks_list:
     description:
-      - List of networks with basic information about each. Matches the C(docker volumes ls) output.
+      - List of dict objects containing the basic information about each network.
+        Keys matches the C(docker network ls) output unless I(verbose_output=yes).
+        See description for I(verbose_output).
     returned: When I(networks) is C(yes)
     type: dict
 docker_containers_list:
     description:
-      - List of containers with basic information about each. Matches the C(docker volumes ls) output.
+      - List of dict objects containing the basic information about each container.
+        Keys matches the C(docker container ls) output unless I(verbose_output=yes).
+        See description for I(verbose_output).
     returned: When I(containers) is C(yes)
     type: dict
 docker_images_list:
     description:
-      - List of images with basic information about each. Matches the C(docker image ls) output.
+      - List of dict objects containing the basic information about each image.
+        Keys matches the C(docker image ls) output unless I(verbose_output=yes).
+        See description for I(verbose_output).
     returned: When I(images) is C(yes)
     type: dict
 docker_disk_usage:
     description:
-      - Information on summary disk usage by images, containers and volumes on docker host.
+      - Information on summary disk usage by images, containers and volumes on docker host
+        unless I(verbose_output=yes). See description for I(verbose_output).
     returned: When I(disk_usage) is C(yes)
     type: int
 
@@ -187,6 +210,7 @@ class DockerHostManager(DockerBaseClass):
 
         self.client = client
         self.results = results
+        self.verbose_output = self.client.module.params['verbose_output']
 
         listed_objects = ['volumes', 'networks', 'containers', 'images']
 
@@ -210,11 +234,14 @@ class DockerHostManager(DockerBaseClass):
 
     def get_docker_disk_usage_facts(self):
         try:
-            return self.client.df()['LayersSize']
+            if self.verbose_output:
+                return self.client.df()
+            else:
+                return self.client.df()['LayersSize']
         except APIError as exc:
             self.client.fail_json(msg="Error inspecting docker host: %s" % to_native(exc))
 
-    def get_docker_items_list(self, docker_object=None, filters=None):
+    def get_docker_items_list(self, docker_object=None, filters=None, verbose=False):
         items = None
         items_list = []
 
@@ -235,30 +262,31 @@ class DockerHostManager(DockerBaseClass):
         except APIError as exc:
             self.client.fail_json(msg="Error inspecting docker host: %s" % to_native(exc))
 
-        if docker_object != 'volumes':
-            for item in items:
-                item_record = dict()
+        if self.verbose_output:
+            if docker_object != 'volumes':
+                return items
+            else:
+                return items['Volumes']
 
-                if docker_object == 'containers':
-                    for key in header_containers:
-                        item_record[key] = item.get(key)
-                if docker_object == 'networks':
-                    for key in header_networks:
-                        item_record[key] = item.get(key)
-                if docker_object == 'images':
-                    for key in header_images:
-                        item_record[key] = item.get(key)
+        if docker_object == 'volumes':
+            items = items['Volumes']
 
-                items_list.append(item_record)
+        for item in items:
+            item_record = dict()
 
-        else:
-            for item in items['Volumes']:
-                item_record = dict()
-
+            if docker_object == 'containers':
+                for key in header_containers:
+                    item_record[key] = item.get(key)
+            elif docker_object == 'networks':
+                for key in header_networks:
+                    item_record[key] = item.get(key)
+            elif docker_object == 'images':
+                for key in header_images:
+                    item_record[key] = item.get(key)
+            elif docker_object == 'volumes':
                 for key in header_volumes:
                     item_record[key] = item.get(key)
-
-                items_list.append(item_record)
+            items_list.append(item_record)
 
         return items_list
 
@@ -274,6 +302,7 @@ def main():
         volumes=dict(type='bool', default=False),
         volumes_filters=dict(type='dict'),
         disk_usage=dict(type='bool', default=False),
+        verbose_output=dict(type='bool', default=False),
     )
 
     client = AnsibleDockerClient(
