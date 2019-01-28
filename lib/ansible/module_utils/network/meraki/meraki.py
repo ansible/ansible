@@ -153,7 +153,6 @@ class MerakiModule(object):
                     is_changed = True
         return is_changed
 
-
     def get_orgs(self):
         """Downloads all organizations for a user."""
         response = self.request('/organizations', method='GET')
