@@ -41,7 +41,6 @@ options:
     required: true
     type: list
     choices: ['console', 'http','ontapi','rsh','snmp','service-processor','sp','ssh','telnet']
-    version_added: "2.8"
     aliases:
       - application
   authentication_method:
