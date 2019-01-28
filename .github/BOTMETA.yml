@@ -1323,7 +1323,6 @@ files:
     maintainers: $team_nxos
     labels:
       - networking
-  test/units/modules/source_control/test_gitlab_: *gitlab
   test/sanity/pep8/legacy-files.txt:
     notified: mattclay
   hacking/report.py:
