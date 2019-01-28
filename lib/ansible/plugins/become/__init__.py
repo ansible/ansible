@@ -38,6 +38,12 @@ class BecomeBase(AnsiblePlugin):
         self._id = ''
         self.success = ''
 
+    def expect_prompt(self):
+        """This function assists connection plugins in determining if they need to wait for
+        a prompt. Both a prompt and a password are required.
+        """
+        return self.prompt and self.get_option('become_pass')
+
     def _build_success_command(self, cmd, shell, noexe=False):
         if cmd and shell and self.success:
             cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
