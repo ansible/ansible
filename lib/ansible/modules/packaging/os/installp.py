@@ -1,58 +1,54 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Kairo Araujo
-# Written by Kairo Araujo <kairo@kairo.eti.br>
+# Copyright: (c) 2017, Kairo Araujo <kairo@kairo.eti.br>
 #
-# GNU General Public License v3.0+ (see COPYING or
-# https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: installp
-author: Kairo Araujo (@kairoaraujo)
-short_description: Installing packages for AIX
+author:
+- Kairo Araujo (@kairoaraujo)
+short_description: Manage packages on AIX
 description:
-  - Manage packages for AIX using 'installp'.
-version_added: "2.5"
+  - Manage packages using 'installp' on AIX
+version_added: '2.8'
 options:
   accept_license:
     description:
-      - Accept license for package.
-    choices: [ 'yes', 'no' ]
-    required: false
+    - Whether to accept the license for the package(s).
+    type: bool
     default: no
   name:
     description:
-      - Name of package to install/remove. To operate on several packages
-        this can accept a comma separated.
-      - C(all) is also allowed with state install. It will install all packages
-        available on informed C(repository_path).
+    - One or more packages to install or remove.
+    - Use C(all) to install all packages available on informed C(repository_path).
+    type: list
     required: true
+    aliases: [ pkg ]
   repository_path:
     description:
-      - Path with AIX packages (required to install).
-    required: no
+    - Path with AIX packages (required to install).
+    type: path
   state:
     description:
-      - State of the package.
-    choices: [present, absent]
-    required: false
+    - Whether the package needs to be present on or absent from the system.
+    type: str
+    choices: [ absent, present ]
     default: present
 notes:
-  - If the package is already installed, even the package/fileset is new,
-    the module will not install it.
+- If the package is already installed, even the package/fileset is new, the module will not install it.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Install package foo
   installp:
     name: foo
@@ -87,17 +83,12 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
-changed:
-    description: Return changed for installp actions as true or false.
-    returned: always
-    type: boolean
-    version_added: 2.5
-'''
+RETURN = r''' # '''
 
-from ansible.module_utils.basic import AnsibleModule
 import os
 import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def _check_new_pkg(module, package, repository_path):
@@ -112,8 +103,7 @@ def _check_new_pkg(module, package, repository_path):
 
     if os.path.isdir(repository_path):
         installp_cmd = module.get_bin_path('installp', True)
-        rc, package_result, err = module.run_command(
-            "%s -l -MR -d %s" % (installp_cmd, repository_path))
+        rc, package_result, err = module.run_command("%s -l -MR -d %s" % (installp_cmd, repository_path))
         if rc != 0:
             module.fail_json(msg="Failed to run installp.", rc=rc, err=err)
 
@@ -134,8 +124,7 @@ def _check_new_pkg(module, package, repository_path):
         return False, None
 
     else:
-        module.fail_json(
-            msg="Repository path %s is not valid." % repository_path)
+        module.fail_json(msg="Repository path %s is not valid." % repository_path)
 
 
 def _check_installed_pkg(module, package, repository_path):
@@ -151,8 +140,7 @@ def _check_installed_pkg(module, package, repository_path):
 
     lslpp_cmd = module.get_bin_path('lslpp', True)
 
-    rc, lslpp_result, err = module.run_command(
-        "%s -lcq %s*" % (lslpp_cmd, package))
+    rc, lslpp_result, err = module.run_command("%s -lcq %s*" % (lslpp_cmd, package))
     if rc == 1:
         package_state = ' '.join(err.split()[-2:])
         if package_state == 'not installed.':
@@ -185,16 +173,13 @@ def remove(module, installp_cmd, packages):
 
         if pkg_check:
             if not module.check_mode:
-                rc, remove_out, err = module.run_command(
-                    "%s -u %s" % (installp_cmd, package))
+                rc, remove_out, err = module.run_command("%s -u %s" % (installp_cmd, package))
                 if rc != 0:
-                    module.fail_json(
-                        msg="Failed to run installp.", rc=rc, err=err)
-                else:
-                    remove_count += 1
-                    removed_pkgs.append(package)
+                    module.fail_json(msg="Failed to run installp.", rc=rc, err=err)
+            remove_count += 1
+            removed_pkgs.append(package)
 
-        if not pkg_check:
+        else:
             not_found_pkg.append(package)
 
     if remove_count > 0:
@@ -202,17 +187,11 @@ def remove(module, installp_cmd, packages):
             not_found_pkg.insert(0, "Package(s) not found: ")
 
         changed = True
-        msg = "Packages removed: %s. %s " % (
-            ' '.join(removed_pkgs), ' '.join(not_found_pkg))
+        msg = "Packages removed: %s. %s " % (' '.join(removed_pkgs), ' '.join(not_found_pkg))
 
     else:
         changed = False
-        msg = (
-            "No packages removed, all packages not found: %s" %
-            ' '.join(not_found_pkg))
-
-    if module.check_mode:
-        changed = True
+        msg = ("No packages removed, all packages not found: %s" % ' '.join(not_found_pkg))
 
     return changed, msg
 
@@ -229,13 +208,11 @@ def install(module, installp_cmd, packages, repository_path, accept_license):
 
     # Validate if package exists on repository path.
     for package in packages:
-        pkg_check, pkg_data = _check_new_pkg(
-            module, package, repository_path)
+        pkg_check, pkg_data = _check_new_pkg(module, package, repository_path)
 
         # If package exists on repository path, check if package is installed.
         if pkg_check:
-            pkg_check_current, pkg_info = _check_installed_pkg(
-                module, package, repository_path)
+            pkg_check_current, pkg_info = _check_installed_pkg(module, package, repository_path)
 
             # If package is already installed.
             if pkg_check_current:
@@ -253,54 +230,35 @@ def install(module, installp_cmd, packages, repository_path, accept_license):
 
             else:
                 if not module.check_mode:
-                    rc, install_out, err = module.run_command(
-                        "%s -a %s -X -d %s %s" % (
-                            installp_cmd, accept_license_param[accept_license],
-                            repository_path, package))
-
+                    rc, install_out, err = module.run_command("%s -a %s -X -d %s %s" % (installp_cmd, accept_license_param[accept_license], repository_path, package))
                     if rc != 0:
-                        module.fail_json(
-                            msg="Failed to run installp", rc=rc, err=err)
-                    else:
-                        installed_pkgs.append(package)
-
-        if not pkg_check:
+                        module.fail_json(msg="Failed to run installp", rc=rc, err=err)
+                installed_pkgs.append(package)
+                        
+        else:
             not_found_pkgs.append(package)
 
     if len(installed_pkgs) > 0:
-        installed_msg = (
-            " Installed: %s." % ' '.join(installed_pkgs))
+        installed_msg = (" Installed: %s." % ' '.join(installed_pkgs))
     else:
         installed_msg = ''
 
     if len(not_found_pkgs) > 0:
         not_found_msg = (" Not found: %s." % ' '.join(not_found_pkgs))
-
     else:
         not_found_msg = ''
 
     if len(already_installed_pkgs) > 0:
-        already_installed_msg = (
-            " Already installed: %s." % already_installed_pkgs)
-
+        already_installed_msg = (" Already installed: %s." % already_installed_pkgs)
     else:
         already_installed_msg = ''
 
     if len(installed_pkgs) > 0:
         changed = True
-        msg = (
-            "%s%s%s" % (installed_msg, not_found_msg, already_installed_msg))
+        msg = ("%s%s%s" % (installed_msg, not_found_msg, already_installed_msg))
     else:
         changed = False
-        msg = (
-            "No packages installed.%s%s%s" % (
-                installed_msg, not_found_msg, already_installed_msg))
-
-    if module.check_mode:
-        changed = True
-        msg = (
-            "%s%s" % (
-                not_found_msg, already_installed_msg))
+        msg = ("No packages installed.%s%s%s" % (installed_msg, not_found_msg, already_installed_msg))
 
     return changed, msg
 
@@ -308,37 +266,32 @@ def install(module, installp_cmd, packages, repository_path, accept_license):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['pkg'], type='list'),
-            repository_path=dict(type='str', default=None),
-            accept_license=dict(type='bool', default='no'),
-            state=dict(default='present', choices=['present', 'absent']),
-        ), supports_check_mode=True,
+            name=dict(type='list', required=True, aliases=['pkg']),
+            repository_path=dict(type='str'),
+            accept_license=dict(type='bool', default=False),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+        ),
+        supports_check_mode=True,
     )
 
-    installp_params = module.params
+    name = module.params['name']
+    repository_path = module.params['repository_path']
+    accept_license = module.params['accept_license']
+    state = module.params['state']
 
     installp_cmd = module.get_bin_path('installp', True)
 
-    name = installp_params['name']
-    repository_path = installp_params['repository_path']
-    accept_license = installp_params['accept_license']
-    state = installp_params['state']
-
     if state == 'present':
         if repository_path is None:
-            module.fail_json(msg="repository_path is required to install "
-                                 "package")
+            module.fail_json(msg="repository_path is required to install package")
 
-        changed, msg = install(
-            module, installp_cmd, name, repository_path, accept_license)
+        changed, msg = install(module, installp_cmd, name, repository_path, accept_license)
 
     elif state == 'absent':
         changed, msg = remove(module, installp_cmd, name)
 
     else:
-        changed = False
-        msg = "Unexpected state."
-        module.fail_json(msg=msg)
+        module.fail_json(changed=False, msg="Unexpected state.")
 
     module.exit_json(changed=changed, msg=msg)
 
