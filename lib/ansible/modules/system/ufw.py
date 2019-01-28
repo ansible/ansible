@@ -213,40 +213,18 @@ from operator import itemgetter
 from ansible.module_utils.basic import AnsibleModule
 
 
-def filter_line_that_not_start_with(pattern, content):
-    return ''.join([line for line in content.splitlines(True) if line.startswith(pattern)])
+def compile_ipv4_regexp():
+    """
+    validation pattern provided by :
+    https://stackoverflow.com/questions/53497/regular-expression-that-matches-
+    valid-ipv6-addresses#answer-17871737
+    """
+    r = r"((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}"
+    r += r"(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
+    return re.compile(r)
 
 
-def filter_line_that_contains(pattern, content):
-    return [line for line in content.splitlines(True) if pattern in line]
-
-
-def filter_line_that_not_contains(pattern, content):
-    return ''.join([line for line in content.splitlines(True) if not line.contains(pattern)])
-
-
-def filter_line_that_match_func(match_func, content):
-    return ''.join([line for line in content.splitlines(True) if match_func(line)])
-
-
-# validation pattern provided by :
-# https://stackoverflow.com/questions/53497/regular-expression-that-matches-
-# valid-ipv6-addresses#answer-17871737
-def filter_line_that_contains_ipv4(content):
-    return filter_line_that_match_func(containsIpv4, content)
-
-
-def filter_line_that_contains_ipv6(content):
-    return filter_line_that_match_func(containsIpv6, content)
-
-
-def containsIpv4(ip):
-    regexp = r"((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}"
-    regexp += r"(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
-    return re.search(regexp, ip)
-
-
-def containsIpv6(ip):
+def compile_ipv6_regexp():
     r = r"(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:"
     r += r"|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}"
     r += r"(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4})"
@@ -257,7 +235,7 @@ def containsIpv6(ip):
     r += r"|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}"
     r += r"[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}"
     r += r"[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))"
-    return re.search(r, ip)
+    return re.compile(r)
 
 
 def main():
@@ -288,6 +266,33 @@ def main():
     )
 
     cmds = []
+
+    ipv4_regexp = compile_ipv4_regexp()
+    ipv6_regexp = compile_ipv6_regexp()
+
+    def filter_line_that_not_start_with(pattern, content):
+        return ''.join([line for line in content.splitlines(True) if line.startswith(pattern)])
+
+    def filter_line_that_contains(pattern, content):
+        return [line for line in content.splitlines(True) if pattern in line]
+
+    def filter_line_that_not_contains(pattern, content):
+        return ''.join([line for line in content.splitlines(True) if not line.contains(pattern)])
+
+    def filter_line_that_match_func(match_func, content):
+        return ''.join([line for line in content.splitlines(True) if match_func(line) is not None])
+
+    def filter_line_that_contains_ipv4(content):
+        return filter_line_that_match_func(ipv4_regexp.search, content)
+
+    def filter_line_that_contains_ipv6(content):
+        return filter_line_that_match_func(ipv6_regexp.search, content)
+
+    def is_match_ipv4(ip):
+        return ipv4_regexp.match(ip) is not None
+
+    def is_match_ipv6(ip):
+        return ipv6_regexp.match(ip) is not None
 
     def execute(cmd, ignore_error=False):
         cmd = ' '.join(map(itemgetter(-1), filter(itemgetter(0), cmd)))
@@ -398,7 +403,7 @@ def main():
             if module.check_mode:
                 regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
                 extract = re.search(regexp, pre_state)
-                if extract:
+                if extract is not None:
                     current_default_values = {}
                     current_default_values["incoming"] = extract.group(1)
                     current_default_values["outgoing"] = extract.group(2)
@@ -438,35 +443,21 @@ def main():
             rules_dry = execute(cmd)
 
             if module.check_mode:
-                # if module.boolean(params['delete']):
-                # delete rules with --dry-run doesn't display "Rules updated" messages
-                # we compare only ## tupple
-                # also, ipv4 change
 
                 nb_skipping_line = len(filter_line_that_contains("Skipping", rules_dry))
 
                 if not (nb_skipping_line > 0 and nb_skipping_line == len(rules_dry.splitlines(True))):
+
                     rules_dry = filter_line_that_not_start_with("### tuple", rules_dry)
-
-                    keys = ['from_ip', 'to_ip']
-                    for key in keys:
-                        if key not in params:
-                            key.remove(key)
-
-                    if len(keys) > 0:
-                        # ufw dry-run doesn't send all rules so have to compare ipv4 or ipv6 rules
-                        if containsIpv4(params['from_ip']) or containsIpv4(params['to_ip']):
-                            if filter_line_that_contains_ipv4(pre_rules) != rules_dry:
-                                changed = True
-                        else:  # ipv6
-                            if filter_line_that_contains_ipv6(pre_rules) != rules_dry:
-                                changed = True
-                    else:
-                        if pre_rules != rules_dry:
+                    # ufw dry-run doesn't send all rules so have to compare ipv4 or ipv6 rules
+                    if is_match_ipv4(params['from_ip']) or is_match_ipv4(params['to_ip']):
+                        if filter_line_that_contains_ipv4(pre_rules) != filter_line_that_contains_ipv4(rules_dry):
                             changed = True
-
-                # elif rules_dry.find("Rules updated") != -1:
-                #    changed = True
+                    elif is_match_ipv6(params['from_ip']) or is_match_ipv6(params['to_ip']):
+                        if filter_line_that_contains_ipv6(pre_rules) != filter_line_that_contains_ipv6(rules_dry):
+                            changed = True
+                    elif pre_rules != rules_dry:
+                        changed = True
 
     # Get the new state
     if module.check_mode:

@@ -11,13 +11,17 @@ import json
 # mock ufw messages
 
 ufw_version_35 = """ufw 0.35\nCopyright 2008-2015 Canonical Ltd.\n"""
-ufw_status_verbose_with_port_7000 = """Status: active
+
+ufw_verbose_header = """Status: active
 Logging: on (low)
 Default: deny (incoming), allow (outgoing), deny (routed)
 New profiles: skip
 
 To                         Action      From
---                         ------      ----
+--                         ------      ----"""
+
+
+ufw_status_verbose_with_port_7000 = ufw_verbose_header + """
 7000/tcp                   ALLOW IN    Anywhere
 7000/tcp (v6)              ALLOW IN    Anywhere (v6)
 """
@@ -34,16 +38,12 @@ user_rules_with_ipv6 = """### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251
 # result of
 # sudo ufw allow in from ff02::fb port 5353 proto udp
 # ufw allow in from 224.0.0.251 port 5353 proto udp
-ufw_status_verbose_with_ipv6 = """Status: active
-Logging: on (low)
-Default: deny (incoming), allow (outgoing), deny (routed)
-New profiles: skip
-
-Vers                       Action      De
-----                       ------      --
+ufw_status_verbose_with_ipv6 = ufw_verbose_header + """
 5353/udp                   ALLOW IN    224.0.0.251
 5353/udp                   ALLOW IN    ff02::fb
 """
+
+ufw_status_verbose_nothing = ufw_verbose_header
 
 skippg_adding_existing_rules = "Skipping adding existing rule\nSkipping adding existing rule (v6)\n"
 
@@ -69,8 +69,26 @@ dry_mode_cmd_with_ipv6 = {
     "ufw --dry-run allow from 224.0.0.252 to any port 5353 proto udp": """### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251 in
 ### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.252 in
 """
-
 }
+
+dry_mode_cmd_nothing = {
+    "ufw status verbose": ufw_status_verbose_nothing,
+    "ufw --version": ufw_version_35,
+    grep_config_cli: "",
+    "ufw --dry-run allow from any to :: port 23": "### tuple ### allow any 23 :: any ::/0 in"
+}
+
+
+def do_nothing_func_nothing(*args, **kwarg):
+    return 0, dry_mode_cmd_nothing[args[0]], ""
+
+
+def do_nothing_func_ipv6(*args, **kwarg):
+    return 0, dry_mode_cmd_with_ipv6[args[0]], ""
+
+
+def do_nothing_func_port_7000(*args, **kwarg):
+    return 0, dry_mode_cmd_with_port_700[args[0]], ""
 
 
 def set_module_args(args):
@@ -96,14 +114,6 @@ def exit_json(*args, **kwargs):
     raise AnsibleExitJson(kwargs)
 
 
-def do_nothing_func_ipv6(*args, **kwarg):
-    return 0, dry_mode_cmd_with_ipv6[args[0]], ""
-
-
-def do_nothing_func_port_7000(*args, **kwarg):
-    return 0, dry_mode_cmd_with_port_700[args[0]], ""
-
-
 def fail_json(*args, **kwargs):
     """function to patch over fail_json; package return data into an exception"""
     kwargs['failed'] = True
@@ -126,12 +136,24 @@ class TestUFW(unittest.TestCase):
         self.addCleanup(self.mock_module_helper.stop)
 
     def test_filter_line_that_contains_ipv4(self):
-        self.assertEqual(module.filter_line_that_contains_ipv4(user_rules_with_ipv6).strip(),
-                         "### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251 in")
+        reg = module.compile_ipv4_regexp()
+
+        self.assertTrue(reg.search("### tuple ### allow udp 5353 ::/0 any ff02::fb in") is None)
+        self.assertTrue(reg.search("### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251 in") is not None)
+
+        self.assertTrue(reg.match("ff02::fb") is None)
+        self.assertTrue(reg.match("224.0.0.251") is not None)
+        self.assertTrue(reg.match("::") is None)
+        self.assertTrue(reg.match("any") is None)
 
     def test_filter_line_that_contains_ipv6(self):
-        self.assertEqual(module.filter_line_that_contains_ipv6(user_rules_with_ipv6).strip(),
-                         "### tuple ### allow udp 5353 ::/0 any ff02::fb in")
+        reg = module.compile_ipv6_regexp()
+        self.assertTrue(reg.search("### tuple ### allow udp 5353 ::/0 any ff02::fb in") is not None)
+        self.assertTrue(reg.search("### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251 in") is None)
+        self.assertTrue(reg.search("### tuple ### allow any 23 :: any ::/0 in") is not None)
+        self.assertTrue(reg.match("ff02::fb") is not None)
+        self.assertTrue(reg.match("224.0.0.251") is None)
+        self.assertTrue(reg.match("::") is not None)
 
     def test_check_mode_add_rules(self):
         set_module_args({
@@ -165,7 +187,7 @@ class TestUFW(unittest.TestCase):
             '_ansible_check_mode': True,
         })
 
-        self.assertTrue(self.__getResult(do_nothing_func_port_7000).exception.args[0]['changed'])
+        self.assertFalse(self.__getResult(do_nothing_func_port_7000).exception.args[0]['changed'])
 
     def test_enable_mode(self):
         set_module_args({
@@ -245,6 +267,17 @@ class TestUFW(unittest.TestCase):
             '_ansible_check_mode': True,
         })
         self.assertTrue(self.__getResult(do_nothing_func_ipv6).exception.args[0]['changed'])
+
+    def test_ipv6_add_from_nothing(self):
+        set_module_args({
+            'rule': 'allow',
+            'port': '23',
+            'to': '::',
+            '_ansible_check_mode': True,
+        })
+        result = self.__getResult(do_nothing_func_nothing).exception.args[0]
+        print(result)
+        self.assertTrue(result['changed'])
 
     def __getResult(self, cmd_fun):
         with patch.object(basic.AnsibleModule, 'run_command') as mock_run_command:
