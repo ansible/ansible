@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -35,7 +37,7 @@ notes:
   - Tested against FRRouting 6.0.
 options:
   config:
-     description:
+    description:
       - Specifies the BGP related configuration.
     suboptions:
       bgp_as:
@@ -271,11 +273,7 @@ options:
         the input configuration.
       - In case of delete the existing BGP configuration will be removed from the device.
     default: merge
-    choices:
-      - merge
-      - replace
-      - override
-      - delete
+    choices: ['merge', 'replace', 'override', 'delete']
 """
 
 EXAMPLES = """
