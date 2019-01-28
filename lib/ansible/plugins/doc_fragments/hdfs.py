@@ -74,8 +74,8 @@ options:
       - You can create the spec in yml then use the to_json filter.
   verify:
     required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    default: false
+    type: bool
     description:
       - For secure connections whether to verify or not the server certificate.
   truststore:

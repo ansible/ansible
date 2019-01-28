@@ -145,7 +145,7 @@ def hdfs_argument_spec():
         # When security is on you can use a delegation token instead of having to authenticate every time with kerberos.
         token= dict(required=False,default=None, no_log=True),
         # a json spec of the nameservice to use, create the spec in yml then use the to_json filter
-        nameservices= dict(required=True,default=None, type='str'),
+        nameservices=dict(required=True, type='str'),
         # For secure connections whether to verify or not the server certificate
         verify= dict(required=False, default=False, type='bool'),
         # For secure connections the server certificate file(trust store) to trust.

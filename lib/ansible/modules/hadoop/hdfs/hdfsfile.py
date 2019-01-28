@@ -39,7 +39,6 @@ options:
     description:
       - 'path to the file being managed.  Aliases: I(dest), I(name)'
     required: true
-    default: []
     aliases: ['dest', 'name']
   state:
     required: false
@@ -88,9 +87,8 @@ options:
       - The space quota to be applied to the directory. This option applies only to directories.
   recursive:
     required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.1"
+    default: false
+    type: bool
     description:
       - recursively set the specified file attributes (applies only to state=directory)
 '''
@@ -138,7 +136,8 @@ changed:
     type: bool
 path:
     description: HDFS Path of the target file.
-    type: string
+    returned: always
+    type: str
 '''
 
 import time
@@ -275,7 +274,7 @@ def main():
             #  client.delete(path)
             hdfs.hdfs_set_attributes( path=path, owner=owner, group=group, replication=replication, permission=mode)
 
-            module.exit_json(dest=path, changed=True)
+            module.exit_json(path=path, changed=True)
 
     hdfs.hdfs_fail_json(path=path, msg='unexpected position reached')
 
