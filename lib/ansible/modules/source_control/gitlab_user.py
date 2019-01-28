@@ -226,7 +226,7 @@ class GitLabUser(object):
         self.userObject = user
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="User should have beenupdated.")
+                self._module.exit_json(changed=True, msg="User should have beenupdated.")
 
             try:
                 user.save()
@@ -350,7 +350,7 @@ class GitLabUser(object):
     '''
     def createUser(self, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="User should have been created.")
+                self._module.exit_json(changed=True, msg="User should have been created.")
 
         try:
             user = self._gitlab.users.create(arguments)
@@ -381,7 +381,7 @@ class GitLabUser(object):
 
     def deleteUser(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, result="User should have been deleted.")
+            self._module.exit_json(changed=True, msg="User should have been deleted.")
 
         user = self.userObject
 
@@ -459,9 +459,9 @@ def main():
     if state == 'absent':
         if user_exists:
             gitlab_user.deleteUser()
-            module.exit_json(changed=True, result="Successfully deleted user %s" % user_username)
+            module.exit_json(changed=True, msg="Successfully deleted user %s" % user_username)
         else:
-            module.exit_json(changed=False, result="User deleted or does not exists")
+            module.exit_json(changed=False, msg="User deleted or does not exists")
 
     if state == 'present':
         if gitlab_user.createOrUpdateUser(user_username, {
@@ -475,9 +475,9 @@ def main():
                                           "confirm": confirm,
                                           "isadmin": user_isadmin,
                                           "external": user_external}):
-            module.exit_json(changed=True, result="Successfully created or updated the user %s" % user_username, user=gitlab_user.userObject._attrs)
+            module.exit_json(changed=True, msg="Successfully created or updated the user %s" % user_username, user=gitlab_user.userObject._attrs)
         else:
-            module.exit_json(changed=False, result="No need to update the user %s" % user_username, user=gitlab_user.userObject._attrs)
+            module.exit_json(changed=False, msg="No need to update the user %s" % user_username, user=gitlab_user.userObject._attrs)
 
 
 if __name__ == '__main__':

@@ -212,7 +212,7 @@ class GitLabRunner(object):
         self.runnerObject = runner
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Runner should have been updated.")
+                self._module.exit_json(changed=True, msg="Runner should have been updated.")
 
             try:
                 runner.save()
@@ -227,7 +227,7 @@ class GitLabRunner(object):
     '''
     def createRunner(self, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Runner should have been created.")
+                self._module.exit_json(changed=True, msg="Runner should have been created.")
 
         try:
             runner = self._gitlab.runners.create(arguments)
@@ -283,7 +283,7 @@ class GitLabRunner(object):
 
     def deleteRunner(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, result="Runner should have been deleted.")
+            self._module.exit_json(changed=True, msg="Runner should have been deleted.")
 
         runner = self.runnerObject
 
@@ -355,9 +355,9 @@ def main():
     if state == 'absent':
         if runner_exists:
             gitlab_runner.deleteRunner()
-            module.exit_json(changed=True, result="Successfully deleted runner %s" % runner_description)
+            module.exit_json(changed=True, msg="Successfully deleted runner %s" % runner_description)
         else:
-            module.exit_json(changed=False, result="Runner deleted or does not exists")
+            module.exit_json(changed=False, msg="Runner deleted or does not exists")
 
     if state == 'present':
         if gitlab_runner.createOrUpdateRunner(runner_description, {
@@ -369,10 +369,10 @@ def main():
                                               "maximum_timeout": maximum_timeout,
                                               "registration_token": registration_token}):
             module.exit_json(changed=True, runner=gitlab_runner.runnerObject._attrs,
-                             result="Successfully created or updated the runner %s" % runner_description)
+                             msg="Successfully created or updated the runner %s" % runner_description)
         else:
             module.exit_json(changed=False, runner=gitlab_runner.runnerObject._attrs,
-                             result="No need to update the runner %s" % runner_description)
+                             msg="No need to update the runner %s" % runner_description)
 
 
 if __name__ == '__main__':

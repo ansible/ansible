@@ -229,7 +229,7 @@ class GitLabHook(object):
         self.hookObject = hook
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Hook should have been updated.")
+                self._module.exit_json(changed=True, msg="Hook should have been updated.")
 
             try:
                 hook.save()
@@ -245,7 +245,7 @@ class GitLabHook(object):
     '''
     def createHook(self, project, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Hook should have been created.")
+                self._module.exit_json(changed=True, msg="Hook should have been created.")
 
         hook = project.hooks.create(arguments)
 
@@ -290,7 +290,7 @@ class GitLabHook(object):
 
     def deleteHook(self):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Hook should have been deleted.")
+                self._module.exit_json(changed=True, msg="Hook should have been deleted.")
 
         return self.hookObject.delete()
 
@@ -374,9 +374,9 @@ def main():
     if state == 'absent':
         if hook_exists:
             gitlab_hook.deleteHook()
-            module.exit_json(changed=True, result="Successfully deleted hook %s" % hook_url)
+            module.exit_json(changed=True, msg="Successfully deleted hook %s" % hook_url)
         else:
-            module.exit_json(changed=False, result="Hook deleted or does not exists")
+            module.exit_json(changed=False, msg="Hook deleted or does not exists")
 
     if state == 'present':
         if gitlab_hook.createOrUpdateHook(project, hook_url, {
@@ -391,9 +391,9 @@ def main():
                                           "enable_ssl_verification": enable_ssl_verification,
                                           "token": hook_token}):
 
-            module.exit_json(changed=True, result="Successfully created or updated the hook %s" % hook_url, hook=gitlab_hook.hookObject._attrs)
+            module.exit_json(changed=True, msg="Successfully created or updated the hook %s" % hook_url, hook=gitlab_hook.hookObject._attrs)
         else:
-            module.exit_json(changed=False, result="No need to update the hook %s" % hook_url, hook=gitlab_hook.hookObject._attrs)
+            module.exit_json(changed=False, msg="No need to update the hook %s" % hook_url, hook=gitlab_hook.hookObject._attrs)
 
 
 if __name__ == '__main__':

@@ -207,7 +207,7 @@ class GitLabProject(object):
         self.projectObject = project
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Project should have been updated.")
+                self._module.exit_json(changed=True, msg="Project should have been updated.")
 
             try:
                 project.save()
@@ -223,7 +223,7 @@ class GitLabProject(object):
     '''
     def createProject(self, namespace, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Project should have been created.")
+                self._module.exit_json(changed=True, msg="Project should have been created.")
 
         arguments['namespace_id'] = namespace.id
         try:
@@ -250,7 +250,7 @@ class GitLabProject(object):
 
     def deleteProject(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, result="Project should have been deleted.")
+            self._module.exit_json(changed=True, msg="Project should have been deleted.")
 
         project = self.projectObject
 
@@ -351,9 +351,9 @@ def main():
     if state == 'absent':
         if project_exists:
             gitlab_project.deleteProject()
-            module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
+            module.exit_json(changed=True, msg="Successfully deleted project %s" % project_name)
         else:
-            module.exit_json(changed=False, result="Project deleted or does not exists")
+            module.exit_json(changed=False, msg="Project deleted or does not exists")
 
     if state == 'present':
         if gitlab_project.createOrUpdateProject(project_name, namespace, {
@@ -366,9 +366,9 @@ def main():
                                                 "visibility": visibility,
                                                 "import_url": import_url}):
 
-            module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name, project=gitlab_project.projectObject._attrs)
+            module.exit_json(changed=True, msg="Successfully created or updated the project %s" % project_name, project=gitlab_project.projectObject._attrs)
         else:
-            module.exit_json(changed=False, result="No need to update the project %s" % project_name, project=gitlab_project.projectObject._attrs)
+            module.exit_json(changed=False, msg="No need to update the project %s" % project_name, project=gitlab_project.projectObject._attrs)
 
 
 if __name__ == '__main__':

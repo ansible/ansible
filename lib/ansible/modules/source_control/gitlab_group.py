@@ -186,7 +186,7 @@ class GitLabGroup(object):
         self.groupObject = group
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Group should have been updated.")
+                self._module.exit_json(changed=True, msg="Group should have been updated.")
 
             try:
                 group.save()
@@ -201,7 +201,7 @@ class GitLabGroup(object):
     '''
     def createGroup(self, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, result="Group should have been created.")
+            self._module.exit_json(changed=True, msg="Group should have been created.")
 
         try:
             group = self._gitlab.groups.create(arguments)
@@ -233,7 +233,7 @@ class GitLabGroup(object):
                 msg="There are still projects in this group. These needs to be moved or deleted before this group can be removed.")
         else:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, result="Group should have been deleted.")
+                self._module.exit_json(changed=True, msg="Group should have been deleted.")
 
             try:
                 group.delete()
@@ -325,18 +325,18 @@ def main():
     if state == 'absent':
         if group_exists:
             gitlab_group.deleteGroup()
-            module.exit_json(changed=True, result="Successfully deleted group %s" % group_name)
+            module.exit_json(changed=True, msg="Successfully deleted group %s" % group_name)
         else:
-            module.exit_json(changed=False, result="Group deleted or does not exists")
+            module.exit_json(changed=False, msg="Group deleted or does not exists")
 
     if state == 'present':
         if gitlab_group.createOrUpdateGroup(group_name, parent_group, {
                                             "path": group_path,
                                             "description": description,
                                             "visibility": group_visibility}):
-            module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name, group=gitlab_group.groupObject._attrs)
+            module.exit_json(changed=True, msg="Successfully created or updated the group %s" % group_name, group=gitlab_group.groupObject._attrs)
         else:
-            module.exit_json(changed=False, result="No need to update the group %s" % group_name, group=gitlab_group.groupObject._attrs)
+            module.exit_json(changed=False, msg="No need to update the group %s" % group_name, group=gitlab_group.groupObject._attrs)
 
 
 if __name__ == '__main__':
