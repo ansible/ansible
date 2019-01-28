@@ -146,25 +146,26 @@ from ansible.module_utils.hdfsbase import HDFSAnsibleModule, hdfs_argument_spec,
 
 # recursive,spacequota and namequota  options requires state to be 'directory'
 def invalid_if():
-    return [ ('state', 'file', ['recursive','spacequota','namequota']),
-             ('state', 'touch', ['recursive','spacequota','namequota']),
-             ('state', 'absent', ['recursive','spacequota','namequota']) ]
+    return [
+        ('state', 'file', ['recursive', 'spacequota', 'namequota']),
+        ('state', 'touch', ['recursive', 'spacequota', 'namequota']),
+        ('state', 'absent', ['recursive', 'spacequota', 'namequota']),
+    ]
 
 
 def main():
 
     argument_spec = hdfs_argument_spec()
-    argument_spec.update( dict(
-        state = dict(choices=['file','directory','touch','absent'], default=None),
-        path  = dict(aliases=['dest', 'name'], required=True),
-        owner = dict(required=False,default=None),
-        group = dict(required=False,default=None),
-        mode = dict(required=False,default=None,type='raw'),
-        replication = dict(required=False,default=None),
-        namequota = dict(required=False,default=None),
-        spacequota = dict(required=False,default=None),
-        recursive  = dict(default=False, type='bool'),
-        )
+    argument_spec.update(
+        state=dict(choices=['file', 'directory', 'touch', 'absent'], default='file'),
+        path=dict(aliases=['dest', 'name'], required=True),
+        owner=dict(required=False, default=None),
+        group=dict(required=False, default=None),
+        mode=dict(required=False, default=None, type='raw'),
+        replication=dict(required=False, default=None),
+        namequota=dict(required=False, default=None),
+        spacequota=dict(required=False, default=None),
+        recursive=dict(default=False, type='bool'),
     )
 
     required_together = hdfs_required_together()
@@ -177,23 +178,23 @@ def main():
         mutually_exclusive=mutually_exclusive
     )
 
-    hdfs = HDFSAnsibleModule(module,invalid_if=invalid_if())
+    hdfs = HDFSAnsibleModule(module, invalid_if=invalid_if())
 
     # The ansible file module uses a dict called file_args then populate it with file parameters
     # Tehn pass that dict as an argument to other functions.
     # I personally find that oweful since it make undrestanding what is beeing passed to the function each time
     # very difficult,so the developer have to follow the code from the begining to see what is beeing changed.
     ''' Get all hdfs arguments '''
-    params     = module.params
-    state         = params['state']
-    path          = params['path']
-    recursive     = params['recursive']
-    owner         = params['owner']
-    group         = params['group']
-    replication   = params['replication']
-    mode          = params['mode']
-    spacequota    = params['spacequota']
-    namequota     = params['namequota']
+    params = module.params
+    state = params['state']
+    path = params['path']
+    recursive = params['recursive']
+    owner = params['owner']
+    group = params['group']
+    replication = params['replication']
+    mode = params['mode']
+    spacequota = params['spacequota']
+    namequota = params['namequota']
 
     prev_state = hdfs.get_state(path)
 
@@ -225,8 +226,8 @@ def main():
             # file is not absent and any other state is a conflict
             hdfs.hdfs_fail_json(path=path, msg="spacequota and namequota options requires state to be 'directory'" % (path))
 
-        changed |= hdfs.hdfs_set_attributes( path=path, owner=owner, group=group,
-                                              replication=replication, permission=mode )
+        changed |= hdfs.hdfs_set_attributes(path=path, owner=owner, group=group,
+                                            replication=replication, permission=mode)
 
         module.exit_json(path=path, changed=changed)
 
@@ -241,19 +242,20 @@ def main():
                 curpath = '/'.join([curpath, dirname])
                 if not hdfs.hdfs_exist(curpath):
                     hdfs.hdfs_makedirs(curpath)
-                    changed |= hdfs.hdfs_set_attributes( path=curpath, owner=owner, group=group,
-                                                             replication=replication, permission=mode )
+                    changed |= hdfs.hdfs_set_attributes(path=curpath, owner=owner, group=group,
+                                                        replication=replication,
+                                                        permission=mode)
         # We already know prev_state is not 'absent', therefore it exists in some form.
         elif prev_state != 'directory':
             hdfs.hdfs_fail_json(path=path, msg='%s already exists as a %s' % (path, prev_state))
 
         # Set the attribute for the actual destination path
         # Quotas are never set recursively; just to the destination directory
-        changed |= hdfs.hdfs_set_attributes(  path=path, owner=owner, group=group, replication=replication,
-                                              quota=namequota, spaceQuota=spacequota, permission=mode )
+        changed |= hdfs.hdfs_set_attributes(path=path, owner=owner, group=group, replication=replication,
+                                            quota=namequota, spaceQuota=spacequota, permission=mode)
 
         if recursive:
-            changed |= hdfs.hdfs_set_attributes_recursive( path=path, owner=owner, group=group, replication=replication, permission=mode)
+            changed |= hdfs.hdfs_set_attributes_recursive(path=path, owner=owner, group=group, replication=replication, permission=mode)
 
         module.exit_json(path=path, changed=changed)
 
@@ -269,7 +271,7 @@ def main():
             # If the set attribute fails we need make sure to delete the created file
             # No way to catch errors at this stage : maybe a function at the hdfsbase level could help
             #  client.delete(path)
-            hdfs.hdfs_set_attributes( path=path, owner=owner, group=group, replication=replication, permission=mode)
+            hdfs.hdfs_set_attributes(path=path, owner=owner, group=group, replication=replication, permission=mode)
 
             module.exit_json(path=path, changed=True)
 

@@ -131,30 +131,30 @@ def _check_required_one_of_if(module, spec):
 def hdfs_argument_spec():
     return dict(
         # Dtermines which type of client we will actually user : InsecureClient, TokenClient or KerberosClient
-        authentication = dict(choices=['none','kerberos','token'], default='none'),
+        authentication=dict(choices=['none','kerberos','token'], default='none'),
         # When security is off, the authenticated user is the username specified in the user.name query parameter, specified by this parameter.
         # Defaults to the current user's (as determined by `whoami`).
-        user = dict(required=False,default=None),
+        user=dict(required=False, default=None),
         # When security is on, the authentication is performed against a kerberos server with the principal, specified by this parameter.
-        principal = dict(required=False,default=None),
+        principal=dict(required=False, default=None),
         # User to proxy as, theorically make sense only with authentication but works for both secure and Insecure.
-        proxy= dict(required=False,default=None),
+        proxy=dict(required=False, default=None),
         # You can use either a keytab or a password for kerberos authentication.
-        password = dict(required=False,default=None, no_log=True),
-        keytab= dict(required=False,default=None, no_log=True),
+        password=dict(required=False, default=None, no_log=True),
+        keytab=dict(required=False, default=None, no_log=True),
         # When security is on you can use a delegation token instead of having to authenticate every time with kerberos.
-        token= dict(required=False,default=None, no_log=True),
+        token=dict(required=False, default=None, no_log=True),
         # a json spec of the nameservice to use, create the spec in yml then use the to_json filter
         nameservices=dict(required=True, type='str'),
         # For secure connections whether to verify or not the server certificate
-        verify= dict(required=False, default=False, type='bool'),
+        verify=dict(required=False, default=False, type='bool'),
         # For secure connections the server certificate file(trust store) to trust.
-        truststore= dict(required=False,default=None, no_log=True),
+        truststore=dict(required=False, default=None, no_log=True),
         # Connection timeouts, forwarded to the request handler. How long to wait for the server to send data before giving up,
-        timeout= dict(required=False, default=None, type='float'),
+        timeout=dict(required=False, default=None, type='float'),
         # Root path, this will be prefixed to all HDFS paths passed to the client. If the root is relative,
         # the path will be assumed relative to the user's home directory.
-        root= dict(required=False, default=None),
+        root=dict(required=False, default=None),
     )
 
 
@@ -163,28 +163,41 @@ def hdfs_required_together():
 
 
 def hdfs_mutually_exclusive():
-    return [['password', 'keytab'],['user', 'principal'],['token', 'principal'],['token', 'user'],['token', 'password'],['token', 'keytab']]
+    return [
+        ['password', 'keytab'],
+        ['user', 'principal'],
+        ['token', 'principal'],
+        ['token', 'user'],
+        ['token', 'password'],
+        ['token', 'keytab']
+    ]
 
 
 def hdfs_required_one_of_if():
-    return [ ('authentication', 'kerberos', ['password','keytab']) ]
+    return [
+        ('authentication', 'kerberos', ['password','keytab']),
+    ]
 
 
 def hdfs_required_if():
-    return [ ('authentication', 'kerberos', ['principal']),('authentication', 'token', ['token'])  ]
+    return [
+        ('authentication', 'kerberos', ['principal']),
+        ('authentication', 'token', ['token']),
+    ]
 
 
 def hdfs_invalid_if():
     return [('verify', False, ['truststore']),
-            ('authentication', 'none', ['principal','password','keytab','token']),
-            ('authentication', 'token', ['principal','password','keytab','user']),
-            ('authentication', 'kerberos', ['token','user'])]
+        ('authentication', 'none', ['principal', 'password', 'keytab', 'token']),
+        ('authentication', 'token', ['principal', 'password', 'keytab', 'user']),
+        ('authentication', 'kerberos', ['token', 'user']),
+    ]
 
 
-def kinit(principal,password=None,keytab=None):
+def kinit(principal, password=None, keytab=None):
     kinit = '/usr/bin/kinit'
     if password is not None:
-        kinit_args = [ kinit, '%s' % principal ]
+        kinit_args = [kinit, principal]
         try:
             kinit = Popen(kinit_args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
             kinit.stdin.write('%s\n' % password)
@@ -192,7 +205,7 @@ def kinit(principal,password=None,keytab=None):
         except Exception:
             raise
     elif keytab is not None:
-        kinit_args = [ kinit, '-kt' , '%s' % keytab,'%s' % principal ]
+        kinit_args = [kinit, '-kt', keytab, principal]
         try:
             kinit = Popen(kinit_args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
             kinit.wait()
@@ -205,7 +218,7 @@ def kinit(principal,password=None,keytab=None):
 def kdestroy():
     try:
         kdestroy = '/usr/bin/kdestroy'
-        kdestroy_args = [ kdestroy, '-q', '-A' ]
+        kdestroy_args = [kdestroy, '-q', '-A']
         kdestroy = Popen(kdestroy_args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         kdestroy.wait()
     except Exception:
@@ -214,7 +227,7 @@ def kdestroy():
 
 class HDFSAnsibleModule(object):
 
-    def __init__(self, module, bypass_checks=False,required_if=None,required_one_of_if=None,invalid_if=None):
+    def __init__(self, module, bypass_checks=False, required_if=None, required_one_of_if=None, invalid_if=None):
         self.module = module
 
         self.file_cleanup_onfail = []
@@ -288,13 +301,13 @@ class HDFSAnsibleModule(object):
         self.file_cleanup_onfail.append(path)
 
     def restore_on_failure(self, restore_path, backup_path):
-        self.file_restore_onfail.append( (restore_path,backup_path) )
+        self.file_restore_onfail.append((restore_path, backup_path))
 
     def local_cleanup_on_failure(self, path):
         self.local_file_cleanup_onfail.append(path)
 
     def local_restore_on_failure(self, restore_path, backup_path):
-        self.local_file_restore_onfail.append( (restore_path,backup_path) )
+        self.local_file_restore_onfail.append((restore_path, backup_path))
 
     def on_fail(self):
         if self.local_file_cleanup_onfail is not None and len(self.local_file_cleanup_onfail) != 0:
@@ -325,7 +338,7 @@ class HDFSAnsibleModule(object):
             for f in self.file_cleanup_onfail:
                 try:
                     if self.isdir(f):
-                        self.client.delete(f,recursive=True)
+                        self.client.delete(f, recursive=True)
                     else:
                         self.client.delete(f)
                 except:
@@ -339,30 +352,36 @@ class HDFSAnsibleModule(object):
                 except:
                     pass
 
-    def _parse_nameservice_parameter(self,nameservice):
+    def _parse_nameservice_parameter(self, nameservice):
         if not isinstance(nameservice, dict):
             # well not a dict nor a list then it is just a urls string most likely
-            return { 'urls' : [ url for url in re.split(r',|;', str(nameservice).strip(' ').strip('"').strip('\'')) ], 'mounts' : [ '/' ] }
+            return {
+                'urls': [url for url in re.split(r',|;', str(nameservice).strip(' ').strip('"').strip('\''))],
+                'mounts': ['/'],
+            }
         else:
             # nameservice is just a dict
             if "urls" in nameservice:
                 if isinstance(nameservice["urls"], list):
-                    urls = [ str(url).strip(' ').strip('"').strip('\'') for url in nameservice["urls"] ]
+                    urls = [str(url).strip(' ').strip('"').strip('\'') for url in nameservice["urls"]]
                 else:
-                    urls = [ str(url) for url in re.split(r',|;', str(nameservice["urls"]).strip(' ').strip('"').strip('\'')) ]
+                    urls = [str(url) for url in re.split(r',|;', str(nameservice["urls"]).strip(' ').strip('"').strip('\''))]
             else:
                 raise HdfsError('missing urls parameter in namespace %s.', nameservice)
             if "mounts" in nameservice:
                 if isinstance(nameservice["mounts"], list):
                     # list of mounts
-                    mounts = [ str(mount).strip(' ').strip('"').strip('\'') for mount in nameservice["mounts"] ]
+                    mounts = [str(mount).strip(' ').strip('"').strip('\'') for mount in nameservice["mounts"]]
                 else:
                     # only one mount point or comma separated list of mounts
-                    mounts =  [ str(mount) for mount in re.split(r',|;', str(nameservice["mounts"]).strip(' ').strip('"').strip('\'')) ]
+                    mounts =  [str(mount) for mount in re.split(r',|;', str(nameservice["mounts"]).strip(' ').strip('"').strip('\''))]
             else:
                 # no mount point provided so mount to /
-                mounts = [ "/" ]
-            return { 'urls' : urls, 'mounts' : mounts }
+                mounts = ["/"]
+            return {
+                'urls': urls,
+                'mounts': mounts,
+            }
 
     def get_client(self):
         """Load HDFS client.
@@ -384,10 +403,10 @@ class HDFSAnsibleModule(object):
         # nameservices could be parsed, check its format now
         if not isinstance(nameservices, list):
             # one nameservice defined
-            options['nameservices'] = [ self._parse_nameservice_parameter(nameservices) ]
+            options['nameservices'] = [self._parse_nameservice_parameter(nameservices)]
         else:
             # provided a list of namespaces
-            options['nameservices'] = [ self._parse_nameservice_parameter(nameservice) for nameservice in nameservices ]
+            options['nameservices'] = [self._parse_nameservice_parameter(nameservice) for nameservice in nameservices]
 
         options.update ({
             'root'          : params.get('root', None),
