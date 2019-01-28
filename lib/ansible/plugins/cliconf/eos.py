@@ -272,13 +272,10 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = {}
-        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
-        result['rpc'] = self.get_base_rpc() + rpc_list
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
-        result['network_api'] = 'cliconf'
 
         return json.dumps(result)
 
