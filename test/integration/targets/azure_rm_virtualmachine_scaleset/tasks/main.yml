@@ -152,7 +152,7 @@
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
-    custom_data: "echo 'something'"
+    custom_data: "#cloud-config\npackage_upgrade: true\npackages:  - httpd"
     image:
       offer: CoreOS
       publisher: CoreOS
@@ -185,7 +185,7 @@
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
-    custom_data: "echo 'something'"
+    custom_data: "#cloud-config\npackage_upgrade: true\npackages:\n  - httpd"
     image:
       offer: CoreOS
       publisher: CoreOS
