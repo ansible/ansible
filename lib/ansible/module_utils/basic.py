@@ -126,7 +126,8 @@ try:
 
     # python 2.7.9+ and 2.7.0+
     for attribute in ('available_algorithms', 'algorithms'):
-        algorithms = getattr(hashlib, attribute, None)
+        # algorithms needs to be a list instead of immutable tuple so md5 can be removed if not available
+        algorithms = list(getattr(hashlib, attribute, None))
         if algorithms:
             break
     if algorithms is None:
