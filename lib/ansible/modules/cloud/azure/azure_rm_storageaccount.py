@@ -96,7 +96,7 @@ options:
         description:
             - Specifies CORS rules for the Blob service.
             - You can include up to five CorsRule elements in the request.
-            - If no CorsRule elements are included in the request body, nothing about CORS will be changed.
+            - If no blob_cors elements are included in the argument list, nothing about CORS will be changed.
             - "If you want to delete all CORS rules and disable CORS for the Blob service, explicitly set blob_cors: []."
         type: list
         version_added: "2.8"
@@ -157,6 +157,19 @@ EXAMPLES = '''
         resource_group: Testing
         name: clh002
         type: Standard_RAGRS
+        blob_cors:
+            - allowed_origins:
+                - http://www.example.com/
+              allowed_methods:
+                - GET
+                - POST
+              allowed_headers:
+                - x-ms-meta-data*
+                - x-ms-meta-target*
+                - x-ms-meta-abc
+              exposed_headers:
+                - x-ms-meta-*
+              max_age_in_seconds: 200
 '''
 
 
@@ -205,11 +218,11 @@ from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMMod
 from ansible.module_utils._text import to_native
 
 cors_rule_spec = dict(
-    allowed_origins=dict(type='list', required=True),
-    allowed_methods=dict(type='list', required=True),
+    allowed_origins=dict(type='list', elements='str', required=True),
+    allowed_methods=dict(type='list', elements='str', required=True),
     max_age_in_seconds=dict(type='int', required=True),
-    exposed_headers=dict(type='list', required=True),
-    allowed_headers=dict(type='list', required=True),
+    exposed_headers=dict(type='list', elements='str', required=True),
+    allowed_headers=dict(type='list', elements='str', required=True),
 )
 
 
