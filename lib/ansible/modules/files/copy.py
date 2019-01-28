@@ -687,20 +687,21 @@ def main():
                             raise
                     except RuntimeError as e:
                         # setfacl failed.
+
                         # FIXME: separate out the following cases and do the appropriate thing:
                         # * If any of the following raise errors, they can be ignored
                         #   * If we're running on python2 therefore the facls were not copied
-                        #   * If there were no facls to clear (because we we're not becoming an
-                        #     unprivileged user, for instance)
                         #   * If the directory we copied into has a default acl, on python2, the
                         #     file ends up with the directory's default acl.  On python3, if the
                         #     file did not start with any acl, it will end up with the default acl.
                         #     A failure to remove 'm' can be ignored.
+
                         # * Treatment of default acls are a related bug.  On Python2, default acls
                         #   are applied to the copied file.  On Python3, the default acls won't
                         #   apply because we copied metadata that tells what the acls are.  Should
                         #   we fix Python2 to not apply default acls (easier)? or fix Python3 to
                         #   apply the default acls?
+
                         # Perhaps it will be easier to:
                         # * Make a clear_facl() function instead of del_facl().  It looks like Linux
                         #   and freebsd support setfacl -b for this but other platforms (z/OS) do not.
@@ -708,7 +709,11 @@ def main():
                         #   * Does the source file have acls?
                         #   * Does the destination file have acls for the default acl and nothing
                         #     else?
-                        if 'Operation not supported' in to_native(e):
+                        native_exc = to_native(e)
+                        if 'Operation not supported' in native_exc:
+                            # noacl file system
+                            pass
+                        elif 'cannot remove non-existent ACL entry' in native_exc:
                             pass
                         else:
                             raise
