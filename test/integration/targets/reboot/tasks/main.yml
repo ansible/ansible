@@ -37,7 +37,7 @@
     - name: Reboot with all options
       reboot:
         connect_timeout: 30
-        extra_search_paths: /usr/local/bin
+        search_paths: /usr/local/bin
         msg: Rebooting
         post_reboot_delay: 1
         pre_reboot_delay: 61
@@ -90,12 +90,12 @@
 
         - name: Reboot when molly-guard is installed
           reboot:
-            extra_search_paths: /lib/molly-guard
+            search_paths: /lib/molly-guard
           register: reboot_result
 
         - import_tasks: check_reboot.yml
 
-      when: ansible_facts.pkg_mgr == 'apt'
+      when: ansible_facts.distribution in ['Debian', 'Ubuntu']
       tags:
         - molly-guard
 
