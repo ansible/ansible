@@ -66,6 +66,7 @@ Ansible ships with the following list of ``module_utils`` files. The module util
 - network/nxos/nxos.py - Contains definitions and helper functions specific to Cisco NXOS networking devices.
 - network/onyx/onyx.py - Definitions and helper functions for modules that manage Mellanox ONYX networking devices.
 - network/ordance/ordance.py - Module support utilities for managing Ordnance devices.
+- network/picos/picos.py - Module support utilities for managing device running PicOS.
 - network/sros/sros.py - Helper functions for modules working with Open vSwitch bridges.
 - network/vyos/vyos.py - Definitions and functions for working with VyOS networking
 - openstack.py - Utilities for modules that work with Openstack instances.
