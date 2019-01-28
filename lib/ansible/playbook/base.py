@@ -523,7 +523,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         attrs = {}
         for (name, attribute) in iteritems(self._valid_attrs):
             attr = getattr(self, name)
-            if attribute.isa == 'class' and attr is not None and hasattr(attr, 'serialize'):
+            if attribute.isa == 'class' and hasattr(attr, 'serialize'):
                 attrs[name] = attr.serialize()
             else:
                 attrs[name] = attr
