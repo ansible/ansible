@@ -110,6 +110,16 @@ class ActionModule(_ActionModule):
         if copy_result.get('changed', False):
             result['changed'] = copy_result['changed']
 
+        if backup_options and backup_options.get('filename'):
+            result['date'] = time.strftime('%Y-%m-%d', time.gmtime(os.stat(result['backup_path']).st_ctime))
+            result['time'] = time.strftime('%H:%M:%S', time.gmtime(os.stat(result['backup_path']).st_ctime))
+
+        else:
+            result['date'] = tstamp.split('@')[0]
+            result['time'] = tstamp.split('@')[1]
+            result['shortname'] = result['backup_path'][::-1].split('.', 1)[1][::-1]
+            result['filename'] = result['backup_path'].split('/')[-1]
+
         # strip out any keys that have two leading and two trailing
         # underscore characters
         for key in list(result.keys()):
