@@ -152,6 +152,7 @@
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
+    custom_data: "echo 'something'"
     image:
       offer: CoreOS
       publisher: CoreOS
@@ -184,6 +185,7 @@
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
+    custom_data: "echo 'something'"
     image:
       offer: CoreOS
       publisher: CoreOS

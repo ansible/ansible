@@ -206,6 +206,12 @@ options:
             - A list of Availability Zones for your virtual machine scale set
         type: list
         version_added: "2.8"
+    custom_data:
+        description:
+            - Custom data for using cloud-init for your VM.
+            - Refer to U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init).
+        aliases:
+            - subnet
 
 extends_documentation_fragment:
     - azure
@@ -365,6 +371,7 @@ azure_vmss:
 
 import random
 import re
+import base64
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -414,7 +421,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name']),
             overprovision=dict(type='bool', default=True),
-            zones=dict(type='list')
+            zones=dict(type='list'),
+            custom_data=dict(type='str')
         )
 
         self.resource_group = None
@@ -445,6 +453,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.security_group = None
         self.overprovision = None
         self.zones = None
+        self.custom_data = None
 
         required_if = [
             ('state', 'present', [
@@ -497,6 +506,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
+
+        if self.custom_data:
+            self.custom_data = base64.b64encode(to_bytes(self.custom_data))
 
         if self.state == 'present':
             # Verify parameters and resolve any defaults
@@ -627,6 +639,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         differences.append('load_balancer')
                         changed = True
 
+                if self.custom_data:
+                    if self.custom_data != vmss_dict['properties']['virtualMachineProfile']['osProfile'].get('customData'):
+                        differences.append('custom_data')
+                        changed = True
+                        vmss_dict['properties']['virtualMachineProfile']['osProfile']['customData'] = self.custom_data
+                   
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -698,6 +716,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             os_profile=self.compute_models.VirtualMachineScaleSetOSProfile(
                                 admin_username=self.admin_username,
                                 computer_name_prefix=self.short_hostname,
+                                custom_data = self.custom_data
                             ),
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
                                 os_disk=self.compute_models.VirtualMachineScaleSetOSDisk(
