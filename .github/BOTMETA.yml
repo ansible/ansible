@@ -171,6 +171,11 @@ files:
   $modules/crypto/acme/: resmo felixfontein
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
+  $modules/database/mysql/: &mysql
+    maintainers: $team_mysql
+    labels: mysql
+    keywords:
+    - mariadb
   $modules/database/postgresql/: matburt
   $modules/database/postgresql/postgresql_db.py: $team_ansible
   $modules/database/postgresql/postgresql_user.py: $team_ansible nerzhul
@@ -534,6 +539,7 @@ files:
     support: core
   $module_utils/compat:
     support: core
+  $module_utils/mysql.py: *mysql
   $module_utils/_text.py:
     support: core
   $module_utils/parsing:
@@ -1041,6 +1047,7 @@ files:
     maintainers: $team_docker
     supershipit: felixfontein
   $plugins/doc_fragments/mso.py: *aci
+  $plugins/doc_fragments/mysql.py: *mysql
   $plugins/doc_fragments/vultr.py:
     maintainers: $team_vultr
     labels: cloud
@@ -1283,12 +1290,14 @@ files:
     supershipit: $team_google
   test/integration/targets/meraki: *meraki
   test/integration/targets/mso: *aci
+  test/integration/targets/mysql: *mysql
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
       - networking
   test/integration/targets/setup_acme:
     maintainers: resmo felixfontein
+  test/integration/targets/setup_mysql_db: *mysql
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
   test/integration/targets/ucs:
@@ -1350,6 +1359,7 @@ macros:
   team_macos: dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
+  team_mysql: []
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
   team_netbox: sieben anthony25 fragmentedpacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
