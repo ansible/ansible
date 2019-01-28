@@ -164,7 +164,7 @@
    assert:
       that:
         - "fact.aks | length == 1"
-        - fact.aks[0].kubeconfig == output.kubeconfig
+        - fact.aks[0].kube_config == output.kube_config
 
  - name: Delete the AKS instance
    azure_rm_aks:
