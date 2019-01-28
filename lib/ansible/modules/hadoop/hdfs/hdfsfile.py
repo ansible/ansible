@@ -31,7 +31,7 @@ extends_documentation_fragment: hdfs
 description:
      - Sets attributes of HDFS files and directories, or removes
        files/directories.
-version_added: "2.3"
+version_added: "2.8"
 requirements: [ pywhdfs ]
 author: "Yassine Azzouz"
 options:
