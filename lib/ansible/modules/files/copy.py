@@ -300,11 +300,11 @@ def del_facl(path, acl_tag, acl_qualifier=None):
         if acl_tag == 'g':
             raise ValueError('acl_qualifier must be set to a groupname or groupid when acl_tag is "g"')
 
-    setfacl = get_bin_path('setfacl', True)
-    if acl_qualifier:
-        acl_string = '{0}:{1}:'.format(acl_tag, acl_qualifier)
-    else:
         acl_string = acl_tag
+    else:
+        acl_string = '{0}:{1}:'.format(acl_tag, acl_qualifier)
+
+    setfacl = get_bin_path('setfacl', True)
     # Like: ['/usr/bin/setfacl', '-x', 'u:1000:', '/etc/config.cfg']
     acl_command = [setfacl, '-x', acl_string, path]
     rc, out, err = module.run_command(acl_command)
