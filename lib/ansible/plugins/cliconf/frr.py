@@ -88,10 +88,7 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = dict()
-        result['rpc'] = self.get_base_rpc() + ['get']
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         result['device_operations'] = self.get_device_operations()
         result['supported_protocols'] = self.get_supported_protocols()
         result.update(self.get_option_values())
