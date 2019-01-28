@@ -300,9 +300,9 @@ def del_facl(path, acl_tag, acl_qualifier=None):
         if acl_tag == 'g':
             raise ValueError('acl_qualifier must be set to a groupname or groupid when acl_tag is "g"')
 
-        acl_string = acl_tag
-    else:
-        acl_string = '{0}:{1}:'.format(acl_tag, acl_qualifier)
+        acl_qualifier = ''
+
+    acl_string = '{0}:{1}:'.format(acl_tag, acl_qualifier)
 
     setfacl = get_bin_path('setfacl', True)
     # Like: ['/usr/bin/setfacl', '-x', 'u:1000:', '/etc/config.cfg']
@@ -694,7 +694,7 @@ def main():
                         #   * If the directory we copied into has a default acl, on python2, the
                         #     file ends up with the directory's default acl.  On python3, if the
                         #     file did not start with any acl, it will end up with the default acl.
-                        #     A failure to remove 'm' can be ignored.
+                        #   * A failure to remove 'm' can be ignored.
 
                         # * Treatment of default acls are a related bug.  On Python2, default acls
                         #   are applied to the copied file.  On Python3, the default acls won't
