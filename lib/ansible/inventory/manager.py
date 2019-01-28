@@ -558,7 +558,7 @@ class InventoryManager(object):
             if C.HOST_PATTERN_MISMATCH == 'warning':
                 display.warning(msg)
             elif C.HOST_PATTERN_MISMATCH == 'error':
-                raise AnsibleOptionsError(msg)
+                raise AnsibleError(msg)
             # no need to write 'ignore' state
 
         return results
