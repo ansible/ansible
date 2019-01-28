@@ -78,6 +78,11 @@ EXAMPLES = """
     ip_defrag: true
     reassemble_tcp: true
     state: present
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
+
 - name: remove node
   skydive_capture:
     name: Node1
@@ -86,6 +91,10 @@ EXAMPLES = """
     ip_defrag: true
     reassemble_tcp: true
     state: absent
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
 """
 
 RETURN = """ # """
