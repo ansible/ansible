@@ -31,7 +31,6 @@ options:
       - Maps docker service C(IMAGE) parameter.
   resolve_image:
     type: bool
-    required: false
     default: true
     description:
       - If the current image digest should be resolved from registry and updated if changed.
@@ -46,23 +45,19 @@ options:
       - present
       - absent
   args:
-    required: false
     description:
       - List arguments to be passed to the container.
   command:
-    required: false
     description:
       - Command to execute when the container starts.
       - A command may be either a string or a list or a list of strings.
     version_added: 2.8
   constraints:
-    required: false
     type: list
     description:
       - List of the service constraints.
       - Maps docker service C(--constraint) option.
   placement_preferences:
-    required: false
     type: list
     description:
       - List of the placement preferences as key value pairs.
@@ -70,42 +65,36 @@ options:
       - Requires API version >= 1.27.
     version_added: 2.8
   hostname:
-    required: false
     type: str
     description:
       - Container hostname.
       - Maps docker service C(--hostname) option.
       - Requires API version >= 1.25.
   tty:
-    required: false
     type: bool
     description:
       - Allocate a pseudo-TTY.
       - Maps docker service C(--tty) option.
       - Requires API version >= 1.25.
   dns:
-    required: false
     type: list
     description:
       - List of custom DNS servers.
       - Maps docker service C(--dns) option.
       - Requires API version >= 1.25.
   dns_search:
-    required: false
     type: list
     description:
       - List of custom DNS search domains.
       - Maps docker service C(--dns-search) option.
       - Requires API version >= 1.25.
   dns_options:
-    required: false
     type: list
     description:
       - List of custom DNS options.
       - Maps docker service C(--dns-option) option.
       - Requires API version >= 1.25.
   force_update:
-    required: false
     type: bool
     default: false
     description:
@@ -113,19 +102,16 @@ options:
       - Maps to docker service update C(--force) option.
       - Requires API version >= 1.25.
   labels:
-    required: false
     type: dict
     description:
       - Dictionary of key value pairs.
       - Maps docker service C(--label) option.
   container_labels:
-    required: false
     type: dict
     description:
       - Dictionary of key value pairs.
       - Maps docker service C(--container-label) option.
   endpoint_mode:
-    required: false
     type: str
     description:
       - Service endpoint mode.
@@ -135,35 +121,29 @@ options:
       - vip
       - dnsrr
   env:
-    required: false
     type: list
     description:
       - List of the service environment variables.
       - Maps docker service --env option.
   log_driver:
-    required: false
     type: str
     description:
       - Configure the logging driver for a service.
   log_driver_options:
-    required: false
     type: dict
     description:
       - Options for service logging driver.
   limit_cpu:
-    required: false
     type: float
     description:
       - Service CPU limit. C(0) equals no limit.
       - Maps docker service C(--limit-cpu) option.
   reserve_cpu:
-    required: false
     type: float
     description:
       - Service CPU reservation. C(0) equals no reservation.
       - Maps docker service --reserve-cpu option.
   limit_memory:
-    required: false
     type: str
     description:
       - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
@@ -173,7 +153,6 @@ options:
       - Omitting the unit defaults to bytes.
       - Maps docker service C(--limit-memory) option.
   reserve_memory:
-    required: false
     type: str
     description:
       - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
@@ -183,14 +162,12 @@ options:
       - Omitting the unit defaults to bytes.
       - Maps docker service C(--reserve-memory) option.
   mode:
-    required: false
     type: str
     default: replicated
     description:
       - Service replication mode.
       - Maps docker service C(--mode) option.
   mounts:
-    required: false
     type: list
     description:
       - List of dictionaries describing the service mounts.
@@ -208,7 +185,6 @@ options:
           - Container path.
       type:
         type: str
-        required: false
         default: bind
         choices:
           - bind
@@ -218,12 +194,10 @@ options:
           - The mount type.
       readonly:
         type: bool
-        required: false
         default: false
         description:
           - Whether the mount should be read-only.
   secrets:
-    required: false
     type: list
     description:
       - List of dictionaries describing the service secrets.
@@ -242,29 +216,24 @@ options:
           - Secret's name as defined at its creation.
       filename:
         type: str
-        required: false
         description:
           - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
       uid:
         type: int
-        required: false
         default: 0
         description:
           - UID of the secret file's owner.
       gid:
         type: int
-        required: false
         default: 0
         description:
           - GID of the secret file's group.
       mode:
         type: int
-        required: false
         default: 0o444
         description:
           - File access mode inside the container.
   configs:
-    required: false
     type: list
     description:
       - List of dictionaries describing the service configs.
@@ -288,30 +257,25 @@ options:
           - Name of the file containing the config. Defaults to the I(config_name) if not specified.
       uid:
         type: int
-        required: false
         default: 0
         description:
           - UID of the config file's owner.
       gid:
         type: int
-        required: false
         default: 0
         description:
           - GID of the config file's group.
       mode:
         type: str
-        required: false
         default: "0o444"
         description:
           - File access mode inside the container.
   networks:
-    required: false
     type: list
     description:
       - List of the service networks names.
       - Maps docker service C(--network) option.
   publish:
-    required: false
     type: list
     description:
       - List of dictionaries describing the service published ports.
@@ -329,7 +293,6 @@ options:
           - The port inside the container to expose.
       protocol:
         type: str
-        required: false
         default: tcp
         description:
           - What protocol to use.
@@ -338,7 +301,6 @@ options:
           - udp
       mode:
         type: str
-        required: false
         description:
           - What publish mode to use.
           - Requires API version >= 1.32.
@@ -346,7 +308,6 @@ options:
           - ingress
           - host
   replicas:
-    required: false
     type: int
     default: -1
     description:
@@ -355,7 +316,6 @@ options:
       - If set to C(-1), and service is present, service replicas will be unchanged.
       - Maps docker service C(--replicas) option.
   restart_policy:
-    required: false
     type: str
     description:
       - Restart condition of the service.
@@ -365,37 +325,31 @@ options:
       - on-failure
       - any
   restart_policy_attempts:
-    required: false
     type: int
     description:
       - Maximum number of service restarts.
       - Maps docker service C(--restart-max-attempts) option.
   restart_policy_delay:
-    required: false
     type: int
     description:
       - Delay between restarts.
       - Maps docker service C(--restart-delay) option.
   restart_policy_window:
-    required: false
     type: int
     description:
       - Restart policy evaluation window.
       - Maps docker service C(--restart-window) option.
   update_delay:
-    required: false
     type: int
     description:
       - Rolling update delay
       - Maps docker service C(--update-delay) option.
   update_parallelism:
-    required: false
     type: int
     description:
       - Rolling update parallelism
       - Maps docker service C(--update-parallelism) option.
   update_failure_action:
-    required: false
     type: int
     description:
       - Action to take in case of container failure.
@@ -404,21 +358,18 @@ options:
       - continue
       - pause
   update_monitor:
-    required: false
     type: int
     description:
       - Time to monitor updated tasks for failures, in nanoseconds.
       - Maps to docker service C(--update-monitor option).
       - Requires API version >= 1.25.
   update_max_failure_ratio:
-    required: false
     type: float
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
       - Maps to docker service C(--update-max-failure-ratio).
       - Requires API version >= 1.25.
   update_order:
-    required: false
     type: str
     description:
       - Specifies the order of operations when rolling out an updated task.
@@ -426,7 +377,6 @@ options:
       - Requires API version >= 1.29.
   user:
     type: str
-    required: false
     description:
       - Sets the username or UID used for the specified command.
       - Before Ansible 2.8, the default value for this option was C(root).
@@ -1499,73 +1449,72 @@ def main():
         name=dict(required=True),
         image=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent']),
-        mounts=dict(default=None, type='list', elements='dict', options=dict(
+        mounts=dict(type='list', elements='dict', options=dict(
             source=dict(type='str', required=True),
             target=dict(type='str', required=True),
             type=dict(
                 default='bind',
                 type='str',
-                required=False,
                 choices=['bind', 'volume', 'tmpfs']
             ),
-            readonly=dict(default=False, type='bool', required=False),
+            readonly=dict(default=False, type='bool'),
         )),
-        configs=dict(default=None, type='list', elements='dict', options=dict(
+        configs=dict(type='list', elements='dict', options=dict(
             config_id=dict(type='str', required=True),
             config_name=dict(type='str', required=True),
-            filename=dict(default=None, type='str', required=False),
-            uid=dict(default=0, type='int', required=False),
-            gid=dict(default=0, type='int', required=False),
-            mode=dict(default=0o444, type='int', required=False),
+            filename=dict(type='str'),
+            uid=dict(default=0, type='int'),
+            gid=dict(default=0, type='int'),
+            mode=dict(default=0o444, type='int'),
         )),
-        secrets=dict(default=None, type='list', elements='dict', options=dict(
+        secrets=dict(type='list', elements='dict', options=dict(
             secret_id=dict(type='str', required=True),
             secret_name=dict(type='str', required=True),
-            filename=dict(default=None, type='str', required=False),
-            uid=dict(default=0, type='int', required=False),
-            gid=dict(default=0, type='int', required=False),
-            mode=dict(default=0o444, type='int', required=False),
+            filename=dict(type='str'),
+            uid=dict(default=0, type='int'),
+            gid=dict(default=0, type='int'),
+            mode=dict(default=0o444, type='int'),
         )),
-        networks=dict(default=None, type='list'),
-        command=dict(default=None, type='raw'),
-        args=dict(default=None, type='list'),
-        env=dict(default=None, type='list'),
+        networks=dict(type='list'),
+        command=dict(type='raw'),
+        args=dict(type='list'),
+        env=dict(type='list'),
         force_update=dict(default=False, type='bool'),
-        log_driver=dict(default=None, type='str'),
-        log_driver_options=dict(default=None, type='dict'),
-        publish=dict(default=None, type='list', elements='dict', options=dict(
+        log_driver=dict(type='str'),
+        log_driver_options=dict(type='dict'),
+        publish=dict(type='list', elements='dict', options=dict(
             published_port=dict(type='int', required=True),
             target_port=dict(type='int', required=True),
-            protocol=dict(default='tcp', type='str', required=False, choices=('tcp', 'udp')),
-            mode=dict(type='str', required=False, choices=('ingress', 'host')),
+            protocol=dict(default='tcp', type='str', choices=('tcp', 'udp')),
+            mode=dict(type='str', choices=('ingress', 'host')),
         )),
-        constraints=dict(default=None, type='list'),
-        placement_preferences=dict(default=None, type='list'),
-        tty=dict(default=None, type='bool'),
-        dns=dict(default=None, type='list'),
-        dns_search=dict(default=None, type='list'),
-        dns_options=dict(default=None, type='list'),
-        hostname=dict(default=None, type='str'),
-        labels=dict(default=None, type='dict'),
-        container_labels=dict(default=None, type='dict'),
+        constraints=dict(type='list'),
+        placement_preferences=dict(type='list'),
+        tty=dict(type='bool'),
+        dns=dict(type='list'),
+        dns_search=dict(type='list'),
+        dns_options=dict(type='list'),
+        hostname=dict(type='str'),
+        labels=dict(type='dict'),
+        container_labels=dict(type='dict'),
         mode=dict(default='replicated', type='str'),
         replicas=dict(default=-1, type='int'),
-        endpoint_mode=dict(default=None, choices=['vip', 'dnsrr']),
-        limit_cpu=dict(default=None, type='float'),
-        limit_memory=dict(default=None, type='str'),
-        reserve_cpu=dict(default=None, type='float'),
-        reserve_memory=dict(default=None, type='str'),
+        endpoint_mode=dict(choices=['vip', 'dnsrr']),
+        limit_cpu=dict(type='float'),
+        limit_memory=dict(type='str'),
+        reserve_cpu=dict(type='float'),
+        reserve_memory=dict(type='str'),
         resolve_image=dict(default=True, type='bool'),
-        restart_policy=dict(default=None, choices=['none', 'on-failure', 'any']),
-        restart_policy_delay=dict(default=None, type='int'),
-        restart_policy_attempts=dict(default=None, type='int'),
-        restart_policy_window=dict(default=None, type='int'),
-        update_delay=dict(default=None, type='int'),
-        update_parallelism=dict(default=None, type='int'),
-        update_failure_action=dict(default=None, choices=['continue', 'pause']),
-        update_monitor=dict(default=None, type='int'),
-        update_max_failure_ratio=dict(default=None, type='float'),
-        update_order=dict(default=None, type='str'),
+        restart_policy=dict(choices=['none', 'on-failure', 'any']),
+        restart_policy_delay=dict(type='int'),
+        restart_policy_attempts=dict(type='int'),
+        restart_policy_window=dict(type='int'),
+        update_delay=dict(type='int'),
+        update_parallelism=dict(type='int'),
+        update_failure_action=dict(choices=['continue', 'pause']),
+        update_monitor=dict(type='int'),
+        update_max_failure_ratio=dict(type='float'),
+        update_order=dict(type='str'),
         user=dict(type='str')
     )
 
