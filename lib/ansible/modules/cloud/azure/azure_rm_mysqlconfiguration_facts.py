@@ -30,7 +30,7 @@ options:
         description:
             - The name of the server.
         required: True
-    setting_name:
+    name:
         description:
             - Setting name.
 
@@ -43,13 +43,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get specific setting of MySQL configuration
+  - name: Get specific setting of MySQL Server
     azure_rm_mysqlconfiguration_facts:
       resource_group: testrg
       server_name: testmysqlserver
-      setting_name: deadlock_timeout
+      name: deadlock_timeout
 
-  - name: List instances of MySQL Configuration
+  - name: Get all settings of MySQL Server
     azure_rm_mysqlconfiguration_facts:
       resource_group: resource_group_name
       server_name: server_name
@@ -118,7 +118,7 @@ class AzureRMMySQLConfigurationFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            setting_name=dict(
+            name=dict(
                 type='str'
             )
         )
@@ -130,7 +130,7 @@ class AzureRMMySQLConfigurationFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
-        self.setting_name = None
+        self.name = None
         super(AzureRMMySQLConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -139,7 +139,7 @@ class AzureRMMySQLConfigurationFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if self.setting_name is not None:
+        if self.name is not None:
             self.results['settings'] = self.get()
         else:
             self.results['settings'] = self.list_by_server()
@@ -156,7 +156,7 @@ class AzureRMMySQLConfigurationFacts(AzureRMModuleBase):
         try:
             response = self.mgmt_client.configurations.get(resource_group_name=self.resource_group,
                                                            server_name=self.server_name,
-                                                           configuration_name=self.setting_name)
+                                                           configuration_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Configurations.')
