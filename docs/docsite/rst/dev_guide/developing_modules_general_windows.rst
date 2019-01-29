@@ -237,7 +237,7 @@ When ``type=dict``, or ``type=list`` and ``elements=dict``, the following keys c
 - ``mutually_exclusive``: Same as the root level ``mutually_exclusive`` but validated against the values in the sub dict
 - ``options``: Same as the root level ``options`` but contains the valid options for the sub option
 - ``required_if``: Same as the root level ``required_if`` but validated against the values in the sub dict
-- ``requied_by``: Same as the root level ``required_by`` but validated against the values in the sub dict
+- ``required_by``: Same as the root level ``required_by`` but validated against the values in the sub dict
 - ``required_together``: Same as the root level ``required_together`` but validated against the values in the sub dict
 - ``required_one_of``: Same as the root level ``required_one_of`` but validated against the values in the sub dict
 
