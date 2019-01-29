@@ -87,8 +87,8 @@ If you would like to access sudo mode, there are also flags to do that:
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --become --become-user batman
 
-The sudo implementation (and other methods of changing the current user) is changeable in Ansible's configuration
-if you happen to want to use a sudo replacement.  Flags passed to sudo (like -H) can also be set.
+The sudo implementation (and other methods of changing the current user) can be modified in Ansible's configuration
+if you happen to want to use a sudo replacement. Flags passed to sudo (like -H) can also be set.
 
 Now run a live command on all of your nodes:
 
