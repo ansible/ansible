@@ -594,3 +594,11 @@ groupings:
   - azure
   azure_rm_webapp:
   - azure
+  k8s:
+  - k8s
+  k8s_facts:
+  - k8s
+  k8s_service:
+  - k8s
+  k8s_scale:
+  - k8s
