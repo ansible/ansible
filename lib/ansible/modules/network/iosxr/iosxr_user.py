@@ -87,6 +87,7 @@ options:
     description:
       - Enters into administration configuration mode for making config
         changes to the device.
+      - Applicable only when using network_cli transport
     type: bool
     default: false
     version_added: "2.8"
