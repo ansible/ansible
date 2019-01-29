@@ -319,6 +319,7 @@ def main():
             class_config=dict(
                 accountStatus=enabled,
                 clearPwdHistory=clear_password_history,
+                descr=description,
                 email=email,
                 expiration=expiration,
                 expires=expires,
