@@ -1303,7 +1303,6 @@ class DockerServiceManager():
             # update. If this is encountered we'll retry the update.
             if (
                 self.retries > 0
-                and e.explanation
                 and 'update out of sequence' in str(e.explanation)
             ):
                 self.retries -= 1
