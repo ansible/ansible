@@ -319,6 +319,9 @@ files:
     labels: macos
     maintainers: $team_macos
   $modules/packaging/os/homebrew_: *macos
+  $modules/packaging/os/installp.py: &aix
+    labels: aix
+    maintainers: $team_aix
   $modules/packaging/os/macports.py: *macos
   $modules/packaging/os/package.py: $team_ansible
   $modules/packaging/os/pacman.py:
@@ -368,9 +371,7 @@ files:
   $modules/storage/glusterfs/: devyanikota
   $modules/storage/ibm/: tzurE
   $modules/storage/zfs/: *solaris
-  $modules/system/aix: &aix
-    labels: aix
-    maintainers: $team_aix
+  $modules/system/aix: *aix
   $modules/system/alternatives.py:
     ignored: DavidWittman
   $modules/system/at.py: $team_ansible
