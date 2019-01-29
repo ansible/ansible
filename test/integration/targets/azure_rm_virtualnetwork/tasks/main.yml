@@ -1,4 +1,4 @@
-- name: Prepare random number
+- name: Prepare random number -- trigger test
   set_fact:
     vnetname: "vnet{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
