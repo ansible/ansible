@@ -155,34 +155,34 @@ docker_volumes_list:
         Keys matches the C(docker volume ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(volumes) is C(yes)
-    type: dict
+    type: list
 docker_networks_list:
     description:
       - List of dict objects containing the basic information about each network.
         Keys matches the C(docker network ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(networks) is C(yes)
-    type: dict
+    type: list
 docker_containers_list:
     description:
       - List of dict objects containing the basic information about each container.
         Keys matches the C(docker container ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(containers) is C(yes)
-    type: dict
+    type: list
 docker_images_list:
     description:
       - List of dict objects containing the basic information about each image.
         Keys matches the C(docker image ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(images) is C(yes)
-    type: dict
+    type: list
 docker_disk_usage:
     description:
       - Information on summary disk usage by images, containers and volumes on docker host
         unless I(verbose_output=yes). See description for I(verbose_output).
     returned: When I(disk_usage) is C(yes)
-    type: int
+    type: dict
 
 '''
 
@@ -237,7 +237,7 @@ class DockerHostManager(DockerBaseClass):
             if self.verbose_output:
                 return self.client.df()
             else:
-                return self.client.df()['LayersSize']
+                return dict(LayerSize=self.client.df()['LayersSize'])
         except APIError as exc:
             self.client.fail_json(msg="Error inspecting docker host: %s" % to_native(exc))
 
@@ -260,7 +260,8 @@ class DockerHostManager(DockerBaseClass):
             elif docker_object == 'volumes':
                 items = self.client.volumes(filters=filters)
         except APIError as exc:
-            self.client.fail_json(msg="Error inspecting docker host: %s" % to_native(exc))
+            self.client.fail_json(msg="Error inspecting docker host for object '%s': %s" %
+                                      (docker_object, to_native(exc)))
 
         if self.verbose_output:
             if docker_object != 'volumes':
