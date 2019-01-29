@@ -530,6 +530,9 @@ class DnfModule(YumDnf):
         # Set installroot
         conf.installroot = installroot
 
+        # Load substitutions from the filesystem
+        conf.substitutions.update_from_etc(installroot)
+
         # Handle different DNF versions immutable mutable datatypes and
         # dnf v1/v2/v3
         #
