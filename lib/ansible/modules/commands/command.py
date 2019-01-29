@@ -69,6 +69,12 @@ options:
     description:
       - If set to C(yes), append a newline to stdin data.
     version_added: "2.8"
+  strip_empty_ends:
+    description:
+      - Strip empty lines from the end of stdout/stderr in result.
+    version_added: "2.8"
+    type: bool
+    default: yes
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
@@ -212,6 +218,7 @@ def main():
             warn=dict(type='bool', default=True),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
+            strip_empty_ends=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
     )
@@ -225,6 +232,7 @@ def main():
     warn = module.params['warn']
     stdin = module.params['stdin']
     stdin_add_newline = module.params['stdin_add_newline']
+    strip = module.params['strip_empty_ends']
 
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
@@ -289,10 +297,14 @@ def main():
     endd = datetime.datetime.now()
     delta = endd - startd
 
+    if strip:
+        out = out.rstrip(b"\r\n")
+        err = err.rstrip(b"\r\n")
+
     result = dict(
         cmd=args,
-        stdout=out.rstrip(b"\r\n"),
-        stderr=err.rstrip(b"\r\n"),
+        stdout=out,
+        stderr=err,
         rc=rc,
         start=str(startd),
         end=str(endd),
