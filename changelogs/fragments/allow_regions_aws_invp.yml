@@ -1,0 +1,2 @@
+bugfixes:
+    - Fix aws_ec2 inventory plugin code to automatically populate regions when missing as documentation states, also leverage config system vs self default/type validation
