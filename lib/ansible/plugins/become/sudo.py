@@ -69,7 +69,6 @@ DOCUMENTATION = """
                 key: password
 """
 
-from ansible.module_utils.six.moves import shlex_quote
 
 from ansible.plugins.become import BecomeBase
 
@@ -83,24 +82,23 @@ class BecomeModule(BecomeBase):
     missing = ('Sorry, a password is required to run sudo', 'sudo: a password is required')
 
     def build_become_command(self, cmd, shell):
-
         super(BecomeModule, self).build_become_command(cmd, shell)
 
-        if cmd:
-            becomecmd = self.get_option('become_exe') or self.name
+        if not cmd:
+            return cmd
 
-            flags = self.get_option('become_flags') or ''
-            prompt = ''
-            if self.get_option('become_pass'):
-                self.prompt = '[sudo via ansible, key=%s] password:' % self._id
-                if flags:  # this could be simplified, but kept as is for now for backwards string matching
-                    flags = flags.replace('-n', '')
-                prompt = '-p "%s"' % (self.prompt)
+        becomecmd = self.get_option('become_exe') or self.name
 
-            user = self.get_option('become_user') or ''
-            if user:
-                user = '-u %s' % (user)
+        flags = self.get_option('become_flags') or ''
+        prompt = ''
+        if self.get_option('become_pass'):
+            self.prompt = '[sudo via ansible, key=%s] password:' % self._id
+            if flags:  # this could be simplified, but kept as is for now for backwards string matching
+                flags = flags.replace('-n', '')
+            prompt = '-p "%s"' % (self.prompt)
 
-            cmd = ' '.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])
+        user = self.get_option('become_user') or ''
+        if user:
+            user = '-u %s' % (user)
 
-        return cmd
+        return ' '.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])

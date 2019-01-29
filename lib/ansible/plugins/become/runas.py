@@ -65,6 +65,5 @@ class BecomeModule(BecomeBase):
     name = 'runas'
 
     def build_become_command(self, cmd, shell):
-
         # runas is implemented inside the winrm connection plugin
         return cmd

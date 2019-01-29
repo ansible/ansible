@@ -65,11 +65,11 @@ class BecomeModule(BecomeBase):
     prompt = 'Enter UPM user password:'
 
     def build_become_command(self, cmd, shell):
-
         super(BecomeModule, self).build_become_command(cmd, shell)
 
-        if cmd:
-            become = self.get_option('become_exe') or self.name
-            flags = self.get_option('become_flags') or ''
-            cmd = '%s %s %s' % (become, flags, self._build_success_command(cmd, shell))
-        return cmd
+        if not cmd:
+            return cmd
+
+        become = self.get_option('become_exe') or self.name
+        flags = self.get_option('become_flags') or ''
+        return '%s %s %s' % (become, flags, self._build_success_command(cmd, shell))

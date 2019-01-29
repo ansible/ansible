@@ -307,8 +307,8 @@ def add_runas_options(parser):
     runas_group.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
                            help="run operations with become (does not imply password prompting)")
     runas_group.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD,
-                           help="privilege escalation method to use (default=%s), use `ansible-doc"
-                           " -t become -l` to list valid choices." % (C.DEFAULT_BECOME_METHOD))
+                           help="privilege escalation method to use (default=%default), use "
+                                "`ansible-doc -t become -l` to list valid choices.")
     runas_group.add_option('--become-user', default=None, dest='become_user', type='string',
                            help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 

@@ -141,19 +141,18 @@ class BecomeModule(BecomeBase):
         return bool(b_su_prompt_localizations_re.match(b_output))
 
     def build_become_command(self, cmd, shell):
-
         super(BecomeModule, self).build_become_command(cmd, shell)
 
         # Prompt handling for ``su`` is more complicated, this
         # is used to satisfy the connection plugin
         self.prompt = True
 
-        if cmd:
-            exe = self.get_option('become_exe') or self.name
-            flags = self.get_option('become_flags') or ''
-            user = self.get_option('become_user') or ''
-            success_cmd = self._build_success_command(cmd, shell)
+        if not cmd:
+            return cmd
 
-            cmd = "%s %s %s -c %s" % (exe, flags, user, shlex_quote(success_cmd))
+        exe = self.get_option('become_exe') or self.name
+        flags = self.get_option('become_flags') or ''
+        user = self.get_option('become_user') or ''
+        success_cmd = self._build_success_command(cmd, shell)
 
-        return cmd
+        return "%s %s %s -c %s" % (exe, flags, user, shlex_quote(success_cmd))

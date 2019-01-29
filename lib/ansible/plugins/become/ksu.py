@@ -111,10 +111,10 @@ class BecomeModule(BecomeBase):
         # is used to satisfy the connection plugin
         self.prompt = True
 
-        if cmd:
-            exe = self.get_option('become_exe') or self.name
-            flags = self.get_option('become_flags') or ''
-            user = self.get_option('become_user') or ''
-            cmd = '%s %s %s -e %s ' % (exe, user, flags, self._build_success_command(cmd, shell))
+        if not cmd:
+            return cmd
 
-        return cmd
+        exe = self.get_option('become_exe') or self.name
+        flags = self.get_option('become_flags') or ''
+        user = self.get_option('become_user') or ''
+        return '%s %s %s -e %s ' % (exe, user, flags, self._build_success_command(cmd, shell))

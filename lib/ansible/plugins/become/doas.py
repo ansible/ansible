@@ -86,22 +86,22 @@ class BecomeModule(BecomeBase):
         # FIXME: more accurate would be: 'doas (%s@' % remote_user
 
     def build_become_command(self, cmd, shell):
-
         super(BecomeModule, self).build_become_command(cmd, shell)
 
-        if cmd:
-            exe = self.get_option('become_exe') or self.name
+        if not cmd:
+            return cmd
 
-            flags = self.get_option('become_flags') or ''
-            if self.get_option('become_pass') and '-n' not in flags:
-                flags += ' -n'
+        become_exe = self.get_option('become_exe') or self.name
 
-            user = self.get_option('become_user') or ''
-            if user:
-                user = '-u %s' % (user)
+        flags = self.get_option('become_flags') or ''
+        if self.get_option('become_pass') and '-n' not in flags:
+            flags += ' -n'
 
-            success_cmd = self._build_success_command(cmd, shell, noexe=True)
+        user = self.get_option('become_user') or ''
+        if user:
+            user = '-u %s' % (user)
 
-            cmd = '%s %s %s %s -c %s' % (exe, flags, user, getattr(shell, 'executable', shell.SHELL_FAMILY), success_cmd)
+        success_cmd = self._build_success_command(cmd, shell, noexe=True)
+        executable = getattr(shell, 'executable', shell.SHELL_FAMILY)
 
-        return cmd
+        return '%s %s %s %s -c %s' % (become_exe, flags, user, executable, success_cmd)

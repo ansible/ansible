@@ -90,7 +90,7 @@ BECOME_METHODS = _DeprecatedSequenceConstant(
     ('ansible.constants.BECOME_METHODS is deprecated, please use '
      'ansible.plugins.loader.become_loader. This list is statically '
      'defined and may not include all become methods'),
-    '2.12'
+    '2.10'
 )
 
 # CONSTANTS ### yes, actual ones
