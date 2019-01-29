@@ -184,7 +184,7 @@ try:
     from azure.common import AzureHttpError
     from azure.mgmt.redis import RedisManagementClient
     from msrestazure.azure_exceptions import CloudError
-except:
+except ImportError:
     # handled in azure_rm_common
     pass
 
