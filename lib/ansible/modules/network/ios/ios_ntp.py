@@ -305,10 +305,6 @@ def main():
     commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
-    # enable for debug purpose only
-    # result['have'] = have
-    # result['want'] = want
-
     if commands:
         if not module.check_mode:
             load_config(module, commands)
