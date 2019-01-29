@@ -303,8 +303,8 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
 
         if rediscache.sku:
             new_result['sku'] = dict(
-                name=rediscache.sku.name,
-                size=rediscache.sku.family.lower() + str(rediscache.sku.capacity)
+                name=rediscache.sku.name.lower(),
+                size=rediscache.sku.family + str(rediscache.sku.capacity)
             )
         if self.return_access_keys:
             new_result['access_keys'] = dict(
