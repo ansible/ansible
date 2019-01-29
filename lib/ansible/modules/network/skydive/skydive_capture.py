@@ -112,7 +112,8 @@ def main():
         description=dict(),
         extra_tcp_metric=dict(type='bool', required=False, ib_req=True, default=False),
         ip_defrag=dict(type='bool', required=False, ib_req=True, default=False),
-        reassemble_tcp=dict(type='bool', required=False, ib_req=True, default=False)
+        reassemble_tcp=dict(type='bool', required=False, ib_req=True, default=False),
+        ssl=dict(type='bool', default=False)
     )
 
     argument_spec = dict(
