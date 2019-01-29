@@ -1209,10 +1209,11 @@ class DockerServiceManager():
 
     def __init__(self, client):
         self.client = client
-        self.diff_tracker = DifferenceTracker()
         self.retries = 2
+        self.diff_tracker = None
 
     def run(self):
+        self.diff_tracker = DifferenceTracker()
         module = self.client.module
 
         image = module.params['image']
