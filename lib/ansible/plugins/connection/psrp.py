@@ -94,6 +94,16 @@ options:
     vars:
     - name: ansible_psrp_connection_timeout
     default: 30
+  read_timeout:
+    description:
+    - The read timeout for receiving data from the remote host.
+    - This value must always be greater than I(operation_timeout).
+    - This option requires pypsrp >= 0.3.
+    - This is measured in seconds.
+    vars:
+    - name: ansible_psrp_read_timeout
+    default: 30
+    version_added: '2.8'
   reconnection_retries:
     description:
     - The number of retries on connection errors.
@@ -514,7 +524,8 @@ if ($bytes_read -gt 0) {
         else:
             self._psrp_cert_validation = True
 
-        self._psrp_connection_timeout = int(self.get_option('connection_timeout'))
+        self._psrp_connection_timeout = self.get_option('connection_timeout')  # Can be None
+        self._psrp_read_timeout = self.get_option('read_timeout')  # Can be None
         self._psrp_message_encryption = self.get_option('message_encryption')
         self._psrp_proxy = self.get_option('proxy')
         self._psrp_ignore_proxy = boolean(self.get_option('ignore_proxy'))
@@ -547,15 +558,22 @@ if ($bytes_read -gt 0) {
             operation_timeout=self._psrp_operation_timeout,
         )
 
+        # Check if PSRP version supports newer read_timeout argument (needs pypsrp 0.3.0+)
+        if hasattr(pypsrp, 'FEATURES') and 'wsman_read_timeout' in pypsrp.FEATURES:
+            self._psrp_conn_kwargs['read_timeout'] = self._psrp_read_timeout
+        elif self._psrp_read_timeout is not None:
+            display.warning("ansible_psrp_read_timeout is unsupported by the current psrp version installed, "
+                            "using ansible_psrp_connection_timeout value for read_timeout instead.")
+
         # Check if PSRP version supports newer reconnection_retries argument (needs pypsrp 0.3.0+)
         if hasattr(pypsrp, 'FEATURES') and 'wsman_reconnections' in pypsrp.FEATURES:
             self._psrp_conn_kwargs['reconnection_retries'] = self._psrp_reconnection_retries
             self._psrp_conn_kwargs['reconnection_backoff'] = self._psrp_reconnection_backoff
         else:
-            if self._psrp_reconnection_retries:
-                display.debug("Installed pypsrp version does not support 'reconnection_retries'.")
-            if self._psrp_reconnection_backoff:
-                display.debug("Installed pypsrp version does not support 'reconnection_backoff'.")
+            if self._psrp_reconnection_retries is not None:
+                display.warning("ansible_psrp_reconnection_retries is unsupported by the current psrp version installed.")
+            if self._psrp_reconnection_backoff is not None:
+                display.warning("ansible_psrp_reconnection_backoff is unsupported by the current psrp version installed.")
 
         # add in the extra args that were set
         for arg in extra_args.intersection(supported_args):
