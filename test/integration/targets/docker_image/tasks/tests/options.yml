@@ -103,6 +103,34 @@
     - dockerfile_1['image']['Config']['WorkingDir'] == '/newdata'
 
 ####################################################################
+## force ###########################################################
+####################################################################
+
+- name: force
+  docker_image:
+    path: "{{ role_path }}/files"
+    name: "{{ iname }}"
+    force: yes
+  register: force_1
+
+- name: force (changed)
+  docker_image:
+    path: "{{ role_path }}/files"
+    name: "{{ iname }}"
+    force: yes
+  register: force_2
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+
+- assert:
+    that:
+    - force_1 is changed
+    - force_2 is changed
+
+####################################################################
 ## load path #######################################################
 ####################################################################
 
