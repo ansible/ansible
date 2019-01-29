@@ -84,10 +84,10 @@ options:
     - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
   use_instance_uuid:
     description:
-    - Use the VMWare instance UUID rather than the BIOS UUID.
-    default: 'no'
+    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    default: no
     type: bool
-    version_added: 2.7
+    version_added: '2.8'
   template:
     description:
     - Template or existing virtual machine used to create new virtual machine.
@@ -2440,7 +2440,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        use_instance_uuid=dict(type='bool', default=False, required=False),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),

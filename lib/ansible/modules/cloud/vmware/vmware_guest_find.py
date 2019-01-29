@@ -37,11 +37,11 @@ options:
      - UUID of the instance to manage if known, this is VMware's BIOS UUID by default.
      - This is required if C(name) parameter is not supplied.
    use_instance_uuid:
-        description:
-            - Use the VMWare instance UUID rather than the BIOS UUID.
-        default: 'no'
-        type: bool
-        version_added: 2.7
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    datacenter:
      description:
      - Destination datacenter for the find operation.
@@ -129,7 +129,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
-        use_instance_uuid=dict(type='bool', default=False, required=False),
+        use_instance_uuid=dict(type='bool', default=False),
         datacenter=dict(removed_in_version=2.9, type='str')
     )
 

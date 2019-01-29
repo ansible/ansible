@@ -58,10 +58,10 @@ options:
      - This is required, if C(name) is not supplied.
    use_instance_uuid:
      description:
-     - Use the VMWare instance UUID rather than the BIOS UUID.
-     default: 'no'
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
      type: bool
-     version_added: 2.7
+     version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -152,7 +152,7 @@ def main():
         name_match=dict(type='str', default='first', choices=['first', 'last']),
         folder=dict(type='str'),
         uuid=dict(type='str'),
-        use_instance_uuid=dict(type='bool', default=False, required=False),
+        use_instance_uuid=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

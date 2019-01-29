@@ -49,10 +49,10 @@ options:
       version_added: 2.7
     use_instance_uuid:
       description:
-      - Use the VMWare instance UUID rather than the BIOS UUID.
-      default: 'no'
+      - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+      default: no
       type: bool
-      version_added: 2.7
+      version_added: '2.8'
     destination_host:
       description:
       - Name of the destination host the virtual machine should be running on.
@@ -291,7 +291,7 @@ def main():
         dict(
             vm_name=dict(aliases=['vm']),
             vm_uuid=dict(aliases=['uuid']),
-            use_instance_uuid=dict(type='bool', default=False, required=False),
+            use_instance_uuid=dict(type='bool', default=False),
             destination_host=dict(aliases=['destination']),
             destination_datastore=dict(aliases=['datastore'])
         )

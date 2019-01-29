@@ -45,10 +45,10 @@ options:
             - This is required if name is not supplied.
    use_instance_uuid:
         description:
-            - Use the VMWare instance UUID rather than the BIOS UUID.
-        default: 'no'
+            - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+        default: no
         type: bool
-        version_added: 2.7
+        version_added: '2.8'
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -185,7 +185,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        use_instance_uuid=dict(type='bool', default=False, required=False),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str', default='/vm'),
         datacenter=dict(type='str', required=True),
         tags=dict(type='bool', default=False)

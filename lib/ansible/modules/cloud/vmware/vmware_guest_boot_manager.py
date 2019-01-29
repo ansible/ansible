@@ -40,10 +40,10 @@ options:
      - This is required if C(name) parameter is not supplied.
    use_instance_uuid:
      description:
-     - Use the VMWare instance UUID rather than the BIOS UUID.
-     default: 'no'
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
      type: bool
-     version_added: 2.7
+     version_added: '2.8'
    boot_order:
      description:
      - List of the boot devices.
@@ -324,7 +324,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
-        use_instance_uuid=dict(type='bool', default=False, required=False),
+        use_instance_uuid=dict(type='bool', default=False),
         boot_order=dict(
             type='list',
             default=[],
