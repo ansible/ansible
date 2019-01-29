@@ -1958,6 +1958,7 @@
     - "{{ network_name_2 }}"
   loop_control:
     loop_var: network_name
+  ignore_errors: yes
 
 - name: Delete volumes
   docker_volume:
@@ -1969,6 +1970,7 @@
     - "{{ volume_name_2 }}"
   loop_control:
     loop_var: volume_name
+  ignore_errors: yes
 
 - name: Delete configs
   docker_network:
@@ -1980,6 +1982,7 @@
     - "{{ config_name_2 }}"
   loop_control:
     loop_var: config_name
+  ignore_errors: yes
 
 - name: Delete secrets
   docker_network:
@@ -1991,3 +1994,4 @@
     - "{{ secret_name_2 }}"
   loop_control:
     loop_var: secret_name
+  ignore_errors: yes
