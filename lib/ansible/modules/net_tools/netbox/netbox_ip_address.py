@@ -46,21 +46,10 @@ options:
           - 6
       address:
         description:
-          - Required if state is C(present)
+          - Required if state is C(present) and first_available C(false)
       prefix:
         description:
-          - |
-            With state C(present), if an interface is given, it will ensure
-            that an IP inside this prefix (and vrf, if given) is attached
-            to this interface. Otherwise, it will get the next available IP
-            of this prefix and attach it.
-
-            With state C(new), it will force to get the next available IP in
-            this prefix. If an interface is given, it will also force to attach
-            it.
-
-            Required if state is C(present) or C(new) when no address is given.
-            Unused if an address is specified.
+          - Required if first_available C(true)
       vrf:
         description:
           - VRF that IP address is associated with
@@ -116,6 +105,20 @@ options:
         example).
     choices: [ absent, new, present ]
     default: present
+  first_available:
+    description:
+      - If C(yes) and state C(present), if an interface is given, it will
+        ensure that an IP inside the given prefix (and vrf, if given) is
+        attached to this interface. Otherwise, it will get the next available
+        IP of this prefix and attach it.
+
+        If C(yes) and state C(new), it will force to get the next available IP
+        in the given prefix. If an interface is given, it will also force to
+        attach it.
+
+        Unused with state C(absent).
+    default: 'no'
+    type: bool
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
@@ -153,6 +156,7 @@ EXAMPLES = r'''
         data:
           prefix: 192.168.1.0/24
         state: new
+        first_available: True
 
     - name: Delete IP address within netbox
       netbox_ip_address:
@@ -204,6 +208,7 @@ EXAMPLES = r'''
             name: GigabitEthernet1
             device: test100
         state: present
+        first_available: True
 
     - name: Attach a new available IP of 192.168.1.0/24 to GigabitEthernet1
       netbox_ip_address:
@@ -216,6 +221,7 @@ EXAMPLES = r'''
             name: GigabitEthernet1
             device: test100
         state: new
+        first_available: True
 '''
 
 RETURN = r'''
@@ -251,6 +257,7 @@ def main():
         netbox_token=dict(type="str", required=True, no_log=True),
         data=dict(type="dict", required=True),
         state=dict(required=False, default='present', choices=['present', 'new', 'absent']),
+        first_available=dict(type="bool", required=False, default=False),
         validate_certs=dict(type="bool", default=True)
     )
 
@@ -267,6 +274,7 @@ def main():
     url = module.params["netbox_url"]
     token = module.params["netbox_token"]
     data = module.params["data"]
+    first_available = module.params["first_available"]
     state = module.params["state"]
     validate_certs = module.params["validate_certs"]
 
@@ -286,7 +294,8 @@ def main():
         norm_data = _check_and_adapt_data(nb, norm_data)
         if state in ("new", "present"):
             return _handle_state_new_present(
-                module, state, nb_app, nb_endpoint, norm_data
+                module, state, nb_app, nb_endpoint, norm_data,
+                first_available=first_available
             )
         elif state == "absent":
             return module.exit_json(
@@ -315,17 +324,9 @@ def _check_and_adapt_data(nb, data):
     return data
 
 
-def _handle_state_new_present(module, state, nb_app, nb_endpoint, data):
-    if data.get("address"):
-        if state == "present":
-            return module.exit_json(
-                **ensure_ip_address_present(nb_endpoint, data)
-            )
-        elif state == "new":
-            return module.exit_json(
-                **create_ip_address(nb_endpoint, data)
-            )
-    else:
+def _handle_state_new_present(module, state, nb_app, nb_endpoint, data,
+                              first_available=False):
+    if first_available:
         if state == "present":
             return module.exit_json(
                 **ensure_ip_in_prefix_present_on_netif(
@@ -335,6 +336,20 @@ def _handle_state_new_present(module, state, nb_app, nb_endpoint, data):
         elif state == "new":
             return module.exit_json(
                 **get_new_available_ip_address(nb_app, data)
+            )
+    else:
+        if not data.get("address"):
+            raise AttributeError(
+                "An address is needed when first_available is False or not "
+                "specified"
+            )
+        if state == "present":
+            return module.exit_json(
+                **ensure_ip_address_present(nb_endpoint, data)
+            )
+        elif state == "new":
+            return module.exit_json(
+                **create_ip_address(nb_endpoint, data)
             )
 
 
@@ -414,7 +429,7 @@ def ensure_ip_in_prefix_present_on_netif(nb_app, nb_endpoint, data):
 
     attached_ips = nb_endpoint.filter(**get_query_params)
     if attached_ips:
-        ip_addr = attached_ips[-1].serialize()
+        ip_addr = attached_ips[0].serialize()
         changed = False
         msg = "IP Address %s already attached" % (ip_addr["address"])
 
