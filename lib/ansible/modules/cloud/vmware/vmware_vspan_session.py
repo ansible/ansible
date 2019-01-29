@@ -151,7 +151,6 @@ EXAMPLES = '''
     source_port_transmitted: 817
     source_port_received: 817
     destination_port: 815
-
   delegate_to: localhost
 
 - name: Create remote destination mirroring session.
@@ -167,7 +166,6 @@ EXAMPLES = '''
     source_port_received: 105
     destination_port: 815
     session_type: "remoteMirrorDest"
-
   delegate_to: localhost
 
 - name: Create remote destination mirroring session.
@@ -178,7 +176,6 @@ EXAMPLES = '''
     switch_name: dvSwitch
     state: absent
     name: Remote Session
-
   delegate_to: localhost
 '''
 
