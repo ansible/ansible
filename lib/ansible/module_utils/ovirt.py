@@ -603,6 +603,7 @@ class BaseModule(object):
 
                 def state_condition(entity):
                     return entity and entity.status == result_state
+
             wait(
                 service=entity_service,
                 condition=state_condition,
@@ -741,7 +742,7 @@ class BaseModule(object):
             self.changed = True
 
         post_action(entity)
-        
+
         wait(
             service=self._service.service(entity.id),
             condition=wait_condition,
