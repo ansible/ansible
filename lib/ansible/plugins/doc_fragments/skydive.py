@@ -39,11 +39,15 @@ options:
         description:
           - Specifies the password to use to authenticate the connection to
             the remote instance of SKYDIVE client.
-      verify_ssl:
+      insecure:
         description:
-          - Specifies the SSL parameter that decides if the connection type shall be
+          - Ignore SSL certification verification.
+        type: bool
+        default: false
+      ssl:
+        description:
+          - Specifies the ssl parameter that decides if the connection type shall be
             http or https.
-          - Boolean value to enable or disable verifying SSL certificates
         type: bool
         default: false
 notes:
