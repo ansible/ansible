@@ -19,6 +19,7 @@ def test_retry_on_out_of_sequence_error():
         manager.run_safe()
     assert run_mock.call_count == 3
 
+
 def test_no_retry_on_general_api_error():
     run_mock = MagicMock(
         side_effect=APIError(
