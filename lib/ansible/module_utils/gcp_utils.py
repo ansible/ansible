@@ -69,7 +69,7 @@ def replace_resource_dict(item, value):
             new_item = ast.literal_eval(item)
             return replace_resource_dict(new_item, value)
         except ValueError:
-            return new_item
+            return item
 
 
 # Handles all authentication and HTTP sessions for GCP API calls.
