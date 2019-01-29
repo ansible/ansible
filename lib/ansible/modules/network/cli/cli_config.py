@@ -147,6 +147,12 @@ EXAMPLES = """
   cli_config:
     config: "{{ lookup('template', 'basic/config.j2') }}"
 
+- name: multiline config
+  cli_config:
+    config: |
+      hostname foo
+      feature nxapi
+
 - name: configure device with config with defaults enabled
   cli_config:
     config: "{{ lookup('template', 'basic/config.j2') }}"
