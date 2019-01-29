@@ -57,7 +57,7 @@ options:
         key: fact_caching_connection
       - section: inventory
         key: cache_connection
-  _prefix:
+  cache_prefix:
     description:
       - Prefix to use for cache plugin files/tables
     default: ansible_inventory_

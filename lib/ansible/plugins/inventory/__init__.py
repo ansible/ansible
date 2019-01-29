@@ -130,15 +130,21 @@ def expand_hostname_range(line=None):
 
 def get_cache_plugin(plugin_name, **kwargs):
     try:
-        return CacheObject(plugin_name, **kwargs)
+        cache = CacheObject(plugin_name, **kwargs)
     except AnsibleError as e:
-        if 'fact_caching_connection' in e:
+        if 'fact_caching_connection' in to_native(e):
             raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set "
                                "to a writeable directory path:\nansible.cfg:\n[default]: fact_caching_connection,\n"
                                "[inventory]: cache_connection;\nEnvironment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\n"
                                "ANSIBLE_CACHE_PLUGIN_CONNECTION." % plugin_name)
         else:
             raise e
+
+    if plugin_name != 'memory' and kwargs and not getattr(cache._plugin, '_options', None):
+        raise AnsibleError('Unable to use cache plugin {0} for inventory. Cache options were provided but may not reconcile '
+                           'correctly unless set via set_options. Refer to the porting guide if the plugin derives user settings '
+                           'from ansible.constants.'.format(plugin_name))
+    return cache
 
 
 class BaseInventoryPlugin(AnsiblePlugin):
@@ -222,7 +228,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
         self.set_options(direct=config)
         if 'cache' in self._options and self.get_option('cache'):
-            cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', '_prefix')]
+            cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
             cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
             self._cache = get_cache_plugin(self.get_option('cache_plugin'), **cache_options)
 
@@ -308,7 +314,7 @@ class Cacheable(object):
 
     def load_cache_plugin(self):
         plugin_name = self.get_option('cache_plugin')
-        cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', '_prefix')]
+        cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
         cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
         self._cache = get_cache_plugin(plugin_name, **cache_options)
 
