@@ -94,7 +94,7 @@ options:
         version_added: "1.2"
     clone:
         description:
-            - If C(no), do not clone the repository if it does not exist locally
+            - If C(no), do not clone the repository even if it does not exist locally
         type: bool
         default: 'yes'
         version_added: "1.9"
