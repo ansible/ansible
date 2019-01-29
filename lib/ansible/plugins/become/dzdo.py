@@ -78,21 +78,20 @@ class BecomeModule(BecomeBase):
     fail = ('Sorry, try again.',)
 
     def build_become_command(self, cmd, shell):
-
         super(BecomeModule, self).build_become_command(cmd, shell)
 
-        if cmd:
-            becomecmd = self.get_option('become_exe') or self.name
+        if not cmd:
+            return cmd
 
-            flags = self.get_option('become_flags') or ''
-            if self.get_option('become_pass'):
-                self._prompt = '[dzdo via ansible, key=%s] password:' % self._id
-                flags = '%s -p "%s"' % (flags.replace('-n', ''), self._prompt)
+        becomecmd = self.get_option('become_exe') or self.name
 
-            user = self.get_option('become_user') or ''
-            if user:
-                user = '-u %s' % (user)
+        flags = self.get_option('become_flags') or ''
+        if self.get_option('become_pass'):
+            self._prompt = '[dzdo via ansible, key=%s] password:' % self._id
+            flags = '%s -p "%s"' % (flags.replace('-n', ''), self._prompt)
 
-            cmd = ' '.join([becomecmd, flags, user, self._build_success_command(cmd, shell)])
+        user = self.get_option('become_user') or ''
+        if user:
+            user = '-u %s' % (user)
 
-        return cmd
+        return ' '.join([becomecmd, flags, user, self._build_success_command(cmd, shell)])

@@ -380,7 +380,7 @@ class PlayContext(Base):
         """ helper function to create privilege escalation commands """
         display.deprecated(
             "PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead",
-            version="2.13"
+            version="2.12"
         )
 
         if not cmd or not self.become:
@@ -406,7 +406,8 @@ class PlayContext(Base):
             shell = get_shell_plugin(executable=executable)
             cmd = plugin.build_become_command(cmd, shell)
             # for backwards compat:
-            self.prompt = plugin.prompt
+            if self.become_pass:
+                self.prompt = plugin.prompt
         else:
             raise AnsibleError("Privilege escalation method not found: %s" % become_method)
 

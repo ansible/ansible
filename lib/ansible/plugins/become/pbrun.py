@@ -88,16 +88,16 @@ class BecomeModule(BecomeBase):
     prompt = 'Password:'
 
     def build_become_command(self, cmd, shell):
-
         super(BecomeModule, self).build_become_command(cmd, shell)
 
-        if cmd:
-            become_exe = self.get_option('become_exe') or self.name
-            flags = self.get_option('become_flags') or ''
-            user = self.get_option('become_user')
-            if user:
-                user = '-u %s' % (user)
+        if not cmd:
+            return cmd
 
-            cmd = ' '.join([become_exe, flags, user, self._build_success_command(cmd, shell, noexe=not(self.get_option('wrap_exe')))])
+        become_exe = self.get_option('become_exe') or self.name
+        flags = self.get_option('become_flags') or ''
+        user = self.get_option('become_user')
+        if user:
+            user = '-u %s' % (user)
+        noexe = not self.get_option('wrap_exe')
 
-        return cmd
+        return ' '.join([become_exe, flags, user, self._build_success_command(cmd, shell, noexe=noexe)])

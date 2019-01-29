@@ -84,7 +84,6 @@ DOCUMENTATION = """
       - This plugin ignores ``become_user`` as pfexec uses it's own ``exec_attr`` to figure this out.
 """
 
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.become import BecomeBase
 
 
@@ -93,11 +92,12 @@ class BecomeModule(BecomeBase):
     name = 'pfexec'
 
     def build_become_command(self, cmd, shell):
-
         super(BecomeModule, self).build_become_command(cmd, shell)
 
-        if cmd:
-            exe = self.get_option('become_exe')
-            flags = self.get_option('become_flags')
-            cmd = '%s %s "%s"' % (exe, flags, self._build_success_command(cmd, shell, noexe=not(self.get_option('wrap_exe'))))
-        return cmd
+        if not cmd:
+            return cmd
+
+        exe = self.get_option('become_exe')
+        flags = self.get_option('become_flags')
+        noexe = not self.get_option('wrap_exe')
+        return '%s %s "%s"' % (exe, flags, self._build_success_command(cmd, shell, noexe=noexe))

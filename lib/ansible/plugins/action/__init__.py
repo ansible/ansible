@@ -109,6 +109,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         return result
 
     def get_plugin_option(self, plugin, option, default=None):
+        """Helper to get an option from a plugin without having to use
+        the try/except dance everywhere to set a default
+        """
         try:
             return plugin.get_option(option)
         except (AttributeError, KeyError):
@@ -950,10 +953,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         display.debug("_low_level_execute_command(): starting")
-#        if not cmd:
-#            # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-#            display.debug("_low_level_execute_command(): no command, exiting")
-#           return dict(stdout='', stderr='', rc=254)
+        # if not cmd:
+        #     # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
+        #     display.debug("_low_level_execute_command(): no command, exiting")
+        #     return dict(stdout='', stderr='', rc=254)
 
         if chdir:
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)

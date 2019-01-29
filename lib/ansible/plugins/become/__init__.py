@@ -27,7 +27,8 @@ class BecomeBase(AnsiblePlugin):
     fail = tuple()
     missing = tuple()
 
-    # many connection plugins cannot provide tty, set to True if your plugin does, i.e su
+    # many connection plugins cannot provide tty, set to True if your become
+    # plugin requires a tty, i.e su
     require_tty = False
 
     # prompt to match
@@ -45,11 +46,13 @@ class BecomeBase(AnsiblePlugin):
         return self.prompt and self.get_option('become_pass')
 
     def _build_success_command(self, cmd, shell, noexe=False):
-        if cmd and shell and self.success:
-            cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
-            exe = getattr(shell, 'executable', None)
-            if exe and not noexe:
-                cmd = '%s -c %s' % (exe, cmd)
+        if not all((cmd, shell, self.success)):
+            return cmd
+
+        cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+        exe = getattr(shell, 'executable', None)
+        if exe and not noexe:
+            cmd = '%s -c %s' % (exe, cmd)
         return cmd
 
     @abstractmethod
@@ -63,11 +66,10 @@ class BecomeBase(AnsiblePlugin):
 
     def check_password_prompt(self, b_output):
         ''' checks if the expected passwod prompt exists in b_output '''
-        found = False
         if self.prompt:
             b_prompt = to_bytes(self.prompt).strip()
-            found = any(l.strip().startswith(b_prompt) for l in b_output.splitlines())
-        return found
+            return any(l.strip().startswith(b_prompt) for l in b_output.splitlines())
+        return False
 
     def _check_password_error(self, b_out, msg):
         ''' returns True/False if domain specific i18n version of msg is found in b_out '''
@@ -75,17 +77,13 @@ class BecomeBase(AnsiblePlugin):
         return b_fail and b_fail in b_out
 
     def check_incorrect_password(self, b_output):
-        is_error = False
         for errstring in self.fail:
             if self._check_password_error(b_output, errstring):
-                is_error = True
-                break
-        return is_error
+                return True
+        return False
 
     def check_missing_password(self, b_output):
-        is_error = False
         for errstring in self.missing:
             if self._check_password_error(b_output, errstring):
-                is_error = True
-                break
-        return is_error
+                return True
+        return False
