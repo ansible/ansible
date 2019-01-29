@@ -39,11 +39,11 @@ options:
   pn_priv:
     description:
       - privileges.
-    type: str
+    type: bool
   pn_auth:
     description:
       - authentication required.
-    type: str
+    type: bool
   pn_user_type:
     description:
       - SNMP user type.
