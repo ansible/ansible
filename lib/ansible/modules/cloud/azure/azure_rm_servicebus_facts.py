@@ -381,7 +381,7 @@ class AzureRMServiceBusFacts(AzureRMModuleBase):
         if self.show_sas_policies and self.type != 'subscription':
             policies = self.get_auth_rules()
             for name in policies.keys():
-                policies[name] = self.get_sas_key(name)
+                policies[name]['keys'] = self.get_sas_key(name)
             result['sas_policies'] = policies
         if self.namespace:
             result['namespace'] = self.namespace
@@ -402,7 +402,7 @@ class AzureRMServiceBusFacts(AzureRMModuleBase):
                 return [client.get(self.resource_group, self.namespace, self.topic, self.name)]
             else:
                 return [client.get(self.resource_group, self.namespace, self.name)]
-        except CloudError:
+        except Exception:
             pass
         return []
 

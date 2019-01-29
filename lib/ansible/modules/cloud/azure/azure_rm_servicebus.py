@@ -178,6 +178,11 @@ author:
 '''
 
 EXAMPLES = '''
+- name: Create a namespace
+  azure_rm_servicebus:
+      name: deadbeef
+      location: eastus
+
 - name: Create a topic
   azure_rm_servicebus:
       name: subtopic
@@ -239,9 +244,10 @@ class AzureRMServiceBus(AzureRMModuleBase):
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
+            location=dict(type='str'),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            namespace=dict(type='str', required=True),
-            type=dict(type='str', choices=['queue', 'topic', 'subscription'], required=True),
+            namespace=dict(type='str'),
+            type=dict(type='str', choices=['queue', 'topic', 'subscription', 'namespace'], required=True),
             subscription_topic_name=dict(type='str'),
             auto_delete_on_idle_in_seconds=dict(type='int'),
             dead_lettering_on_filter_evaluation_exceptions=dict(type='bool'),
@@ -265,13 +271,16 @@ class AzureRMServiceBus(AzureRMModuleBase):
         )
 
         required_if = [
-            ('type', 'subscription', ['subscription_topic_name'])
+            ('type', 'subscription', ['subscription_topic_name', 'namespace']),
+            ('type', 'queue', ['namespace']),
+            ('type', 'topic', ['namespace'])
         ]
 
         self.resource_group = None
         self.name = None
         self.state = None
         self.namespace = None
+        self.location = None
         self.type = None
         self.subscription_topic_name = None
         self.auto_delete_on_idle_in_seconds = None
@@ -310,8 +319,12 @@ class AzureRMServiceBus(AzureRMModuleBase):
 
         changed = False
 
-        resource_group = self.get_resource_group(self.resource_group)
-        self.location = resource_group.location
+        if not self.location:
+            resource_group = self.get_resource_group(self.resource_group)
+            self.location = resource_group.location
+
+        if self.type == 'namespace':
+            self.namespace = self.name
 
         original = self.get()
         if self.state == 'present':
@@ -327,7 +340,8 @@ class AzureRMServiceBus(AzureRMModuleBase):
                 max_delivery_count=self.max_delivery_count,
                 max_size_in_megabytes=self.max_size_in_mb,
                 requires_session=self.requires_session,
-                support_ordering=self.support_ordering
+                support_ordering=self.support_ordering,
+                location=self.location
             )
             if self.status:
                 params['status'] = self.servicebus_models.EntityStatus(str.capitalize(_snake_to_camel(self.status)))
@@ -338,10 +352,11 @@ class AzureRMServiceBus(AzureRMModuleBase):
 
             instance_type = getattr(self.servicebus_models, 'SB{0}'.format(str.capitalize(self.type)))
             instance = instance_type(**params)
+            result = original
             if not original:
                 changed = True
                 result = instance
-            else:
+            elif self.type != 'namespace':  # namespace's location and sku cannot be updated
                 result = original
                 attribute_map = set(instance_type._attribute_map.keys()) - set(instance_type._validation.keys())
                 for attribute in attribute_map:
@@ -406,8 +421,10 @@ class AzureRMServiceBus(AzureRMModuleBase):
         return ns
 
     def create_or_update(self, param):
+        ns = self.create_ns_if_not_exist()
+        if self.type == 'namespace':
+            return ns
         try:
-            self.create_ns_if_not_exist()
             client = self._get_client()
             if self.type == 'subscription':
                 return client.create_or_update(self.resource_group, self.namespace, self.subscription_topic_name, self.name, param)
@@ -419,7 +436,9 @@ class AzureRMServiceBus(AzureRMModuleBase):
     def delete(self):
         try:
             client = self._get_client()
-            if self.type == 'subscription':
+            if self.type == 'namespace':
+                client.delete(self.resource_group, self.name)
+            elif self.type == 'subscription':
                 client.delete(self.resource_group, self.namespace, self.subscription_topic_name, self.name)
             else:
                 client.delete(self.resource_group, self.namespace, self.name)
@@ -433,7 +452,9 @@ class AzureRMServiceBus(AzureRMModuleBase):
     def get(self):
         try:
             client = self._get_client()
-            if self.type == 'subscription':
+            if self.type == 'namespace':
+                return client.get(self.resource_group, self.name)
+            elif self.type == 'subscription':
                 return client.get(self.resource_group, self.namespace, self.subscription_topic_name, self.name)
             else:
                 return client.get(self.resource_group, self.namespace, self.name)
@@ -455,6 +476,8 @@ class AzureRMServiceBus(AzureRMModuleBase):
                 result['status'] = _camel_to_snake(value)
             elif isinstance(value, self.servicebus_models.MessageCountDetails):
                 result[attribute] = value.as_dict()
+            elif isinstance(value, self.servicebus_models.SBSku):
+                result[attribute] = value.name
             elif isinstance(value, datetime):
                 result[attribute] = str(value)
             elif isinstance(value, str):
@@ -470,7 +493,10 @@ class AzureRMServiceBus(AzureRMModuleBase):
         result = dict()
         try:
             client = self._get_client()
-            rules = client.list_authorization_rules(self.resource_group, self.namespace, self.name)
+            if self.type == 'namespace':
+                rules = client.list_authorization_rules(self.resource_group, self.name)
+            else:
+                rules = client.list_authorization_rules(self.resource_group, self.namespace, self.name)
             while True:
                 rule = rules.next()
                 result[rule.name] = self.policy_to_dict(rule)
@@ -496,7 +522,10 @@ class AzureRMServiceBus(AzureRMModuleBase):
     def delete_sas_policy(self, name):
         try:
             client = self._get_client()
-            client.delete_authorization_rule(self.resource_group, self.namespace, self.name, name)
+            if self.type == 'namespace':
+                client.delete_authorization_rule(self.resource_group, self.name, name)
+            else:
+                client.delete_authorization_rule(self.resource_group, self.namespace, self.name, name)
             return True
         except Exception as exc:
             self.fail('Error when deleting SAS policy {0} - {1}'.format(name, exc.message or str(exc)))
@@ -504,8 +533,11 @@ class AzureRMServiceBus(AzureRMModuleBase):
     def regenerate_sas_key(self, name):
         try:
             client = self._get_client()
-            client.regenerate_keys(self.resource_group, self.namespace, self.name, name, 'PrimaryKey')
-            client.regenerate_keys(self.resource_group, self.namespace, self.name, name, 'SecondaryKey')
+            for key in ['PrimaryKey', 'SecondaryKey']:
+                if self.type == 'namespace':
+                    client.regenerate_keys(self.resource_group, self.name, name, key)
+                else:
+                    client.regenerate_keys(self.resource_group, self.namespace, self.name, name, key)
         except Exception as exc:
             self.fail('Error when generating SAS policy {0}\'s key - {1}'.format(name, exc.message or str(exc)))
         return None
@@ -513,7 +545,10 @@ class AzureRMServiceBus(AzureRMModuleBase):
     def get_sas_key(self, name):
         try:
             client = self._get_client()
-            return client.list_keys(self.resource_group, self.namespace, self.name, name).as_dict()
+            if self.type == 'namespace':
+                return client.list_keys(self.resource_group, self.name, name).as_dict()
+            else:
+                return client.list_keys(self.resource_group, self.namespace, self.name, name).as_dict()
         except Exception:
             pass
         return None

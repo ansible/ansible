@@ -3,6 +3,42 @@
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
+- name: Create a namespace
+  azure_rm_servicebus:
+      name: "servicebus{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      type: namespace
+  register: namespace
+
+- assert:
+    that:
+      - namespace.id
+      - namespace.changed
+
+- name: Create a namespace (idempontent)
+  azure_rm_servicebus:
+      name: "servicebus{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      type: namespace
+  register: namespace
+
+- assert:
+    that:
+      - not namespace.changed
+
+- name: Create a queue
+  azure_rm_servicebus:
+      name: "queue{{ rpfx }}"
+      namespace: "servicebus{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      type: queue
+  register: queue
+
+- assert:
+      that:
+          - queue.id
+          - queue.changed
+
 - name: Create a topic (check mode)
   azure_rm_servicebus:
       name: "topic{{ rpfx }}"
@@ -84,3 +120,66 @@
          - facts.servicebuses[0].subscription_count == 1
          - facts.servicebuses[0].sas_policies.testpolicy
          - facts.servicebuses[0].sas_policies.testpolicy.rights == 'manage'
+
+- name: Delete subscription
+  azure_rm_servicebus:
+      name: "subs{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      type: subscription
+      subscription_topic_name: "topic{{ rpfx }}"
+      state: absent
+
+- name: Retrive topic
+  azure_rm_servicebus_facts:
+      name: "topic{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      type: topic
+      show_sas_policies: yes
+  register: facts
+
+- assert:
+      that:
+         - facts.servicebuses[0].subscription_count == 0
+         - "facts.servicebuses | length == 1"
+
+- name: Delete topic
+  azure_rm_servicebus:
+      name: "topic{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      type: topic
+      state: absent
+
+- name: Retrive topic
+  azure_rm_servicebus_facts:
+      name: "topic{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      type: topic
+      show_sas_policies: yes
+  register: facts
+
+- assert:
+      that:
+         - "facts.servicebuses | length == 0"
+
+- name: Delete queue
+  azure_rm_servicebus:
+      name: "queue{{ rpfx }}"
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      type: queue
+      state: absent
+
+- name: Delete namespace
+  azure_rm_servicebus:
+      name: "{{ item }}"
+      type: namespace
+      resource_group: "{{ resource_group }}"
+      state: absent
+  with_items:
+      - "servicebus{{ rpfx }}"
+      - "ns{{ rpfx }}"
+      - "nothing{{ rpfx }}"
