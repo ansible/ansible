@@ -41,14 +41,13 @@ config_script_pattern = "/pica/bin/pica_sh -c 'configure;execute %s;commit'"
 
 def command_helper(module, command, command_pattern, errmsg=None):
     """Run a command, catch any errors"""
-    #(_rc, output, _err) = module.run_command("/bin/sh -c '%s'" % command)
     (_rc, output, _err) = module.run_command(command_pattern % command, use_unsafe_shell=True)
     if _rc or 'ERROR' in output or 'ERROR' in _err:
         module.fail_json(msg=errmsg or output)
     return str(output)
 
 
-def run_command(module, command_list, command_string, command_pattern, description = ''):
+def run_command(module, command_list, command_string, command_pattern, description=''):
     commands = []
     if command_list:
         commands = command_list
@@ -61,7 +60,7 @@ def run_command(module, command_list, command_string, command_pattern, descripti
     # Run all of the net commands
     output_lines = []
     if description != '':
-        output_lines.append(description) 
+        output_lines.append(description)
     for line in commands:
         if line.strip():
             output_lines += [command_helper(module, line.strip(), command_pattern, "Failed on line: %s" % line)]
