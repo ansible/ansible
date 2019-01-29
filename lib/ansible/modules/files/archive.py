@@ -45,7 +45,7 @@ options:
     type: path
   exclude_path:
     description:
-      - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive
+      - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive.
     type: str
     version_added: '2.4'
   force_archive:
