@@ -1,12 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Varun Chopra (@chopraaa)
+# Copyright: (c) 2018, Varun Chopra (@chopraaa) <v@chopraaa.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = r'''
 ---
@@ -14,7 +16,7 @@ module: win_partition
 version_added: '2.8'
 short_description: Creates, changes and removes partitions on Windows Server
 description:
-- The M(win_partition) module can create, modify or delete a partition on a disk
+  - The M(win_partition) module can create, modify or delete a partition on a disk
 options:
   state:
     description:
@@ -80,13 +82,13 @@ options:
     choices: [ system_partition, microsoft_reserved, basic_data, microsoft_recovery ]
 
 notes:
-- A minimum Operating System Version of 6.2 is required to use this module. To check if your OS is compatible, see
-  U(https://docs.microsoft.com/en-us/windows/desktop/sysinfo/operating-system-version).
-- This module cannot be used for removing the drive letter associated with a partition, initializing a disk or, file system formatting.
-- Idempotence works only if you're specifying a drive letter or other unique attributes such as a combination of disk number and partition number.
-- For more information, see U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830524(v=vs.85).aspx).
+  - A minimum Operating System Version of 6.2 is required to use this module. To check if your OS is compatible, see
+    U(https://docs.microsoft.com/en-us/windows/desktop/sysinfo/operating-system-version).
+  - This module cannot be used for removing the drive letter associated with a partition, initializing a disk or, file system formatting.
+  - Idempotence works only if you're specifying a drive letter or other unique attributes such as a combination of disk number and partition number.
+  - For more information, see U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830524.aspx).
 author:
-- Varun Chopra (@chopraaa)
+  - Varun Chopra (@chopraaa) <v@chopraaa.com>
 '''
 
 EXAMPLES = r'''
