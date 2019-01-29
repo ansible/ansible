@@ -139,8 +139,8 @@ def main():
             ["state", "present", ["pn_name", "pn_scope"]],
             ["state", "absent", ["pn_name"]],
             ["state", "update", ["pn_name", "pn_password"]]
-            )
-        )
+        ),
+    )
 
     # Accessing the arguments
     cliswitch = module.params['pn_cliswitch']
