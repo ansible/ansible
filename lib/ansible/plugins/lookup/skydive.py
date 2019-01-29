@@ -57,14 +57,14 @@ _list:
 
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.network.skydive.api import skydive_lookup
+from ansible.module_utils.network.skydive.skydive import skydive_lookup
 from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleError
 
 
 class LookupModule(LookupBase):
 
-    def run(self, variables=None, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         provider = kwargs.pop('provider', {})
         filter_data = kwargs.pop('filter', {})
