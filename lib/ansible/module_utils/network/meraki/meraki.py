@@ -158,12 +158,12 @@ class MerakiModule(object):
 
     def get_orgs(self):
         """Downloads all organizations for a user."""
-        start = datetime.datetime.utcnow()
+        # start = datetime.datetime.utcnow()
         response = self.request('/organizations', method='GET', description="get_orgs")
         if self.status != 200:
             self.fail_json(msg='Organization lookup failed')
         self.orgs = response
-        self.metrics['get_orgs'] = str(datetime.datetime.utcnow() - start)
+        # self.metrics['get_orgs'] = str(datetime.datetime.utcnow() - start)
         return self.orgs
 
     def is_org_valid(self, data, org_name=None, org_id=None):
@@ -289,7 +289,7 @@ class MerakiModule(object):
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'],
                                )
-        if description:
+        if description is not None:
             self.metrics['request'] = dict()
             self.metrics['request'][description] = str(datetime.datetime.utcnow() - start)
         else:
