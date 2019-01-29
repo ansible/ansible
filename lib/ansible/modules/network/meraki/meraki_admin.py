@@ -43,6 +43,8 @@ options:
         description:
         - List of networks the administrator has privileges on.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
+        - C(id) is the network ID.
+        - C(access) is the access level to be assigned for the network ID.
     state:
         description:
         - Create or modify an organization
@@ -117,6 +119,28 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: absent
     email: jane@doe.com
+    
+- name: Create a new administrator with full access to a tag
+  meraki_admin:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    name: Jane Doe
+    orgAccess: read-only
+    email: jane@doe.com
+    tags:
+        - {"tag": "tenant", "access": "full"}
+        
+- name: Create a new administrator with full access to a network
+  meraki_admin:
+    auth_key: abc12345
+    org_name: YourOrg
+    state: present
+    name: Jane Doe
+    orgAccess: read-only
+    email: jane@doe.com
+    networks:
+        - {"id": "N_12345", "access": "full"}
 '''
 
 RETURN = r'''
