@@ -31,6 +31,7 @@ options:
         C(absent) to delete user C(update) to update user.
     type: str
     required: true
+    choices: ['present', 'absent', 'update']
   pn_scope:
     description:
       - local or fabric.
