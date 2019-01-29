@@ -34,7 +34,7 @@ options:
         aliases: [ 'name' ]
     sheetID:
         description:
-            - This is the Sheet ID
+            - The ID of sheet to append columns to.
         required: true
     client_id:
         description:
