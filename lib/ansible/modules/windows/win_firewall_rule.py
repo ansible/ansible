@@ -19,55 +19,67 @@ description:
 options:
   enabled:
     description:
-      - Is this firewall rule enabled or disabled.
+      - Whether this firewall rule is enabled or disabled.
     type: bool
-    default: 'yes'
+    default: yes
     aliases: [ enable ]
   state:
     description:
       - Should this rule be added or removed.
+    type: str
     choices: [ absent, present ]
     default: present
   name:
     description:
-      - The rules name
+      - The rules name.
+    type: str
     required: yes
   direction:
     description:
-      - Is this rule for inbound or outbound traffic.
+      - Whether this rule is for inbound or outbound traffic.
+    type: str
     required: yes
     choices: [ in, out ]
   action:
     description:
       - What to do with the items this rule is for.
+    type: str
     required: yes
     choices: [ allow, block ]
   description:
     description:
       - Description for the firewall rule.
+    type: str
   localip:
     description:
       - The local ip address this rule applies to.
+    type: str
     default: any
   remoteip:
     description:
       - The remote ip address/range this rule applies to.
+    type: str
     default: any
   localport:
     description:
       - The local port this rule applies to.
+    type: str
   remoteport:
     description:
       - The remote port this rule applies to.
+    type: str
   program:
     description:
       - The program this rule applies to.
+    type: str
   service:
     description:
       - The service this rule applies to.
+    type: str
   protocol:
     description:
       - The protocol this rule applies to.
+    type: str
     default: any
   profiles:
     description:
@@ -78,10 +90,10 @@ options:
   force:
     description:
     - Replace any existing rule by removing it first.
-    - This is no longer required in 2.4 as rules no longer need replacing when being modified.
-    - DEPRECATED in 2.4 and will be removed in 2.9.
+    - This is no longer required in Ansible 2.4 as rules no longer need replacing when being modified.
+    - DEPRECATED in Ansible 2.4 and will be removed in Ansible 2.9.
     type: bool
-    default: 'no'
+    default: no
 seealso:
 - module: win_firewall
 author:

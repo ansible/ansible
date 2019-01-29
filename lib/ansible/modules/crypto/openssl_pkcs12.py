@@ -255,8 +255,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         try:
             self.remove()
-
-            p12 = crypto.load_pkcs12(open(self.src, 'rb').read(),
+            with open(self.src, 'rb') as pkcs12_fh:
+                pkcs12_content = pkcs12_fh.read()
+            p12 = crypto.load_pkcs12(pkcs12_content,
                                      self.passphrase)
             pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM,
                                           p12.get_privatekey())
@@ -312,7 +313,7 @@ def main():
     if not pyopenssl_found:
         module.fail_json(msg='The python pyOpenSSL library is required')
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

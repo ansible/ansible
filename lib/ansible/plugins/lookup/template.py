@@ -73,41 +73,41 @@ class LookupModule(LookupBase):
             lookupfile = self.find_file_in_search_path(variables, 'templates', term)
             display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile:
-                with open(to_bytes(lookupfile, errors='surrogate_or_strict'), 'rb') as f:
-                    template_data = to_text(f.read(), errors='surrogate_or_strict')
+                b_template_data, show_data = self._loader._get_file_contents(lookupfile)
+                template_data = to_text(b_template_data, errors='surrogate_or_strict')
 
-                    # set jinja2 internal search path for includes
-                    searchpath = variables.get('ansible_search_path')
-                    if searchpath:
-                        # our search paths aren't actually the proper ones for jinja includes.
-                        # We want to search into the 'templates' subdir of each search path in
-                        # addition to our original search paths.
-                        newsearchpath = []
-                        for p in searchpath:
-                            newsearchpath.append(os.path.join(p, 'templates'))
-                            newsearchpath.append(p)
-                        searchpath = newsearchpath
-                    else:
-                        searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
-                    self._templar.environment.loader.searchpath = searchpath
-                    if variable_start_string is not None:
-                        self._templar.environment.variable_start_string = variable_start_string
-                    if variable_end_string is not None:
-                        self._templar.environment.variable_end_string = variable_end_string
+                # set jinja2 internal search path for includes
+                searchpath = variables.get('ansible_search_path', [])
+                if searchpath:
+                    # our search paths aren't actually the proper ones for jinja includes.
+                    # We want to search into the 'templates' subdir of each search path in
+                    # addition to our original search paths.
+                    newsearchpath = []
+                    for p in searchpath:
+                        newsearchpath.append(os.path.join(p, 'templates'))
+                        newsearchpath.append(p)
+                    searchpath = newsearchpath
+                searchpath.insert(0, os.path.dirname(lookupfile))
 
-                    # The template will have access to all existing variables,
-                    # plus some added by ansible (e.g., template_{path,mtime}),
-                    # plus anything passed to the lookup with the template_vars=
-                    # argument.
-                    vars = variables.copy()
-                    vars.update(generate_ansible_template_vars(lookupfile))
-                    vars.update(lookup_template_vars)
-                    self._templar.set_available_variables(vars)
+                self._templar.environment.loader.searchpath = searchpath
+                if variable_start_string is not None:
+                    self._templar.environment.variable_start_string = variable_start_string
+                if variable_end_string is not None:
+                    self._templar.environment.variable_end_string = variable_end_string
 
-                    # do the templating
-                    res = self._templar.template(template_data, preserve_trailing_newlines=True,
-                                                 convert_data=convert_data_p, escape_backslashes=False)
-                    ret.append(res)
+                # The template will have access to all existing variables,
+                # plus some added by ansible (e.g., template_{path,mtime}),
+                # plus anything passed to the lookup with the template_vars=
+                # argument.
+                vars = variables.copy()
+                vars.update(generate_ansible_template_vars(lookupfile))
+                vars.update(lookup_template_vars)
+                self._templar.set_available_variables(vars)
+
+                # do the templating
+                res = self._templar.template(template_data, preserve_trailing_newlines=True,
+                                             convert_data=convert_data_p, escape_backslashes=False)
+                ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
 

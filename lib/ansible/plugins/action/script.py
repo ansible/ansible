@@ -66,7 +66,7 @@ class ActionModule(ActionBase):
             if chdir:
                 # Powershell is the only Windows-path aware shell
                 if self._connection._shell.SHELL_FAMILY == 'powershell' and \
-                        not self.windows_absolute_path_detection.matches(chdir):
+                        not self.windows_absolute_path_detection.match(chdir):
                     raise AnsibleActionFail('chdir %s must be an absolute path for a Windows remote node' % chdir)
                 # Every other shell is unix-path-aware.
                 if self._connection._shell.SHELL_FAMILY != 'powershell' and not chdir.startswith('/'):

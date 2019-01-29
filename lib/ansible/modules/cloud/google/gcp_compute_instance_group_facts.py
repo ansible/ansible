@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -118,7 +117,7 @@ items:
       description:
       - The network to which all instances in the instance group belong.
       returned: success
-      type: dict
+      type: str
     region:
       description:
       - The region where the instance group is located (for regional resources).
@@ -128,7 +127,7 @@ items:
       description:
       - The subnetwork to which all instances in the instance group belong.
       returned: success
-      type: dict
+      type: str
     zone:
       description:
       - A reference to the zone where the instance group resides.
@@ -157,12 +156,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            filters=dict(type='list', elements='str'),
-            zone=dict(required=True, type='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), zone=dict(required=True, type='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
@@ -172,9 +166,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 

@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -51,9 +50,8 @@ options:
   name:
     description:
     - A unique identifier for the database, which cannot be changed after the instance
-      is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-      The final segment of the name must be between 6 and 30 characters in length.
-    required: false
+      is created. Values are of the form [a-z][-a-z0-9]*[a-z0-9].
+    required: true
   extra_statements:
     description:
     - 'An optional list of DDL statements to run inside the newly created database.
@@ -65,12 +63,14 @@ options:
     description:
     - The instance to create the database on.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_spanner_instance
-      task and then set this instance field to "{{ name-of-resource }}" Alternatively,
-      you can set this instance to a dictionary with the name key where the value
-      is the name of your Instance'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_spanner_instance
+      task and then set this instance field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
+notes:
+- 'API Reference: U(https://cloud.google.com/spanner/docs/reference/rest/v1/projects.instances.databases)'
+- 'Official Documentation: U(https://cloud.google.com/spanner/)'
 '''
 
 EXAMPLES = '''
@@ -102,8 +102,7 @@ RETURN = '''
 name:
   description:
   - A unique identifier for the database, which cannot be changed after the instance
-    is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-    The final segment of the name must be between 6 and 30 characters in length.
+    is created. Values are of the form [a-z][-a-z0-9]*[a-z0-9].
   returned: success
   type: str
 extraStatements:
@@ -118,7 +117,7 @@ instance:
   description:
   - The instance to create the database on.
   returned: success
-  type: dict
+  type: str
 '''
 
 ################################################################################
@@ -139,9 +138,9 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            name=dict(type='str'),
+            name=dict(required=True, type='str'),
             extra_statements=dict(type='list', elements='str'),
-            instance=dict(required=True, type='dict')
+            instance=dict(required=True),
         )
     )
 
@@ -181,8 +180,7 @@ def create(module, link):
 
 
 def update(module, link):
-    auth = GcpSession(module, 'spanner')
-    return return_if_object(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="Database cannot be edited")
 
 
 def delete(module, link):
@@ -192,8 +190,9 @@ def delete(module, link):
 
 def resource_to_request(module):
     request = {
+        u'instance': replace_resource_dict(module.params.get(u'instance', {}), 'name'),
         u'name': module.params.get('name'),
-        u'extraStatements': module.params.get('extra_statements')
+        u'extraStatements': module.params.get('extra_statements'),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -210,19 +209,12 @@ def fetch_resource(module, link, allow_not_found=True):
 
 
 def self_link(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name'),
-        'name': module.params['name']
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name'), 'name': module.params['name']}
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases/{name}".format(**res)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name')
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases".format(**res)
 
 
@@ -238,8 +230,8 @@ def return_if_object(module, response, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     result = decode_response(result, module)
 
@@ -271,10 +263,7 @@ def is_different(module, response):
 # Remove unnecessary properties from the response.
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
-    return {
-        u'name': response.get(u'name'),
-        u'extraStatements': module.params.get('extra_statements')
-    }
+    return {u'name': module.params.get('name'), u'extraStatements': module.params.get('extra_statements')}
 
 
 def decode_response(response, module):

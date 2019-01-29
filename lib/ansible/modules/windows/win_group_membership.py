@@ -20,6 +20,7 @@ options:
   name:
     description:
       - Name of the local group to manage membership on.
+    type: str
     required: yes
   members:
     description:
@@ -29,11 +30,12 @@ options:
       - Accepts service users as NT AUTHORITY\username.
       - Accepts all local, domain and service user types as username,
         favoring domain lookups when in a domain.
-    required: yes
     type: list
+    required: yes
   state:
     description:
       - Desired state of the members in the group.
+    type: str
     choices: [ absent, present ]
     default: present
 seealso:

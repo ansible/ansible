@@ -54,11 +54,9 @@ options:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
               subscription and location. Check your subscription for available choices.
-        required: true
     capacity:
         description:
             - Capacity of VMSS.
-        required: true
         default: 1
     tier:
         description:
@@ -202,6 +200,11 @@ options:
             - Specifies whether the Virtual Machine Scale Set should be overprovisioned.
         type: bool
         default: True
+        version_added: "2.8"
+    zones:
+        description:
+            - A list of Availability Zones for your virtual machine scale set
+        type: list
         version_added: "2.8"
 
 extends_documentation_fragment:
@@ -389,7 +392,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             state=dict(choices=['present', 'absent'], default='present', type='str'),
             location=dict(type='str'),
             short_hostname=dict(type='str'),
-            vm_size=dict(type='str', required=True),
+            vm_size=dict(type='str'),
             tier=dict(type='str', choices=['Basic', 'Standard']),
             capacity=dict(type='int', default=1),
             upgrade_policy=dict(type='str', choices=['Automatic', 'Manual']),
@@ -410,7 +413,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             remove_on_absent=dict(type='list', default=['all']),
             enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name']),
-            overprovision=dict(type='bool', default=True)
+            overprovision=dict(type='bool', default=True),
+            zones=dict(type='list')
         )
 
         self.resource_group = None
@@ -440,6 +444,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.enable_accelerated_networking = None
         self.security_group = None
         self.overprovision = None
+        self.zones = None
+
+        required_if = [
+            ('state', 'present', [
+             'vm_size'])
+        ]
 
         self.results = dict(
             changed=False,
@@ -449,8 +459,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         super(AzureRMVirtualMachineScaleSet, self).__init__(
             derived_arg_spec=self.module_arg_spec,
-            supports_check_mode=True
-        )
+            supports_check_mode=True,
+            required_if=required_if)
 
     def exec_module(self, **kwargs):
 
@@ -461,6 +471,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         # make sure options are lower case
         self.remove_on_absent = set([resource.lower() for resource in self.remove_on_absent])
+
+        # convert elements to ints
+        self.zones = [int(i) for i in self.zones] if self.zones else None
 
         # default virtual_network_resource_group to resource_group
         if not self.virtual_network_resource_group:
@@ -475,6 +488,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         subnet = None
         image_reference = None
         custom_image = False
+        load_balancer_backend_address_pools = None
+        load_balancer_inbound_nat_pools = None
+        load_balancer = None
+        support_lb_change = True
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -529,6 +546,15 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
             disable_ssh_password = not self.ssh_password_enabled
 
+            if self.load_balancer:
+                load_balancer = self.get_load_balancer(self.load_balancer)
+                load_balancer_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
+                                                        for resource in load_balancer.backend_address_pools]
+                                                       if load_balancer.backend_address_pools else None)
+                load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(id=resource.id)
+                                                    for resource in load_balancer.inbound_nat_pools]
+                                                   if load_balancer.inbound_nat_pools else None)
+
         try:
             self.log("Fetching virtual machine scale set {0}".format(self.name))
             vmss = self.compute_client.virtual_machine_scale_sets.get(self.resource_group, self.name)
@@ -582,6 +608,25 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     differences.append('overprovision')
                     changed = True
 
+                vmss_dict['zones'] = [int(i) for i in vmss_dict['zones']] if 'zones' in vmss_dict and vmss_dict['zones'] else None
+                if self.zones != vmss_dict['zones']:
+                    self.log("CHANGED: virtual machine scale sets {0} zones".format(self.name))
+                    differences.append('Zones')
+                    changed = True
+                    vmss_dict['zones'] = self.zones
+
+                nicConfigs = vmss_dict['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations']
+                backend_address_pool = nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('loadBalancerBackendAddressPools', [])
+                if (len(nicConfigs) != 1 or len(backend_address_pool) != 1):
+                    support_lb_change = False  # Currently not support for the vmss contains more than one loadbalancer
+                    self.module.warn('Updating more than one load balancer on VMSS is currently not supported')
+                else:
+                    load_balancer_id = "{0}/".format(load_balancer.id) if load_balancer else None
+                    backend_address_pool_id = backend_address_pool[0].get('id')
+                    if bool(load_balancer_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(load_balancer_id):
+                        differences.append('load_balancer')
+                        changed = True
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -623,17 +668,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                     if self.subnet_name:
                         subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
-
-                    load_balancer_backend_address_pools = None
-                    load_balancer_inbound_nat_pools = None
-                    if self.load_balancer:
-                        load_balancer = self.get_load_balancer(self.load_balancer)
-                        load_balancer_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
-                                                                for resource in load_balancer.backend_address_pools]
-                                                               if load_balancer.backend_address_pools else None)
-                        load_balancer_inbound_nat_pools = ([self.compute_models.SubResource(id=resource.id)
-                                                            for resource in load_balancer.inbound_nat_pools]
-                                                           if load_balancer.inbound_nat_pools else None)
 
                     if not self.short_hostname:
                         self.short_hostname = self.name
@@ -694,7 +728,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                     )
                                 ]
                             )
-                        )
+                        ),
+                        zones=self.zones
                     )
 
                     if self.admin_password:
@@ -745,6 +780,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     vmss_resource.virtual_machine_profile.storage_profile.os_disk.caching = self.os_disk_caching
                     vmss_resource.sku.capacity = self.capacity
                     vmss_resource.overprovision = self.overprovision
+
+                    if support_lb_change:
+                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                            .ip_configurations[0].load_balancer_backend_address_pools = load_balancer_backend_address_pools
+                        vmss_resource.virtual_machine_profile.network_profile.network_interface_configurations[0] \
+                            .ip_configurations[0].load_balancer_inbound_nat_pools = load_balancer_inbound_nat_pools
 
                     if self.data_disks is not None:
                         data_disks = []

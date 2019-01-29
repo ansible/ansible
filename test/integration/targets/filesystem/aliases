@@ -1,4 +1,3 @@
 destructive
 shippable/posix/group3
 skip/osx
-skip/rhel8.0

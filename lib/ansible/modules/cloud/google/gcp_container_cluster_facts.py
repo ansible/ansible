@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -181,7 +180,7 @@ items:
         preemptible:
           description:
           - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-            for more inforamtion about preemptible VM instances.'
+            for more information about preemptible VM instances.'
           returned: success
           type: bool
     masterAuth:
@@ -240,8 +239,6 @@ items:
       description:
       - The name of the Google Compute Engine network to which the cluster is connected.
         If left unspecified, the default network will be used.
-      - To ensure it exists and it is operations, configure the network using 'gcompute_network'
-        resource.
       returned: success
       type: str
     clusterIpv4Cidr:
@@ -369,11 +366,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            zone=dict(required=True, type='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(zone=dict(required=True, type='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
@@ -383,9 +376,7 @@ def main():
         items = items.get('clusters')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 

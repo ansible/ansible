@@ -51,6 +51,7 @@ options:
     - Bandwidth limit for volume in M or G units.
       M will set MB/s
       G will set GB/s
+      To clear an existing Qos setting using 0 (zero)
     version_added: '2.8'
 extends_documentation_fragment:
 - purestorage.fa
@@ -95,6 +96,14 @@ EXAMPLES = r'''
     name: foo
     target: bar
     overwrite: yes
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+    state: present
+
+- name: Clear volume QoS from volume foo
+  purefa_volume:
+    name: foo
+    qos: 0
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
     state: present
@@ -225,7 +234,13 @@ def update_volume(module, array):
                     module.fail_json(msg='Volume {0} resize failed.'.format(module.params['name']))
     if module.params['qos']:
         if human_to_bytes(module.params['qos']) != vol_qos['bandwidth_limit']:
-            if 549755813888 >= int(human_to_bytes(module.params['qos'])) >= 1048576:
+            if module.params['qos'] == '0':
+                try:
+                    array.set_volume(module.params['name'], bandwidth_limit='')
+                    changed = True
+                except Exception:
+                    module.fail_json(msg='Volume {0} QoS removal failed.'.format(module.params['name']))
+            elif 549755813888 >= int(human_to_bytes(module.params['qos'])) >= 1048576:
                 try:
                     array.set_volume(module.params['name'],
                                      bandwidth_limit=module.params['qos'])

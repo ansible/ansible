@@ -49,14 +49,14 @@ Individuals with direct commit access to ansible/ansible are entrusted with powe
   - Commit directly.
   - Merge your own PRs. Someone else should have a chance to review and approve the PR merge. If you are a Core Committer, you have a small amount of leeway here for very minor changes.
   - Forget about alternate environments. Consider the alternatives--yes, people have bad environments, but they are the ones who need us the most.
-  - Drag your community team members down. Always discuss the technical merits, but you should never address the person's limitations (you can later go for beers and call them idiots, but not in IRC/Github/etc.).
+  - Drag your community team members down. Always discuss the technical merits, but you should never address the person's limitations (you can later go for beers and call them idiots, but not in IRC/GitHub/etc.).
   - Forget about the maintenance burden. Some things are really cool to have, but they might not be worth shoehorning in if the maintenance burden is too great.
   - Break playbooks. Always keep backwards compatibility in mind.
   - Forget to keep it simple. Complexity breeds all kinds of problems.
 
 * Do
 
-  - Squash, avoid merges whenever possible, use github's squash commits or cherry pick if needed (bisect thanks you).
+  - Squash, avoid merges whenever possible, use GitHub's squash commits or cherry pick if needed (bisect thanks you).
   - Be active. Committers who have no activity on the project (through merges, triage, commits, etc.) will have their permissions suspended.
   - Consider backwards compatibility (goes back to "don't break existing playbooks").
   - Write tests. PRs with tests are looked at with more priority than PRs without tests that should have them included. While not all changes require tests, be sure to add them for bug fixes or functionality changes.
@@ -74,7 +74,7 @@ People
 Individuals who've been asked to become a part of this group have generally been contributing in significant ways to the Ansible community for some time. Should they agree, they are requested to add their names and GitHub IDs to this file, in the section below, via a pull request. Doing so indicates that these individuals agree to act in the ways that their fellow committers trust that they will act.
 
 +---------------------+----------------------+--------------------+----------------------+
-| Name                | Github ID            | IRC Nick           | Other                |
+| Name                | GitHub ID            | IRC Nick           | Other                |
 +=====================+======================+====================+======================+
 | James Cammarata     | jimi-c               | jimi               |                      |
 +---------------------+----------------------+--------------------+----------------------+

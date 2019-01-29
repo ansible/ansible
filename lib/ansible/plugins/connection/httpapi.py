@@ -128,6 +128,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
@@ -135,7 +137,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout

@@ -66,7 +66,7 @@ options:
               check out Zabbix API documentation U(https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition)
         suboptions:
             type:
-                description: Type (label) of the condition
+                description: Type (label) of the condition.
                 choices:
                     # trigger
                     - host_group
@@ -105,18 +105,22 @@ options:
                 description:
                     - Value to compare with.
                     - When I(type) is set to C(discovery_status), the choices
-                      are C(up), C(down), C(discovered), C(lost)
+                      are C(up), C(down), C(discovered), C(lost).
                     - When I(type) is set to C(discovery_object), the choices
-                      are C(host), C(service)
+                      are C(host), C(service).
                     - When I(type) is set to C(event_type), the choices
                       are C(item in not supported state), C(item in normal state),
                       C(LLD rule in not supported state),
-                      C(LLD rule in normal state), C(trigger in unknown state), C(trigger in normal state)
+                      C(LLD rule in normal state), C(trigger in unknown state), C(trigger in normal state).
+                    - When I(type) is set to C(trigger_severity), the choices
+                      are (case-insensitive) C(not classified), C(information), C(warning), C(average), C(high), C(disaster)
+                      irrespective of user-visible names being changed in Zabbix. Defaults to C(not classified) if omitted.
                     - Besides the above options, this is usualy either the name
                       of the object or a string to compare with.
             operator:
                 description:
                     - Condition operator.
+                    - When I(type) is set to C(time_period), the choices are C(in), C(not in).
                 choices:
                     - '='
                     - '<>'
@@ -130,6 +134,18 @@ options:
                 description:
                     - Arbitrary unique ID that is used to reference the condition from a custom expression.
                     - Can only contain upper-case letters.
+                    - Required for custom expression filters.
+    eval_type:
+        description:
+            - Filter condition evaluation method.
+            - Defaults to C(andor) if conditions are less then 2 or if
+              I(formula) is not specified.
+            - Defaults to C(custom_expression) when formula is specified.
+        choices:
+            - 'andor'
+            - 'and'
+            - 'or'
+            - 'custom_expression'
     formula:
         description:
             - User-defined expression to be used for evaluating conditions of filters with a custom expression.
@@ -153,11 +169,11 @@ options:
             - Works only with >= Zabbix 3.2
     acknowledge_default_message:
         description:
-            - Acknowledge operation message text.
+            - Update operation (known as "Acknowledge operation" before Zabbix 4.0) message text.
             - Works only with >= Zabbix 3.4
     acknowledge_default_subject:
         description:
-            - Acknowledge operation message subject.
+            - Update operation (known as "Acknowledge operation" before Zabbix 4.0) message subject.
             - Works only with >= Zabbix 3.4
     operations:
         type: list
@@ -211,6 +227,20 @@ options:
             media_type:
                 description:
                     - Media type that will be used to send the message.
+            host_groups:
+                type: list
+                description:
+                    - List of host groups host should be added to.
+                    - Required when I(type=add_to_host_group) or I(type=remove_from_host_group).
+            templates:
+                type: list
+                description:
+                    - List of templates host should be linked to.
+                    - Required when I(type=link_to_template) or I(type=unlink_from_template).
+            inventory:
+                description:
+                    - Host inventory mode.
+                    - Required when I(type=set_host_inventory_mode).
             command_type:
                 description:
                     - Type of operation command.
@@ -228,7 +258,7 @@ options:
             execute_on:
                 description:
                     - Target on which the custom script operation command will be executed.
-                    - Required when I(type=remote_command) and I(command_type=custom_script)
+                    - Required when I(type=remote_command) and I(command_type=custom_script).
                 choices:
                     - agent
                     - server
@@ -236,53 +266,54 @@ options:
             run_on_groups:
                 description:
                     - Host groups to run remote commands on.
-                    - Required when I(type=remote_command) if I(run_on_hosts) is not set
+                    - Required when I(type=remote_command) if I(run_on_hosts) is not set.
             run_on_hosts:
                 description:
-                    - Hosts to run remote commands on
-                    - Required when I(type=remote_command) if I(run_on_groups) is not set
+                    - Hosts to run remote commands on.
+                    - Required when I(type=remote_command) if I(run_on_groups) is not set.
+                    - If set to 0 the command will be run on the current host.
             ssh_auth_type:
                 description:
                     - Authentication method used for SSH commands.
-                    - Required when I(type=remote_command) and I(command_type=ssh)
+                    - Required when I(type=remote_command) and I(command_type=ssh).
                 choices:
                     - password
                     - public_key
             ssh_privatekey_file:
                 description:
                     - Name of the private key file used for SSH commands with public key authentication.
-                    - Required when I(type=remote_command) and I(command_type=ssh)
+                    - Required when I(type=remote_command) and I(command_type=ssh).
             ssh_publickey_file:
                 description:
                     - Name of the public key file used for SSH commands with public key authentication.
-                    - Required when I(type=remote_command) and I(command_type=ssh)
+                    - Required when I(type=remote_command) and I(command_type=ssh).
             username:
                 description:
                     - User name used for authentication.
-                    - Required when I(type=remote_command) and I(command_type in [ssh, telnet])
+                    - Required when I(type=remote_command) and I(command_type in [ssh, telnet]).
             password:
                 description:
                     - Password used for authentication.
-                    - Required when I(type=remote_command) and I(command_type in [ssh, telnet])
+                    - Required when I(type=remote_command) and I(command_type in [ssh, telnet]).
             port:
                 description:
                     - Port number used for authentication.
-                    - Required when I(type=remote_command) and I(command_type in [ssh, telnet])
+                    - Required when I(type=remote_command) and I(command_type in [ssh, telnet]).
             script_name:
                 description:
                     - The name of script used for global script commands.
-                    - Required when I(type=remote_command) and I(command_type=global_script)
+                    - Required when I(type=remote_command) and I(command_type=global_script).
     recovery_operations:
         type: list
         description:
-            - List of recovery operations
-            - C(Suboptions) are the same as for I(operations)
+            - List of recovery operations.
+            - C(Suboptions) are the same as for I(operations).
             - Works only with >= Zabbix 3.2
     acknowledge_operations:
         type: list
         description:
-            - List of acknowledge operations
-            - C(Suboptions) are the same as for I(operations)
+            - List of acknowledge operations.
+            - C(Suboptions) are the same as for I(operations).
             - Works only with >= Zabbix 3.4
 
 notes:
@@ -883,7 +914,7 @@ class Operations(object):
             operation: operation to construct the message user
 
         Returns:
-            list: constructed operation message user or None if oprtation not found
+            list: constructed operation message user or None if operation not found
         """
         if operation.get('send_to_users') is None:
             return None
@@ -1012,7 +1043,7 @@ class Operations(object):
         return {'inventory_mode': operation.get('inventory')}
 
     def construct_the_data(self, operations):
-        """Construct the oprtation data using helper methods.
+        """Construct the operation data using helper methods.
 
         Args:
             operation: operation to construct
@@ -1199,11 +1230,11 @@ class Filter(object):
         self._zapi = zbx
         self._zapi_wrapper = zapi_wrapper
 
-    def _construct_evaltype(self, _eval, _conditions):
+    def _construct_evaltype(self, _eval_type, _formula, _conditions):
         """Construct the eval type
 
         Args:
-            _eval: zabbix condition evaluation formula
+            _formula: zabbix condition evaluation formula
             _conditions: list of conditions to check
 
         Returns:
@@ -1214,9 +1245,37 @@ class Filter(object):
                 'evaltype': '0',
                 'formula': None
             }
+        if _eval_type == 'andor':
+            return {
+                'evaltype': '0',
+                'formula': None
+            }
+        if _eval_type == 'and':
+            return {
+                'evaltype': '1',
+                'formula': None
+            }
+        if _eval_type == 'or':
+            return {
+                'evaltype': '2',
+                'formula': None
+            }
+        if _eval_type == 'custom_expression':
+            if _formula is not None:
+                return {
+                    'evaltype': '3',
+                    'formula': _formula
+                }
+            else:
+                self._module.fail_json(msg="'formula' is required when 'eval_type' is set to 'custom_expression'")
+        if _formula is not None:
+            return {
+                'evaltype': '3',
+                'formula': _formula
+            }
         return {
-            'evaltype': '3',
-            'formula': _eval
+            'evaltype': '0',
+            'formula': None
         }
 
     def _construct_conditiontype(self, _condition):
@@ -1380,12 +1439,12 @@ class Filter(object):
         except Exception as e:
             self._module.fail_json(
                 msg="""Unsupported value '%s' for specified condition type.
-                       Check out Zabbix API documetation for supported values for
+                       Check out Zabbix API documentation for supported values for
                        condition type '%s' at
                        https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition""" % (value, conditiontype)
             )
 
-    def construct_the_data(self, _formula, _conditions):
+    def construct_the_data(self, _eval_type, _formula, _conditions):
         """Construct the user defined filter conditions to fit the Zabbix API
         requirements operations data using helper methods.
 
@@ -1410,6 +1469,7 @@ class Filter(object):
                 "operator": self._construct_operator(cond)
             })
         _constructed_evaltype = self._construct_evaltype(
+            _eval_type,
             _formula,
             constructed_data['conditions']
         )
@@ -1557,6 +1617,7 @@ def main():
             acknowledge_default_subject=dict(type='str', required=False, default=None),
             conditions=dict(type='list', required=False, default=None),
             formula=dict(type='str', required=False, default=None),
+            eval_type=dict(type='str', required=False, default=None, choices=['andor', 'and', 'or', 'custom_expression']),
             operations=dict(type='list', required=False, default=None),
             recovery_operations=dict(type='list', required=False, default=[]),
             acknowledge_operations=dict(type='list', required=False, default=[])
@@ -1587,6 +1648,7 @@ def main():
     acknowledge_default_subject = module.params['acknowledge_default_subject']
     conditions = module.params['conditions']
     formula = module.params['formula']
+    eval_type = module.params['eval_type']
     operations = module.params['operations']
     recovery_operations = module.params['recovery_operations']
     acknowledge_operations = module.params['acknowledge_operations']
@@ -1629,7 +1691,7 @@ def main():
                 operations=ops.construct_the_data(operations),
                 recovery_operations=recovery_ops.construct_the_data(recovery_operations),
                 acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
-                conditions=fltr.construct_the_data(formula, conditions)
+                conditions=fltr.construct_the_data(eval_type, formula, conditions)
             )
 
             if difference == {}:
@@ -1658,7 +1720,7 @@ def main():
                 operations=ops.construct_the_data(operations),
                 recovery_operations=recovery_ops.construct_the_data(recovery_operations),
                 acknowledge_operations=acknowledge_ops.construct_the_data(acknowledge_operations),
-                conditions=fltr.construct_the_data(formula, conditions)
+                conditions=fltr.construct_the_data(eval_type, formula, conditions)
             )
             module.exit_json(changed=True, msg="Action created: %s, ID: %s" % (name, action_id))
 

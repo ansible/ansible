@@ -61,17 +61,18 @@ def setup_env(filename):
     setattr(module.AnsibleModule, '__init__', fake)
     setattr(module, '_load_params', _fake_load_params)
 
-    yield fake
+    try:
+        yield fake
+    finally:
+        setattr(module.AnsibleModule, '__init__', _original_init)
+        setattr(module, '_load_params', _original_load_params)
 
-    setattr(module.AnsibleModule, '__init__', _original_init)
-    setattr(module, '_load_params', _original_load_params)
-
-    # Clean up imports to prevent issues with mutable data being used in modules
-    for k in list(sys.modules.keys()):
-        # It's faster if we limit to items in ansible.module_utils
-        # But if this causes problems later, we should remove it
-        if k not in pre_sys_modules and k.startswith('ansible.module_utils.'):
-            del sys.modules[k]
+        # Clean up imports to prevent issues with mutable data being used in modules
+        for k in list(sys.modules.keys()):
+            # It's faster if we limit to items in ansible.module_utils
+            # But if this causes problems later, we should remove it
+            if k not in pre_sys_modules and k.startswith('ansible.module_utils.'):
+                del sys.modules[k]
 
 
 def get_argument_spec(filename):

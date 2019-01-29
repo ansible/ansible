@@ -67,8 +67,7 @@ requirements:
    - mysql (command line binary)
    - mysqldump (command line binary)
 notes:
-   - Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) package on the remote host,
-     as well as mysql and mysqldump binaries.
+   - Requires the mysql and mysqldump binaries on the remote host.
    - This module is B(not idempotent) when I(state) is C(import), and will import the dump file each time if run more than once.
 extends_documentation_fragment: mysql
 '''

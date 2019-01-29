@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -61,10 +60,9 @@ options:
     description:
     - The name of the bucket.
     - 'This field represents a link to a Bucket resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_storage_bucket
-      task and then set this bucket field to "{{ name-of-resource }}" Alternatively,
-      you can set this bucket to a dictionary with the name key where the value is
-      the name of your Bucket'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket
+      task and then set this bucket field to "{{ name-of-resource }}"'
     required: true
   entity:
     description:
@@ -110,7 +108,7 @@ extends_documentation_fragment: gcp
 EXAMPLES = '''
 - name: create a bucket
   gcp_storage_bucket:
-      name: "bucket-bac"
+      name: "{{ resource_name }}"
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -133,7 +131,7 @@ bucket:
   description:
   - The name of the bucket.
   returned: success
-  type: dict
+  type: str
 domain:
   description:
   - The domain associated with the entity.
@@ -205,14 +203,11 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            bucket=dict(required=True, type='dict'),
+            bucket=dict(required=True),
             entity=dict(required=True, type='str'),
             entity_id=dict(type='str'),
-            project_team=dict(type='dict', options=dict(
-                project_number=dict(type='str'),
-                team=dict(type='str', choices=['editors', 'owners', 'viewers'])
-            )),
-            role=dict(type='str', choices=['OWNER', 'READER', 'WRITER'])
+            project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str', choices=['editors', 'owners', 'viewers']))),
+            role=dict(type='str', choices=['OWNER', 'READER', 'WRITER']),
         )
     )
 
@@ -269,7 +264,7 @@ def resource_to_request(module):
         u'entity': module.params.get('entity'),
         u'entityId': module.params.get('entity_id'),
         u'projectTeam': BucketAccessControlProjectteam(module.params.get('project_team', {}), module).to_request(),
-        u'role': module.params.get('role')
+        u'role': module.params.get('role'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -304,8 +299,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -342,7 +337,7 @@ def response_to_hash(module, response):
         u'entityId': response.get(u'entityId'),
         u'id': response.get(u'id'),
         u'projectTeam': BucketAccessControlProjectteam(response.get(u'projectTeam', {}), module).from_response(),
-        u'role': response.get(u'role')
+        u'role': response.get(u'role'),
     }
 
 
@@ -355,16 +350,10 @@ class BucketAccessControlProjectteam(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'projectNumber': self.request.get('project_number'),
-            u'team': self.request.get('team')
-        })
+        return remove_nones_from_dict({u'projectNumber': self.request.get('project_number'), u'team': self.request.get('team')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'projectNumber': self.request.get(u'projectNumber'),
-            u'team': self.request.get(u'team')
-        })
+        return remove_nones_from_dict({u'projectNumber': self.request.get(u'projectNumber'), u'team': self.request.get(u'team')})
 
 
 if __name__ == '__main__':

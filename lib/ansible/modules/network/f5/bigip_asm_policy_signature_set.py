@@ -22,9 +22,9 @@ version_added: 2.8
 options:
   name:
     description:
-      - Specifies the name of the signature sets to apply/remove to the ASM policy.
-      - Apart from built-in signature sets that ship with the device, users can create and use
-        their own signature sets.
+      - Specifies the name of the signature sets to apply on or remove from the ASM policy.
+      - Apart from built-in signature sets that ship with the device, users can use user created
+        signature sets.
       - When C(All Response Signatures), configures all signatures in the attack signature
         pool that can review responses.
       - When C(All Signatures), configures all attack signatures in the attack signature pool.
@@ -60,9 +60,9 @@ options:
         that attempt to run system level commands through a vulnerable application.
       - When C(OWA Signatures), configures signatures that target attacks against
         the Microsoft Outlook Web Access (OWA) application.
-      - When C(Other Application Attacks Signatures), configures signatures targeting miscellaneous attacks
-        including session fixation, local file access, injection attempts, header tampering,
-        and so on that could affect many applications.
+      - When C(Other Application Attacks Signatures), configures signatures targeting miscellaneous attacks,
+        including session fixation, local file access, injection attempts, header tampering
+        and so on, affecting many applications.
       - When C(Path Traversal Signatures), configures signatures targeting attacks that attempt to access files
         and directories that are stored outside the web root folder.
       - When C(Predictable Resource Location Signatures), configures signatures targeting attacks that attempt
@@ -78,7 +78,7 @@ options:
         that are integrated using WebSphere including general database, Microsoft Windows, IIS,
         Microsoft SQL Server, Apache, Oracle, Unix/Linux, IBM DB2, PostgreSQL, and XML.
       - When C(XPath Injection Signatures), configures signatures targeting attacks that attempt to gain access
-        to data structures or bypass permissions or access when a web site uses user-supplied information
+        to data structures or bypass permissions when a web site uses user-supplied information
         to construct XPath queries for XML data.
     required: True
   policy_name:
@@ -87,12 +87,12 @@ options:
     required: True
   alarm:
     description:
-      - Specifies whether the security policy logs the request data in the Statistics screen,
-        if a request matches a signature that is included in the signature set.
+      - Specifies if the security policy logs the request data in the Statistics screen,
+        when a request matches a signature that is included in the signature set.
     type: bool
   block:
     description:
-      - Effective when the security policy's enforcement mode is Blocking.
+      - Effective when the security policy`s enforcement mode is Blocking.
       - Determines how the system treats requests that match a signature included in the signature set.
       - When C(yes) the system blocks all requests that match a signature,
         and provides the client with a support ID number.

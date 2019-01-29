@@ -32,10 +32,10 @@ except ImportError:
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
@@ -240,7 +240,7 @@ class VariableManager:
                 for inventory_dir in self._inventory._sources:
                     if ',' in inventory_dir and not os.path.exists(inventory_dir):  # skip host lists
                         continue
-                    elif not os.path.isdir(inventory_dir):  # always pass 'inventory directory'
+                    elif not os.path.isdir(to_bytes(inventory_dir)):  # always pass 'inventory directory'
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
@@ -519,7 +519,7 @@ class VariableManager:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=self._templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
                     items = lookup_loader.get(task.loop_with, loader=self._loader, templar=self._templar).run(terms=loop_terms, variables=vars_copy)
-                except AnsibleUndefinedVariable:
+                except AnsibleTemplateError:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
@@ -528,7 +528,7 @@ class VariableManager:
         elif task.loop is not None:
             try:
                 items = self._templar.template(task.loop)
-            except AnsibleUndefinedVariable:
+            except AnsibleTemplateError:
                 # This task will be skipped later due to this, so we just setup
                 # a dummy array for the later code so it doesn't fail
                 items = [None]

@@ -24,9 +24,11 @@ except ImportError:
     pass
 
 import abc
+import datetime
 import errno
 import hashlib
 import os
+import re
 
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes
@@ -80,15 +82,16 @@ def load_privatekey(path, passphrase=None):
     """Load the specified OpenSSL private key."""
 
     try:
-        if passphrase:
-            privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                                open(path, 'rb').read(),
-                                                to_bytes(passphrase))
-        else:
-            privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                                open(path, 'rb').read())
+        with open(path, 'rb') as b_priv_key_fh:
+            priv_key_detail = b_priv_key_fh.read()
 
-        return privatekey
+        if passphrase:
+            return crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                          priv_key_detail,
+                                          to_bytes(passphrase))
+        else:
+            return crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                          priv_key_detail)
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
 
@@ -97,9 +100,9 @@ def load_certificate(path):
     """Load the specified certificate."""
 
     try:
-        cert_content = open(path, 'rb').read()
-        cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert_content)
-        return cert
+        with open(path, 'rb') as cert_fh:
+            cert_content = cert_fh.read()
+        return crypto.load_certificate(crypto.FILETYPE_PEM, cert_content)
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
 
@@ -108,9 +111,9 @@ def load_certificate_request(path):
     """Load the specified certificate signing request."""
 
     try:
-        csr_content = open(path, 'rb').read()
-        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, csr_content)
-        return csr
+        with open(path, 'rb') as csr_fh:
+            csr_content = csr_fh.read()
+        return crypto.load_certificate_request(crypto.FILETYPE_PEM, csr_content)
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
 
@@ -126,6 +129,37 @@ def parse_name_field(input_dict):
         else:
             result.append((key, input_dict[key]))
     return result
+
+
+def convert_relative_to_datetime(relative_time_string):
+    """Get a datetime.datetime or None from a string in the time format described in sshd_config(5)"""
+
+    parsed_result = re.match(
+        r"^(?P<prefix>[+-])((?P<weeks>\d+)[wW])?((?P<days>\d+)[dD])?((?P<hours>\d+)[hH])?((?P<minutes>\d+)[mM])?((?P<seconds>\d+)[sS]?)?$",
+        relative_time_string)
+
+    if parsed_result is None or len(relative_time_string) == 1:
+        # not matched or only a single "+" or "-"
+        return None
+
+    offset = datetime.timedelta(0)
+    if parsed_result.group("weeks") is not None:
+        offset += datetime.timedelta(weeks=int(parsed_result.group("weeks")))
+    if parsed_result.group("days") is not None:
+        offset += datetime.timedelta(days=int(parsed_result.group("days")))
+    if parsed_result.group("hours") is not None:
+        offset += datetime.timedelta(hours=int(parsed_result.group("hours")))
+    if parsed_result.group("minutes") is not None:
+        offset += datetime.timedelta(
+            minutes=int(parsed_result.group("minutes")))
+    if parsed_result.group("seconds") is not None:
+        offset += datetime.timedelta(
+            seconds=int(parsed_result.group("seconds")))
+
+    if parsed_result.group("prefix") == "+":
+        return datetime.datetime.utcnow() + offset
+    else:
+        return datetime.datetime.utcnow() - offset
 
 
 @six.add_metaclass(abc.ABCMeta)

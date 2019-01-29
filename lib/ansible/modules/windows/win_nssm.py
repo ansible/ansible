@@ -24,12 +24,14 @@ options:
   name:
     description:
       - Name of the service to operate on.
+    type: str
     required: true
   state:
     description:
       - State of the service on the system.
       - Note that NSSM actions like "pause", "continue", "rotate" do not fit the declarative style of ansible, so these should be implemented via the
         ansible command module.
+    type: str
     choices: [ absent, present, started, stopped, restarted ]
     default: started
   application:
@@ -44,33 +46,41 @@ options:
   stdout_file:
     description:
       - Path to receive output.
+    type: str
   stderr_file:
     description:
       - Path to receive error output.
+    type: str
   app_parameters:
     description:
       - A string representing a dictionary of parameters to be passed to the application when it starts.
       - Use either this or C(app_parameters_free_form), not both.
+    type: str
   app_parameters_free_form:
-    version_added: "2.3.0"
     description:
       - Single string of parameters to be passed to the service.
       - Use either this or C(app_parameters), not both.
+    type: str
+    version_added: "2.3"
   dependencies:
     description:
       - Service dependencies that has to be started to trigger startup, separated by comma.
+    type: list
   user:
     description:
       - User to be used for service startup.
+    type: str
   password:
     description:
       - Password to be used for service startup.
+    type: str
   start_mode:
     description:
       - If C(auto) is selected, the service will start at bootup.
       - C(delayed) causes a delayed but automatic start after boot (added in version 2.5).
       - C(manual) means that the service will start only when another service needs it.
       - C(disabled) means that the service will stay off, regardless if it is needed or not.
+    type: str
     choices: [ auto, delayed, disabled, manual ]
     default: auto
 seealso:

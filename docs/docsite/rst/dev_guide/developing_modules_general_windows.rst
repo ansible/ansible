@@ -32,7 +32,7 @@ Vagrant Cloud.
 
 This guide will use the Vagrant boxes created by the `packer-windoze <https://github.com/jborean93/packer-windoze>`_
 repository which have also been uploaded to `Vagrant Cloud <https://app.vagrantup.com/boxes/search?utf8=%E2%9C%93&sort=downloads&provider=&q=jborean93>`_.
-To find out more info on how these images are created, please go to the Github
+To find out more info on how these images are created, please go to the GitHub
 repo and look at the ``README`` file.
 
 Before you can get started, the following programs must be installed (please consult the Vagrant and

@@ -112,22 +112,22 @@ elapsed:
   type: float
   sample: 3.14159265
 matched_processes:
-  description: List of matched processes (either stopped or started)
+  description: List of matched processes (either stopped or started).
   returned: always
   type: complex
   contains:
     name:
-      description: The name of the matched process
+      description: The name of the matched process.
       returned: always
       type: str
       sample: svchost
     owner:
-      description: The owner of the matched process
+      description: The owner of the matched process.
       returned: when supported by PowerShell
       type: str
       sample: NT AUTHORITY\SYSTEM
     pid:
-      description: The PID of the matched process
+      description: The PID of the matched process.
       returned: always
       type: int
       sample: 7908

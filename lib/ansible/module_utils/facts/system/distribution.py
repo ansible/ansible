@@ -26,8 +26,12 @@ from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
-def get_uname_version(module):
-    rc, out, err = module.run_command(['uname', '-v'])
+def get_uname(module, flags=('-v')):
+    if isinstance(flags, str):
+        flags = flags.split()
+    command = ['uname']
+    command.extend(flags)
+    rc, out, err = module.run_command(command)
     if rc == 0:
         return out
     return None
@@ -94,6 +98,8 @@ class DistributionFiles:
         'Archlinux': 'Arch Linux'
     }
 
+    STRIP_QUOTES = r'\'\"\\'
+
     def __init__(self, module):
         self.module = module
 
@@ -110,6 +116,7 @@ class DistributionFiles:
 
     def _parse_dist_file(self, name, dist_file_content, path, collected_facts):
         dist_file_dict = {}
+        dist_file_content = dist_file_content.strip(DistributionFiles.STRIP_QUOTES)
         if name in self.SEARCH_STRING:
             # look for the distribution string in the data and replace according to RELEASE_NAME_MAP
             # only the distribution name is set, the version is assumed to be correct from distro.linux_distribution()
@@ -322,9 +329,14 @@ class DistributionFiles:
         elif 'SteamOS' in data:
             debian_facts['distribution'] = 'SteamOS'
             # nothing else to do, SteamOS gets correct info from python functions
+        elif path == '/etc/lsb-release' and 'Kali' in data:
+            debian_facts['distribution'] = 'Kali'
+            release = re.search('DISTRIB_RELEASE=(.*)', data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
         elif 'Devuan' in data:
             debian_facts['distribution'] = 'Devuan'
-            release = re.search(r"PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
+            release = re.search(r"PRETTY_NAME=\"?[^(\"]+ \(?([^) \"]+)\)?", data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
             version = re.search(r"VERSION_ID=\"(.*)\"", data)
@@ -446,7 +458,7 @@ class Distribution(object):
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint', 'SteamOS', 'Devuan'],
+                                'Linux Mint', 'SteamOS', 'Devuan', 'Kali'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
@@ -579,6 +591,8 @@ class Distribution(object):
         data = get_file_content('/etc/release').splitlines()[0]
 
         if 'Solaris' in data:
+            # for solaris 10 uname_r will contain 5.10, for solaris 11 it will have 5.11
+            uname_r = get_uname(self.module, flags=['-r'])
             ora_prefix = ''
             if 'Oracle Solaris' in data:
                 data = data.replace('Oracle ', '')
@@ -586,9 +600,10 @@ class Distribution(object):
             sunos_facts['distribution'] = data.split()[0]
             sunos_facts['distribution_version'] = data.split()[1]
             sunos_facts['distribution_release'] = ora_prefix + data
+            sunos_facts['distribution_major_version'] = uname_r.split('.')[1].rstrip()
             return sunos_facts
 
-        uname_v = get_uname_version(self.module)
+        uname_v = get_uname(self.module, flags=['-v'])
         distribution_version = None
 
         if 'SmartOS' in data:

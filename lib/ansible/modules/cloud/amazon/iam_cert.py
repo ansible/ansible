@@ -218,11 +218,14 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
 def load_data(cert, key, cert_chain):
     # if paths are provided rather than lookups read the files and return the contents
     if cert and os.path.isfile(cert):
-        cert = open(cert, 'r').read().rstrip()
+        with open(cert, 'r') as cert_fh:
+            cert = cert_fh.read().rstrip()
     if key and os.path.isfile(key):
-        key = open(key, 'r').read().rstrip()
+        with open(key, 'r') as key_fh:
+            key = key_fh.read().rstrip()
     if cert_chain and os.path.isfile(cert_chain):
-        cert_chain = open(cert_chain, 'r').read()
+        with open(cert_chain, 'r') as cert_chain_fh:
+            cert_chain = cert_chain_fh.read()
     return cert, key, cert_chain
 
 

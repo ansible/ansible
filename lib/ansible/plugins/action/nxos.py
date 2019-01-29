@@ -26,7 +26,7 @@ import sys
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.nxos.nxos import nxos_provider_spec
 from ansible.utils.display import Display
@@ -34,11 +34,12 @@ from ansible.utils.display import Display
 display = Display()
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        self._config_module = True if self._task.action == 'nxos_config' else False
         socket_path = None
 
         if (self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
@@ -54,7 +55,8 @@ class ActionModule(_ActionModule):
                 self._task.args['username'] = self._play_context.connection_user
 
         if self._task.action == 'nxos_install_os':
-            if C.PERSISTENT_COMMAND_TIMEOUT < 600 or C.PERSISTENT_CONNECT_TIMEOUT < 600:
+            connection = self._connection
+            if connection.get_option('persistent_command_timeout') < 600 or connection.get_option('persistent_connect_timeout') < 600:
                 msg = 'PERSISTENT_COMMAND_TIMEOUT and PERSISTENT_CONNECT_TIMEOUT'
                 msg += ' must be set to 600 seconds or higher when using nxos_install_os module'
                 return {'failed': True, 'msg': msg}

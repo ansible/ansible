@@ -44,7 +44,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - "'test-topic1' in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a topic that already exists
   gcp_pubsub_topic:
@@ -82,7 +82,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - "'test-topic1' not in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a topic that does not exist
   gcp_pubsub_topic:

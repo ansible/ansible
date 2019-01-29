@@ -180,10 +180,26 @@ class SunOSHardware(Hardware):
         """
         if out:
             system_conf = out.split('\n')[0]
-            found = re.search(r'(\w+\sEnterprise\s\w+)', system_conf)
 
+            # If you know of any other manufacturers whose names appear in
+            # the first line of prtdiag's output, please add them here:
+            vendors = [
+                "Fujitsu",
+                "Oracle Corporation",
+                "QEMU",
+                "Sun Microsystems",
+                "VMware, Inc.",
+            ]
+            vendor_regexp = "|".join(map(re.escape, vendors))
+            system_conf_regexp = (r'System Configuration:\s+'
+                                  + r'(' + vendor_regexp + r')\s+'
+                                  + r'(?:sun\w+\s+)?'
+                                  + r'(.+)')
+
+            found = re.match(system_conf_regexp, system_conf)
             if found:
-                dmi_facts['product_name'] = found.group(1)
+                dmi_facts['system_vendor'] = found.group(1)
+                dmi_facts['product_name'] = found.group(2)
 
         return dmi_facts
 

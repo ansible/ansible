@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -49,10 +48,9 @@ options:
     description:
     - The cluster this node pool belongs to.
     - 'This field represents a link to a Cluster resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
-      task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
-      you can set this cluster to a dictionary with the name key where the value is
-      the name of your Cluster'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_container_cluster
+      task and then set this cluster field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -168,7 +166,7 @@ items:
         preemptible:
           description:
           - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-            for more inforamtion about preemptible VM instances.'
+            for more information about preemptible VM instances.'
           returned: success
           type: bool
     initialNodeCount:
@@ -249,7 +247,7 @@ items:
       description:
       - The cluster this node pool belongs to.
       returned: success
-      type: dict
+      type: str
     zone:
       description:
       - The zone where the node pool is deployed.
@@ -269,12 +267,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            zone=dict(required=True, type='str'),
-            cluster=dict(required=True, type='dict')
-        )
-    )
+    module = GcpModule(argument_spec=dict(zone=dict(required=True, type='str'), cluster=dict(required=True)))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
@@ -284,18 +277,12 @@ def main():
         items = items.get('nodePools')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'zone': module.params['zone'],
-        'cluster': replace_resource_dict(module.params['cluster'], 'name')
-    }
+    res = {'project': module.params['project'], 'zone': module.params['zone'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
     return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools".format(**res)
 
 

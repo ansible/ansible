@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -67,7 +66,7 @@ items:
       description:
       - A reference to a Topic resource.
       returned: success
-      type: dict
+      type: str
     pushConfig:
       description:
       - If push delivery is used with this subscription, this field is used to configure
@@ -115,10 +114,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-        )
-    )
+    module = GcpModule(argument_spec=dict())
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']
@@ -128,9 +124,7 @@ def main():
         items = items.get('subscriptions')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 

@@ -25,6 +25,7 @@ options:
       - The text to be spoken.
       - Use either C(msg) or C(msg_file).
       - Optional so that you can use this module just to play sounds.
+    type: str
   msg_file:
     description:
       - Full path to a windows format text file containing the text to be spokend.
@@ -36,6 +37,7 @@ options:
       - Which voice to use. See notes for how to discover installed voices.
       - If the requested voice is not available the default voice will be used.
         Example voice names from Windows 10 are C(Microsoft Zira Desktop) and C(Microsoft Hazel Desktop).
+    type: str
     default: system default voice
   speech_speed:
     description:
@@ -98,17 +100,17 @@ EXAMPLES = r'''
 
 RETURN = r'''
 message_text:
-    description: the text that the module attempted to speak
+    description: The text that the module attempted to speak.
     returned: success
     type: str
     sample: "Warning, deployment commencing in 5 minutes."
 voice:
-    description: the voice used to speak the text.
+    description: The voice used to speak the text.
     returned: success
     type: str
     sample: Microsoft Hazel Desktop
 voice_info:
-    description: the voice used to speak the text.
+    description: The voice used to speak the text.
     returned: when requested voice could not be loaded
     type: str
     sample: Could not load voice TestVoice, using system default voice

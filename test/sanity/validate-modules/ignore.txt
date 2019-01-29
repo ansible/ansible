@@ -120,7 +120,7 @@ lib/ansible/modules/cloud/cloudstack/cs_vpn_connection.py E322
 lib/ansible/modules/cloud/cloudstack/cs_zone.py E322
 lib/ansible/modules/cloud/cloudstack/cs_zone.py E325
 lib/ansible/modules/cloud/cloudstack/cs_zone.py E326
-lib/ansible/modules/cloud/digital_ocean/digital_ocean.py E322
+lib/ansible/modules/cloud/digital_ocean/_digital_ocean.py E322
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_floating_ip.py E322
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_floating_ip.py E324
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_floating_ip.py E325
@@ -377,7 +377,6 @@ lib/ansible/modules/database/mongodb/mongodb_parameter.py E317
 lib/ansible/modules/database/mongodb/mongodb_parameter.py E323
 lib/ansible/modules/database/mongodb/mongodb_parameter.py E326
 lib/ansible/modules/database/mongodb/mongodb_user.py E322
-lib/ansible/modules/database/mongodb/mongodb_user.py E324
 lib/ansible/modules/database/mysql/mysql_replication.py E325
 lib/ansible/modules/database/mysql/mysql_replication.py E326
 lib/ansible/modules/database/mysql/mysql_user.py E322
@@ -402,10 +401,7 @@ lib/ansible/modules/database/proxysql/proxysql_scheduler.py E322
 lib/ansible/modules/database/vertica/vertica_role.py E322
 lib/ansible/modules/database/vertica/vertica_schema.py E322
 lib/ansible/modules/database/vertica/vertica_user.py E322
-lib/ansible/modules/files/acl.py E322
-lib/ansible/modules/files/acl.py E325
 lib/ansible/modules/files/assemble.py E323
-lib/ansible/modules/files/assemble.py E324
 lib/ansible/modules/files/blockinfile.py E324
 lib/ansible/modules/files/blockinfile.py E326
 lib/ansible/modules/files/copy.py E322
@@ -794,7 +790,6 @@ lib/ansible/modules/packaging/os/yum_repository.py E324
 lib/ansible/modules/packaging/os/zypper.py E326
 lib/ansible/modules/remote_management/foreman/foreman.py E322
 lib/ansible/modules/remote_management/foreman/foreman.py E325
-lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E324
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_power.py E326
@@ -874,10 +869,6 @@ lib/ansible/modules/storage/zfs/zfs_facts.py E323
 lib/ansible/modules/storage/zfs/zpool_facts.py E323
 lib/ansible/modules/system/aix_inittab.py E324
 lib/ansible/modules/system/aix_inittab.py E326
-lib/ansible/modules/system/authorized_key.py E322
-lib/ansible/modules/system/authorized_key.py E324
-lib/ansible/modules/system/authorized_key.py E325
-lib/ansible/modules/system/beadm.py E324
 lib/ansible/modules/system/capabilities.py E322
 lib/ansible/modules/system/cron.py E324
 lib/ansible/modules/system/cronvar.py E324
@@ -894,7 +885,6 @@ lib/ansible/modules/system/osx_defaults.py E322
 lib/ansible/modules/system/osx_defaults.py E324
 lib/ansible/modules/system/pamd.py E324
 lib/ansible/modules/system/pamd.py E326
-lib/ansible/modules/system/parted.py E326
 lib/ansible/modules/system/puppet.py E322
 lib/ansible/modules/system/puppet.py E325
 lib/ansible/modules/system/runit.py E322
@@ -907,14 +897,11 @@ lib/ansible/modules/system/service.py E323
 lib/ansible/modules/system/service.py E210
 lib/ansible/modules/system/systemd.py E324
 lib/ansible/modules/system/solaris_zone.py E324
-lib/ansible/modules/system/svc.py E322
-lib/ansible/modules/system/svc.py E324
 lib/ansible/modules/system/ufw.py E322
 lib/ansible/modules/system/ufw.py E326
 lib/ansible/modules/system/user.py E210
 lib/ansible/modules/system/user.py E324
 lib/ansible/modules/system/user.py E327
-lib/ansible/modules/system/vdo.py E324
 lib/ansible/modules/system/vdo.py E326
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential.py E326
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py E324
