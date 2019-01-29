@@ -225,23 +225,16 @@ class PullCLI(CLI):
 
             if checkout_key in repo_opts:
                 display.warning("--module-args '%s' argument was provided but is being overridden because of deprecated -C or --checkout" % checkout_key)
-            else:
-                display.warning("-C and --checkout are deprecated, use --module-args '%s=<%s>'" % (checkout_key, checkout_key))
 
             repo_opts[checkout_key] = context.CLIARGS['checkout']
 
         if context.CLIARGS['clean']:
             repo_opts['force'] = 'yes'
 
-        if context.CLIARGS['fullclone'] and context.CLIARGS['module_name'] in ['git', 'subversion']:
-            display.warning('--full is deprecated')
-
         if context.CLIARGS['module_name'] == 'git':
             if context.CLIARGS['accept_host_key']:
                 if 'accept_hostkey' in repo_opts:
                     display.warning("--module-args 'accept_hostkey' argument was provided but is being overridden because of deprecated --accept-host-key")
-                else:
-                    display.warning("--accept-host-key is deprecated, use --module-args 'accept_hostkey=yes'")
 
                 repo_opts['accept_hostkey'] = 'yes'
 
@@ -261,16 +254,12 @@ class PullCLI(CLI):
             if context.CLIARGS['tracksubs']:
                 if 'track_submodules' in repo_opts:
                     display.warning("--module-args 'track_submodules' argument was provided but is being overridden because of deprecated --track-subs")
-                else:
-                    display.warning("--track-subs is deprecated use --module-args 'track_submodules=yes'")
 
                 repo_opts['track_submodules'] = 'yes'
 
             if context.CLIARGS['verify']:
                 if 'verify_commit' in repo_opts:
                     display.warning("--module-args 'verify_commit' argument was provided but is being overridden because of deprecated --verify-commit")
-                else:
-                    display.warning("--verify-commit is deprecated, use --module-args 'verify_commit=yes'")
 
                 repo_opts['verify_commit'] = 'yes'
         elif context.CLIARGS['module_name'] == 'subversion':
