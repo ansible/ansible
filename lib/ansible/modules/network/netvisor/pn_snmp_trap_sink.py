@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pn_snmp_trap_sink
-author: "Pluribus Networks (devops@pluribusnetworks.com)"
+author: "Pluribus Networks (@rajaspachipulusu17)"
 version_added: "2.8"
 short_description: CLI command to create/delete snmp-trap-sink
 description:
