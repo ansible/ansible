@@ -169,7 +169,7 @@ class ElasticLoadBalancerV2(object):
         # on the load balancer
         for subnet in self.elb['AvailabilityZones']:
             this_mapping = {'SubnetId': subnet['SubnetId']}
-            for address in subnet['LoadBalancerAddresses']:
+            for address in subnet.get('LoadBalancerAddresses', []):
                 if 'AllocationId' in address:
                     this_mapping['AllocationId'] = address['AllocationId']
                     break
