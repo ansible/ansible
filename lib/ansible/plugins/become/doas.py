@@ -66,8 +66,23 @@ DOCUMENTATION = """
             ini:
               - section: doas_become_plugin
                 key: password
+        prompt_l10n:
+            description:
+                - List of localized strings to match for prompt detection
+                - If empty we'll use the built in one
+            default: []
+            ini:
+              - section: doas_become_plugin
+                key: localized_prompts
+            vars:
+              - name: ansible_doas_prompt_l10n
+            env:
+              - name: ANSIBLE_DOAS_PROMPT_L10N
 """
 
+import re
+
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.become import BecomeBase
 
 
@@ -79,11 +94,15 @@ class BecomeModule(BecomeBase):
     fail = ('Permission denied',)
     missing = ('Authorization required',)
 
-    def __init__(self):
+    def check_password_prompt(self, b_output):
+        ''' checks if the expected passwod prompt exists in b_output '''
 
-        super(BecomeModule, self).__init__()
-        self.prompt = 'doas ('
         # FIXME: more accurate would be: 'doas (%s@' % remote_user
+        # however become plugins don't have that information currently
+        b_prompts = [to_bytes(p) for p in self.get_option('prompt_l10n')] or [b'doas (']
+        b_prompt = b"|".join(b_prompts)
+
+        return bool(re.match(b_prompt, b_output))
 
     def build_become_command(self, cmd, shell):
         super(BecomeModule, self).build_become_command(cmd, shell)
@@ -91,10 +110,12 @@ class BecomeModule(BecomeBase):
         if not cmd:
             return cmd
 
+        self.prompt = True
+
         become_exe = self.get_option('become_exe') or self.name
 
         flags = self.get_option('become_flags') or ''
-        if self.get_option('become_pass') and '-n' not in flags:
+        if not self.get_option('become_pass') and '-n' not in flags:
             flags += ' -n'
 
         user = self.get_option('become_user') or ''
