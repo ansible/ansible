@@ -29,7 +29,7 @@
       size: C1
   register: output
 
-- name: Assert creating redis cache check mode
+- name: Assert creating redis cache
   assert:
     that:
       - output.changed
@@ -37,7 +37,7 @@
 
 - name: Get facts
   azure_rm_rediscache_facts:
-    resource_gorup: "{{ resource_group }}"
+    resource_group: "{{ resource_group }}"
     name: "{{ redis_name }}"
   register: facts
 
@@ -178,7 +178,7 @@
 
 - name: Get facts
   azure_rm_rediscache_facts:
-    resource_gorup: "{{ resource_group }}"
+    resource_group: "{{ resource_group }}"
     name: "{{ redis_name }}2"
     return_access_keys: True
   register: facts
