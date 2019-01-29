@@ -25,8 +25,6 @@ import json
 
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 
-
-
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
