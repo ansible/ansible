@@ -261,9 +261,10 @@ class ElbManager:
 
         elbs = []
         marker = None
+        ec2_elbs = ec2_elbs if ec2_elbs else None
         while True:
             try:
-                newelbs = elb.get_all_load_balancers(marker=marker)
+                newelbs = elb.get_all_load_balancers(load_balancer_names=ec2_elbs, marker=marker)
                 marker = newelbs.next_marker
                 elbs.extend(newelbs)
                 if not marker:
