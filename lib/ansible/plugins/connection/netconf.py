@@ -206,8 +206,10 @@ try:
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml
     HAS_NCCLIENT = True
-except ImportError:
+    NCCLIENT_IMP_ERR = None
+except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
     HAS_NCCLIENT = False
+    NCCLIENT_IMP_ERR = err
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
@@ -270,8 +272,8 @@ class Connection(NetworkConnectionBase):
     def _connect(self):
         if not HAS_NCCLIENT:
             raise AnsibleError(
-                'ncclient is required to use the netconf connection type.\n'
-                'Please run pip install ncclient'
+                'ncclient is required to use the netconf connection type: %s.\n'
+                'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
             )
 
         self.queue_message('log', 'ssh connection done, starting ncclient')
