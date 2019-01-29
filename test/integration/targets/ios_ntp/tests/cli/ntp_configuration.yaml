@@ -1,7 +1,19 @@
 ---
-- name: Configure ntp
+- name: Remove ntp (if set)
   ios_ntp:
-    server:
+    server: 10.75.32.5
+    source_int: Loopback0
+    acl: NTP_ACL
+    logging: true
+    key_id: 10
+    auth_key: 15435A030726242723273C21181319000A
+    auth: true
+    state: absent
+  ignore_errors: true
+
+- name: Reconfigure ntp as before
+  ios_ntp:
+    server: 10.75.32.5
     source_int: Loopback0
     acl: NTP_ACL
     logging: true
@@ -9,7 +21,22 @@
     auth_key: 15435A030726242723273C21181319000A
     auth: true
     state: present
-  register: result
 
-- debug:
-    msg: "{{ result }}"
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Ensure idempotence
+  ios_ntp:
+    server: 10.75.32.5
+    source_int: Loopback0
+    acl: NTP_ACL
+    logging: true
+    key_id: 10
+    auth_key: 15435A030726242723273C21181319000A
+    auth: true
+    state: present
+
+- assert:
+    that:
+      - "result.changed == false"
