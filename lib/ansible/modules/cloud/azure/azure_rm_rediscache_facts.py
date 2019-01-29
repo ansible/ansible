@@ -44,7 +44,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu <@yungezz>"
+    - "Yunge Zhu (@yungezz)"
 '''
 
 EXAMPLES = '''
