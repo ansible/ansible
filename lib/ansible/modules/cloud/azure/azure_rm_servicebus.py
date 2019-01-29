@@ -42,13 +42,17 @@ options:
             - Servicebus namespace name.
             - A namespace is a scoping container for all messaging components.
             - Multiple queues and topics can reside within a single namespace, and namespaces often serve as application containers.
-        required: true
+            - Required when C(type) is not C(namespace).
+    location:
+        description:
+            - Namespace location.
     type:
         description:
             - Type of the messaging application.
             - Queue enables you to store messages until the receiving application is available to receive and process them.
             - Topic and subscriptions enable 1:n relationships between publishers and subscribers.
         choices:
+            - namespace
             - queue
             - topic
             - subscription
