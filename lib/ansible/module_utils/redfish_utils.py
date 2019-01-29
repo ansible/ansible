@@ -513,8 +513,8 @@ class RedfishUtils(object):
         return result
 
     def update_firmware_simple(self, image_uri: str):
-        uri = self.root_uri + self.firmware_uri + "/Actions/UpdateService.SimpleUpdate"
-        payload = {"ImageURI", image_uri}
+        uri = self.root_uri + self.update_uri + "Actions/UpdateService.SimpleUpdate"
+        payload = {'ImageURI': image_uri}
         response = self.post_request(uri, payload, HEADERS)
         if response['ret'] is False:
             return response
