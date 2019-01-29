@@ -9,14 +9,14 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
 module: junos_ping
 short_description: Tests reachability using ping from devices running Juniper JUNOS
 description:
-  - Tests reachability using ping from a VyOS device to a remote destination.
+  - Tests reachability using ping from devices running Juniper JUNOS to a remote destination.
   - Tested against Junos (17.3R1.10)
   - For a general purpose network module, see the M(net_ping) module.
   - For Windows targets, use the M(win_ping) module instead.
@@ -149,7 +149,7 @@ def main():
     interface = module.params['interface']
     warnings = list()
 
-    results = {}
+    results = {'changed': False}
     if warnings:
         results["warnings"] = warnings
 
