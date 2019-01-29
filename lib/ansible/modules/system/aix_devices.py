@@ -367,7 +367,8 @@ def main():
                 result['msg'] = "Device %s does not exist." % device
 
     else:
-        module.fail_json(msg='Unexpected state %s.' % state, **result)
+        result['msg'] = "Unexpected state %s." % state
+        module.fail_json(**result)
 
     module.exit_json(**result)
 
