@@ -1,0 +1,2 @@
+test_win_rds_settings_path: '{{win_output_dir}}\win_rds_settings'
+rds_cert_suject: rdg.test.com
