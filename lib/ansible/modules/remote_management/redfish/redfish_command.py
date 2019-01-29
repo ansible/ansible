@@ -163,6 +163,7 @@ def main():
             userpswd=dict(no_log=True),
             userrole=dict(),
             bootdevice=dict(),
+            firmware_uri=dict(),
         ),
         supports_check_mode=False
     )
@@ -232,7 +233,10 @@ def main():
                     module.fail_json(msg=to_native(result['msg']))
                 result = rf_utils.create_bios_config_job()
             elif command == "UpdateFirmware":
-                result = rf_utils.update_firmware_simple(module.params['uri'])
+                result = rf_utils._find_updateservice_resource(rf_uri)
+                if result['ret'] is False:
+                    module.fail_json(msg=to_native(result['msg']))
+                result = rf_utils.update_firmware_simple(module.params['firmware_uri'])
 
     elif category == "Manager":
         MANAGER_COMMANDS = {
