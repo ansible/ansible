@@ -18,13 +18,14 @@ DOCUMENTATION = r'''
 module: vmware_host_scanhba
 short_description: Rescan host HBA's and optionally refresh the storage system
 description:
-- This module can force a rescan of the hosts HBA subsystem which is needed when wanting to mount a new datastore if you can't wait for the automatic updates which happen frequently.
-- For example, you could use this before using vmware_host_datastore to mount a new datastore to ensure your device/volume is ready, you can also optionally force a Refresh of the Storage System in vCenter/ESXi Web Client.
+- This module can force a rescan of the hosts HBA subsystem which is needed when wanting to mount a new datastore.
+- You could use this before using vmware_host_datastore to mount a new datastore to ensure your device/volume is ready, 
+- You can also optionally force a Refresh of the Storage System in vCenter/ESXi Web Client.
 - All parameters and VMware object names are case sensitive.
 version_added: '2.8'
 author:
-- Michael Eaton <meaton@iforium.com>
-notes: 
+- Michael Eaton
+notes:
 - Tested on vSphere 6.0
 requirements:
 - python >= 2.6
@@ -35,7 +36,7 @@ options:
     - ESXi hostname to Rescan the storage subsystem on.
     required: true
   refresh_storage:
-    description: 
+    description:
     - Refresh the storage system in vCenter/ESXi Web Client
     required: false
     default: false
@@ -73,10 +74,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import vmware_argument_spec, PyVmomi, find_obj
 from ansible.module_utils._text import to_native
 
+
 class VmwareHbaScan(PyVmomi):
     def __init__(self, module):
         super(VmwareHbaScan, self).__init__(module)
-    
+
     def scan(self):
         esxi_host_name = self.params.get('esxi_hostname', None)
         refresh_storage = self.params.get('refresh_storage', bool)
@@ -85,6 +87,7 @@ class VmwareHbaScan(PyVmomi):
         host.configManager.storageSystem.RescanAllHba()
         if refresh_storage is True:
             host.configManager.storageSystem.RefreshStorageSystem()
+
 
 def main():
     argument_spec = vmware_argument_spec()
