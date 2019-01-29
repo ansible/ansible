@@ -577,9 +577,9 @@ def command_windows_integration(args):
                     manage = ManageWindowsCI(remote)
                     manage.upload("test/runner/setup/windows-httptester.ps1", watcher_path)
 
-                    # need to use -Command as we cannot pass an array of values with -File
-                    script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command .\\%s -Hosts %s" \
-                             % (watcher_path, ", ".join(HTTPTESTER_HOSTS))
+                    # We cannot pass an array of string with -File so we just use a delimiter for multiple values
+                    script = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\%s -Hosts \"%s\"" \
+                             % (watcher_path, "|".join(HTTPTESTER_HOSTS))
                     if args.verbosity > 3:
                         script += " -Verbose"
                     manage.ssh(script, options=ssh_options, force_pty=False)
@@ -594,7 +594,7 @@ def command_windows_integration(args):
                 for remote in [r for r in remotes if r.version != '2008']:
                     # delete the tmp file that keeps the http-tester alive
                     manage = ManageWindowsCI(remote)
-                    manage.ssh("del %s /F /Q" % watcher_path)
+                    manage.ssh("cmd.exe /c \"del %s /F /Q\"" % watcher_path, force_pty=False)
 
             watcher_path = "ansible-test-http-watcher-%s.ps1" % time.time()
             pre_target = forward_ssh_ports
