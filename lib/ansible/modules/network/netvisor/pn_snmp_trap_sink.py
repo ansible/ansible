@@ -48,6 +48,7 @@ options:
   pn_type:
     description:
       - trap type.
+    type: str
     choices: ['TRAP_TYPE_V1_TRAP', 'TRAP_TYPE_V2C_TRAP', 'TRAP_TYPE_V2_INFORM']
     default: 'TRAP_TYPE_V2C_TRAP'
 """
