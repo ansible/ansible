@@ -32,6 +32,7 @@ options:
         C(absent) to delete snmp-vacm and C(update) to modify snmp-vacm.
     type: str
     required: true
+    choices: ['present', 'absent', 'update']
   pn_oid_restrict:
     description:
       - restrict OID.
