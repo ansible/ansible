@@ -517,7 +517,7 @@ class VMwareVspanSession(PyVmomi):
         results = dict(changed=False, result="")
         promiscous_ports = self.turn_off_promiscuous()
         if not self.check_if_session_name_is_free():
-            self.module.fail_json(msg='There is another VSpan Session with this name.')
+            self.module.fail_json(msg="There is another VSpan Session with the name: {0:s}.".format(self.name))
         # Locate the ports, we want to use
         dv_ports = self.dv_switch.FetchDVPorts(vim.dvs.PortCriteria(portKey=[str(self.source_port_received),
                                                                              str(self.source_port_transmitted),
