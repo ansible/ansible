@@ -1296,20 +1296,17 @@ class DockerServiceManager():
         return msg, changed, rebuilt, differences.get_legacy_docker_diffs(), facts
 
     def run_safe(self):
-        try:
-            return self.run()
-        except APIError as e:
-            # Sometimes Version.Index will have changed between an inspect and
-            # update. If this is encountered we'll retry the update.
-            if (
-                self.retries > 0
-                and 'update out of sequence' in str(e.explanation)
-            ):
-                self.retries -= 1
-                time.sleep(1)
-                return self.run_safe()
-            else:
-                raise
+        while self.retries > 0:
+            try:
+                return self.run()
+            except APIError as e:
+                # Sometimes Version.Index will have changed between an inspect and
+                # update. If this is encountered we'll retry the update.
+                if 'update out of sequence' in str(e.explanation):
+                    self.retries -= 1
+                    time.sleep(1)
+                else:
+                    raise
 
 
 def _detect_publish_mode_usage(client):
