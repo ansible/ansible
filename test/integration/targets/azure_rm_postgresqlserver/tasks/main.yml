@@ -177,7 +177,7 @@
   azure_rm_postgresqlconfiguration_facts:
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
-    setting_name: deadlock_timeout
+    name: deadlock_timeout
   register: output
 - name: Assert that facts are returned
   assert:

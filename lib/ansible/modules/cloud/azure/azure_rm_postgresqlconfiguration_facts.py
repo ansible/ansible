@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Zim Kalinowski, (@zikalino)
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -24,13 +24,13 @@ description:
 options:
     resource_group:
         description:
-            - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
+            - The name of the resource group that contains the resource.
         required: True
     server_name:
         description:
             - The name of the server.
         required: True
-    setting_name:
+    name:
         description:
             - Setting name.
 
@@ -47,12 +47,12 @@ EXAMPLES = '''
     azure_rm_postgresqlconfiguration_facts:
       resource_group: testrg
       server_name: testpostgresqlserver
-      setting_name: deadlock_timeout
+      name: deadlock_timeout
 
   - name: Get all settings of PostgreSQL Configuration
     azure_rm_postgresqlconfiguration_facts:
-      resource_group: resource_group_name
-      server_name: server_name
+      resource_group: testrg
+      server_name: testpostgresqlserver
 '''
 
 RETURN = '''
@@ -66,7 +66,7 @@ settings:
                 - Setting resource ID
             returned: always
             type: str
-            sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/testrg/providers/Microsoft.DBforPostgreSQL/servers/testpostgresqlser
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testrg/providers/Microsoft.DBforPostgreSQL/servers/testpostgresqlser
                      ver/configurations/deadlock_timeout"
         name:
             description:
@@ -118,7 +118,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            setting_name=dict(
+            name=dict(
                 type='str'
             )
         )
@@ -130,7 +130,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
-        self.setting_name = None
+        self.name = None
         super(AzureRMPostgreSQLConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -139,7 +139,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        if self.setting_name is not None:
+        if self.name is not None:
             self.results['settings'] = self.get()
         else:
             self.results['settings'] = self.list_by_server()
@@ -156,7 +156,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         try:
             response = self.mgmt_client.configurations.get(resource_group_name=self.resource_group,
                                                            server_name=self.server_name,
-                                                           configuration_name=self.setting_name)
+                                                           configuration_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Configurations.')
