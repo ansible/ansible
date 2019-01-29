@@ -169,11 +169,11 @@ options:
             - Works only with >= Zabbix 3.2
     acknowledge_default_message:
         description:
-            - Acknowledge operation message text.
+            - Update operation (known as "Acknowledge operation" before Zabbix 4.0) message text.
             - Works only with >= Zabbix 3.4
     acknowledge_default_subject:
         description:
-            - Acknowledge operation message subject.
+            - Update operation (known as "Acknowledge operation" before Zabbix 4.0) message subject.
             - Works only with >= Zabbix 3.4
     operations:
         type: list
