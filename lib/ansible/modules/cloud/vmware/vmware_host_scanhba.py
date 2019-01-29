@@ -24,6 +24,7 @@ description:
 version_added: '2.8'
 author:
 - Michael Eaton <meaton@iforium.com>
+notes: 
 - Tested on vSphere 6.0
 requirements:
 - python >= 2.6
@@ -75,7 +76,6 @@ from ansible.module_utils._text import to_native
 class VmwareHbaScan(PyVmomi):
     def __init__(self, module):
         super(VmwareHbaScan, self).__init__(module)
-
     
     def scan(self):
         esxi_host_name = self.params.get('esxi_hostname', None)
@@ -96,7 +96,6 @@ def main():
                            supports_check_mode=False)
 
     hbascan = VmwareHbaScan(module)
-   
     hbascan.scan()
 
     module.exit_json(changed=True)
