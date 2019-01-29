@@ -160,6 +160,10 @@ Noteworthy module changes
 * The ``digital_ocean`` module has been deprecated in favor of modules that do not require external dependencies.
   This allows for more flexibility and better module support.
 
+* The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
+
+* The ``docker_swarm_service`` module no longer sets a default for the ``user`` option. Before, the default was ``root``.
+
 Plugins
 =======
 
