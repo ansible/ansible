@@ -286,7 +286,8 @@ def run(module, device_operations, connection, candidate, running, rollback_id):
 
             kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
                       'comment': commit_comment}
-            connection.edit_config(**kwargs)
+            if commit:
+                connection.edit_config(**kwargs)
             result['changed'] = True
 
         if banner_diff:
@@ -295,7 +296,8 @@ def run(module, device_operations, connection, candidate, running, rollback_id):
             kwargs = {'candidate': candidate, 'commit': commit}
             if multiline_delimiter:
                 kwargs.update({'multiline_delimiter': multiline_delimiter})
-            connection.edit_banner(**kwargs)
+            if commit:
+                connection.edit_banner(**kwargs)
             result['changed'] = True
 
     if module._diff:
