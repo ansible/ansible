@@ -180,7 +180,7 @@ author:
 EXAMPLES = '''
 - name: Create a topic
   azure_rm_servicebus:
-      name: sbtopic
+      name: subtopic
       resource_group: foo
       namespace: bar
       duplicate_detection_time_in_seconds: 600
@@ -195,7 +195,7 @@ EXAMPLES = '''
       resource_group: foo
       namespace: bar
       type: subscription
-      subscription_topic_name: sbtopic
+      subscription_topic_name: subtopic
 '''
 RETURN = '''
 id:
@@ -389,6 +389,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
         return self.results
 
     def create_ns_if_not_exist(self):
+        self.log('Cannot find namespace, creating a one')
         ns = None
         try:
             ns = self.servicebus_client.namespaces.get(self.resource_group, self.namespace)
