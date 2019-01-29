@@ -106,49 +106,49 @@ We have a ``ansibullbot`` helper that comments on GitHub Issues and PRs which sh
 Example: Adding a group of modules
 ==================================
 
-For example, to add a group of modules under a new category (e.g. security), you would follow these steps:
+For example, to add a group of modules for ``myprod`` product, under a new ``newtech`` category , you would follow these steps:
 
 #. Create the new category directory in ``lib/ansible/modules`` and add an empty ``__init__.py`` file:
 
     .. code-block:: bash
 
-      $ ls lib/ansible/modules/security
+      $ ls lib/ansible/modules/newtech
          __init__.py
 
 #. Create the topic for this new group of modules under that new category and add an empty ``__init__.py`` file:
 
     .. code-block:: bash
 
-       $ ls lib/ansible/modules/security/checkpoint
+       $ ls lib/ansible/modules/newtech/myprod
           __init__.py
 
 #. Add your module python file:
 
     .. code-block:: bash
 
-       $ ls lib/ansible/modules/security/checkpoint
-         checkpoint_access_rule.py      __init__.py
+       $ ls lib/ansible/modules/newtech/myprod
+         myprod_find_widget.py      __init__.py
 
 #. Create the new category directory in ``test/units/modules`` and add an empty ``__init__.py`` file:
 
     .. code-block:: bash
 
-       $ ls test/units/modules/security
+       $ ls test/units/modules/newtech
            __init__.py
 
 #. Create the topic for this new group of modules under that new category and add an empty ``__init__.py`` file:
 
     .. code-block:: bash
 
-       $ ls test/units/modules/security/checkpoint
+       $ ls test/units/modules/newtech/myprod
           __init__.py
 
 #. Add your test python file:
 
     .. code-block:: bash
 
-       $ ls test/units/modules/security/checkpoint
-         __init__.py         test_checkpoint_access_rule.py
+       $ ls test/units/modules/newtech/myprod
+         __init__.py         test_myprod_find_widget.py
 
 See :ref:`developing_testing` for details on developing these unit tests for your new modules.
 
