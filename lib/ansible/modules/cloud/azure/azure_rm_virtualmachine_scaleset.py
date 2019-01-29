@@ -208,8 +208,11 @@ options:
         version_added: "2.8"
     custom_data:
         description:
-            - Custom data for using cloud-init for your VM.
-            - Refer to U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init).
+            - Data which is made available to the virtual machine and used by e.g., cloud-init.
+            - Many images in the marketplace are not cloud-init ready. Thus, data
+              sent to I(custom_data) would be ignored. If the image you are attempting to use is not listed in
+              U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
+              follow these steps U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
         version_added: "2.8"
 
 extends_documentation_fragment:
