@@ -4,7 +4,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# (c) 2018 Red Hat Inc.
+# (c) 2019 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -26,6 +26,8 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import os
+
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six import iterkeys
 from ansible.module_utils._text import to_text
@@ -38,13 +40,14 @@ except ImportError:
     HAS_SKYDIVE_CLIENT = False
 
 # defining skydive constants
-SKYDIVE_LOOKUP_QUERY = 'G.V().Has'
+SKYDIVE_GREMLIN_QUERY = 'G.V().Has'
 
 SKYDIVE_PROVIDER_SPEC = {
     'endpoint': dict(fallback=(env_fallback, ['SKYDIVE_HOST'])),
     'username': dict(fallback=(env_fallback, ['SKYDIVE_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['SKYDIVE_PASSWORD']), no_log=True),
-    'ssl_verify': dict(type='bool', default=False, fallback=(env_fallback, ['SKYDIVE_SSL_VERIFY']))
+    'insecure': dict(type='bool', default=False, fallback=(env_fallback, ['SKYDIVE_INSECURE'])),
+    'ssl': dict(type='bool', default=False, fallback=(env_fallback, ['SKYDIVE_SSL']))
 }
 
 
@@ -52,26 +55,41 @@ class skydive_restclient(object):
     ''' Base class for implementing Skydive Rest API '''
     provider_spec = {'provider': dict(type='dict', options=SKYDIVE_PROVIDER_SPEC)}
 
-    def __init__(self, endpoint="localhost:8082", username="admin", password="password"):
-        try:
-            self.restclient_object = RESTClient(endpoint, username=username, password=password)
-        except TypeError as err:
-            raise err
+    def __init__(self, **kwargs):
+        if not HAS_SKYDIVE_CLIENT:
+            raise Exception('skydive-client is required but does not appear '
+                            'to be installed.  It can be installed using the '
+                            'command `pip install skydive-client`')
+            if not set(kwargs.keys()).issubset(SKYDIVE_PROVIDER_SPEC.keys()):
+                raise Exception('invalid or unsupported keyword argument for skydive_restclient connection.')
+            for key, value in iteritems(SKYDIVE_PROVIDER_SPEC):
+                if key not in kwargs:
+                    # apply default values from SKYDIVE_PROVIDER_SPEC since we cannot just
+                    # assume the provider values are coming from AnsibleModule
+                    if 'default' in value:
+                        kwargs[key] = value['default']
+                    # override any values with env variables unless they were
+                    # explicitly set
+                    env = ('SKYDIVE_%s' % key).upper()
+                    if env in os.environ:
+                        kwargs[key] = os.environ.get(env)
+        if 'ssl' in kwargs:
+            scheme = "https" if kwargs["ssl"] else "http"
+            del kwargs['ssl']
+            kwargs['scheme'] = scheme
+        self.restclient_object = RESTClient(kwargs)
 
 
 class skydive_lookup(skydive_restclient):
     provider_spec = {'provider': dict(type='dict', options=SKYDIVE_PROVIDER_SPEC)}
 
     def __init__(self, provider):
-        endpoint = provider['host']
-        username = provider['username']
-        password = provider['password']
-        super(skydive_lookup, self).__init__(endpoint, username, password)
+        super(skydive_lookup, self).__init__(**provider)
         self.query_str = ""
 
     def lookup_query(self, filter_data):
         query_key = filter_data.keys()[0]
-        self.query_str = SKYDIVE_LOOKUP_QUERY + "('{0}', '{1}')".format(query_key, filter_data[query_key])
+        self.query_str = SKYDIVE_GREMLIN_QUERY + "('{0}', '{1}')".format(query_key, filter_data[query_key])
         nodes = self.restclient_object.lookup_nodes(self.query_str)
         return nodes[0].__dict__
 
@@ -82,11 +100,7 @@ class skydive_flow_topology(skydive_restclient):
         self.module = module
         provider = module.params['provider']
 
-        endpoint = provider['host']
-        username = provider['username']
-        password = provider['password']
-
-        super(skydive_flow_topology, self).__init__(endpoint, username, password)
+        super(skydive_flow_topology, self).__init__(**provider)
 
     def run(self, ib_spec):
         state = self.module.params['state']
@@ -102,7 +116,7 @@ class skydive_flow_topology(skydive_restclient):
                 proposed_object[key] = self.module.params[key]
 
         if state == 'present':
-            capture_str = SKYDIVE_LOOKUP_QUERY + "('Name', '{0}', 'Type', '{1}', 'extra_tcp_metric', '{2}'\
+            capture_str = SKYDIVE_GREMLIN_QUERY + "('Name', '{0}', 'Type', '{1}', 'extra_tcp_metric', '{2}'\
                                                  ,'ip_defrag', '{3}', 'reassemble_tcp',\
                                                  '{4}')".format(obj_filter['name'],
                                                                 obj_filter['capture_type'],
@@ -115,7 +129,7 @@ class skydive_flow_topology(skydive_restclient):
                 self.module.fail_json(msg=to_text(e))
             result['changed'] = True
         if state == 'absent':
-            capture_str = SKYDIVE_LOOKUP_QUERY + "('Name', '{0}', 'Type', '{1}', 'extra_tcp_metric', '{2}'\
+            capture_str = SKYDIVE_GREMLIN_QUERY + "('Name', '{0}', 'Type', '{1}', 'extra_tcp_metric', '{2}'\
                                                  ,'ip_defrag', '{3}', 'reassemble_tcp',\
                                                  '{4}')".format(obj_filter['name'],
                                                                 obj_filter['capture_type'],
