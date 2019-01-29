@@ -40,7 +40,7 @@ options:
         - ID of organization associated to a network.
     subset:
         description:
-        - Display only certain facts
+        - Display only certain facts.
         choices: [categories, policy]
 
 author:
@@ -110,7 +110,7 @@ def main():
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+                           supports_check_mode=True,
                            )
 
     meraki = MerakiModule(module, function='content_filtering_facts')
@@ -124,12 +124,6 @@ def main():
 
     if meraki.params['net_name'] and meraki.params['net_id']:
         meraki.fail_json(msg='net_name and net_id are mutually exclusive')
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    if module.check_mode:
-        return meraki.result
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
