@@ -9,13 +9,14 @@ Run this with SSH with the -R arguments to foward ports 8080 and 8443 to the
 httptester container.
 
 .PARAMETER Hosts
-A list of hostnames to add to the Windows hosts file for the httptester
-container.
+A list of hostnames, delimited by '|', to add to the Windows hosts file for the
+httptester container, e.g. 'ansible.host.com|secondary.host.test'.
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true, Position=0)][String[]]$Hosts
+    [Parameter(Mandatory=$true, Position=0)][String]$Hosts
 )
+$Hosts = $Hosts.Split('|')
 
 $ProgressPreference = "SilentlyContinue"
 $ErrorActionPreference = "Stop"
