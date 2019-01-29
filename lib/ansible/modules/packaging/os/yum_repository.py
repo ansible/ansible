@@ -10,7 +10,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
+    'metadata_version': '1.2',
     'status': ['stableinterface'],
     'supported_by': 'core'
 }
@@ -446,6 +446,8 @@ class YumRepo(object):
     # List of parameters which can be a list
     list_params = ['exclude', 'includepkgs']
 
+    is_new_repo = True
+
     def __init__(self, module):
         # To be able to use fail_json
         self.module = module
@@ -466,24 +468,25 @@ class YumRepo(object):
 
         # Read the repo file if it exists
         if os.path.isfile(self.params['dest']):
+            self.is_new_repo = False
             self.repofile.read(self.params['dest'])
 
     def add(self):
-        # Remove already existing repo and create a new one
-        if self.repofile.has_section(self.section):
-            self.repofile.remove_section(self.section)
+        if self.is_new_repo:
+            # Add section
+            self.repofile.add_section(self.section)
 
-        # Add section
-        self.repofile.add_section(self.section)
-
-        # Baseurl/mirrorlist is not required because for removal we need only
-        # the repo name. This is why we check if the baseurl/mirrorlist is
-        # defined.
-        req_params = (self.params['baseurl'], self.params['metalink'], self.params['mirrorlist'])
-        if req_params == (None, None, None):
-            self.module.fail_json(
-                msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required for "
-                    "adding a new repo.")
+            # Baseurl/mirrorlist is not required because for removal we need only
+            # the repo name. This is why we check if the baseurl/mirrorlist is
+            # defined. We check name because it is renamed from the description param.
+            req_params = (self.params['baseurl'],
+                self.params['metalink'],
+                self.params['mirrorlist'],
+                self.params['name'])
+            if req_params == (None, None, None, None):
+                self.module.fail_json(
+                    msg="Parameter 'baseurl', 'metalink', or 'mirrorlist' and 'description' is required for "
+                        "adding a new repo.")
 
         # Set options
         for key, value in sorted(self.params.items()):
@@ -502,6 +505,9 @@ class YumRepo(object):
         if len(self.repofile.sections()):
             # Write data into the file
             try:
+                if os.path.isfile(self.params['dest']):
+                    os.remove(self.params['dest'])
+
                 fd = open(self.params['dest'], 'w')
             except IOError as e:
                 self.module.fail_json(
@@ -620,18 +626,6 @@ def main():
 
     name = module.params['name']
     state = module.params['state']
-
-    # Check if required parameters are present
-    if state == 'present':
-        if (
-                module.params['baseurl'] is None and
-                module.params['metalink'] is None and
-                module.params['mirrorlist'] is None):
-            module.fail_json(
-                msg="Parameter 'baseurl', 'metalink' or 'mirrorlist' is required.")
-        if module.params['description'] is None:
-            module.fail_json(
-                msg="Parameter 'description' is required.")
 
     # Rename "name" and "description" to ensure correct key sorting
     module.params['repoid'] = module.params['name']
