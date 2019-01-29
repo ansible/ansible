@@ -23,10 +23,18 @@ options:
     description:
     - Service name
   image:
+    type: str
     required: true
     description:
     - Service image path and tag.
       Maps docker service IMAGE parameter.
+  resolve_image:
+    type: bool
+    required: false
+    default: true
+    description:
+      - If the current image digest should be resolved from registry and updated if changed.
+    version_added: 2.8
   state:
     required: true
     default: present
@@ -117,11 +125,10 @@ options:
     - Dictionary of key value pairs.
     - Maps docker service --container-label option.
   endpoint_mode:
-    required: false
+    type: str
     description:
     - Service endpoint mode.
     - Maps docker service --endpoint-mode option.
-    default: vip
     choices:
     - vip
     - dnsrr
@@ -321,12 +328,12 @@ options:
     - Maps to docker service --update-order
     - Requires API version >= 1.29
   user:
+    type: str
     required: false
-    default: root
     description:
-    - username or UID.
-    - "If set to C(null) the image provided value (or the one already
-       set for the service) will be used"
+    - Sets the username or UID used for the specified command.
+    - Before Ansible 2.8, the default value for this option was C(root).
+      The default has been removed so that the user defined in the image is used if no user is specified here.
 extends_documentation_fragment:
 - docker
 requirements:
@@ -336,6 +343,9 @@ requirements:
    (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
    Version 2.1.0 or newer is only available with the C(docker) module."
 - "Docker API >= 1.24"
+notes:
+  - "Images will only resolve to the latest digest when using Docker API >= 1.30 and docker-py >= 3.2.0.
+     When using older versions use C(force_update: true) to trigger the swarm to resolve a new image."
 '''
 
 RETURN = '''
@@ -520,9 +530,9 @@ import time
 import shlex
 import operator
 from ansible.module_utils.docker_common import (
-    DockerBaseClass,
     AnsibleDockerClient,
     DifferenceTracker,
+    DockerBaseClass,
 )
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.six import string_types
@@ -531,6 +541,8 @@ from ansible.module_utils._text import to_text
 try:
     from distutils.version import LooseVersion
     from docker import types
+    from docker.utils import parse_repository_tag
+    from docker.errors import DockerException
 except Exception:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -542,7 +554,7 @@ class DockerService(DockerBaseClass):
         self.image = ""
         self.command = None
         self.args = []
-        self.endpoint_mode = "vip"
+        self.endpoint_mode = None
         self.dns = []
         self.hostname = ""
         self.tty = False
@@ -559,7 +571,7 @@ class DockerService(DockerBaseClass):
         self.reserve_cpu = 0.000
         self.reserve_memory = 0
         self.mode = "replicated"
-        self.user = "root"
+        self.user = None
         self.mounts = []
         self.configs = []
         self.secrets = []
@@ -623,11 +635,11 @@ class DockerService(DockerBaseClass):
             'update_order': self.update_order}
 
     @staticmethod
-    def from_ansible_params(ap, old_service):
+    def from_ansible_params(ap, old_service, image_digest):
         s = DockerService()
+        s.image = image_digest
         s.constraints = ap['constraints']
         s.placement_preferences = ap['placement_preferences']
-        s.image = ap['image']
         s.args = ap['args']
         s.endpoint_mode = ap['endpoint_mode']
         s.dns = ap['dns']
@@ -755,7 +767,7 @@ class DockerService(DockerBaseClass):
         differences = DifferenceTracker()
         needs_rebuild = False
         force_update = False
-        if self.endpoint_mode != os.endpoint_mode:
+        if self.endpoint_mode is not None and self.endpoint_mode != os.endpoint_mode:
             differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
         if self.env != os.env:
             differences.add('env', parameter=self.env, active=os.env)
@@ -819,8 +831,9 @@ class DockerService(DockerBaseClass):
             differences.add('update_max_failure_ratio', parameter=self.update_max_failure_ratio, active=os.update_max_failure_ratio)
         if self.update_order is not None and self.update_order != os.update_order:
             differences.add('update_order', parameter=self.update_order, active=os.update_order)
-        if self.image != os.image.split('@')[0]:
-            differences.add('image', parameter=self.image, active=os.image.split('@')[0])
+        has_image_changed, change = self.has_image_changed(os.image)
+        if has_image_changed:
+            differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
         if self.dns != os.dns:
@@ -857,6 +870,11 @@ class DockerService(DockerBaseClass):
             if filtered_publish_item != filtered_old_publish_item:
                 return True
         return False
+
+    def has_image_changed(self, old_image):
+        if '@' not in self.image:
+            old_image = old_image.split('@')[0]
+        return self.image != old_image, old_image
 
     def __str__(self):
         return str({
@@ -1029,7 +1047,7 @@ class DockerServiceManager():
         update_config_data = raw_data['Spec']['UpdateConfig']
 
         ds.image = task_template_data['ContainerSpec']['Image']
-        ds.user = task_template_data['ContainerSpec'].get('User', 'root')
+        ds.user = task_template_data['ContainerSpec'].get('User', None)
         ds.env = task_template_data['ContainerSpec'].get('Env', [])
         ds.command = task_template_data['ContainerSpec'].get('Command')
         ds.args = task_template_data['ContainerSpec'].get('Args', [])
@@ -1072,17 +1090,15 @@ class DockerServiceManager():
             ds.restart_policy_attempts = restart_policy_data.get('MaxAttempts')
             ds.restart_policy_window = restart_policy_data.get('Window')
 
-        raw_data_endpoint = raw_data.get('Endpoint', None)
-        if raw_data_endpoint:
-            raw_data_endpoint_spec = raw_data_endpoint.get('Spec', None)
-            if raw_data_endpoint_spec:
-                ds.endpoint_mode = raw_data_endpoint_spec.get('Mode', 'vip')
-                for port in raw_data_endpoint_spec.get('Ports', []):
-                    ds.publish.append({
-                        'protocol': port['Protocol'],
-                        'mode': port.get('PublishMode', None),
-                        'published_port': int(port['PublishedPort']),
-                        'target_port': int(port['TargetPort'])})
+        raw_data_endpoint_spec = raw_data['Spec'].get('EndpointSpec')
+        if raw_data_endpoint_spec:
+            ds.endpoint_mode = raw_data_endpoint_spec.get('Mode')
+            for port in raw_data_endpoint_spec.get('Ports', []):
+                ds.publish.append({
+                    'protocol': port['Protocol'],
+                    'mode': port.get('PublishMode', None),
+                    'published_port': int(port['PublishedPort']),
+                    'target_port': int(port['TargetPort'])})
 
         if 'Resources' in task_template_data.keys():
             if 'Limits' in task_template_data['Resources'].keys():
@@ -1175,12 +1191,38 @@ class DockerServiceManager():
     def remove_service(self, name):
         self.client.remove_service(name)
 
+    def get_image_digest(self, name, resolve=True):
+        if (
+            not name
+            or not resolve
+            or self.client.docker_py_version < LooseVersion('3.2')
+            or self.client.docker_api_version < LooseVersion('1.30')
+        ):
+            return name
+        repo, tag = parse_repository_tag(name)
+        if not tag:
+            tag = 'latest'
+        name = repo + ':' + tag
+        distribution_data = self.client.inspect_distribution(name)
+        digest = distribution_data['Descriptor']['digest']
+        return '%s@%s' % (name, digest)
+
     def __init__(self, client):
         self.client = client
         self.diff_tracker = DifferenceTracker()
 
     def run(self):
         module = self.client.module
+
+        image = module.params['image']
+        try:
+            image_digest = self.get_image_digest(
+                name=image,
+                resolve=module.params['resolve_image']
+            )
+        except DockerException as e:
+            return module.fail_json(
+                msg="Error looking for an image named %s: %s" % (image, e))
         try:
             current_service = self.get_service(module.params['name'])
         except Exception as e:
@@ -1188,7 +1230,11 @@ class DockerServiceManager():
                 msg="Error looking for service named %s: %s" %
                     (module.params['name'], e))
         try:
-            new_service = DockerService.from_ansible_params(module.params, current_service)
+            new_service = DockerService.from_ansible_params(
+                module.params,
+                current_service,
+                image_digest
+            )
         except Exception as e:
             return module.fail_json(
                 msg="Error parsing module parameters: %s" % e)
@@ -1288,12 +1334,13 @@ def main():
         container_labels=dict(default={}, type='dict'),
         mode=dict(default="replicated"),
         replicas=dict(default=-1, type='int'),
-        endpoint_mode=dict(default='vip', choices=['vip', 'dnsrr']),
+        endpoint_mode=dict(default=None, choices=['vip', 'dnsrr']),
         restart_policy=dict(default='none', choices=['none', 'on-failure', 'any']),
         limit_cpu=dict(default=0, type='float'),
         limit_memory=dict(default=0, type='str'),
         reserve_cpu=dict(default=0, type='float'),
         reserve_memory=dict(default=0, type='str'),
+        resolve_image=dict(default=True, type='bool'),
         restart_policy_delay=dict(default=0, type='int'),
         restart_policy_attempts=dict(default=0, type='int'),
         restart_policy_window=dict(default=0, type='int'),
@@ -1303,7 +1350,7 @@ def main():
         update_monitor=dict(default=5000000000, type='int'),
         update_max_failure_ratio=dict(default=0, type='float'),
         update_order=dict(default=None, type='str'),
-        user=dict(default='root'))
+        user=dict(type='str'))
 
     option_minimal_versions = dict(
         dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),

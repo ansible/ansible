@@ -1391,6 +1391,15 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+HOST_PATTERN_MISMATCH:
+  name: Control host pattern mismatch behaviour
+  default: 'warning'
+  description: This setting changes the behaviour of mismatched host patterns, it allows you to force a fatal error, a warning or just ignore it
+  env: [{name: ANSIBLE_HOST_PATTERN_MISMATCH}]
+  ini:
+  - {key: host_pattern_mismatch, section: inventory}
+  choices: ['warning', 'error', 'ignore']
+  version_added: "2.8"
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
   default: True

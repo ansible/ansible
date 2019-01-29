@@ -29,8 +29,8 @@ author: "Nathaniel Case (@qalthos)"
 short_description: Manage VyOS configuration on remote device
 description:
   - This module provides configuration file management of VyOS
-    devices.  It provides arguments for managing both the
-    configuration file and state of the active configuration.   All
+    devices. It provides arguments for managing both the
+    configuration file and state of the active configuration. All
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
 extends_documentation_fragment: vyos
@@ -64,10 +64,10 @@ options:
     description:
       - The C(backup) argument will backup the current devices active
         configuration to the Ansible control host prior to making any
-        changes.  The backup file will be located in the backup folder
-        in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not
-        exist, it is created.
+        changes. If the C(backup_options) value is not given, the
+        backup file will be located in the backup folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
   comment:
@@ -90,6 +90,28 @@ options:
         active configuration is saved.
     type: bool
     default: 'no'
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -114,6 +136,13 @@ EXAMPLES = """
     lines:
       # - set int eth eth2 description 'OUTSIDE'
       - set interface ethernet eth2 description 'OUTSIDE'
+
+- name: configurable backup path
+  vyos_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -132,6 +161,26 @@ backup_path:
   returned: when backup is yes
   type: str
   sample: /playbooks/ansible/backup/vyos_config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: vyos_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/vyos_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 import re
 
@@ -242,6 +291,10 @@ def run(module, result):
 
 
 def main():
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
         lines=dict(type='list'),
@@ -253,6 +306,7 @@ def main():
         config=dict(),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
     )
 
