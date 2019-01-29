@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Ansible Project
@@ -33,6 +34,7 @@ options:
     switch:
         description:
             - The name of the distributed vSwitch on which to add or remove the mirroring session.
+            - The name of the switch to create or remove.
         required: True
         aliases: [ 'switch_name' ]
     name:
@@ -152,7 +154,6 @@ EXAMPLES = '''
     source_port_received: 817
     destination_port: 815
   delegate_to: localhost
-
 - name: Create remote destination mirroring session.
   vmware_vspan_session:
     hostname: '{{ vcenter_hostname }}'
@@ -167,7 +168,6 @@ EXAMPLES = '''
     destination_port: 815
     session_type: "remoteMirrorDest"
   delegate_to: localhost
-
 - name: Create remote destination mirroring session.
   vmware_vspan_session:
     hostname: '{{ vcenter_hostname }}'
@@ -214,16 +214,29 @@ class VMwareVspanSession(PyVmomi):
         self.modified_ports = dict()
         self.deleted_session = None
         if module.params['source_vm_transmitted'] is not None:
+            if (module.params['source_vm_transmitted']['name'] is None or
+                    module.params['source_vm_transmitted']['nic_label'] is None):
+                self.module.fail_json(msg="Please provide both VM name and NIC Label")
             self.source_vm_transmitted_name = module.params['source_vm_transmitted']['name']
             self.source_vm_transmitted_nic_label = module.params['source_vm_transmitted']['nic_label']
         if module.params['source_vm_received'] is not None:
+            if (module.params['source_vm_received']['name'] is None or
+                    module.params['source_vm_received']['nic_label'] is None):
+                self.module.fail_json(msg="Please provide both VM name and NIC Label")
             self.source_vm_received_name = module.params['source_vm_received']['name']
             self.source_vm_received_nic_label = module.params['source_vm_received']['nic_label']
         if module.params['destination_vm'] is not None:
+            if (module.params['destination_vm']['name'] is None or
+                    module.params['destination_vm']['nic_label'] is None):
+                self.module.fail_json(msg="Please provide both VM name and NIC Label")
             self.destination_vm_name = module.params['destination_vm']['name']
             self.destination_vm_nic_label = module.params['destination_vm']['nic_label']
 
     def set_operation(self):
+        if self.dv_switch is None:
+            self.module.fail_json(msg="There is no dvSwitch with the name: {0:s}.".format(self.switch))
+
+
         """Sets the operation according to state"""
         if self.state == 'absent':
             self.operation = 'remove'
@@ -234,7 +247,6 @@ class VMwareVspanSession(PyVmomi):
 
     def find_session_by_name(self):
         """Finds a session by name
-
         Returns
         -------
         vim.dvs.VmwareDistributedVirtualSwitch.VspanSession
@@ -247,7 +259,6 @@ class VMwareVspanSession(PyVmomi):
 
     def get_vm_port(self, vm_name, nic_label):
         """Finds the port of the VM
-
         Returns
         -------
         str
@@ -295,7 +306,6 @@ class VMwareVspanSession(PyVmomi):
 
     def set_port_security_promiscuous(self, port, state):
         """Set the given port to the given promiscuous state.
-
         Parameters
         ----------
         port : str
@@ -321,7 +331,6 @@ class VMwareVspanSession(PyVmomi):
 
     def turn_off_promiscuous(self):
         """Disable all promiscuous mode ports, and give them back in a list.
-
         Returns
         -------
         list
@@ -372,7 +381,6 @@ class VMwareVspanSession(PyVmomi):
 
     def delete_mirroring_session(self, key):
         """Deletes the mirroring session.
-
         Parameters
         ----------
         key : str
@@ -430,7 +438,6 @@ class VMwareVspanSession(PyVmomi):
 
     def check_if_session_name_is_free(self):
         """Checks whether the name is used or not
-
         Returns
         -------
         bool
