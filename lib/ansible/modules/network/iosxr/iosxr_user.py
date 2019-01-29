@@ -83,6 +83,13 @@ options:
         `admin` user and the current defined set of users.
     type: bool
     default: false
+  admin:
+    description:
+      - Enters into administration configuration mode for making config
+        changes to the device.
+    type: bool
+    default: false
+    version_added: "2.8"
   state:
     description:
       - Configures the state of the username definition
@@ -478,7 +485,8 @@ class CliConfiguration(ConfigBase):
         self._result['commands'] = []
         if commands:
             commit = not self._module.check_mode
-            diff = load_config(self._module, commands, commit=commit)
+            admin = self._module.params['admin']
+            diff = load_config(self._module, commands, commit=commit, admin=admin)
             if diff:
                 self._result['diff'] = dict(prepared=diff)
 
@@ -637,6 +645,8 @@ def main():
 
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
+
+        admin=dict(type='bool', default=False),
 
         public_key=dict(),
         public_key_contents=dict(),
