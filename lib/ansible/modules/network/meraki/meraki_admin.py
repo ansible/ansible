@@ -119,7 +119,7 @@ EXAMPLES = r'''
     org_name: YourOrg
     state: absent
     email: jane@doe.com
-    
+
 - name: Create a new administrator with full access to a tag
   meraki_admin:
     auth_key: abc12345
@@ -130,7 +130,7 @@ EXAMPLES = r'''
     email: jane@doe.com
     tags:
         - {"tag": "tenant", "access": "full"}
-        
+
 - name: Create a new administrator with full access to a network
   meraki_admin:
     auth_key: abc12345
