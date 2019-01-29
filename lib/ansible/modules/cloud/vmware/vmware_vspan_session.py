@@ -258,7 +258,7 @@ class VMwareVspanSession(PyVmomi):
         """
         vm = find_vm_by_name(self.content, vm_name)
         if vm is None:
-            self.module.fail_json(msg='There is no VM with this name.')
+            self.module.fail_json(msg="There is no VM with the name: {0:s}.".format(vm_name))
         for hardware in vm.config.hardware.device:
             if isinstance(hardware, vim.vm.device.VirtualVmxnet3):
                 if hardware.deviceInfo.label == nic_label:
