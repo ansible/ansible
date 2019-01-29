@@ -438,6 +438,7 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
 
+.. note:: ``ansible_group_priority`` can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars.
 
 .. _using_multiple_inventory_sources:
 
