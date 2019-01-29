@@ -19,6 +19,9 @@ version_added: historical
 short_description: Copy files to remote locations
 description:
     - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
+    - Use the M(fetch) module to copy files from remote locations to the local box.
+    - If you need variable interpolation in copied files, use the M(template) module. Using a variable in the C(content)
+      field will result in unpredictable output.
     - For Windows targets, use the M(win_copy) module instead.
 options:
   src:
@@ -32,17 +35,17 @@ options:
     type: path
   content:
     description:
-    - When used instead of I(src), sets the contents of a file directly to the specified value.
-    - For anything advanced or with formatting also look at the template module.
+    - When used instead of C(src), sets the contents of a file directly to the specified value.
+    - For advanced formatting or if C(content) contains a variable, use the C(template) module.
     type: str
     version_added: '1.1'
   dest:
     description:
-    - Remote path where the file should be copied to.
-    - If I(src) is a directory, this must be a directory too.
-    - If I(dest) is a non-existent path and if either I(dest) ends with "/" or I(src) is a directory, I(dest) is created.
+    - Remote absolute path where the file should be copied to.
+    - If C(src) is a directory, this must be a directory too.
+    - If C(dest) is a non-existent path and if either C(dest) ends with "/" or C(src) is a directory, C(dest) is created.
     - If I(dest) is a relative path, the starting directory is determined by the remote host.
-    - If I(src) and I(dest) are files, the parent directory of I(dest) is not created and the task fails if it does not already exist.
+    - If C(src) and C(dest) are files, the parent directory of C(dest) is not created and the task fails if it does not already exist.
     type: path
     required: yes
   backup:
@@ -63,7 +66,7 @@ options:
   mode:
     description:
     - The permissions of the destination file or directory.
-    - For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers.
+    - For those used to C(/usr/bin/chmod) remember that modes are actually octal numbers.
       You must either add a leading zero so that Ansible's YAML parser knows it is an octal number
       (like C(0644) or C(01777))or quote it (like C('644') or C('1777')) so Ansible receives a string
       and can do its own conversion from string into number. Giving Ansible a number without following
@@ -81,11 +84,11 @@ options:
     version_added: '1.5'
   remote_src:
     description:
-    - Influence whether I(src) needs to be transferred or already is present remotely.
-    - If C(no), it will search for I(src) at originating/master machine.
-    - If C(yes) it will go to the remote/target machine for the I(src).
-    - I(remote_src) supports recursive copying as of Ansible 2.8.
-    - I(remote_src) only works with C(mode=preserve) as of Ansible 2.6.
+    - Influence whether C(src) needs to be transferred or already is present remotely.
+    - If C(no), it will search for C(src) at originating/master machine.
+    - If C(yes) it will go to the remote/target machine for the C(src).
+    - C(remote_src) supports recursive copying as of version 2.8.
+    - C(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool
     default: no
     version_added: '2.0'
