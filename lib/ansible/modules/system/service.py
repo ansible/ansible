@@ -43,6 +43,7 @@ options:
           between the stop and start command.
         - This helps to work around badly-behaving init scripts that exit immediately
           after signaling a process to stop.
+        - Not all service managers support sleep, i.e when using systemd this setting will be ignored.
         type: int
         version_added: "1.3"
     pattern:
