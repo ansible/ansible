@@ -92,12 +92,12 @@ RETURN = '''
 changed:
   description: Return changed for aix_lvg actions as true or false.
   returned: always
-  type: boolean
+  type: bool
   version_added: 2.5
 msg:
   description: Return message regarding the action.
   returned: always
-  type: string
+  type: str
   version_added: 2.5
 '''
 
