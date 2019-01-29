@@ -519,7 +519,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
-        variable_manager = VariableManager(loader=loader, inventory=inventory, cli=CLI)
+        variable_manager = VariableManager(loader=loader, inventory=inventory, version_info=CLI.version_info(gitinfo=False))
 
         return loader, inventory, variable_manager
 

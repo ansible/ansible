@@ -76,7 +76,7 @@ class VariableManager:
     _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
                           'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
 
-    def __init__(self, loader=None, inventory=None, cli=None):
+    def __init__(self, loader=None, inventory=None, version_info=None):
         self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
@@ -88,11 +88,7 @@ class VariableManager:
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self._templar = Templar(loader=self._loader)
 
-        # handle cli option mapping to variables
-        if cli is not None:
-            self._options_vars = load_options_vars(cli.version_info(gitinfo=False))
-        else:
-            self._options_vars = defaultdict(dict)
+        self._options_vars = load_options_vars(version_info)
 
         # If the basedir is specified as the empty string then it results in cwd being used.
         # This is not a safe location to load vars from.
