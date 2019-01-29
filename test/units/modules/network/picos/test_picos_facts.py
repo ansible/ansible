@@ -21,7 +21,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-import json, re
+import json
+import re
 
 from units.compat.mock import patch
 from ansible.modules.network.picos import picos_facts
@@ -53,8 +54,7 @@ class TestPicosFactsModule(TestPicosModule):
                     command = obj['command']
                 except ValueError:
                     command = item
-                #filename = str(command).replace(' ', '_').replace('/', '_')
-                filename = re.sub('\W+', '_', str(command))
+                filename = re.sub(r'\W+', '_', str(command))
                 output.append(load_fixture(filename))
             return output
 
@@ -81,7 +81,7 @@ class TestPicosFactsModule(TestPicosModule):
         self.assertEqual(facts['ansible_net_version'].strip(), '2.10.2/d9ce4ec')
 
     def test_picos_facts_exclude_most(self):
-        set_module_args(dict(gather_subset=['-hardware','-config']))
+        set_module_args(dict(gather_subset=['-hardware', '-config']))
         result = self.execute_module()
         facts = result.get('ansible_facts')
         self.assertEqual(len(facts), 6)
