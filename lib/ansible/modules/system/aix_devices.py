@@ -13,54 +13,52 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author:
-  - Kairo Araujo (@kairoaraujo)
+- Kairo Araujo (@kairoaraujo)
 module: aix_devices
-short_description: Manages AIX devices.
+short_description: Manages AIX devices
 description:
-  - This module discovers, defines, removes and modifies attributes of AIX
-    devices.
-version_added: "2.7"
+- This module discovers, defines, removes and modifies attributes of AIX devices.
+version_added: '2.8'
 options:
   attributes:
     description:
-      - Specifies attributes to device separated by comma.
+    - A list of device attributes.
+    type: list
   device:
     description:
-      - Device name.
-      - C(all) is valid to rescan C(present) all devices (AIX cfgmgr command).
+    - The name of the device.
+    - C(all) is valid to rescan C(present) all devices (AIX cfgmgr command).
     required: true
   force:
     description:
-      - Forces action.
+    - Forces action.
     type: bool
-    default: "no"
+    default: no
   recursive:
     description:
-      - Removes or defines a device and children devices.
+    - Removes or defines a device and children devices.
     type: bool
-    default: "no"
+    default: no
   state:
     description:
-      - Controls the device state.
-      - C(present) rescan a specific device or all devices (when C(device) is
-        not specified).
-      - C(absent) removes a device.
-      - C(defined) changes device to Defined state.
-    choices: [present, absent, defined]
+    - Controls the device state.
+    - C(present) rescan a specific device or all devices (when C(device) is not specified).
+    - C(absent) removes a device.
+    - C(defined) changes device to Defined state.
+    choices: [ absent, defined, present ]
     default: present
-    required: true
 '''
 
-EXAMPLES = '''
-- name: Scan new devices.
+EXAMPLES = r'''
+- name: Scan new devices
   aix_devices:
     device: all
     state: present
 
-- name: Scan new virtual devices (vio0).
+- name: Scan new virtual devices (vio0)
   aix_devices:
     device: vio0
     state: present
@@ -71,7 +69,7 @@ EXAMPLES = '''
     attributes:
       delalias4: 10.0.0.100,255.255.255.0
 
-- name: Removes ent2.
+- name: Removes ent2
   aix_devices:
     device: ent2
     state: absent
@@ -128,18 +126,7 @@ EXAMPLES = '''
     state: present
 '''
 
-RETURN = '''
-changed:
-  description: Return changed for aix_device actions as true or false.
-  returned: always
-  type: boolean
-  version_added: "2.7"
-msg:
-  description: Return message regarding the action.
-  returned: always
-  type: string
-  version_added: "2.7"
-'''
+RETURN = r''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -164,9 +151,8 @@ def _check_device(module, device):
         device_state = lsdev_out.split()[1]
         return True, device_state
 
-    else:
-        device_state = None
-        return False, device_state
+    device_state = None
+    return False, device_state
 
 
 def _check_device_attr(module, device, attr):
@@ -226,10 +212,11 @@ def discover_device(module, device):
 def change_device_attr(module, attributes, device, force):
     """ Change AIX device attribute. """
 
-    chdev_cmd = module.get_bin_path('chdev', True)
+    msg = ''
     attr_changed = []
     attr_not_changed = []
     attr_invalid = []
+    chdev_cmd = module.get_bin_path('chdev', True)
 
     for attr in list(attributes.keys()):
         new_param = attributes[attr]
@@ -239,42 +226,38 @@ def change_device_attr(module, attributes, device, force):
             attr_invalid.append(attr)
 
         elif current_param != new_param:
-            if not module.check_mode:
-                if force:
-                    cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr]), "%s" % force]
-                else:
-                    cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr])]
+            if force:
+                cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr]), "%s" % force]
+            else:
+                cmd = ["%s" % chdev_cmd, '-l', "%s" % device, '-a', "%s=%s" % (attr, attributes[attr])]
 
+            if not module.check_mode:
                 rc, chdev_out, err = module.run_command(cmd)
                 if rc != 0:
                     module.exit_json(msg="Failed to run chdev.", rc=rc, err=err)
-                else:
-                    attr_changed.append(attributes[attr])
+
+            attr_changed.append(attributes[attr])
         else:
             attr_not_changed.append(attributes[attr])
 
-    changed = True
-    msg = ''
-    if not module.check_mode:
-        if len(attr_changed) > 0:
-            changed = True
-            attr_changed_msg = "Attributes changed: %s. " % ','.join(attr_changed)
-        else:
-            changed = False
-            attr_changed_msg = ''
+    if len(attr_changed) > 0:
+        changed = True
+        attr_changed_msg = "Attributes changed: %s. " % ','.join(attr_changed)
+    else:
+        changed = False
+        attr_changed_msg = ''
 
-        if len(attr_not_changed) > 0:
-            attr_not_changed_msg = "Attributes already set: %s. " % ','.join(attr_not_changed)
+    if len(attr_not_changed) > 0:
+        attr_not_changed_msg = "Attributes already set: %s. " % ','.join(attr_not_changed)
+    else:
+        attr_not_changed_msg = ''
 
-        else:
-            attr_not_changed_msg = ''
+    if len(attr_invalid) > 0:
+        attr_invalid_msg = "Invalid attributes: %s " % ', '.join(attr_invalid)
+    else:
+        attr_invalid_msg = ''
 
-        if len(attr_invalid) > 0:
-            attr_invalid_msg = "Invalid attributes: %s " % ', '.join(attr_invalid)
-        else:
-            attr_invalid_msg = ''
-
-        msg = "%s%s%s" % (attr_changed_msg, attr_not_changed_msg, attr_invalid_msg)
+    msg = "%s%s%s" % (attr_changed_msg, attr_not_changed_msg, attr_invalid_msg)
 
     return changed, msg
 
@@ -301,17 +284,14 @@ def remove_device(module, device, force, recursive, state):
 
     if not module.check_mode:
         if state:
-            rc, rmdev_out, err = module.run_command(
-                ["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive, "%s" % state])
+            rc, rmdev_out, err = module.run_command(["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive, "%s" % state])
         else:
-            rc, rmdev_out, err = module.run_command(
-                ["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive])
+            rc, rmdev_out, err = module.run_command(["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive])
 
         if rc != 0:
             module.fail_json(msg="Failed to run rmdev", rc=rc, err=err)
-        else:
-            changed = True
-            msg = rmdev_out
+
+        msg = rmdev_out
 
     return changed, msg
 
@@ -324,7 +304,7 @@ def main():
             device=dict(type='str'),
             force=dict(type='bool', default=False),
             recursive=dict(type='bool', default=False),
-            state=dict(choices=['absent', 'present', 'defined'], default='present'),
+            state=dict(type='str', default='present', choices=['absent', 'defined', 'present']),
         ),
         supports_check_mode=True,
     )
@@ -343,7 +323,6 @@ def main():
     result = dict(
         changed=False,
         msg='',
-        state=state
     )
 
     if state == 'present':
@@ -354,8 +333,6 @@ def main():
                 result['changed'], result['msg'] = change_device_attr(module, attributes, device, force)
             else:
                 result['msg'] = "Device %s does not exist." % device
-
-            module.exit_json(**result)
 
         else:
             # discovery devices (cfgmgr)
@@ -371,16 +348,12 @@ def main():
             else:
                 result['changed'], result['msg'] = discover_device(module, device)
 
-            module.exit_json(**result)
-
     elif state == 'absent' or state == 'defined':
         if not device:
             result['msg'] = "device is required to absent or defined state."
 
-            module.exit_json(**result)
-
         else:
-            # remove device
+            # Remove device
             check_device, device_state = _check_device(module, device)
             if check_device:
                 if state == 'defined' and device_state == 'Defined':
@@ -393,11 +366,8 @@ def main():
             else:
                 result['msg'] = "Device %s does not exist." % device
 
-            module.exit_json(**result)
-
     else:
-        result['msg'] = "Unexpected state %s." % state
-        module.fail_json(**result)
+        module.fail_json(msg='Unexpected state %s.' % state, **result)
 
     module.exit_json(**result)
 
