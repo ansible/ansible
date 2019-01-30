@@ -766,8 +766,14 @@ files:
     maintainers: $team_scaleway
     labels:
       - cloud
+  $module_utils/ansible_tower.py:
+    support: community
+    maintainers: $team_tower
   $module_utils/xenserver.py:
-    maintainers: bvitnik
+      maintainers: bvitnik
+
+###############################
+# playbook
   lib/ansible/playbook/handler.py:
     keywords:
       - handlers
