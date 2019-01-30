@@ -3,7 +3,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 #Requires -Module Ansible.ModuleUtils.FileUtil
 #Requires -Module Ansible.ModuleUtils.LinkUtil
 
@@ -13,28 +13,47 @@ function DateTo-Timestamp($start_date, $end_date) {
     }
 }
 
-$params = Parse-Args $args -supports_check_mode $true
-
-$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
-$get_md5 = Get-AnsibleParam -obj $params -name "get_md5" -type "bool" -default $false
-$get_checksum = Get-AnsibleParam -obj $params -name "get_checksum" -type "bool" -default $true
-$checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -type "str" -default "sha1" -validateset "md5","sha1","sha256","sha384","sha512"
-
-$result = @{
-    changed = $false
-    stat = @{
-        exists = $false
+function Get-FileChecksum($path, $algorithm) {
+    switch ($algorithm) {
+        'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
+        'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
+        'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
+        'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
+        'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
+        default { Fail-Json -obj $result -message "Unsupported hash algorithm supplied '$algorithm'" }
     }
+
+    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    try {
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower()
+    } finally {
+        $fp.Dispose()
+    }
+
+    return $hash
 }
 
-# get_md5 will be an undocumented option in 2.9 to be removed at a later
-# date if possible (3.0+)
-if (Get-Member -inputobject $params -name "get_md5") {
-    Add-DepreactionWarning -obj $result -message "get_md5 has been deprecated along with the md5 return value, use get_checksum=True and checksum_algorithm=md5 instead" -version 2.9
+$spec = @{
+    options = @{
+        path = @{ type='path'; required=$true; aliases=@( 'dest', 'name' ) }
+        get_checksum = @{ type='bool'; default=$true }
+        checksum_algorithm = @{ type='str'; default='sha1'; choices=@( 'md5', 'sha1', 'sha256', 'sha384', 'sha512' ) }
+        get_md5 = @{ type='bool'; default=$false; removed_in_version='2.9' }
+    }
+    supports_check_mode = $true
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$path = $module.Params.path
+$get_md5 = $module.Params.get_md5
+$get_checksum = $module.Params.get_checksum
+$checksum_algorithm = $module.Params.checksum_algorithm
+
+$module.Result.stat = @{ exists=$false }
 
 $info = Get-AnsibleItem -Path $path -ErrorAction SilentlyContinue
-If ($info -ne $null) {
+If ($null -ne $info) {
     $epoch_date = Get-Date -Date "01/01/1970"
     $attributes = @()
     foreach ($attribute in ($info.Attributes -split ',')) {
@@ -105,14 +124,14 @@ If ($info -ne $null) {
             try {
                 $stat.md5 = Get-FileChecksum -path $path -algorithm "md5"
             } catch {
-                Fail-Json -obj $result -message "failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)"
+                $module.FailJson("Failed to get MD5 hash of file, remove get_md5 to ignore this error: $($_.Exception.Message)", $_)
             }
         }
         if ($get_checksum) {
             try {
                 $stat.checksum = Get-FileChecksum -path $path -algorithm $checksum_algorithm
             } catch {
-                Fail-Json -obj $result -message "failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)"
+                $module.FailJson("Failed to get hash of file, set get_checksum to False to ignore this error: $($_.Exception.Message)", $_)
             }
         }
     }
@@ -122,7 +141,7 @@ If ($info -ne $null) {
     try {
         $link_info = Get-Link -link_path $info.FullName
     } catch {
-        Add-Warning -obj $result -message "Failed to check/get link info for file: $($_.Exception.Message)"
+        $module.Warn("Failed to check/get link info for file: $($_.Exception.Message)")
     }
     if ($link_info -ne $null) {
         switch ($link_info.Type) {
@@ -130,14 +149,14 @@ If ($info -ne $null) {
                 $stat.islnk = $true
                 $stat.isreg = $false
                 $stat.lnk_target = $link_info.TargetPath
-                $stat.lnk_source = $link_info.AbsolutePath                
+                $stat.lnk_source = $link_info.AbsolutePath
                 break
             }
             "JunctionPoint" {
                 $stat.isjunction = $true
                 $stat.isreg = $false
                 $stat.lnk_target = $link_info.TargetPath
-                $stat.lnk_source = $link_info.AbsolutePath                
+                $stat.lnk_source = $link_info.AbsolutePath
                 break
             }
             "HardLink" {
@@ -152,7 +171,7 @@ If ($info -ne $null) {
         }
     }
 
-    $result.stat = $stat
+    $module.Result.stat = $stat
 }
 
-Exit-Json $result
+$module.ExitJson()
