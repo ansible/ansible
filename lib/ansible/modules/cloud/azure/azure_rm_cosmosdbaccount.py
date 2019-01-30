@@ -331,7 +331,7 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
         if self.parameters.pop('enable_gremlin', False):
             self.parameters['capabilities'].append({'name': 'EnableGremlin'})
 
-        for rule in self.parameters['virtual_network_rules']:
+        for rule in self.parameters.get('virtual_network_rules', []):
             subnet = rule.pop('subnet')
             if isinstance(subnet, dict):
                 virtual_network_name = subnet.get('virtual_network_name')
