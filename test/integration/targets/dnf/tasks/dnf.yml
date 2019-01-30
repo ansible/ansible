@@ -265,223 +265,102 @@
         - "not dnf_result is changed"
 
 # GROUP INSTALL
-# Using 'Books and Guides' because it is only 5 packages and a 7.3 M download on Fedora 26.
-# It also doesn't install anything that will tamper with our Python environment.
-- name: install Books and Guides group block (Fedora)
-  block:
-  - name: install Books and Guides group
-    dnf:
-      name: "@Books and Guides"
-      state: present
-    register: dnf_result
+- name: install Custom Group group
+  dnf:
+    name: "@Custom Group"
+    state: present
+  register: dnf_result
 
-  - name: verify installation of the group
-    assert:
-      that:
-          - "not dnf_result.failed | default(False)"
-          - "dnf_result.changed"
+- name: check foo with rpm
+  command: rpm -q foo
+  failed_when: False
+  register: foo_result
 
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'results' in dnf_result"
+- name: verify installation of the group
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - foo_result.rc == 0
 
-  - name: install the group again
-    dnf:
-      name: "@Books and Guides"
-      state: present
-    register: dnf_result
+- name: install the group again
+  dnf:
+    name: "@Custom Group"
+    state: present
+  register: dnf_result
 
-  - name: verify nothing changed
-    assert:
-      that:
-          - "not dnf_result.changed"
+- name: verify nothing changed
+  assert:
+    that:
+    - not dnf_result is changed
+    - "'msg' in dnf_result"
 
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'msg' in dnf_result"
+- name: verify that bar is not installed
+  dnf:
+    name: bar
+    state: absent
 
-  - name: verify that bc is not installed
-    dnf:
-      name: bc
-      state: absent
+- name: install the group again but also with a package that is not yet installed
+  dnf:
+    name:
+      - "@Custom Group"
+      - bar
+    state: present
+  register: dnf_result
 
-  - name: install the group again but also with a package that is not yet installed
-    dnf:
-      name:
-        - "@Books and Guides"
-        - bc
-      state: present
-    register: dnf_result
+- name: check bar with rpm
+  command: rpm -q bar
+  failed_when: False
+  register: bar_result
 
-  - name: verify bc is installed
-    assert:
-      that:
-          - "dnf_result.changed"
+- name: verify bar is installed
+  assert:
+    that:
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - bar_result.rc == 0
 
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'results' in dnf_result"
+- name: try to install the group again, with --check to check 'changed'
+  dnf:
+    name: "@Custom Group"
+    state: present
+  check_mode: yes
+  register: dnf_result
 
-  - name: try to install the group again, with --check to check 'changed'
-    dnf:
-      name: "@Books and Guides"
-      state: present
-    check_mode: yes
-    register: dnf_result
+- name: verify nothing changed
+  assert:
+    that:
+    - not dnf_result is changed
+    - "'msg' in dnf_result"
 
-  - name: verify nothing changed
-    assert:
-      that:
-          - "not dnf_result.changed"
+- name: remove bar after test
+  dnf:
+    name: bar
+    state: absent
 
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'msg' in dnf_result"
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
+  register: shell_dnf_result
 
-  # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-  - shell: 'dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"'
-    register: shell_dnf_result
+# GROUP UPGRADE - this will go to the same method as group install
+# but through group_update - it is its invocation we're testing here
+# see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
+- name: install latest Custom Group
+  dnf:
+    name: "@Custom Group"
+    state: latest
+  register: dnf_result
 
-  # GROUP UPGRADE - this will go to the same method as group install
-  # but through group_update - it is its invocation we're testing here
-  # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
-  - name: install latest Books and Guides
-    dnf:
-      name: "@Books and Guides"
-      state: latest
-    register: dnf_result
+- name: verify installation of the group
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
 
-  - name: verify installation of the group
-    assert:
-      that:
-          - "not dnf_result.failed | default(False)"
-          - "dnf_result.changed"
-
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'results' in dnf_result"
-
-  # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-  - shell: dnf -y group install "Books and Guides" && dnf -y group remove "Books and Guides"
-  when: ansible_distribution == "Fedora"
-
-- name: install RPM Development Tools group block (rhel8 beta)
-  block:
-  - name: install RPM Development Tools group
-    dnf:
-      name: "@RPM Development Tools"
-      state: present
-    register: dnf_result
-
-  - name: verify installation of the group
-    assert:
-      that:
-          - "not dnf_result.failed | default(False)"
-          - "dnf_result.changed"
-
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'results' in dnf_result"
-
-  - name: install the group again
-    dnf:
-      name: "@RPM Development Tools"
-      state: present
-    register: dnf_result
-
-  - name: verify nothing changed
-    assert:
-      that:
-          - "not dnf_result.changed"
-
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'msg' in dnf_result"
-
-  - name: verify that bc is not installed
-    dnf:
-      name: bc
-      state: absent
-
-  - name: install the group again but also with a package that is not yet installed
-    dnf:
-      name:
-        - "@RPM Development Tools"
-        - bc
-      state: present
-    register: dnf_result
-
-  - name: verify bc is installed
-    assert:
-      that:
-          - "dnf_result.changed"
-
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'results' in dnf_result"
-
-  - name: try to install the group again, with --check to check 'changed'
-    dnf:
-      name: "@RPM Development Tools"
-      state: present
-    check_mode: yes
-    register: dnf_result
-
-  - name: verify nothing changed
-    assert:
-      that:
-          - "not dnf_result.changed"
-
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'msg' in dnf_result"
-
-  # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-  - shell: 'dnf -y group install "RPM Development Tools" && dnf -y group remove "RPM Development Tools"'
-    register: shell_dnf_result
-
-  # GROUP UPGRADE - this will go to the same method as group install
-  # but through group_update - it is its invocation we're testing here
-  # see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
-  - name: install latest RPM Development Tools
-    dnf:
-      name: "@RPM Development Tools"
-      state: latest
-    register: dnf_result
-
-  - name: verify installation of the group
-    assert:
-      that:
-          - "not dnf_result.failed | default(False)"
-          - "dnf_result.changed"
-
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'results' in dnf_result"
-
-  # cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-  - shell: dnf -y group install "RPM Development Tools" && dnf -y group remove "RPM Development Tools"
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version|int == 8
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
 
 - name: try to install non existing group
   dnf:
@@ -542,58 +421,35 @@
 
 # ENVIRONMENT UPGRADE
 # see commit de299ef77c03a64a8f515033a79ac6b7db1bc710
+- name: install Custom Environment Group
+  dnf:
+    name: "@Custom Environment Group"
+    state: latest
+  register: dnf_result
 
-# Newer Fedora Docker images come with coreutils-single which is incompatible
-# with coreutils (required by @Web Server). We force the install of coreutils
-# before running the environment group install.
-# https://github.com/fedora-cloud/docker-brew-fedora/issues/58
-- name: ensure coreutils is installed over coreutils-single
-  command: dnf install --allowerasing -y coreutils
-  changed_when: '"Nothing to do" not in coreutils_install.stdout'
-  register: coreutils_install
-  when: ansible_distribution == "Fedora"
+- name: check bar with rpm
+  command: rpm -q bar
+  register: bar_result
 
-- name: install Web Server environment block (Fedora)
-  block:
-  - name: install Web Server environment
-    dnf:
-      name: "@Web Server"
-      state: latest
-    register: dnf_result
-  - name: verify installation of the environment
-    assert:
-      that:
-          - "not dnf_result.failed | default(False)"
-          - "dnf_result.changed"
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'results' in dnf_result"
-  always:
-  - name: reinstall coreutils-single if coreutils was installed
-    command: dnf install --allowerasing -y coreutils-single
-    when: coreutils_install is changed
-  when: ansible_distribution == "Fedora"
+- name: verify installation of the environment
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - bar_result.rc == 0
 
-- name: install Server environment block (rhel8 beta)
-  block:
-  - name: install Server environment
-    dnf:
-      name: "@Server"
-      state: latest
-    register: dnf_result
-  - name: verify installation of the environment
-    assert:
-      that:
-          - "not dnf_result.failed | default(False)"
-          - "dnf_result.changed"
-  - name: verify dnf module outputs
-    assert:
-      that:
-          - "'changed' in dnf_result"
-          - "'results' in dnf_result"
-  when: ansible_distribution == "RedHat"
+# Fedora 28 (DNF 2) does not support this, just remove the package itself
+- name: remove bar package on Fedora 28
+  dnf:
+    name: bar
+    state: absent
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- name: remove Custom Environment Group
+  shell: dnf -y group install "Custom Environment Group" && dnf -y group remove "Custom Environment Group"
+  when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
 
 # https://github.com/ansible/ansible/issues/39704
 - name: install non-existent rpm, state=latest
