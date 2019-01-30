@@ -142,6 +142,7 @@ files:
   $modules/cloud/scaleway/scaleway_volume.py:
     ignored: hekonsek
   $modules/cloud/smartos/: &solaris
+    keywords: [ beadm, dladm, illumos, ipadm, smartos, solaris, sunos, zfs, zpool ]
     labels: solaris
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
@@ -172,10 +173,9 @@ files:
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/mysql/: &mysql
-    maintainers: $team_mysql
+    keywords: [ mariadb ]
     labels: mysql
-    keywords:
-    - mariadb
+    maintainers: $team_mysql
   $modules/database/postgresql/: matburt
   $modules/database/postgresql/postgresql_db.py: $team_ansible
   $modules/database/postgresql/postgresql_user.py: $team_ansible nerzhul
@@ -312,14 +312,17 @@ files:
   $modules/packaging/os/apt_repository.py: $team_ansible
   $modules/packaging/os/openbsd_pkg.py: &bsd
     ignored: bleader
+    keywords: [ doas, dragonfly, freebsd, iocage, jail, netbsd, openbsd, opnsense, pfsense ]
     labels: bsd
     maintainers: $team_bsd
   $modules/packaging/os/homebrew.py: &macos
     ignored: frenck
+    keywords: [ brew, cask, darwin, homebrew, macosx, macports, osx ]
     labels: macos
     maintainers: $team_macos
   $modules/packaging/os/homebrew_: *macos
   $modules/packaging/os/installp.py: &aix
+    keywords: [ aix, efix, lpar, wpar ]
     labels: aix
     maintainers: $team_aix
   $modules/packaging/os/macports.py: *macos
@@ -339,6 +342,7 @@ files:
   $modules/packaging/os/snap.py: angristan
   $modules/packaging/os/svr4pkg.py: *solaris
   $modules/packaging/os/swdepot.py: &hpux
+    keywords: [ hp-ux ]
     labels: hpux
     maintainers: $team_hpux
   $modules/packaging/os/swupd.py: hnanni
