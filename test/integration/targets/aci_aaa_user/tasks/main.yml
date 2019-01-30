@@ -115,6 +115,44 @@
     - nm_modify_user_again.current.0.aaaUser.attributes.descr == 'Ansible test user for integration tests'
 
 
+# CLEAR PASSWORD HISTORY
+- name: Clear password history (check_mode)
+  aci_aaa_user: &clear_password_history
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    aaa_user: ansible
+    clear_password_history: yes
+  check_mode: yes
+  register: cm_clear_password_history
+
+- name: Clear password history (normal mode)
+  aci_aaa_user: *clear_password_history
+  register: nm_clear_password_history
+
+- name: Clear password history (check mode)
+  aci_aaa_user: *clear_password_history
+  check_mode: yes
+  register: cm_clear_password_history_again
+
+- name: Clear password history (normal mode)
+  aci_aaa_user: *clear_password_history
+  register: nm_clear_password_history_again
+
+- name: Verify clear password history
+  assert:
+    that:
+    # NOTE: Clearing password history is a changing action, everytime
+    - cm_clear_password_history is changed
+    - nm_clear_password_history is changed
+    - cm_clear_password_history_again is changed
+    - nm_clear_password_history_again is changed
+
+
 # QUERY ALL USERS
 - name: Query all users (check_mode)
   aci_aaa_user: &user_query
