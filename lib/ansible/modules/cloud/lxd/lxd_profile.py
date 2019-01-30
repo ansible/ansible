@@ -199,10 +199,22 @@ class LXDProfileManagement(object):
         self.state = self.module.params['state']
         self.new_name = self.module.params.get('new_name', None)
 
-        self.url = self.module.params['url']
         self.key_file = self.module.params.get('key_file', None)
         self.cert_file = self.module.params.get('cert_file', None)
         self.debug = self.module._verbosity >= 4
+
+        try:
+            cmd='/usr/bin/file ' + self.module.params['snap_url']
+
+            snap_socket_check = os.system(cmd)
+
+            if snap_socket_check == 0:
+                self.url = self.module.params['snap_url']
+            else:
+                self.url = self.module.params['url']
+        except Exception as e:
+            self.module.fail_json(msg=e.msg)
+
         try:
             self.client = LXDClient(
                 self.url, key_file=self.key_file, cert_file=self.cert_file,
@@ -351,6 +363,10 @@ def main():
             url=dict(
                 type='str',
                 default='unix:/var/lib/lxd/unix.socket'
+            ),
+            snap_url=dict(
+                type='str',
+                default='unix:/var/snap/lxd/common/lxd/unix.socket'
             ),
             key_file=dict(
                 type='str',
