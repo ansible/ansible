@@ -64,9 +64,14 @@ options:
         default: present
     url:
         description:
-          - The unix domain socket path or the https URL for the LXD server.
+          - (APT/YUM) The unix domain socket path or the https URL for the LXD server.
         required: false
         default: unix:/var/lib/lxd/unix.socket
+    snap_url:
+        description:
+          - (SNAP) The unix domain socket path or the https URL for the LXD server. 
+        required: false
+        default: unix:/var/snap/lxd/common/lxd/unix.socket
     key_file:
         description:
           - The client certificate key file path.
