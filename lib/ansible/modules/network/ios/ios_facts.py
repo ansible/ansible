@@ -107,7 +107,10 @@ ansible_net_api:
   description: The name of the transport
   returned: always
   type: str
-
+ansible_net_python_version:
+  description: The Python version Ansible controller is using
+  returned: always
+  type: str
 
 # hardware
 ansible_net_filesystems:
