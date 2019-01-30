@@ -56,7 +56,10 @@ class TestIosNtpModule(TestIosModule):
             key_id='10',
             state='present'
         ))
-        commands = []
+        commands = [
+            'ntp server 10.75.33.5',
+            'ntp source Vlan2'
+        ]
         self.execute_module(changed=True, commands=commands)
 
     def test_ios_ntp_remove(self):
