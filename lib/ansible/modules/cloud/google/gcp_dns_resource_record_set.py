@@ -287,7 +287,7 @@ def collection(module):
 def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
     if allow_not_found and response.status_code == 404:
-        return None
+        module.fail_json(msg="Google DNS Managed Zone '%s' not found" % replace_resource_dict(module.params['managed_zone'], 'name'))
 
     # If no content, return nothing.
     if response.status_code == 204:
@@ -375,8 +375,6 @@ def prefetch_soa_resource(module):
     )
 
     result = fetch_wrapped_resource(resource, 'dns#resourceRecordSet', 'dns#resourceRecordSetsListResponse', 'rrsets')
-    if not result:
-        raise ValueError("Google DNS Managed Zone %s not found" % replace_resource_dict(module.params['managed_zone'], 'name'))
     return result
 
 
@@ -388,6 +386,8 @@ def create_change(original, updated, module):
 # Fetch current SOA. We need the last SOA so we can increment its serial
 def update_soa(module):
     original_soa = prefetch_soa_resource(module)
+    if original_soa is None:
+        return [None, None]
 
     # Create a clone of the SOA record so we can update it
     updated_soa = copy.deepcopy(original_soa)
