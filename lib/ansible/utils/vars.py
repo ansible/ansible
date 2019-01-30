@@ -145,6 +145,8 @@ def load_extra_vars(loader):
 
 def load_options_vars(version):
 
+    if version is None:
+        version = 'Unknown'
     options_vars = {'ansible_version': version}
     attrs = {'check': 'check_mode',
              'diff': 'diff_mode',
