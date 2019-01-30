@@ -1416,6 +1416,12 @@ HOST_PATTERN_MISMATCH:
   - {key: host_pattern_mismatch, section: inventory}
   choices: ['warning', 'error', 'ignore']
   version_added: "2.8"
+INSTALLED_CONTENT_ROOTS:
+  name: root paths for loading installed role/plugin content
+  default: ['~/.ansible/content', '/usr/share/ansible/content']
+  type: list
+  ini:
+  - {key: installed_content_roots, section: defaults}
 INTERPRETER_PYTHON:
   name: Python interpreter path (or automatic discovery behavior) used for module execution
   default: auto_legacy

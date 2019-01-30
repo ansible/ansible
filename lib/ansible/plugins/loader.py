@@ -11,6 +11,7 @@ import glob
 import imp
 import os
 import os.path
+import pkgutil
 import sys
 import warnings
 
@@ -298,6 +299,67 @@ class PluginLoader:
                 self._clear_caches()
                 display.debug('Added %s to loader search path' % (directory))
 
+    def _find_fq_plugin(self, fq_name, extension):
+        # prefix our extension Python namespace if it isn't already there
+        if not fq_name.startswith('a.'):
+            fq_name = 'a.' + fq_name
+
+        splitname = fq_name.rsplit('.', 1)
+        if len(splitname) != 2:
+            raise ValueError('{0} is not a valid namespace-qualified plugin name'.format(to_native(fq_name)))
+
+        package = splitname[0]
+        resource = splitname[1]
+
+        append_plugin_type = self.class_name or self.subdir
+
+        if append_plugin_type:
+            # only current non-class special case, module_utils don't use this loader method
+            if append_plugin_type == 'library':
+                append_plugin_type = 'modules'
+            else:
+                append_plugin_type = get_plugin_class(append_plugin_type)
+            package += '.plugins.{0}'.format(append_plugin_type)
+
+        if extension:
+            resource += extension
+
+        plugin_content = None
+
+        try:
+            plugin_content = pkgutil.get_data(package, resource)
+
+            if plugin_content is None:
+                return None
+
+            # HACK: if this is a typed loader, ensure there's a class in there
+            # NB: this hack should not be necessary for type-specific plugins
+            if self.class_name:
+                if not b"class %s" % to_bytes(self.class_name) in plugin_content:
+                    return None
+        except IOError:
+            if extension:
+                return None  # extension was specified and we didn't find it, move on
+
+        pkg = sys.modules.get(package)
+        pkg_path = os.path.dirname(pkg.__file__)
+
+        if plugin_content:  # we found it earlier, just return the reconstructed path
+            return os.path.join(pkg_path, resource)
+
+        # look for any matching extension in the package location (sans filter)
+        ext_blacklist = ['.pyc', '.pyo']
+        found_files = [f for f in glob.iglob(os.path.join(pkg_path, resource) + '.*') if os.path.isfile(f) and os.path.splitext(f)[1] not in ext_blacklist]
+
+        if not found_files:
+            return None
+
+        if len(found_files) > 1:
+            # TODO: warn?
+            pass
+
+        return found_files[0]
+
     def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''
 
@@ -317,6 +379,10 @@ class PluginLoader:
 
         if check_aliases:
             name = self.aliases.get(name, name)
+
+        # TODO: we should still probably require a well-known prefix on FQNS so we don't paint ourselves into a corner with future stuff
+        if '.' in name and not name.startswith('Ansible'):  # HACK: need this right now so we can still load shipped PS module_utils
+            return self._find_fq_plugin(name, suffix)
 
         # The particular cache to look for modules within.  This matches the
         # requested mod_type
@@ -603,11 +669,17 @@ class Jinja2Loader(PluginLoader):
     def find_plugin(self, name):
         # Nothing using Jinja2Loader use this method.  We can't use the base class version because
         # we deduplicate differently than the base class
+        if '.' in name:
+            return super(Jinja2Loader, self).find_plugin(name)
+
         raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
 
     def get(self, name, *args, **kwargs):
         # Nothing using Jinja2Loader use this method.  We can't use the base class version because
         # we deduplicate differently than the base class
+        if '.' in name:
+            return super(Jinja2Loader, self).get(name, *args, **kwargs)
+
         raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
 
     def all(self, *args, **kwargs):
@@ -695,10 +767,20 @@ def _load_plugin_filter():
     return filters
 
 
+def _add_content_roots():
+    roots = C.config.get_config_value('INSTALLED_CONTENT_ROOTS')
+    pathset = set(sys.path)
+    for root in (to_native(r) for r in reversed(roots)):  # preserve as-listed precedence
+        if root not in pathset:
+            sys.path.insert(0, root)
+
+
 # TODO: All of the following is initialization code   It should be moved inside of an initialization
 # function which is called at some point early in the ansible and ansible-playbook CLI startup.
 
 _PLUGIN_FILTERS = _load_plugin_filter()
+
+_add_content_roots()
 
 # doc fragments first
 fragment_loader = PluginLoader(

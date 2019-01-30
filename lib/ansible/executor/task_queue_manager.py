@@ -167,6 +167,10 @@ class TaskQueueManager:
                                    " see the 2.4 porting guide for details." % callback_obj._load_name, version="2.9")
             self._callback_plugins.append(callback_obj)
 
+        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if '.' in c):
+            callback_obj = callback_loader.get(callback_plugin_name)
+            self._callback_plugins.append(callback_obj)
+
         self._callbacks_loaded = True
 
     def run(self, play):

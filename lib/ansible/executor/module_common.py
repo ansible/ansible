@@ -29,6 +29,7 @@ import os
 import shlex
 import zipfile
 import re
+import pkgutil
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -429,10 +430,15 @@ class ModuleDepFinder(ast.NodeVisitor):
 
     def visit_Import(self, node):
         # import ansible.module_utils.MODLIB[.MODLIBn] [as asname]
-        for alias in (a for a in node.names if a.name.startswith('ansible.module_utils.')):
-            py_mod = alias.name[self.IMPORT_PREFIX_SIZE:]
-            py_mod = tuple(py_mod.split('.'))
-            self.submodules.add(py_mod)
+        for alias in node.names:
+            if alias.name.startswith('ansible.module_utils.'):
+                py_mod = alias.name[self.IMPORT_PREFIX_SIZE:]
+                py_mod = tuple(py_mod.split('.'))
+                self.submodules.add(py_mod)
+            elif alias.name.startswith('a.'):
+                # keep 'a' as a sentinel prefix to trigger collection-loaded MU path
+                # FIXME: maybe make this a fancier type or use a reserved explicit sentinel instead?
+                self.submodules.add(tuple(alias.name.split('.')))
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
@@ -453,6 +459,10 @@ class ModuleDepFinder(ast.NodeVisitor):
                 # from ansible.module_utils import MODLIB [,MODLIB2] [as asname]
                 for alias in node.names:
                     self.submodules.add((alias.name,))
+
+        elif node.module.startswith('a.'):
+            # TODO: finish out the subpackage et al cases
+            self.submodules.add(tuple(node.module.split('.')))
         self.generic_visit(node)
 
 
@@ -555,6 +565,17 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             module_info = imp.find_module('_six', [os.path.join(p, 'six') for p in module_utils_paths])
             py_module_name = ('six', '_six')
             idx = 0
+        elif py_module_name[0] == 'a':  # FIXME: use a better sentinel or fancier data structure here?
+            # FIXME: replicate module name resolution like below for granular imports
+            # this is a collection-hosted MU; look it up with get_data
+            package_name = '.'.join(py_module_name[:-1])
+            resource_name = py_module_name[-1] + '.py'
+            try:
+                # FIXME: this won't support full package import, but do we actually want it to?
+                module_info = pkgutil.get_data(package_name, resource_name)
+            except FileNotFoundError:
+                # FIXME: implement package fallback code
+                raise AnsibleError('unable to load collection-hosted module_util {0}.{1}'.format(package_name, resource_name))
         else:
             # Check whether either the last or the second to last identifier is
             # a module name
@@ -577,56 +598,78 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
                 msg.append(py_module_name[-1])
             raise AnsibleError(' '.join(msg))
 
-        # Found a byte compiled file rather than source.  We cannot send byte
-        # compiled over the wire as the python version might be different.
-        # imp.find_module seems to prefer to return source packages so we just
-        # error out if imp.find_module returns byte compiled files (This is
-        # fragile as it depends on undocumented imp.find_module behaviour)
-        if module_info[2][2] not in (imp.PY_SOURCE, imp.PKG_DIRECTORY):
-            msg = ['Could not find python source for imported module support code for %s.  Looked for' % name]
+        if isinstance(module_info, bytes):  # collection-hosted, just the code
+            # HACK: maybe surface collection dirs in here and use existing find_module code?
+            normalized_name = py_module_name
+            normalized_data = module_info
+            normalized_path = '/'.join(py_module_name)
+            py_module_cache[normalized_name] = (normalized_data, normalized_path)
+            normalized_modules.add(normalized_name)
+
+            # HACK: walk back up the package hierarchy to pick up package inits; this won't do the right thing
+            # for actual packages yet...
+            accumulated_pkg_name = ()
+            for pkg in py_module_name[:-1]:
+                accumulated_pkg_name = accumulated_pkg_name + (pkg,)
+                normalized_name = accumulated_pkg_name + ('__init__',)
+                if normalized_name not in py_module_cache:
+                    normalized_path = '/'.join(accumulated_pkg_name)
+                    # HACK: possibly preserve some of the actual package file contents; problematic for extend_paths and others though?
+                    normalized_data = ''
+                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                    normalized_modules.add(normalized_name)
+
+        else:
+            # Found a byte compiled file rather than source.  We cannot send byte
+            # compiled over the wire as the python version might be different.
+            # imp.find_module seems to prefer to return source packages so we just
+            # error out if imp.find_module returns byte compiled files (This is
+            # fragile as it depends on undocumented imp.find_module behaviour)
+            if module_info[2][2] not in (imp.PY_SOURCE, imp.PKG_DIRECTORY):
+                msg = ['Could not find python source for imported module support code for %s.  Looked for' % name]
+                if idx == 2:
+                    msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
+                else:
+                    msg.append(py_module_name[-1])
+                raise AnsibleError(' '.join(msg))
+
             if idx == 2:
-                msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
-            else:
-                msg.append(py_module_name[-1])
-            raise AnsibleError(' '.join(msg))
+                # We've determined that the last portion was an identifier and
+                # thus, not part of the module name
+                py_module_name = py_module_name[:-1]
 
-        if idx == 2:
-            # We've determined that the last portion was an identifier and
-            # thus, not part of the module name
-            py_module_name = py_module_name[:-1]
+            # If not already processed then we've got work to do
+            # If not in the cache, then read the file into the cache
+            # We already have a file handle for the module open so it makes
+            # sense to read it now
+            if py_module_name not in py_module_cache:
+                if module_info[2][2] == imp.PKG_DIRECTORY:
+                    # Read the __init__.py instead of the module file as this is
+                    # a python package
+                    normalized_name = py_module_name + ('__init__',)
+                    if normalized_name not in py_module_names:
+                        normalized_path = os.path.join(os.path.join(module_info[1], '__init__.py'))
+                        normalized_data = _slurp(normalized_path)
+                        py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                        normalized_modules.add(normalized_name)
+                else:
+                    normalized_name = py_module_name
+                    if normalized_name not in py_module_names:
+                        normalized_path = module_info[1]
+                        normalized_data = module_info[0].read()
+                        module_info[0].close()
+                        py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                        normalized_modules.add(normalized_name)
 
-        # If not already processed then we've got work to do
-        # If not in the cache, then read the file into the cache
-        # We already have a file handle for the module open so it makes
-        # sense to read it now
-        if py_module_name not in py_module_cache:
-            if module_info[2][2] == imp.PKG_DIRECTORY:
-                # Read the __init__.py instead of the module file as this is
-                # a python package
-                normalized_name = py_module_name + ('__init__',)
-                if normalized_name not in py_module_names:
-                    normalized_path = os.path.join(os.path.join(module_info[1], '__init__.py'))
-                    normalized_data = _slurp(normalized_path)
-                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
-                    normalized_modules.add(normalized_name)
-            else:
-                normalized_name = py_module_name
-                if normalized_name not in py_module_names:
-                    normalized_path = module_info[1]
-                    normalized_data = module_info[0].read()
-                    module_info[0].close()
-                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
-                    normalized_modules.add(normalized_name)
-
-            # Make sure that all the packages that this module is a part of
-            # are also added
-            for i in range(1, len(py_module_name)):
-                py_pkg_name = py_module_name[:-i] + ('__init__',)
-                if py_pkg_name not in py_module_names:
-                    pkg_dir_info = imp.find_module(py_pkg_name[-1],
-                                                   [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
-                    normalized_modules.add(py_pkg_name)
-                    py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
+                # Make sure that all the packages that this module is a part of
+                # are also added
+                for i in range(1, len(py_module_name)):
+                    py_pkg_name = py_module_name[:-i] + ('__init__',)
+                    if py_pkg_name not in py_module_names:
+                        pkg_dir_info = imp.find_module(py_pkg_name[-1],
+                                                       [os.path.join(p, *py_pkg_name[:-1]) for p in module_utils_paths])
+                        normalized_modules.add(py_pkg_name)
+                        py_module_cache[py_pkg_name] = (_slurp(pkg_dir_info[1]), pkg_dir_info[1])
 
     # FIXME: Currently the AnsiBallZ wrapper monkeypatches module args into a global
     # variable in basic.py.  If a module doesn't import basic.py, then the AnsiBallZ wrapper will
@@ -653,10 +696,16 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     unprocessed_py_module_names = normalized_modules.difference(py_module_names)
 
     for py_module_name in unprocessed_py_module_names:
+        # HACK: this probably works, but is not guaranteed to; need a more explicit flag?
+        if not py_module_cache[py_module_name][1].startswith('/'):
+            dir_prefix = ''
+        else:
+            dir_prefix = 'ansible/module_utils'
+
         py_module_path = os.path.join(*py_module_name)
         py_module_file_name = '%s.py' % py_module_path
 
-        zf.writestr(os.path.join("ansible/module_utils",
+        zf.writestr(os.path.join(dir_prefix,
                     py_module_file_name), py_module_cache[py_module_name][0])
         display.vvvvv("Using module_utils file %s" % py_module_cache[py_module_name][1])
 

@@ -36,6 +36,11 @@ try:
 except ImportError:
     from sha import sha as sha1
 
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
+
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
 from jinja2.runtime import Context, StrictUndefined
@@ -255,6 +260,59 @@ class AnsibleContext(Context):
         return val
 
 
+class JinjaPluginIntercept(MutableMapping):
+    def __init__(self, delegatee, pluginloader, *args, **kwargs):
+        super(JinjaPluginIntercept, self).__init__(*args, **kwargs)
+        self._delegatee = delegatee
+        self._pluginloader = pluginloader
+
+        if self._pluginloader.class_name == 'FilterModule':
+            self._method_map_name = "filters"
+        elif self._pluginloader.class_name == 'TestModule':
+            self._method_map_name = "tests"
+
+    def __getitem__(self, key):
+        if not isinstance(key, string_types):
+            raise ValueError('key must be a string')
+
+        key = to_native(key)
+
+        if '.' not in key:  # might be a built-in value, delegate to base dict
+            return self._delegatee.__getitem__(key)
+
+        components = key.rsplit('.', 1)
+
+        if len(components) != 2:
+            raise KeyError('invalid plugin name: {0}'.format(key))
+
+        fq_plugin = components[0]
+        function_name = components[1]
+
+        # TODO: error handling for bogus plugin name, bogus impl, bogus filter/test
+        plugin_impl = self._pluginloader.get(fq_plugin)
+
+        method_map = getattr(plugin_impl, self._method_map_name)
+
+        function_impl = method_map().get(function_name)
+
+        return function_impl
+
+    def __setitem__(self, key, value):
+        return self._delegatee.__setitem__(key, value)
+
+    def __delitem__(self):
+        raise NotImplementedError()
+
+    def __iter__(self):
+        # not strictly accurate since we're not counting dynamically-loaded values
+        return self._delegatee.__iter__()
+
+    def __len__(self):
+        # not strictly accurate since we're not counting dynamically-loaded values
+        return self._delegatee.__len__()
+
+
+
 class AnsibleEnvironment(Environment):
     '''
     Our custom environment, which simply allows us to override the class-level
@@ -262,6 +320,12 @@ class AnsibleEnvironment(Environment):
     '''
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
+
+    def __init__(self, *args, **kwargs):
+        super(AnsibleEnvironment, self).__init__(*args, **kwargs)
+
+        self.filters = JinjaPluginIntercept(self.filters, filter_loader)
+        self.tests = JinjaPluginIntercept(self.tests, test_loader)
 
 
 class Templar:
