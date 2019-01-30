@@ -133,6 +133,7 @@ def main():
             responses=dict(type='dict', required=True),
             timeout=dict(type='int', default=30),
             echo=dict(type='bool', default=False),
+            codec_errors=dict(type='str'),
         )
     )
 
@@ -146,6 +147,7 @@ def main():
     responses = module.params['responses']
     timeout = module.params['timeout']
     echo = module.params['echo']
+    codec_errors = module.params['codec_errors']
 
     events = dict()
     for key, value in responses.items():
@@ -194,11 +196,11 @@ def main():
             # Prefer pexpect.run from pexpect>=4
             out, rc = pexpect.run(args, timeout=timeout, withexitstatus=True,
                                   events=events, cwd=chdir, echo=echo,
-                                  encoding='utf-8')
+                                  encoding='utf-8', codec_errors=codec_errors)
         except TypeError:
             # Use pexpect.runu in pexpect>=3.3,<4
             out, rc = pexpect.runu(args, timeout=timeout, withexitstatus=True,
-                                   events=events, cwd=chdir, echo=echo)
+                                   events=events, cwd=chdir, echo=echo, codec_errors=codec_errors)
     except (TypeError, AttributeError) as e:
         # This should catch all insufficient versions of pexpect
         # We deem them insufficient for their lack of ability to specify
