@@ -840,7 +840,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         def _check_subjectAltName(extensions):
             current_altnames_ext = _find_extension(extensions, cryptography.x509.SubjectAlternativeName)
             current_altnames = [str(altname) for altname in current_altnames_ext.value] if current_altnames_ext else []
-            altnames = [str(self._get_san(altname)) for altname in self.subjectAltName]
+            altnames = [str(self._get_san(altname)) for altname in self.subjectAltName] if self.subjectAltName else []
             if set(altnames) != set(current_altnames):
                 return False
             if altnames:
