@@ -31,7 +31,7 @@ PRs must be raised well in advance of the dates below to have a chance of being 
 Release Manager
 ---------------
 
-Adam Miller (IRC: maxamillion; GitHub: @maxamillion)
+Toshio Kuratomi (IRC: abadger1999; GitHub: @abadger)
 
 Planned work
 ============
