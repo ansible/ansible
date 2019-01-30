@@ -111,6 +111,7 @@ class PlaybookExecutor:
                     templar = Templar(loader=self._loader, variables=all_vars)
                     setattr(play, 'vars_prompt', templar.template(play.vars_prompt))
 
+                    # FIXME: this should be a play 'sub object' like loop_control
                     if play.vars_prompt:
                         for var in play.vars_prompt:
                             vname = var['name']
@@ -121,11 +122,13 @@ class PlaybookExecutor:
                             encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
+                            unsafe = var.get("unsafe", None)
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
+                                                            default, unsafe)
+                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 
