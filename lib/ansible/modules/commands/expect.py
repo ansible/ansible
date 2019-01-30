@@ -53,6 +53,11 @@ options:
       - Whether or not to echo out your response strings.
     default: false
     type: bool
+  codec_errors:
+    description:
+      - Used to avoid the utf-8 codec error, options are strict,replace
+    default: false
+    type: str
 requirements:
   - python >= 2.6
   - pexpect >= 3.3
