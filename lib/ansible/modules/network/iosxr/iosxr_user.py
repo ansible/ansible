@@ -131,6 +131,12 @@ EXAMPLES = """
     name: ansible
     configured_password: mypassword
     state: present
+- name: create a new user in admin configuration mode
+  iosxr_user:
+    name: ansible
+    configured_password: mypassword
+    admin: True
+    state: present
 - name: remove all users except admin
   iosxr_user:
     purge: True
