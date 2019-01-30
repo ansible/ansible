@@ -152,6 +152,7 @@
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
+    custom_data: "#cloud-config"
     image:
       offer: CoreOS
       publisher: CoreOS
@@ -184,6 +185,7 @@
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
+    custom_data: "#cloud-config"
     image:
       offer: CoreOS
       publisher: CoreOS
@@ -353,7 +355,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -377,7 +379,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -403,7 +405,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -427,7 +429,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -451,7 +453,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_B1s
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser

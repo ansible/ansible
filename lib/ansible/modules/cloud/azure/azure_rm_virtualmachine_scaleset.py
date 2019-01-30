@@ -206,6 +206,14 @@ options:
             - A list of Availability Zones for your virtual machine scale set
         type: list
         version_added: "2.8"
+    custom_data:
+        description:
+            - Data which is made available to the virtual machine and used by e.g., cloud-init.
+            - Many images in the marketplace are not cloud-init ready. Thus, data
+              sent to I(custom_data) would be ignored. If the image you are attempting to use is not listed in
+              U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
+              follow these steps U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
+        version_added: "2.8"
 
 extends_documentation_fragment:
     - azure
@@ -365,6 +373,7 @@ azure_vmss:
 
 import random
 import re
+import base64
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -375,6 +384,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict, format_resource_id
+from ansible.module_utils.basic import to_native, to_bytes
 
 
 AZURE_OBJECT_CLASS = 'VirtualMachineScaleSet'
@@ -414,7 +424,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             enable_accelerated_networking=dict(type='bool'),
             security_group=dict(type='raw', aliases=['security_group_name']),
             overprovision=dict(type='bool', default=True),
-            zones=dict(type='list')
+            zones=dict(type='list'),
+            custom_data=dict(type='str')
         )
 
         self.resource_group = None
@@ -445,6 +456,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.security_group = None
         self.overprovision = None
         self.zones = None
+        self.custom_data = None
 
         required_if = [
             ('state', 'present', [
@@ -497,6 +509,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         if not self.location:
             # Set default location
             self.location = resource_group.location
+
+        if self.custom_data:
+            self.custom_data = to_native(base64.b64encode(to_bytes(self.custom_data)))
 
         if self.state == 'present':
             # Verify parameters and resolve any defaults
@@ -627,6 +642,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         differences.append('load_balancer')
                         changed = True
 
+                if self.custom_data:
+                    if self.custom_data != vmss_dict['properties']['virtualMachineProfile']['osProfile'].get('customData'):
+                        differences.append('custom_data')
+                        changed = True
+                        vmss_dict['properties']['virtualMachineProfile']['osProfile']['customData'] = self.custom_data
+
                 self.differences = differences
 
             elif self.state == 'absent':
@@ -698,6 +719,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             os_profile=self.compute_models.VirtualMachineScaleSetOSProfile(
                                 admin_username=self.admin_username,
                                 computer_name_prefix=self.short_hostname,
+                                custom_data=self.custom_data
                             ),
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
                                 os_disk=self.compute_models.VirtualMachineScaleSetOSDisk(
