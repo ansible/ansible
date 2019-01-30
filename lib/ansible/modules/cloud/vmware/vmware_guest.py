@@ -39,7 +39,7 @@ notes:
     - "   Resource > Assign Virtual Machine to Resource Pool"
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
     - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
-    - Use SCSI disks instead of IDE when you want to resize online disks by specifing a SCSI controller
+    - Use SCSI disks instead of IDE when you want to expand online disks by specifing a SCSI controller
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
@@ -169,7 +169,7 @@ options:
     description:
     - A list of disks to add.
     - This parameter is case sensitive.
-    - Resizing disks is not supported.
+    - Shrinking disks is not supported.
     - Removing existing disks of the virtual machine is not supported.
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
