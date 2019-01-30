@@ -33,4 +33,3 @@ def test_no_retry_on_general_api_error():
     with pytest.raises(APIError):
         manager.run_safe()
     assert run_mock.call_count == 1
-
