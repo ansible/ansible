@@ -70,13 +70,13 @@ author: "Andrew Klychkov (@Andersson007)"
 '''
 
 EXAMPLES = '''
-# Ping postgres server bu Ansible ad-hoc command:
-# ansible postgres -m postgresql_ping
+# PostgreSQL ping dbsrv server from the shell:
+# ansible dbsrv -m postgresql_ping
 
-- name: Ping postgres server using not default credentials and ssl
+- name: PostgreSQL ping dbsrv server using not default credentials and ssl
   postgresql_ping:
     db: protected_db
-    login_host: myhostname
+    login_host: dbsrv
     login_user: secret
     login_password: secret_pass
     ssl_rootcert: /root/root.crt
