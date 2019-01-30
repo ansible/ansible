@@ -16,6 +16,7 @@ from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.play import Play
+from ansible.plugins.loader import become_loader
 from ansible.utils import context_objects as co
 
 
@@ -132,7 +133,7 @@ def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
 
     play_context.become = True
     play_context.become_user = 'foo'
-    play_context.become_method = 'sudo'
+    play_context.set_become_plugin(become_loader.get('sudo'))
     play_context.become_flags = sudo_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
 
@@ -146,46 +147,46 @@ def test_play_context_make_become_cmd(mocker, parser, reset_cli_args):
                                                                       default_exe, success, default_cmd), cmd) is not None)
 
     play_context.become_pass = None
-    play_context.become_method = 'su'
+    play_context.set_become_plugin(become_loader.get('su'))
     play_context.become_flags = su_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert (re.match("""%s  %s -c '%s -c '"'"'echo %s; %s'"'"''""" % (su_exe, play_context.become_user, default_exe,
                                                                       success, default_cmd), cmd) is not None)
 
-    play_context.become_method = 'pbrun'
+    play_context.set_become_plugin(become_loader.get('pbrun'))
     play_context.become_flags = pbrun_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match("""%s %s -u %s 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user,
                                                        success, default_cmd), cmd) is not None
 
-    play_context.become_method = 'pfexec'
+    play_context.set_become_plugin(become_loader.get('pfexec'))
     play_context.become_flags = pfexec_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match('''%s %s "'echo %s; %s'"''' % (pfexec_exe, pfexec_flags, success, default_cmd), cmd) is not None
 
-    play_context.become_method = 'doas'
+    play_context.set_become_plugin(become_loader.get('doas'))
     play_context.become_flags = doas_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert (re.match("""%s %s -u %s %s -c 'echo %s; %s'""" % (doas_exe, doas_flags, play_context.become_user, default_exe, success,
                                                               default_cmd), cmd) is not None)
 
-    play_context.become_method = 'ksu'
+    play_context.set_become_plugin(become_loader.get('ksu'))
     play_context.become_flags = ksu_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert (re.match("""%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags,
                                                               default_exe, success, default_cmd), cmd) is not None)
 
-    play_context.become_method = 'bad'
+    play_context.set_become_plugin(become_loader.get('bad'))
     with pytest.raises(AnsibleError):
         play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
 
-    play_context.become_method = 'dzdo'
+    play_context.set_become_plugin(become_loader.get('dzdo'))
     play_context.become_flags = dzdo_flags
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match("""%s %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, dzdo_flags, play_context.become_user, default_exe,
                                                              success, default_cmd), cmd) is not None
     play_context.become_pass = 'testpass'
-    play_context.become_method = 'dzdo'
+    play_context.set_become_plugin(become_loader.get('dzdo'))
     cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
     assert re.match("""%s %s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, dzdo_flags, r'\"\[dzdo via ansible, key=.+?\] password:\"',
                                                                    play_context.become_user, default_exe, success, default_cmd), cmd) is not None
