@@ -72,7 +72,7 @@ def run_command(module, command_list, command_string, command_pattern, descripti
 def run_commands(module, commands):
     if isinstance(commands, list):
         return run_command(module, commands, None, shell_pattern)
-    elif isinstance(commans, str):
+    elif isinstance(commands, str):
         return run_command(module, None, commands, shell_pattern)
     else:
         e = 'Error in run_commands() - invalid parameter: commands=%s' % commands
