@@ -76,6 +76,14 @@ ansible_net_image:
   description: The image file the device is running
   returned: always
   type: str
+ansible_net_api:
+  description: The name of the transport
+  returned: always
+  type: str
+ansible_net_python_version:
+  description: The Python version Ansible controller is using
+  returned: always
+  type: str
 
 # hardware
 ansible_net_filesystems:
@@ -115,61 +123,66 @@ ansible_net_neighbors:
   returned: when interfaces is configured
   type: dict
 """
+
+import platform
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_commands
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_commands, get_capabilities
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
 
 class FactsBase(object):
 
-    def __init__(self):
-        self.facts = dict()
-        self.commands()
+    COMMANDS = frozenset()
 
-    def commands(self):
-        raise NotImplementedError
+    def __init__(self, module):
+        self.module = module
+        self.facts = dict()
+        self.responses = None
+
+    def populate(self):
+        self.responses = run_commands(self.module, list(self.COMMANDS), check_rc=False)
 
 
 class Default(FactsBase):
 
-    def commands(self):
-        return(['show version | utility head -n 20'])
+    def populate(self):
+        self.facts.update(self.platform_facts())
 
-    def populate(self, results):
-        self.facts['version'] = self.parse_version(results['show version | utility head -n 20'])
-        self.facts['image'] = self.parse_image(results['show version | utility head -n 20'])
-        self.facts['hostname'] = self.parse_hostname(results['show version | utility head -n 20'])
+    def platform_facts(self):
+        platform_facts = {}
 
-    def parse_version(self, data):
-        match = re.search(r'Version (\S+)$', data, re.M)
-        if match:
-            return match.group(1)
+        resp = get_capabilities(self.module)
+        device_info = resp['device_info']
 
-    def parse_hostname(self, data):
-        match = re.search(r'^(.+) uptime', data, re.M)
-        if match:
-            return match.group(1)
+        platform_facts['system'] = device_info['network_os']
 
-    def parse_image(self, data):
-        match = re.search(r'image file is "(.+)"', data)
-        if match:
-            return match.group(1)
+        for item in ('model', 'image', 'version', 'platform', 'hostname'):
+            val = device_info.get('network_os_%s' % item)
+            if val:
+                platform_facts[item] = val
 
+        platform_facts['api'] = resp['network_api']
+        platform_facts['python_version'] = platform.python_version()
+
+        return platform_facts
 
 class Hardware(FactsBase):
 
-    def commands(self):
-        return(['dir /all', 'show memory summary'])
+    COMMANDS = [
+        'dir /all',
+        'show memory summary'
+    ]
 
-    def populate(self, results):
-        self.facts['filesystems'] = self.parse_filesystems(
-            results['dir /all'])
+    def populate(self):
+        super(Hardware, self).populate()
+        data = self.responses[0]
+        self.facts['filesystems'] = self.parse_filesystems(data)
 
-        match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
-                          results['show memory summary'])
+        data = self.responses[1]
+        match = re.search(r'Physical Memory: (\d+)M total \((\d+)', data)
         if match:
             self.facts['memtotal_mb'] = match.group(1)
             self.facts['memfree_mb'] = match.group(2)
@@ -180,33 +193,39 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-    def commands(self):
-        return(['show running-config'])
+    COMMANDS = [
+        'show running-config'
+    ]
 
-    def populate(self, results):
-        self.facts['config'] = results['show running-config']
+    def populate(self):
+        super(Config, self).populate()
+        self.facts['config'] = self.responses[0]
 
 
 class Interfaces(FactsBase):
 
-    def commands(self):
-        return(['show interfaces', 'show ipv6 interface',
-                'show lldp', 'show lldp neighbors detail'])
+    COMMANDS = [
+        'show interfaces',
+        'show ipv6 interface',
+        'show lldp',
+        'show lldp neighbors detail'
+    ]
 
-    def populate(self, results):
+    def populate(self):
+        super(Interfaces, self).populate()
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        interfaces = self.parse_interfaces(results['show interfaces'])
+        interfaces = self.parse_interfaces(self.responses[0])
         self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
-        data = results['show ipv6 interface']
+        data = self.responses[1]
         if len(data) > 0:
             data = self.parse_interfaces(data)
             self.populate_ipv6_interfaces(data)
 
-        if 'LLDP is not enabled' not in results['show lldp']:
-            neighbors = results['show lldp neighbors detail']
+        if 'LLDP is not enabled' not in self.responses[2]:
+            neighbors = self.responses[3]
             self.facts['neighbors'] = self.parse_neighbors(neighbors)
 
     def populate_interfaces(self, interfaces):
@@ -402,17 +421,11 @@ def main():
 
     instances = list()
     for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key]())
+        instances.append(FACT_SUBSETS[key](module))
 
-    try:
-        for inst in instances:
-            commands = inst.commands()
-            responses = run_commands(module, commands)
-            results = dict(zip(commands, responses))
-            inst.populate(results)
-            facts.update(inst.facts)
-    except Exception:
-        module.exit_json(out=module.from_json(results))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
