@@ -47,7 +47,7 @@ options:
         description:
             - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
               subscription and location. Check your subscription for available choices. Required when creating a VM.
-            - Available values can be found here: U(https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general)
+            - "Available values can be found here: U(https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general)"
     user_name:
         description:
             - The user name of the virtual machine.

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabsartifactsource
+module: azure_rm_devtestlabartifactsource
 version_added: "2.8"
 short_description: Manage Azure DevTest Labs Artifacts Source instance.
 description:
@@ -58,7 +58,7 @@ options:
     security_token:
         description:
             - The security token to authenticate to the artifact source.
-    enabled:
+    is_enabled:
         description:
             - Indicates whether the artifact source is enabled.
         type: bool
