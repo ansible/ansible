@@ -1,0 +1,3 @@
+bugfixes:
+    - remove bare var handling from conditionals (not needed since we removed bare vars from `with_` loops) to normalize handling of
+      variable values, no matter if the string value comes from a top level variable or from a dictionary key or subkey
