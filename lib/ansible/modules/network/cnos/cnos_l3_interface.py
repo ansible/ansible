@@ -3,8 +3,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 #
-# Copyright (C) 2017 Lenovo, Inc.
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright (C) 2019 Lenovo, Inc.
+# (c) 2019, Ansible by Red Hat, inc
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -72,7 +72,6 @@ options:
         L(CNOS Platform Options guide, ../network/user_guide/platform_cnos.html).
       - HORIZONTALLINE
       - A dict object containing connection details.
-    version_added: "2.8"
     suboptions:
       host:
         description:
