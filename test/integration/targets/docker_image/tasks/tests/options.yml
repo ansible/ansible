@@ -162,7 +162,7 @@
     force: yes
   register: force_1
 
-- name: force (unchanged)
+- name: force (unchanged, but still changed)
   docker_image:
     path: "{{ role_path }}/files"
     name: "{{ iname }}"
@@ -178,7 +178,10 @@
 - assert:
     that:
     - force_1 is changed
-    - force_2 is not changed
+    # In Ansible 2.7, there's no detection which will detect that the
+    # resulting image didn't change. That's why force_2 is changed
+    # for Ansible 2.7, but not for Ansible 2.8.
+    - force_2 is changed
 
 ####################################################################
 ## load path #######################################################
