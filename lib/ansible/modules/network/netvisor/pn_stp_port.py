@@ -142,8 +142,8 @@ def main():
             ["state", "update", ["pn_port"]],
         ),
         required_one_of=(
-            [['pn_cost', 'pn_root_guard', 'pn_filter',
-              'pn_edge', 'pn_bpdu_guard', 'pn_block']],
+            ['pn_cost', 'pn_root_guard', 'pn_filter',
+             'pn_edge', 'pn_bpdu_guard', 'pn_block'],
         ),
     )
 
