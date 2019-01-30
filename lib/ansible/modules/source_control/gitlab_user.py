@@ -306,12 +306,14 @@ class GitLabUser(object):
     @param group_path Complete path of the Group including parent group path. <parent_path>/<group_path>
     @param access_level Gitlab access_level to assign
     '''
-    def assignUserToGroup(self, user, group_path, access_level):
-        group_name = group_path.split('/').pop()
-        group = findGroup(self._gitlab, group_path)
+    def assignUserToGroup(self, user, group_identifier, access_level):
+        group = findGroup(self._gitlab, group_identifier)
 
         if self._module.check_mode:
             return True
+
+        if group is None:
+            return False
 
         if self.memberExists(group, self.getUserId(user)):
             if not self.memberAsGoodAccessLevel(group, self.getUserId(user), self.ACCESS_LEVEL[access_level]):
@@ -320,14 +322,13 @@ class GitLabUser(object):
                 member.save()
                 return True
         else:
-            if group is not None:
-                try:
-                    group.members.create({
-                        'user_id': self.getUserId(user),
-                        'access_level': self.ACCESS_LEVEL[access_level]})
-                except gitlab.exceptions.GitlabCreateError as e:
-                    self._module.fail_json(msg="Failed to assign user to group: %s" % to_native(e))
-                return True
+            try:
+                group.members.create({
+                    'user_id': self.getUserId(user),
+                    'access_level': self.ACCESS_LEVEL[access_level]})
+            except gitlab.exceptions.GitlabCreateError as e:
+                self._module.fail_json(msg="Failed to assign user to group: %s" % to_native(e))
+            return True
         return False
 
     '''
