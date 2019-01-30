@@ -853,7 +853,7 @@ class TaskExecutor:
         become = become_loader.get(name)
         if not become:
             raise AnsibleError("Invalid become method specified, could not find matching plugin: '%s'. "
-                               "You can use `ansible-doc -t become -l` to list available plugins." % name)
+                               "Use `ansible-doc -t become -l` to list available plugins." % name)
         return become
 
     def _get_connection(self, variables, templar):
@@ -896,7 +896,7 @@ class TaskExecutor:
 
         if getattr(become_plugin, 'require_tty', False) and not getattr(connection, 'has_tty', False):
             raise AnsibleError(
-                "The '%s' connection does not provide a tty which is requied for this "
+                "The '%s' connection does not provide a tty which is requied for the selected "
                 "become plugin: %s." % (conn_type, become_plugin.name)
             )
 

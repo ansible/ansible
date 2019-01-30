@@ -227,9 +227,11 @@ class ConnectionBase(AnsiblePlugin):
     def reset(self):
         display.warning("Reset is not implemented for this connection")
 
-    # NOTE: these password functions are all become specific, the name is confusing as it does not handle 'protocl passwords'
+    # NOTE: these password functions are all become specific, the name is
+    # confusing as it does not handle 'protocol passwords'
     # DEPRECATED:
-    # These are kept for backwards compatiblity, in the next version they will emit deprecation messages
+    # These are kept for backwards compatiblity, in the next version they
+    # will emit deprecation messages
     # Use the methods provided by the become plugins instead
     def check_become_success(self, b_output):
         return self.become.check_success(b_output)
