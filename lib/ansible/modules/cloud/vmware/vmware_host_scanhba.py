@@ -83,6 +83,9 @@ class VmwareHbaScan(PyVmomi):
         esxi_host_name = self.params.get('esxi_hostname', None)
         refresh_storage = self.params.get('refresh_storage', bool)
         host = find_obj(self.content, [vim.HostSystem], name=esxi_host_name)
+        
+        if host is None:
+           self.module.fail_json(msg="Unable to find host system %s in the given configuration." % esxi_host_name) 
 
         host.configManager.storageSystem.RescanAllHba()
         if refresh_storage is True:
