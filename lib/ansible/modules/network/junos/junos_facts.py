@@ -86,10 +86,13 @@ ansible_facts:
   returned: always
   type: dict
 """
+
+import platform
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param, tostring
-from ansible.module_utils.network.junos.junos import get_configuration, get_connection
+from ansible.module_utils.network.junos.junos import get_configuration, get_connection, get_capabilities
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -138,18 +141,29 @@ class FactsBase(object):
 class Default(FactsBase):
 
     def populate(self):
-        reply = self.rpc('get-software-information')
-        data = reply.find('.//software-information')
-
-        self.facts.update({
-            'hostname': self.get_text(data, 'host-name'),
-            'version': self.get_text(data, 'junos-version'),
-            'model': self.get_text(data, 'product-model')
-        })
+        self.facts.update(self.platform_facts())
 
         reply = self.rpc('get-chassis-inventory')
         data = reply.find('.//chassis-inventory/chassis')
         self.facts['serialnum'] = self.get_text(data, 'serial-number')
+
+    def platform_facts(self):
+        platform_facts = {}
+
+        resp = get_capabilities(self.module)
+        device_info = resp['device_info']
+
+        platform_facts['system'] = device_info['network_os']
+
+        for item in ('model', 'image', 'version', 'platform', 'hostname'):
+            val = device_info.get('network_os_%s' % item)
+            if val:
+                platform_facts[item] = val
+
+        platform_facts['api'] = resp['network_api']
+        platform_facts['python_version'] = platform.python_version()
+
+        return platform_facts
 
 
 class Config(FactsBase):
