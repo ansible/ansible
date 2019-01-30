@@ -117,7 +117,7 @@ options:
         replaces the existing configuration. The difference comes when the configuration
         is later committed. This option performs a 'diff' between the new candidate
         configuration and the existing committed configuration. It then only notifies
-        system processes repsonsible for the changed portions of the configuration, and
+        system processes responsible for the changed portions of the configuration, and
         only marks the actual configuration changes as 'changed'.
     default: merge
     choices: ['merge', 'override', 'replace', 'update']
