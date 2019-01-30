@@ -344,7 +344,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         self.lab_virtual_machine['size'] = self.lab_virtual_machine.pop('vm_size')
         self.lab_virtual_machine['os_type'] = _snake_to_camel(self.lab_virtual_machine['os_type'], True)
-
+        
         if self.lab_virtual_machine.get('storage_type'):
             self.lab_virtual_machine['storage_type'] = _snake_to_camel(self.lab_virtual_machine['storage_type'], True)
 
@@ -360,9 +360,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         else:
             template = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DevTestLab/labs/{2}/virtualnetworks/{3}"
             self.lab_virtual_machine['lab_virtual_network_id'] = template.format(self.subscription_id,
-                                                                                 self.resource_group,
-                                                                                 self.lab_name,
-                                                                                 lab_subnet.get('virtual_network_name'))
+                                                                                self.resource_group,
+                                                                                self.lab_name,
+                                                                                lab_subnet.get('virtual_network_name'))
             self.lab_virtual_machine['lab_subnet_name'] = lab_subnet.get('name')
 
         response = None
@@ -403,7 +403,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                 # currently artifacts can be only specified when vm is created
                 # and in addition we don't have detailed information, just a number of "total artifacts"
-                if len(self.lab_virtual_machine.get('artifacts', [])) != old_response['artifact_deployment_status']['total_artifacts']:
+                if len(self.lab_virtual_machine.get('artifacts',[])) != old_response['artifact_deployment_status']['total_artifacts']:
                     self.module.warn("Property 'artifacts' cannot be changed")
 
                 if self.lab_virtual_machine.get('disallow_public_ip_address') is not None:
