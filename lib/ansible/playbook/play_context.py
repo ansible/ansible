@@ -34,7 +34,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
 from ansible.utils.display import Display
-from ansible.plugins.loader import become_loader, get_shell_plugin
+from ansible.plugins.loader import get_shell_plugin
 from ansible.utils.ssh_functions import check_for_controlpersist
 
 
@@ -158,6 +158,8 @@ class PlayContext(Base):
 
         self.password = passwords.get('conn_pass', '')
         self.become_pass = passwords.get('become_pass', '')
+
+        self._become_plugin = None
 
         self.prompt = ''
         self.success_key = ''
@@ -376,6 +378,9 @@ class PlayContext(Base):
 
         return new_info
 
+    def set_become_plugin(self, plugin):
+        self._become_plugin = plugin
+
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
         display.deprecated(
@@ -389,7 +394,7 @@ class PlayContext(Base):
         become_method = self.become_method
 
         # load/call become plugins here
-        plugin = become_loader.get(become_method)
+        plugin = self._become_plugin
 
         if plugin:
             options = {

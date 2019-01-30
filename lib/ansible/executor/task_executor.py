@@ -23,6 +23,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins.loader import become_loader
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
@@ -848,6 +849,13 @@ class TaskExecutor:
         else:
             return async_result
 
+    def _get_become(self, name):
+        become = become_loader.get(name)
+        if not become:
+            raise AnsibleError("Invalid become method specified, could not find matching plugin: '%s'. "
+                               "You can use `ansible-doc -t become -l` to list available plugins." % name)
+        return become
+
     def _get_connection(self, variables, templar):
         '''
         Reads the connection property for the host, and returns the
@@ -868,24 +876,37 @@ class TaskExecutor:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
-        # load become plugin if needed
-        become_method = None
-        if self._play_context.become:
-            become_method = self._play_context.become_method
-
         # load connection
         conn_type = self._play_context.connection
         connection = self._shared_loader_obj.connection_loader.get(
             conn_type,
             self._play_context,
             self._new_stdin,
-            become_method=become_method,
             task_uuid=self._task._uuid,
             ansible_playbook_pid=to_text(os.getppid())
         )
 
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
+
+        # load become plugin if needed
+        become_plugin = None
+        if self._play_context.become:
+            become_plugin = self._get_become(self._play_context.become_method)
+
+        if getattr(become_plugin, 'require_tty', False) and not getattr(connection, 'has_tty', False):
+            raise AnsibleError(
+                "The '%s' connection does not provide a tty which is requied for this "
+                "become plugin: %s." % (conn_type, become_plugin.name)
+            )
+
+        try:
+            connection.set_become_plugin(become_plugin)
+        except AttributeError:
+            # Connection plugin does not support set_become_plugin
+            pass
+
+        self._play_context.set_become_plugin(become_plugin)
 
         # FIXME: remove once all plugins pull all data from self._options
         self._play_context.set_attributes_from_plugin(connection)

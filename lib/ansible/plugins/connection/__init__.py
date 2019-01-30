@@ -58,7 +58,7 @@ class ConnectionBase(AnsiblePlugin):
 
     default_user = None
 
-    def __init__(self, play_context, new_stdin, shell=None, become_method=None, *args, **kwargs):
+    def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
 
         super(ConnectionBase, self).__init__()
 
@@ -87,19 +87,9 @@ class ConnectionBase(AnsiblePlugin):
             self._shell = get_shell_plugin(shell_type=getattr(self, '_shell_type', None), executable=self._play_context.executable)
 
         self.become = None
-        if become_method:
-            # dont assign direclty as we need to check stuff
-            self.load_become(become_method)
 
-    def load_become(self, name):
-
-        self.become = become_loader.get(name)
-        if not self.become:
-            raise AnsibleError("Invalid become method specified, could not find matching plugin: '%s'. "
-                               "You can use `ansible-doc -t become -l` to list available plugins." % name)
-
-        if self.become.require_tty and not getattr(self, 'has_tty', False):
-            raise AnsibleError("The '%s' connection does not provide a tty which is requied for this become plugin: %s." % (self.transport, name))
+    def set_become_plugin(self, plugin):
+        self.become = plugin
 
     @property
     def connected(self):

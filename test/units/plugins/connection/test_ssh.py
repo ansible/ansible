@@ -34,7 +34,7 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
-from ansible.plugins.loader import connection_loader
+from ansible.plugins.loader import connection_loader, become_loader
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -92,7 +92,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         pc = PlayContext()
         new_stdin = StringIO()
 
-        conn = connection_loader.get('ssh', pc, new_stdin, become_method='sudo')
+        conn = connection_loader.get('ssh', pc, new_stdin)
+        conn.set_become_plugin(become_loader.get('sudo'))
 
         conn.check_password_prompt = MagicMock()
         conn.check_become_success = MagicMock()
@@ -343,7 +344,8 @@ def mock_run_env(request, mocker):
     pc = PlayContext()
     new_stdin = StringIO()
 
-    conn = connection_loader.get('ssh', pc, new_stdin, become_method='sudo')
+    conn = connection_loader.get('ssh', pc, new_stdin)
+    conn.set_become_plugin(become_loader.get('sudo'))
     conn._send_initial_data = MagicMock()
     conn._examine_output = MagicMock()
     conn._terminate_process = MagicMock()
