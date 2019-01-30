@@ -453,7 +453,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_B1s
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
