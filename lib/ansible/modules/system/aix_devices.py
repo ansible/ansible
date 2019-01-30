@@ -30,7 +30,7 @@ options:
   device:
     description:
     - The name of the device.
-    - C(all) is valid to rescan C(present) all devices (AIX cfgmgr command).
+    - C(all) is valid to rescan C(available) all devices (AIX cfgmgr command).
     required: true
   force:
     description:
@@ -45,23 +45,23 @@ options:
   state:
     description:
     - Controls the device state.
-    - C(present) or C(available) rescan a specific device or all devices (when C(device) is not specified).
-    - C(absent) removes a device.
+    - C(available) (alias C(present)) rescan a specific device or all devices (when C(device) is not specified).
+    - C(removed) (alias C(absent) removes a device.
     - C(defined) changes device to Defined state.
-    choices: [ absent, defined, present ]
-    default: present
+    choices: [ absent, defined, available ]
+    default: available
 '''
 
 EXAMPLES = r'''
 - name: Scan new devices
   aix_devices:
     device: all
-    state: present
+    state: available
 
 - name: Scan new virtual devices (vio0)
   aix_devices:
     device: vio0
-    state: present
+    state: available
 
 - name: Removing IP alias to en0
   aix_devices:
@@ -72,7 +72,7 @@ EXAMPLES = r'''
 - name: Removes ent2
   aix_devices:
     device: ent2
-    state: absent
+    state: removed
 
 - name: Put device en2 in Defined
   aix_devices:
@@ -82,7 +82,7 @@ EXAMPLES = r'''
 - name: Removes ent4 (inexistent).
   aix_devices:
     device: ent4
-    state: absent
+    state: removed
 
 - name: Put device en4 in Defined (inexistent)
   aix_devices:
@@ -99,7 +99,7 @@ EXAMPLES = r'''
   aix_devices:
     device: vscsi1
     recursive: yes
-    state: absent
+    state: removed
 
 - name: Changes en1 mtu to 9000 and disables arp.
   aix_devices:
@@ -107,7 +107,7 @@ EXAMPLES = r'''
     attributes:
       mtu: 900
       arp: off
-    state: present
+    state: available
 
 - name: Configure IP, netmask and set en1 up.
   aix_devices:
@@ -116,14 +116,14 @@ EXAMPLES = r'''
       netaddr: 192.168.0.100
       netmask: 255.255.255.0
       state: up
-    state: present
+    state: available
 
 - name: Adding IP alias to en0
   aix_devices:
     device: en0
     attributes:
       alias4: 10.0.0.100,255.255.255.0
-    state: present
+    state: available
 '''
 
 RETURN = r''' # '''
@@ -265,6 +265,7 @@ def remove_device(module, device, force, recursive, state):
     """ Puts device in defined state or removes device. """
 
     state_opt = {
+        'removed': '-d',
         'absent': '-d',
         'defined': ''
     }
@@ -303,7 +304,7 @@ def main():
             device=dict(type='str'),
             force=dict(type='bool', default=False),
             recursive=dict(type='bool', default=False),
-            state=dict(type='str', default='present', choices=['absent', 'defined', 'present', 'available']),
+            state=dict(type='str', default='available', choices=['removed', 'defined', 'available']),
         ),
         supports_check_mode=True,
     )
@@ -324,7 +325,7 @@ def main():
         msg='',
     )
 
-    if state == 'present' or state == 'available':
+    if state == 'available' or state == 'present':
         if attributes:
             # change attributes on device
             device_status, device_state = _check_device(module, device)
@@ -347,9 +348,9 @@ def main():
             else:
                 result['changed'], result['msg'] = discover_device(module, device)
 
-    elif state == 'absent' or state == 'defined':
+    elif state == 'removed' or state == 'absent' or state == 'defined':
         if not device:
-            result['msg'] = "device is required to absent or defined state."
+            result['msg'] = "device is required to removed or defined state."
 
         else:
             # Remove device
