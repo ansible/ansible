@@ -99,7 +99,7 @@ class BecomeModule(BecomeBase):
 
         # FIXME: more accurate would be: 'doas (%s@' % remote_user
         # however become plugins don't have that information currently
-        b_prompts = [to_bytes(p) for p in self.get_option('prompt_l10n')] or [b'doas \(', b'Password:']
+        b_prompts = [to_bytes(p) for p in self.get_option('prompt_l10n')] or [br'doas \(', br'Password:']
         b_prompt = b"|".join(b_prompts)
 
         return bool(re.match(b_prompt, b_output))
