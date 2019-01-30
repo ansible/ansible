@@ -4,9 +4,9 @@
   vars:
     testvar: lola
     oldtemplate: '{{ testvar }}'
-    newtemplate: !j2 testvar
+    newtemplate: !j testvar
   tasks:
-    - name: ensure moustache:{{oldtemplate}} is teh same as nomoustache:{{newtemplate}}
+    - name: ensure moustache:{{oldtemplate}} is the same as nomoustache:{{newtemplate}}
       assert:
         that:
             - oldtemplate == newtemplate
