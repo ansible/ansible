@@ -4,7 +4,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
-#Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.FileUtil
 #Requires -Module Ansible.ModuleUtils.LinkUtil
 
@@ -12,6 +11,26 @@ function DateTo-Timestamp($start_date, $end_date) {
     if ($start_date -and $end_date) {
         return (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
     }
+}
+
+function Get-FileChecksum($path, $algorithm) {
+    switch ($algorithm) {
+        'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
+        'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
+        'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
+        'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
+        'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
+        default { Fail-Json -obj $result -message "Unsupported hash algorithm supplied '$algorithm'" }
+    }
+
+    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    try {
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower()
+    } finally {
+        $fp.Dispose()
+    }
+
+    return $hash
 }
 
 $spec = @{
@@ -28,7 +47,7 @@ $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $path = $module.Params.path
 $get_md5 = $module.Params.get_md5
-$get_checksum = $module.Params.checksum
+$get_checksum = $module.Params.get_checksum
 $checksum_algorithm = $module.Params.checksum_algorithm
 
 $module.Result.stat = @{ exists=$false }
