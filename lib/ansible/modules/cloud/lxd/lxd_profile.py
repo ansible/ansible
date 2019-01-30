@@ -64,12 +64,12 @@ options:
         default: present
     url:
         description:
-          - (APT/YUM) The unix domain socket path or the https URL for the LXD server.
+          - The unix domain socket path or the https URL for the LXD server.
         required: false
         default: unix:/var/lib/lxd/unix.socket
     snap_url:
         description:
-          - (SNAP) The unix domain socket path or the https URL for the LXD server. 
+          - (SNAP) The unix domain socket path or the https URL for the LXD server.
         required: false
         default: unix:/var/snap/lxd/common/lxd/unix.socket
     key_file:
