@@ -53,6 +53,7 @@ EXAMPLES = r'''
       esxi_hostname: '{{ inventory_hostname }}'
       refresh_storage: true
   delegate_to: localhost
+
 - name: Recan HBA's for a given ESXi host and don't refresh storage system objects
   vmware_host_scanhba:
       hostname: '{{ vcenter_hostname }}'
@@ -63,6 +64,16 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+result:
+    description: return confirmation of requested host and updated / refreshed storage system
+    returned: always
+    type: dict
+    sample: {
+        "esxi01.example.com": {
+            "rescaned_hba": "true",
+            "refreshed_storage": "true"
+        }
+    }
 '''
 
 try:
@@ -90,6 +101,15 @@ class VmwareHbaScan(PyVmomi):
         host.configManager.storageSystem.RescanAllHba()
         if refresh_storage is True:
             host.configManager.storageSystem.RefreshStorageSystem()
+        
+        return_data = dict()
+        
+        return_data[host.name] = dict(
+                rescaned_hba="true",
+                refreshed_storage=refresh_storage
+            )
+
+        self.module.exit_json(changed=True, result=return_data)
 
 
 def main():
@@ -103,8 +123,6 @@ def main():
 
     hbascan = VmwareHbaScan(module)
     hbascan.scan()
-
-    module.exit_json(changed=True)
 
 
 if __name__ == '__main__':
