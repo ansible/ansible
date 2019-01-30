@@ -9,7 +9,7 @@ __metaclass__ = type
 import sys
 import pytest
 
-pyvmomi = pytest.importorskip('PyVmomi')
+pyvmomi = pytest.importorskip('pyVmomi')
 
 from ansible.module_utils.vmware import connect_to_api, PyVmomi
 
@@ -88,6 +88,10 @@ class FakeAnsibleModule:
         raise FailJson(*args, **kwargs)
 
 
+def fake_connect_to_api(module):
+    pass
+
+
 def test_pyvmomi_lib_exists(mocker, fake_ansible_module):
     """ Test if Pyvmomi is present or not"""
     mocker.patch('ansible.module_utils.vmware.HAS_PYVMOMI', new=False)
@@ -119,12 +123,7 @@ def test_required_params(request, params, msg, fake_ansible_module):
 
 def test_validate_certs(mocker, fake_ansible_module):
     """ Test if SSL is required or not"""
-    fake_ansible_module.params = dict(
-        username='Administrator@vsphere.local',
-        password='Esxi@123$%',
-        hostname='esxi1',
-        validate_certs=True,
-    )
+    fake_ansible_module.params = test_data[3][0]
 
     mocker.patch('ansible.module_utils.vmware.ssl', new=None)
     with pytest.raises(FailJson) as exec_info:
@@ -132,3 +131,25 @@ def test_validate_certs(mocker, fake_ansible_module):
     msg = 'pyVim does not support changing verification mode with python < 2.7.9.' \
           ' Either update python or use validate_certs=false.'
     assert msg == exec_info.value.kwargs['msg']
+
+
+def test_vmdk_disk_path_split(mocker, fake_ansible_module):
+    """ Test vmdk_disk_path_split function"""
+    fake_ansible_module.params = test_data[0][0]
+
+    mocker.patch('ansible.module_utils.vmware.connect_to_api', new=fake_connect_to_api)
+    pyv = PyVmomi(fake_ansible_module)
+    v = pyv.vmdk_disk_path_split('[ds1] VM_0001/VM0001_0.vmdk')
+    assert v == ('ds1', 'VM_0001/VM0001_0.vmdk', 'VM0001_0.vmdk', 'VM_0001')
+
+
+def test_vmdk_disk_path_split_negative(mocker, fake_ansible_module):
+    """ Test vmdk_disk_path_split function"""
+    fake_ansible_module.params = test_data[0][0]
+
+    mocker.patch('ansible.module_utils.vmware.connect_to_api', new=fake_connect_to_api)
+    with pytest.raises(FailJson) as exec_info:
+        pyv = PyVmomi(fake_ansible_module)
+        pyv.vmdk_disk_path_split('[ds1]')
+
+    assert 'Bad path' in exec_info.value.kwargs['msg']
