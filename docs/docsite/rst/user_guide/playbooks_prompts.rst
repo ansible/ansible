@@ -89,6 +89,16 @@ Depending on your platform at most the following crypt schemes are supported:
 - *sha256_crypt* - SHA-256 Crypt
 - *sha512_crypt* - SHA-512 Crypt
 
+.. versionadded:: 2.8
+
+If you need to put in special characters (i.e `{%`) that might create templating errors, use the ``unsafe`` option::
+
+   vars_prompt:
+     - name: "my_password_with_wierd_chars"
+       prompt: "Enter password"
+       unsafe: yes
+       private: yes
+
 .. seealso::
 
    :doc:`playbooks`
@@ -101,6 +111,3 @@ Depending on your platform at most the following crypt schemes are supported:
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-

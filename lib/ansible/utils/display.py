@@ -39,7 +39,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
 from ansible.utils.singleton import Singleton
-
+from ansible.utils.unsafe_proxy import wrap_var
 
 try:
     # Python 2
@@ -305,7 +305,7 @@ class Display(with_metaclass(Singleton, object)):
         else:
             return input(prompt_string)
 
-    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
 
         result = None
         if sys.__stdin__.isatty():
@@ -343,6 +343,9 @@ class Display(with_metaclass(Singleton, object)):
 
         # handle utf-8 chars
         result = to_text(result, errors='surrogate_or_strict')
+
+        if unsafe:
+            result = wrap_var(result)
         return result
 
     @staticmethod
