@@ -51,7 +51,27 @@ options:
 '''
 
 EXAMPLES = '''
-# Set NTP Server with parameters
+# Set new NTP server and source interface
+- ios_ntp:
+    server: 10.0.255.10
+    source_int: Loopback0
+    logging: false
+    state: present
+
+# Remove NTP ACL and logging
+- ios_ntp:
+    acl: NTP_ACL
+    logging: true
+    state: absent
+
+# Set NTP authentication
+- ios_ntp:
+    key_id: 10
+    auth_key: 15435A030726242723273C21181319000A
+    auth: true
+    state: present
+
+# Set new NTP configuration
 - ios_ntp:
     server: 10.0.255.10
     source_int: Loopback0
@@ -61,7 +81,6 @@ EXAMPLES = '''
     auth_key: 15435A030726242723273C21181319000A
     auth: true
     state: present
-    provider: "{{ staging }}"
 '''
 
 RETURN = '''
