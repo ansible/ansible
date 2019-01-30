@@ -58,32 +58,20 @@ class TestCnosL3InterfaceModule(TestCnosModule):
             name='Ethernet 1/35',
             ipv4='192.168.4.1/24'
         ))
-        result = self.execute_module(changed=True)
-        self.assertEqual(
-            result,
-            {
-                'commands': [
-                    'interface Ethernet 1/35',
-                    'ip address 192.168.4.1 255.255.255.0'
-                ],
-                'changed': True
-            }
-        )
+        commands = [
+            'interface Ethernet 1/35',
+            'ip address 192.168.4.1 255.255.255.0'
+        ]
+        result = self.execute_module(changed=True, commands=commands)
 
     def test_cnos_l3_interface_absent(self, *args, **kwargs):
         set_module_args(dict(
             name='Ethernet1/9',
             state='absent'
         ))
-        result = self.execute_module(changed=True)
-        self.assertEqual(
-            result,
-            {
-                'commands': [
-                    'interface Ethernet1/9',
-                    'no ip address',
-                    'no ipv6 address'
-                ],
-                'changed': True
-            }
-        )
+        commands = [
+            'interface Ethernet1/9',
+            'no ip address',
+            'no ipv6 address'
+        ]
+        result = self.execute_module(changed=True, commands=commands)
