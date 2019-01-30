@@ -2,3 +2,4 @@ cloud/azure
 shippable/azure/group4
 destructive
 azure_rm_webapp_facts
+azure_rm_webappslot
