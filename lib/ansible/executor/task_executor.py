@@ -906,6 +906,9 @@ class TaskExecutor:
             # Connection plugin does not support set_become_plugin
             pass
 
+        # Backwards compat for connection plugins that don't support become plugins
+        # Just do this unconditionally for now, we could move it inside of the
+        # AttributeError above later
         self._play_context.set_become_plugin(become_plugin)
 
         # FIXME: remove once all plugins pull all data from self._options
