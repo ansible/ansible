@@ -45,7 +45,7 @@ options:
   state:
     description:
     - Controls the device state.
-    - C(present) rescan a specific device or all devices (when C(device) is not specified).
+    - C(present) or C(available) rescan a specific device or all devices (when C(device) is not specified).
     - C(absent) removes a device.
     - C(defined) changes device to Defined state.
     choices: [ absent, defined, present ]
@@ -212,7 +212,6 @@ def discover_device(module, device):
 def change_device_attr(module, attributes, device, force):
     """ Change AIX device attribute. """
 
-    msg = ''
     attr_changed = []
     attr_not_changed = []
     attr_invalid = []
@@ -284,7 +283,7 @@ def remove_device(module, device, force, recursive, state):
 
     if not module.check_mode:
         if state:
-            rc, rmdev_out, err = module.run_command(["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive, "%s" % state])
+            rc, rmdev_out, err = module.run_command(["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive, "%s" % force])
         else:
             rc, rmdev_out, err = module.run_command(["%s" % rmdev_cmd, "-l", "%s" % device, "%s" % recursive])
 
@@ -304,7 +303,7 @@ def main():
             device=dict(type='str'),
             force=dict(type='bool', default=False),
             recursive=dict(type='bool', default=False),
-            state=dict(type='str', default='present', choices=['absent', 'defined', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'defined', 'present', 'available']),
         ),
         supports_check_mode=True,
     )
@@ -325,7 +324,7 @@ def main():
         msg='',
     )
 
-    if state == 'present':
+    if state == 'present' or state == 'available':
         if attributes:
             # change attributes on device
             device_status, device_state = _check_device(module, device)
