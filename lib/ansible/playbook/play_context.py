@@ -29,7 +29,6 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class

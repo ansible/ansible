@@ -12,11 +12,10 @@ from abc import abstractmethod, abstractproperty
 from functools import wraps
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.display import Display
-from ansible.plugins.loader import become_loader, connection_loader, get_shell_plugin
+from ansible.plugins.loader import connection_loader, get_shell_plugin
 from ansible.utils.path import unfrackpath
 
 display = Display()
