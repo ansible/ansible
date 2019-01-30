@@ -166,6 +166,19 @@ class AzureRMDevTestLabVirtualNetwork(AzureRMModuleBase):
         if self.virtual_network.get('location') is None:
             self.virtual_network['location'] = resource_group.location
 
+        # subnet overrides for virtual network and subnet created by default
+        template = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/{3}"
+        subnet_id = template.format(self.subscription_id,
+                                    self.resource_group,
+                                    self.name,
+                                    self.name + "Subnet")
+        self.virtual_network['subnet_overrides'] = [{
+            'resource_id': subnet_id,
+            'lab_subnet_name': self.name + "Subnet",
+            'use_in_vm_creation_permission': 'Allow',
+            'use_public_ip_address_permission':  'Allow'
+        }]
+
         old_response = self.get_virtualnetwork()
 
         if not old_response:
