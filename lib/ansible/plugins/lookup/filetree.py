@@ -181,7 +181,6 @@ class LookupModule(LookupBase):
                     ret += self.lookup_term(term_l, variables, **kwargs)
             else:
                 ret += self.lookup_term(term, variables, **kwargs)
-
         return ret
 
     def lookup_term(self, term, variables=None, **kwargs):
