@@ -14,6 +14,12 @@ DOCUMENTATION = """
       _terms:
         description: The variable names to look up.
         required: True
+      regex:
+        description: If the variable name to lookup is a regular expression
+        default: False
+      rtype:
+        description: What variable type to return, supported values are 'dict' or 'list'
+        default: 'list'
       default:
         description:
             - What to return if a variable is undefined.
@@ -49,6 +55,12 @@ EXAMPLES = """
     - hosts
     - batch
     - hosts_all
+
+- name: find variables matching a regular expression
+  debug: msg="{{ lookup('vars', 'ansible_play_hosts.*', regex=true) }}"
+
+- name: find variables matching a regular expression, return dict instead of list
+  debug: msg="{{ lookup('vars', 'ansible_play_hosts.*', regex=true, rtype='dict') }}"
 """
 
 RETURN = """
@@ -57,6 +69,8 @@ _value:
     - value of the variables requested.
 """
 
+import re
+import collections
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
@@ -71,9 +85,18 @@ class LookupModule(LookupBase):
 
         self.set_options(direct=kwargs)
         default = self.get_option('default')
+        is_regex = self.get_option('regex')
+        rtype = self.get_option('rtype')
 
-        ret = []
-        for term in terms:
+        if is_regex:
+            r = re.compile(terms[0])
+            lvars = filter(r.match, myvars)
+        else:
+            lvars = terms
+
+        ret = collections.OrderedDict()
+
+        for term in lvars:
             if not isinstance(term, string_types):
                 raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
 
@@ -86,11 +109,15 @@ class LookupModule(LookupBase):
                     except KeyError:
                         raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
 
-                ret.append(self._templar.template(value, fail_on_undefined=True))
+                ret[term] = self._templar.template(value, fail_on_undefined=True)
             except AnsibleUndefinedVariable:
-                if default is not None:
-                    ret.append(default)
-                else:
+                if default is None:
                     raise
 
-        return ret
+        if default is not None and len(ret) == 0:
+            ret['default'] = default
+
+        if rtype == 'dict':
+            return dict(ret)
+        else:
+            return list(ret.values())

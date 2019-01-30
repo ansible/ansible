@@ -294,6 +294,14 @@
     that:
       - 'var_host == ansible_host'
 
+- name: Test default value
+  set_fact:
+    var_host: '{{ lookup("vars", "variable_not_exists", default="defaultvalue") }}'
+
+- assert:
+    that:
+      - 'var_host == "defaultvalue"'
+
 - name: Test that we can give a list of values to var and receive a list of values back
   set_fact:
     var_host_info: '{{ query("vars", "ansible_host", "ansible_user") }}'
@@ -302,3 +310,48 @@
     that:
       - 'var_host_info[0] == ansible_host'
       - 'var_host_info[1] == ansible_user'
+
+- name: Test that we can give a list of values to var and receive a dict of values back
+  set_fact:
+    var_host_info: '{{ query("vars", "ansible_host", "ansible_user", rtype="dict") }}'
+
+- assert:
+    that:
+      - "var_host_info['ansible_host'] == ansible_host"
+      - "var_host_info['ansible_user'] == ansible_user"
+
+- name: Test that we can give a regex
+  vars:
+    lookup_regex1: value1
+    lookup_regex2: value2
+  set_fact:
+    var_host_info: '{{ query("vars", "lookup_regex.*", regex=true) | sort }}'
+
+- assert:
+    that:
+      - "var_host_info[0] == 'value1'"
+      - "var_host_info[1] == 'value2'"
+
+- name: Test that we can give a regex, return type dict
+  vars:
+    lookup_regex1: value1
+    lookup_regex2:
+      value: value2
+  set_fact:
+    var_host_info: '{{ query("vars", "lookup_regex.*", regex=true, rtype="dict") }}'
+
+- assert:
+    that:
+      - "var_host_info['lookup_regex1'] == 'value1'"
+      - "var_host_info['lookup_regex2']['value'] == 'value2'"
+
+- name: Test that we can give a regex, return type dict default value
+  vars:
+    lookup_default:
+      value: value2
+  set_fact:
+    var_host_info: '{{ query("vars", "lookup_regex.*", regex=true, rtype="dict", default=lookup_default) }}'
+
+- assert:
+    that:
+      - "var_host_info['default']['value'] == 'value2'"
