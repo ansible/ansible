@@ -109,6 +109,12 @@ tests = [
      'test_spec': [
          [('prompting for host:', 'testhost\r')],
          r'testhost.*ok=1']},
+
+    # Test play unsafe toggle
+    {'playbook': 'unsafe.yml',
+     'test_spec': [
+         [('prompting for variable:', '{{whole}}\r')],
+         r'testhost.*ok=2']},
 ]
 
 for t in tests:

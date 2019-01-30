@@ -1,0 +1,2 @@
+minor_changes:
+    - added 'unsafe' keyword to vars_prompt so users can signal 'template unsafe' content
