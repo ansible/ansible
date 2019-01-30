@@ -296,7 +296,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module))
+                update(module, self_link(module), fetch)
                 fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
@@ -320,8 +320,25 @@ def create(module, link):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link):
-    module.fail_json(msg="Instance cannot be edited")
+def update(module, link, fetch):
+    auth = GcpSession(module, 'redis')
+    params = {'updateMask': updateMask(resource_to_request(module), response_to_hash(module, fetch))}
+    request = resource_to_request(module)
+    del request['name']
+    return wait_for_operation(module, auth.patch(link, request, params=params))
+
+
+def updateMask(request, response):
+    update_mask = []
+    if request.get('displayName') != response.get('displayName'):
+        update_mask.append('displayName')
+    if request.get('labels') != response.get('labels'):
+        update_mask.append('labels')
+    if request.get('redisConfigs') != response.get('redisConfigs'):
+        update_mask.append('redisConfigs')
+    if request.get('memorySizeGb') != response.get('memorySizeGb'):
+        update_mask.append('memorySizeGb')
+    return ','.join(update_mask)
 
 
 def delete(module, link):
