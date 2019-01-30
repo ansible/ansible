@@ -115,9 +115,9 @@ def parse_source_int(line, dest):
 
 def parse_acl(line, dest):
     if dest == 'access-group':
-        match = re.search(r'(ntp access-group )(peer )?(serve )?(\S+)', line, re.M)
+        match = re.search(r'ntp access-group (?:peer|serve)(?:\s+)(\S+)', line, re.M)
         if match:
-            acl = match.group(4)
+            acl = match.group(1)
             return acl
 
 
