@@ -45,6 +45,20 @@ class TestIosNtpModule(TestIosModule):
         self.get_config.return_value = load_fixture('ios_ntp_config.cfg').strip()
         self.load_config.return_value = dict(diff=None, session='session')
 
+    def test_ios_ntp_idempotent(self):
+        set_module_args(dict(
+            server='10.75.32.5',
+            source_int='Loopback0',
+            acl='NTP_ACL',
+            logging=True,
+            auth=True,
+            auth_key='15435A030726242723273C21181319000A',
+            key_id='10',
+            state='present'
+        ))
+        commands = []
+        self.execute_module(changed=False, commands=commands)
+
     def test_ios_ntp_config(self):
         set_module_args(dict(
             server='10.75.33.5',
