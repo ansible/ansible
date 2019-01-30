@@ -149,17 +149,24 @@
 ## force ###########################################################
 ####################################################################
 
-- name: force
+- name: Build an image
   docker_image:
     path: "{{ role_path }}/files"
     name: "{{ iname }}"
-    force: yes
-  register: force_1
 
 - name: force (changed)
   docker_image:
     path: "{{ role_path }}/files"
     name: "{{ iname }}"
+    dockerfile: "MyDockerfile"
+    force: yes
+  register: force_1
+
+- name: force (unchanged)
+  docker_image:
+    path: "{{ role_path }}/files"
+    name: "{{ iname }}"
+    dockerfile: "MyDockerfile"
     force: yes
   register: force_2
 
@@ -171,7 +178,7 @@
 - assert:
     that:
     - force_1 is changed
-    - force_2 is changed
+    - force_2 is not changed
 
 ####################################################################
 ## load path #######################################################
