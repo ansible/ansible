@@ -211,7 +211,16 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'EXECUTE', 'FILE', 'CREATE TABLESPACE', 'CREATE USER',
                          'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
-                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL'))
+                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL',
+                         'CREATE ROLE', 'DROP ROLE', 'APPLICATION PASSWORD ADMIN',
+                         'AUDIT ADMIN', 'BACKUP ADMIN', 'BINLOG ADMIN',
+                         'BINLOG_ENCRYPTION_ADMIN', 'CONNECTION_ADMIN',
+                         'ENCRYPTION_KEY_ADMIN', 'FIREWALL_ADMIN', 'FIREWALL_USER',
+                         'GROUP_REPLICATION_ADMIN', 'PERSIST_RO_VARIABLES_ADMIN',
+                         'REPLICATION_SLAVE_ADMIN', 'RESOURCE_GROUP_ADMIN',
+                         'RESOURCE_GROUP_USER', 'ROLE_ADMIN', 'SET_USER_ID',
+                         'SESSION_VARIABLES_ADMIN', 'SYSTEM_VARIABLES_ADMIN',
+                         'VERSION_TOKEN_ADMIN', 'XA_RECOVER_ADMIN'))
 
 
 class InvalidPrivsError(Exception):
