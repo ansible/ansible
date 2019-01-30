@@ -213,7 +213,7 @@ def map_obj_to_commands(want, have, module):
     try:
         server_have = have[0]['server']
     except KeyError:
-        source_int_have = None
+        server_have = None
 
     try:
         source_int_have = have[0]['source_int']
