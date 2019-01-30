@@ -36,9 +36,14 @@ class TestVyosFactsModule(TestVyosModule):
         self.mock_run_commands = patch('ansible.modules.network.vyos.vyos_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.vyos.vyos_facts.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
         super(TestVyosFactsModule, self).tearDown()
         self.mock_run_commands.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None):
         def load_from_file(*args, **kwargs):
