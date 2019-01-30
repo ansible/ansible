@@ -355,7 +355,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -379,7 +379,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -405,7 +405,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -429,7 +429,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
