@@ -55,7 +55,7 @@ This will download the Vagrant box from Vagrant Cloud and add it to the local
 boxes on your host and then start up that instance in VirtualBox. When starting
 for the first time, the Windows VM will run through the sysprep process and
 then create a HTTP and HTTPS WinRM listener automatically. Vagrant will finish
-its process once the listeners are onlinem, after which the VM can be used by Ansible.
+its process once the listeners are online, after which the VM can be used by Ansible.
 
 Create an Ansible inventory
 ===========================
