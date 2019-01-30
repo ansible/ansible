@@ -210,40 +210,13 @@ def map_obj_to_commands(want, have, module):
 
     commands = list()
 
-    try:
-        server_have = have[0]['server']
-    except KeyError:
-        server_have = None
-
-    try:
-        source_int_have = have[0]['source_int']
-    except KeyError:
-        source_int_have = None
-
-    try:
-        acl_have = have[0]['acl']
-    except KeyError:
-        acl_have = None
-
-    try:
-        logging_have = have[0]['logging']
-    except KeyError:
-        logging_have = None
-
-    try:
-        auth_have = have[0]['auth']
-    except KeyError:
-        auth_have = None
-
-    try:
-        auth_key_have = have[0]['auth_key']
-    except KeyError:
-        auth_key_have = None
-
-    try:
-        key_id_have = have[0]['key_id']
-    except KeyError:
-        key_id_have = None
+    server_have = have[0].get('server', None)
+    source_int_have = have[0].get('source_int', None)
+    acl_have = have[0].get('acl', None)
+    logging_have = have[0].get('logging', None)
+    auth_have = have[0].get('auth', None)
+    auth_key_have = have[0].get('auth_key', None)
+    key_id_have = have[0].get('key_id', None)
 
     for w in want:
         server = w['server']
