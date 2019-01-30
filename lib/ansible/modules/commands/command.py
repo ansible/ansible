@@ -85,6 +85,7 @@ notes:
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
     -  For Windows targets, use the M(win_command) module instead.
+    -  For rebooting systems, use the M(reboot) or M(win_reboot) module.
 seealso:
 - module: raw
 - module: script
@@ -182,18 +183,18 @@ def check_command(module, commandline):
     command = os.path.basename(command)
 
     disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
-                     " warn=False to this command task or set command_warnings=False in" \
+                     " 'warn: false' to this command task or set 'command_warnings=False' in" \
                      " ansible.cfg to get rid of this message."
     substitutions = {'mod': None, 'cmd': command}
 
     if command in arguments:
-        msg = "Consider using the {mod} module with {subcmd} rather than running {cmd}.  " + disable_suffix
+        msg = "Consider using the {mod} module with {subcmd} rather than running '{cmd}'.  " + disable_suffix
         substitutions['mod'] = 'file'
         substitutions['subcmd'] = arguments[command]
         module.warn(msg.format(**substitutions))
 
     if command in commands:
-        msg = "Consider using the {mod} module rather than running {cmd}.  " + disable_suffix
+        msg = "Consider using the {mod} module rather than running '{cmd}'.  " + disable_suffix
         substitutions['mod'] = commands[command]
         module.warn(msg.format(**substitutions))
 

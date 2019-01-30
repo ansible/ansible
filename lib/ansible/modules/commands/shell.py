@@ -87,6 +87,7 @@ notes:
     do not include evil things like semicolons.
   - An alternative to using inline shell scripts with this module is to use
     the M(script) module possibly together with the M(template) module.
+  - For rebooting systems, use the M(reboot) or M(win_reboot) module.
 seealso:
 - module: command
 - module: raw
