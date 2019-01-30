@@ -169,6 +169,7 @@ class Default(FactsBase):
 
         return platform_facts
 
+
 class Hardware(FactsBase):
 
     COMMANDS = [
