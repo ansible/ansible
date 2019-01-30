@@ -67,6 +67,12 @@ def test_play_context(mocker, parser, reset_cli_args):
     assert play_context.check_mode is True
     assert play_context.no_log is None
 
+    mock_play = mocker.MagicMock()
+    mock_play.force_handlers = True
+
+    play_context = PlayContext(play=mock_play)
+    assert play_context.force_handlers is True
+
     mock_task = mocker.MagicMock()
     mock_task.connection = 'mocktask'
     mock_task.remote_user = 'mocktask'
