@@ -97,7 +97,7 @@ class BecomeModule(BecomeBase):
         if not cmd:
             return cmd
 
-        exe = self.get_option('become_exe')
+        exe = self.get_option('become_exe') or self.name
         flags = self.get_option('become_flags')
         noexe = not self.get_option('wrap_exe')
         return '%s %s "%s"' % (exe, flags, self._build_success_command(cmd, shell, noexe=noexe))
