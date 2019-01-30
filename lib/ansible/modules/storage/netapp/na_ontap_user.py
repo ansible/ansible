@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -20,7 +20,7 @@ short_description: NetApp ONTAP user configuration and management
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
 - Create or destroy users.
@@ -41,6 +41,7 @@ options:
     required: true
     type: list
     choices: ['console', 'http','ontapi','rsh','snmp','service-processor','sp','ssh','telnet']
+    version_added: "2.8"
     aliases:
       - application
   authentication_method:
@@ -304,8 +305,10 @@ class NetAppOntapUser(object):
         except netapp_utils.zapi.NaApiError as error:
             if to_native(error.code) == '13114':
                 return False
-            else:
-                self.module.fail_json(msg='Error setting password for user %s: %s' % (self.parameters['name'], to_native(error)),
+            # if the user give the same password, instead of returning an error, return ok
+            if to_native(error.code) == '13214' and error.message.startswith('New password must be different than the old password.'):
+                return False
+            self.module.fail_json(msg='Error setting password for user %s: %s' % (self.parameters['name'], to_native(error)),
                                       exception=traceback.format_exc())
 
         self.server.set_vserver(None)
@@ -324,7 +327,8 @@ class NetAppOntapUser(object):
             if self.parameters.get('set_password') is not None:
                 self.na_helper.changed = True
             current = self.get_user()
-            current['lock_user'] = self.na_helper.get_value_for_bool(True, current['lock_user'])
+            if current is not None:
+                current['lock_user'] = self.na_helper.get_value_for_bool(True, current['lock_user'])
             modify = self.na_helper.get_modified_attributes(current, self.parameters)
 
         if self.na_helper.changed:
@@ -343,7 +347,8 @@ class NetAppOntapUser(object):
                     else:
                         self.unlock_given_user()
                 elif not create_delete_decision and self.parameters.get('set_password') is not None:
-                    self.change_password()
+                    # if change password return false nothing has changed so we need to set changed to False
+                    self.na_helper.changed = self.change_password()
         self.module.exit_json(changed=self.na_helper.changed)
 
 
