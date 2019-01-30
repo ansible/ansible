@@ -7,7 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.network.frr.providers.cli.config.bgp import Provider
+from ansible.module_utils.network.frr.providers.cli.config.bgp.process import Provider
 from ansible.modules.network.frr import frr_bgp
 from .frr_module import TestFrrModule, load_fixture
 
