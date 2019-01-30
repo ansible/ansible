@@ -47,8 +47,8 @@ class TestIosNtpModule(TestIosModule):
 
     def test_ios_ntp_config(self):
         set_module_args(dict(
-            server='10.75.32.5',
-            source_int='Loopback0',
+            server='10.75.33.5',
+            source_int='Vlan2',
             acl='NTP_ACL',
             logging=True,
             auth=True,
@@ -57,7 +57,7 @@ class TestIosNtpModule(TestIosModule):
             state='present'
         ))
         commands = []
-        self.execute_module(changed=False, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_ios_ntp_remove(self):
         set_module_args(dict(
