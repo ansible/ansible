@@ -181,6 +181,7 @@ class LookupModule(LookupBase):
                     ret += self.lookup_term(term_l, variables, **kwargs)
             else:
                 ret += self.lookup_term(term, variables, **kwargs)
+                # change that should not affect the results of the tests
         return ret
 
     def lookup_term(self, term, variables=None, **kwargs):
