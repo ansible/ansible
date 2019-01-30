@@ -204,7 +204,7 @@ class LXDProfileManagement(object):
         self.debug = self.module._verbosity >= 4
 
         try:
-            cmd='/usr/bin/file ' + self.module.params['snap_url']
+            cmd = '/usr/bin/file ' + self.module.params['snap_url']
 
             snap_socket_check = os.system(cmd)
 
