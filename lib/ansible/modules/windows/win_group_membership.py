@@ -35,6 +35,7 @@ options:
   state:
     description:
       - Desired state of the members in the group.
+      - C(pure) was added in Ansible 2.8.
       - When C(state) is C(pure), only the members specified will exist,
         and all other existing members not specified are removed.
     type: str
