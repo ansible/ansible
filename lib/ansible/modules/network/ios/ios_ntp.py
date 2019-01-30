@@ -267,7 +267,8 @@ def map_obj_to_commands(want, have, module):
             if key_id is not None and key_id != key_id_have:
                 commands.append('ntp trusted-key {0}'.format(key_id))
             if auth_key is not None and auth_key != auth_key_have:
-                commands.append('ntp authentication-key {0} md5 {1} 7'.format(key_id, auth_key))
+                if key_id:
+                    commands.append('ntp authentication-key {0} md5 {1} 7'.format(key_id, auth_key))
 
     return commands
 
