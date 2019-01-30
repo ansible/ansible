@@ -333,7 +333,7 @@ commands:
 """
 from ansible.module_utils._text import to_text
 from ansible.module_utils.network.frr.providers.module import NetworkModule
-from ansible.module_utils.network.frr.providers.cli.config.bgp import REDISTRIBUTE_PROTOCOLS
+from ansible.module_utils.network.frr.providers.cli.config.bgp.process import REDISTRIBUTE_PROTOCOLS
 
 
 def main():
