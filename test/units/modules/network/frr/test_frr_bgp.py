@@ -1,8 +1,7 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
- # (c) 2019, Ansible by Red Hat, inc
+#
+# (c) 2019, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -35,14 +34,20 @@ class TestFrrBgpModule(TestFrrModule):
         self.assertEqual(commands, ['no router bgp 64496'])
 
     def test_frr_bgp_neighbor(self):
-        obj = Provider(params=dict(config=dict(bgp_as='64496', neighbors=[dict(neighbor='192.51.100.2', remote_as=64496)]),
+        obj = Provider(params=dict(config=dict(bgp_as=64496, neighbors=[dict(neighbor='192.51.100.2', remote_as=64496)]),
                                    operation='merge'))
         commands = obj.render(self._bgp_config)
         self.assertEqual(commands, ['router bgp 64496', 'neighbor 192.51.100.2 remote-as 64496', 'exit'])
 
     def test_frr_bgp_neighbor_idempotent(self):
-        obj = Provider(params=dict(config=dict(bgp_as='64496', neighbors=[dict(neighbor='192.51.100.1', remote_as=64496,
-                                                                               timers=dict(keepalive=120, holdtime=360))]),
+        obj = Provider(params=dict(config=dict(bgp_as=64496, neighbors=[dict(neighbor='192.51.100.1', remote_as=64496,
+                                                                             timers=dict(keepalive=120, holdtime=360))]),
                                    operation='merge'))
         commands = obj.render(self._bgp_config)
         self.assertEqual(commands, [])
+
+    def test_frr_bgp_network(self):
+        obj = Provider(params=dict(config=dict(bgp_as=64496, networks=[dict(prefix='192.0.2.0', masklen=24, route_map='RMAP_1')]),
+                                   operation='merge'))
+        commands = obj.render(self._bgp_config)
+        self.assertEqual(commands, ['router bgp 64496', 'network 192.0.2.0/24 route-map RMAP_1', 'exit'])
