@@ -340,7 +340,7 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'description': module.params.get('description'),
-        u'gatewayIPv4': response.get(u'gateway_ipv4'),
+        u'gatewayIPv4': response.get(u'gatewayIPv4'),
         u'id': response.get(u'id'),
         u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),

@@ -669,7 +669,7 @@ class FirewallAllowedArray(object):
         return remove_nones_from_dict({u'IPProtocol': item.get('ip_protocol'), u'ports': item.get('ports')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({u'IPProtocol': item.get(u'ip_protocol'), u'ports': item.get(u'ports')})
+        return remove_nones_from_dict({u'IPProtocol': item.get(u'IPProtocol'), u'ports': item.get(u'ports')})
 
 
 class FirewallDeniedArray(object):
@@ -696,7 +696,7 @@ class FirewallDeniedArray(object):
         return remove_nones_from_dict({u'IPProtocol': item.get('ip_protocol'), u'ports': item.get('ports')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({u'IPProtocol': item.get(u'ip_protocol'), u'ports': item.get(u'ports')})
+        return remove_nones_from_dict({u'IPProtocol': item.get(u'IPProtocol'), u'ports': item.get(u'ports')})
 
 
 if __name__ == '__main__':

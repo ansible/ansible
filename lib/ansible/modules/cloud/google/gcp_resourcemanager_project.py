@@ -305,7 +305,7 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'projectNumber': response.get(u'number'),
+        u'projectNumber': response.get(u'projectNumber'),
         u'lifecycleState': response.get(u'lifecycleState'),
         u'name': response.get(u'name'),
         u'createTime': response.get(u'createTime'),
