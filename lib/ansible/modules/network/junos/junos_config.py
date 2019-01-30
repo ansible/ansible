@@ -113,8 +113,14 @@ options:
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
+        C(update) is similar to the override option. The new configuration completely
+        replaces the existing configuration. The difference comes when the configuration
+        is later committed. This option performs a 'diff' between the new candidate
+        configuration and the existing committed configuration. It then only notifies
+        system processes responsible for the changed portions of the configuration, and
+        only marks the actual configuration changes as 'changed'.
     default: merge
-    choices: ['merge', 'override', 'replace']
+    choices: ['merge', 'override', 'replace', 'update']
     version_added: "2.3"
   confirm_commit:
     description:

@@ -615,7 +615,6 @@ lib/ansible/modules/network/ironware/ironware_command.py E323
 lib/ansible/modules/network/ironware/ironware_config.py E323
 lib/ansible/modules/network/ironware/ironware_facts.py E323
 lib/ansible/modules/network/junos/junos_command.py E324
-lib/ansible/modules/network/junos/junos_config.py E326
 lib/ansible/modules/network/junos/junos_interface.py E324
 lib/ansible/modules/network/junos/junos_linkagg.py E324
 lib/ansible/modules/network/junos/junos_logging.py E322
