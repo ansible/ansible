@@ -1909,7 +1909,7 @@ class SunOS(User):
                                 fields[5] = str(int(warnweeks) * 7)
                             line = ':'.join(fields)
                             lines.append('%s\n' % line)
-                    with open(self.SHADOWFILE, 'w+'):
+                    with open(self.SHADOWFILE, 'w+') as f:
                         f.writelines(lines)
                     rc = 0
                 except Exception as err:
@@ -1928,7 +1928,7 @@ class SunOS(User):
         with open(self.USER_ATTR, 'r') as file_handler:
             for line in file_handler:
                 lines = line.strip().split('::::')
-                if lines[0] == self.user:
+                if lines[0] == self.name:
                     tmp = dict(x.split('=') for x in lines[1].split(';'))
                     info[0] = tmp.get('profiles', '')
                     info[1] = tmp.get('auths', '')
