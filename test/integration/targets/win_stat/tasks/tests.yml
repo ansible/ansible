@@ -462,7 +462,7 @@
 - name: test win_stat module without path argument
   win_stat:
   register: win_stat_no_args
-  failed_when: "win_stat_no_args.msg != 'Get-AnsibleParam: Missing required argument: path'"
+  failed_when: "win_stat_no_args.msg != 'missing required arguments: path'"
 
 # https://github.com/ansible/ansible/issues/30258
 - name: get path of pagefile
