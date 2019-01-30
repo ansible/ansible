@@ -29,27 +29,27 @@ from ansible.errors import AnsibleConnectionFailure
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(r'[\r\n]?<.+>(?:\s*)$'),
-        re.compile(r'[\r\n]?\[.+\](?:\s*)$'),
+        re.compile(br'[\r\n]?<.+>(?:\s*)$'),
+        re.compile(br'[\r\n]?\[.+\](?:\s*)$'),
     ]
 
     terminal_stderr_re = [
-        re.compile(r"% ?Error: "),
-        re.compile(r"^% \w+", re.M),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-        re.compile(r"syntax error"),
-        re.compile(r"unknown command"),
-        re.compile(r"Error\[\d+\]: ", re.I),
-        re.compile(r"Error:", re.I)
+        re.compile(br"% ?Error: "),
+        re.compile(br"^% \w+", re.M),
+        re.compile(br"% ?Bad secret"),
+        re.compile(br"invalid input", re.I),
+        re.compile(br"(?:incomplete|ambiguous) command", re.I),
+        re.compile(br"connection timed out", re.I),
+        re.compile(br"[^\r\n]+ not found", re.I),
+        re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"syntax error"),
+        re.compile(br"unknown command"),
+        re.compile(br"Error\[\d+\]: ", re.I),
+        re.compile(br"Error:", re.I)
     ]
 
     def on_open_shell(self):
         try:
-            self._exec_cli_command('screen-length 0 temporary')
+            self._exec_cli_command(b'screen-length 0 temporary')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
