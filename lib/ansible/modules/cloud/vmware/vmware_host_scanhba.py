@@ -37,7 +37,7 @@ options:
     required: true
   refresh_storage:
     description:
-    - Refresh the storage system in vCenter/ESXi Web Client
+    - Refresh the storage system in vCenter/ESXi Web Client.
     required: false
     default: false
     type: bool
