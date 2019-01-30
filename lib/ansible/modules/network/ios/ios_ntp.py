@@ -31,7 +31,6 @@ options:
             - Enable NTP logs. Data type boolean.
         type: bool
         default: False
-        choices: [True, False]
     auth:
         description:
             - Enable NTP authentication. Data type boolean.
@@ -279,8 +278,8 @@ def main():
         server=dict(),
         source_int=dict(),
         acl=dict(),
-        logging=dict(type='bool', choices=[True, False], default=False),
-        auth=dict(type='bool', choices=[True, False], default=False),
+        logging=dict(type='bool', default=False),
+        auth=dict(type='bool', default=False),
         auth_key=dict(),
         key_id=dict(),
         state=dict(choices=['absent', 'present'], default='present')
