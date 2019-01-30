@@ -124,10 +124,22 @@ options:
       - vip
       - dnsrr
   env:
+    type: raw
+    description:
+      - List or dictionary of the service environment variables.
+      - If passed a list each items need to be in the format of C(KEY=VALUE).
+      - If passed a dictionary values which might be parsed as numbers,
+        booleans or other types by the YAML parser must be quoted (e.g. I("true"))
+        in order to avoid data loss.
+      - Corresponds to the C(--env) option of C(docker service create).
+  env_files:
     type: list
     description:
-      - List of the service environment variables.
-      - Corresponds to the C(--env) option of C(docker service create).
+      - List of paths to files, present on the target, containing environment variables C(FOO=BAR).
+      - The order of the list is significant in determining the value assigned to a
+        variable that shows up more than once.
+      - If variable also present in I(env), then I(env) value will override.
+    version_added: "2.8"
   log_driver:
     type: str
     description:
@@ -568,11 +580,53 @@ from ansible.module_utils._text import to_text
 
 try:
     from docker import types
-    from docker.utils import parse_repository_tag
+    from docker.utils import (
+        parse_repository_tag,
+        parse_env_file,
+        format_environment
+    )
     from docker.errors import APIError, DockerException
 except ImportError:
     # missing docker-py handled in ansible.module_utils.docker.common
     pass
+
+
+def get_docker_environment(env, env_files):
+    """
+    Will return a list of "KEY=VALUE" items. Supplied env variable can
+    be either a list or a dictionary.
+
+    If environment files are combined with explicit environment variables,
+    the explicit environment variables take precedence.
+    """
+    env_dict = {}
+    if env_files:
+        for env_file in env_files:
+            parsed_env_file = parse_env_file(env_file)
+            for name, value in parsed_env_file.items():
+                env_dict[name] = str(value)
+    if env and isinstance(env, dict):
+        for name, value in env.items():
+            if not isinstance(value, string_types):
+                raise ValueError(
+                    'Non-string value found for env option. '
+                    'Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s' % name
+                )
+            env_dict[name] = str(value)
+    elif env and isinstance(env, list):
+        for item in env:
+            try:
+                name, value = item.split('=', 1)
+            except ValueError:
+                raise ValueError('Invalid environment variable found in list, needs to be in format KEY=VALUE.')
+            env_dict[name] = value
+    elif env is not None:
+        raise ValueError(
+            'Invalid type for env %s (%s). Only list or dict allowed.' % (env, type(env))
+        )
+
+    env_list = format_environment(env_dict)
+    return sorted(env_list) or None
 
 
 class DockerService(DockerBaseClass):
@@ -674,7 +728,6 @@ class DockerService(DockerBaseClass):
         s.dns_options = ap['dns_options']
         s.hostname = ap['hostname']
         s.tty = ap['tty']
-        s.env = ap['env']
         s.log_driver = ap['log_driver']
         s.log_driver_options = ap['log_driver_options']
         s.labels = ap['labels']
@@ -723,6 +776,8 @@ class DockerService(DockerBaseClass):
                 'Only string or list allowed. Check quoting.'
                 % (s.command, type(s.command))
             )
+
+        s.env = get_docker_environment(ap['env'], ap['env_files'])
 
         if ap['force_update']:
             s.force_update = int(str(time.time()).replace('.', ''))
@@ -1487,7 +1542,8 @@ def main():
         networks=dict(type='list'),
         command=dict(type='raw'),
         args=dict(type='list'),
-        env=dict(type='list'),
+        env=dict(type='raw'),
+        env_files=dict(type='list', elements='path'),
         force_update=dict(default=False, type='bool'),
         log_driver=dict(type='str'),
         log_driver_options=dict(type='dict'),
