@@ -48,7 +48,7 @@ options:
     - C(available) (alias C(present)) rescan a specific device or all devices (when C(device) is not specified).
     - C(removed) (alias C(absent) removes a device.
     - C(defined) changes device to Defined state.
-    choices: [ absent, defined, available ]
+    choices: [ available, defined, removed ]
     default: available
 '''
 
