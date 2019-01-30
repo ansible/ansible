@@ -178,6 +178,8 @@ options:
     - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
+    - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
+    - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
     - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
     - '     - Available options are :'
@@ -564,7 +566,7 @@ import time
 
 HAS_PYVMOMI = False
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim, vmodl, VmomiSupport
     HAS_PYVMOMI = True
 except ImportError:
     pass
@@ -575,7 +577,8 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
-                                         find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip)
+                                         find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip,
+                                         wait_for_task, TaskError)
 
 
 class PyVmomiDeviceHelper(object):
@@ -661,7 +664,6 @@ class PyVmomiDeviceHelper(object):
     def create_scsi_disk(self, scsi_ctl, disk_index=None):
         diskspec = vim.vm.device.VirtualDeviceSpec()
         diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
         diskspec.device.controllerKey = scsi_ctl.device.key
@@ -1708,6 +1710,38 @@ class PyVmomiHelper(PyVmomi):
         self.module.fail_json(
             msg="No size, size_kb, size_mb, size_gb or size_tb attribute found into disk configuration")
 
+    def find_vmdk(self, vmdk_path):
+        """
+        Takes a vsphere datastore path in the format
+
+            [datastore_name] path/to/file.vmdk
+
+        Returns vsphere file object or raises RuntimeError
+        """
+        datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder = self.vmdk_disk_path_split(vmdk_path)
+
+        datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
+
+        if datastore is None:
+            self.module.fail_json(msg="Failed to find the datastore %s" % datastore_name)
+
+        return self.find_vmdk_file(datastore, vmdk_fullpath, vmdk_filename, vmdk_folder)
+
+    def add_existing_vmdk(self, vm_obj, expected_disk_spec, diskspec, scsi_ctl):
+        """
+        Adds vmdk file described by expected_disk_spec['filename'], retrieves the file
+        information and adds the correct spec to self.configspec.deviceChange.
+        """
+        filename = expected_disk_spec['filename']
+        # if this is a new disk, or the disk file names are different
+        if (vm_obj and diskspec.device.backing.fileName != filename) or vm_obj is None:
+            vmdk_file = self.find_vmdk(expected_disk_spec['filename'])
+            diskspec.device.backing.fileName = expected_disk_spec['filename']
+            diskspec.device.capacityInKB = VmomiSupport.vmodlTypes['long'](vmdk_file.fileSize / 1024)
+            diskspec.device.key = -1
+            self.change_detected = True
+            self.configspec.deviceChange.append(diskspec)
+
     def configure_disks(self, vm_obj):
         # Ignore empty disk list, this permits to keep disks when deploying a template/cloning a VM
         if len(self.params['disk']) == 0:
@@ -1741,6 +1775,12 @@ class PyVmomiHelper(PyVmomi):
                 diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
 
+            # increment index for next disk search
+            disk_index += 1
+            # index 7 is reserved to SCSI controller
+            if disk_index == 7:
+                disk_index += 1
+
             if 'disk_mode' in expected_disk_spec:
                 disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
                 valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
@@ -1762,18 +1802,18 @@ class PyVmomiHelper(PyVmomi):
                 elif disk_type == 'eagerzeroedthick':
                     diskspec.device.backing.eagerlyScrub = True
 
+            if 'filename' in expected_disk_spec and expected_disk_spec['filename'] is not None:
+                self.add_existing_vmdk(vm_obj, expected_disk_spec, diskspec, scsi_ctl)
+                continue
+            else:
+                diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+
             # which datastore?
             if expected_disk_spec.get('datastore'):
                 # TODO: This is already handled by the relocation spec,
                 # but it needs to eventually be handled for all the
                 # other disks defined
                 pass
-
-            # increment index for next disk search
-            disk_index += 1
-            # index 7 is reserved to SCSI controller
-            if disk_index == 7:
-                disk_index += 1
 
             kb = self.get_configured_disk_size(expected_disk_spec)
             # VMWare doesn't allow to reduce disk sizes
