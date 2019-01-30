@@ -32,7 +32,8 @@
 
 import json
 
-shell_pattern = "/" + "bin" + "/sh" + " -c '%s'"
+# shell_pattern = "/bin/sh -c '%s'"
+shell_pattern = "/pica/bin/pica_sh -c 'start shell sh;%s;exit'"
 cli_pattern = "/pica/bin/pica_sh -c '%s'"
 config_pattern = "/pica/bin/pica_sh -c 'configure;%s;exit'"
 config_commit_pattern = "/pica/bin/pica_sh -c 'configure;%s;commit'"
