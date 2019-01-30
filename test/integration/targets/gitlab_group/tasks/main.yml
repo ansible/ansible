@@ -42,4 +42,3 @@
   assert:
     that:
       - gitlab_group_state_again is not changed
-

@@ -66,4 +66,3 @@
   assert:
     that:
       - gitlab_runner_state_absent is changed
-

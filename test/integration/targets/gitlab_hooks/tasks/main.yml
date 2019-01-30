@@ -65,4 +65,3 @@
   assert:
     that:
       - gitlab_hook_state_absent is changed
-

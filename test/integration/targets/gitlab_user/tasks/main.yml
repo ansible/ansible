@@ -48,4 +48,3 @@
   assert:
     that:
       - gitlab_user_state_again is not changed
-
