@@ -1,0 +1,8 @@
+minor_changes:
+  - spotinst - Added Elastigroup Code Deploy
+  - spotinst - Added Elastigroup Nomad
+  - spotinst - Added Elastigroup Docker Swarm
+  - spotinst - Added Elastigroup Route53
+  - spotinst - Added Elastigroup MLB
+  - spotinst - Updated Elastigroup Kubernetes
+  - spotinst - Updated Elastigroup ECS
