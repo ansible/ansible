@@ -42,10 +42,10 @@
     name: "{{ dbname }}"
     location: eastus
     geo_rep_locations:
-      - name: westus
-        failover_priority: 1
       - name: eastus
         failover_priority: 0
+      - name: westus
+        failover_priority: 1
     database_account_offer_type: Standard
   register: output
 - name: Assert the state has not changed
@@ -59,10 +59,10 @@
     name: "{{ dbname }}"
     location: eastus
     geo_rep_locations:
-      - name: westus
-        failover_priority: 1
       - name: eastus
         failover_priority: 0
+      - name: westus
+        failover_priority: 1
     database_account_offer_type: Standard
     enable_automatic_failover: yes
   register: output
