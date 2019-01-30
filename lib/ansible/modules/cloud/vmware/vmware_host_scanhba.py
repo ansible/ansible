@@ -19,7 +19,7 @@ module: vmware_host_scanhba
 short_description: Rescan host HBA's and optionally refresh the storage system
 description:
 - This module can force a rescan of the hosts HBA subsystem which is needed when wanting to mount a new datastore.
-- You could use this before using vmware_host_datastore to mount a new datastore to ensure your device/volume is ready.
+- You could use this before using M(vmware_host_datastore) to mount a new datastore to ensure your device/volume is ready.
 - You can also optionally force refresh operation on the Storage System in vCenter/ESXi Web Client.
 - All parameters and VMware object names are case sensitive.
 version_added: '2.8'
