@@ -506,9 +506,9 @@ In this example we will set up a test inventory to connect to two hosts and run 
 tests for win_stat:
 
 - Run the command ``source ./hacking/env-setup`` to prepare environment.
-- Install required Python modules using the command ``pip install "pywinrm>=0.2.2"``.
 - Create a copy of ``./test/integration/inventory.winrm.template`` and name it ``inventory.winrm``.
 - Fill in entries under ``[windows]`` and set the required variables that are needed to connect to the host.
+- :ref:`Install the required Python modules <windows_winrm>` to support WinRM and a configured authentication method.
 - To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you wish to test.
 
 This will execute all the tests currently defined for that role. You can set

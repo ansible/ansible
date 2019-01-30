@@ -1,3 +1,5 @@
+.. _windows_winrm:
+
 Windows Remote Management
 =========================
 Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
