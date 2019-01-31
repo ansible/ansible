@@ -64,6 +64,7 @@ def credentials(module):
 
     return node_ip, username, password
 
+
 rubrik_provider_spec = {
     'node_ip': dict(fallback=(env_fallback, ['rubrik_cdm_node_ip'])),
     'username': dict(fallback=(env_fallback, ['rubrik_cdm_username'])),
