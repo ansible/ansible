@@ -19,7 +19,7 @@ DOCUMENTATION = """
       - Scott Buchanan <sbuchanan@ri.pn>
       - Andrew Zenk <azenk@umn.edu>
       - Sam Doran<sdoran@redhat.com>
-    version_added: "2.7"
+    version_added: "2.8"
     requirements:
       - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
     short_description: fetch documents from 1Password
