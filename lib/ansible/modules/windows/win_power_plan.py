@@ -25,8 +25,6 @@ options:
       - String value that indicates the desired power plan. The power plan must already be
         present on the system. Commonly there will be options for C(balanced) and C(high performance).
     required: yes
-requirements:
-  - Windows Server 2008R2 (6.1)/Windows 7 or higher
 '''
 
 EXAMPLES = '''
