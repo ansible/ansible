@@ -31,8 +31,11 @@
 
 from ansible.module_utils.six import iteritems
 
-import urllib3
-urllib3.disable_warnings()
+try:
+    import urllib3
+    urllib3.disable_warnings()
+except ImportError:
+    pass
 
 import os
 

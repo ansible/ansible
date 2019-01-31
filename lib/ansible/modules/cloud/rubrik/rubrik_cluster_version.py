@@ -19,6 +19,7 @@ description:
 version_added: 2.8
 author: Rubrik Ranger Team
 
+
 extends_documentation_fragment:
     - rubrik_cdm
 requirements: [rubrik_cdm]
@@ -76,7 +77,7 @@ def main():
         rubrik = rubrik_cdm.Connect(node_ip, username, password)
     except SystemExit as error:
         module.fail_json(msg=str(error))
-        
+
     try:
         api_request = rubrik.cluster_version()
     except SystemExit as error:
