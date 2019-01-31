@@ -4,7 +4,7 @@
 from gitlab import Gitlab
 from gitlab.v4.objects import Group
 
-from httmock import HTTMock  # noqa
+from httmock import with_httmock  # noqa
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.source_control.gitlab_group import GitLabGroup
@@ -23,51 +23,58 @@ class TestGitlabGroup(unittest.TestCase):
         self.gitlab_instance = Gitlab("http://localhost", private_token="private_token", api_version=4)
         self.moduleUtil = GitLabGroup(module=FakeAnsibleModule(), gitlab_instance=self.gitlab_instance)
 
+    @with_httmock(resp_get_group)
     def test_exist_group(self):
-        with HTTMock(resp_get_group):
-            rvalue = self.moduleUtil.existsGroup(1)
+        rvalue = self.moduleUtil.existsGroup(1)
 
-            self.assertEqual(rvalue, True)
+        self.assertEqual(rvalue, True)
 
-        with HTTMock(resp_get_missing_group):
-            rvalue = self.moduleUtil.existsGroup(1)
+    @with_httmock(resp_get_missing_group)
+    def test_exist_group(self):
+        rvalue = self.moduleUtil.existsGroup(1)
 
-            self.assertEqual(rvalue, False)
+        self.assertEqual(rvalue, False)
 
+    @with_httmock(resp_create_group)
     def test_create_group(self):
-        with HTTMock(resp_create_group):
-            group = self.moduleUtil.createGroup({'name': "Foobar Group", 'path': "foo-bar"})
-            self.assertEqual(type(group), Group)
-            self.assertEqual(group.name, "Foobar Group")
-            self.assertEqual(group.path, "foo-bar")
-            self.assertEqual(group.id, 1)
+        group = self.moduleUtil.createGroup({'name': "Foobar Group", 'path': "foo-bar"})
 
+        self.assertEqual(type(group), Group)
+        self.assertEqual(group.name, "Foobar Group")
+        self.assertEqual(group.path, "foo-bar")
+        self.assertEqual(group.id, 1)
+
+    @with_httmock(resp_create_subgroup)
     def test_create_subgroup(self):
-        with HTTMock(resp_create_subgroup):
-            group = self.moduleUtil.createGroup({'name': "BarFoo Group", 'path': "bar-foo", "parent_id": 1})
-            self.assertEqual(type(group), Group)
-            self.assertEqual(group.name, "BarFoo Group")
-            self.assertEqual(group.full_path, "foo-bar/bar-foo")
-            self.assertEqual(group.id, 2)
-            self.assertEqual(group.parent_id, 1)
+        group = self.moduleUtil.createGroup({'name': "BarFoo Group", 'path': "bar-foo", "parent_id": 1})
 
+        self.assertEqual(type(group), Group)
+        self.assertEqual(group.name, "BarFoo Group")
+        self.assertEqual(group.full_path, "foo-bar/bar-foo")
+        self.assertEqual(group.id, 2)
+        self.assertEqual(group.parent_id, 1)
+
+    @with_httmock(resp_get_group)
     def test_update_group(self):
-        with HTTMock(resp_get_group):
-            group = self.gitlab_instance.groups.get(1)
-            changed, newGroup = self.moduleUtil.updateGroup(group, {'name': "BarFoo Group", "visibility": "private"})
+        group = self.gitlab_instance.groups.get(1)
+        changed, newGroup = self.moduleUtil.updateGroup(group, {'name': "BarFoo Group", "visibility": "private"})
 
-            self.assertEqual(changed, True)
-            self.assertEqual(newGroup.name, "BarFoo Group")
-            self.assertEqual(newGroup.visibility, "private")
+        self.assertEqual(changed, True)
+        self.assertEqual(newGroup.name, "BarFoo Group")
+        self.assertEqual(newGroup.visibility, "private")
 
-            changed, newGroup = self.moduleUtil.updateGroup(group, {'name': "BarFoo Group"})
+        changed, newGroup = self.moduleUtil.updateGroup(group, {'name': "BarFoo Group"})
 
-            self.assertEqual(changed, False)
+        self.assertEqual(changed, False)
 
+    @with_httmock(resp_get_group)
+    @with_httmock(resp_find_group_project)
+    @with_httmock(resp_delete_group)
     def test_delete_group(self):
-        with HTTMock(resp_get_group), HTTMock(resp_delete_group), HTTMock(resp_find_group_project):
-            self.moduleUtil.existsGroup(1)
+        self.moduleUtil.existsGroup(1)
 
-            rvalue = self.moduleUtil.deleteGroup()
+        print(self.moduleUtil.groupObject.projects)
 
-            self.assertEqual(rvalue, None)
+        rvalue = self.moduleUtil.deleteGroup()
+
+        self.assertEqual(rvalue, None)

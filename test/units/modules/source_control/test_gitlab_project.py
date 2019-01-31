@@ -4,7 +4,7 @@
 from gitlab import Gitlab
 from gitlab.v4.objects import Project
 
-from httmock import HTTMock  # noqa
+from httmock import with_httmock  # noqa
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.source_control.gitlab_project import GitLabProject
@@ -18,54 +18,58 @@ except ImportError:
     pass
 
 
-class TestGitlabRunner(unittest.TestCase):
+class TestGitlabProject(unittest.TestCase):
+    @with_httmock(resp_get_user)
     def setUp(self):
-        with HTTMock(resp_get_user):
-            self.gitlab_instance = Gitlab("http://localhost ", private_token="private_token", api_version=4)
-            self.gitlab_instance.user = self.gitlab_instance.users.get(1)
-            self.moduleUtil = GitLabProject(module=FakeAnsibleModule(), gitlab_instance=self.gitlab_instance)
+        self.gitlab_instance = Gitlab("http://localhost ", private_token="private_token", api_version=4)
+        self.gitlab_instance.user = self.gitlab_instance.users.get(1)
+        self.moduleUtil = GitLabProject(module=FakeAnsibleModule(), gitlab_instance=self.gitlab_instance)
 
+    @with_httmock(resp_get_group)
+    @with_httmock(resp_get_project_by_name)
     def test_project_exist(self):
-        with HTTMock(resp_get_group), HTTMock(resp_get_project_by_name):
-            group = self.gitlab_instance.groups.get(1)
+        group = self.gitlab_instance.groups.get(1)
 
-            rvalue = self.moduleUtil.existsProject(group, "diaspora-client")
+        rvalue = self.moduleUtil.existsProject(group, "diaspora-client")
 
-            self.assertEqual(rvalue, True)
+        self.assertEqual(rvalue, True)
 
-            rvalue = self.moduleUtil.existsProject(group, "missing-project")
+        rvalue = self.moduleUtil.existsProject(group, "missing-project")
 
-            self.assertEqual(rvalue, False)
+        self.assertEqual(rvalue, False)
 
+    @with_httmock(resp_get_group)
+    @with_httmock(resp_create_project)
     def test_create_project(self):
-        with HTTMock(resp_get_group), HTTMock(resp_create_project):
-            group = self.gitlab_instance.groups.get(1)
-            project = self.moduleUtil.createProject(group, {"name": "Diaspora Client", "path": "diaspora-client", "namespace_id": group.id})
+        group = self.gitlab_instance.groups.get(1)
+        project = self.moduleUtil.createProject(group, {"name": "Diaspora Client", "path": "diaspora-client", "namespace_id": group.id})
 
-            self.assertEqual(type(project), Project)
-            self.assertEqual(project.name, "Diaspora Client")
+        self.assertEqual(type(project), Project)
+        self.assertEqual(project.name, "Diaspora Client")
 
+    @with_httmock(resp_get_project)
     def test_update_project(self):
-        with HTTMock(resp_get_project):
-            project = self.gitlab_instance.projects.get(1)
+        project = self.gitlab_instance.projects.get(1)
 
-            changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name"})
+        changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name"})
 
-            self.assertEqual(changed, True)
-            self.assertEqual(type(newProject), Project)
-            self.assertEqual(newProject.name, "New Name")
+        self.assertEqual(changed, True)
+        self.assertEqual(type(newProject), Project)
+        self.assertEqual(newProject.name, "New Name")
 
-            changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name"})
+        changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name"})
 
-            self.assertEqual(changed, False)
-            self.assertEqual(newProject.name, "New Name")
+        self.assertEqual(changed, False)
+        self.assertEqual(newProject.name, "New Name")
 
+    @with_httmock(resp_get_group)
+    @with_httmock(resp_get_project_by_name)
+    @with_httmock(resp_delete_project)
     def test_delete_project(self):
-        with HTTMock(resp_get_group), HTTMock(resp_get_project_by_name), HTTMock(resp_delete_project):
-            group = self.gitlab_instance.groups.get(1)
+        group = self.gitlab_instance.groups.get(1)
 
-            self.moduleUtil.existsProject(group, "diaspora-client")
+        self.moduleUtil.existsProject(group, "diaspora-client")
 
-            rvalue = self.moduleUtil.deleteProject()
+        rvalue = self.moduleUtil.deleteProject()
 
-            self.assertEqual(rvalue, None)
+        self.assertEqual(rvalue, None)

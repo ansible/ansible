@@ -4,7 +4,7 @@
 from gitlab import Gitlab
 from gitlab.v4.objects import ProjectHook
 
-from httmock import HTTMock  # noqa
+from httmock import with_httmock  # noqa
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.source_control.gitlab_hooks import GitLabHook
@@ -23,48 +23,54 @@ class TestGitlabHook(unittest.TestCase):
         self.gitlab_instance = Gitlab("http://localhost", private_token="private_token", api_version=4)
         self.moduleUtil = GitLabHook(module=FakeAnsibleModule(), gitlab_instance=self.gitlab_instance)
 
+    @with_httmock(resp_get_project)
+    @with_httmock(resp_find_project_hook)
     def test_hook_exist(self):
-        with HTTMock(resp_get_project), HTTMock(resp_find_project_hook):
-            project = self.gitlab_instance.projects.get(1)
+        project = self.gitlab_instance.projects.get(1)
 
-            rvalue = self.moduleUtil.existsHooks(project, "http://example.com/hook")
+        rvalue = self.moduleUtil.existsHooks(project, "http://example.com/hook")
 
-            self.assertEqual(rvalue, True)
+        self.assertEqual(rvalue, True)
 
-            rvalue = self.moduleUtil.existsHooks(project, "http://gitlab.com/hook")
+        rvalue = self.moduleUtil.existsHooks(project, "http://gitlab.com/hook")
 
-            self.assertEqual(rvalue, False)
+        self.assertEqual(rvalue, False)
 
+    @with_httmock(resp_get_project)
+    @with_httmock(resp_create_project_hook)
     def test_create_hook(self):
-        with HTTMock(resp_get_project), HTTMock(resp_create_project_hook):
-            project = self.gitlab_instance.projects.get(1)
+        project = self.gitlab_instance.projects.get(1)
 
-            hook = self.moduleUtil.createHook(project, {"url": "http://example.com/hook"})
+        hook = self.moduleUtil.createHook(project, {"url": "http://example.com/hook"})
 
-            self.assertEqual(type(hook), ProjectHook)
-            self.assertEqual(hook.url, "http://example.com/hook")
+        self.assertEqual(type(hook), ProjectHook)
+        self.assertEqual(hook.url, "http://example.com/hook")
 
+    @with_httmock(resp_get_project)
+    @with_httmock(resp_find_project_hook)
     def test_update_hook(self):
-        with HTTMock(resp_get_project), HTTMock(resp_find_project_hook):
-            project = self.gitlab_instance.projects.get(1)
-            hook = self.moduleUtil.findHook(project, "http://example.com/hook")
+        project = self.gitlab_instance.projects.get(1)
+        hook = self.moduleUtil.findHook(project, "http://example.com/hook")
 
-            changed, newHook = self.moduleUtil.updateHook(hook, {"url": "http://gitlab.com/hook"})
+        changed, newHook = self.moduleUtil.updateHook(hook, {"url": "http://gitlab.com/hook"})
 
-            self.assertEqual(changed, True)
-            self.assertEqual(type(newHook), ProjectHook)
-            self.assertEqual(newHook.url, "http://gitlab.com/hook")
+        self.assertEqual(changed, True)
+        self.assertEqual(type(newHook), ProjectHook)
+        self.assertEqual(newHook.url, "http://gitlab.com/hook")
 
-            changed, newHook = self.moduleUtil.updateHook(hook, {"url": "http://gitlab.com/hook"})
+        changed, newHook = self.moduleUtil.updateHook(hook, {"url": "http://gitlab.com/hook"})
 
-            self.assertEqual(changed, False)
-            self.assertEqual(newHook.url, "http://gitlab.com/hook")
+        self.assertEqual(changed, False)
+        self.assertEqual(newHook.url, "http://gitlab.com/hook")
 
+    @with_httmock(resp_get_project)
+    @with_httmock(resp_find_project_hook)
+    @with_httmock(resp_delete_project_hook)
     def test_delete_hook(self):
-        with HTTMock(resp_get_project), HTTMock(resp_find_project_hook), HTTMock(resp_delete_project_hook):
-            project = self.gitlab_instance.projects.get(1)
-            self.moduleUtil.existsHooks(project, "http://example.com/hook")
+        project = self.gitlab_instance.projects.get(1)
 
-            rvalue = self.moduleUtil.deleteHook()
+        self.moduleUtil.existsHooks(project, "http://example.com/hook")
 
-            self.assertEqual(rvalue, None)
+        rvalue = self.moduleUtil.deleteHook()
+
+        self.assertEqual(rvalue, None)
