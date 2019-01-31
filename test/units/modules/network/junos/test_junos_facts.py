@@ -63,7 +63,15 @@ class TestJunosCommandModule(TestJunosModule):
 
         self.mock_get_capabilities = patch('ansible.module_utils.network.junos.junos.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
-        self.get_capabilities.return_value = {'network_api': 'netconf'}
+        self.get_capabilities.return_value = {
+            'device_info': {
+                'network_os': 'junos',
+                'network_os_hostname': 'vsrx01',
+                'network_os_model': 'vsrx',
+                'network_os_version': '17.3R1.10'
+            },
+            'network_api': 'netconf'
+        }
 
     def tearDown(self):
         super(TestJunosCommandModule, self).tearDown()
