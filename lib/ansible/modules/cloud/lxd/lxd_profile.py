@@ -72,6 +72,7 @@ options:
           - The unix domain socket path when LXD is installed by snap package manager.
         required: false
         default: unix:/var/snap/lxd/common/lxd/unix.socket
+        version_added: '2.8'
     key_file:
         description:
           - The client certificate key file path.
