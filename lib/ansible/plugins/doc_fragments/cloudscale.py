@@ -20,5 +20,6 @@ notes:
   - Instead of the api_token parameter the C(CLOUDSCALE_API_TOKEN) environment variable can be used.
   - All operations are performed using the cloudscale.ch public API v1.
   - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
-  - A valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at U(https://control.cloudscale.ch).
+  - A valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
+    U(https://control.cloudscale.ch).
 '''
