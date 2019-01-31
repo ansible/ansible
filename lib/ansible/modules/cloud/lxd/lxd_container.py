@@ -303,7 +303,7 @@ class LXDContainerManagement(object):
         self.debug = self.module._verbosity >= 4
 
         try:
-            if os.path.exists(self.module.params['snap_url'].replace('unix:','')):
+            if os.path.exists(self.module.params['snap_url'].replace('unix:', '')):
                 self.url = self.module.params['snap_url']
             else:
                 self.url = self.module.params['url']
