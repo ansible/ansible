@@ -25,7 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
+import q
 import os
 from functools import partial
 from ansible.module_utils._text import to_native
@@ -221,7 +221,7 @@ class WapiModule(WapiBase):
 
         # get object reference
         ib_obj_ref, update, new_name = self.get_object_ref(self.module, ib_obj_type, obj_filter, ib_spec)
-
+        q(ib_obj_ref)
         proposed_object = {}
         for key, value in iteritems(ib_spec):
             if self.module.params[key] is not None:
@@ -398,6 +398,10 @@ class WapiModule(WapiBase):
                     test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
             elif (ib_obj_type == NIOS_IPV4_FIXED_ADDRESS or ib_obj_type == NIOS_IPV6_FIXED_ADDRESS and 'mac' in obj_filter):
                 test_obj_filter = dict([['mac', obj_filter['mac']]])
+            elif (ib_obj_type == NIOS_A_RECORD):
+                # resolves issue where a_record with uppercase name was returning null and was failing
+                test_obj_filter = obj_filter
+                test_obj_filter['name'] = test_obj_filter['name'].lower()
             # check if test_obj_filter is empty copy passed obj_filter
             else:
                 test_obj_filter = obj_filter
@@ -411,6 +415,7 @@ class WapiModule(WapiBase):
             if module.params['restart_if_needed']:
                 ib_spec['restart_if_needed'] = temp
         else:
+            q("A_record")
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
         return ib_obj, update, new_name
 
