@@ -1221,7 +1221,6 @@ class PyVmomiHelper(PyVmomi):
                                           " a VLAN name under VM network list.")
 
             if 'name' in network and self.cache.get_network(network['name']) is None:
-                self.module.fail_json(msg="Network %s" % self.cache.get_network(network['name']))
                 self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
             elif 'vlan' in network:
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
