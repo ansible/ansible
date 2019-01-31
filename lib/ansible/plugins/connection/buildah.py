@@ -28,8 +28,6 @@ DOCUMENTATION = """
         default: inventory_hostname
         vars:
             - name: ansible_host
-#        keyword:
-#            - name: hosts
       remote_user:
         description:
             - User specified via name or ID which is used to execute commands inside the container.
@@ -40,8 +38,6 @@ DOCUMENTATION = """
           - name: ANSIBLE_REMOTE_USER
         vars:
           - name: ansible_user
-#        keyword:
-#            - name: remote_user
     notes:
         - "When you are using rootless buildah containers, you should wrap"
         - "invocation of ansible-playbook in ``buildah unshare`` like this:"
