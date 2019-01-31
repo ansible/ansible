@@ -15,7 +15,7 @@
 # Pre-test setup
 - name: delete a instance
   gcp_spanner_instance:
-      name: "{{ resource_name }}"
+      name: testinstance
       display_name: My Spanner Instance
       node_count: 2
       labels:
@@ -28,7 +28,7 @@
 #----------------------------------------------------------
 - name: create a instance
   gcp_spanner_instance:
-      name: "{{ resource_name }}"
+      name: testinstance
       display_name: My Spanner Instance
       node_count: 2
       labels:
@@ -58,7 +58,7 @@
 # ----------------------------------------------------------------------------
 - name: create a instance that already exists
   gcp_spanner_instance:
-      name: "{{ resource_name }}"
+      name: testinstance
       display_name: My Spanner Instance
       node_count: 2
       labels:
@@ -76,7 +76,7 @@
 #----------------------------------------------------------
 - name: delete a instance
   gcp_spanner_instance:
-      name: "{{ resource_name }}"
+      name: testinstance
       display_name: My Spanner Instance
       node_count: 2
       labels:
@@ -106,7 +106,7 @@
 # ----------------------------------------------------------------------------
 - name: delete a instance that does not exist
   gcp_spanner_instance:
-      name: "{{ resource_name }}"
+      name: testinstance
       display_name: My Spanner Instance
       node_count: 2
       labels:

@@ -123,7 +123,7 @@ def main():
 
 def collection(module):
     res = {'project': module.params['project'], 'managed_zone': replace_resource_dict(module.params['managed_zone'], 'name')}
-    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/rrsets".format(**res)
+    return "https://www.googleapis.com/dns/v1/projects/{project}/managedZones/{managed_zone}/changes".format(**res)
 
 
 def fetch_list(module, link):
