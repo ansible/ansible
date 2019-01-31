@@ -132,7 +132,7 @@ from ansible.module_utils.network.onyx.onyx import get_interfaces_config
 
 
 class OnyxInterfaceModule(BaseOnyxModule):
-    IF_ETH_REGEX = re.compile(r"^Eth(\d+\/\d+|Eth\d+\/\d+\d+)$")
+    IF_ETH_REGEX = re.compile(r"^Eth(\d+\/\d+|\d+\/\d+\/\d+)$")
     IF_VLAN_REGEX = re.compile(r"^Vlan (\d+)$")
     IF_LOOPBACK_REGEX = re.compile(r"^Loopback (\d+)$")
 
