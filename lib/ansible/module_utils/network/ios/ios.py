@@ -129,10 +129,10 @@ def get_config(module, flags=None):
         return cfg
 
 
-def run_commands(module, commands, check_rc=True):
+def run_commands(module, commands, check_rc=True, return_timestamps=False):
     connection = get_connection(module)
     try:
-        return connection.run_commands(commands=commands, check_rc=check_rc)
+        return connection.run_commands(commands=commands, check_rc=check_rc, return_timestamps=return_timestamps)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 
