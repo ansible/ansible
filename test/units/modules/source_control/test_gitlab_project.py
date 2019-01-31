@@ -10,7 +10,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.source_control.gitlab_project import GitLabProject
 
 from units.utils.test_gitlab import (FakeAnsibleModule, resp_get_group, resp_get_project_by_name, resp_create_project,
-                                     resp_get_project, resp_delete_project)
+                                     resp_get_project, resp_delete_project, resp_get_user)
 
 try:
     import unittest
@@ -20,8 +20,10 @@ except ImportError:
 
 class TestGitlabRunner(unittest.TestCase):
     def setUp(self):
-        self.gitlab_instance = Gitlab("http://localhost ", private_token="private_token", api_version=4)
-        self.moduleUtil = GitLabProject(module=FakeAnsibleModule(), gitlab_instance=self.gitlab_instance)
+        with HTTMock(resp_get_user):
+            self.gitlab_instance = Gitlab("http://localhost ", private_token="private_token", api_version=4)
+            self.gitlab_instance.user = self.gitlab_instance.users.get(1)
+            self.moduleUtil = GitLabProject(module=FakeAnsibleModule(), gitlab_instance=self.gitlab_instance)
 
     def test_project_exist(self):
         with HTTMock(resp_get_group), HTTMock(resp_get_project_by_name):
