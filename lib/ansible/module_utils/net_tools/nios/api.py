@@ -25,7 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-import q
+
 import os
 from functools import partial
 from ansible.module_utils._text import to_native
@@ -221,7 +221,7 @@ class WapiModule(WapiBase):
 
         # get object reference
         ib_obj_ref, update, new_name = self.get_object_ref(self.module, ib_obj_type, obj_filter, ib_spec)
-        q(ib_obj_ref)
+
         proposed_object = {}
         for key, value in iteritems(ib_spec):
             if self.module.params[key] is not None:
