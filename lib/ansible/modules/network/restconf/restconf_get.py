@@ -37,7 +37,6 @@ options:
         of value in C(path). If value is I(all) return all descendant data nodes of
         value in C(path)
     required: false
-    default: all
     choices: ['config', 'nonconfig', 'all']
   output:
     description:
@@ -84,7 +83,7 @@ def main():
     """
     argument_spec = dict(
         path=dict(required=True),
-        content=dict(choices=['config', 'nonconfig', 'all'], default='all'),
+        content=dict(choices=['config', 'nonconfig', 'all']),
         output=dict(choices=['json', 'xml'], default='json'),
     )
 

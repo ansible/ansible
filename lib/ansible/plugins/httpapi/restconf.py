@@ -60,9 +60,9 @@ class HttpApi(HttpApiBase):
             'Content-Type': message_kwargs.get('content_type') or CONTENT_TYPE,
             'Accept': message_kwargs.get('accept') or CONTENT_TYPE,
         }
-        response = self.connection.send(path, data, headers=headers, method=message_kwargs.get('method'))
+        response, response_data = self.connection.send(path, data, headers=headers, method=message_kwargs.get('method'))
 
-        return handle_response(response)
+        return handle_response(response_data.read())
 
 
 def handle_response(response):
