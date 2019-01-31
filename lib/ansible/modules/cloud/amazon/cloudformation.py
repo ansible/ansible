@@ -90,6 +90,17 @@ options:
         is generated based on input parameters.
         See the AWS Change Sets docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
     version_added: "2.4"
+  capabilities:
+    description:
+    - Capabilities allow stacks to create and modify IAM resources, which may include adding users or roles.
+    - Currently the only available values are 'CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM' and 'CAPABILITY_AUTO_EXPAND'. Multiple may be provided.CAPABILITY_AUTO_EXPAND
+    - The following resources require that one or both of these parameters is specified: AWS::IAM::AccessKey,
+        AWS::IAM::Group, AWS::IAM::InstanceProfile, AWS::IAM::Policy, AWS::IAM::Role, AWS::IAM::User, AWS::IAM::UserToGroupAddition
+    choices:
+    - 'CAPABILITY_IAM'
+    - 'CAPABILITY_NAMED_IAM'
+	- 'CAPABILITY_AUTO_EXPAND'
+	version_added: "2.8"
   template_format:
     description:
     - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
@@ -596,6 +607,7 @@ def main():
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
         create_changeset=dict(default=False, type='bool'),
         changeset_name=dict(default=None, required=False),
+        capabilities=dict(type='list', choices=['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM', 'CAPABILITY_AUTO_EXPAND'], default=['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM']),
         role_arn=dict(default=None, required=False),
         tags=dict(default=None, type='dict'),
         termination_protection=dict(default=None, type='bool'),
@@ -616,7 +628,7 @@ def main():
 
     # collect the parameters that are passed to boto3. Keeps us from having so many scalars floating around.
     stack_params = {
-        'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
+        'Capabilities': module.params['capabilities'],
         'ClientRequestToken': to_native(uuid.uuid4()),
     }
     state = module.params['state']
