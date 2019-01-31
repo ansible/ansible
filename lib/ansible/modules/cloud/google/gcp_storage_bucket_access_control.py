@@ -117,7 +117,7 @@ EXAMPLES = '''
 
 - name: create a bucket access control
   gcp_storage_bucket_access_control:
-      bucket: "{{ bucket }}"
+      bucket: "test_object"
       entity: user-alexstephen@google.com
       role: WRITER
       project: "test_project"
