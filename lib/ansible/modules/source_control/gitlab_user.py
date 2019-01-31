@@ -316,8 +316,8 @@ class GitLabUser(object):
             return False
 
         if self.memberExists(group, self.getUserId(user)):
-            if not self.memberAsGoodAccessLevel(group, self.getUserId(user), self.ACCESS_LEVEL[access_level]):
-                member = self.findMember(group, self.getUserId(user))
+            member = self.findMember(group, self.getUserId(user))
+            if not self.memberAsGoodAccessLevel(group, member.id, self.ACCESS_LEVEL[access_level]):
                 member.access_level = self.ACCESS_LEVEL[access_level]
                 member.save()
                 return True
