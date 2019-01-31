@@ -27,6 +27,7 @@ from itertools import chain
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import get_timestamp
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
@@ -271,11 +272,12 @@ class Cliconf(CliconfBase):
 
         return resp
 
-    def run_commands(self, commands=None, check_rc=True):
+    def run_commands(self, commands=None, check_rc=True, return_timestamps=False):
         if commands is None:
             raise ValueError("'commands' value is required")
 
         responses = list()
+        timestamps = list()
         for cmd in to_list(commands):
             if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
@@ -286,14 +288,19 @@ class Cliconf(CliconfBase):
 
             try:
                 out = self.send_command(**cmd)
+                timestamp = get_timestamp()
             except AnsibleConnectionFailure as e:
                 if check_rc:
                     raise
                 out = getattr(e, 'err', to_text(e))
 
             responses.append(out)
+            timestamps.append(timestamp)
 
-        return responses
+        if return_timestamps:
+            return responses, timestamps
+        else:
+            return responses
 
     def get_defaults_flag(self):
         """
