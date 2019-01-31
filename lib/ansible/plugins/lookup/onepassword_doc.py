@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
     lookup: onepassword_doc
     author:
-      - David Taylor <djtaylor13@gmail.com>
+      - David Taylor (@djtaylor)
       - Scott Buchanan <sbuchanan@ri.pn>
       - Andrew Zenk <azenk@umn.edu>
       - Sam Doran<sdoran@redhat.com>
