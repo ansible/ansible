@@ -1005,6 +1005,8 @@ class ModuleValidator(Validator):
                         # This is the normal case
                         self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
 
+                    add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+
                     existing_doc = self._check_for_new_args(doc, metadata)
                     self._check_version_added(doc, existing_doc)
 
