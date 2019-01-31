@@ -23,7 +23,7 @@
       node_config:
         machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: us-central1-a
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -39,7 +39,7 @@
       node_config:
         machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: us-central1-a
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -51,7 +51,7 @@
       - result.changed == true
 - name: verify that cluster was created
   gcp_container_cluster_facts:
-      zone: us-central1-a
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -73,7 +73,7 @@
       node_config:
         machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: us-central1-a
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -94,7 +94,7 @@
       node_config:
         machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: us-central1-a
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -106,7 +106,7 @@
       - result.changed == true
 - name: verify that cluster was deleted
   gcp_container_cluster_facts:
-      zone: us-central1-a
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -128,7 +128,7 @@
       node_config:
         machine_type: n1-standard-4
         disk_size_gb: 500
-      zone: us-central1-a
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
