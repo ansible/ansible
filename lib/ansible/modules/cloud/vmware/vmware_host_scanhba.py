@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -19,9 +20,10 @@ module: vmware_host_scanhba
 short_description: Rescan host HBA's and optionally refresh the storage system
 description:
 - This module can force a rescan of the hosts HBA subsystem which is needed when wanting to mount a new datastore.
-- You could use this before using M(vmware_host_datastore) to mount a new datastore to ensure your device/volume is ready.
-- You can also optionally force refresh operation on the Storage System in vCenter/ESXi Web Client.
+- You could use this before using vmware_host_datastore to mount a new datastore to ensure your device/volume is ready.
+- You can also optionally force a Refresh of the Storage System in vCenter/ESXi Web Client.
 - All parameters and VMware object names are case sensitive.
+- You can supply an esxi_hostname or a cluster_name
 version_added: '2.8'
 author:
 - Michael Eaton (@if-meaton)
@@ -34,10 +36,14 @@ options:
   esxi_hostname:
     description:
     - ESXi hostname to Rescan the storage subsystem on.
-    required: true
+    required: false
+  cluster_name:
+    description:
+    - Cluster name to Rescan the storage subsystem on (this will run the rescan task on each host in the cluster).
+    required: false    
   refresh_storage:
     description:
-    - Refresh the storage system in vCenter/ESXi Web Client.
+    - Refresh the storage system in vCenter/ESXi Web Client for each host found
     required: false
     default: false
     type: bool
@@ -53,7 +59,16 @@ EXAMPLES = r'''
       esxi_hostname: '{{ inventory_hostname }}'
       refresh_storage: true
   delegate_to: localhost
-
+  
+- name: Rescan HBA's for a given cluster - all found hosts will be scanned 
+  vmware_host_scanhba:
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      esxi_hostname: '{{ inventory_hostname }}'
+      refresh_storage: true
+  delegate_to: localhost
+  
 - name: Recan HBA's for a given ESXi host and don't refresh storage system objects
   vmware_host_scanhba:
       hostname: '{{ vcenter_hostname }}'
@@ -92,31 +107,40 @@ class VmwareHbaScan(PyVmomi):
 
     def scan(self):
         esxi_host_name = self.params.get('esxi_hostname', None)
+        cluster_name = self.params.get('cluster_name', None)
         refresh_storage = self.params.get('refresh_storage', bool)
-        host = find_obj(self.content, [vim.HostSystem], name=esxi_host_name)
+        hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
+        results = dict(changed=True, result=dict())
 
-        if host is None:
-            self.module.fail_json(msg="Unable to find host system %s in the given configuration." % esxi_host_name)
+        if not hosts:
+            self.module.fail_json(msg="Failed to find any hosts.")
 
-        host.configManager.storageSystem.RescanAllHba()
-        if refresh_storage is True:
-            host.configManager.storageSystem.RefreshStorageSystem()
+        for host in hosts:
+            results['result'][host.name] = dict()
+            host.configManager.storageSystem.RescanAllHba()
+            if refresh_storage is True:
+                host.configManager.storageSystem.RefreshStorageSystem()
 
-        return_data = dict()
+            results['result'][host.name]['rescaned_hba'] = True
+            results['result'][host.name]['refreshed_storage'] = refresh_storage
 
-        return_data[host.name] = dict(rescaned_hba="true", refreshed_storage=refresh_storage)
-
-        self.module.exit_json(changed=True, result=return_data)
+        self.module.exit_json(**results)
 
 
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        esxi_hostname=dict(type='str', required=True),
+        esxi_hostname=dict(type='str', required=False),
+        cluster_name=dict(type='str', required=False),
         refresh_storage=dict(type='bool', default=False, required=False)
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[
+            ['cluster_name', 'esxi_hostname'],
+        ],
+        supports_check_mode=False
+    )
 
     hbascan = VmwareHbaScan(module)
     hbascan.scan()
