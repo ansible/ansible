@@ -295,7 +295,7 @@ def main():
     project = findProject(gitlab_instance, project_identifier)
 
     if project is None:
-        module.fail_json(msg="Failed to create project: project %s doesn't exists" % project_identifier)
+        module.fail_json(msg="Failed to create deploy_key: project %s doesn't exists" % project_identifier)
 
     deployKey_exists = gitlab_deploy_key.existsDeployKey(project, key_title)
 
