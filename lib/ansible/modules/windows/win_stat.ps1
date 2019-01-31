@@ -7,7 +7,7 @@
 #Requires -Module Ansible.ModuleUtils.FileUtil
 #Requires -Module Ansible.ModuleUtils.LinkUtil
 
-function DateTo-Timestamp($start_date, $end_date) {
+function ConvertTo-Timestamp($start_date, $end_date) {
     if ($start_date -and $end_date) {
         return (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
     }
@@ -33,12 +33,34 @@ function Get-FileChecksum($path, $algorithm) {
     return $hash
 }
 
+function Get-FileInfo {
+    param([String]$Path, [Switch]$Follow)
+
+    $info = Get-AnsibleItem -Path $Path -ErrorAction SilentlyContinue
+    $link_info = $null
+    if ($null -ne $info) {
+        try {
+            $link_info = Get-Link -link_path $info.FullName
+        } catch {
+            $module.Warn("Failed to check/get link info for file: $($_.Exception.Message)")
+        }
+
+        # If follow=true we want to follow the link all the way back to root object
+        if ($Follow -and $null -ne $link_info -and $link_info.Type -in @("SymbolicLink", "JunctionPoint")) {
+            $info, $link_info = Get-FileInfo -Path $link_info.AbsolutePath -Follow
+        }
+    }
+
+    return $info, $link_info
+}
+
 $spec = @{
     options = @{
         path = @{ type='path'; required=$true; aliases=@( 'dest', 'name' ) }
         get_checksum = @{ type='bool'; default=$true }
         checksum_algorithm = @{ type='str'; default='sha1'; choices=@( 'md5', 'sha1', 'sha256', 'sha384', 'sha512' ) }
         get_md5 = @{ type='bool'; default=$false; removed_in_version='2.9' }
+        follow = @{ type='bool'; default=$false }
     }
     supports_check_mode = $true
 }
@@ -49,11 +71,13 @@ $path = $module.Params.path
 $get_md5 = $module.Params.get_md5
 $get_checksum = $module.Params.get_checksum
 $checksum_algorithm = $module.Params.checksum_algorithm
+$follow = $module.Params.follow
 
 $module.Result.stat = @{ exists=$false }
 
-$info = Get-AnsibleItem -Path $path -ErrorAction SilentlyContinue
-If ($null -ne $info) {
+Load-LinkUtils
+$info, $link_info = Get-FileInfo -Path $path -Follow:$follow
+If ($null -ne $info) {    
     $epoch_date = Get-Date -Date "01/01/1970"
     $attributes = @()
     foreach ($attribute in ($info.Attributes -split ',')) {
@@ -77,9 +101,9 @@ If ($null -ne $info) {
         # lnk_target = islnk or isjunction Target of the symlink. Note that relative paths remain relative
         # lnk_source = islnk os isjunction Target of the symlink normalized for the remote filesystem
         hlnk_targets = @()
-        creationtime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.CreationTime)
-        lastaccesstime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.LastAccessTime)
-        lastwritetime = (DateTo-Timestamp -start_date $epoch_date -end_date $info.LastWriteTime)
+        creationtime = (ConvertTo-Timestamp -start_date $epoch_date -end_date $info.CreationTime)
+        lastaccesstime = (ConvertTo-Timestamp -start_date $epoch_date -end_date $info.LastAccessTime)
+        lastwritetime = (ConvertTo-Timestamp -start_date $epoch_date -end_date $info.LastWriteTime)
         # size = a file and directory - calculated below
         path = $info.FullName
         filename = $info.Name
@@ -100,8 +124,8 @@ If ($null -ne $info) {
     # values that are set according to the type of file
     if ($info.Attributes.HasFlag([System.IO.FileAttributes]::Directory)) {
         $stat.isdir = $true
-        $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($stat.path -replace '\\', '\\')'"
-        if ($share_info -ne $null) {
+        $share_info = Get-CimInstance -ClassName Win32_Share -Filter "Path='$($stat.path -replace '\\', '\\')'"
+        if ($null -ne $share_info) {
             $stat.isshared = $true
             $stat.sharename = $share_info.Name
         }
@@ -137,13 +161,7 @@ If ($null -ne $info) {
     }
 
     # Get symbolic link, junction point, hard link info
-    Load-LinkUtils
-    try {
-        $link_info = Get-Link -link_path $info.FullName
-    } catch {
-        $module.Warn("Failed to check/get link info for file: $($_.Exception.Message)")
-    }
-    if ($link_info -ne $null) {
+    if ($null -ne $link_info) {
         switch ($link_info.Type) {
             "SymbolicLink" {
                 $stat.islnk = $true
@@ -175,3 +193,4 @@ If ($null -ne $info) {
 }
 
 $module.ExitJson()
+
