@@ -480,53 +480,53 @@ You may see the following error if this value is too low:
 
 Suggestions to resolve:
 
-Options 1 (Global command timeout setting):
-Increase value of command timeout in configuration file or by setting environment variable.
+* Option 1 (Global command timeout setting):
+  Increase value of command timeout in configuration file or by setting environment variable.
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=60
+     export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=60
 
-To make this a permanent change, add the following to your ``ansible.cfg`` file:
+  To make this a permanent change, add the following to your ``ansible.cfg`` file:
 
-.. code-block:: ini
+  .. code-block:: ini
 
-   [persistent_connection]
-   command_timeout = 60
+     [persistent_connection]
+     command_timeout = 60
 
-Option 2 (Per task command timeout setting):
-Increase command timeout per task basis. All network modules support a
-timeout value that can be set on a per task basis.
-The timeout value controls the amount of time in seconds before the
-task will fail if the command has not returned.
+* Option 2 (Per task command timeout setting):
+  Increase command timeout per task basis. All network modules support a
+  timeout value that can be set on a per task basis.
+  The timeout value controls the amount of time in seconds before the
+  task will fail if the command has not returned.
 
-For local connection type:
+  For local connection type:
 
-.. FIXME: Detail error here
+  .. FIXME: Detail error here
 
-Suggestions to resolve:
+  Suggestions to resolve:
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-    - name: save running-config
-      ios_command:
-        commands: copy running-config startup-config
-        provider: "{{ cli }}"
-        timeout: 30
+      - name: save running-config
+        ios_command:
+          commands: copy running-config startup-config
+          provider: "{{ cli }}"
+          timeout: 30
 
-For network_cli, netconf connection type (applicable from 2.7 onwards):
+  For network_cli, netconf connection type (applicable from 2.7 onwards):
 
-.. FIXME: Detail error here
+  .. FIXME: Detail error here
 
-Suggestions to resolve:
+  Suggestions to resolve:
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-    - name: save running-config
-      ios_command:
-        commands: copy running-config startup-config
-      vars:
-        ansible_command_timeout: 60
+      - name: save running-config
+        ios_command:
+          commands: copy running-config startup-config
+        vars:
+          ansible_command_timeout: 60
 
 Some operations take longer than the default 30 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
