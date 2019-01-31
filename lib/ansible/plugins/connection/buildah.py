@@ -8,6 +8,9 @@
 # Written by: Tomas Tomecek (https://github.com/TomasTomecek)
 
 from __future__ import (absolute_import, division, print_function)
+
+import os
+
 __metaclass__ = type
 
 
@@ -39,6 +42,11 @@ DOCUMENTATION = """
           - name: ansible_user
 #        keyword:
 #            - name: remote_user
+    notes:
+        - "When you are using rootless buildah containers, you should wrap"
+        - "invocation of ansible-playbook in ``buildah unshare`` like this:"
+        - "``buildah unshare ansible-playbook -c buildah playbook.yaml``."
+        - "For more info, see https://github.com/ansible/ansible/issues/50583"
 """
 
 import shlex
@@ -75,6 +83,13 @@ class Connection(ConnectionBase):
         # `buildah inspect` doesn't contain info about what the default user is -- if it's not
         # set, it's empty
         self.user = self._play_context.remote_user
+
+        if os.getuid() != 0:
+            display.warning(
+                "You have invoked the playbook with an unprivileged user. "
+                "This may not function, please prepend `buildah unshare` to your command. "
+                "For more info, see https://github.com/ansible/ansible/issues/50583"
+            )
 
     def _set_user(self):
         self._buildah(b"config", [b"--user=" + to_bytes(self.user, errors='surrogate_or_strict')])
