@@ -256,6 +256,9 @@ options:
     description:
     - The location where the cluster is deployed.
     required: true
+    aliases:
+    - zone
+    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
@@ -622,7 +625,7 @@ def main():
                 ),
             ),
             subnetwork=dict(type='str'),
-            location=dict(required=True, type='str'),
+            location=dict(required=True, type='str', aliases=['zone']),
         )
     )
 
@@ -797,7 +800,7 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri)
+        op_result = fetch_resource(module, op_uri, False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
