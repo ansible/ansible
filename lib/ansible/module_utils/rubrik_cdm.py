@@ -28,8 +28,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import env_fallback
+
 
 try:
     import urllib3
@@ -37,45 +38,47 @@ try:
 except ImportError:
     pass
 
-import os
-
-
 def credentials(module):
-    """Helper function to establish inital connectivity to the Rubrik cluster. The function will first attempt
-    to read the relevant credentials from environment variables and then if those are not found try to manually provie
-    the values through supplied parameters.
-
+    """Helper function to provider the node ip, username, and password to the Rubrik module. If a "provider" variable is present in the Ansible task, those variables 
+    will be used to establish connectivity to the Rubrik cluster. If a "provider" variable is not present, attempt to read the cluster details from environment variables.
     Arguments:
         module {class} -- Ansible module helper class.
-
     Returns:
-        [str] -- Any potential error that may occur during the initial connection.
-        [class] -- On success, return rubrik_cdm.Connect
+        [node_ip] -- The node ip or hostname of the Rubrik cluster
+        [username] -- The username used to login to the Rubrik cluster
+        [password] -- The password used to login to the Rubrik cluster
     """
 
     ansible = module.params
 
-    try:
+    if ansible["provider"]:
+        node_ip = ansible["provider"]["node_ip"]
+        username = ansible["provider"]["username"]
+        password = ansible["provider"]["password"]
+    else:
         node_ip = ansible["node_ip"]
         username = ansible["username"]
         password = ansible["password"]
-    except KeyError:
-        node_ip = os.environ.get('rubrik_cdm_node_ip')
-        username = os.environ.get('rubrik_cdm_username')
-        password = os.environ.get('rubrik_cdm_password')
 
     return node_ip, username, password
 
+rubrik_provider_spec = {
+    'node_ip': dict(fallback=(env_fallback, ['rubrik_cdm_node_ip'])),
+    'username': dict(fallback=(env_fallback, ['rubrik_cdm_username'])),
+    'password': dict(fallback=(env_fallback, ['rubrik_cdm_password']), no_log=True),
+}
 
-login_credentials_spec = {
-    'node_ip': dict(),
-    'username': dict(),
-    'password': dict(no_log=True),
+rubrik_manual_spec = {
+    'node_ip': dict(fallback=(env_fallback, ['rubrik_cdm_node_ip'])),
+    'username': dict(fallback=(env_fallback, ['rubrik_cdm_username'])),
+    'password': dict(fallback=(env_fallback, ['rubrik_cdm_password']), no_log=True),
 }
 
 rubrik_argument_spec = {
-    'provider': dict(type='dict', options=login_credentials_spec),
+    'provider': dict(type='dict', options=rubrik_provider_spec),
 }
+
+rubrik_argument_spec.update(rubrik_manual_spec)
 
 
 def load_provider_variables(module):
@@ -85,6 +88,6 @@ def load_provider_variables(module):
 
     provider = module.params.get('provider') or dict()
     for key, value in iteritems(provider):
-        if key in login_credentials_spec:
+        if key in rubrik_argument_spec:
             if module.params.get(key) is None and value is not None:
                 module.params[key] = value

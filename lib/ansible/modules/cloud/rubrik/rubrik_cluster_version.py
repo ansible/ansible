@@ -26,10 +26,8 @@ requirements: [rubrik_cdm]
 '''
 
 EXAMPLES = '''
-- rubrik_cluster_version:
-
-- rubrik_cluster_version:
-    provider: "{{ credentials }}"
+- name: Retrieve the software version of the Rubrik cluster
+  rubrik_cluster_version:
 '''
 
 RETURN = '''
@@ -57,7 +55,10 @@ def main():
 
     results = {}
 
-    argument_spec = rubrik_argument_spec
+    argument_spec = dict(
+    )
+
+    argument_spec.update(rubrik_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
@@ -68,12 +69,10 @@ def main():
     if not HAS_RUBRIK_SDK:
         module.fail_json(msg='The Rubrik Python SDK is required for this module (pip install rubrik_cdm).')
 
-    try:
-        node_ip, username, password = credentials(module)
-    except ValueError:
-        module.fail_json(msg="The Rubrik login credentials are missing. Verify the correct env vars are present or provide them through the `provider` param.")
+    node_ip, username, password = credentials(module)
 
     try:
+        
         rubrik = rubrik_cdm.Connect(node_ip, username, password)
     except SystemExit as error:
         module.fail_json(msg=str(error))
