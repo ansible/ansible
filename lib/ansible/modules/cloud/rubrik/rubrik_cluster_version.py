@@ -16,8 +16,8 @@ module: rubrik_cluster_version
 short_description: Retrieves the software version of the Rubrik cluster.
 description:
     - Retrieves the software version of the Rubrik cluster.
-version_added: 2.8
-author: Rubrik Ranger Team
+version_added: '2.8'
+author: Rubrik Build Team (@drew-russell) <build@rubrik.com>
 
 
 extends_documentation_fragment:
@@ -36,7 +36,7 @@ RETURN = '''
 version:
     description: The version of the Rubrik cluster.
     returned: success
-    type: string
+    type: str
     sample: 4.1.3-2510
 '''
 
