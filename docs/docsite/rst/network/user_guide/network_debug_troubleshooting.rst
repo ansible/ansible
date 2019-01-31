@@ -4,6 +4,9 @@
 Network Debug and Troubleshooting Guide
 ***************************************
 
+.. contents::
+   :local:
+
 
 Introduction
 ============
@@ -11,8 +14,6 @@ Introduction
 Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogeneous networking devices. Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
 
 This section discusses how to debug and troubleshoot network modules in Ansible 2.3.
-
-
 
 
 
@@ -442,11 +443,10 @@ of inactivity), simple delete the socket file.
 Timeout issues
 ==============
 
-Timeouts
---------
-Persistent connection idle timeout:
+Persistent connection idle timeout
+----------------------------------
 
-For example:
+By default, ``ANSIBLE_PERSISTENT_CONNECT_TIMEOUT`` is set to 30 (seconds). You may see the following error if this value is too low:
 
 .. code-block:: yaml
 
@@ -467,8 +467,12 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    connect_timeout = 60
 
-Command timeout:
-For example:
+Command timeout
+---------------
+
+By default, ``ANSIBLE_PERSISTENT_COMMAND_TIMEOUT`` is set to 30 (seconds). Prior versions of Ansible had this value set to 10 seconds by default.
+You may see the following error if this value is too low:
+
 
 .. code-block:: yaml
 
@@ -530,8 +534,10 @@ In this case, changing the timeout value from the default 30 seconds to 60
 seconds will prevent the task from failing before the command completes
 successfully.
 
-Persistent socket connect timeout:
-For example:
+Persistent connection retry timeout
+-----------------------------------
+
+By default, ``ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT`` is set to 15 (seconds). You may see the following error if this value is too low:
 
 .. code-block:: yaml
 
@@ -696,21 +702,21 @@ Example ssh config file (~/.ssh/config)
     IdentityFile "/path/to/ssh-key.pem"
     Port 22
 
-  # Note: Due to the way that Paramiko reads the SSH Config file, 
+  # Note: Due to the way that Paramiko reads the SSH Config file,
   # you need to specify the NETCONF port that the host uses.
   # i.e. It does not automatically use ansible_port
   # As a result you need either:
-  
+
   Host junos01
     HostName junos01
     ProxyCommand ssh -W %h:22 jumphost
-    
+
   # OR
-  
+
   Host junos01
     HostName junos01
     ProxyCommand ssh -W %h:830 jumphost
-    
+
   # Depending on the netconf port used.
 
 Example Ansible inventory file
