@@ -52,7 +52,7 @@ DOCUMENTATION = """
         performed an initial sign in (meaning C(~/.op/config) exists), then only the C(master_password) is required.
         You may optionally specify C(subdomain) in this scenario, otherwise the last used subdomain will be used by C(op).
       - This lookup can perform an initial login by providing C(subdomain), C(username), C(secret_key) and C(master_password).
-      - Due to the B(very) sensitive nature of these credentials, it is B(highly) recommeneded that you only pass in the minial credentials
+      - Due to the B(very) sensitive nature of these credentials, it is B(highly) recommended that you only pass in the minimal credentials
         needed at any given time. Also, store these credentials in an Ansible Vault using a key that is equal to or greater in strength
         to the 1Password master password.
       - This lookup stores potentially sensitive data from 1Password as Ansible facts.
