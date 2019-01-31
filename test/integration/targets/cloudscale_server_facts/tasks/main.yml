@@ -1,0 +1,122 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2019, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Gather facts of non existing server
+  cloudscale_server_facts:
+    name: '{{ cloudscale_resource_prefix }}-test-facts'
+  register: server
+- name: Verify setup create server
+  assert:
+    that:
+      - server is not changed
+      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - server.state == 'absent'
+
+- name: Setup create server
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-facts'
+    flavor: '{{ cloudscale_server_facts_flavor }}'
+    image: '{{ cloudscale_server_facts_image }}'
+    ssh_keys: '{{ cloudscale_server_facts_ssh_key }}'
+    state: running
+  register: server
+- name: Verify setup create server
+  assert:
+    that:
+      - server is changed
+      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - server.state == 'running'
+
+- name: Test gather facts of a server in check mode
+  cloudscale_server_facts:
+    name: '{{ cloudscale_resource_prefix }}-test-facts'
+  register: server
+  check_mode: yes
+- name: Verify gather facts of a server in check mode
+  assert:
+    that:
+      - server is not changed
+      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - server.flavor.slug == '{{ cloudscale_server_facts_flavor }}'
+      - server.image.slug == '{{ cloudscale_server_facts_image }}'
+      - server.state == 'running'
+      - cloudscale_server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - cloudscale_server.flavor.slug == '{{ cloudscale_server_facts_flavor }}'
+      - cloudscale_server.image.slug == '{{ cloudscale_server_facts_image }}'
+      - cloudscale_server.state == 'running'
+
+- name: Test gather facts of a server
+  cloudscale_server_facts:
+    name: '{{ cloudscale_resource_prefix }}-test-facts'
+  register: server
+- name: Verify gather facts of a server
+  assert:
+    that:
+      - server is not changed
+      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - server.flavor.slug == '{{ cloudscale_server_facts_flavor }}'
+      - server.image.slug == '{{ cloudscale_server_facts_image }}'
+      - server.state == 'running'
+      - cloudscale_server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - cloudscale_server.flavor.slug == '{{ cloudscale_server_facts_flavor }}'
+      - cloudscale_server.image.slug == '{{ cloudscale_server_facts_image }}'
+      - cloudscale_server.state == 'running'
+
+- name: Test gather facts of a server by uuid in check mode
+  cloudscale_server_facts:
+    uuid: '{{ server.uuid }}'
+  register: server
+  check_mode: yes
+- name: Verify gather facts of a server by uuid in check mode
+  assert:
+    that:
+      - server is not changed
+      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - server.flavor.slug == '{{ cloudscale_server_facts_flavor }}'
+      - server.image.slug == '{{ cloudscale_server_facts_image }}'
+      - server.state == 'running'
+      - cloudscale_server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - cloudscale_server.flavor.slug == '{{ cloudscale_server_facts_flavor }}'
+      - cloudscale_server.image.slug == '{{ cloudscale_server_facts_image }}'
+      - cloudscale_server.state == 'running'
+
+- name: Test gather facts of a server by uuid
+  cloudscale_server_facts:
+    uuid: '{{ server.uuid }}'
+  register: server
+- name: Verify gather facts of a server by uuid
+  assert:
+    that:
+      - server is not changed
+      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - server.flavor.slug == '{{ cloudscale_server_facts_flavor }}'
+      - server.image.slug == '{{ cloudscale_server_facts_image }}'
+      - server.state == 'running'
+      - cloudscale_server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+      - cloudscale_server.flavor.slug == '{{ cloudscale_server_facts_flavor }}'
+      - cloudscale_server.image.slug == '{{ cloudscale_server_facts_image }}'
+      - cloudscale_server.state == 'running'
+
+# TODO: Why we need to stop manually before absent?
+- name: Stop server
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-facts'
+    state: stopped
+  register: server
+- name: Verify stop server
+  assert:
+    that:
+      - server is successful
+      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
+
+- name: Cleanup server
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-facts'
+    state: absent
+  register: server
+- name: Verify cleanup server
+  assert:
+    that:
+      - server is successful
+      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
