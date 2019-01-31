@@ -54,7 +54,8 @@
     cmd.exe /c mklink /H "{{win_stat_dir}}\nested\hard-link.ps1" "{{win_stat_dir}}\nested\hard-target.txt"
     cmd.exe /c mklink /J "{{win_stat_dir}}\junction-link" "{{win_stat_dir}}\junction-dest"
     cmd.exe /c mklink /D "{{win_stat_dir}}\nested\nested\link-rel" "..\..\link-dest"
-  
+    cmd.exe /c mklink /D "{{win_stat_dir}}\outer-link" "{{win_stat_dir}}\nested\nested\link-rel"
+
     $date = Get-Date -Year 2016 -Month 11 -Day 1 -Hour 7 -Minute 10 -Second 5 -Millisecond 0
     Get-ChildItem -Path "{{win_stat_dir}}" -Recurse | ForEach-Object {
         $_.CreationTime = $date
