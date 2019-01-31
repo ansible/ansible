@@ -32,18 +32,14 @@ DOCUMENTATION = """
       master_password:
         description: The password used to unlock the specified vault.
         default: None
-        version_added: '2.7'
         aliases: ['vault_password']
       subdomain:
         description: The 1Password subdomain to authenticate against.
         default: None
-        version_added: '2.7'
       username:
         description: The username used to sign in.
-        version_added: '2.7'
       secret_key:
         description: The secret key used when performing an initial sign in.
-        version_added: '2.7'
       vault:
         description: Vault containing the item to retrieve (case-insensitive). If absent will search all vaults
         default: None
