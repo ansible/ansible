@@ -44,24 +44,24 @@ options:
 """
 
 EXAMPLES = """
-- name: snmp-community functionality
+- name: Create snmp community
   pn_snmp_community:
     pn_cliswitch: "sw01"
     state: "present"
     pn_community_string: "foo"
     pn_community_type: "read-write"
 
-- name: snmp-community functionality
+- name: Delete snmp community
   pn_snmp_community:
     pn_cliswitch: "sw01"
     state: "absent"
     pn_community_string: "foo"
 
-- name: snmp-community functionality
+- name: Modify snmp community
   pn_snmp_community:
     pn_cliswitch: "sw01"
     state: "update"
-    pn_community_string: "F4u1tMgmt"
+    pn_community_string: "foo"
     pn_community_type: "read-only"
 """
 
