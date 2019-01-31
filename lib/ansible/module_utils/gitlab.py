@@ -43,7 +43,11 @@ def findProject(gitlab_instance, identifier):
     try:
         project = gitlab_instance.projects.get(identifier)
     except Exception as e:
-        return None
+        current_user = gitlab_instance.user
+        try:
+            project = gitlab_instance.projects.get(current_user.username + '/' + identifier)
+        except Exception as e:
+            return None
 
     return project
 
