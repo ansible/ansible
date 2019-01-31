@@ -800,6 +800,7 @@ def main():
                 if module._diff:
                     result['diff'] = dict(before=sanitize_cr(before_client),
                                           after=sanitize_cr(updated_client))
+                result['changed'] = (before_client != updated_client)
 
                 module.exit_json(**result)
 
