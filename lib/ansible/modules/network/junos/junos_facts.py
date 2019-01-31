@@ -92,7 +92,7 @@ import platform
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param, tostring
-from ansible.module_utils.network.junos.junos import get_configuration, get_connection, get_capabilities
+from ansible.module_utils.network.junos.junos import get_configuration, get_capabilities
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -332,7 +332,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    get_connection(module)
     warnings = list()
     gather_subset = module.params['gather_subset']
 
