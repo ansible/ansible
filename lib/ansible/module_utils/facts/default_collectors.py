@@ -73,6 +73,7 @@ from ansible.module_utils.facts.network.hpux import HPUXNetworkCollector
 from ansible.module_utils.facts.network.hurd import HurdNetworkCollector
 from ansible.module_utils.facts.network.linux import LinuxNetworkCollector
 from ansible.module_utils.facts.network.iscsi import IscsiInitiatorNetworkCollector
+from ansible.module_utils.facts.network.nvme import NvmeInitiatorNetworkCollector
 from ansible.module_utils.facts.network.netbsd import NetBSDNetworkCollector
 from ansible.module_utils.facts.network.openbsd import OpenBSDNetworkCollector
 from ansible.module_utils.facts.network.sunos import SunOSNetworkCollector
@@ -151,6 +152,7 @@ _network = [
     HPUXNetworkCollector,
     HurdNetworkCollector,
     IscsiInitiatorNetworkCollector,
+    NvmeInitiatorNetworkCollector,
     LinuxNetworkCollector,
     NetBSDNetworkCollector,
     OpenBSDNetworkCollector,
