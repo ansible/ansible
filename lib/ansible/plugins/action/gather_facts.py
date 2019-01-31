@@ -100,7 +100,7 @@ class ActionModule(ActionBase):
 
         if failed:
             result['failed'] = True
-            result['msg'] += "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
+            result['msg'] = "The following modules failed to execute: %s\n" % (', '.join(failed.keys()))
             for fail in failed:
                 result['msg'] += '  %s: %s\n' % (fail, failed[fail])
 
