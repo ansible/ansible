@@ -210,11 +210,7 @@ class LXDProfileManagement(object):
         self.debug = self.module._verbosity >= 4
 
         try:
-            cmd = '/usr/bin/file ' + self.module.params['snap_url']
-
-            snap_socket_check = os.system(cmd)
-
-            if snap_socket_check == 0:
+            if os.path.exists(self.module.params['snap_url'].replace('unix:','')):
                 self.url = self.module.params['snap_url']
             else:
                 self.url = self.module.params['url']
