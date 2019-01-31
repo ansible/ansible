@@ -54,7 +54,6 @@ lib/ansible/modules/windows/win_pagefile.ps1 PSAvoidUsingPositionalParameters
 lib/ansible/modules/windows/win_pagefile.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_pagefile.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_pagefile.ps1 PSUseSupportsShouldProcess
-lib/ansible/modules/windows/win_power_plan.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_psmodule.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_rabbitmq_plugin.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_rabbitmq_plugin.ps1 PSAvoidUsingInvokeExpression
