@@ -339,7 +339,7 @@ def wait_for_completion(status, op_result, module):
     while not status:
         raise_if_errors(op_result, ['error'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri)
+        op_result = fetch_resource(module, op_uri, False)
         status = navigate_hash(op_result, ['done'])
     return op_result
 

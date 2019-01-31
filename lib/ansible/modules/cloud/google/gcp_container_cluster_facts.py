@@ -45,7 +45,9 @@ options:
     - The location where the cluster is deployed.
     required: true
     aliases:
+    - region
     - zone
+    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
@@ -362,7 +364,7 @@ import json
 
 
 def main():
-    module = GcpModule(argument_spec=dict(location=dict(required=True, type='str', aliases=['zone'])))
+    module = GcpModule(argument_spec=dict(location=dict(required=True, type='str', aliases=['region', 'zone'])))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
