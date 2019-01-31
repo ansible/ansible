@@ -19,8 +19,18 @@ from units.compat import unittest
 from units.compat.mock import patch
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup.onepassword import OnePass, LookupModule
+from ansible.plugins.lookup.onepassword_doc import OnePassDoc
+from ansible.plugins.lookup.onepassword_doc import LookupModule as OnePasswordDocLookup
 from ansible.plugins.lookup.onepassword_raw import LookupModule as OnePasswordRawLookup
 
+# Mock raw document response when using `op get document`
+MOCK_DOCUMENTS = [
+    {
+        'vault_name': 'Acme TLS Certificates',
+        'doc_id': '9876543299',
+        'output': '-----BEGIN CERTIFICATE-----\nMIID6TCCAtGgAwIBAgIJAKoaiLjRaRdjMA0GCSqGSIb3DQEBBQUAMFYxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMQ8wDQYDVQQHEwZNeUNpdHkxDTAL\nBgNVBAoTBEFDTUUxEjAQBgNVBAMTCWxvY2FsaG9zdDAeFw0xOTAxMzExNjAzMzFa\nFw0yMDAxMzExNjAzMzFaMFYxCzAJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0\nYXRlMQ8wDQYDVQQHEwZNeUNpdHkxDTALBgNVBAoTBEFDTUUxEjAQBgNVBAMTCWxv\nY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAM9YTwZx59mb\nxq7MKtxHJ9TgSrsnR/D66K4Glmpep9wykheyH6ejtrpNznx98dkJCERhmwlThZ0W\n3HKWcJtEXhM2DALyS25Rni5AabjYF2Sk/Ga2iGoAqHmVShINIkaO/o4zlpQZ4kde\ndope07xxuqzHIYFdQv/61qmhpNp4LRdAmQauwPYGcjPb6WyXFryVEKeczh1uLJdT\nmmBeO/O0ceHiddO5K3Y56+tOn/7hXPTsK/48HSoL6RFLtMpAQCGBsWWhWhweUzzP\nd8Fpq54E55vGZmtGNzlLPdHlgW2pAhNQ13ABhQCiUxdn+TMZN5eMW6SAHomwmqgp\nKEZz87EJJ7ECAwEAAaOBuTCBtjAdBgNVHQ4EFgQU3QNGU0ApbweojfHQSEaq5Ee/\nViwwgYYGA1UdIwR/MH2AFN0DRlNAKW8HqI3x0EhGquRHv1YsoVqkWDBWMQswCQYD\nVQQGEwJBVTETMBEGA1UECBMKU29tZS1TdGF0ZTEPMA0GA1UEBxMGTXlDaXR5MQ0w\nCwYDVQQKEwRBQ01FMRIwEAYDVQQDEwlsb2NhbGhvc3SCCQCqGoi40WkXYzAMBgNV\nHRMEBTADAQH/MA0GCSqGSIb3DQEBBQUAA4IBAQATk9bX+Lcq4mjcv6Iic9HjQ8vB\nmZOocLCqOmzIke0IBb0eXubwh5e4dMG0tgg9KGw4QHWy1NkIzrFhNQS5nMV6unLJ\nSinPiebvCRetABW8kOGhnowoJ5QMOGQBvOKh4MS9Nlt/Ba/FCu5YRwTZBSYVuL8o\n4ylKSoxW2t8Xz0ppHQ73irIlROuMFyVJy4T0A6nh24E673CdMbVYAEpjZKYJFKRU\nHR8zO/PuiB8wPTWvLhGeoxBubpZ+N2+Ec6PR4LJTmGy0WAkmXFdwHMpt3ik59+tM\n8PsTBuEs9J0Qd078vWslbKULR9g1qM6/lxbmuNyNWYSNFnvRKMkYJISUuca3\n-----END CERTIFICATE-----\n'
+    },
+]
 
 # Intentionally excludes metadata leaf nodes that would exist in real output if not relevant.
 MOCK_ENTRIES = [
@@ -102,6 +112,10 @@ MOCK_ENTRIES = [
     },
 ]
 
+def get_mock_document_generator():
+    for entry in MOCK_DOCUMENTS:
+        for query in entry['queries']:
+            yield entry, query
 
 def get_mock_query_generator(require_field=None):
     def _process_field(field, section_title=None):
@@ -123,7 +137,6 @@ def get_mock_query_generator(require_field=None):
                     if fixture:
                         yield fixture
 
-
 def get_one_mock_query(require_field=None):
     generator = get_mock_query_generator(require_field)
     return next(generator)
@@ -134,8 +147,17 @@ class MockOnePass(OnePass):
     _mock_logged_out = False
     _mock_timed_out = False
 
+    def _lookup_mock_document(self, key, vault=None):
+        for entry in MOCK_DOCUMENTS:
+            if vault is not None and vault.lower() != entry['vault_name'].lower():
+                continue
+
+            if key == entry['doc_id']:
+                return entry['output']
+
     def _lookup_mock_entry(self, key, vault=None):
         for entry in MOCK_ENTRIES:
+
             if vault is not None and vault.lower() != entry['vault_name'].lower() and vault.lower() != entry['output']['vaultUuid'].lower():
                 continue
 
@@ -165,6 +187,8 @@ class MockOnePass(OnePass):
         get_type_parser.add_parser('account', parents=[get_options])
         get_item_parser = get_type_parser.add_parser('item', parents=[get_options])
         get_item_parser.add_argument('item_id')
+        get_doc_parser = get_type_parser.add_parser('document', parents=[get_options])
+        get_doc_parser.add_argument('item_id')
 
         args = parser.parse_args(args)
 
@@ -183,6 +207,14 @@ class MockOnePass(OnePass):
             if self._mock_timed_out:
                 return mock_exit(error='401: Authentication required.', rc=1)
 
+            if args.object_type == 'document':
+                mock_entry = self._lookup_mock_document(args.item_id, args.vault)
+
+                if mock_entry is None:
+                    return mock_exit(error='Document {0} not found'.format(args.item_id))
+
+                return mock_exit(output=mock_entry)
+
             if args.object_type == 'item':
                 mock_entry = self._lookup_mock_entry(args.item_id, args.vault)
 
@@ -197,6 +229,8 @@ class MockOnePass(OnePass):
 
         raise AnsibleError('Unsupported command string passed to OnePass mock: {0}'.format(args))
 
+class MockOnePassDoc(MockOnePass, OnePassDoc):
+    pass
 
 class LoggedOutMockOnePass(MockOnePass):
 
@@ -317,4 +351,17 @@ class TestOnePasswordRawLookup(unittest.TestCase):
         self.assertEqual(
             [raw_value] * len(entry['queries']),
             raw_lookup_plugin.run(entry['queries'])
+        )
+
+@patch('ansible.plugins.lookup.onepassword_doc.OnePassDoc', MockOnePassDoc)
+class TestOnePasswordDocLookup(unittest.TestCase):
+
+    def test_onepassword_doc(self):
+        doc_lookup_plugin = OnePasswordDocLookup()
+
+        entry = MOCK_DOCUMENTS[0]
+        raw_value = entry['output']
+
+        self.assertEqual(
+            raw_value, doc_lookup_plugin.run(entry['doc_id'])
         )

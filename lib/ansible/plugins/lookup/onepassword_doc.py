@@ -100,8 +100,8 @@ from ansible.module_utils._text import to_bytes
 
 class OnePassDoc(OnePass):
 
-    def get_document_raw(self, item_id, vault=None):
-        args = ["get", "document", item_id]
+    def get_document_raw(self, doc_id, vault=None):
+        args = ["get", "document", doc_id]
         if vault is not None:
             args += ['--vault={0}'.format(vault)]
         if not self.logged_in:
@@ -109,12 +109,12 @@ class OnePassDoc(OnePass):
         rc, output, dummy = self._run(args)
         return output
 
-    def get_document(self, item_id, vault=None):
-        return self.get_document_raw(item_id, vault)
+    def get_document(self, doc_id, vault=None):
+        return self.get_document_raw(doc_id, vault)
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables=None, **kwargs):
+    def run(self, doc_id, variables=None, **kwargs):
         op = OnePassDoc()
 
         vault = kwargs.get('vault')
@@ -125,7 +125,4 @@ class LookupModule(LookupBase):
 
         op.assert_logged_in()
 
-        values = []
-        for term in terms:
-            values.append(op.get_document(term, vault))
-        return values
+        return op.get_document(doc_id, vault)
