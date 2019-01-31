@@ -40,8 +40,8 @@ options:
         default: '/usr/local/bin'
     state:
         description:
-            - state of the cask
-        choices: [ 'present', 'absent', 'upgraded' ]
+            - state of the cask. Note: 'latest' is an alias for 'upgraded'.
+        choices: [ 'present', 'absent', 'latest', 'upgraded' ]
         default: present
     sudo_password:
         description:
@@ -69,15 +69,10 @@ options:
         version_added: "2.5.0"
     upgrade_all:
         description:
-            - upgrade all casks (mutually exclusive with `upgrade`)
+            - upgrade all casks
         type: bool
         default: 'no'
-        version_added: "2.5.0"
-    upgrade:
-        description:
-            - upgrade all casks (mutually exclusive with `upgrade_all`)
-        type: bool
-        default: 'no'
+        aliases: ['upgrade']
         version_added: "2.5.0"
     greedy:
         description:
