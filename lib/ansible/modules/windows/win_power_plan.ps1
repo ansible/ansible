@@ -3,23 +3,24 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
+#Requires -Module Ansible.ModuleUtils.AddType
 
-$params = Parse-Args -arguments $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
-
-# these are your module parameters
-$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
-
-$result = @{
-    changed = $false
-    power_plan_name = $name
-    power_plan_enabled = $null
-    all_available_plans = $null
+$spec = @{
+    options = @{
+        name = @{ type = "str"; required = $true }
+    }
+    supports_check_mode = $true
 }
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
-$pinvoke_functions = @"
+$name = $module.Params.name
+
+$module.Result.power_plan_name = $name
+$module.Result.power_plan_enabled = $null
+$module.Result.all_available_plans = $null
+
+Add-CSharpType -References @"
 using System;
 using System.Runtime.InteropServices;
 
@@ -69,10 +70,6 @@ namespace Ansible.WinPowerPlan
     }
 }
 "@
-$original_tmp = $env:TMP
-$env:TMP = $_remote_tmp
-Add-Type -TypeDefinition $pinvoke_functions
-$env:TMP = $original_tmp
 
 Function Get-LastWin32ErrorMessage {
     param([Int]$ErrorCode)
@@ -96,7 +93,7 @@ Function Get-PlanName {
 
         if ($res -ne 0) {
             $err_msg = Get-LastWin32ErrorMessage -ErrorCode $res
-            Fail-Json -obj $result -message "Failed to get name for power scheme $Plan - $err_msg"
+            $module.FailJson("Failed to get name for power scheme $Plan - $err_msg")
         }
 
         return [System.Runtime.InteropServices.Marshal]::PtrToStringUni($buffer)
@@ -121,7 +118,7 @@ Function Get-PowerPlans {
         } elseif ($res -notin @(0, 234)) {
             # 0 == ERROR_SUCCESS and 234 == ERROR_MORE_DATA
             $err_msg = Get-LastWin32ErrorMessage -ErrorCode $res
-            Fail-Json -obj $result -message "Failed to get buffer size on local power schemes at index $i - $err_msg"
+            $module.FailJson("Failed to get buffer size on local power schemes at index $i - $err_msg")
         }
 
         $buffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($buffer_size)
@@ -134,7 +131,7 @@ Function Get-PowerPlans {
                 break
             } elseif ($res -notin @(0, 234, 259)) {
                 $err_msg = Get-LastWin32ErrorMessage -ErrorCode $res
-                Fail-Json -obj $result -message "Failed to enumerate local power schemes at index $i - $err_msg"
+                $module.FailJson("Failed to enumerate local power schemes at index $i - $err_msg")
             }
             $scheme_guid = [System.Runtime.InteropServices.Marshal]::PtrToStructure($buffer, [Type][Guid])
         } finally {
@@ -154,7 +151,7 @@ Function Get-ActivePowerPlan {
     $res = [Ansible.WinPowerPlan.NativeMethods]::PowerGetActiveScheme([IntPtr]::Zero, [ref]$buffer)
     if ($res -ne 0) {
         $err_msg = Get-LastWin32ErrorMessage -ErrorCode $res
-        Fail-Json -obj $result -message "Failed to get the active power plan - $err_msg"
+        $module.FailJson("Failed to get the active power plan - $err_msg")
     }
 
     try {
@@ -172,39 +169,39 @@ Function Set-ActivePowerPlan {
 
     $res = 0
     if ($PSCmdlet.ShouldProcess($Plan, "Set Power Plan")) {
-        $res = [Ansible.WinPowerPlan.NativeMethods]::PowerSetActiveScheme([IntPtr]::Zero, $plan_guid)
+        $res = [Ansible.WinPowerPlan.NativeMethods]::PowerSetActiveScheme([IntPtr]::Zero, $Plan)
     }
 
     if ($res -ne 0) {
         $err_msg = Get-LastWin32ErrorMessage -ErrorCode $res
-        Fail-Json -obj $result -message "Failed to set the active power plan to $name - $err_msg"
+        $module.FailJson("Failed to set the active power plan to $Plan - $err_msg")
     }
 }
 
 # Get all local power plans and the current active plan
 $plans = Get-PowerPlans
 $active_plan = Get-ActivePowerPlan
-$result.all_available_plans = @{}
+$module.Result.all_available_plans = @{}
 foreach ($plan_info in $plans.GetEnumerator()) {
-    $result.all_available_plans.($plan_info.Key) = $plan_info.Value -eq $active_plan
+    $module.Result.all_available_plans.($plan_info.Key) = $plan_info.Value -eq $active_plan
 }
 
 if ($name -notin $plans.Keys) {
-    Fail-Json -obj $result -message "Defined power_plan: ($name) is not available"
+    $module.FailJson("Defined power_plan: ($name) is not available")
 }
 $plan_guid = $plans.$name
 $is_active = $active_plan -eq $plans.$name
-$result.power_plan_enabled = $is_active
+$module.Result.power_plan_enabled = $is_active
 
 if (-not $is_active) {
-    Set-ActivePowerPlan -Plan $plan_guid -WhatIf:$check_mode
-    $result.changed = $true
-    $result.power_plan_enabled = $true
+    Set-ActivePowerPlan -Plan $plan_guid -WhatIf:$module.CheckMode
+    $module.Result.changed = $true
+    $module.Result.power_plan_enabled = $true
     foreach ($plan_info in $plans.GetEnumerator()) {
         $is_active = $plan_info.Value -eq $plan_guid
-        $result.all_available_plans.($plan_info.Key) = $is_active
+        $module.Result.all_available_plans.($plan_info.Key) = $is_active
     }
 }
 
-Exit-Json -obj $result
+$module.ExitJson()
 
