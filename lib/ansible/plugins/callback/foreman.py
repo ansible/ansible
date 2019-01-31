@@ -95,6 +95,7 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         super(CallbackModule, self).__init__()
         self.items = defaultdict(list)
+        self.facts = defaultdict(dict)
         self.start_time = int(time.time())
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
@@ -140,26 +141,32 @@ class CallbackModule(CallbackBase):
             verify = self.FOREMAN_SSL_VERIFY
         return verify
 
-    def send_facts(self, host, data):
+    def send_facts(self):
         """
         Sends facts to Foreman, to be parsed by foreman_ansible fact
         parser.  The default fact importer should import these facts
         properly.
         """
-        data["_type"] = "ansible"
-        data["_timestamp"] = datetime.now().strftime(self.TIME_FORMAT)
-        facts = {"name": host,
-                 "facts": data,
-                 }
-        try:
-            r = requests.post(url=self.FOREMAN_URL + '/api/v2/hosts/facts',
-                              data=json.dumps(facts),
-                              headers=self.FOREMAN_HEADERS,
-                              cert=self.FOREMAN_SSL_CERT,
-                              verify=self.ssl_verify)
-            r.raise_for_status()
-        except requests.exceptions.RequestException as err:
-            print(to_text(err))
+        for host, facts in self.facts.items():
+            facts = {
+                "name": host,
+                "facts": {
+                    "ansible_facts": self.facts[host],
+                    "_type": "ansible",
+                    "_timestamp": datetime.now().strftime(self.TIME_FORMAT),
+                },
+            }
+
+            try:
+                r = requests.post(url=self.FOREMAN_URL + '/api/v2/hosts/facts',
+                                  data=json.dumps(facts),
+                                  headers=self.FOREMAN_HEADERS,
+                                  cert=self.FOREMAN_SSL_CERT,
+                                  verify=self.ssl_verify)
+                r.raise_for_status()
+            except requests.exceptions.RequestException as err:
+                self._display.warning('Sending facts to Foreman at {url} failed for {host}: {err}'.format(
+                    host=host, err=to_text(err), url=self.FOREMAN_URL))
 
     def _build_log(self, data):
         logs = []
@@ -202,7 +209,7 @@ class CallbackModule(CallbackBase):
             metrics["time"] = {"total": int(time.time()) - self.start_time}
             now = datetime.now().strftime(self.TIME_FORMAT)
             report = {
-                "report": {
+                "config_report": {
                     "host": host,
                     "reported_at": now,
                     "metrics": metrics,
@@ -210,24 +217,25 @@ class CallbackModule(CallbackBase):
                     "logs": log,
                 }
             }
-            # To be changed to /api/v2/config_reports in 1.11.  Maybe we
-            # could make a GET request to get the Foreman version & do
-            # this automatically.
             try:
-                r = requests.post(url=self.FOREMAN_URL + '/api/v2/reports',
+                r = requests.post(url=self.FOREMAN_URL + '/api/v2/config_reports',
                                   data=json.dumps(report),
                                   headers=self.FOREMAN_HEADERS,
                                   cert=self.FOREMAN_SSL_CERT,
                                   verify=self.ssl_verify)
                 r.raise_for_status()
             except requests.exceptions.RequestException as err:
-                print(to_text(err))
+                self._display.warning('Sending report to Foreman at {url} failed for {host}: {err}'.format(
+                    host=host, err=to_text(err), url=self.FOREMAN_URL))
             self.items[host] = []
 
     def append_result(self, result):
         name = result._task.get_name()
         host = result._host.get_name()
-        self.items[host].append((name, result._result))
+        value = result._result
+        self.items[host].append((name, value))
+        if 'ansible_facts' in value:
+            self.facts[host].update(value['ansible_facts'])
 
     # Ansible callback API
     def v2_runner_on_failed(self, result, ignore_errors=False):
@@ -243,14 +251,8 @@ class CallbackModule(CallbackBase):
         self.append_result(result)
 
     def v2_playbook_on_stats(self, stats):
+        self.send_facts()
         self.send_reports(stats)
 
     def v2_runner_on_ok(self, result):
-        res = result._result
-        module = result._task.action
-
-        if module == 'setup' or 'ansible_facts' in res:
-            host = result._host.get_name()
-            self.send_facts(host, res)
-        else:
-            self.append_result(result)
+        self.append_result(result)
