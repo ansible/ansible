@@ -359,7 +359,7 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
 
     minimal_gather_subset = minimal_gather_subset or frozenset()
 
-    if connection:
+    if connection and hasattr(connection, 'get_capabilities'):
         capabilities = json.loads(connection.get_capabilities())
         platform_info = {'system': to_text(capabilities['device_info']['network_os'])}
     else:
