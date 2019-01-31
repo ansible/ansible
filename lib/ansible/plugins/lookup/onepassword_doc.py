@@ -110,8 +110,7 @@ class OnePassDoc(OnePass):
         return output
 
     def get_document(self, item_id, vault=None):
-        output = self.get_document_raw(item_id, vault)
-        return output
+        return self.get_document_raw(item_id, vault)
 
 class LookupModule(LookupBase):
 
