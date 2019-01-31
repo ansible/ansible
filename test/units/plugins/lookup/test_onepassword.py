@@ -23,12 +23,39 @@ from ansible.plugins.lookup.onepassword_doc import OnePassDoc
 from ansible.plugins.lookup.onepassword_doc import LookupModule as OnePasswordDocLookup
 from ansible.plugins.lookup.onepassword_raw import LookupModule as OnePasswordRawLookup
 
+# pep8 doesn't like really long lines, break this up before adding into JSON
+MOCK_TLS_CERT = (
+    '-----BEGIN CERTIFICATE-----\n',
+    'MIID6TCCAtGgAwIBAgIJAKoaiLjRaRdjMA0GCSqGSIb3DQEBBQUAMFYxCzAJBgNV\n',
+    'BAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMQ8wDQYDVQQHEwZNeUNpdHkxDTAL\n',
+    'BgNVBAoTBEFDTUUxEjAQBgNVBAMTCWxvY2FsaG9zdDAeFw0xOTAxMzExNjAzMzFa\n',
+    'Fw0yMDAxMzExNjAzMzFaMFYxCzAJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0\n',
+    'YXRlMQ8wDQYDVQQHEwZNeUNpdHkxDTALBgNVBAoTBEFDTUUxEjAQBgNVBAMTCWxv\n',
+    'Y2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAM9YTwZx59mb\n',
+    'xq7MKtxHJ9TgSrsnR/D66K4Glmpep9wykheyH6ejtrpNznx98dkJCERhmwlThZ0W\n',
+    '3HKWcJtEXhM2DALyS25Rni5AabjYF2Sk/Ga2iGoAqHmVShINIkaO/o4zlpQZ4kde\n',
+    'dope07xxuqzHIYFdQv/61qmhpNp4LRdAmQauwPYGcjPb6WyXFryVEKeczh1uLJdT\n',
+    'mmBeO/O0ceHiddO5K3Y56+tOn/7hXPTsK/48HSoL6RFLtMpAQCGBsWWhWhweUzzP\n',
+    'd8Fpq54E55vGZmtGNzlLPdHlgW2pAhNQ13ABhQCiUxdn+TMZN5eMW6SAHomwmqgp\n',
+    'KEZz87EJJ7ECAwEAAaOBuTCBtjAdBgNVHQ4EFgQU3QNGU0ApbweojfHQSEaq5Ee/\n',
+    'ViwwgYYGA1UdIwR/MH2AFN0DRlNAKW8HqI3x0EhGquRHv1YsoVqkWDBWMQswCQYD\n',
+    'VQQGEwJBVTETMBEGA1UECBMKU29tZS1TdGF0ZTEPMA0GA1UEBxMGTXlDaXR5MQ0w\n',
+    'CwYDVQQKEwRBQ01FMRIwEAYDVQQDEwlsb2NhbGhvc3SCCQCqGoi40WkXYzAMBgNV\n',
+    'HRMEBTADAQH/MA0GCSqGSIb3DQEBBQUAA4IBAQATk9bX+Lcq4mjcv6Iic9HjQ8vB\n',
+    'mZOocLCqOmzIke0IBb0eXubwh5e4dMG0tgg9KGw4QHWy1NkIzrFhNQS5nMV6unLJ\n',
+    'SinPiebvCRetABW8kOGhnowoJ5QMOGQBvOKh4MS9Nlt/Ba/FCu5YRwTZBSYVuL8o\n',
+    '4ylKSoxW2t8Xz0ppHQ73irIlROuMFyVJy4T0A6nh24E673CdMbVYAEpjZKYJFKRU\n',
+    'HR8zO/PuiB8wPTWvLhGeoxBubpZ+N2+Ec6PR4LJTmGy0WAkmXFdwHMpt3ik59+tM\n',
+    '8PsTBuEs9J0Qd078vWslbKULR9g1qM6/lxbmuNyNWYSNFnvRKMkYJISUuca3\n',
+    '-----END CERTIFICATE-----\n',
+)
+
 # Mock raw document response when using `op get document`
 MOCK_DOCUMENTS = [
     {
         'vault_name': 'Acme TLS Certificates',
         'doc_id': '9876543299',
-        'output': '-----BEGIN CERTIFICATE-----\nMIID6TCCAtGgAwIBAgIJAKoaiLjRaRdjMA0GCSqGSIb3DQEBBQUAMFYxCzAJBgNV\nBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMQ8wDQYDVQQHEwZNeUNpdHkxDTAL\nBgNVBAoTBEFDTUUxEjAQBgNVBAMTCWxvY2FsaG9zdDAeFw0xOTAxMzExNjAzMzFa\nFw0yMDAxMzExNjAzMzFaMFYxCzAJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0\nYXRlMQ8wDQYDVQQHEwZNeUNpdHkxDTALBgNVBAoTBEFDTUUxEjAQBgNVBAMTCWxv\nY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAM9YTwZx59mb\nxq7MKtxHJ9TgSrsnR/D66K4Glmpep9wykheyH6ejtrpNznx98dkJCERhmwlThZ0W\n3HKWcJtEXhM2DALyS25Rni5AabjYF2Sk/Ga2iGoAqHmVShINIkaO/o4zlpQZ4kde\ndope07xxuqzHIYFdQv/61qmhpNp4LRdAmQauwPYGcjPb6WyXFryVEKeczh1uLJdT\nmmBeO/O0ceHiddO5K3Y56+tOn/7hXPTsK/48HSoL6RFLtMpAQCGBsWWhWhweUzzP\nd8Fpq54E55vGZmtGNzlLPdHlgW2pAhNQ13ABhQCiUxdn+TMZN5eMW6SAHomwmqgp\nKEZz87EJJ7ECAwEAAaOBuTCBtjAdBgNVHQ4EFgQU3QNGU0ApbweojfHQSEaq5Ee/\nViwwgYYGA1UdIwR/MH2AFN0DRlNAKW8HqI3x0EhGquRHv1YsoVqkWDBWMQswCQYD\nVQQGEwJBVTETMBEGA1UECBMKU29tZS1TdGF0ZTEPMA0GA1UEBxMGTXlDaXR5MQ0w\nCwYDVQQKEwRBQ01FMRIwEAYDVQQDEwlsb2NhbGhvc3SCCQCqGoi40WkXYzAMBgNV\nHRMEBTADAQH/MA0GCSqGSIb3DQEBBQUAA4IBAQATk9bX+Lcq4mjcv6Iic9HjQ8vB\nmZOocLCqOmzIke0IBb0eXubwh5e4dMG0tgg9KGw4QHWy1NkIzrFhNQS5nMV6unLJ\nSinPiebvCRetABW8kOGhnowoJ5QMOGQBvOKh4MS9Nlt/Ba/FCu5YRwTZBSYVuL8o\n4ylKSoxW2t8Xz0ppHQ73irIlROuMFyVJy4T0A6nh24E673CdMbVYAEpjZKYJFKRU\nHR8zO/PuiB8wPTWvLhGeoxBubpZ+N2+Ec6PR4LJTmGy0WAkmXFdwHMpt3ik59+tM\n8PsTBuEs9J0Qd078vWslbKULR9g1qM6/lxbmuNyNWYSNFnvRKMkYJISUuca3\n-----END CERTIFICATE-----\n'
+        'output': MOCK_TLS_CERT
     },
 ]
 
@@ -112,10 +139,12 @@ MOCK_ENTRIES = [
     },
 ]
 
+
 def get_mock_document_generator():
     for entry in MOCK_DOCUMENTS:
         for query in entry['queries']:
             yield entry, query
+
 
 def get_mock_query_generator(require_field=None):
     def _process_field(field, section_title=None):
@@ -136,6 +165,7 @@ def get_mock_query_generator(require_field=None):
                     fixture = _process_field(field, section['title'])
                     if fixture:
                         yield fixture
+
 
 def get_one_mock_query(require_field=None):
     generator = get_mock_query_generator(require_field)
@@ -229,8 +259,10 @@ class MockOnePass(OnePass):
 
         raise AnsibleError('Unsupported command string passed to OnePass mock: {0}'.format(args))
 
+
 class MockOnePassDoc(MockOnePass, OnePassDoc):
     pass
+
 
 class LoggedOutMockOnePass(MockOnePass):
 
@@ -352,6 +384,7 @@ class TestOnePasswordRawLookup(unittest.TestCase):
             [raw_value] * len(entry['queries']),
             raw_lookup_plugin.run(entry['queries'])
         )
+
 
 @patch('ansible.plugins.lookup.onepassword_doc.OnePassDoc', MockOnePassDoc)
 class TestOnePasswordDocLookup(unittest.TestCase):
