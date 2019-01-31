@@ -58,23 +58,19 @@ options:
         - This is only used if C(reboot=yes) and a reboot is required.
         default: 1200
         version_added: '2.5'
-    serverselection:
+    server_selection:
         description:
-        - If set, C(serverselection) will define the update service that the
-          Windows Update Agent will operate against.
-        - C(serverselection=0) [ssDefault] Indicates that the search call should
-          search the default server.
-        - C(serverselection=1) [ssManagedServer] Indicates the managed server, in
-          an environment that uses Windows Server Update Services or a similar
-          corporate update server to manage the computer.
-        - C(serverselection=2) [ssWindowsUpdate] Indicates the Windows Update
-          service.
-        - C(serverselection=3) [ssOthers] Indicates some update service other
-          than those listed previously. If the ServerSelection property of a
-          Windows Update Agent API object is set to ssOthers, then the ServiceID
-          property of the object contains the ID of the service.
-        type: int
-        choices: [ 0, 1, 2, 3 ]
+        - Defines the Windows Update source catalog.
+        - C(default) Use the default search source.  For many systems default is
+          set to the Microsoft Windows Update catalog.
+        - C(managed_server) Use a managed server catalog.  For environments
+          which use Windows Server Update Services (WSUS), Systems Center
+          Configuration Manager (SCCM), or a similar corporate update server to
+          manage updates.
+        - C(serverselection=2) Use the Microsoft Windows Update catalog.
+        type: str
+        choices: [ default, managed_server, windows_update ]
+        default: default
         version_added: '2.8'
     state:
         description:

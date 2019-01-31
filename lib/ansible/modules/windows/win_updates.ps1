@@ -16,7 +16,7 @@ $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched"
 $blacklist = Get-AnsibleParam -obj $params -name "blacklist" -type "list"
 $whitelist = Get-AnsibleParam -obj $params -name "whitelist" -type "list"
-$serverselection = Get-AnsibleParam -obj $params -name "serverselection" -type "int"
+$server_selection = Get-AnsibleParam -obj $params -name "server_selection" -type "string"
 
 # For backwards compatibility
 Function Get-CategoryMapping ($category_name) {
@@ -61,7 +61,7 @@ $update_script_block = {
             $state,
             $blacklist,
             $whitelist,
-            $serverselection
+            $server_selection
         )
 
         $result = @{
@@ -88,16 +88,38 @@ $update_script_block = {
             return $result
         }
 
-        if ($serverselection -in 0..3) {
-            Write-DebugLog -msg "Setting Windows Update searcher to use alternate update source (serverselection: $serverselection)..."
-            try {
-                $searcher.ServerSelection = $serverselection
-            } catch {
-                $result.failed = $true
-                $result.msg = "Failed to update Windows Update search source: $($_.Exception.Message)"
-                return $result
+        Write-DebugLog -msg "Setting Windows Update Agent search source..."
+        try {
+            switch ($server_selection) {
+                "default" {
+                    $server_selection_value = 0
+                    $result.server_selection = "default"
+                    break
+                }
+                "managed_server" {
+                    $server_selection_value = 1
+                    $result.server_selection = "managed_server"
+                    break
+                }
+                "windows_update" {
+                    $server_selection_value = 2
+                    $result.server_selection = "windows_update"
+                    break
+                }
+                default {
+                    Write-DebugLog -msg "Undefined or invalid server_selection specified"
+                    $server_selection_value = 0
+                    $result.server_selection = "default"
+                }
             }
-       }
+            Write-DebugLog -msg "Search source set to '$($result.server_selection)'"
+            $searcher.serverselection = $server_selection_value
+        }
+        catch {
+            $result.failed = $true
+            $result.msg = "Failed to set Windows Update Agent search source: $($_.Exception.Message)"
+            return $result
+        }
 
         Write-DebugLog -msg "Searching for updates to install"
         try {
@@ -415,7 +437,7 @@ Function Start-Natively($common_functions, $script) {
             blacklist = $blacklist
             whitelist = $whitelist
             check_mode = $check_mode
-            serverselection = $serverselection
+            server_selection = $server_selection
         }) > $null
 
         $output = $ps_pipeline.Invoke()
@@ -477,7 +499,7 @@ Function Start-AsScheduledTask($common_functions, $script) {
                 blacklist = $blacklist
                 whitelist = $whitelist
                 check_mode = $check_mode
-                serverselection = $serverselection
+                server_selection = $server_selection
             }
         )
         ErrorAction = "Stop"
