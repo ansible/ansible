@@ -49,7 +49,7 @@ DOCUMENTATION = """
         default: None
     notes:
       - This lookup will use an existing 1Password session if one exists. If not, and you have already
-        performed an initial sign in (meaning C(~/.op/config exists)), then only the C(master_password) is required.
+        performed an initial sign in (meaning C(~/.op/config) exists), then only the C(master_password) is required.
         You may optionally specify C(subdomain) in this scenario, otherwise the last used subdomain will be used by C(op).
       - This lookup can perform an initial login by providing C(subdomain), C(username), C(secret_key), and C(master_password).
       - Due to the B(very) sensitive nature of these credentials, it is B(highly) recommeneded that you only pass in the minial credentials
