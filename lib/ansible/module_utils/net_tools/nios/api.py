@@ -415,7 +415,6 @@ class WapiModule(WapiBase):
             if module.params['restart_if_needed']:
                 ib_spec['restart_if_needed'] = temp
         else:
-            q("A_record")
             ib_obj = self.get_object(ib_obj_type, obj_filter.copy(), return_fields=ib_spec.keys())
         return ib_obj, update, new_name
 
