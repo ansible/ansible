@@ -103,7 +103,7 @@ options:
     default:
     - 'CAPABILITY_IAM'
     - 'CAPABILITY_NAMED_IAM'
-  version_added: "2.8"
+    version_added: "2.8"
   template_format:
     description:
     - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
