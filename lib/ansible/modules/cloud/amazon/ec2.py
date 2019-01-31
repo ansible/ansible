@@ -1188,16 +1188,18 @@ def create_instances(module, ec2, vpc, override_count=None):
                 if spot_launch_group and isinstance(spot_launch_group, string_types):
                     params['launch_group'] = spot_launch_group
 
-                # Set spot ValidUntil
-                # https://docs.aws.amazon.com/cli/latest/reference/ec2/request-spot-instances.html
-                utc_valid_until = datetime.datetime.utcnow() +
-                    datetime.timedelta(seconds=spot_wait_timeout)
-                params['valid_until'] = utc_valid_until
-
                 params.update(dict(
                     count=count_remaining,
                     type=spot_type,
                 ))
+
+                # Set spot ValidUntil
+                # ValidUntil -> (timestamp). The end date of the request, in
+                # UTC format (for example, YYYY -MM -DD T*HH* :MM :SS Z).
+                utc_valid_until = (datetime.datetime.utcnow()
+                                  + datetime.timedelta(seconds=spot_wait_timeout))
+                params['valid_until'] = utc_valid_until.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
                 res = ec2.request_spot_instances(spot_price, **params)
 
                 # Now we have to do the intermediate waiting
