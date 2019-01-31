@@ -1,0 +1,3 @@
+gitlab_project_name: ansible_test_project
+gitlab_hook_url: http://gitlab.example.com/hook
+gitlab_runner_name: ansible_test_runner
