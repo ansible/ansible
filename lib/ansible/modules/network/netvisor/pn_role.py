@@ -72,7 +72,7 @@ options:
 """
 
 EXAMPLES = """
-- name: role functionality
+- name: Role create
   pn_role:
     pn_cliswitch: 'sw01'
     state: 'present'
@@ -80,20 +80,20 @@ EXAMPLES = """
     pn_scope: 'local'
     pn_access: 'read-only'
 
-- name: role functionality
+- name: Role delete
   pn_role:
     pn_cliswitch: 'sw01'
     state: 'absent'
     pn_name: 'foo'
 
-- name: role functionality
+- name: Role modify
   pn_role:
     pn_cliswitch: 'sw01'
     state: 'update'
     pn_name: 'foo'
     pn_access: 'read-write'
-    pn_sudo: True
-    pn_shell: True
+    pn_sudo: true
+    pn_shell: true
 """
 
 RETURN = """
