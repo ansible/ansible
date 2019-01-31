@@ -72,7 +72,6 @@ def main():
     node_ip, username, password = credentials(module)
 
     try:
-        
         rubrik = rubrik_cdm.Connect(node_ip, username, password)
     except SystemExit as error:
         module.fail_json(msg=str(error))

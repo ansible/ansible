@@ -38,9 +38,11 @@ try:
 except ImportError:
     pass
 
+
 def credentials(module):
-    """Helper function to provider the node ip, username, and password to the Rubrik module. If a "provider" variable is present in the Ansible task, those variables 
-    will be used to establish connectivity to the Rubrik cluster. If a "provider" variable is not present, attempt to read the cluster details from environment variables.
+    """Helper function to provider the node ip, username, and password to the Rubrik module. If a "provider" variable is present in the Ansible task, those
+    variables will be used to establish connectivity to the Rubrik cluster. If a "provider" variable is not present, attempt to read the cluster details
+    from environment variables.
     Arguments:
         module {class} -- Ansible module helper class.
     Returns:

@@ -58,4 +58,22 @@ options:
             read this value from the rubrik_cdm_password environment variable. If this environment variable is
             not present it will need to be manually specified here or in the I(provider) parameter.
         required: false
+  node_ip:
+    description:
+      - The DNS hostname or IP address of the Rubrik cluster. By defeault, the module will attempt to
+        read this value from the rubrik_cdm_node_ip environment variable. If this environment variable is
+        not present it will need to be manually specified here or in the I(provider) parameter.
+    required: false
+  username:
+    description:
+      - The username used to authenticate the connection to the Rubrik cluster. By defeault, the module will attempt to
+        read this value from the rubrik_cdm_username environment variable. If this environment variable is
+        not present it will need to be manually specified here or in the I(provider) parameter.
+    required: false
+  password:
+    description:
+      - The password used to authenticate the connection to the Rubrik cluster. By defeault, the module will attempt to
+        read this value from the rubrik_cdm_password environment variable. If this environment variable is
+        not present it will need to be manually specified here or in the I(provider) parameter.
+    required: false
 """
