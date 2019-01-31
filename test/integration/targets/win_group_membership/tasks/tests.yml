@@ -240,3 +240,81 @@
     - remove_another_user_from_group_again.removed == []
     - remove_another_user_from_group_again.members == []
   when: not in_check_mode
+
+
+- name: Setup users for pure testing
+  win_group_membership:
+    <<: *wgm_present
+    members:
+      - "{{ admin_account_name }}"
+      - NT AUTHORITY\NETWORK SERVICE
+
+
+- name: Define users as pure
+  win_group_membership: &wgm_pure
+    <<: *wgm_present
+    state: pure
+  register: define_users_as_pure
+
+- name: Test define_users_as_pure (normal mode)
+  assert:
+    that:
+    - define_users_as_pure.changed == true
+    - define_users_as_pure.added == ["{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
+    - define_users_as_pure.removed == ["NT AUTHORITY\\NETWORK SERVICE"]
+    - define_users_as_pure.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
+  when: not in_check_mode
+
+- name: Test define_users_as_pure (check-mode)
+  assert:
+    that:
+    - define_users_as_pure.changed == true
+    - define_users_as_pure.added == []
+    - define_users_as_pure.removed == []
+    - define_users_as_pure.members == []
+  when: in_check_mode
+
+
+- name: Define users as pure (again)
+  win_group_membership: *wgm_pure
+  register: define_users_as_pure_again
+
+- name: Test define_users_as_pure_again (normal mode)
+  assert:
+    that:
+    - define_users_as_pure_again.changed == false
+    - define_users_as_pure_again.added == []
+    - define_users_as_pure_again.removed == []
+    - define_users_as_pure_again.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}", "NT AUTHORITY\\SYSTEM"]
+  when: not in_check_mode
+
+
+- name: Define different syntax users as pure
+  win_group_membership:
+    <<: *wgm_pure
+    members:
+      - '{{ ansible_hostname }}\{{ admin_account_name }}'
+      - '.\{{ win_local_user }}'
+  register: define_different_syntax_users_as_pure
+
+- name: Test define_different_syntax_users_as_pure (normal mode)
+  assert:
+    that:
+    - define_different_syntax_users_as_pure.changed == true
+    - define_different_syntax_users_as_pure.added == []
+    - define_different_syntax_users_as_pure.removed == ["NT AUTHORITY\\SYSTEM"]
+    - define_different_syntax_users_as_pure.members == ["{{ ansible_hostname }}\\{{ admin_account_name }}", "{{ ansible_hostname }}\\{{ win_local_user }}"]
+  when: not in_check_mode
+
+- name: Test define_different_syntax_users_as_pure (check-mode)
+  assert:
+    that:
+    - define_different_syntax_users_as_pure.changed == true
+    - define_different_syntax_users_as_pure.added == []
+    - define_different_syntax_users_as_pure.removed == []
+    - define_different_syntax_users_as_pure.members == []
+  when: in_check_mode
+
+
+- name: Teardown remaining pure users
+  win_group_membership: *wgm_absent
