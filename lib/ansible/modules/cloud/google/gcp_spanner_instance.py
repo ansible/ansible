@@ -85,7 +85,7 @@ notes:
 EXAMPLES = '''
 - name: create a instance
   gcp_spanner_instance:
-      name: "test_object"
+      name: testinstance
       display_name: My Spanner Instance
       node_count: 2
       labels:
@@ -291,7 +291,7 @@ def response_to_hash(module, response):
 def async_op_url(module, extra_data=None):
     if extra_data is None:
         extra_data = {}
-    url = "https://spanner.googleapis.com/v1/projects/{project}/global/operations/{op_id}"
+    url = "https://spanner.googleapis.com/v1/{op_id}"
     combined = extra_data.copy()
     combined.update(module.params)
     return url.format(**combined)
@@ -301,19 +301,20 @@ def wait_for_operation(module, response):
     op_result = return_if_object(module, response)
     if op_result is None:
         return {}
-    status = navigate_hash(op_result, ['status'])
+    status = navigate_hash(op_result, ['done'])
     wait_done = wait_for_completion(status, op_result, module)
-    return fetch_resource(module, navigate_hash(wait_done, ['targetLink']))
+    raise_if_errors(op_result, ['error'], module)
+    return navigate_hash(wait_done, ['response'])
 
 
 def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
-    while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], module)
+    while not status:
+        raise_if_errors(op_result, ['error'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri)
-        status = navigate_hash(op_result, ['status'])
+        op_result = fetch_resource(module, op_uri, False)
+        status = navigate_hash(op_result, ['done'])
     return op_result
 
 

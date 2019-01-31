@@ -40,17 +40,21 @@ requirements:
 - requests >= 2.18.4
 - google-auth >= 1.3.0
 options:
-  zone:
+  location:
     description:
-    - The zone where the cluster is deployed.
+    - The location where the cluster is deployed.
     required: true
+    aliases:
+    - region
+    - zone
+    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name:  a cluster facts
   gcp_container_cluster_facts:
-      zone: us-central1-a
+      location: us-central1-a
       project: test_project
       auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
@@ -65,7 +69,7 @@ items:
     name:
       description:
       - The name of this cluster. The name must be unique within this project and
-        zone, and can be up to 40 characters. Must be Lowercase letters, numbers,
+        location, and can be up to 40 characters. Must be Lowercase letters, numbers,
         and hyphens only. Must start with a letter. Must end with a number or a letter.
       returned: success
       type: str
@@ -288,12 +292,6 @@ items:
       - The name of the Google Compute Engine subnetwork to which the cluster is connected.
       returned: success
       type: str
-    location:
-      description:
-      - The list of Google Compute Engine locations in which the cluster's nodes should
-        be located.
-      returned: success
-      type: list
     endpoint:
       description:
       - The IP address of this cluster's master endpoint.
@@ -347,9 +345,9 @@ items:
       - The time the cluster will be automatically deleted in RFC3339 text format.
       returned: success
       type: str
-    zone:
+    location:
       description:
-      - The zone where the cluster is deployed.
+      - The location where the cluster is deployed.
       returned: success
       type: str
 '''
@@ -366,7 +364,7 @@ import json
 
 
 def main():
-    module = GcpModule(argument_spec=dict(zone=dict(required=True, type='str')))
+    module = GcpModule(argument_spec=dict(location=dict(required=True, type='str', aliases=['region', 'zone'])))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
@@ -381,7 +379,7 @@ def main():
 
 
 def collection(module):
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters".format(**module.params)
+    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters".format(**module.params)
 
 
 def fetch_list(module, link):
