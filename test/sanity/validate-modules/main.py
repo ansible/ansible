@@ -1098,12 +1098,12 @@ class ModuleValidator(Validator):
                 )
                 return
 
-        existing_version = existing_doc.get('version_added')
-        if version_added_raw != existing_version:
+        if existing_doc and version_added_raw != existing_doc.get('version_added'):
             self.reporter.error(
                 path=self.object_path,
                 code=307,
-                msg='version_added should be %r. Currently %r' % (existing_version, version_added_raw)
+                msg='version_added should be %r. Currently %r' % (existing_doc.get('version_added'),
+                                                                  version_added_raw)
             )
 
         if not self._is_new_module():
