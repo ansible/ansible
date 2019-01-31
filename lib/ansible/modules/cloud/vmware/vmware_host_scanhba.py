@@ -40,7 +40,7 @@ options:
   cluster_name:
     description:
     - Cluster name to Rescan the storage subsystem on (this will run the rescan task on each host in the cluster).
-    required: false    
+    required: false
   refresh_storage:
     description:
     - Refresh the storage system in vCenter/ESXi Web Client for each host found
@@ -59,8 +59,8 @@ EXAMPLES = r'''
       esxi_hostname: '{{ inventory_hostname }}'
       refresh_storage: true
   delegate_to: localhost
-  
-- name: Rescan HBA's for a given cluster - all found hosts will be scanned 
+
+- name: Rescan HBA's for a given cluster - all found hosts will be scanned
   vmware_host_scanhba:
       hostname: '{{ vcenter_hostname }}'
       username: '{{ vcenter_username }}'
@@ -68,7 +68,7 @@ EXAMPLES = r'''
       esxi_hostname: '{{ inventory_hostname }}'
       refresh_storage: true
   delegate_to: localhost
-  
+
 - name: Recan HBA's for a given ESXi host and don't refresh storage system objects
   vmware_host_scanhba:
       hostname: '{{ vcenter_hostname }}'
