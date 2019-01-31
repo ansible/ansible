@@ -19,7 +19,7 @@ module: keycloak_scope
 
 short_description: Allows administration of Keycloak scope mappings via the Keycloak REST API
 
-version_added: "2.7"
+version_added: "2.8"
 
 description:
     - This module allows the administration of Keycloak scope mappings through the Keycloak REST
@@ -217,7 +217,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: "Added/Updated 0 scope mapping(s), removed 0 scope mapping(s)."
 
 proposed:
@@ -467,6 +467,7 @@ def main():
     result['msg'] = 'Added/Updated %s scope mapping(s), removed %s scope mapping(s).' % (updated_roles, removed_roles)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
