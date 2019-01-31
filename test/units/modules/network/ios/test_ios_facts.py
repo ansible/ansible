@@ -35,7 +35,7 @@ class TestIosFactsModule(TestIosModule):
 
         self.mock_get_capabilities = patch('ansible.modules.network.ios.ios_facts.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
-        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+        self.get_capabilities.return_value = {'device_info': {'network_os': 'ios', 'network_os_hostname': 'an-ios-01', 'network_os_image': 'flash0:/vios-adventerprisek9-m', 'network_os_model': 'WS-C3750-24TS', 'network_os_version': '15.6(3)M2'}, 'network_api': 'cliconf'}
 
     def tearDown(self):
         super(TestIosFactsModule, self).tearDown()
