@@ -172,12 +172,12 @@ Function Set-ActivePowerPlan {
 
     $res = 0
     if ($PSCmdlet.ShouldProcess($Plan, "Set Power Plan")) {
-        $res = [Ansible.WinPowerPlan.NativeMethods]::PowerSetActiveScheme([IntPtr]::Zero, $plan_guid)
+        $res = [Ansible.WinPowerPlan.NativeMethods]::PowerSetActiveScheme([IntPtr]::Zero, $Plan)
     }
 
     if ($res -ne 0) {
         $err_msg = Get-LastWin32ErrorMessage -ErrorCode $res
-        Fail-Json -obj $result -message "Failed to set the active power plan to $name - $err_msg"
+        Fail-Json -obj $result -message "Failed to set the active power plan to $Plan - $err_msg"
     }
 }
 
