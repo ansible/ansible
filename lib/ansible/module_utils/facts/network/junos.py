@@ -16,7 +16,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import glob, q
+import glob
 import os
 import re
 import socket
@@ -96,7 +96,6 @@ class JunosNetwork(Network):
             for address in ipv4_addresses:
                 addr = address.split('/')[0].strip()
                 network_facts['all_ipv4_address'].append(addr)
-
 
             ipv6_addresses = re.findall(r'inet6\s*(\S+)', value, re.M)
             if len(ipv6_addresses) == 0:
