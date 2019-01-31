@@ -58,7 +58,7 @@ options:
             - In the case of C(path) pointing to another link, then that will
               be followed until no more links are found.
         type: bool
-        default no
+        default: no
         version_added: "2.8"
 seealso:
 - module: stat
