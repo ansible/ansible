@@ -339,13 +339,15 @@ def main():
     gitlab_project = GitLabProject(module, gitlab_instance)
 
     if group_identifier:
-        namespace = findGroup(gitlab_instance, group_identifier)
-        if namespace is None:
+        group = findGroup(gitlab_instance, group_identifier)
+        if group is None:
             module.fail_json(msg="Failed to create project: group %s doesn't exists" % group_identifier)
 
+        namespace = gitlab_instance.namespaces.get(group.id)
         project_exists = gitlab_project.existsProject(namespace, project_path)
     else:
-        namespace = gitlab_instance.users.list(username=gitlab_instance.user.username)[0]
+        user = gitlab_instance.users.list(username=gitlab_instance.user.username)[0]
+        namespace = gitlab_instance.namespaces.get(user.id)
         project_exists = gitlab_project.existsProject(namespace, project_path)
 
     if state == 'absent':
