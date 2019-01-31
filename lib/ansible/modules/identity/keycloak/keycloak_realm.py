@@ -797,7 +797,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: Realm my-test-realm has been created.
 
 proposed:
@@ -1054,6 +1054,7 @@ def main():
             result['msg'] = 'Realm %s has been deleted.' % realm
             module.exit_json(**result)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
