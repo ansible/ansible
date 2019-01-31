@@ -1221,6 +1221,7 @@ class PyVmomiHelper(PyVmomi):
                                           " a VLAN name under VM network list.")
 
             if 'name' in network and self.cache.get_network(network['name']) is None:
+                self.module.fail_json(msg="Network %s" % self.cache.get_network(network['name']))
                 self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
             elif 'vlan' in network:
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
@@ -2399,6 +2400,16 @@ class PyVmomiHelper(PyVmomi):
 
             self.change_detected = True
 
+        # add customize existing VM after VM re-configure
+        if 'existing_vm' in self.params['customization'] and self.params['customization']['existing_vm']:
+            if self.current_vm_obj.config.template:
+                self.module.fail_json(msg="VM is template, not support guest OS customization.")
+            if self.current_vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOff:
+                self.module.fail_json(msg="VM is not in poweroff state, can not do guest OS customization.")
+            cus_result = self.customize_exist_vm()
+            if cus_result['failed']:
+                return cus_result
+
         vm_facts = self.gather_facts(self.current_vm_obj)
         return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
 
@@ -2412,7 +2423,6 @@ class PyVmomiHelper(PyVmomi):
                 if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
                     network_changes = True
                     break
-
         if len(self.params['customization']) > 1 or network_changes or self.params.get('customization_spec'):
             self.customize_vm(vm_obj=self.current_vm_obj)
         try:
@@ -2427,14 +2437,13 @@ class PyVmomiHelper(PyVmomi):
         if task.info.state == 'error':
             return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customize_exist'}
 
-        vm_facts = self.gather_facts(self.current_vm_obj)
         if self.params['wait_for_customization']:
             set_vm_power_state(self.content, self.current_vm_obj, 'poweredon', force=False)
             is_customization_ok = self.wait_for_customization(self.current_vm_obj)
             if not is_customization_ok:
-                return {'changed': self.change_applied, 'failed': True, 'instance': vm_facts, 'op': 'wait_for_customize_exist'}
+                return {'changed': self.change_applied, 'failed': True, 'op': 'wait_for_customize_exist'}
 
-        return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
+        return {'changed': self.change_applied, 'failed': False}
 
     def wait_for_task(self, task, poll_interval=1):
         """
@@ -2569,24 +2578,14 @@ def main():
                 set_vm_power_state(pyv.content, vm, 'poweredoff', module.params['force'])
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
-            if 'existing_vm' in module.params['customization'] and module.params['customization']['existing_vm']:
-                if module.check_mode:
-                    result.update(
-                        vm_name=vm.name,
-                        changed=True,
-                        desired_operation='customize_exist_vm',
-                    )
-                    module.exit_json(**result)
-                result = pyv.customize_exist_vm()
-            else:
-                if module.check_mode:
-                    result.update(
-                        vm_name=vm.name,
-                        changed=True,
-                        desired_operation='reconfigure_vm',
-                    )
-                    module.exit_json(**result)
-                result = pyv.reconfigure_vm()
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    desired_operation='reconfigure_vm',
+                )
+                module.exit_json(**result)
+            result = pyv.reconfigure_vm()
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             if module.check_mode:
                 result.update(
