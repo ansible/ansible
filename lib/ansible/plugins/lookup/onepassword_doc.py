@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# (c) 2019, David Taylor <djtaylor13@gmail.com> (onepassword.py used as a starting point)
+# Copyright: (c) 2019, David Taylor <djtaylor13@gmail.com> (onepassword.py used as a starting point)
 # (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
 # (c) 2016, Andrew Zenk <azenk@umn.edu> (lastpass.py used as starting point)
 # (c) 2018, Ansible Project
