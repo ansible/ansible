@@ -66,8 +66,6 @@ options:
         required: true
         aliases:
           - address
-          - address_add
-          - address_remove
       configure_for_dhcp:
         description:
           - Configure the host_record over DHCP instead of DNS, if user
@@ -82,6 +80,26 @@ options:
         required: false
         aliases:
           - mac
+        add:
+          version_added: "2.8"
+          description:
+            - If user wants to add the ipv4 address to an existing host record.
+              Note that with I(add) user will have to keep the I(state) as I(present),
+              as new IP address is allocated to existing host record. See examples.
+          type: bool
+          required: false
+          aliases:
+            - add
+        remove:
+          version_added: "2.8"
+          description:
+            - If user wants to remove the ipv4 address from an existing host record.
+              Note that with I(remove) user will have to change the I(state) to I(absent),
+              as IP address is de-allocated from an existing host record. See examples.
+          type: bool
+          required: false
+          aliases:
+            - remove
   ipv6addrs:
     description:
       - Configures the IPv6 addresses for the host record.  This argument
@@ -220,7 +238,8 @@ EXAMPLES = '''
   nios_host_record:
     name: host.ansible.com
     ipv4:
-      - address_add: 192.168.10.2
+      - address: 192.168.10.2
+        add: true
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -231,8 +250,9 @@ EXAMPLES = '''
   nios_host_record:
     name: host.ansible.com
     ipv4:
-      - address_remove: 192.168.10.1
-    state: present
+      - address: 192.168.10.1
+        remove: true
+    state: absent
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin
@@ -278,9 +298,11 @@ def main():
     ''' Main entry point for module execution
     '''
     ipv4addr_spec = dict(
-        ipv4addr=dict(required=True, aliases=['address', 'address_add', 'address_remove'], ib_req=True),
+        ipv4addr=dict(required=True, aliases=['address'], ib_req=True),
         configure_for_dhcp=dict(type='bool', required=False, aliases=['dhcp'], ib_req=True),
-        mac=dict(required=False, aliases=['mac'], ib_req=True)
+        mac=dict(required=False, aliases=['mac'], ib_req=True),
+        add=dict(type='bool', aliases=['add'], required=False),
+        remove=dict(type='bool', aliases=['remove'], required=False)
     )
 
     ipv6addr_spec = dict(
