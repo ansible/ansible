@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2019, David Taylor <djtaylor13@gmail.com> (onepassword.py used as a starting point)
-# (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
-# (c) 2016, Andrew Zenk <azenk@umn.edu> (lastpass.py used as starting point)
-# (c) 2018, Ansible Project
+# Copyright: (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
+# Copyright: (c) 2016, Andrew Zenk <azenk@umn.edu> (lastpass.py used as starting point)
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
@@ -16,9 +16,9 @@ DOCUMENTATION = """
     lookup: onepassword_doc
     author:
       - David Taylor (@djtaylor)
-      - Scott Buchanan <sbuchanan@ri.pn>
-      - Andrew Zenk <azenk@umn.edu>
-      - Sam Doran<sdoran@redhat.com>
+      - Scott Buchanan <@scottsb>
+      - Andrew Zenk <@azenk>
+      - Sam Doran<@samdoran>
     version_added: "2.8"
     requirements:
       - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
