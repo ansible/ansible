@@ -24,6 +24,7 @@ description:
     - This module allows the user to send a configuration XML file to a netconf
       device, and detects if there was a configuration change.
 extends_documentation_fragment: netconf
+extends_documentation_fragment: network_agnostic
 options:
   content:
     description:
