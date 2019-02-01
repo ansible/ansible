@@ -143,9 +143,44 @@ options:
         description:
             - Profile of managed cluster add-on.
             - Key can be C(http_application_routing), C(monitoring), C(virtual_node).
-            - Value must be a dict contains a bool variable C(enabled) and a dictionary C(config).
-            - C(config) is the configuration of the add-on.
+            - Value must be a dict contains a bool variable C(enabled).
         type: dict
+        suboptions:
+            http_application_routing:
+                description:
+                    - The HTTP application routing solution makes it easy to access applications that are deployed to your cluster.
+                type: dict
+                suboptions:
+                    enabled:
+                        description:
+                            - Whether the solution enabled.
+                        type: bool
+            monitoring:
+                description:
+                    - It gives you performance visibility by collecting memory and processor metrics from controllers, nodes,
+                      and containers that are available in Kubernetes through the Metrics API.
+                type: dict
+                suboptions:
+                    enabled:
+                        description:
+                            - Whether the solution enabled.
+                        type: bool
+                    log_analytics_workspace_resource_id:
+                        description:
+                            - Where to store the container metrics.
+            virtual_node:
+                description:
+                    - With virtual nodes, you have quick provisioning of pods, and only pay per second for their execution time.
+                    - You don't need to wait for Kubernetes cluster autoscaler to deploy VM compute nodes to run the additional pods.
+                type: dict
+                suboptions:
+                    enabled:
+                        description:
+                            - Whether the solution enabled.
+                        type: bool
+                    subnet_resource_id:
+                        description:
+                            - Subnet associdated to the cluster. 
         version_added: 2.8
 
 extends_documentation_fragment:
@@ -280,10 +315,8 @@ def create_addon_dict(addon):
     result = dict()
     addon = addon or dict()
     for key in addon.keys():
-        result[key] = dict(
-            enabled=addon[key].enabled,
-            config=addon[key].config
-        )
+        result[key] = addon[key].config
+        result[key]['enabled'] = addon[key].enabled
     return result
 
 
@@ -334,8 +367,22 @@ def create_addon_profiles_spec():
     '''
     spec = dict()
     for key in ADDONS.keys():
-        spec[key] = dict(type='dict', options=addon_spec, aliases=[ADDONS[key]])
+        values = ADDONS[key]
+        addon_spec = dict(
+            enabled=dict(type='bool', default=True)
+        )
+        configs = values.get('config') or {}
+        for item in configs.keys():
+            addon_spec[item] = dict(type='str', aliases=[configs[item]], required=True)       
+        spec[key] = dict(type='dict', options=addon_spec, aliases=[values['name']])
     return spec
+
+
+ADDONS = {
+    'http_application_routing': dict(name='httpApplicationRouting'),
+    'monitoring': dict(name='omsagent', config={'log_analytics_workspace_resource_id': 'logAnalyticsWorkspaceResourceID'}),
+    'virtual_node': dict(name='aciConnector', config={'subnet_resource_id': 'SubnetName'})
+}
 
 
 linux_profile_spec = dict(
@@ -380,19 +427,6 @@ aad_profile_spec = dict(
     server_app_secret=dict(type='str'),
     tenant_id=dict(type='str')
 )
-
-
-addon_spec = dict(
-    enabled=dict(type='bool', default=True),
-    config=dict(type='dict')
-)
-
-
-ADDONS = {
-    'http_application_routing': 'httpApplicationRouting',
-    'monitoring': 'omsagent',
-    'virtual_node': 'aciConnector'
-}
 
 
 class AzureRMManagedCluster(AzureRMModuleBase):
@@ -503,13 +537,11 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             if agentpoolcount > 1:
                 self.fail('You cannot specify more than one agent_pool_profiles currently')
 
-            if response:
-                self.results = response
-                self.results['changed'] = False
             if not response:
                 to_be_updated = True
-
             else:
+                self.results = response
+                self.results['changed'] = False
                 self.log('Results : {0}'.format(response))
                 update_tags, response['tags'] = self.update_tags(response['tags'])
 
@@ -556,27 +588,23 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                             if self.network_profile[key] and self.network_profile[key].lower() != original.lower():
                                 to_be_updated = True
 
-                    def compare_addon(origin, patch):
+                    def compare_addon(origin, patch, config):
                         if not patch:
                             return True
                         if not origin:
                             return False
                         if origin['enabled'] != patch['enabled']:
                             return False
-                        origin_config = origin.get('config', {})
-                        patch_config = patch.get('config')
-                        if not patch_config:
-                            return True
-                        if len(origin_config.keys()) != len(patch_config.keys()):
-                            return False
-                        for key in origin_config.keys():
-                            if origin_config[key].lower() != patch_config.get(key).lower():
+                        config = config or dict()
+                        for key in config.keys():
+                            if origin.get(config[key]) != patch.get(key):
                                 return False
                         return True
 
                     if self.addon:
                         for key in ADDONS.keys():
-                            if not compare_addon(response['addon'].get(ADDONS[key]), self.addon.get(key)):
+                            addon_name = ADDONS[key]['name']
+                            if not compare_addon(response['addon'].get(addon_name), self.addon.get(key), ADDONS[key].get('config')):
                                 to_be_updated = True
 
                     for profile_result in response['agent_pool_profiles']:
@@ -764,7 +792,12 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             if not ADDONS.get(key):
                 self.fail('Unsupported addon {0}'.format(key))
             if addon.get(key):
-                result[ADDONS[key]] = self.containerservice_models.ManagedClusterAddonProfile(**addon[key])
+                name = ADDONS[key]['name']
+                config_spec = ADDONS[key].get('config') or dict()
+                config = addon[key]
+                for v in config_spec.keys():
+                    config[config_spec[v]] = config[v]
+                result[name] = self.containerservice_models.ManagedClusterAddonProfile(config=config, enabled=config['enabled'])
         return result
 
 
