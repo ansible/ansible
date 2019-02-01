@@ -133,22 +133,22 @@
       - query_all is not changed
       - query_all.current | length > 1
       - query_all.current.0.fvBD is defined
-      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_all.filter_string'
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_all.filter_string|urldecode'
       - '"class/fvBD.json" in query_all.url'
       - query_tenant is not changed
       - query_tenant.current | length == 1
       - query_tenant.current.0.fvTenant.children | length == 2
-      - '"rsp-subtree-class=fvRsBdToEpRet,fvBD,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_tenant.filter_string'
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvBD,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_tenant.filter_string|urldecode'
       - '"tn-anstest.json" in query_tenant.url'
       - query_bd_bd is not changed
       - query_bd_bd.current != []
       - '"query-target-filter=eq(fvBD.name, \"anstest\")" in query_bd_bd.filter_string|urldecode'
-      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd_bd.filter_string'
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd_bd.filter_string|urldecode'
       - '"class/fvBD.json" in query_bd_bd.url'
       - query_bd is not changed
       - query_bd.current | length == 1
       - query_bd.current.0.fvBD.attributes.name == "anstest"
-      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd.filter_string'
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd.filter_string|urldecode'
       - '"tn-anstest/BD-anstest.json" in query_bd.url'
 
 - name: delete bd - check mode works
