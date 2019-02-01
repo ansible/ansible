@@ -38,9 +38,6 @@ from ansible.plugins.httpapi import HttpApiBase
 from ansible.module_utils.basic import to_text
 from ansible.module_utils.network.fortimanager.common import BASE_HEADERS
 from ansible.module_utils.network.fortimanager.common import FMGBaseException
-from ansible.module_utils.network.fortimanager.common import FMGValidSessionException
-from ansible.module_utils.network.fortimanager.common import FMGValueError
-from ansible.module_utils.network.fortimanager.common import FMGResponseNotFormedCorrect
 from ansible.module_utils.network.fortimanager.common import FMGRCommon
 from ansible.module_utils.network.fortimanager.common import FMGRMethods
 
@@ -169,13 +166,6 @@ class HttpApi(HttpApiBase):
             result = json.loads(to_text(response_data.getvalue()))
             self._update_self_from_response(result, self._url, data)
             return self._handle_response(result)
-
-        except ValueError as err:
-            raise FMGValueError(err)
-        except KeyError as err:
-            raise FMGResponseNotFormedCorrect(err)
-        except IndexError as err:
-            raise FMGResponseNotFormedCorrect(err)
         except Exception as err:
             raise FMGBaseException(err)
 

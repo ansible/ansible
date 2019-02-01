@@ -127,30 +127,6 @@ class FMGBaseException(Exception):
             msg = "An exception occurred within the fortimanager.py httpapi connection plugin."
         super(FMGBaseException, self).__init__(msg, *args)
 
-
-class FMGValidSessionException(FMGBaseException):
-    """Raised when a call is made, but there is no valid login instance"""
-
-    def __init__(self, method, params, *args, **kwargs):
-        msg = "A call using the {method} method was requested to {url} on a FortiManager instance that had no " \
-              "valid session or was not connected. Paramaters were:\n{params}". \
-            format(method=method, url=params[0]["url"], params=params)
-        super(FMGValidSessionException, self).__init__(msg, *args, **kwargs)
-
-
-class FMGValueError(ValueError):
-    """Catch value errors such as bad timeout values"""
-
-    def __init__(self, *args):
-        super(FMGValueError, self).__init__(*args)
-
-
-class FMGResponseNotFormedCorrect(KeyError):
-    """Used only if a response does not have a standard format as based on FMG response guidelines"""
-
-    def __init__(self, *args):
-        super(FMGResponseNotFormedCorrect, self).__init__(*args)
-
 # END ERROR CLASSES
 
 
