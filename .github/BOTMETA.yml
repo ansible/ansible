@@ -371,8 +371,10 @@ files:
   $modules/source_control/github_key.py:
     ignored: erydo
   $modules/source_control/gitlab_: &gitlab
+    keywords: [ gitlab ]
     labels: gitlab
     maintainers: $team_gitlab
+    notified: jlozadad
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
   $modules/storage/purestorage/:
@@ -1325,7 +1327,7 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers jmcgill298 schunduri
-  team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA wtcross
+  team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross 
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
