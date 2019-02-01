@@ -51,3 +51,10 @@ class TestFrrBgpModule(TestFrrModule):
                                    operation='merge'))
         commands = obj.render(self._bgp_config)
         self.assertEqual(commands, ['router bgp 64496', 'network 192.0.2.0/24 route-map RMAP_1', 'exit'])
+
+    def test_frr_bgp_network_idempotent(self):
+        obj = Provider(params=dict(config=dict(bgp_as=64496, networks=[dict(prefix='192.0.1.0', masklen=24, route_map='RMAP_1'),
+                                                                       dict(prefix='198.51.100.0', masklen=24, route_map='RMAP_2')]),
+                                   operation='merge'))
+        commands = obj.render(self._bgp_config)
+        self.assertEqual(commands, [])

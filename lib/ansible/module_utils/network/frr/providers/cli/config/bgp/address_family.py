@@ -30,7 +30,7 @@ import re
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.frr.providers.providers import CliProvider
-from ansible.module_utils.network.frr.providers.cli.config.bgp.neighbors import Neighbors
+from ansible.module_utils.network.frr.providers.cli.config.bgp.neighbors import AFNeighbors
 
 
 class AddressFamily(CliProvider):
@@ -156,4 +156,4 @@ class AddressFamily(CliProvider):
     def _render_neighbors(self, item, config):
         """ generate bgp neighbor configuration
         """
-        return Neighbors(self.params).render(config, nbr_list=item['neighbors'])
+        return AFNeighbors(self.params).render(config, nbr_list = item['neighbors'])

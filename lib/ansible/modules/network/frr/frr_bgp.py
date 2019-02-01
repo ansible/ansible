@@ -66,14 +66,6 @@ options:
               - Remote AS of the BGP neighbor to configure.
             type: int
             required: True
-          route_reflector_client:
-            description:
-              - Specify a neighbor as a route reflector client.
-            type: bool
-          route_server_client:
-            description:
-              - Specify a neighbor as a route server client.
-            type: bool
           update_source:
             description:
               - Source of the routing updates.
@@ -111,22 +103,14 @@ options:
                   - The range is from 0 to 65535.
                 type: int
                 required: True
-          activate:
+          advertisement_interval:
             description:
-              - Enable the address family for this neighbor.
-            type: bool
-          remove_private_as:
+              - Minimum interval between sending BGP routing updates for this neighbor.
+            type: int
+          local_as:
             description:
-              - Remove the private AS number from outbound updates.
-            type: bool
-          next_hop_self:
-            description:
-              - Enable/disable the next hop calculation for this neighbor.
-            type: bool
-          next_hop_unchanged:
-            description:
-              - Enable/disable propagation of next hop unchanged for iBGP paths to this neighbor.
-            type: bool
+              - The local AS number for the neighbor.
+            type: int
       networks:
         description:
           - Specify networks to announce via BGP.
@@ -169,6 +153,10 @@ options:
                 description:
                   - Specifies the protocol for configuring redistribute information.
                 required: True
+              id:
+                description:
+                  - Specifies the instance ID/table ID for this protocol
+                  - Valid for ospf and table
               metric:
                 description:
                   - Specifies the metric for redistributed routes.
@@ -191,16 +179,11 @@ options:
                   - Route map to modify the attributes.
           neighbors:
             description:
-              - Specifies BGP neighbor related configurations.
+              - Specifies BGP neighbor related configurations in Address Family configuration mode.
             suboptions:
               neighbor:
                 description:
                   - Neighbor router address.
-                required: True
-              remote_as:
-                description:
-                  - Remote AS of the BGP neighbor to configure.
-                type: int
                 required: True
               route_reflector_client:
                 description:
@@ -210,43 +193,6 @@ options:
                 description:
                   - Specify a neighbor as a route server client.
                 type: bool
-              update_source:
-                description:
-                  - Source of the routing updates.
-              password:
-                description:
-                  - Password to authenticate the BGP peer connection.
-              enabled:
-                description:
-                  - Administratively shutdown or enable a neighbor.
-                type: bool
-              description:
-                description:
-                  - Neighbor specific description.
-              ebgp_multihop:
-                description:
-                  - Specifies the maximum hop count for EBGP neighbors not on directly connected networks.
-                  - The range is from 1 to 255.
-                type: int
-              peer_group:
-                description:
-                  - Name of the peer group that the neighbor is a member of.
-              timers:
-                description:
-                  - Specifies BGP neighbor timer related configurations.
-                suboptions:
-                  keepalive:
-                    description:
-                      - Frequency (in seconds) with which the FRR sends keepalive messages to its peer.
-                      - The range is from 0 to 65535.
-                    type: int
-                    required: True
-                  holdtime:
-                    description:
-                      - Interval (in seconds) after not receiving a keepalive message that FRR declares a peer dead.
-                      - The range is from 0 to 65535.
-                    type: int
-                    required: True
               activate:
                 description:
                   - Enable the address family for this neighbor.
@@ -259,10 +205,11 @@ options:
                 description:
                   - Enable/disable the next hop calculation for this neighbor.
                 type: bool
-              next_hop_unchanged:
+              maximum_prefix:
                 description:
-                  - Enable/disable propagation of next hop unchanged for iBGP paths to this neighbor.
-                type: bool
+                  - Maximum number of prefixes to accept from this peer.
+                  - The range is from 1 to 4294967295.
+                type: int
   operation:
     description:
       - Specifies the operation to be performed on the BGP process configured on the device.
@@ -360,19 +307,26 @@ def main():
     neighbor_spec = {
         'neighbor': dict(required=True),
         'remote_as': dict(type='int', required=True),
+        'advertisement_interval': dict(type='int'),
+        'local_as': dict(type='int'),
+        'port': dict(type='int'),
         'update_source': dict(),
         'password': dict(no_log=True),
         'enabled': dict(type='bool'),
         'description': dict(),
         'ebgp_multihop': dict(type='int'),
         'timers': dict(type='dict', elements='dict', options=timer_spec),
-        'route_reflector_client': dict(type='bool'),
-        'route_server_client': dict(type='bool'),
         'peer_group': dict(),
+    }
+
+    af_neighbor_spec = {
+        'neighbor': dict(required=True),
         'activate': dict(type='bool'),
         'remove_private_as': dict(type='bool'),
         'next_hop_self': dict(type='bool'),
-        'next_hop_unchanged': dict(type='bool')
+        'route_reflector_client': dict(type='bool'),
+        'route_server_client': dict(type='bool'),
+        'maximum_prefix': dict(type='int')
     }
 
     address_family_spec = {
@@ -380,7 +334,7 @@ def main():
         'safi': dict(choices=['flowspec', 'labeled-unicast', 'multicast', 'unicast'], default='unicast'),
         'networks': dict(type='list', elements='dict', options=network_spec),
         'redistribute': dict(type='list', elements='dict', options=redistribute_spec),
-        'neighbors': dict(type='list', elements='dict', options=neighbor_spec),
+        'neighbors': dict(type='list', elements='dict', options=af_neighbor_spec),
     }
 
     config_spec = {

@@ -8,7 +8,7 @@ router bgp 64496
  !
  address-family ipv4 unicast
   network 192.0.1.0/24 route-map RMAP_1
-  network 198.51.100.0/24
+  network 198.51.100.0/24 route-map RMAP_2
   redistribute static metric 100
   redistribute ospf 223 metric 10
  exit-address-family
