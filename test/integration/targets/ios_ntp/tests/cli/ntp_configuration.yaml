@@ -1,0 +1,75 @@
+---
+- name: remove NTP (if set)
+  ios_ntp:
+    server: 10.75.32.5
+    source_int: Loopback0
+    acl: NTP_ACL
+    logging: true
+    key_id: 10
+    auth_key: 15435A030726242723273C21181319000A
+    auth: true
+    state: absent
+  ignore_errors: true
+
+- block:
+
+  - name: configure NTP
+    ios_ntp: &config
+      server: 10.75.32.5
+      source_int: Loopback0
+      state: present
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: idempotence check
+    ios_ntp: *config
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: configure NTP
+    ios_ntp: &config1
+      acl: NTP_ACL
+      logging: true
+      state: present
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_ntp: *config1
+
+  - assert: *false
+
+  - name: configure NTP with diffferen values
+    ios_ntp: &config2
+      key_id: 10
+      auth_key: 15435A030726242723273C21181319000A
+      auth: true
+      state: present
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_ntp: *config2
+
+  - assert: *false
+
+  - name: remove part of config
+    ios_ntp: &config3
+      acl: NTP_ACL
+      logging: true
+      state: absent
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_ntp: *config3
+
+  - assert: *false
+
+  always:
+  - name: Remove ntp config
+    ios_ntp: *remove
