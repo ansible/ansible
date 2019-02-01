@@ -21,7 +21,7 @@ options:
     description:
       - The package manager used by the system so we can query the package information.
       - Since 2.8 this is a list and can support multiple package managers per system.
-      - The 'portage', 'pkg' and pip options were added in version 2.8.
+      - The 'portage' and 'pkg' options were added in version 2.8.
     default: ['auto']
     choices: ['auto', 'rpm', 'apt', 'portage', 'pkg']
     required: False
