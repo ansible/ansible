@@ -331,6 +331,7 @@ CONDITINAL_BARE_VARS:
   env: [{name: ANSIBLE_CONDITIONAL_BARE_VARS}]
   ini:
   - {key: conditional_bare_variables, section: defaults}
+  version_added: "2.8"
 ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
