@@ -111,11 +111,11 @@ class Cliconf(CliconfBase):
 
         if diff_match not in option_values['diff_match']:
             raise ValueError("'match' value %s in invalid, valid values are %s" % (
-            diff_match, ', '.join(option_values['diff_match'])))
+                diff_match, ', '.join(option_values['diff_match'])))
 
         if diff_replace not in option_values['diff_replace']:
             raise ValueError("'replace' value %s in invalid, valid values are %s" % (
-            diff_replace, ', '.join(option_values['diff_replace'])))
+                diff_replace, ', '.join(option_values['diff_replace'])))
 
         # prepare candidate configuration
         candidate_obj = NetworkConfig(indent=1)
