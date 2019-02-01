@@ -74,7 +74,7 @@ class Cliconf(CliconfBase):
             'format': ['text'],
             'diff_match': ['line', 'strict', 'exact', 'none'],
             'diff_replace': ['line', 'block'],
-            'output': ['text']
+            'output': []
         }
 
     def get_device_operations(self):
@@ -131,7 +131,6 @@ class Cliconf(CliconfBase):
 
         diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
         return diff
-
 
     @enable_mode
     def get_config(self, source='running', flags=None, format=None):
