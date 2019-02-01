@@ -38,7 +38,9 @@ options:
             - Show kubeconfig of the AKS cluster.
             - Note the operation will cost more network overhead, not recommond to use when listing AKS.
         version_added: 2.8
-        type: bool
+        choices:
+            - user
+            - admin
 
 extends_documentation_fragment:
     - azure
@@ -90,7 +92,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            show_kubeconfig=dict(type='bool')
+            show_kubeconfig=dict(type='str', choices=['user', 'admin'])
         )
 
         self.results = dict(
@@ -168,7 +170,10 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
 
         :return: AKS instance kubeconfig
         '''
-        access_profile = self.containerservice_client.managed_clusters.get_access_profile(resource_group, name, "clusterUser")
+        if not self.show_kubeconfig:
+            return ''
+        role_name = 'cluster{0}'.format(str.capitalize(self.show_kubeconfig))
+        access_profile = self.containerservice_client.managed_clusters.get_access_profile(resource_group, name, role_name)
         return access_profile.kube_config.decode('utf-8')
 
 
