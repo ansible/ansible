@@ -9,7 +9,8 @@ from httmock import with_httmock  # noqa
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.source_control.gitlab_user import GitLabUser
 
-from units.utils.test_gitlab import (FakeAnsibleModule, resp_find_user, resp_get_user, resp_get_user_keys,
+from units.utils.test_gitlab import (FakeAnsibleModule, python_version_check_requirement,
+                                     resp_find_user, resp_get_user, resp_get_user_keys,
                                      resp_create_user_keys, resp_create_user, resp_delete_user,
                                      resp_get_member, resp_get_group, resp_add_member,
                                      resp_update_member, resp_get_member)
@@ -22,6 +23,8 @@ except ImportError:
 
 class TestGitlabUser(unittest.TestCase):
     def setUp(self):
+        python_version_check_requirement(self)
+
         self.gitlab_instance = Gitlab("http://localhost", private_token="private_token", api_version=4)
         self.moduleUtil = GitLabUser(module=FakeAnsibleModule(), gitlab_instance=self.gitlab_instance)
 

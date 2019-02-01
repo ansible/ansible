@@ -9,7 +9,8 @@ from httmock import with_httmock  # noqa
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.source_control.gitlab_hooks import GitLabHook
 
-from units.utils.test_gitlab import (FakeAnsibleModule, resp_get_project, resp_find_project_hook,
+from units.utils.test_gitlab import (FakeAnsibleModule, python_version_check_requirement,
+                                     resp_get_project, resp_find_project_hook,
                                      resp_create_project_hook, resp_delete_project_hook)
 
 try:
@@ -20,6 +21,8 @@ except ImportError:
 
 class TestGitlabHook(unittest.TestCase):
     def setUp(self):
+        python_version_check_requirement(self)
+
         self.gitlab_instance = Gitlab("http://localhost", private_token="private_token", api_version=4)
         self.moduleUtil = GitLabHook(module=FakeAnsibleModule(), gitlab_instance=self.gitlab_instance)
 

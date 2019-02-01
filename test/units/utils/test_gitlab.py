@@ -1,6 +1,8 @@
 # Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+import sys
+
 from httmock import response  # noqa
 from httmock import urlmatch  # noqa
 
@@ -14,6 +16,15 @@ class FakeAnsibleModule(object):
 
     def exit_json(self, **args):
         pass
+
+
+# Python 2.7+ is needed for python-gitlab
+GITLAB_MINIMUM_PYTHON_VERSION = (2, 7)
+
+
+def python_version_check_requirement(unittest_testcase):
+    if sys.version_info < GITLAB_MINIMUM_PYTHON_VERSION:
+        unittest_testcase.skipTest("Python %s+ is needed for python-gitlab" % ",".join(map(str, GITLAB_MINIMUM_PYTHON_VERSION)))
 
 
 '''
