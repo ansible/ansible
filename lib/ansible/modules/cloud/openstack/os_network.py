@@ -153,7 +153,7 @@ def main():
         external=dict(default=False, type='bool'),
         provider_physical_network=dict(required=False),
         provider_network_type=dict(required=False),
-        provider_segmentation_id=dict(required=False),
+        provider_segmentation_id=dict(required=False, type='int'),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None)
     )
