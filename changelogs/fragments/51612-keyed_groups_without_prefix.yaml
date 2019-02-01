@@ -1,0 +1,2 @@
+minor_changes:
+- Do not include prefix or separator in inventory plugin constructured group names if prefix is specified to be null.

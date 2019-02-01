@@ -123,6 +123,9 @@ keyed_groups:
 # places each host in a group named 'azure_loc_(location name)', depending on the VM's location
 - prefix: azure_loc
   key: location
+# place hosts in groups named 'running', 'stopped', 'deallocated', etc., depending on the VM's powerstate
+- prefix: null
+  key: powerstate
 # places host in a group named 'some_tag_X' using the value of the 'sometag' tag on a VM as X, and defaulting to the
 # value 'none' (eg, the group 'some_tag_none') if the 'sometag' tag is not defined for a VM.
 - prefix: some_tag

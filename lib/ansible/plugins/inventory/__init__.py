@@ -350,7 +350,10 @@ class Constructable(object):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
 
-                        if isinstance(key, string_types):
+                        if prefix is None:
+                            # Allow user to specify un-keyed group via null
+                            groups.append(key)
+                        elif isinstance(key, string_types):
                             groups.append('%s%s%s' % (prefix, sep, key))
                         elif isinstance(key, list):
                             for name in key:
