@@ -88,7 +88,7 @@ options:
         suboptions:
             host:
                 description:
-                - IP addres or hostname of RADIUS server.
+                - IP address or hostname of RADIUS server.
             port:
                 description:
                 - Port number RADIUS server is listening to.
@@ -117,7 +117,7 @@ options:
         suboptions:
             host:
                 description:
-                - IP addres or hostname of RADIUS server.
+                - IP address or hostname of RADIUS server.
             port:
                 description:
                 - Port number RADIUS server is listening to.
