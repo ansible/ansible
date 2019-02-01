@@ -141,7 +141,7 @@ class HttpApi(HttpApiBase):
 
         try:
             if self.sid is None and params[0]["url"] != "sys/login/user":
-                raise FMGValidSessionException(method, params)
+                raise FMGBaseException("An attempt was made to login with the SID None and URL != login url.")
         except IndexError:
             raise FMGBaseException("An attempt was made at communicating with a FMG with "
                                    "no valid session and an incorrectly formatted request.")
