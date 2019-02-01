@@ -51,7 +51,8 @@ class ActionModule(ActionBase):
                                      "letters, numbers and underscores." % k)
                     return result
 
-                if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
+                v_is_boolean = isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no', 'y', 'n', 'on', 'off')
+                if v_is_boolean and not C.DEFAULT_JINJA2_NATIVE:
                     v = boolean(v, strict=False)
                 facts[k] = v
 
