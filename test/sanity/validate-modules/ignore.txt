@@ -906,7 +906,6 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential.py E326
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py E324
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_launch.py E323
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_template.py E322
-lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_template.py E325
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_team.py E322
 lib/ansible/modules/web_infrastructure/apache2_mod_proxy.py E317
 lib/ansible/modules/web_infrastructure/apache2_mod_proxy.py E326

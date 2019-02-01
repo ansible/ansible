@@ -84,6 +84,12 @@ options:
       description:
         - Start the playbook at the task matching this name.
       version_added: 2.7
+    diff_mode_enabled:
+      description:
+        - Enable diff mode for the job template.
+      version_added: 2.7
+      type: bool
+      default: 'no'
     fact_caching_enabled:
       description:
         - Enable use of fact caching for the job template.
