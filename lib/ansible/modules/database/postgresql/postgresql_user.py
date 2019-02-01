@@ -21,8 +21,8 @@ short_description: Adds or removes a user (role) from a remote PostgreSQL server
 description:
    - Adds or removes a user (role) from a remote PostgreSQL server instance
      ("cluster" in PostgreSQL terminology) and, optionally,
-     grant the user access to an existing database or tables.
-     A user is a role with login privilege.
+     grants the user access to an existing database or tables.
+     A user is a role with login privilege (see U(https://www.postgresql.org/docs/11/role-attributes.html) for more information).
    - The fundamental function of the module is to create, or delete, users from
      a PostgreSQL instances. Privilege assignment, or removal, is an optional
      step, which works on one database at a time. This allows for the module to
