@@ -94,6 +94,10 @@ add ``$ErrorActionPreference = "Continue"`` to the top of the module. This chang
 of the EAP that was accidentally removed in a previous release and ensure that modules are more resiliant to errors
 that may occur in execution.
 
+PowerShell module options and option choices are currently case insensitive to what is defined in the module
+specification. This behaviour is deprecated and a warning displayed to the user if a case insensitive match was found.
+A future release of Ansible will make these checks case sensitive.
+
 
 Modules removed
 ---------------
