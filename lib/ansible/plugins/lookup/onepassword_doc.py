@@ -16,7 +16,9 @@ DOCUMENTATION = """
     lookup: onepassword_doc
     author:
       - David Taylor (@djtaylor)
-      - Scott Buchanan <@scottsb>
+      - Scott Buchanan (@scottsb)
+      - Andrew Zenk (@azenk)
+      - Sam Doran (@samdoran)
       - Andrew Zenk <@azenk>
       - Sam Doran<@samdoran>
     version_added: "2.8"
