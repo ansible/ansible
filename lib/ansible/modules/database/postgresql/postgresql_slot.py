@@ -26,7 +26,7 @@ options:
     required: true
   type:
     description:
-      - slots come in two distinct flavors
+      - slots come in two distinct flavors, physical and logical
     required: false
     default: physical
     choices: [ "physical", "logical" ]
