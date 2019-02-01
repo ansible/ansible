@@ -119,6 +119,7 @@ def slot_exists(cursor, slot):
     cursor.execute(query, {'slot': slot})
     return cursor.rowcount == 1
 
+  
 def slot_delete(cursor, slot):
     if slot_exists(cursor, slot):
         query = "SELECT pg_drop_replication_slot('%s')" % slot
@@ -127,6 +128,7 @@ def slot_delete(cursor, slot):
     else:
         return False
 
+      
 def slot_create_physical(cursor, slot):
     if not slot_exists(cursor, slot):
         query = "SELECT pg_create_physical_replication_slot('%s')" % slot
@@ -135,6 +137,7 @@ def slot_create_physical(cursor, slot):
     else:
         return False
 
+      
 def slot_create_logical(cursor, slot, decoder):
     if not slot_exists(cursor, slot):
         query = "SELECT pg_create_logical_replication_slot('%s', '%s')" % (slot, decoder)
@@ -152,7 +155,7 @@ def main():
         argument_spec=dict(
             login_user=dict(default="postgres"),
             login_password=dict(default="", no_log=True),
-            login_host=dict(default="localhost"),:
+            login_host=dict(default="localhost"),
             port=dict(default="5432"),
             db=dict(required=False),
             slot_name=dict(required=True),
@@ -214,6 +217,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
+        
     module.exit_json(changed=changed, db=db, slot_name=slot)
 
 if __name__ == '__main__':
