@@ -279,6 +279,20 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
 
         return results
 
+    def list_keys(self):
+        """List Azure redis cache keys"""
+
+        self.log('List keys for {0}'.format(self.name))
+
+        item = None
+
+        try:
+            item = self._client.redis.list_keys(resource_group_name=self.resource_group, name=self.name)
+        except CloudError as exc:
+            self.fail("Failed to list redis keys of {0} - {1}".format(self.name, str(exc)))
+
+        return item
+
     def serialize_rediscache(self, rediscache):
         '''
         Convert a Azure redis cache object to dict.
@@ -307,10 +321,12 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
                 size=rediscache.sku.family + str(rediscache.sku.capacity)
             )
         if self.return_access_keys:
-            new_result['access_keys'] = dict(
-                primary=rediscache.access_keys.primary_key,
-                secondary=rediscache.access_keys.secondary_key
-            )
+            access_keys = self.list_keys()
+            if access_keys:
+                new_result['access_keys'] = dict(
+                    primary=access_keys.primary_key,
+                    secondary=access_keys.secondary_key
+                )
         return new_result
 
 
