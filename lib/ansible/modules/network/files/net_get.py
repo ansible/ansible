@@ -22,6 +22,7 @@ short_description: Copy a file from a network device to Ansible Controller
 description:
   - This module provides functionality to copy file from network device to
     ansible controller.
+extends_documentation_fragment: network_agnostic
 options:
   src:
     description:
@@ -53,6 +54,8 @@ notes:
    - User privilege to do scp on network device should be pre-configured
      e.g. ios - need user privilege 15 by default for allowing scp.
    - Default destination of source file.
+
+.. include:: foo
 """
 
 EXAMPLES = """
