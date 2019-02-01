@@ -791,9 +791,7 @@ class AnsibleModule(object):
         self._warnings = []
         self._deprecations = []
         self._clean = {}
-
-        # Change to 'error' in Ansible 2.12
-        self._string_conversion_action = 'warn'
+        self._string_conversion_action = ''
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
@@ -1864,23 +1862,18 @@ class AnsibleModule(object):
         if isinstance(value, string_types):
             return value
 
-        # Note: str() could throw a unicode error if value's __str__() method
-        # returns non-ascii. Have to port utils.to_bytes() if that happens.
-        #
         # Ignore, warn, or error when converting to a string.
         # The current default is to warn. Change this in Anisble 2.12 to error.
         common_msg = 'The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). {2}'
         if self._string_conversion_action == 'error':
             extra_msg = 'Quote the entire value to ensure it does not change.'
-            msg = common_msg.format(value, str(value), extra_msg)
+            msg = common_msg.format(value, to_text(value), extra_msg)
             self.fail_json(msg=msg)
-        elif self._string_conversion_action == 'ignore':
-            return str(value)
-        else:
+        elif self._string_conversion_action == 'warn':
             extra_msg = 'If this does not look like what you expect, quote the entire value to ensure it does not change.'
-            msg = common_msg.format(value, str(value), extra_msg)
+            msg = common_msg.format(value, to_text(value), extra_msg)
             self.warn(msg)
-            return str(value)
+        return to_native(value, errors='surrogate_or_strict')
 
     def _check_type_list(self, value):
         if isinstance(value, list):
