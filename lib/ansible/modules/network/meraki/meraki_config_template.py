@@ -157,7 +157,6 @@ def delete_template(meraki, org_id, name, data):
 def bind(meraki, net_id, template_id):
     path = meraki.construct_path('bind', net_id=net_id)
     payload = {'configTemplateId': template_id}
-    # meraki.fail_json(msg=path, payload=payload)
     if meraki.params['auto_bind']:
         payload['autoBind'] = meraki.params['auto_bind']
     r = meraki.request(path, method='POST', payload=json.dumps(payload))
@@ -209,7 +208,6 @@ def main():
     unbind_urls = {'config_template': '/networks/{net_id}/unbind'}
 
     meraki.url_catalog['get_all'].update(query_urls)
-    # meraki.url_catalog['get_all']['config_template'] = '/organizations/{org_id}/configTemplates'
     meraki.url_catalog['delete'] = delete_urls
     meraki.url_catalog['bind'] = bind_urls
     meraki.url_catalog['unbind'] = unbind_urls
