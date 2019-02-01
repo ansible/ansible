@@ -220,7 +220,7 @@ def main():
        
     module.exit_json(changed=changed, db=db, slot_name=slot)
 
-if __name__ == '__main__'
+if __name__ == '__main__':
     main()
 
   
