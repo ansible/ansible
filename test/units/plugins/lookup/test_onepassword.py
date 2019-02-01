@@ -241,7 +241,7 @@ class MockOnePass(OnePass):
                 mock_entry = self._lookup_mock_document(args.item_id, args.vault)
 
                 if mock_entry is None:
-                    return mock_exit(error='Document {0} not found'.format(args.item_id))
+                    return mock_exit(error='Document {0} not found'.format(args.item_id), rc=1)
 
                 return mock_exit(output=mock_entry)
 
@@ -388,6 +388,12 @@ class TestOnePasswordRawLookup(unittest.TestCase):
 
 @patch('ansible.plugins.lookup.onepassword_doc.OnePassDoc', MockOnePassDoc)
 class TestOnePasswordDocLookup(unittest.TestCase):
+
+    def test_onepassword_doc_not_found(self):
+        doc_lookup_plugin = OnePasswordDocLookup()
+
+        with self.assertRaises(AnsibleError):
+            doc_lookup_plugin.run('NotRealDoc')
 
     def test_onepassword_doc(self):
         doc_lookup_plugin = OnePasswordDocLookup()
