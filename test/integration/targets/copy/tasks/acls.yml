@@ -1,0 +1,21 @@
+- file:
+    path: "{{ remote_dir }}"
+    state: directory
+  become: yes
+  become_user: '{{ remote_unprivileged_user }}'
+
+- copy:
+    content: "TEST"
+    dest: "{{ remote_dir }}/test.txt"
+  become: yes
+  become_user: "{{ remote_unprivileged_user }}"
+
+- command: "getfacl {{ remote_dir }}/test.txt"
+  register: acls
+  become: yes
+  become_user: '{{ remote_unprivileged_user }}'
+- debug:
+    var: acls
+- assert:
+    that:
+      - "'user:{{ remote_unprivileged_user }}:r-x\t#effective:r--' not in acls.stdout_lines"
