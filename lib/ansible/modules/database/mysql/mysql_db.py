@@ -143,7 +143,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --ssl-cert=%s" % pipes.quote(ssl_cert)
     if ssl_key is not None:
         cmd += " --ssl-key=%s" % pipes.quote(ssl_key)
-    if ssl_cert is not None:
+    if ssl_ca is not None:
         cmd += " --ssl-ca=%s" % pipes.quote(ssl_ca)
     if socket is not None:
         cmd += " --socket=%s" % pipes.quote(socket)
@@ -196,7 +196,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--ssl-cert=%s" % pipes.quote(ssl_cert))
     if ssl_key is not None:
         cmd.append("--ssl-key=%s" % pipes.quote(ssl_key))
-    if ssl_cert is not None:
+    if ssl_ca is not None:
         cmd.append("--ssl-ca=%s" % pipes.quote(ssl_ca))
     else:
         cmd.append("--host=%s" % pipes.quote(host))
