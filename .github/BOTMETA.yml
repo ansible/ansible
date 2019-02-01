@@ -180,6 +180,7 @@ files:
     keywords: [ postgres, postgresql ]
     labels: postgresql
     maintainers: $team_postgresql
+    notified: jbscalia
   $modules/database/proxysql/: bmildren
   $modules/database/vertica/: dareko
   $modules/files/acl.py:
