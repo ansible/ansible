@@ -132,7 +132,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         result = []
 
         try:
-            item = self.containerservice_client.managed_clusters.get(
+            item = self.managedcluster_client.managed_clusters.get(
                 self.resource_group, self.name)
         except CloudError:
             pass
@@ -150,7 +150,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.log('List all Azure Kubernetes Services')
 
         try:
-            response = self.containerservice_client.managed_clusters.list(self.resource_group)
+            response = self.managedcluster_client.managed_clusters.list(self.resource_group)
         except AzureHttpError as exc:
             self.fail('Failed to list all items - {0}'.format(str(exc)))
 
@@ -173,7 +173,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         if not self.show_kubeconfig:
             return ''
         role_name = 'cluster{0}'.format(str.capitalize(self.show_kubeconfig))
-        access_profile = self.containerservice_client.managed_clusters.get_access_profile(resource_group, name, role_name)
+        access_profile = self.managedcluster_client.managed_clusters.get_access_profile(resource_group, name, role_name)
         return access_profile.kube_config.decode('utf-8')
 
 

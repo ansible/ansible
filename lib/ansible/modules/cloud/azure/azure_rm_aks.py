@@ -537,6 +537,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             if agentpoolcount > 1:
                 self.fail('You cannot specify more than one agent_pool_profiles currently')
 
+            available_versions = self.get_all_versions()
+            if self.kubernetes_version not in available_versions.keys():
+                self.fail("Unsupported kubernetes version. Excepted one of {0} but get {1}".format(available_versions.keys(), self.kubernetes_version))
             if not response:
                 to_be_updated = True
             else:
@@ -577,6 +580,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         to_be_updated = True
 
                     if response['kubernetes_version'] != self.kubernetes_version:
+                        upgrade_versions = available_versions.get(response['kubernetes_version'])
+                        if upgrade_versions and self.kubernetes_version not in upgrade_versions:
+                            self.fail('Cannot upgrade kubernetes version to {0}, supported value are {1}'.format(self.kubernetes_version,  upgrade_versions))
                         to_be_updated = True
 
                     if response['enable_rbac'] != self.enable_rbac:
@@ -667,7 +673,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         service_principal_profile = self.create_service_principal_profile_instance(self.service_principal)
 
-        parameters = self.containerservice_models.ManagedCluster(
+        parameters = self.managedcluster_models.ManagedCluster(
             location=self.location,
             dns_prefix=self.dns_prefix,
             kubernetes_version=self.kubernetes_version,
@@ -688,7 +694,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         # self.log("agent_pool_profiles : {0}".format(parameters.agent_pool_profiles))
 
         try:
-            poller = self.containerservice_client.managed_clusters.create_or_update(self.resource_group, self.name, parameters)
+            poller = self.managedcluster_client.managed_clusters.create_or_update(self.resource_group, self.name, parameters)
             response = self.get_poller_result(poller)
             response.kube_config = self.get_aks_kubeconfig()
             return create_aks_dict(response)
@@ -698,7 +704,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
     def update_aks_tags(self):
         try:
-            poller = self.containerservice_client.managed_clusters.update_tags(self.resource_group, self.name, self.tags)
+            poller = self.managedcluster_client.managed_clusters.update_tags(self.resource_group, self.name, self.tags)
             response = self.get_poller_result(poller)
             return response.tags
         except CloudError as exc:
@@ -712,7 +718,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         '''
         self.log("Deleting the AKS instance {0}".format(self.name))
         try:
-            poller = self.containerservice_client.managed_clusters.delete(self.resource_group, self.name)
+            poller = self.managedcluster_client.managed_clusters.delete(self.resource_group, self.name)
             self.get_poller_result(poller)
             return True
         except CloudError as e:
@@ -728,7 +734,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         '''
         self.log("Checking if the AKS instance {0} is present".format(self.name))
         try:
-            response = self.containerservice_client.managed_clusters.get(self.resource_group, self.name)
+            response = self.managedcluster_client.managed_clusters.get(self.resource_group, self.name)
             self.log("Response : {0}".format(response))
             self.log("AKS instance : {0} found".format(response.name))
             response.kube_config = self.get_aks_kubeconfig()
@@ -737,13 +743,24 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             self.log('Did not find the AKS instance.')
             return False
 
+    def get_all_versions(self):
+        try:
+            result = dict()
+            response = self.containerservice_client.container_services.list_orchestrators(self.location, resource_type='managedClusters')
+            orchestrators = response.orchestrators
+            for item in orchestrators:
+                result[item.orchestrator_version] = [x.orchestrator_version for x in item.upgrades] if item.upgrades else []
+            return result
+        except Exception as exc:
+            self.fail('Error when getting AKS supported kubernetes version list for location {0} - {1}'.format(self.location, exc.message or str(exc)))
+
     def get_aks_kubeconfig(self):
         '''
         Gets kubeconfig for the specified AKS instance.
 
         :return: AKS instance kubeconfig
         '''
-        access_profile = self.containerservice_client.managed_clusters.get_access_profile(resource_group_name=self.resource_group,
+        access_profile = self.managedcluster_client.managed_clusters.get_access_profile(resource_group_name=self.resource_group,
                                                                                           resource_name=self.name,
                                                                                           role_name="clusterUser")
         return access_profile.kube_config.decode('utf-8')
@@ -754,7 +771,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         :param: agentpoolprofile: dict with the parameters to setup the ManagedClusterAgentPoolProfile
         :return: ManagedClusterAgentPoolProfile
         '''
-        return self.containerservice_models.ManagedClusterAgentPoolProfile(**agentpoolprofile)
+        return self.managedcluster_models.ManagedClusterAgentPoolProfile(**agentpoolprofile)
 
     def create_service_principal_profile_instance(self, spnprofile):
         '''
@@ -762,7 +779,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         :param: spnprofile: dict with the parameters to setup the ManagedClusterServicePrincipalProfile
         :return: ManagedClusterServicePrincipalProfile
         '''
-        return self.containerservice_models.ManagedClusterServicePrincipalProfile(
+        return self.managedcluster_models.ManagedClusterServicePrincipalProfile(
             client_id=spnprofile['client_id'],
             secret=spnprofile['client_secret']
         )
@@ -773,17 +790,17 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         :param: linuxprofile: dict with the parameters to setup the ContainerServiceLinuxProfile
         :return: ContainerServiceLinuxProfile
         '''
-        return self.containerservice_models.ContainerServiceLinuxProfile(
+        return self.managedcluster_models.ContainerServiceLinuxProfile(
             admin_username=linuxprofile['admin_username'],
-            ssh=self.containerservice_models.ContainerServiceSshConfiguration(public_keys=[
-                self.containerservice_models.ContainerServiceSshPublicKey(key_data=str(linuxprofile['ssh_key']))])
+            ssh=self.managedcluster_models.ContainerServiceSshConfiguration(public_keys=[
+                self.managedcluster_models.ContainerServiceSshPublicKey(key_data=str(linuxprofile['ssh_key']))])
         )
 
     def create_network_profile_instance(self, network):
-        return self.containerservice_models.ContainerServiceNetworkProfile(**network) if network else None
+        return self.managedcluster_models.ContainerServiceNetworkProfile(**network) if network else None
 
     def create_aad_profile_instance(self, aad):
-        return self.containerservice_models.ManagedClusterAADProfile(**aad) if aad else None
+        return self.managedcluster_models.ManagedClusterAADProfile(**aad) if aad else None
 
     def create_addon_profile_instance(self, addon):
         result = dict()
@@ -797,7 +814,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                 config = addon[key]
                 for v in config_spec.keys():
                     config[config_spec[v]] = config[v]
-                result[name] = self.containerservice_models.ManagedClusterAddonProfile(config=config, enabled=config['enabled'])
+                result[name] = self.managedcluster_models.ManagedClusterAddonProfile(config=config, enabled=config['enabled'])
         return result
 
 
