@@ -19,8 +19,6 @@ DOCUMENTATION = """
       - Scott Buchanan (@scottsb)
       - Andrew Zenk (@azenk)
       - Sam Doran (@samdoran)
-      - Andrew Zenk <@azenk>
-      - Sam Doran<@samdoran>
     version_added: "2.8"
     requirements:
       - C(op) 1Password command line utility. See U(https://support.1password.com/command-line/)
