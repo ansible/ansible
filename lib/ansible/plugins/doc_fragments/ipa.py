@@ -18,7 +18,9 @@ options:
     description:
     - IP or hostname of IPA server.
     - If the value is not specified in the task, the value of environment variable C(IPA_HOST) will be used instead.
-    - If both the environment variable C(IPA_HOST) and the value are not specified in the task, then default value is set.
+    - If both the environment variable C(IPA_HOST) and the value are not specified in the task, then DNS will be used to try to discover the FreeIPA server.
+    - The relevant entry needed in FreeIPA is the 'ipa-ca' entry.
+    - If neither the DNS entry, nor the environment C(IPA_HOST), nor the value are available in the task, then the default value will be used.
     - 'Environment variable fallback mechanism is added in version 2.5.'
     default: ipa.example.com
   ipa_user:

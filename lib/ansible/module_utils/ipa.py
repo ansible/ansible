@@ -28,13 +28,28 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import json
+import socket
 
 import re
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves.urllib.parse import quote
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, AnsibleFallbackNotFound
+
+
+def _env_then_dns_fallback(*args, **kwargs):
+    ''' Load value from environment or DNS in that order'''
+    try:
+        return env_fallback(*args, **kwargs)
+    except AnsibleFallbackNotFound:
+        # If no host was given, we try to guess it from IPA.
+        # The ipa-ca entry is a standard entry that IPA will have set for
+        # the CA.
+        try:
+            return socket.gethostbyaddr(socket.gethostbyname('ipa-ca'))[0]
+        except Exception:
+            raise AnsibleFallbackNotFound
 
 
 class IPAClient(object):
@@ -181,7 +196,7 @@ class IPAClient(object):
 def ipa_argument_spec():
     return dict(
         ipa_prot=dict(type='str', default='https', choices=['http', 'https'], fallback=(env_fallback, ['IPA_PROT'])),
-        ipa_host=dict(type='str', default='ipa.example.com', fallback=(env_fallback, ['IPA_HOST'])),
+        ipa_host=dict(type='str', default='ipa.example.com', fallback=(_env_then_dns_fallback, ['IPA_HOST'])),
         ipa_port=dict(type='int', default=443, fallback=(env_fallback, ['IPA_PORT'])),
         ipa_user=dict(type='str', default='admin', fallback=(env_fallback, ['IPA_USER'])),
         ipa_pass=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['IPA_PASS'])),
