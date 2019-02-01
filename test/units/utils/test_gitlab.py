@@ -6,6 +6,28 @@ import sys
 from httmock import response  # noqa
 from httmock import urlmatch  # noqa
 
+from units.compat import unittest
+
+from gitlab import Gitlab
+
+
+class FakeAnsibleModule(object):
+    def __init__(self):
+        self.check_mode = False
+
+    def fail_json(self, **args):
+        pass
+
+    def exit_json(self, **args):
+        pass
+
+class GitlabModuleTestCase(unittest.TestCase):
+    def setUp(self):
+        unitest_python_version_check_requirement(self)
+
+        self.mock_module = FakeAnsibleModule()
+
+        self.gitlab_instance = Gitlab("http://localhost", private_token="private_token", api_version=4)
 
 # Python 2.7+ is needed for python-gitlab
 GITLAB_MINIMUM_PYTHON_VERSION = (2, 7)

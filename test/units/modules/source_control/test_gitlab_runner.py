@@ -1,17 +1,14 @@
 # Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from units.modules.utils import ModuleTestCase
 from ansible.modules.source_control.gitlab_runner import GitLabRunner
 
-from units.utils.test_gitlab import (unitest_python_version_check_requirement,
+from units.utils.test_gitlab import (GitlabModuleTestCase,
                                      python_version_match_requirement,
                                      resp_find_runners, resp_get_runner,
                                      resp_create_runner, resp_delete_runner)
 
 # Gitlab module requirements
-from gitlab import Gitlab
-
 if python_version_match_requirement():
     from gitlab.v4.objects import Runner
 
@@ -19,12 +16,10 @@ if python_version_match_requirement():
 from httmock import with_httmock  # noqa
 
 
-class TestGitlabRunner(ModuleTestCase):
+class TestGitlabRunner(GitlabModuleTestCase):
     def setUp(self):
         super(TestGitlabRunner, self).setUp()
-        unitest_python_version_check_requirement(self)
 
-        self.gitlab_instance = Gitlab("http://localhost", private_token="private_token", api_version=4)
         self.moduleUtil = GitLabRunner(module=self.mock_module, gitlab_instance=self.gitlab_instance)
 
     @with_httmock(resp_find_runners)
