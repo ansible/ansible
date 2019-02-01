@@ -36,13 +36,13 @@ version_added: "2.8"
 import json
 from ansible.plugins.httpapi import HttpApiBase
 from ansible.module_utils.basic import to_text
-from ansible.module_utils.network.fortimanager.fortimanager import FMGLockContext
 from ansible.module_utils.network.fortimanager.common import BASE_HEADERS
 from ansible.module_utils.network.fortimanager.common import FMGBaseException
 from ansible.module_utils.network.fortimanager.common import FMGValidSessionException
 from ansible.module_utils.network.fortimanager.common import FMGValueError
 from ansible.module_utils.network.fortimanager.common import FMGResponseNotFormedCorrect
 from ansible.module_utils.network.fortimanager.common import FMGRCommon
+from ansible.module_utils.network.fortimanager.common import FMGRMethods
 
 
 class HttpApi(HttpApiBase):
@@ -52,7 +52,6 @@ class HttpApi(HttpApiBase):
         self._sid = None
         self._url = "/jsonrpc"
         self._host = None
-        self._lock_ctx = FMGLockContext(self)
         self._tools = FMGRCommon
         self._debug = False
         self._connected_fmgr = None
@@ -61,6 +60,9 @@ class HttpApi(HttpApiBase):
         self._last_data_payload = None
         self._last_url = None
         self._last_response_raw = None
+        self._locked_adom_list = list()
+        self._uses_workspace = False
+        self._uses_adoms = False
 
     def set_become(self, become_context):
         """
@@ -87,8 +89,8 @@ class HttpApi(HttpApiBase):
 
         :return: Dictionary of status, if it logged in or not.
         """
-
-        self.execute("sys/login/user", passwd=password, user=username, )
+        self.send_request(FMGRMethods.EXEC, self._tools.format_request(FMGRMethods.EXEC, "sys/login/user",
+                                                                       passwd=password, user=username,))
 
         if "FortiManager object connected to FortiManager" in self.__str__():
             # If Login worked, then inspect the FortiManager for Workspace Mode, and it's system information.
@@ -100,7 +102,8 @@ class HttpApi(HttpApiBase):
 
     def inspect_fmgr(self):
         # CHECK FOR WORKSPACE MODE TO SEE IF WE HAVE TO ENABLE ADOM LOCKS
-        self._lock_ctx.check_mode()
+
+        self.check_mode()
         # CHECK FOR SYSTEM STATUS -- SHOULD RETURN 0
         status = self.get_system_status()
         if status[0] == -11:
@@ -121,9 +124,10 @@ class HttpApi(HttpApiBase):
         This function will logout of the FortiManager.
         """
         if self.sid is not None:
-            if self._lock_ctx.uses_workspace:
-                self._lock_ctx.run_unlock()
-            ret_code, response = self.execute("sys/logout")
+            if self.uses_workspace:
+                self.run_unlock()
+            ret_code, response = self.send_request(FMGRMethods.EXEC,
+                                                   self._tools.format_request(FMGRMethods.EXEC, "sys/logout"))
             self.sid = None
             return ret_code, response
 
@@ -137,6 +141,7 @@ class HttpApi(HttpApiBase):
 
         :return: Dictionary of status, if it logged in or not.
         """
+
         try:
             if self.sid is None and params[0]["url"] != "sys/login/user":
                 raise FMGValidSessionException(method, params)
@@ -174,33 +179,6 @@ class HttpApi(HttpApiBase):
         except Exception as err:
             raise FMGBaseException(err)
 
-    def get(self, url, *args, **kwargs):
-        return self.send_request("get", self._tools.format_request("get", url, *args, **kwargs))
-
-    def add(self, url, *args, **kwargs):
-        return self.send_request("add", self._tools.format_request("add", url, *args, **kwargs))
-
-    def update(self, url, *args, **kwargs):
-        return self.send_request("update", self._tools.format_request("update", url, *args, **kwargs))
-
-    def set(self, url, *args, **kwargs):
-        return self.send_request("set", self._tools.format_request("set", url, *args, **kwargs))
-
-    def delete(self, url, *args, **kwargs):
-        return self.send_request("delete", self._tools.format_request("delete", url, *args, **kwargs))
-
-    def replace(self, url, *args, **kwargs):
-        return self.send_request("replace", self._tools.format_request("replace", url, *args, **kwargs))
-
-    def clone(self, url, *args, **kwargs):
-        return self.send_request("clone", self._tools.format_request("clone", url, *args, **kwargs))
-
-    def execute(self, url, *args, **kwargs):
-        return self.send_request("exec", self._tools.format_request("execute", url, *args, **kwargs))
-
-    def move(self, url, *args, **kwargs):
-        return self.send_request("move", self._tools.format_request("move", url, *args, **kwargs))
-
     def _handle_response(self, response):
         self._set_sid(response)
         if isinstance(response["result"], list):
@@ -227,6 +205,26 @@ class HttpApi(HttpApiBase):
     def _set_sid(self, response):
         if self.sid is None and "session" in response:
             self.sid = response["session"]
+
+    def return_connected_fmgr(self):
+        """
+        Returns the data stored under self._connected_fmgr
+
+        :return: dict
+        """
+        try:
+            if self._connected_fmgr:
+                return self._connected_fmgr
+        except BaseException:
+            raise FMGBaseException("Couldn't Retrieve Connected FMGR Stats")
+
+    def get_system_status(self):
+        """
+        Returns the system status page from the FortiManager, for logging and other uses.
+        return: status
+        """
+        status = self.send_request(FMGRMethods.GET, self._tools.format_request(FMGRMethods.GET, "sys/status"))
+        return status
 
     @property
     def debug(self):
@@ -255,52 +253,113 @@ class HttpApi(HttpApiBase):
     def sid(self, val):
         self._sid = val
 
-    @property
-    def verify_ssl(self):
-        return self._verify_ssl
-
-    @verify_ssl.setter
-    def verify_ssl(self, val):
-        self._verify_ssl = val
-
-    @property
-    def timeout(self):
-        return self._timeout
-
-    @timeout.setter
-    def timeout(self, val):
-        self._timeout = val
-
-    def lock_adom(self, adom=None, *args, **kwargs):
-        return self._lock_ctx.lock_adom(adom, *args, **kwargs)
-
-    def unlock_adom(self, adom=None, *args, **kwargs):
-        return self._lock_ctx.unlock_adom(adom, *args, **kwargs)
-
-    def commit_changes(self, adom=None, aux=False, *args, **kwargs):
-        return self._lock_ctx.commit_changes(adom, aux, *args, **kwargs)
-
-    def return_connected_fmgr(self):
-        """
-        Returns the data stored under self._connected_fmgr
-
-        :return: dict
-        """
-        try:
-            if self._connected_fmgr:
-                return self._connected_fmgr
-        except BaseException:
-            raise FMGBaseException("Couldn't Retrieve Connected FMGR Stats")
-
-    def get_system_status(self):
-        """
-        Returns the system status page from the FortiManager, for logging and other uses.
-        return: status
-        """
-        status = self.get("sys/status")
-        return status
-
     def __str__(self):
         if self.sid is not None and self.connection._url is not None:
             return "FortiManager object connected to FortiManager: " + str(self.connection._url)
         return "FortiManager object with no valid connection to a FortiManager appliance."
+
+    ##################################
+    # BEGIN DATABASE LOCK CONTEXT CODE
+    ##################################
+
+    @property
+    def uses_workspace(self):
+        return self._uses_workspace
+
+    @uses_workspace.setter
+    def uses_workspace(self, val):
+        self._uses_workspace = val
+
+    @property
+    def uses_adoms(self):
+        return self._uses_adoms
+
+    @uses_adoms.setter
+    def uses_adoms(self, val):
+        self._uses_adoms = val
+
+    def add_adom_to_lock_list(self, adom):
+        if adom not in self._locked_adom_list:
+            self._locked_adom_list.append(adom)
+
+    def remove_adom_from_lock_list(self, adom):
+        if adom in self._locked_adom_list:
+            self._locked_adom_list.remove(adom)
+
+    def check_mode(self):
+        """
+        Checks FortiManager for the use of Workspace mode
+        """
+        url = "/cli/global/system/global"
+        code, resp_obj = self.send_request(FMGRMethods.GET, self._tools.format_request(FMGRMethods.GET, url,
+                                                                                       fields=["workspace-mode",
+                                                                                               "adom-status"]))
+        try:
+            if resp_obj["workspace-mode"] != 0:
+                self.uses_workspace = True
+        except KeyError:
+            self.uses_workspace = False
+        try:
+            if resp_obj["adom-status"] == 1:
+                self.uses_adoms = True
+        except KeyError:
+            self.uses_adoms = False
+
+    def run_unlock(self):
+        """
+        Checks for ADOM status, if locked, it will unlock
+        """
+        for adom_locked in self._locked_adom_list:
+            self.unlock_adom(adom_locked)
+
+    def lock_adom(self, adom=None, *args, **kwargs):
+        """
+        Locks an ADOM for changes
+        """
+        if adom:
+            if adom.lower() == "global":
+                url = "/dvmdb/global/workspace/lock/"
+            else:
+                url = "/dvmdb/adom/{adom}/workspace/lock/".format(adom=adom)
+        else:
+            url = "/dvmdb/adom/root/workspace/lock"
+        code, respobj = self.send_request(FMGRMethods.EXEC, self._tools.format_request(FMGRMethods.EXEC, url))
+        if code == 0 and respobj["status"]["message"].lower() == "ok":
+            self.add_adom_to_lock_list(adom)
+        return code, respobj
+
+    def unlock_adom(self, adom=None, *args, **kwargs):
+        """
+        Unlocks an ADOM after changes
+        """
+        if adom:
+            if adom.lower() == "global":
+                url = "/dvmdb/global/workspace/unlock/"
+            else:
+                url = "/dvmdb/adom/{adom}/workspace/unlock/".format(adom=adom)
+        else:
+            url = "/dvmdb/adom/root/workspace/unlock"
+        code, respobj = self.send_request(FMGRMethods.EXEC, self._tools.format_request(FMGRMethods.EXEC, url))
+        if code == 0 and respobj["status"]["message"].lower() == "ok":
+            self.remove_adom_from_lock_list(adom)
+        return code, respobj
+
+    def commit_changes(self, adom=None, aux=False, *args, **kwargs):
+        """
+        Commits changes to an ADOM
+        """
+        if adom:
+            if aux:
+                url = "/pm/config/adom/{adom}/workspace/commit".format(adom=adom)
+            else:
+                if adom.lower() == "global":
+                    url = "/dvmdb/global/workspace/commit/"
+                else:
+                    url = "/dvmdb/adom/{adom}/workspace/commit".format(adom=adom)
+        else:
+            url = "/dvmdb/adom/root/workspace/commit"
+        return self.send_request(FMGRMethods.EXEC, self._tools.format_request(FMGRMethods.EXEC, url))
+
+    ################################
+    # END DATABASE LOCK CONTEXT CODE
+    ################################

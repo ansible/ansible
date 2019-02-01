@@ -56,7 +56,7 @@ class FortiManagerHandler(object):
 
     def process_request(self, url, datagram, method):
         """
-        Formats and Runs the API Request via Connection Plugin
+        Formats and Runs the API Request via Connection Plugin. Streamlined for use FROM Modules.
 
         :param url: Connection URL to access
         :type url: string
@@ -273,8 +273,8 @@ class FortiManagerHandler(object):
         :type ansible_params: dict
         :param paramgram: Contains the paramgram passed to the modules' local modify function.
         :type paramgram: dict
-        :param *args: Free-form arguments that could be added.
-        :param **kwargs: Free-form keyword arguments that could be added.
+        :param args: Free-form arguments that could be added.
+        :param kwargs: Free-form keyword arguments that could be added.
 
         :return: A dictionary containing lots of information to append to Ansible Facts.
         :rtype: dict
@@ -295,9 +295,22 @@ class FortiManagerHandler(object):
         return facts
 
 
-# USED TO DETERMINE LOCK CONTEXT ON A FORTIMANAGER. A DATABASE LOCKING CONCEPT THAT NEEDS TO BE ACCOUNTED FOR.
-class FMGLockContext(object):
+##########################
+# BEGIN DEPRECATED METHODS
+##########################
 
+# SOME OF THIS CODE IS DUPLICATED IN THE PLUGIN, BUT THOSE ARE PLUGIN SPECIFIC. THIS VERSION STILL ALLOWS FOR
+# THE USAGE OF PYFMG FOR CUSTOMERS WHO HAVE NOT YET UPGRADED TO ANSIBLE 2.7
+
+# LEGACY PYFMG METHODS START
+# USED TO DETERMINE LOCK CONTEXT ON A FORTIMANAGER. A DATABASE LOCKING CONCEPT THAT NEEDS TO BE ACCOUNTED FOR.
+
+class FMGLockContext(object):
+    """
+    - DEPRECATING: USING CONNECTION MANAGER NOW INSTEAD. EVENTUALLY THIS CLASS WILL DISAPPEAR. PLEASE
+    - CONVERT ALL MODULES TO CONNECTION MANAGER METHOD.
+    - LEGACY pyFMG HANDLER OBJECT: REQUIRES A CHECK FOR PY FMG AT TOP OF PAGE
+    """
     def __init__(self, fmg):
         self._fmg = fmg
         self._locked_adom_list = list()
@@ -386,6 +399,7 @@ class FMGLockContext(object):
         return self._fmg.execute(url, {}, *args, **kwargs)
 
 
+# DEPRECATED -- USE PLUGIN INSTEAD
 class AnsibleFortiManager(object):
     """
     - DEPRECATING: USING CONNECTION MANAGER NOW INSTEAD. EVENTUALLY THIS CLASS WILL DISAPPEAR. PLEASE
@@ -441,3 +455,7 @@ class AnsibleFortiManager(object):
 
     def clone(self, url, data):
         return self.fmgr_instance.clone(url, **data)
+
+##########################
+# END DEPRECATED METHODS
+##########################

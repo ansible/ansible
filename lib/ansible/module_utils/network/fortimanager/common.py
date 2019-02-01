@@ -36,6 +36,9 @@ class FMGRMethods:
     UPDATE = "update"
     ADD = "add"
     DELETE = "delete"
+    REPLACE = "replace"
+    CLONE = "clone"
+    MOVE = "move"
 
 
 BASE_HEADERS = {
@@ -161,11 +164,9 @@ class FMGRCommon(object):
 
         :param url: Connection URL to access
         :type url: string
-        :param datagram: The prepared payload for the API Request in dictionary format
-        :type datagram: dict
         :param method: The preferred API Request method (GET, ADD, POST, etc....)
         :type method: basestring
-        :param **kwargs: The payload dictionary from the module to be converted.
+        :param kwargs: The payload dictionary from the module to be converted.
 
         :return: Properly formatted dictionary payload for API Request via Connection Plugin.
         :rtype: dict
@@ -256,12 +257,13 @@ class FMGRCommon(object):
         if len(list_overrides) > 0:
             for list_variable in list_overrides:
                 try:
+                    list_variable = list_variable.replace("-", "_")
                     override_data = module.params[list_variable]
                     if override_data:
                         del paramgram[list_variable]
                         paramgram[list_variable] = override_data
-                except BaseException:
-                    raise FMGBaseException("An error occurred trying to merge custom lists for the paramgram parent")
+                except BaseException as e:
+                    raise FMGBaseException("Error occurred merging custom lists for the paramgram parent: " + str(e))
         return paramgram
 
     @staticmethod
