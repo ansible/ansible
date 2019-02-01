@@ -54,8 +54,6 @@ notes:
    - User privilege to do scp on network device should be pre-configured
      e.g. ios - need user privilege 15 by default for allowing scp.
    - Default destination of source file.
-
-.. include:: foo
 """
 
 EXAMPLES = """
