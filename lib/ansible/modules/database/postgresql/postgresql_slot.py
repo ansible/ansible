@@ -6,11 +6,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -90,10 +88,9 @@ RETURN = '''
 slot_name:
     description: Name of the slot
     returned: success, changed
-    type: string
+    type: str
     sample: "physical_slot_one"
 '''
-
 
 import traceback
 
@@ -122,7 +119,6 @@ def slot_exists(cursor, slot):
     cursor.execute(query, {'slot': slot})
     return cursor.rowcount == 1
 
-
 def slot_delete(cursor, slot):
     if slot_exists(cursor, slot):
         query = "SELECT pg_drop_replication_slot('%s')" % slot
@@ -131,7 +127,6 @@ def slot_delete(cursor, slot):
     else:
         return False
 
-
 def slot_create_physical(cursor, slot):
     if not slot_exists(cursor, slot):
         query = "SELECT pg_create_physical_replication_slot('%s')" % slot
@@ -139,7 +134,6 @@ def slot_create_physical(cursor, slot):
         return True
     else:
         return False
-
 
 def slot_create_logical(cursor, slot, decoder):
     if not slot_exists(cursor, slot):
@@ -152,7 +146,6 @@ def slot_create_logical(cursor, slot, decoder):
 # ===========================================
 # Module execution.
 #
-
 
 def main():
     module = AnsibleModule(
