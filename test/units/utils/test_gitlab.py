@@ -22,8 +22,14 @@ class FakeAnsibleModule(object):
 GITLAB_MINIMUM_PYTHON_VERSION = (2, 7)
 
 
-def python_version_check_requirement(unittest_testcase):
-    if sys.version_info < GITLAB_MINIMUM_PYTHON_VERSION:
+# Verify if the current Python version is higher than GITLAB_MINIMUM_PYTHON_VERSION
+def python_version_match_requirement():
+    return sys.version_info >= GITLAB_MINIMUM_PYTHON_VERSION
+
+
+# Skip unittest test case if python version don't match requirement
+def unitest_python_version_check_requirement(unittest_testcase):
+    if not python_version_match_requirement():
         unittest_testcase.skipTest("Python %s+ is needed for python-gitlab" % ",".join(map(str, GITLAB_MINIMUM_PYTHON_VERSION)))
 
 

@@ -1,17 +1,22 @@
 # Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from gitlab import Gitlab
-from gitlab.v4.objects import Project
-
-from httmock import with_httmock  # noqa
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.source_control.gitlab_project import GitLabProject
 
-from units.utils.test_gitlab import (FakeAnsibleModule, python_version_check_requirement,
+from units.utils.test_gitlab import (FakeAnsibleModule, unitest_python_version_check_requirement,
+                                     python_version_match_requirement,
                                      resp_get_group, resp_get_project_by_name, resp_create_project,
                                      resp_get_project, resp_delete_project, resp_get_user)
+
+# Gitlab module requirements
+from gitlab import Gitlab
+
+if python_version_match_requirement():
+    from gitlab.v4.objects import Project
+
+# Unit tests requirements
+from httmock import with_httmock  # noqa
 
 try:
     import unittest
@@ -22,7 +27,7 @@ except ImportError:
 class TestGitlabProject(unittest.TestCase):
     @with_httmock(resp_get_user)
     def setUp(self):
-        python_version_check_requirement(self)
+        unitest_python_version_check_requirement(self)
 
         self.gitlab_instance = Gitlab("http://localhost ", private_token="private_token", api_version=4)
         self.gitlab_instance.user = self.gitlab_instance.users.get(1)
