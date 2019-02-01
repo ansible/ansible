@@ -2,6 +2,56 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+
+- debug: var=vmlist
+
+- set_fact:
+   vm1: "{{ vmlist['json'][0] }}"
+
+- debug: var=vm1
+
+- name: Register facts about vm1
+  vmware_guest_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm1 | basename }}"
+  register: vm1_facts
+
+- debug: var=vm1_facts
+
+- set_fact:
+    vm_name: "VM_{{ 10000 | random }}"
+
 # Clone from existing VM with DVPG
 - name: Deploy VM from template {{ vm1 | basename }}
   vmware_guest:
@@ -11,25 +61,53 @@
     validate_certs: no
     datacenter: "{{ (vm1|basename).split('_')[0] }}"
     state: poweredon
-    folder: "{{ vm1 | dirname }}"
-    template: "{{ vm1 | basename }}"
+    folder: "{{ vm1_facts.instance.hw_folder }}"
+    template: "{{ vm1_facts.instance.hw_name }}"
     name: "{{ vm_name }}"
     disk:
       - size: 10mb
         autoselect_datastore: yes
     guest_id: rhel7_64guest
     hardware:
-      memory_mb: 512
-      num_cpus: 1
+      memory_mb: "{{ vm1_facts.instance.hw_memtotal_mb }}"
+      num_cpus: "{{ vm1_facts.instance.hw_processor_count }}"
     networks:
       - name: "DC0_DVPG0"
-  register: no_vm_result
+  register: deploy_from_template
 
-- debug: var=no_vm_result
+- debug: var=deploy_from_template
 
 - assert:
     that:
-      - "no_vm_result.changed"
+      - "deploy_from_template.changed"
+
+- name: Deploy VM from template {{ vm1 | basename }} again
+  vmware_guest:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
+    state: poweredon
+    folder: "{{ vm1_facts.instance.hw_folder }}"
+    template: "{{ vm1_facts.instance.hw_name }}"
+    name: "{{ vm_name }}"
+    disk:
+      - size: 10mb
+        autoselect_datastore: yes
+    guest_id: rhel7_64guest
+    hardware:
+      memory_mb: "{{ vm1_facts.instance.hw_memtotal_mb }}"
+      num_cpus: "{{ vm1_facts.instance.hw_processor_count }}"
+    networks:
+      - name: "DC0_DVPG0"
+  register: deploy_from_template_again
+
+- debug: var=deploy_from_template_again
+
+- assert:
+    that:
+      - "not deploy_from_template_again.changed"
 
 # New clone with DVPG
 - set_fact:
@@ -45,7 +123,7 @@
     validate_certs: no
     datacenter: "{{ (vm1|basename).split('_')[0] }}"
     state: poweredon
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ vm1_facts.instance.hw_folder }}"
     name: "{{ vm_name }}"
     disk:
       - size: 10mb
@@ -56,13 +134,13 @@
       num_cpus: 1
     networks:
       - name: "DC0_DVPG0"
-  register: no_vm_result
+  register: deploy_new_vm
 
-- debug: var=no_vm_result
+- debug: var=deploy_new_vm
 
 - assert:
     that:
-      - "no_vm_result.changed"
+      - "deploy_new_vm.changed"
 
 - name: Deploy same {{ vm_name }} VM again
   vmware_guest:
@@ -72,7 +150,7 @@
     validate_certs: no
     datacenter: "{{ (vm1|basename).split('_')[0] }}"
     state: poweredon
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ vm1_facts.instance.hw_folder }}"
     name: "{{ vm_name }}"
     disk:
       - size: 10mb
@@ -81,12 +159,15 @@
     hardware:
       memory_mb: 512
       num_cpus: 1
+      hotadd_cpu: true
+      hotremove_cpu: true
+      hotadd_memory: true
     networks:
       - name: "DC0_DVPG0"
-  register: no_vm_result
+  register: deploy_new_vm
 
-- debug: var=no_vm_result
+- debug: var=deploy_new_vm
 
 - assert:
     that:
-      - "not no_vm_result.changed"
+      - "not deploy_new_vm.changed"

@@ -2,20 +2,67 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>, Tim Steinbach <tim@nequissimus.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+
+- debug: var=vmlist
+
+- set_fact:
+   vm1: "{{ vmlist['json'][0] }}"
+
+- debug: var=vm1
+
+- name: Register facts about vm1
+  vmware_guest_facts:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: no
+    datacenter: "{{ (vm1|basename).split('_')[0] }}"
+    folder: "{{ vm1 | dirname }}"
+    name: "{{ vm1 | basename }}"
+  register: vm1_facts
+
+- debug: var=vm1_facts
+
 - name: Create dvswitch
   vmware_dvswitch:
     validate_certs: False
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter_name: "{{ (vm1 | basename).split('_')[0] }}"
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    datacenter: "{{ vm1_facts.instance.hw_folder | dirname }}"
     switch_name: dvSwitch
     uplink_quantity: 2
     discovery_proto: lldp
     discovery_operation: both
     mtu: 9000
     state: present
-  register: dvswitch
 
 - name: Add portgroup
   vmware_dvs_portgroup:
@@ -24,12 +71,11 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     portgroup_name: "portgroup_network"
-    switch_name: "{{ dvswitch.switch_name }}"
+    switch_name: dvSwitch
     vlan_id: "1"
     num_ports: 2
     portgroup_type: earlyBinding
     state: present
-  register: dvsportgroup
 
 - name: create new VMs with portgroup
   vmware_guest:
@@ -39,18 +85,19 @@
     password: "{{ vcenter_password }}"
     name: new_vm_pg
     guest_id: centos64Guest
-    datacenter: "{{ (vm1 | basename).split('_')[0] }}"
+    datacenter: "{{ vm1_facts.instance.hw_folder | dirname }}"
     disk:
       - size: 3mb
         type: thin
         autoselect_datastore: yes
     networks:
-      - name: "{{ dvsportgroup.portgroup_name }}"
+      - name: "portgroup_network"
+        dvswitch_name: dvSwitch
     hardware:
         num_cpus: 1
         memory_mb: 512
     state: poweredoff
-    folder: "{{ vm1 | dirname }}"
+    folder: "{{ vm1_facts.instance.hw_folder }}"
   register: vm_with_portgroup
   ignore_errors: no
 
@@ -59,3 +106,33 @@
 - assert:
     that:
       - "vm_with_portgroup.changed"
+
+- name: create new VMs with portgroup again
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: new_vm_pg
+    guest_id: centos64Guest
+    datacenter: "{{ vm1_facts.instance.hw_folder | dirname }}"
+    disk:
+      - size: 3mb
+        type: thin
+        autoselect_datastore: yes
+    networks:
+      - name: "portgroup_network"
+        dvswitch_name: dvSwitch
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    state: poweredoff
+    folder: "{{ vm1_facts.instance.hw_folder }}"
+  register: vm_with_portgroup_again
+  ignore_errors: no
+
+- debug: var=vm_with_portgroup_again
+
+- assert:
+    that:
+      - "not vm_with_portgroup_again.changed"
