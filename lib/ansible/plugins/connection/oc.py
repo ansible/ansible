@@ -127,7 +127,7 @@ DOCUMENTATION = """
           - Path to a CA certificate used to authenticate with the API.
         default: ''
         vars:
-          - name: ansible_oc_cert_file
+          - name: ansible_oc_ssl_ca_cert
         env:
           - name: K8S_AUTH_SSL_CA_CERT
       oc_verify_ssl:
@@ -137,7 +137,7 @@ DOCUMENTATION = """
         vars:
           - name: ansible_oc_verify_ssl
         env:
-          - name: K8s_AUTH_VERIFY_SSL
+          - name: K8S_AUTH_VERIFY_SSL
 """
 
 from ansible.plugins.connection.kubectl import Connection as KubectlConnection

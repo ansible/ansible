@@ -105,10 +105,11 @@ EXAMPLES = r'''
     smtp_server_password: mail-secret
     local_host_name: smtp.mydomain.com
     from_address: no-reply@mydomain.com
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -116,7 +117,7 @@ RETURN = r'''
 smtp_server:
   description: The new C(smtp_server) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: mail.mydomain.com
 smtp_server_port:
   description: The new C(smtp_server_port) value of the SMTP configuration.
@@ -126,17 +127,17 @@ smtp_server_port:
 local_host_name:
   description: The new C(local_host_name) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: smtp.mydomain.com
 from_address:
   description: The new C(from_address) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: no-reply@mydomain.com
 encryption:
   description: The new C(encryption) value of the SMTP configuration.
   returned: changed
-  type: string
+  type: str
   sample: tls
 authentication:
   description: Whether the authentication parameters are active or not.

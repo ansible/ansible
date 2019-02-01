@@ -61,10 +61,11 @@ EXAMPLES = r'''
     port_misuse_policy: misuse1
     timer_policy_enabled: yes
     port_misuse_policy_enabled: yes
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -72,17 +73,17 @@ RETURN = r'''
 timer_policy:
   description: The new timer policy attached to the resource.
   returned: changed
-  type: string
+  type: str
   sample: /Common/timer1
 port_misuse_policy:
   description: The new port misuse policy attached to the resource.
   returned: changed
-  type: string
+  type: str
   sample: /Common/misuse1
 description:
   description: New description of the resource.
   returned: changed
-  type: string
+  type: str
   sample: My service policy description
 '''
 

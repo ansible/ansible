@@ -69,19 +69,19 @@ RETURN = r'''
 hw_bios_date:
     description: BIOS date
     returned: always
-    type: string
+    type: str
     sample: 05/05/2011
 
 hw_bios_version:
     description: BIOS version
     returned: always
-    type: string
+    type: str
     sample: P68
 
 hw_ethX:
     description: Interface information (for each interface)
     returned: always
-    type: dictionary
+    type: dict
     sample:
       - macaddress: 00:11:22:33:44:55
         macaddress_dash: 00-11-22-33-44-55
@@ -89,7 +89,7 @@ hw_ethX:
 hw_eth_ilo:
     description: Interface information (for the iLO network interface)
     returned: always
-    type: dictionary
+    type: dict
     sample:
       - macaddress: 00:11:22:33:44:BA
       - macaddress_dash: 00-11-22-33-44-BA
@@ -97,25 +97,25 @@ hw_eth_ilo:
 hw_product_name:
     description: Product name
     returned: always
-    type: string
+    type: str
     sample: ProLiant DL360 G7
 
 hw_product_uuid:
     description: Product UUID
     returned: always
-    type: string
+    type: str
     sample: ef50bac8-2845-40ff-81d9-675315501dac
 
 hw_system_serial:
     description: System serial number
     returned: always
-    type: string
+    type: str
     sample: ABC12345D6
 
 hw_uuid:
     description: Hardware UUID
     returned: always
-    type: string
+    type: str
     sample: 123456ABC78901D2
 '''
 
@@ -138,7 +138,7 @@ warnings.simplefilter('ignore')
 def parse_flat_interface(entry, non_numeric='hw_eth_ilo'):
     try:
         factname = 'hw_eth' + str(int(entry['Port']) - 1)
-    except:
+    except Exception:
         factname = non_numeric
 
     facts = {
@@ -193,7 +193,7 @@ def main():
                     if name.startswith('Port'):
                         try:
                             factname = 'hw_eth' + str(int(value) - 1)
-                        except:
+                        except Exception:
                             factname = 'hw_eth_ilo'
                     elif name.startswith('MAC'):
                         facts[factname] = {
@@ -208,7 +208,7 @@ def main():
                 if name.startswith('Port'):
                     try:
                         factname = 'hw_iscsi' + str(int(value) - 1)
-                    except:
+                    except Exception:
                         factname = 'hw_iscsi_ilo'
                 elif name.startswith('MAC'):
                     facts[factname] = {

@@ -85,7 +85,7 @@ RETURN = r'''
 description:
   description: The new description of the license key.
   returned: changed
-  type: string
+  type: str
   sample: My license for BIG-IP 1
 '''
 
@@ -471,6 +471,7 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         required_if=spec.required_if,
     )
+
     client = F5RestClient(**module.params)
 
     try:

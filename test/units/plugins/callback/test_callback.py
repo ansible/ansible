@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import re
 import textwrap
 import types
@@ -26,6 +27,7 @@ import types
 from units.compat import unittest
 from units.compat.mock import patch, mock_open, MagicMock
 
+import pytest
 
 from ansible.plugins.callback import CallbackBase
 
@@ -133,7 +135,7 @@ class TestCallbackResults(unittest.TestCase):
         self.assertEqual(result, expected_result)
 
 
-class TestCallbackDumpResults(unittest.TestCase):
+class TestCallbackDumpResults(object):
     def test_internal_keys(self):
         cb = CallbackBase()
         result = {'item': 'some_item',
@@ -144,26 +146,26 @@ class TestCallbackDumpResults(unittest.TestCase):
                   'bad_dict_key': {'_ansible_internal_blah': 'SENTINEL'},
                   'changed': True}
         json_out = cb._dump_results(result)
-        self.assertFalse('"_ansible_' in json_out)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertTrue('LEFTIN' in json_out)
+        assert '"_ansible_' not in json_out
+        assert 'SENTINEL' not in json_out
+        assert 'LEFTIN' in json_out
 
     def test_exception(self):
         cb = CallbackBase()
         result = {'item': 'some_item LEFTIN',
                   'exception': ['frame1', 'SENTINEL']}
         json_out = cb._dump_results(result)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertFalse('exception' in json_out)
-        self.assertTrue('LEFTIN' in json_out)
+        assert 'SENTINEL' not in json_out
+        assert 'exception' not in json_out
+        assert 'LEFTIN' in json_out
 
     def test_verbose(self):
         cb = CallbackBase()
         result = {'item': 'some_item LEFTIN',
                   '_ansible_verbose_always': 'chicane'}
         json_out = cb._dump_results(result)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertTrue('LEFTIN' in json_out)
+        assert 'SENTINEL' not in json_out
+        assert 'LEFTIN' in json_out
 
     def test_diff(self):
         cb = CallbackBase()
@@ -171,8 +173,20 @@ class TestCallbackDumpResults(unittest.TestCase):
                   'diff': ['remove stuff', 'added LEFTIN'],
                   '_ansible_verbose_always': 'chicane'}
         json_out = cb._dump_results(result)
-        self.assertFalse('SENTINEL' in json_out)
-        self.assertTrue('LEFTIN' in json_out)
+        assert 'SENTINEL' not in json_out
+        assert 'LEFTIN' in json_out
+
+    def test_mixed_keys(self):
+        cb = CallbackBase()
+        result = {3: 'pi',
+                  'tau': 6}
+        json_out = cb._dump_results(result)
+        round_trip_result = json.loads(json_out)
+        assert len(round_trip_result) == 2
+        assert '3' in round_trip_result
+        assert 'tau' in round_trip_result
+        assert round_trip_result['3'] == 'pi'
+        assert round_trip_result['tau'] == 6
 
 
 class TestCallbackDiff(unittest.TestCase):

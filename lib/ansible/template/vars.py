@@ -107,7 +107,7 @@ class AnsibleJ2Vars(Mapping):
             except AnsibleUndefinedVariable:
                 raise
             except Exception as e:
-                msg = getattr(e, 'message') or to_native(e)
+                msg = getattr(e, 'message', None) or to_native(e)
                 raise AnsibleError("An unhandled exception occurred while templating '%s'. "
                                    "Error was a %s, original message: %s" % (to_native(variable), type(e), msg))
 

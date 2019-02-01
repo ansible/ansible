@@ -179,13 +179,14 @@ options:
     description:
       - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed
         are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str),
-        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GB), iops (int) - device_type
+        encrypted (bool; False), snapshot (str), volume_type (str), volume_size (int, GiB), iops (int) - device_type
         is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
   ebs_optimized:
     version_added: "1.6"
     description:
       - whether instance is using optimized EBS volumes, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html).
     default: 'no'
+    type: bool
   exact_count:
     version_added: "1.5"
     description:
@@ -212,7 +213,7 @@ options:
 author:
     - "Tim Gerla (@tgerla)"
     - "Lester Wade (@lwade)"
-    - "Seth Vidal"
+    - "Seth Vidal (@skvidal)"
 extends_documentation_fragment: aws
 '''
 
@@ -607,7 +608,7 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
         if isinstance(tags, str):
             try:
                 tags = literal_eval(tags)
-            except:
+            except Exception:
                 pass
 
         # if not a string type, convert and make sure it's a text string
@@ -1101,7 +1102,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 for volume in volumes:
                     if 'device_name' not in volume:
                         module.fail_json(msg='Device name must be set for volume')
-                    # Minimum volume size is 1GB. We'll use volume size explicitly set to 0
+                    # Minimum volume size is 1GiB. We'll use volume size explicitly set to 0
                     # to be a signal not to create this volume
                     if 'volume_size' not in volume or int(volume['volume_size']) > 0:
                         bdm[volume['device_name']] = create_block_device(module, ec2, volume)
@@ -1598,12 +1599,12 @@ def main():
             source_dest_check=dict(type='bool', default=None),
             termination_protection=dict(type='bool', default=None),
             state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
-            instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),
+            instance_initiated_shutdown_behavior=dict(default='stop', choices=['stop', 'terminate']),
             exact_count=dict(type='int', default=None),
             count_tag=dict(),
             volumes=dict(type='list'),
             ebs_optimized=dict(type='bool', default=False),
-            tenancy=dict(default='default'),
+            tenancy=dict(default='default', choices=['default', 'dedicated']),
             network_interfaces=dict(type='list', aliases=['network_interface'])
         )
     )

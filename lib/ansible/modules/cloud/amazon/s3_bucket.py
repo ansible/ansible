@@ -21,9 +21,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: s3_bucket
-short_description: Manage S3 buckets in AWS, Ceph, Walrus and FakeS3
+short_description: Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
 description:
-    - Manage S3 buckets in AWS, Ceph, Walrus and FakeS3
+    - Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
 version_added: "2.0"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
@@ -43,7 +43,7 @@ options:
       - The JSON policy as a string.
   s3_url:
     description:
-      - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc.
+      - S3 URL endpoint for usage with DigitalOcean, Ceph, Eucalyptus and fakes3 etc.
       - Assumes AWS if not specified.
       - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
@@ -51,13 +51,14 @@ options:
     description:
       - Enable API compatibility with Ceph. It takes into account the S3 API subset working
         with Ceph in order to provide the same module behaviour where possible.
+    type: bool
     version_added: "2.2"
   requester_pays:
     description:
       - With Requester Pays buckets, the requester instead of the bucket owner pays the cost
         of the request and the data download from the bucket.
     type: bool
-    default: 'no'
+    default: False
   state:
     description:
       - Create or remove the s3 bucket
@@ -110,6 +111,11 @@ EXAMPLES = '''
       example: tag1
       another: tag2
 
+# Create a simple DigitalOcean Spaces bucket using their provided regional endpoint
+- s3_bucket:
+    name: mydobucket
+    s3_url: 'https://nyc3.digitaloceanspaces.com'
+
 '''
 
 import json
@@ -119,7 +125,7 @@ import time
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import to_text
-from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import compare_policies, ec2_argument_spec, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, AWSRetry
 
@@ -196,7 +202,7 @@ def create_or_update_bucket(s3_client, module, location):
         if exp.response['Error']['Code'] != 'NotImplemented' or requester_pays is not None:
             module.fail_json_aws(exp, msg="Failed to get bucket request payment")
     else:
-        if requester_pays is not None:
+        if requester_pays:
             payer = 'Requester' if requester_pays else 'BucketOwner'
             if requester_pays_status != payer:
                 put_bucket_request_payment(s3_client, name, payer)
@@ -446,10 +452,13 @@ def paginated_list(s3_client, **pagination_params):
 
 
 def paginated_versions_list(s3_client, **pagination_params):
-    pg = s3_client.get_paginator('list_object_versions')
-    for page in pg.paginate(**pagination_params):
-        # We have to merge the Versions and DeleteMarker lists here, as DeleteMarkers can still prevent a bucket deletion
-        yield [(data['Key'], data['VersionId']) for data in (page.get('Versions', []) + page.get('DeleteMarkers', []))]
+    try:
+        pg = s3_client.get_paginator('list_object_versions')
+        for page in pg.paginate(**pagination_params):
+            # We have to merge the Versions and DeleteMarker lists here, as DeleteMarkers can still prevent a bucket deletion
+            yield [(data['Key'], data['VersionId']) for data in (page.get('Versions', []) + page.get('DeleteMarkers', []))]
+    except is_boto3_error_code('NoSuchBucket'):
+        yield []
 
 
 def destroy_bucket(s3_client, module):
@@ -541,7 +550,7 @@ def main():
             force=dict(required=False, default='no', type='bool'),
             policy=dict(required=False, default=None, type='json'),
             name=dict(required=True, type='str'),
-            requester_pays=dict(default='no', type='bool'),
+            requester_pays=dict(default=False, type='bool'),
             s3_url=dict(aliases=['S3_URL'], type='str'),
             state=dict(default='present', type='str', choices=['present', 'absent']),
             tags=dict(required=False, default=None, type='dict'),

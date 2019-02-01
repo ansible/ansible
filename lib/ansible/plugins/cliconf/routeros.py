@@ -28,12 +28,6 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 
 class Cliconf(CliconfBase):
 
@@ -41,19 +35,19 @@ class Cliconf(CliconfBase):
         device_info = {}
         device_info['network_os'] = 'RouterOS'
 
-        resource = self.get(b'/system resource print')
+        resource = self.get('/system resource print')
         data = to_text(resource, errors='surrogate_or_strict').strip()
         match = re.search(r'version: (\S+)', data)
         if match:
             device_info['network_os_version'] = match.group(1)
 
-        routerboard = self.get(b'/system routerboard print')
+        routerboard = self.get('/system routerboard print')
         data = to_text(routerboard, errors='surrogate_or_strict').strip()
         match = re.search(r'model: (.+)$', data, re.M)
         if match:
             device_info['network_os_model'] = match.group(1)
 
-        identity = self.get(b'/system identity print')
+        identity = self.get('/system identity print')
         data = to_text(identity, errors='surrogate_or_strict').strip()
         match = re.search(r'name: (.+)$', data, re.M)
         if match:
@@ -71,8 +65,5 @@ class Cliconf(CliconfBase):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)

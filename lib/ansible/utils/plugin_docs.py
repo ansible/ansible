@@ -8,14 +8,11 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSet, MutableSequence
-from ansible.parsing.plugin_docs import read_docstring, read_docstub
+from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 # modules that are ok that they do not have documentation strings
@@ -72,6 +69,13 @@ def add_fragments(doc, filename, fragment_loader):
                     doc['notes'] = []
                 doc['notes'].extend(notes)
 
+        if 'seealso' in fragment:
+            seealso = fragment.pop('seealso')
+            if seealso:
+                if 'seealso' not in doc:
+                    doc['seealso'] = []
+                doc['seealso'].extend(seealso)
+
         if 'options' not in fragment:
             raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
@@ -93,7 +97,7 @@ def add_fragments(doc, filename, fragment_loader):
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
     """
-    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the module_docs_fragments directory.
+    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)

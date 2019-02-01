@@ -21,7 +21,7 @@ short_description: NetApp Element Software Snapshot Schedules
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create, destroy, or update accounts on ElementSW
 
@@ -175,7 +175,7 @@ RETURN = """
 schedule_id:
     description: Schedule ID of the newly created schedule
     returned: success
-    type: string
+    type: str
 """
 import traceback
 from ansible.module_utils.basic import AnsibleModule
@@ -187,7 +187,7 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     from solidfire.custom.models import DaysOfWeekFrequency, Weekday, DaysOfMonthFrequency
     from solidfire.common import ApiServerError
-except:
+except Exception:
     HAS_SF_SDK = False
 
 

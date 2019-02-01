@@ -7,7 +7,10 @@ __metaclass__ = type
 
 from itertools import product
 
+import mock
 import pytest
+
+from ansible.module_utils.six.moves import builtins
 
 # the module we are actually testing (sort of)
 from ansible.module_utils.facts.system.distribution import DistributionFactCollector
@@ -507,6 +510,26 @@ BUG_REPORT_URL="https://bugs.devuan.org/"
         }
     },
     {
+        'name': "Devuan",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="Devuan GNU/Linux ascii"
+NAME="Devuan GNU/Linux"
+ID=devuan
+HOME_URL="https://www.devuan.org/"
+SUPPORT_URL="https://devuan.org/os/community"
+BUG_REPORT_URL="https://bugs.devuan.org/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': u'Devuan',
+            'distribution_major_version': u'NA',
+            'distribution_release': u'ascii',
+            'os_family': 'Debian',
+            'distribution_version': u'NA'
+        }
+    },
+    {
         "platform.dist": [
             "Ubuntu",
             "16.04",
@@ -597,6 +620,31 @@ VERSION_ID="12.04"
                    'distribution_release': u'precise',
                    "os_family": "Debian",
                    'distribution_version': u'12.04'}
+    },
+    {
+        'name': 'Kali 2019.1',
+        'input': {
+            '/etc/os-release': ("PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2019.1\"\n"
+                                "VERSION_ID=\"2019.1\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.kali.org/\"\n"
+                                "SUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\n"),
+            '/etc/lsb-release': ("DISTRIB_ID=Kali\nDISTRIB_RELEASE=kali-rolling\nDISTRIB_CODENAME=kali-rolling\n"
+                                 "DISTRIB_DESCRIPTION=\"Kali GNU/Linux Rolling\"\n"),
+            '/usr/lib/os-release': ("PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2019.1\"\n"
+                                    "VERSION_ID=\"2019.1\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\nHOME_URL=\"https://www.kali.org/\"\n"
+                                    "SUPPORT_URL=\"https://forums.kali.org/\"\nBUG_REPORT_URL=\"https://bugs.kali.org/\"\n")
+        },
+        'platform.dist': [
+            'kali',
+            '2019.1',
+            ''
+        ],
+        'result': {
+            'distribution': 'Kali',
+            'distribution_version': '2019.1',
+            'distribution_release': 'kali-rolling',
+            'distribution_major_version': '2019',
+            'os_family': 'Debian'
+        }
     },
     {
         "platform.dist": [
@@ -796,10 +844,12 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 10",
         "uname_v": "Generic_141445-09",
+        "uname_r": "5.10",
         "result": {
             "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "10",
             "distribution_version": "10"
         },
         "platform.dist": [
@@ -817,10 +867,12 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 11",
         "uname_v": "11.0",
+        "uname_r": "5.11",
         "result": {
             "distribution_release": "Oracle Solaris 11 11/11 X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "11",
             "distribution_version": "11"
         },
         "platform.dist": [
@@ -836,6 +888,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
     {
         "name": "Solaris 11.3",
+        "uname_r": "5.11",
         "platform.dist": [
             "",
             "",
@@ -843,8 +896,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         ],
         "input": {
             "/etc/release": (
-                "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  "
-                "All rights reserved.\n                            Assembled 06 October 2015\n"
+                "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2018, Oracle and/or its affiliates.  "
+                "All rights reserved.\n                              Assembled 09 May 2018\n"
             )
         },
         "platform.system": "SunOS",
@@ -852,11 +905,36 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 11.3 X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "11",
             "distribution_version": "11.3"
         }
     },
     {
+        "name": "Solaris 11.4",
+        "uname_r": "5.11",
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": (
+                "                            Oracle Solaris 11.4 SPARC\n    Copyright (c) 1983, 2018, Oracle and/or its affiliates."
+                "  All rights reserved.\n                           Assembled 14 September 2018\n"
+            )
+        },
+        "platform.system": "SunOS",
+        "result": {
+            "distribution_release": "Oracle Solaris 11.4 SPARC",
+            "distribution": "Solaris",
+            "os_family": "Solaris",
+            "distribution_major_version": "11",
+            "distribution_version": "11.4"
+        }
+    },
+    {
         "name": "Solaris 10",
+        "uname_r": "5.10",
         "platform.dist": [
             "",
             "",
@@ -871,6 +949,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "10",
             "distribution_version": "10"
         }
     },
@@ -969,36 +1048,49 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
 
     # ClearLinux https://github.com/ansible/ansible/issues/31501#issuecomment-340861535
-    {
-        "platform.dist": [
-            "Clear Linux OS for Intel Architecture",
-            "18450",
-            "clear-linux-os"
-        ],
-        "input": {
-            "/usr/lib/os-release": '''
-NAME="Clear Linux OS for Intel Architecture"
+{
+    "platform.dist": [
+        "Clear Linux OS",
+        "26580",
+        "clear-linux-os"
+    ],
+    "input": {
+        "/etc/os-release": '''
+NAME="Clear Linux OS"
 VERSION=1
 ID=clear-linux-os
-VERSION_ID=18450
-PRETTY_NAME="Clear Linux OS for Intel Architecture"
+ID_LIKE=clear-linux-os
+VERSION_ID=26580
+PRETTY_NAME="Clear Linux OS"
+ANSI_COLOR="1;35"
+HOME_URL="https://clearlinux.org"
+SUPPORT_URL="https://clearlinux.org"
+BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
+PRIVACY_POLICY_URL="http://www.intel.com/privacy"
+''',
+        "/usr/lib/os-release": '''
+NAME="Clear Linux OS"
+VERSION=1
+ID=clear-linux-os
+ID_LIKE=clear-linux-os
+VERSION_ID=26580
+PRETTY_NAME="Clear Linux OS"
 ANSI_COLOR="1;35"
 HOME_URL="https://clearlinux.org"
 SUPPORT_URL="https://clearlinux.org"
 BUG_REPORT_URL="mailto:dev@lists.clearlinux.org"
 PRIVACY_POLICY_URL="http://www.intel.com/privacy"
 '''
-        },
-        "name": "Clear Linux OS for Intel Architecture 1",
-        "result": {
-            "distribution_release": "clear-linux-os",
-            "distribution": "ClearLinux",
-            "distribution_major_version": "18450",
-            "os_family": "ClearLinux",
-            "distribution_version": "18450"
-        }
     },
-
+    "name": "ClearLinux 26580",
+    "result": {
+        "distribution_release": "clear-linux-os",
+        "distribution": "Clear Linux OS",
+        "distribution_major_version": "26580",
+        "os_family": "ClearLinux",
+        "distribution_version": "26580"
+    }
+},
     # ArchLinux with no /etc/arch-release but with a /etc/os-release with NAME=Arch Linux
     # The fact needs to map 'Arch Linux' to 'Archlinux' for compat with 2.3 and earlier facts
     {
@@ -1031,7 +1123,7 @@ def test_distribution_version(am, mocker, testcase):
     * input files that are faked
       * those should be complete and also include "irrelevant" files that might be mistaken as coming from other distributions
       * all files that are not listed here are assumed to not exist at all
-    * the output of pythons platform.dist()
+    * the output of ansible.module_utils.distro.linux_distribution() [called platform.dist() for historical reasons]
     * results for the ansible variables distribution* and os_family
 
     """
@@ -1048,8 +1140,13 @@ def test_distribution_version(am, mocker, testcase):
             data = data.strip()
         return data
 
-    def mock_get_uname_version(am):
-        return testcase.get('uname_v', None)
+    def mock_get_uname(am, flags):
+        if '-v' in flags:
+            return testcase.get('uname_v', None)
+        elif '-r' in flags:
+            return testcase.get('uname_r', None)
+        else:
+            return None
 
     def mock_file_exists(fname, allow_empty=False):
         if fname not in testcase['input']:
@@ -1068,13 +1165,42 @@ def test_distribution_version(am, mocker, testcase):
     def mock_platform_version():
         return testcase.get('platform.version', '')
 
+    def mock_distro_name():
+        return testcase['platform.dist'][0]
+
+    def mock_distro_version():
+        return testcase['platform.dist'][1]
+
+    def mock_distro_codename():
+        return testcase['platform.dist'][2]
+
+    def mock_open(filename, mode='r'):
+        if filename in testcase['input']:
+            file_object = mocker.mock_open(read_data=testcase['input'][filename]).return_value
+            file_object.__iter__.return_value = testcase['input'][filename].splitlines(True)
+        else:
+            file_object = real_open(filename, mode)
+        return file_object
+
+    def mock_os_path_is_file(filename):
+        if filename in testcase['input']:
+            return True
+        return False
+
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
-    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname', mock_get_uname)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
-    mocker.patch('platform.dist', lambda: testcase['platform.dist'])
+    mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
+    mocker.patch('ansible.module_utils.distro.id', mock_distro_name)
+    mocker.patch('ansible.module_utils.distro.version', mock_distro_version)
+    mocker.patch('ansible.module_utils.distro.codename', mock_distro_codename)
+    mocker.patch('os.path.isfile', mock_os_path_is_file)
     mocker.patch('platform.system', mock_platform_system)
     mocker.patch('platform.release', mock_platform_release)
     mocker.patch('platform.version', mock_platform_version)
+
+    real_open = builtins.open
+    mocker.patch.object(builtins, 'open', new=mock_open)
 
     # run Facts()
     distro_collector = DistributionFactCollector()

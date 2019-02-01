@@ -13,7 +13,7 @@ RETURN = '''
 success:
     description: flag indicating that execution was successful
     returned: success
-    type: boolean
+    type: bool
     sample: True
 ...
 '''
@@ -867,7 +867,7 @@ class Collector(LogicMonitor):
                                           "arch": arch}))
                     with open(installfilepath, "w") as write_file:
                         write_file.write(installer)
-                except:
+                except Exception:
                     self.fail(msg="Unable to open installer file for writing")
             else:
                 self.module.debug("Collector installer already exists")

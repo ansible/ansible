@@ -23,9 +23,10 @@ version:
 
 .PHONY: summary
 summary:
-	@echo 'release_summary: |\n\
-	   | Release Date: $(shell date '+%Y-%m-%d')\n\
-	   | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_' > \
+	@printf '%s\n%s\n%s\n' \
+	'release_summary: |' \
+	'   | Release Date: $(shell date '+%Y-%m-%d')' \
+	'   | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__' > \
 	../../changelogs/fragments/v${version}_summary.yaml
 
 .PHONY: changelog

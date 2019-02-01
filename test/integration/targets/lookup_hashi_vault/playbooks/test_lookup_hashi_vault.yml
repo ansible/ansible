@@ -1,4 +1,4 @@
-- hosts: testhost
+- hosts: localhost
   tasks:
     - name: register pyOpenSSL version
       command: "{{ ansible_python.executable }} -c 'import OpenSSL; print(OpenSSL.__version__)'"

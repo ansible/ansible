@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'certified'}
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - "Run system-cli commands on ONTAP"
 extends_documentation_fragment:
@@ -28,14 +28,14 @@ options:
 EXAMPLES = """
     - name: run ontap cli command
       na_ontap_command:
-        hostname: "{{ hostname }} "
+        hostname: "{{ hostname }}"
         username: "{{ admin username }}"
         password: "{{ admin password }}"
         command: ['version']
 
     - name: run ontap cli command
       na_ontap_command:
-        hostname: "{{ hostname }} "
+        hostname: "{{ hostname }}"
         username: "{{ admin username }}"
         password: "{{ admin password }}"
         command: ['network', 'interface', 'show']

@@ -30,7 +30,7 @@ notes:
   - To create a new runner at least the C(private_token), C(registration_token), C(name) and C(url) options are required.
   - Runners need to have unique names.
 version_added: 2.8
-author: "Samy Coenen (SamyCoenen)"
+author: "Samy Coenen (@SamyCoenen)"
 options:
     private_token:
         description:
@@ -138,7 +138,7 @@ RETURN = '''
 changed:
     description: Values changed on the API
     returned: changed
-    type: boolean
+    type: bool
     sample: false
 msg:
     description: Information returned from the API when updating a runner, a create only returns the id and token.

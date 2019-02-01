@@ -15,7 +15,7 @@ version_added: '2.5'
 short_description: Gather facts about ec2 AMIs
 description: Gather facts about ec2 AMIs
 author:
-  - Prasad Katti, @prasadkatti
+  - Prasad Katti (@prasadkatti)
 requirements: [ boto3 ]
 options:
   image_ids:
@@ -79,7 +79,7 @@ images:
     architecture:
       description: The architecture of the image
       returned: always
-      type: string
+      type: str
       sample: x86_64
     block_device_mappings:
       description: Any block device mapping entries
@@ -89,7 +89,7 @@ images:
         device_name:
           description: The device name exposed to the instance
           returned: always
-          type: string
+          type: str
           sample: /dev/sda1
         ebs:
           description: EBS volumes
@@ -98,12 +98,12 @@ images:
     creation_date:
       description: The date and time the image was created
       returned: always
-      type: string
+      type: str
       sample: '2017-10-16T19:22:13.000Z'
     description:
       description: The description of the AMI
       returned: always
-      type: string
+      type: str
       sample: ''
     ena_support:
       description: whether enhanced networking with ENA is enabled
@@ -113,22 +113,22 @@ images:
     hypervisor:
       description: The hypervisor type of the image
       returned: always
-      type: string
+      type: str
       sample: xen
     image_id:
       description: The ID of the AMI
       returned: always
-      type: string
+      type: str
       sample: ami-5b466623
     image_location:
       description: The location of the AMI
       returned: always
-      type: string
+      type: str
       sample: 408466080000/Webapp
     image_type:
       description: The type of image
       returned: always
-      type: string
+      type: str
       sample: machine
     launch_permissions:
       description: launch permissions of the ami
@@ -138,12 +138,12 @@ images:
     name:
       description: The name of the AMI that was provided during image creation
       returned: always
-      type: string
+      type: str
       sample: Webapp
     owner_id:
       description: The AWS account ID of the image owner
       returned: always
-      type: string
+      type: str
       sample: '408466080000'
     public:
       description: whether the image has public launch permissions
@@ -153,22 +153,22 @@ images:
     root_device_name:
       description: The device name of the root device
       returned: always
-      type: string
+      type: str
       sample: /dev/sda1
     root_device_type:
       description: The type of root device used by the AMI
       returned: always
-      type: string
+      type: str
       sample: ebs
     sriov_net_support:
       description: whether enhanced networking is enabled
       returned: always
-      type: string
+      type: str
       sample: simple
     state:
       description: The current state of the AMI
       returned: always
-      type: string
+      type: str
       sample: available
     tags:
       description: Any tags assigned to the image
@@ -177,7 +177,7 @@ images:
     virtualization_type:
       description: The type of virtualization of the AMI
       returned: always
-      type: string
+      type: str
       sample: hvm
 '''
 

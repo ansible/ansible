@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -99,26 +99,27 @@ notes:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Create a sync-only device group
   bigip_device_group:
     name: foo-group
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create a sync-only device group with auto-sync enabled
   bigip_device_group:
     name: foo-group
     auto_sync: yes
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -136,12 +137,12 @@ full_sync:
 description:
   description: The new description of the device group.
   returned: changed
-  type: string
+  type: str
   sample: this is a device group
 type:
   description: The new type of the device group.
   returned: changed
-  type: string
+  type: str
   sample: sync-failover
 auto_sync:
   description: The new auto_sync value of the device group.
@@ -164,27 +165,21 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -202,7 +197,7 @@ class Parameters(AnsibleF5Parameters):
         'type',
         'autoSync',
         'incrementalConfigSyncSizeMax',
-        'networkFailover'
+        'networkFailover',
     ]
     returnables = [
         'save_on_auto_sync',
@@ -285,7 +280,11 @@ class Changes(Parameters):
         result = {}
         try:
             for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
+                change = getattr(self, returnable)
+                if isinstance(change, dict):
+                    result.update(change)
+                else:
+                    result[returnable] = change
             result = self._filter_params(result)
         except Exception:
             pass
@@ -367,7 +366,7 @@ class ModuleManager(object):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
         self.want = ModuleParameters(params=self.module.params)
-        self.have = None
+        self.have = ApiParameters()
         self.changes = UsableChanges()
 
     def _set_changed_options(self):
@@ -391,31 +390,6 @@ class ModuleManager(object):
             return True
         return False
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
-
-    def exec_module(self):
-        changed = False
-        result = dict()
-        state = self.want.state
-
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
-
-        reportable = ReportableChanges(params=self.changes.to_return())
-        changes = reportable.to_return()
-        result.update(**changes)
-        result.update(dict(changed=changed))
-        return result
-
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
@@ -424,17 +398,34 @@ class ModuleManager(object):
                 version=warning['version']
             )
 
+    def exec_module(self):
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
+
     def present(self):
         if self.exists():
             return self.update()
         else:
             return self.create()
 
-    def exists(self):
-        result = self.client.api.tm.cm.device_groups.device_group.exists(
-            name=self.want.name
-        )
-        return result
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -454,14 +445,6 @@ class ModuleManager(object):
             raise F5ModuleError("Failed to delete the device group")
         return True
 
-    def remove_members_in_group_from_device(self):
-        resource = self.client.api.tm.cm.device_groups.device_group.load(
-            name=self.want.name
-        )
-        collection = resource.devices_s.get_collection()
-        for item in collection:
-            item.delete()
-
     def create(self):
         self._set_changed_options()
         if self.want.type == 'sync-only' and self.want.network_failover is not None:
@@ -473,38 +456,120 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
-    def create_on_device(self):
-        params = self.changes.api_params()
-        self.client.api.tm.cm.device_groups.device_group.create(
-            name=self.want.name,
-            **params
-        )
-
-    def update_on_device(self):
-        params = self.changes.api_params()
-        resource = self.client.api.tm.cm.device_groups.device_group.load(
-            name=self.want.name
-        )
-        resource.modify(**params)
-
     def absent(self):
         if self.exists():
             return self.remove()
         return False
 
-    def remove_from_device(self):
-        resource = self.client.api.tm.cm.device_groups.device_group.load(
-            name=self.want.name
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/cm/device-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
         )
-        if resource:
-            resource.delete()
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def remove_members_in_group_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/cm/device-group/{2}/devices/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        for item in response['items']:
+            new_uri = uri + '{0}'.format(item['name'])
+            response = self.client.api.delete(new_uri)
+            if response.status == 200:
+                return True
+            raise F5ModuleError(response.content)
+
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/cm/device-group/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
+
+    def update_on_device(self):
+        params = self.changes.api_params()
+        uri = "https://{0}:{1}/mgmt/tm/cm/device-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/cm/device-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.cm.device_groups.device_group.load(
-            name=self.want.name
+        uri = "https://{0}:{1}/mgmt/tm/cm/device-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.name
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -533,7 +598,7 @@ class ArgumentSpec(object):
                 default='present',
                 choices=['absent', 'present']
             ),
-            network_failover=dict(type='bool')
+            network_failover=dict(type='bool'),
         )
         self.argument_spec = {}
         self.argument_spec.update(f5_argument_spec)
@@ -547,18 +612,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

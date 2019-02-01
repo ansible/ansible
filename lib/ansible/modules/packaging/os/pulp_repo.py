@@ -40,6 +40,14 @@ options:
         the Basic authentication header upon initial request.
     type: bool
     default: 'no'
+  generate_sqlite:
+    description:
+      - Boolean flag to indicate whether sqlite files should be generated during
+        a repository publish.
+    required: false
+    type: bool
+    default: 'no'
+    version_added: "2.8"
   importer_ssl_ca_cert:
     description:
       - CA certificate string used to validate the feed source SSL certificate.
@@ -65,9 +73,25 @@ options:
     description:
       - Proxy url setting for the pulp repository importer. This is in the
         format scheme://host.
+    required: false
+    default: null
   proxy_port:
     description:
       - Proxy port setting for the pulp repository importer.
+    required: false
+    default: null
+  proxy_username:
+    description:
+      - Proxy username for the pulp repository importer.
+    required: false
+    default: null
+    version_added: "2.8"
+  proxy_password:
+    description:
+      - Proxy password for the pulp repository importer.
+    required: false
+    default: null
+    version_added: "2.8"
   publish_distributor:
     description:
       - Distributor to use when state is C(publish). The default is to
@@ -84,6 +108,14 @@ options:
     description:
       - Repo plugin type to use (i.e. C(rpm), C(docker)).
     default: rpm
+  repoview:
+    description:
+      - Whether to generate repoview files for a published repository. Setting
+        this to "yes" automatically activates `generate_sqlite`.
+    required: false
+    type: bool
+    default: 'no'
+    version_added: "2.8"
   serve_http:
     description:
       - Make the repo available over HTTP.
@@ -156,7 +188,7 @@ RETURN = '''
 repo:
   description: Name of the repo that the action was performed on.
   returned: success
-  type: string
+  type: str
   sample: my_repo
 '''
 
@@ -195,6 +227,9 @@ class pulp_server(object):
 
         for distributor in repo_config['distributors']:
             for key, value in kwargs.items():
+                if key not in distributor['config'].keys():
+                    return False
+
                 if not distributor['config'][key] == value:
                     return False
 
@@ -219,10 +254,14 @@ class pulp_server(object):
         repo_id,
         relative_url,
         feed=None,
+        generate_sqlite=False,
         serve_http=False,
         serve_https=True,
         proxy_host=None,
         proxy_port=None,
+        proxy_username=None,
+        proxy_password=None,
+        repoview=False,
         ssl_ca_cert=None,
         ssl_client_cert=None,
         ssl_client_key=None,
@@ -242,6 +281,8 @@ class pulp_server(object):
             yum_distributor['distributor_config']['http'] = serve_http
             yum_distributor['distributor_config']['https'] = serve_https
             yum_distributor['distributor_config']['relative_url'] = relative_url
+            yum_distributor['distributor_config']['repoview'] = repoview
+            yum_distributor['distributor_config']['generate_sqlite'] = generate_sqlite or repoview
             data['distributors'].append(yum_distributor)
 
             if add_export_distributor:
@@ -253,6 +294,8 @@ class pulp_server(object):
                 export_distributor['distributor_config']['http'] = serve_http
                 export_distributor['distributor_config']['https'] = serve_https
                 export_distributor['distributor_config']['relative_url'] = relative_url
+                export_distributor['distributor_config']['repoview'] = repoview
+                export_distributor['distributor_config']['generate_sqlite'] = generate_sqlite or repoview
                 data['distributors'].append(export_distributor)
 
             data['importer_type_id'] = "yum_importer"
@@ -266,6 +309,12 @@ class pulp_server(object):
 
             if proxy_port:
                 data['importer_config']['proxy_port'] = proxy_port
+
+            if proxy_username:
+                data['importer_config']['proxy_username'] = proxy_username
+
+            if proxy_password:
+                data['importer_config']['proxy_password'] = proxy_password
 
             if ssl_ca_cert:
                 data['importer_config']['ssl_ca_cert'] = ssl_ca_cert
@@ -479,16 +528,20 @@ def main():
     argument_spec.update(
         add_export_distributor=dict(default=False, type='bool'),
         feed=dict(),
+        generate_sqlite=dict(default=False, type='bool'),
         importer_ssl_ca_cert=dict(),
         importer_ssl_client_cert=dict(),
         importer_ssl_client_key=dict(),
         name=dict(required=True, aliases=['repo']),
         proxy_host=dict(),
         proxy_port=dict(),
+        proxy_username=dict(),
+        proxy_password=dict(no_log=True),
         publish_distributor=dict(),
         pulp_host=dict(default="https://127.0.0.1"),
         relative_url=dict(),
         repo_type=dict(default="rpm"),
+        repoview=dict(default=False, type='bool'),
         serve_http=dict(default=False, type='bool'),
         serve_https=dict(default=True, type='bool'),
         state=dict(
@@ -501,16 +554,20 @@ def main():
 
     add_export_distributor = module.params['add_export_distributor']
     feed = module.params['feed']
+    generate_sqlite = module.params['generate_sqlite']
     importer_ssl_ca_cert = module.params['importer_ssl_ca_cert']
     importer_ssl_client_cert = module.params['importer_ssl_client_cert']
     importer_ssl_client_key = module.params['importer_ssl_client_key']
     proxy_host = module.params['proxy_host']
     proxy_port = module.params['proxy_port']
+    proxy_username = module.params['proxy_username']
+    proxy_password = module.params['proxy_password']
     publish_distributor = module.params['publish_distributor']
     pulp_host = module.params['pulp_host']
     relative_url = module.params['relative_url']
     repo = module.params['name']
     repo_type = module.params['repo_type']
+    repoview = module.params['repoview']
     serve_http = module.params['serve_http']
     serve_https = module.params['serve_https']
     state = module.params['state']
@@ -584,10 +641,14 @@ def main():
                     repo_id=repo,
                     relative_url=relative_url,
                     feed=feed,
+                    generate_sqlite=generate_sqlite,
                     serve_http=serve_http,
                     serve_https=serve_https,
                     proxy_host=proxy_host,
                     proxy_port=proxy_port,
+                    proxy_username=proxy_username,
+                    proxy_password=proxy_password,
+                    repoview=repoview,
                     ssl_ca_cert=importer_ssl_ca_cert,
                     ssl_client_cert=importer_ssl_client_cert,
                     ssl_client_key=importer_ssl_client_key,
@@ -604,6 +665,8 @@ def main():
                 feed=feed,
                 proxy_host=proxy_host,
                 proxy_port=proxy_port,
+                proxy_username=proxy_username,
+                proxy_password=proxy_password,
                 ssl_ca_cert=importer_ssl_ca_cert,
                 ssl_client_cert=importer_ssl_client_cert,
                 ssl_client_key=importer_ssl_client_key
@@ -614,6 +677,8 @@ def main():
                         feed=feed,
                         proxy_host=proxy_host,
                         proxy_port=proxy_port,
+                        proxy_username=proxy_username,
+                        proxy_password=proxy_password,
                         ssl_ca_cert=importer_ssl_ca_cert,
                         ssl_client_cert=importer_ssl_client_cert,
                         ssl_client_key=importer_ssl_client_key)
@@ -631,6 +696,18 @@ def main():
                             relative_url=relative_url)
 
                     changed = True
+
+            if not server.compare_repo_distributor_config(repo, generate_sqlite=generate_sqlite):
+                if not module.check_mode:
+                    server.update_repo_distributor_config(repo, generate_sqlite=generate_sqlite)
+
+                changed = True
+
+            if not server.compare_repo_distributor_config(repo, repoview=repoview):
+                if not module.check_mode:
+                    server.update_repo_distributor_config(repo, repoview=repoview)
+
+                changed = True
 
             if not server.compare_repo_distributor_config(repo, http=serve_http):
                 if not module.check_mode:

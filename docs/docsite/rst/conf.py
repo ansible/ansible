@@ -28,6 +28,12 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath(os.path.join('..', '_extensions')))
 
+# We want sphinx to document the ansible modules contained in this repository,
+# not those that may happen to be installed in the version
+# of Python used to run sphinx.  When sphinx loads in order to document,
+# the repository version needs to be the one that is loaded:
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..', '..', 'lib')))
+
 VERSION = '2.7'
 AUTHOR = 'Ansible, Inc'
 
@@ -126,6 +132,10 @@ rst_epilog = """
 html_theme_path = ['../_themes']
 html_theme = 'sphinx_rtd_theme'
 html_short_title = 'Ansible Documentation'
+
+html_theme_options = {
+    'canonical_url': "https://docs.ansible.com/ansible/latest/",
+}
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths

@@ -28,21 +28,21 @@ Inventory sources are strings (i.e what you pass to ``-i`` in the command line),
 they can represent a path to a file/script or just be the raw data for the plugin to use.
 Here are some plugins and the type of source they use:
 
-+--------------------------------------------+--------------------------------------+
-|  Plugin                                    | Source                               |
-+--------------------------------------------+--------------------------------------+
-| :ref:`host list <host_list_inventory>`     | A comma separated list of hosts      |
-+--------------------------------------------+--------------------------------------+
-| :ref:`yaml <yaml_inventory>`               | Path to a YAML format data file      |
-+--------------------------------------------+--------------------------------------+
-| :ref:`constructed <constructed_inventory>` | Path to a YAML configuration file    |
-+--------------------------------------------+--------------------------------------+
-| :ref:`ini <ini_inventory>`                 | Path to An ini formated data file    |
-+--------------------------------------------+--------------------------------------+
-| :ref:`virtualbox <virtualbox_inventory>`   | Path to a YAML configuration file    |
-+--------------------------------------------+--------------------------------------+
-| :ref:`script plugin <script_inventory>`    | Path to an executable outputing JSON |
-+--------------------------------------------+--------------------------------------+
++--------------------------------------------+---------------------------------------+
+|  Plugin                                    | Source                                |
++--------------------------------------------+---------------------------------------+
+| :ref:`host list <host_list_inventory>`     | A comma separated list of hosts       |
++--------------------------------------------+---------------------------------------+
+| :ref:`yaml <yaml_inventory>`               | Path to a YAML format data file       |
++--------------------------------------------+---------------------------------------+
+| :ref:`constructed <constructed_inventory>` | Path to a YAML configuration file     |
++--------------------------------------------+---------------------------------------+
+| :ref:`ini <ini_inventory>`                 | Path to an INI formatted data file    |
++--------------------------------------------+---------------------------------------+
+| :ref:`virtualbox <virtualbox_inventory>`   | Path to a YAML configuration file     |
++--------------------------------------------+---------------------------------------+
+| :ref:`script plugin <script_inventory>`    | Path to an executable outputting JSON |
++--------------------------------------------+---------------------------------------+
 
 
 .. _developing_inventory_inventory_plugins:
@@ -123,7 +123,7 @@ from the :ref:`host list <host_list_inventory>` plugin:
             valid = True
         return valid
 
-This method is just to expedite the inventory process and avoid uneccessary parsing of sources that are easy to filter out before causing a parse error.
+This method is just to expedite the inventory process and avoid unnecessary parsing of sources that are easy to filter out before causing a parse error.
 
 .. _inventory_plugin_parse:
 
@@ -132,7 +132,7 @@ parse
 
 This method does the bulk of the work in the plugin.
 
-It takes the following paramters:
+It takes the following parameters:
 
  * inventory: inventory object with existing data and the methods to add hosts/groups/variables to inventory
  * loader: Ansible's DataLoader. The DataLoader can read files, auto load JSON/YAML and decrypt vaulted data, and cache read files.
@@ -164,11 +164,11 @@ To facilitate this there are a few of helper functions used in the example below
 
             # this method will parse 'common format' inventory sources and
             # update any options declared in DOCUMENTATION as needed
-            config = self._read_config_data(self, path)
+            config = self._read_config_data(path)
 
             # if NOT using _read_config_data you should call set_options directly,
             # to process any defined configuration for this plugin,
-            # if you dont define any options you can skip
+            # if you don't define any options you can skip
             #self.set_options()
 
             # example consuming options from inventory source
@@ -178,14 +178,14 @@ To facilitate this there are a few of helper functions used in the example below
             )
 
 
-            # make requests to get data to feed into inventorya
-            mydata = myselss.getitall()
+            # make requests to get data to feed into inventory
+            mydata = mysession.getitall()
 
             #parse data and create inventory objects:
             for colo in mydata:
                 for server in mydata[colo]['servers']:
                     self.inventory.add_host(server['name'])
-                    self.inventory.set_varaible('ansible_host', server['external_ip'])
+                    self.inventory.set_variable('ansible_host', server['external_ip'])
 
 The specifics will vary depending on API and structure returned. But one thing to keep in mind, if the inventory source or any other issue crops up you should ``raise AnsibleParserError`` to let Ansible know that the source was invalid or the process failed.
 
@@ -198,7 +198,7 @@ Inventory source common format
 ------------------------------
 
 To simplify development, most plugins use a mostly standard configuration file as the inventory source, YAML based and with just one required field ``plugin`` which should contain the name of the plugin that is expected to consume the file.
-Depending on other common features used, other fields might be needed, but each plugin can also add it's own custom options as needed.
+Depending on other common features used, other fields might be needed, but each plugin can also add its own custom options as needed.
 For example, if you use the integrated caching, ``cache_plugin``, ``cache_timeout`` and other cache related fields could be present.
 
 .. _inventory_development_auto:

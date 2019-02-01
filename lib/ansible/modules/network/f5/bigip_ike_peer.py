@@ -24,6 +24,9 @@ options:
     description:
       - Specifies the name of the IKE peer.
     required: True
+  description:
+    description:
+      - Description of the IKE peer.
   version:
     description:
       - Specifies which version of IKE is used.
@@ -174,6 +177,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -191,22 +195,22 @@ RETURN = r'''
 presented_id_type:
   description: The new Presented ID Type value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: address
 verified_id_type:
   description: The new Verified ID Type value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: address
 phase1_auth_method:
   description: The new IKE Phase 1 Credentials Authentication Method value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: rsa-signature
 remote_address:
   description: The new Remote Address value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.2.1
 version:
   description: The new list of IKE versions.
@@ -216,27 +220,27 @@ version:
 phase1_encryption_algorithm:
   description: The new IKE Phase 1 Encryption Algorithm.
   returned: changed
-  type: string
+  type: str
   sample: 3des
 phase1_hash_algorithm:
   description: The new IKE Phase 1 Authentication Algorithm.
   returned: changed
-  type: string
+  type: str
   sample: sha256
 phase1_perfect_forward_secrecy:
   description: The new IKE Phase 1 Perfect Forward Secrecy.
   returned: changed
-  type: string
+  type: str
   sample: modp1024
 phase1_cert:
   description: The new IKE Phase 1 Certificate Credentials.
   returned: changed
-  type: string
+  type: str
   sample: /Common/cert1.crt
 phase1_key:
   description: The new IKE Phase 1 Key Credentials.
   returned: changed
-  type: string
+  type: str
   sample: /Common/cert1.key
 phase1_verify_peer_cert:
   description: The new IKE Phase 1 Key Verify Peer Certificate setting.
@@ -246,12 +250,12 @@ phase1_verify_peer_cert:
 verified_id_value:
   description: The new Verified ID Value setting for the Verified ID Type.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.3.1
 presented_id_value:
   description: The new Presented ID Value setting for the Presented ID Type.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.3.1
 '''
 
@@ -269,6 +273,7 @@ try:
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import flatten_boolean
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -280,6 +285,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import flatten_boolean
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -315,6 +321,7 @@ class Parameters(AnsibleF5Parameters):
         'verifyCert',
         'peersIdValue',
         'myIdValue',
+        'description',
     ]
 
     returnables = [
@@ -332,6 +339,7 @@ class Parameters(AnsibleF5Parameters):
         'phase1_verify_peer_cert',
         'verified_id_value',
         'presented_id_value',
+        'description',
     ]
 
     updatables = [
@@ -349,6 +357,7 @@ class Parameters(AnsibleF5Parameters):
         'phase1_verify_peer_cert',
         'verified_id_value',
         'presented_id_value',
+        'description',
     ]
 
     @property
@@ -357,7 +366,11 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
@@ -376,6 +389,14 @@ class ModuleParameters(Parameters):
         if self._values['phase1_key'] in ['', 'none']:
             return ''
         return fq_name(self.partition, self._values['phase1_key'])
+
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -431,6 +452,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -695,6 +720,7 @@ class ArgumentSpec(object):
                 default='always',
                 choices=['always', 'on_create']
             ),
+            description=dict(),
             state=dict(default='present', choices=['absent', 'present']),
             partition=dict(
                 default='Common',
@@ -730,8 +756,9 @@ def main():
         required_together=spec.required_together,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

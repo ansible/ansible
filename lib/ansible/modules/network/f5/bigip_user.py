@@ -50,12 +50,12 @@ options:
     description:
       - Specifies the administrative partition to which the user has access.
         C(partition_access) is required when creating a new account.
-        Should be in the form "partition:role". Valid roles include
-        C(acceleration-policy-editor), C(admin), C(application-editor), C(auditor)
-        C(certificate-manager), C(guest), C(irule-manager), C(manager), C(no-access)
+        Should be in the form "partition:role".
+      - Valid roles include C(acceleration-policy-editor), C(admin), C(application-editor),
+        C(auditor), C(certificate-manager), C(guest), C(irule-manager), C(manager), C(no-access),
         C(operator), C(resource-admin), C(user-manager), C(web-application-security-administrator),
-        and C(web-application-security-editor). Partition portion of tuple should
-        be an existing partition or the value 'all'.
+        and C(web-application-security-editor).
+      - Partition portion of tuple should be an existing partition or the value 'all'.
   state:
     description:
       - Whether the account should exist or not, taking action if the state is
@@ -67,8 +67,8 @@ options:
   update_password:
     description:
       - C(always) will allow to update passwords if the user chooses to do so.
-        C(on_create) will only set the password for newly created users. When
-        C(username_credential) is C(root), this value will be forced to C(always).
+        C(on_create) will only set the password for newly created users.
+      - When C(username_credential) is C(root), this value will be forced to C(always).
     default: always
     choices:
       - always
@@ -180,7 +180,7 @@ RETURN = r'''
 full_name:
   description: Full name of the user
   returned: changed and success
-  type: string
+  type: str
   sample: John Doe
 partition_access:
   description:
@@ -192,11 +192,19 @@ partition_access:
 shell:
   description: The shell assigned to the user account
   returned: changed and success
-  type: string
+  type: str
   sample: tmsh
 '''
 
-import re
+import os
+import tempfile
+
+from ansible.module_utils._text import to_bytes
+
+try:
+    from BytesIO import BytesIO
+except ImportError:
+    from io import BytesIO
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
@@ -212,6 +220,7 @@ try:
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.icontrol import tmos_version
+    from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -221,6 +230,36 @@ except ImportError:
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.icontrol import tmos_version
+    from ansible.module_utils.network.f5.icontrol import upload_file
+
+
+try:
+    # Crypto is used specifically for changing the root password via
+    # tmsh over REST.
+    #
+    # We utilize the crypto library to encrypt the contents of a file
+    # before we upload it, and then decrypt it on-box to change the
+    # password.
+    #
+    # To accomplish such a process, we need to be able to encrypt the
+    # temporary file with the public key found on the box.
+    #
+    # These libraries are used to do the encryption.
+    #
+    # Note that, if these are not available, the ability to change the
+    # root password is disabled and the user will be notified as such
+    # by a failure of the module.
+    #
+    # These libraries *should* be available on most Ansible controllers
+    # by default though as crypto is a dependency of Ansible.
+    #
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import padding
+    from cryptography.hazmat.primitives import hashes
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -296,6 +335,14 @@ class Parameters(AnsibleF5Parameters):
 
                 result.append(value)
         return result
+
+    @property
+    def temp_upload_file(self):
+        if self._values['temp_upload_file'] is None:
+            f = tempfile.NamedTemporaryFile()
+            name = os.path.basename(f.name)
+            self._values['temp_upload_file'] = name
+        return self._values['temp_upload_file']
 
 
 class ApiParameters(Parameters):
@@ -578,16 +625,6 @@ class BaseManager(object):
                 raise F5ModuleError(err)
 
     def validate_create_parameters(self):
-        """Password credentials and partition access are mandatory,
-
-        when creating a user resource.
-        """
-        if self.want.password_credential and \
-                self.want.update_password != 'on_create':
-            err = "The 'update_password' option " \
-                  "needs to be set to 'on_create' when creating " \
-                  "a resource with a password."
-            raise F5ModuleError(err)
         if self.want.partition_access is None:
             err = "The 'partition_access' option " \
                   "is required when creating a resource."
@@ -784,6 +821,12 @@ class PartitionedManager(BaseManager):
 
 class RootUserManager(BaseManager):
     def exec_module(self):
+        if not HAS_CRYPTO:
+            raise F5ModuleError(
+                "An installed and up-to-date python 'cryptography' package is "
+                "required to change the 'root' password."
+            )
+
         changed = False
         result = dict()
         state = self.want.state
@@ -806,15 +849,126 @@ class RootUserManager(BaseManager):
         return True
 
     def update(self):
+        public_key = self.get_public_key_from_device()
+        public_key = self.extract_key(public_key)
+        encrypted = self.encrypt_password_change_file(
+            public_key, self.want.password_credential
+        )
+        self.upload_to_device(encrypted, self.want.temp_upload_file)
         result = self.update_on_device()
+        self.remove_uploaded_file_from_device(self.want.temp_upload_file)
+        return result
+
+    def encrypt_password_change_file(self, public_key, password):
+        # This function call requires that the public_key be expressed in bytes
+        pub = serialization.load_pem_public_key(
+            to_bytes(public_key),
+            backend=default_backend()
+        )
+
+        message = to_bytes("{0}\n{0}\n".format(password))
+        ciphertext = pub.encrypt(
+            message,
+
+            # OpenSSL craziness
+            #
+            # Using this padding because it is the only one that works with
+            # the OpenSSL on BIG-IP at this time.
+            padding.PKCS1v15(),
+
+            #
+            # OAEP is the recommended padding to use for encrypting, however, two
+            # things are wrong with it on BIG-IP.
+            #
+            # The first is that one of the parameters required to decrypt the data
+            # is not supported by the OpenSSL version on BIG-IP. A "parameter setting"
+            # error is raised when you attempt to use the OAEP parameters to specify
+            # hashing algorithms.
+            #
+            # This is validated by this thread here
+            #
+            #  https://mta.openssl.org/pipermail/openssl-dev/2017-September/009745.html
+            #
+            # Were is supported, we could use OAEP, but the second problem is that OAEP
+            # is not the default mode of the ``openssl`` command. Therefore, we need
+            # to adjust the command we use to decrypt the encrypted file when it is
+            # placed on BIG-IP.
+            #
+            # The correct (and recommended if BIG-IP ever upgrades OpenSSL) code is
+            # shown below.
+            #
+            #   padding.OAEP(
+            #       mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            #       algorithm=hashes.SHA256(),
+            #       label=None
+            #   )
+            #
+            # Additionally, the code in ``update_on_device()`` would need to be changed
+            # to pass the correct command line arguments to decrypt the file.
+        )
+        return BytesIO(ciphertext)
+
+    def extract_key(self, content):
+        """Extracts the public key from the openssl command output over REST
+
+        The REST output includes some extra output that is not relevant to the
+        public key. This function attempts to only return the valid public key
+        data from the openssl output
+
+        Args:
+            content: The output from the REST API command to view the public key.
+
+        Returns:
+            string: The discovered public key
+        """
+
+        lines = content.split("\n")
+        start = lines.index('-----BEGIN PUBLIC KEY-----')
+        end = lines.index('-----END PUBLIC KEY-----')
+        result = "\n".join(lines[start:end + 1])
         return result
 
     def update_on_device(self):
-        escape_patterns = r'([$' + "'])"
         errors = ['Bad password', 'password change canceled', 'based on a dictionary word']
-        content = "{0}\n{0}\n".format(self.want.password_credential)
-        command = re.sub(escape_patterns, r'\\\1', content)
-        cmd = '-c "printf \\\"{0}\\\" | tmsh modify auth password root"'.format(command)
+
+        # Decrypting logic
+        #
+        # The following commented out command will **not** work on BIG-IP versions
+        # utilizing OpenSSL 1.0.11-fips (15 Jan 2015).
+        #
+        # The reason is because that version of OpenSSL does not support the various
+        # ``-pkeyopt`` parameters shown below.
+        #
+        # Nevertheless, I am including it here as a possible future enhancement in
+        # case the method currently in use stops working.
+        #
+        # This command overrides defaults provided by OpenSSL because I am not
+        # sure how long the defaults will remain the defaults. Probably as long
+        # as it took OpenSSL to reach 1.0...
+        #
+        #    openssl = [
+        #        'openssl', 'pkeyutl', '-in', '/var/config/rest/downloads/{0}'.format(self.want.temp_upload_file),
+        #        '-decrypt', '-inkey', '/config/ssl/ssl.key/default.key',
+        #        '-pkeyopt', 'rsa_padding_mode:oaep', '-pkeyopt', 'rsa_oaep_md:sha256',
+        #        '-pkeyopt', 'rsa_mgf1_md:sha256'
+        #    ]
+        #
+        # The command we actually use is (while not recommended) also the only one
+        # that works. It forgoes the usage of OAEP and uses the defaults that come
+        # with OpenSSL (PKCS1v15)
+        #
+        # See this link for information on the parameters used
+        #
+        #    https://www.openssl.org/docs/manmaster/man1/pkeyutl.html
+        #
+        # If you change the command below, you will need to additionally change
+        # how the encryption is done in ``encrypt_password_change_file()``.
+        #
+        openssl = [
+            'openssl', 'pkeyutl', '-in', '/var/config/rest/downloads/{0}'.format(self.want.temp_upload_file),
+            '-decrypt', '-inkey', '/config/ssl/ssl.key/default.key',
+        ]
+        cmd = '-c "{0} | tmsh modify auth password root"'.format(' '.join(openssl))
 
         params = dict(
             command='run',
@@ -838,6 +992,74 @@ class RootUserManager(BaseManager):
             else:
                 raise F5ModuleError(resp.content)
         return True
+
+    def upload_to_device(self, content, name):
+        """Uploads a file-like object via the REST API to a given filename
+
+        Args:
+            content: The file-like object whose content to upload
+            name: The remote name of the file to store the content in. The
+                  final location of the file will be in /var/config/rest/downloads.
+
+        Returns:
+            void
+        """
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, content, name)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
+
+    def remove_uploaded_file_from_device(self, name):
+        filepath = '/var/config/rest/downloads/{0}'.format(name)
+        params = {
+            "command": "run",
+            "utilCmdArgs": filepath
+        }
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-rm".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def get_public_key_from_device(self):
+        cmd = '-c "openssl rsa -in /config/ssl/ssl.key/default.key -pubout"'
+
+        params = dict(
+            command='run',
+            utilCmdArgs=cmd
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'commandResult' in response:
+            return response['commandResult']
+        return None
 
 
 class ArgumentSpec(object):

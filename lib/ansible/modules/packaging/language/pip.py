@@ -98,9 +98,9 @@ options:
     description:
       - The system umask to apply before installing the pip package. This is
         useful, for example, when installing on systems that have a very
-        restrictive umask by default (e.g., 0077) and you want to pip install
+        restrictive umask by default (e.g., "0077") and you want to pip install
         packages which are to be used by all users. Note that this requires you
-        to specify desired umask mode in octal, with a leading 0 (e.g., 0077).
+        to specify desired umask mode as an octal string, (e.g., "0022").
     version_added: "2.1"
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be
@@ -211,7 +211,7 @@ RETURN = '''
 cmd:
   description: pip command used by the module
   returned: success
-  type: string
+  type: str
   sample: pip2 install ansible six
 name:
   description: list of python modules targetted by pip
@@ -221,17 +221,17 @@ name:
 requirements:
   description: Path to the requirements file
   returned: success, if a requirements file was provided
-  type: string
+  type: str
   sample: "/srv/git/project/requirements.txt"
 version:
   description: Version of the package specified in 'name'
   returned: success, if a name and version were provided
-  type: string
+  type: str
   sample: "2.5.1"
 virtualenv:
   description: Path to the virtualenv
   returned: success, if a virtualenv path was provided
-  type: string
+  type: str
   sample: "/tmp/virtualenv"
 '''
 
@@ -350,10 +350,11 @@ def _is_present(module, req, installed_pkgs, pkg_command):
     for pkg in installed_pkgs:
         if '==' in pkg:
             pkg_name, pkg_version = pkg.split('==')
+            pkg_name = Package.canonicalize_name(pkg_name)
         else:
             continue
 
-        if pkg_name.lower() == req.package_name and req.is_satisfied_by(pkg_version):
+        if pkg_name == req.package_name and req.is_satisfied_by(pkg_version):
             return True
 
     return False
@@ -499,6 +500,8 @@ class Package:
     test whether a package is already satisfied.
     """
 
+    _CANONICALIZE_RE = re.compile(r'[-_.]+')
+
     def __init__(self, name_string, version_string=None):
         self._plain_package = False
         self.package_name = name_string
@@ -510,12 +513,12 @@ class Package:
             name_string = separator.join((name_string, version_string))
         try:
             self._requirement = Requirement.parse(name_string)
-            # old pkg_resource will replace 'setuptools' with 'distribute' when it already installed
-            if self._requirement.project_name == "distribute":
+            # old pkg_resource will replace 'setuptools' with 'distribute' when it's already installed
+            if self._requirement.project_name == "distribute" and "setuptools" in name_string:
                 self.package_name = "setuptools"
                 self._requirement.project_name = "setuptools"
             else:
-                self.package_name = self._requirement.project_name
+                self.package_name = Package.canonicalize_name(self._requirement.project_name)
             self._plain_package = True
         except ValueError as e:
             pass
@@ -538,6 +541,11 @@ class Package:
                 op_dict[op](version_to_test, LooseVersion(ver))
                 for op, ver in self._requirement.specs
             )
+
+    @staticmethod
+    def canonicalize_name(name):
+        # This is taken from PEP 503.
+        return Package._CANONICALIZE_RE.sub("-", name).lower()
 
     def __str__(self):
         if self._plain_package:

@@ -61,6 +61,7 @@ options:
       - Whether the firewall rule for public port should be created, while creating the new rule.
       - Use M(cs_firewall) for managing firewall rules.
     default: false
+    type: bool
   vm_guest_ip:
     description:
       - VM guest NIC secondary IP address for the port forwarding rule.
@@ -90,6 +91,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+    type: bool
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -140,17 +142,17 @@ RETURN = '''
 id:
   description: UUID of the public IP address.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 ip_address:
   description: Public IP address.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 protocol:
   description: Protocol.
   returned: success
-  type: string
+  type: str
   sample: tcp
 private_port:
   description: Start port on the virtual machine's IP address.
@@ -179,27 +181,27 @@ tags:
 vm_name:
   description: Name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_display_name:
   description: Display name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_guest_ip:
   description: IP of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: 10.101.65.152
 vpc:
   description: Name of the VPC.
   returned: success
-  type: string
+  type: str
   sample: my_vpc
 network:
   description: Name of the network.
   returned: success
-  type: string
+  type: str
   sample: dmz
 '''
 

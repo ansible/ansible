@@ -127,6 +127,10 @@ options:
         type: bool
         default: 'no'
         version_added: "2.2"
+    release:
+        description:
+            - Set a release version
+        version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -190,6 +194,13 @@ EXAMPLES = '''
     password: somepass
     environment: Library
     auto_attach: true
+
+- name: Register as user (joe_user) with password (somepass) and a specific release
+  redhat_subscription:
+    state: present
+    username: joe_user
+    password: somepass
+    release: 7.4
 '''
 
 RETURN = '''
@@ -313,7 +324,7 @@ class Rhsm(RegistrationBase):
     def register(self, username, password, auto_attach, activationkey, org_id,
                  consumer_type, consumer_name, consumer_id, force_register, environment,
                  rhsm_baseurl, server_insecure, server_hostname, server_proxy_hostname,
-                 server_proxy_port, server_proxy_user, server_proxy_password):
+                 server_proxy_port, server_proxy_user, server_proxy_password, release):
         '''
             Register the current system to the provided RHSM or Sat6 server
             Raises:
@@ -337,6 +348,15 @@ class Rhsm(RegistrationBase):
         if org_id:
             args.extend(['--org', org_id])
 
+        if server_proxy_hostname and server_proxy_port:
+            args.extend(['--proxy', server_proxy_hostname + ':' + server_proxy_port])
+
+        if server_proxy_user:
+            args.extend(['--proxyuser', server_proxy_user])
+
+        if server_proxy_password:
+            args.extend(['--proxypassword', server_proxy_password])
+
         if activationkey:
             args.extend(['--activationkey', activationkey])
         else:
@@ -354,12 +374,9 @@ class Rhsm(RegistrationBase):
                 args.extend(['--consumerid', consumer_id])
             if environment:
                 args.extend(['--environment', environment])
-            if server_proxy_hostname and server_proxy_port:
-                args.extend(['--proxy', server_proxy_hostname + ':' + server_proxy_port])
-            if server_proxy_user:
-                args.extend(['--proxyuser', server_proxy_user])
-            if server_proxy_password:
-                args.extend(['--proxypassword', server_proxy_password])
+
+        if release:
+            args.extend(['--release', release])
 
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
@@ -657,6 +674,7 @@ def main():
             server_proxy_password=dict(default=None,
                                        required=False,
                                        no_log=True),
+            release=dict(default=None, required=False)
         ),
         required_together=[['username', 'password'],
                            ['server_proxy_hostname', 'server_proxy_port'],
@@ -704,6 +722,7 @@ def main():
     server_proxy_port = module.params['server_proxy_port']
     server_proxy_user = module.params['server_proxy_user']
     server_proxy_password = module.params['server_proxy_password']
+    release = module.params['release']
 
     global SUBMAN_CMD
     SUBMAN_CMD = module.get_bin_path('subscription-manager', True)
@@ -732,7 +751,7 @@ def main():
                 rhsm.register(username, password, auto_attach, activationkey, org_id,
                               consumer_type, consumer_name, consumer_id, force_register,
                               environment, rhsm_baseurl, server_insecure, server_hostname,
-                              server_proxy_hostname, server_proxy_port, server_proxy_user, server_proxy_password)
+                              server_proxy_hostname, server_proxy_port, server_proxy_user, server_proxy_password, release)
                 if pool_ids:
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
                 else:

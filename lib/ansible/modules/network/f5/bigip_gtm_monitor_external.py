@@ -84,16 +84,18 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Create an external monitor
   bigip_gtm_monitor_external:
     name: foo
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Create an external monitor with variables
@@ -103,10 +105,11 @@ EXAMPLES = r'''
     variables:
       var1: foo
       var2: bar
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Add a variable to an existing set
@@ -117,10 +120,11 @@ EXAMPLES = r'''
       var1: foo
       var2: bar
       cat: dog
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -128,12 +132,12 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: external
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -155,33 +159,31 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import compare_dictionary
+    from library.module_utils.network.f5.icontrol import module_provisioned
     from library.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import compare_dictionary
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -189,32 +191,22 @@ class Parameters(AnsibleF5Parameters):
         'defaultsFrom': 'parent',
         'apiRawValues': 'variables',
         'run': 'external_program',
-        'args': 'arguments'
+        'args': 'arguments',
     }
 
     api_attributes = [
-        'defaultsFrom', 'interval', 'timeout', 'destination', 'run', 'args'
+        'defaultsFrom', 'interval', 'timeout', 'destination', 'run', 'args',
     ]
 
     returnables = [
         'parent', 'ip', 'port', 'interval', 'timeout', 'variables', 'external_program',
-        'arguments'
+        'arguments',
     ]
 
     updatables = [
         'destination', 'interval', 'timeout', 'variables', 'external_program',
-        'arguments'
+        'arguments',
     ]
-
-    def to_return(self):
-        result = {}
-        try:
-            for returnable in self.returnables:
-                result[returnable] = getattr(self, returnable)
-            result = self._filter_params(result)
-        except Exception:
-            pass
-        return result
 
     @property
     def destination(self):
@@ -468,32 +460,6 @@ class ModuleManager(object):
             return True
         return False
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
-
-    def exec_module(self):
-        changed = False
-        result = dict()
-        state = self.want.state
-
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
-
-        reportable = ReportableChanges(params=self.changes.to_return())
-        changes = reportable.to_return()
-        result.update(**changes)
-        result.update(dict(changed=changed))
-        self._announce_deprecations(result)
-        return result
-
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
         for warning in warnings:
@@ -502,14 +468,7 @@ class ModuleManager(object):
                 version=warning['version']
             )
 
-    def present(self):
-        if self.exists():
-            return self.update()
-        else:
-            return self.create()
-
-    def create(self):
-        self._set_changed_options()
+    def _set_default_creation_values(self):
         if self.want.timeout is None:
             self.want.update({'timeout': 120})
         if self.want.interval is None:
@@ -518,10 +477,52 @@ class ModuleManager(object):
             self.want.update({'ip': '*'})
         if self.want.port is None:
             self.want.update({'port': '*'})
+
+    def exec_module(self):
+        if not module_provisioned(self.client, 'gtm'):
+            raise F5ModuleError(
+                "GTM must be provisioned to use this module."
+            )
+        changed = False
+        result = dict()
+        state = self.want.state
+
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
+
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
+        result.update(**changes)
+        result.update(dict(changed=changed))
+        self._announce_deprecations(result)
+        return result
+
+    def present(self):
+        if self.exists():
+            return self.update()
+        else:
+            return self.create()
+
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
+    def create(self):
+        self._set_changed_options()
+        self._set_default_creation_values()
         if self.module.check_mode:
             return True
         self.create_on_device()
         return True
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -532,11 +533,6 @@ class ModuleManager(object):
         self.update_on_device()
         return True
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
-
     def remove(self):
         if self.module.check_mode:
             return True
@@ -545,57 +541,117 @@ class ModuleManager(object):
             raise F5ModuleError("Failed to delete the monitor.")
         return True
 
-    def read_current_from_device(self):
-        resource = self.client.api.tm.gtm.monitor.externals.external.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        result = resource.attrs
-        return ApiParameters(params=result)
-
     def exists(self):
-        result = self.client.api.tm.gtm.monitor.externals.external.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/external/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/external/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if self.want.variables:
+            self.set_variable_on_device(self.want.variables)
 
     def update_on_device(self):
         params = self.changes.api_params()
-        result = self.client.api.tm.gtm.monitor.externals.external.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
         if params:
-            result.modify(**params)
+            uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/external/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name)
+            )
+            resp = self.client.api.patch(uri, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
         if self.changes.variables:
             self.set_variable_on_device(self.changes.variables)
+
+    def read_current_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/external/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/gtm/monitor/external/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def set_variable_on_device(self, commands):
         command = ' '.join(['user-defined {0} \\\"{1}\\\"'.format(k, v) for k, v in iteritems(commands)])
         command = 'tmsh modify gtm monitor external {0} {1}'.format(self.want.name, command)
-        self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
             utilCmdArgs='-c "{0}"'.format(command)
         )
-
-    def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.gtm.monitor.externals.external.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
-        )
-        if self.want.variables:
-            self.set_variable_on_device(self.want.variables)
-
-    def remove_from_device(self):
-        result = self.client.api.tm.gtm.monitor.externals.external.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        if result:
-            result.delete()
+        resp = self.client.api.post(uri, json=args)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
@@ -606,7 +662,7 @@ class ArgumentSpec(object):
             parent=dict(default='/Common/external'),
             arguments=dict(),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             external_program=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
@@ -630,20 +686,19 @@ def main():
 
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode
+        supports_check_mode=spec.supports_check_mode,
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

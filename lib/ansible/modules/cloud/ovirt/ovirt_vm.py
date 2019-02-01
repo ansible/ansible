@@ -359,11 +359,12 @@ options:
         version_added: "2.3"
     cloud_init_persist:
         description:
-            - "If I(true) the C(cloud_init) or C(sysprep) parameters will be saved for the virtual machine
-               and won't be virtual machine won't be started as run-once."
+            - "If I(yes) the C(cloud_init) or C(sysprep) parameters will be saved for the virtual machine
+               and the virtual machine won't be started as run-once."
         type: bool
         version_added: "2.5"
         aliases: [ 'sysprep_persist' ]
+        default: 'no'
     kernel_params_persist:
         description:
             - "If I(true) C(kernel_params), C(initrd_path) and C(kernel_path) will persist in virtual machine configuration,
@@ -579,6 +580,12 @@ options:
     force_migrate:
         description:
             - "If I(true), the VM will migrate even if it is defined as non-migratable."
+        version_added: "2.8"
+        type: bool
+    next_run:
+        description:
+            - "If I(true), the update will not be applied to the VM immediately and will be only applied when virtual machine is restarted."
+            - NOTE - If there are multiple next run configuration changes on the VM, the first change may get reverted if this option is not passed.
         version_added: "2.8"
         type: bool
 
@@ -1399,7 +1406,7 @@ class VmsModule(BaseModule):
             disk_service = disks_service.disk_service(da.disk.id)
             wait(
                 service=disk_service,
-                condition=lambda disk: disk.status == otypes.DiskStatus.OK,
+                condition=lambda disk: disk.status == otypes.DiskStatus.OK if disk.storage_type == otypes.DiskStorageType.IMAGE else True,
                 wait=self.param('wait'),
                 timeout=self.param('timeout'),
             )
@@ -2049,6 +2056,7 @@ def main():
         export_domain=dict(default=None),
         export_ova=dict(type='dict'),
         force_migrate=dict(type='bool'),
+        next_run=dict(type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -2084,6 +2092,7 @@ def main():
             ret = vms_module.create(
                 entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
+                update_params={'next_run': module.params['next_run']} if module.params['next_run'] is not None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )

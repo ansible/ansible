@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -49,34 +49,36 @@ requirements:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
-- name: Add an iAppLX package
+- name: Install AS3
   bigip_iapplx_package:
-    package: MyApp-0.1.0-0001.noarch.rpm
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    package: f5-appsvcs-3.5.0-3.noarch.rpm
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Add an iAppLX package stored in a role
   bigip_iapplx_package:
     package: "{{ roles_path }}/files/MyApp-0.1.0-0001.noarch.rpm'"
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove an iAppLX package
   bigip_iapplx_package:
     package: MyApp-0.1.0-0001.noarch.rpm
-    password: secret
-    server: lb.mydomain.com
     state: absent
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -88,30 +90,29 @@ import os
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import urlparse
 from distutils.version import LooseVersion
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.icontrol import tmos_version
+    from library.module_utils.network.f5.icontrol import upload_file
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.icontrol import tmos_version
+    from ansible.module_utils.network.f5.icontrol import upload_file
 
 
 class Parameters(AnsibleF5Parameters):
@@ -160,6 +161,16 @@ class Parameters(AnsibleF5Parameters):
         result = os.path.splitext(base)
         return result[0]
 
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
     def to_return(self):
         result = {}
         try:
@@ -171,31 +182,36 @@ class Parameters(AnsibleF5Parameters):
         return result
 
 
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.want = Parameters(module=self.module, params=self.module.params)
-        self.changes = Parameters()
+        self.want = ModuleParameters(module=self.module, params=self.module.params)
+        self.changes = UsableChanges()
 
     def exec_module(self):
         result = dict()
         changed = False
         state = self.want.state
 
-        version = self.client.api.tmos_version
+        version = tmos_version(self.client)
         if LooseVersion(version) <= LooseVersion('12.0.0'):
             raise F5ModuleError(
                 "This version of BIG-IP is not supported."
             )
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
@@ -214,31 +230,13 @@ class ModuleManager(object):
             changed = self.remove()
         return changed
 
-    def exists(self):
-        exists = False
-        packages = self.get_installed_packages_on_device()
-        if os.path.exists(self.want.package):
-            exists = True
-        for package in packages:
-            if exists:
-                if self.want.package_name == package['packageName']:
-                    return True
-            else:
-                if self.want.package_root == package['packageName']:
-                    return True
-        return False
-
-    def get_installed_packages_on_device(self):
-        collection = self.client.api.shared.iapp.package_management_tasks_s
-        task = collection.package_management_task.create(
-            operation='QUERY'
-        )
-        status = self._wait_for_task(task)
-        if status == 'FINISHED':
-            return task.queryResponse
-        raise F5ModuleError(
-            "Failed to find the installed packages on the device"
-        )
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the iAppLX package")
+        return True
 
     def create(self):
         if self.module.check_mode:
@@ -261,63 +259,189 @@ class ModuleManager(object):
         else:
             raise F5ModuleError("Failed to create the iApp template")
 
-    def upload_to_device(self):
-        upload = self.client.api.shared.file_transfer.uploads
-        upload.upload_file(
-            self.want.package
+    def exists(self):
+        exists = False
+        packages = self.get_installed_packages_on_device()
+        if os.path.exists(self.want.package):
+            exists = True
+        for package in packages:
+            if exists:
+                if self.want.package_name == package['packageName']:
+                    return True
+            else:
+                if self.want.package_root == package['packageName']:
+                    return True
+        return False
+
+    def get_installed_packages_on_device(self):
+        uri = "https://{0}:{1}/mgmt/shared/iapp/package-management-tasks".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        params = dict(operation='QUERY')
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        path = urlparse(response["selfLink"]).path
+        task = self._wait_for_task(path)
+
+        if task['status'] == 'FINISHED':
+            return task['queryResponse']
+        raise F5ModuleError(
+            "Failed to find the installed packages on the device"
         )
 
+    def _wait_for_task(self, path):
+        task = None
+        for x in range(0, 60):
+            task = self.check_task_on_device(path)
+            if task['status'] in ['FINISHED', 'FAILED']:
+                return task
+            time.sleep(1)
+        return task
+
+    def check_task_on_device(self, path):
+        uri = "https://{0}:{1}{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            path
+        )
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
+
+    def upload_to_device(self):
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, self.want.package)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
+
     def remove_package_file_from_device(self):
-        self.client.api.tm.util.unix_rm.exec_cmd(
-            'run',
+        params = dict(
+            command="run",
             utilCmdArgs="/var/config/rest/downloads/{0}".format(self.want.package_file)
         )
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-rm".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def create_on_device(self):
         remote_path = "/var/config/rest/downloads/{0}".format(self.want.package_file)
-        collection = self.client.api.shared.iapp.package_management_tasks_s
-        task = collection.package_management_task.create(
-            operation='INSTALL',
-            packageFilePath=remote_path
+        params = dict(
+            operation='INSTALL', packageFilePath=remote_path
         )
-        status = self._wait_for_task(task)
-        if status == 'FINISHED':
+        uri = "https://{0}:{1}/mgmt/shared/iapp/package-management-tasks".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        path = urlparse(response["selfLink"]).path
+        task = self._wait_for_task(path)
+
+        if task['status'] == 'FINISHED':
             return True
         else:
-            raise F5ModuleError(task.errorMessage)
-
-    def remove(self):
-        if self.module.check_mode:
-            return True
-        self.remove_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the iAppLX package")
-        return True
+            raise F5ModuleError(task['errorMessage'])
 
     def remove_from_device(self):
-        collection = self.client.api.shared.iapp.package_management_tasks_s
-        task = collection.package_management_task.create(
+        params = dict(
             operation='UNINSTALL',
             packageName=self.want.package_root
         )
-        status = self._wait_for_task(task)
-        if status == 'FINISHED':
+        uri = "https://{0}:{1}/mgmt/shared/iapp/package-management-tasks".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        path = urlparse(response["selfLink"]).path
+        task = self._wait_for_task(path)
+
+        if task['status'] == 'FINISHED':
             return True
         return False
 
-    def _wait_for_task(self, task):
-        for x in range(0, 60):
-            task.refresh()
-            if task.status in ['FINISHED', 'FAILED']:
-                return task.status
-            time.sleep(1)
-        return task.status
-
     def enable_iapplx_on_device(self):
-        self.client.api.tm.util.bash.exec_cmd(
-            'run',
+        params = dict(
+            command="run",
             utilCmdArgs='-c "touch /var/config/rest/iapps/enable"'
         )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
@@ -346,18 +470,17 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         required_if=spec.required_if
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
-    except F5ModuleError as e:
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(e))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

@@ -258,7 +258,7 @@ class RudderInventory(object):
 
         try:
             response, content = self.conn.request(target.geturl(), method, body, headers)
-        except:
+        except Exception:
             self.fail_with_error('Error connecting to Rudder server')
 
         try:

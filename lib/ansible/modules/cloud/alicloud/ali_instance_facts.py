@@ -97,7 +97,7 @@ instances:
         availability_zone:
             description: The availability zone of the instance is in.
             returned: always
-            type: string
+            type: str
             sample: cn-beijing-a
         block_device_mappings:
             description: Any block device mapping entries for the instance.
@@ -107,12 +107,12 @@ instances:
                 device_name:
                     description: The device name exposed to the instance (for example, /dev/xvda).
                     returned: always
-                    type: string
+                    type: str
                     sample: /dev/xvda
                 attach_time:
                     description: The time stamp when the attachment initiated.
                     returned: always
-                    type: string
+                    type: str
                     sample: "2018-06-25T04:08:26Z"
                 delete_on_termination:
                     description: Indicates whether the volume is deleted on instance termination.
@@ -122,12 +122,12 @@ instances:
                 status:
                     description: The attachment state.
                     returned: always
-                    type: string
+                    type: str
                     sample: in_use
                 volume_id:
                     description: The ID of the cloud disk.
                     returned: always
-                    type: string
+                    type: str
                     sample: d-2zei53pjsi117y6gf9t6
         cpu:
             description: The CPU core count of the instance.
@@ -137,12 +137,12 @@ instances:
         creation_time:
             description: The time the instance was created.
             returned: always
-            type: string
+            type: str
             sample: "2018-06-25T04:08Z"
         description:
             description: The instance description.
             returned: always
-            type: string
+            type: str
             sample: "my ansible instance"
         eip:
             description: The attribution of EIP associated with the instance.
@@ -152,25 +152,25 @@ instances:
                 allocation_id:
                     description: The ID of the EIP.
                     returned: always
-                    type: string
+                    type: str
                     sample: eip-12345
                 internet_charge_type:
                     description: The internet charge type of the EIP.
                     returned: always
-                    type: string
+                    type: str
                     sample: "paybybandwidth"
                 ip_address:
                     description: EIP address.
                     returned: always
-                    type: string
+                    type: str
                     sample: 42.10.2.2
         expired_time:
             description: The time the instance will expire.
             returned: always
-            type: string
+            type: str
             sample: "2099-12-31T15:59Z"
         gpu:
-            description: The attribution of instane GPU.
+            description: The attribution of instance GPU.
             returned: always
             type: complex
             contains:
@@ -182,52 +182,52 @@ instances:
                 spec:
                     description: The specification of the GPU.
                     returned: always
-                    type: string
+                    type: str
                     sample: ""
         host_name:
             description: The host name of the instance.
             returned: always
-            type: string
+            type: str
             sample: iZ2zewaoZ
         id:
             description: Alias of instance_id.
             returned: always
-            type: string
+            type: str
             sample: i-abc12345
         instance_id:
             description: ECS instance resource ID.
             returned: always
-            type: string
+            type: str
             sample: i-abc12345
         image_id:
             description: The ID of the image used to launch the instance.
             returned: always
-            type: string
+            type: str
             sample: m-0011223344
         inner_ip_address:
             description: The inner IPv4 address of the classic instance.
             returned: always
-            type: string
+            type: str
             sample: 10.0.0.2
         instance_charge_type:
             description: The instance charge type.
             returned: always
-            type: string
+            type: str
             sample: PostPaid
         instance_name:
             description: The name of the instance.
             returned: always
-            type: string
+            type: str
             sample: my-ecs
         instance_type:
             description: The instance type of the running instance.
             returned: always
-            type: string
+            type: str
             sample: ecs.sn1ne.xlarge
         internet_charge_type:
             description: The billing method of the network bandwidth.
             returned: always
-            type: string
+            type: str
             sample: PayByBandwidth
         internet_max_bandwidth_in:
             description: Maximum incoming bandwidth from the internet network.
@@ -257,42 +257,42 @@ instances:
                 mac_address:
                     description: The MAC address.
                     returned: always
-                    type: string
+                    type: str
                     sample: "00:11:22:33:44:55"
                 network_interface_id:
                     description: The ID of the network interface.
                     returned: always
-                    type: string
+                    type: str
                     sample: eni-01234567
                 primary_ip_address:
                     description: The primary IPv4 address of the network interface within the vswitch.
                     returned: always
-                    type: string
+                    type: str
                     sample: 10.0.0.1
         osname:
             description: The operation system name of the instance owned.
             returned: always
-            type: string
+            type: str
             sample: CentOS
         ostype:
             description: The operation system type of the instance owned.
             returned: always
-            type: string
+            type: str
             sample: linux
         private_ip_address:
             description: The IPv4 address of the network interface within the subnet.
             returned: always
-            type: string
+            type: str
             sample: 10.0.0.1
         public_ip_address:
             description: The public IPv4 address assigned to the instance
             returned: always
-            type: string
+            type: str
             sample: 43.0.0.1
         resource_group_id:
             description: The id of the resource group to which the instance belongs.
             returned: always
-            type: string
+            type: str
             sample: my-ecs-group
         security_groups:
             description: One or more security groups for the instance.
@@ -302,17 +302,17 @@ instances:
                 - group_id:
                       description: The ID of the security group.
                       returned: always
-                      type: string
+                      type: str
                       sample: sg-0123456
                 - group_name:
                       description: The name of the security group.
                       returned: always
-                      type: string
+                      type: str
                       sample: my-security-group
         status:
             description: The current status of the instance.
             returned: always
-            type: string
+            type: str
             sample: running
         tags:
             description: Any tags assigned to the instance.
@@ -322,7 +322,7 @@ instances:
         vswitch_id:
             description: The ID of the vswitch in which the instance is running.
             returned: always
-            type: string
+            type: str
             sample: vsw-dew00abcdef
         vpc_id:
             description: The ID of the VPC the instance is in.

@@ -42,16 +42,19 @@ options:
     description:
       - Allocate an EIP inside a VPC or not. Required if specifying an ENI.
     default: 'no'
+    type: bool
     version_added: "1.4"
   reuse_existing_ip_allowed:
     description:
       - Reuse an EIP that is not associated to a device (when available), instead of allocating a new one.
     default: 'no'
+    type: bool
     version_added: "1.6"
   release_on_disassociation:
     description:
       - whether or not to automatically release the EIP when it is disassociated
     default: 'no'
+    type: bool
     version_added: "2.0"
   private_ip_address:
     description:
@@ -62,6 +65,7 @@ options:
       -  Specify this option to allow an Elastic IP address that is already associated with another
          network interface or instance to be re-associated with the specified instance or interface.
     default: 'no'
+    type: bool
     version_added: "2.5"
 extends_documentation_fragment:
     - aws
@@ -151,12 +155,12 @@ RETURN = '''
 allocation_id:
   description: allocation_id of the elastic ip
   returned: on success
-  type: string
+  type: str
   sample: eipalloc-51aa3a6c
 public_ip:
   description: an elastic ip address
   returned: on success
-  type: string
+  type: str
   sample: 52.88.159.209
 '''
 

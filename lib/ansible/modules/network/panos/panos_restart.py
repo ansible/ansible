@@ -43,7 +43,7 @@ RETURN = '''
 status:
     description: success status
     returned: success
-    type: string
+    type: str
     sample: "okey dokey"
 '''
 

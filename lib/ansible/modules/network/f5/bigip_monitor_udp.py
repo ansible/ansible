@@ -106,19 +106,21 @@ EXAMPLES = r'''
   bigip_monitor_udp:
     state: present
     ip: 10.10.10.10
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_udp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove UDP Monitor
   bigip_monitor_udp:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_udp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -126,7 +128,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: http
 description:
   description: The description of the monitor.
@@ -136,7 +138,7 @@ description:
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -169,6 +171,7 @@ try:
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.compare import cmp_str_with_none
     from library.module_utils.network.f5.ipaddress import is_valid_ip
 
 except ImportError:
@@ -181,6 +184,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
 
 
@@ -192,17 +196,35 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'recv', 'send',
-        'destination', 'description',
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'recv',
+        'send',
+        'destination',
+        'description',
     ]
 
     returnables = [
-        'parent', 'send', 'receive', 'ip', 'port', 'interval', 'timeout',
-        'time_until_up', 'description',
+        'parent',
+        'send',
+        'receive',
+        'ip',
+        'port',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
     ]
 
     updatables = [
-        'destination', 'send', 'receive', 'interval', 'timeout', 'time_until_up',
+        'destination',
+        'send',
+        'receive',
+        'interval',
+        'timeout',
+        'time_until_up',
         'description',
     ]
 
@@ -278,11 +300,21 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -370,6 +402,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -582,7 +618,7 @@ class ArgumentSpec(object):
             receive=dict(),
             receive_disable=dict(required=False),
             ip=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             time_until_up=dict(type='int'),

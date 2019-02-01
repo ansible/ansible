@@ -37,6 +37,7 @@ def main():
             'labels': Any(list_string_types, *string_types),
             'maintainers': Any(list_string_types, *string_types),
             'notified': Any(list_string_types, *string_types),
+            'supershipit': Any(list_string_types, *string_types),
             'support': Any("core", "network", "community"),
         })
     )
@@ -64,20 +65,18 @@ def main():
     if botmeta_support != 'core':
         print('%s:%d:%d: .github/BOTMETA.yml MUST be support: core' % (path, 0, 0))
 
-    # We have two macros to define locations, ensure they haven't been removed
-    module_utils_path = botmeta.get('macros', {}).get('module_utils', '')
-    modules_path = botmeta.get('macros', {}).get('modules', '')
+    # Find all path (none-team) macros so we can substitute them
+    macros = botmeta.get('macros', {})
+    path_macros = []
+    for macro in macros:
+        if macro.startswith('team_'):
+            continue
+        path_macros.append(macro)
 
-    if module_utils_path != 'lib/ansible/module_utils':
-        print('%s:%d:%d: [macros][module_utils] has been changed or removed' % (path, 0, 0))
-
-    if modules_path != 'lib/ansible/modules':
-        print('%s:%d:%d: [macros][modules] has been changed or removed' % (path, 0, 0))
-
-    # See if all `files:` are valid
+    # Ensure all `files` correspond to a file
     for file in botmeta['files']:
-        file = file.replace('$module_utils', module_utils_path)
-        file = file.replace('$modules', modules_path)
+        for macro in path_macros:
+            file = file.replace('$' + macro, botmeta.get('macros', {}).get(macro, ''))
         if not os.path.exists(file):
             # Not a file or directory, though maybe the prefix to one?
             # https://github.com/ansible/ansibullbot/pull/1023
@@ -91,4 +90,4 @@ if __name__ == '__main__':
 # Possible future work
 # * Schema for `macros:` - currently ignored due to team_ansible
 # * Ensure that all $teams mention in `files:` exist in `$macros`
-# * Validate GitHub names - possibly expensive lookup needed
+# * Validate GitHub names - possibly expensive lookup needed - No should be validated when module is added - gundalow

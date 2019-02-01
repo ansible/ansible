@@ -1,4 +1,4 @@
-|PyPI version| |Docs badge| |Chat badge| |Build Status|
+|PyPI version| |Docs badge| |Chat badge| |Build Status| |Code Of Conduct| |Mailing Lists| |License|
 
 *******
 Ansible
@@ -90,7 +90,7 @@ Authors
 =======
 
 Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
-(michael.dehaan/gmail/com) and has contributions from over 3700 users
+(michael.dehaan/gmail/com) and has contributions from over 4000 users
 (and growing). Thanks everyone!
 
 `Ansible <https://www.ansible.com>`_ is sponsored by `Red Hat, Inc.
@@ -111,3 +111,12 @@ See `COPYING <COPYING>`_ to see the full text.
    :target: https://app.shippable.com/projects/573f79d02a8192902e20e34b
 .. |Chat badge| image:: https://img.shields.io/badge/chat-IRC-brightgreen.svg
    :target: https://docs.ansible.com/ansible/latest/community/communication.html
+.. |Code Of Conduct| image:: https://img.shields.io/badge/code%20of%20conduct-Ansible-silver.svg
+   :target: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html
+   :alt: Ansible Code of Conduct
+.. |Mailing Lists| image:: https://img.shields.io/badge/mailing%20lists-Ansible-orange.svg
+   :target: https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information
+   :alt: Ansible mailing lists
+.. |License| image:: https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg
+   :target: COPYING
+   :alt: Repository License

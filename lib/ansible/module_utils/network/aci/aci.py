@@ -37,6 +37,7 @@ import os
 from copy import deepcopy
 
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
 
@@ -148,7 +149,7 @@ class ACIModule(object):
                 return true
             elif bool_value is False:
                 return false
-        except:
+        except Exception:
             # This provides backward compatibility to Ansible v2.4, deprecate in Ansible v2.8
             if value == true:
                 self.module.deprecate("Boolean value '%s' is no longer valid, please use 'yes' as a boolean value." % value, '2.9')
@@ -164,7 +165,7 @@ class ACIModule(object):
         ''' Return an ACI-compatible ISO8601 formatted time: 2123-12-12T00:00:00.000+00:00 '''
         try:
             return dt.isoformat(timespec='milliseconds')
-        except:
+        except Exception:
             tz = dt.strftime('%z')
             return '%s.%03d%s:%s' % (dt.strftime('%Y-%m-%dT%H:%M:%S'), dt.microsecond / 1000, tz[:3], tz[3:])
 
@@ -230,8 +231,10 @@ class ACIModule(object):
             self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
 
         try:
-            sig_key = load_privatekey(FILETYPE_PEM, open(self.params['private_key'], 'r').read())
-        except:
+            with open(self.params['private_key'], 'r') as priv_key_fh:
+                private_key_content = priv_key_fh.read()
+            sig_key = load_privatekey(FILETYPE_PEM, private_key_content)
+        except Exception:
             self.module.fail_json(msg='Cannot load private key %s' % self.params['private_key'])
 
         # NOTE: ACI documentation incorrectly adds a space between method and path
@@ -387,13 +390,13 @@ class ACIModule(object):
     # TODO: This could be designed to update existing keys
     def update_qs(self, params):
         ''' Append key-value pairs to self.filter_string '''
-        accepted_params = dict((k, v) for (k, v) in params.items() if v)
+        accepted_params = dict((k, v) for (k, v) in params.items() if v is not None)
         if accepted_params:
             if self.filter_string:
                 self.filter_string += '&'
             else:
                 self.filter_string = '?'
-            self.filter_string += '&'.join(['%s=%s' % (k, v) for (k, v) in accepted_params.items()])
+            self.filter_string += urlencode(accepted_params)
 
     # TODO: This could be designed to accept multiple obj_classes and keys
     def build_filter(self, obj_class, params):

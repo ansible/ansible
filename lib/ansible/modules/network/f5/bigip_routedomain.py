@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 F5 Networks Inc.
+# Copyright: (c) 2016, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -87,9 +87,14 @@ options:
   vlans:
     description:
       - VLANs for the system to use in the route domain.
+  fw_enforced_policy:
+    description:
+      - Specifies AFM policy to be attached to route domain.
+    version_added: 2.8
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -97,22 +102,24 @@ EXAMPLES = r'''
   bigip_routedomain:
     name: foo
     id: 1234
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Set VLANs on the route domain
   bigip_routedomain:
     name: bar
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
     vlans:
       - net1
       - foo
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -125,12 +132,12 @@ id:
 description:
   description: The description of the route domain.
   returned: changed
-  type: string
+  type: str
   sample: route domain foo
 strict:
   description: The new strict isolation setting.
   returned: changed
-  type: string
+  type: str
   sample: enabled
 parent:
   description: The new parent route domain.
@@ -150,7 +157,7 @@ routing_protocol:
 bwc_policy:
   description: The new bandwidth controller.
   returned: changed
-  type: string
+  type: str
   sample: /Common/foo
 connection_limit:
   description: The new connection limit for the route domain.
@@ -160,42 +167,45 @@ connection_limit:
 flow_eviction_policy:
   description: The new eviction policy to use with this route domain.
   returned: changed
-  type: string
+  type: str
   sample: /Common/default-eviction-policy
 service_policy:
   description: The new service policy to use with this route domain.
   returned: changed
-  type: string
+  type: str
   sample: /Common-my-service-policy
+fw_enforced_policy:
+  description: Specfies AFM policy to be attached to route domain.
+  returned: changed
+  type: str
+  sample: /Common/afm-blocking-policy
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
+    from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.compare import cmp_simple_list
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
+    from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import cmp_simple_list
 
 
 class Parameters(AnsibleF5Parameters):
@@ -204,7 +214,9 @@ class Parameters(AnsibleF5Parameters):
         'servicePolicy': 'service_policy',
         'bwcPolicy': 'bwc_policy',
         'flowEvictionPolicy': 'flow_eviction_policy',
-        'routingProtocol': 'routing_protocol'
+        'routingProtocol': 'routing_protocol',
+        'fwEnforcedPolicy': 'fw_enforced_policy',
+        'fwEnforcedPolicyReference': 'fw_policy_link',
     }
 
     api_attributes = [
@@ -217,7 +229,9 @@ class Parameters(AnsibleF5Parameters):
         'flowEvictionPolicy',
         'routingProtocol',
         'vlans',
-        'id'
+        'id',
+        'fwEnforcedPolicy',
+        'fwEnforcedPolicyReference',
     ]
 
     returnables = [
@@ -230,7 +244,7 @@ class Parameters(AnsibleF5Parameters):
         'routing_protocol',
         'vlans',
         'connection_limit',
-        'id'
+        'id',
     ]
 
     updatables = [
@@ -243,7 +257,9 @@ class Parameters(AnsibleF5Parameters):
         'routing_protocol',
         'vlans',
         'connection_limit',
-        'id'
+        'id',
+        'fw_enforced_policy',
+        'fw_policy_link',
     ]
 
     @property
@@ -271,12 +287,26 @@ class ApiParameters(Parameters):
     @property
     def domains(self):
         domains = self.read_domains_from_device()
-        result = [x.fullPath for x in domains]
+        result = [x['fullPath'] for x in domains['items']]
         return result
 
     def read_domains_from_device(self):
-        collection = self.client.api.tm.net.route_domains.get_collection()
-        return collection
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
 
 
 class ModuleParameters(Parameters):
@@ -326,6 +356,24 @@ class ModuleParameters(Parameters):
         if len(self._values['routing_protocol']) == 1 and self._values['routing_protocol'][0] in ['', 'none']:
             return ''
         return self._values['routing_protocol']
+
+    @property
+    def fw_enforced_policy(self):
+        if self._values['fw_enforced_policy'] is None:
+            return None
+        if self._values['fw_enforced_policy'] in ['none', '']:
+            return None
+        name = self._values['fw_enforced_policy']
+        return fq_name(self.partition, name)
+
+    @property
+    def fw_policy_link(self):
+        policy = self.fw_enforced_policy
+        if policy is None:
+            return None
+        tmp = policy.split('/')
+        link = dict(link='https://localhost/mgmt/tm/security/firewall/policy/~{0}~{1}'.format(tmp[1], tmp[2]))
+        return link
 
 
 class Changes(Parameters):
@@ -383,33 +431,20 @@ class Difference(object):
 
     @property
     def routing_protocol(self):
-        if self.want.routing_protocol is None:
-            return None
-        if self.want.routing_protocol == '' and self.have.routing_protocol is None:
-            return None
-        if self.want.routing_protocol == '' and len(self.have.routing_protocol) > 0:
-            return []
-        if self.have.routing_protocol is None:
-            return self.want.routing_protocol
-        want = set(self.want.routing_protocol)
-        have = set(self.have.routing_protocol)
-        if want != have:
-            return list(want)
+        return cmp_simple_list(self.want.routing_protocol, self.have.routing_protocol)
 
     @property
     def vlans(self):
-        if self.want.vlans is None:
+        return cmp_simple_list(self.want.vlans, self.have.vlans)
+
+    @property
+    def fw_policy_link(self):
+        if self.want.fw_enforced_policy is None:
             return None
-        if self.want.vlans == '' and self.have.vlans is None:
+        if self.want.fw_enforced_policy == self.have.fw_enforced_policy:
             return None
-        if self.want.vlans == '' and len(self.have.vlans) > 0:
-            return []
-        if self.have.vlans is None:
-            return self.want.vlans
-        want = set(self.want.vlans)
-        have = set(self.have.vlans)
-        if want != have:
-            return list(want)
+        if self.want.fw_policy_link != self.have.fw_policy_link:
+            return self.want.fw_policy_link
 
 
 class ModuleManager(object):
@@ -457,13 +492,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -486,12 +518,10 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def exists(self):
-        result = self.client.api.tm.net.route_domains.route_domain.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -529,42 +559,112 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
     def create_on_device(self):
         params = self.changes.api_params()
-        self.client.api.tm.net.route_domains.route_domain.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if self.want.fw_enforced_policy:
+            payload = dict(
+                fwEnforcedPolicy=self.want.fw_enforced_policy,
+                fwEnforcedPolicyReference=self.want.fw_policy_link
+            )
+            uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.name),
+            )
+            resp = self.client.api.patch(uri, json=payload)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] in [400, 403]:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+        return True
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.net.route_domains.route_domain.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.net.route_domains.route_domain.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
         )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.net.route_domains.route_domain.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/net/route-domain/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name),
         )
-        result = resource.attrs
-        return ApiParameters(params=result, client=self.client)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response, client=self.client)
 
 
 class ArgumentSpec(object):
@@ -575,7 +675,7 @@ class ArgumentSpec(object):
             id=dict(type='int'),
             description=dict(),
             strict=dict(type='bool'),
-            parent=dict(type='int'),
+            parent=dict(),
             vlans=dict(type='list'),
             routing_protocol=dict(
                 type='list',
@@ -585,6 +685,7 @@ class ArgumentSpec(object):
             connection_limit=dict(type='int'),
             flow_eviction_policy=dict(),
             service_policy=dict(),
+            fw_enforced_policy=dict(),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
@@ -609,18 +710,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: fmgr_script
 version_added: "2.5"
-author: Andrew Welsh
+author: Andrew Welsh (@Ghilli3)
 short_description: Add/Edit/Delete and execute scripts
 description: Create/edit/delete scripts and execute the scripts on the FortiManager using jsonrpc API
 
@@ -128,7 +128,7 @@ RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback

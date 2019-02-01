@@ -17,9 +17,11 @@ short_description: Provides rollback and rollback preview functionality (config:
 description:
 - Provides rollback and rollback preview functionality for Cisco ACI fabrics.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.
-notes:
-- More information about the internal APIC class B(config:ImportP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_config_snapshot
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(config:ImportP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -27,16 +29,20 @@ options:
   compare_export_policy:
     description:
     - The export policy that the C(compare_snapshot) is associated to.
+    type: str
   compare_snapshot:
     description:
     - The name of the snapshot to compare with C(snapshot).
+    type: str
   description:
     description:
     - The description for the Import Policy.
+    type: str
     aliases: [ descr ]
   export_policy:
     description:
     - The export policy that the C(snapshot) is associated to.
+    type: str
     required: yes
   fail_on_decrypt:
     description:
@@ -47,24 +53,29 @@ options:
     description:
     - Determines how the import should be handled by the APIC.
     - The APIC defaults to C(atomic) when unset.
+    type: str
     choices: [ atomic, best-effort ]
   import_policy:
     description:
     - The name of the Import Policy to use for config rollback.
+    type: str
   import_type:
     description:
     - Determines how the current and snapshot configuration should be compared for replacement.
     - The APIC defaults to C(replace) when unset.
+    type: str
     choices: [ merge, replace ]
   snapshot:
     description:
     - The name of the snapshot to rollback to, or the base snapshot to use for comparison.
     - The C(aci_snapshot) module can be used to query the list of available snapshots.
+    type: str
     required: yes
   state:
     description:
     - Use C(preview) for previewing the diff between two snapshots.
     - Use C(rollback) for reverting the configuration to a previous snapshot.
+    type: str
     choices: [ preview, rollback ]
     default: rollback
 extends_documentation_fragment: aci
@@ -133,7 +144,7 @@ RETURN = r'''
 preview:
   description: A preview between two snapshots
   returned: when state is preview
-  type: string
+  type: str
 error:
   description: The error information as returned from the APIC
   returned: failure
@@ -146,22 +157,22 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -171,7 +182,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

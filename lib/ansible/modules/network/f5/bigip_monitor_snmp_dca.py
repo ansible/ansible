@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -135,20 +135,22 @@ author:
 EXAMPLES = r'''
 - name: Create SNMP DCS monitor
   bigip_monitor_snmp_dca:
-    state: present
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_monitor
+    state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove TCP Echo Monitor
   bigip_monitor_snmp_dca:
-    state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_monitor
+    state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -156,7 +158,7 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: snmp_dca
 description:
   description: The description of the monitor.
@@ -181,17 +183,17 @@ time_until_up:
 community:
   description: The new community for the monitor.
   returned: changed
-  type: string
+  type: str
   sample: foobar
 version:
   description: The new new SNMP version to be used by the monitor.
   returned: changed
-  type: string
+  type: str
   sample: v2c
 agent_type:
   description: The new agent type to be used by the monitor.
   returned: changed
-  type: string
+  type: str
   sample: UCD
 cpu_coefficient:
   description: The new CPU coefficient.
@@ -238,7 +240,7 @@ try:
     from library.module_utils.network.f5.common import transform_name
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
-
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -249,6 +251,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import transform_name
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -265,21 +268,56 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination', 'community',
-        'version', 'agentType', 'cpuCoefficient', 'cpuThreshold', 'memoryCoefficient',
-        'memoryThreshold', 'diskCoefficient', 'diskThreshold', 'description',
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'destination',
+        'community',
+        'version',
+        'agentType',
+        'cpuCoefficient',
+        'cpuThreshold',
+        'memoryCoefficient',
+        'memoryThreshold',
+        'diskCoefficient',
+        'diskThreshold',
+        'description',
     ]
 
     returnables = [
-        'parent', 'ip', 'interval', 'timeout', 'time_until_up', 'description', 'community',
-        'version', 'agent_type', 'cpu_coefficient', 'cpu_threshold', 'memory_coefficient',
-        'memory_threshold', 'disk_coefficient', 'disk_threshold',
+        'parent',
+        'ip',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
+        'community',
+        'version',
+        'agent_type',
+        'cpu_coefficient',
+        'cpu_threshold',
+        'memory_coefficient',
+        'memory_threshold',
+        'disk_coefficient',
+        'disk_threshold',
     ]
 
     updatables = [
-        'ip', 'interval', 'timeout', 'time_until_up', 'description', 'community',
-        'version', 'agent_type', 'cpu_coefficient', 'cpu_threshold', 'memory_coefficient',
-        'memory_threshold', 'disk_coefficient', 'disk_threshold',
+        'ip',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
+        'community',
+        'version',
+        'agent_type',
+        'cpu_coefficient',
+        'cpu_threshold',
+        'memory_coefficient',
+        'memory_threshold',
+        'disk_coefficient',
+        'disk_threshold',
     ]
 
     @property
@@ -358,11 +396,21 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -433,6 +481,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):

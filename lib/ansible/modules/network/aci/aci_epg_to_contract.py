@@ -19,8 +19,14 @@ description:
 notes:
 - The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
-- More information about the internal APIC classes B(fv:RsCons) and B(fv:RsProv) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- module: aci_epg
+- module: aci_contract
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(fv:RsCons) and B(fv:RsProv).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -28,39 +34,47 @@ options:
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     aliases: [ app_profile, app_profile_name ]
   contract:
     description:
     - The name of the contract.
+    type: str
     aliases: [ contract_name ]
   contract_type:
     description:
     - Determines if the EPG should Provide or Consume the Contract.
+    type: str
     required: yes
     choices: [ consumer, provider ]
   epg:
     description:
     - The name of the end point group.
+    type: str
     aliases: [ epg_name ]
   priority:
     description:
     - QoS class.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ level1, level2, level3, unspecified ]
   provider_match:
     description:
     - The matching algorithm for Provided Contracts.
     - The APIC defaults to C(at_least_one) when unset during creation.
+    type: str
     choices: [ all, at_least_one, at_most_one, none ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 '''
@@ -149,7 +163,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -198,17 +212,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -218,7 +232,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

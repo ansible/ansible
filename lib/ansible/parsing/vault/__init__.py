@@ -75,13 +75,10 @@ from ansible.module_utils.six import PY3, binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
@@ -740,7 +737,7 @@ class VaultLib:
                     file_slug = ''
                     if filename:
                         file_slug = ' of "%s"' % filename
-                    display.vvvvv('Decrypt%s successful with secret=%s and vault_id=%s' % (file_slug, vault_secret, vault_secret_id))
+                    display.vvvvv('Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), vault_secret, vault_secret_id))
                     break
             except AnsibleVaultFormatError as exc:
                 msg = "There was a vault format error"
@@ -1033,7 +1030,10 @@ class VaultEditor:
                 with open(filename, "rb") as fh:
                     data = fh.read()
         except Exception as e:
-            raise AnsibleError(str(e))
+            msg = to_native(e)
+            if not msg:
+                msg = repr(e)
+            raise AnsibleError('Unable to read source file (%s): %s' % (to_native(filename), msg))
 
         return data
 

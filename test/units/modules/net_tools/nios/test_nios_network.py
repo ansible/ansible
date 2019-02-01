@@ -160,7 +160,6 @@ class TestNiosNetworkModule(TestNiosModule):
         }
 
         wapi = self._get_wapi(test_object)
-        print("WAPI: ", wapi)
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
@@ -190,3 +189,61 @@ class TestNiosNetworkModule(TestNiosModule):
 
         self.assertTrue(res['changed'])
         wapi.delete_object.assert_called_once_with(ref)
+
+    def test_nios_networkcontainer_ipv4_create(self):
+        self.module.params = {'provider': None, 'state': 'present', 'networkcontainer': '192.168.10.0/24',
+                              'comment': None, 'extattrs': None}
+
+        test_object = None
+        test_spec = {
+            "networkcontainer": {"ib_req": True},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.create_object.assert_called_once_with('testobject', {'networkcontainer': '192.168.10.0/24'})
+
+    def test_nios_networkcontainer_ipv4_remove(self):
+        self.module.params = {'provider': None, 'state': 'absent', 'networkcontainer': '192.168.10.0/24',
+                              'comment': None, 'extattrs': None}
+
+        ref = "networkcontainer/ZG5zLm5ldHdvcmtfdmlldyQw:ansible/false"
+
+        test_object = [{
+            "comment": "test comment",
+            "_ref": ref,
+            "networkcontainer": "192.168.10.0/24"
+        }]
+
+        test_spec = {
+            "networkcontainer": {"ib_req": True},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.delete_object.assert_called_once_with(ref)
+
+    def test_nios_networkcontainer_ipv6_create(self):
+        self.module.params = {'provider': None, 'state': 'present', 'ipv6networkcontainer': 'fe80::/64',
+                              'comment': None, 'extattrs': None}
+
+        test_object = None
+        test_spec = {
+            "ipv6networkcontainer": {"ib_req": True},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.create_object.assert_called_once_with('testobject', {'ipv6networkcontainer': 'fe80::/64'})

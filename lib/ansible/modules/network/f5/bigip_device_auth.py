@@ -188,17 +188,17 @@ servers:
 authentication:
   description: Process the system uses to serve authentication requests when using TACACS.
   returned: changed
-  type: string
+  type: str
   sample: use-all-servers
 service_name:
   description: Name of the service the user is requesting to be authorized to use.
   returned: changed
-  type: string
+  type: str
   sample: ppp
 protocol_name:
   description: Name of the protocol associated with C(service_name) used for client authentication.
   returned: changed
-  type: string
+  type: str
   sample: ip
 '''
 
@@ -790,8 +790,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

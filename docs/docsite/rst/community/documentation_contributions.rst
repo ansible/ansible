@@ -163,6 +163,19 @@ For example:
 
   sphinx-build -b html -c rst/ rst/dev_guide/ _build/html/dev_guide/ rst/dev_guide/developing_modules_documenting.rst
 
+Running the final tests
+^^^^^^^^^^^^^^^^^^^^^^^
+
+When you submit a documentation pull request, automated tests are run. Those same tests can be run locally. To do so, navigate to the repository's top directory and run:
+
+.. code-block:: bash
+
+  make clean &&
+  bin/ansible-test sanity --test docs-build &&
+  bin/ansible-test sanity --test rstcheck
+
+Unfortunately, leftover rST-files from previous document-generating can occasionally confuse these tests. It is therefore safest to run them on a clean copy of the repository, which is the purpose of ``make clean``. If you type these three lines one at a time and manually check the success of each, you do not need the ``&&``.
+
 Joining the documentation working group
 =======================================
 

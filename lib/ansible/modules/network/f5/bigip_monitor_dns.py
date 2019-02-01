@@ -223,10 +223,11 @@ EXAMPLES = r'''
     query_type: aaaa
     up_interval: 5
     adaptive: no
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -234,12 +235,12 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: http
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 interval:
   description: The new interval in which to run the monitor check.
@@ -264,12 +265,12 @@ adaptive:
 accept_rcode:
   description: RCODE required in the response for an up status.
   returned: changed
-  type: string
+  type: str
   sample: no-error
 allowed_divergence_type:
   description: Type of divergence used for adaptive response time monitoring.
   returned: changed
-  type: string
+  type: str
   sample: absolute
 allowed_divergence_value:
   description:
@@ -279,10 +280,10 @@ allowed_divergence_value:
   type: int
   sample: 25
 description:
-    description: The description of the monitor.
-    returned: changed
-    type: str
-    sample: Important Monitor
+  description: The description of the monitor.
+  returned: changed
+  type: str
+  sample: Important Monitor
 adaptive_limit:
   description: Absolute number of milliseconds that may not be exceeded by a monitor probe.
   returned: changed
@@ -296,14 +297,14 @@ sampling_timespan:
 answer_section_contains:
   description: Type of DNS query that the monitor sends.
   returned: changed
-  type: string
+  type: str
   sample: query-type
 manual_resume:
   description:
     - Whether the system automatically changes the status of a resource to enabled at the
       next successful monitor check.
   returned: changed
-  type: string
+  type: str
   sample: query-type
 up_interval:
   description: Interval for the system to use to perform the health check when a resource is up.
@@ -313,17 +314,17 @@ up_interval:
 query_name:
   description: Query name for the monitor to use in a DNS query.
   returned: changed
-  type: string
+  type: str
   sample: foo
 query_type:
   description: Type of DNS query that the monitor sends. Either C(a) or C(aaaa).
   returned: changed
-  type: string
+  type: str
   sample: aaaa
 receive:
   description: IP address that the monitor uses from the resource record sections of the DNS response.
   returned: changed
-  type: string
+  type: str
   sample: 2.3.2.4
 reverse:
   description: Whether the monitor operates in reverse mode.
@@ -335,7 +336,7 @@ port:
     - Alias port or service for the monitor to check, on behalf of the pools or pool
       members with which the monitor is associated.
   returned: changed
-  type: string
+  type: str
   sample: 80
 transparent:
   description: Whether the monitor operates in transparent mode.
@@ -355,12 +356,13 @@ try:
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import transform_name
-    from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.common import flatten_boolean
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from library.module_utils.network.f5.ipaddress import validate_ip_address
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -369,12 +371,13 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import transform_name
-    from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.common import flatten_boolean
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
     from ansible.module_utils.network.f5.ipaddress import validate_ip_address
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -549,10 +552,22 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def manual_resume(self):
         if self._values['manual_resume'] is None:
@@ -605,35 +620,19 @@ class UsableChanges(Changes):
 class ReportableChanges(Changes):
     @property
     def manual_resume(self):
-        if self._values['manual_resume'] is None:
-            return None
-        elif self._values['manual_resume'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['manual_resume'])
 
     @property
     def reverse(self):
-        if self._values['reverse'] is None:
-            return None
-        elif self._values['reverse'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['reverse'])
 
     @property
     def transparent(self):
-        if self._values['transparent'] is None:
-            return None
-        elif self._values['transparent'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['transparent'])
 
     @property
     def adaptive(self):
-        if self._values['adaptive'] is None:
-            return None
-        elif self._values['adaptive'] == 'enabled':
-            return 'yes'
-        return 'no'
+        return flatten_boolean(self._values['adaptive'])
 
 
 class Difference(object):
@@ -700,6 +699,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -958,7 +961,7 @@ class ArgumentSpec(object):
             receive=dict(),
             ip=dict(),
             description=dict(),
-            port=dict(type='int'),
+            port=dict(),
             interval=dict(type='int'),
             timeout=dict(type='int'),
             manual_resume=dict(type='bool'),
@@ -998,6 +1001,7 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
     )
+
     client = F5RestClient(**module.params)
 
     try:

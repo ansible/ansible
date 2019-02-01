@@ -339,7 +339,7 @@ class RHEVConn(object):
             api = API(url=url, username=user, password=password, insecure=str(insecure_api))
             api.test()
             self.conn = api
-        except:
+        except Exception:
             raise Exception("Failed to connect to RHEV-M.")
 
     def __del__(self):

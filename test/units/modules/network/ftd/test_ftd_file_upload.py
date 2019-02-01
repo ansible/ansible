@@ -39,9 +39,9 @@ class TestFtdFileUpload(object):
         connection_class_mock = mocker.patch('ansible.modules.network.ftd.ftd_file_upload.Connection')
         return connection_class_mock.return_value
 
-    @pytest.mark.parametrize("missing_arg", ['operation', 'fileToUpload'])
+    @pytest.mark.parametrize("missing_arg", ['operation', 'file_to_upload'])
     def test_module_should_fail_without_required_args(self, missing_arg):
-        module_args = {'operation': 'uploadFile', 'fileToUpload': '/tmp/test.txt'}
+        module_args = {'operation': 'uploadFile', 'file_to_upload': '/tmp/test.txt'}
         del module_args[missing_arg]
         set_module_args(module_args)
 
@@ -52,7 +52,7 @@ class TestFtdFileUpload(object):
 
     def test_module_should_fail_when_no_operation_spec_found(self, connection_mock):
         connection_mock.get_operation_spec.return_value = None
-        set_module_args({'operation': 'nonExistingUploadOperation', 'fileToUpload': '/tmp/test.txt'})
+        set_module_args({'operation': 'nonExistingUploadOperation', 'file_to_upload': '/tmp/test.txt'})
 
         with pytest.raises(AnsibleFailJson) as ex:
             self.module.main()
@@ -67,7 +67,7 @@ class TestFtdFileUpload(object):
             OperationField.URL: '/object/network',
             OperationField.MODEL_NAME: 'NetworkObject'
         }
-        set_module_args({'operation': 'nonUploadOperation', 'fileToUpload': '/tmp/test.txt'})
+        set_module_args({'operation': 'nonUploadOperation', 'file_to_upload': '/tmp/test.txt'})
 
         with pytest.raises(AnsibleFailJson) as ex:
             self.module.main()
@@ -87,7 +87,7 @@ class TestFtdFileUpload(object):
 
         set_module_args({
             'operation': 'uploadFile',
-            'fileToUpload': '/tmp/test.txt'
+            'file_to_upload': '/tmp/test.txt'
         })
         with pytest.raises(AnsibleExitJson) as ex:
             self.module.main()

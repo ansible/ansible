@@ -133,13 +133,13 @@ loglines:
 msg:
     description: Message detailing the failure reason
     returned: failure
-    type: string
+    type: str
     sample: "Action does not exist"
 
 diff:
     description: List of differences between the actual configured object and the configuration specified in the module
     returned: failure
-    type: dictionary
+    type: dict
     sample: "{ 'targetlbvserver': 'difference. ours: (str) server1 other: (str) server2' }"
 '''
 

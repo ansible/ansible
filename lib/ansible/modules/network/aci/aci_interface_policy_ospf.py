@@ -17,9 +17,10 @@ module: aci_interface_policy_ospf
 short_description: Manage OSPF interface policies (ospf:IfPol)
 description:
 - Manage OSPF interface policies on Cisco ACI fabrics.
-notes:
-- More information about the internal APIC class B(ospf:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(ospf:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.7'
@@ -27,6 +28,7 @@ options:
   tenant:
     description:
     - The name of the Tenant the OSPF interface policy should belong to.
+    type: str
     required: yes
     aliases: [ tenant_name ]
   ospf:
@@ -34,17 +36,20 @@ options:
     - The OSPF interface policy name.
     - This name can be between 1 and 64 alphanumeric characters.
     - Note that you cannot change this name after the object has been saved.
+    type: str
     required: yes
     aliases: [ ospf_interface, name ]
   description:
     description:
     - The description for the OSPF interface.
+    type: str
     aliases: [ descr ]
   network_type:
     description:
     - The OSPF interface policy network type.
     - OSPF supports broadcast and point-to-point.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ bcast, p2p ]
   cost:
     description:
@@ -63,6 +68,7 @@ options:
       interface subconfiguration mode command.
     - Accepted values range between C(1) and C(450).
     - The APIC defaults to C(0) when unset during creation.
+    type: int
   controls:
     description:
     - The interface policy controls.
@@ -125,6 +131,7 @@ options:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -205,7 +212,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -254,17 +261,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -274,7 +281,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

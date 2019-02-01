@@ -17,24 +17,21 @@ module: win_get_url
 version_added: "1.7"
 short_description: Downloads file from HTTP, HTTPS, or FTP to node
 description:
-- Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
-  server I(must) have direct access to the remote resource.
+- Downloads files from HTTP, HTTPS, or FTP to the remote server.
+- The remote server I(must) have direct access to the remote resource.
 - For non-Windows targets, use the M(get_url) module instead.
-author:
-- Paul Durivage (@angstwad)
-- Takeshi Kuramochi (@tksarah)
 options:
   url:
     description:
     - The full URL of a file to download.
-    required: yes
     type: str
+    required: yes
   dest:
     description:
     - The location to save the file at the URL.
     - Be sure to include a filename and extension as appropriate.
-    required: yes
     type: path
+    required: yes
   force:
     description:
     - If C(yes), will always download the file. If C(no), will only
@@ -44,7 +41,7 @@ options:
       time of the requested resource, so for this to work, the remote web
       server must support HEAD requests.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "2.0"
   headers:
     description:
@@ -66,7 +63,7 @@ options:
     - If C(yes), will add a Basic authentication header on the initial request.
     - If C(no), will use Microsoft's WebClient to handle authentication.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.5"
   validate_certs:
     description:
@@ -74,7 +71,7 @@ options:
       on personally controlled sites using self-signed certificates.
     - If C(skip_certificate_validation) was set, it overrides this option.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.4'
   proxy_url:
     description:
@@ -96,7 +93,7 @@ options:
     - If C(no), it will not use a proxy, even if one is defined in an environment
       variable on the target hosts.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.4'
   timeout:
     description:
@@ -108,6 +105,13 @@ notes:
 - If your URL includes an escaped slash character (%2F) this module will convert it to a real slash.
   This is a result of the behaviour of the System.Uri class as described in
   L(the documentation,https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/schemesettings-element-uri-settings#remarks).
+seealso:
+- module: get_url
+- module: uri
+- module: win_uri
+author:
+- Paul Durivage (@angstwad)
+- Takeshi Kuramochi (@tksarah)
 '''
 
 EXAMPLES = r'''
@@ -142,7 +146,7 @@ RETURN = r'''
 dest:
     description: destination file/path
     returned: always
-    type: string
+    type: str
     sample: C:\Users\RandomUser\earthrise.jpg
 elapsed:
     description: The elapsed seconds between the start of poll and the end of the module.
@@ -152,12 +156,12 @@ elapsed:
 url:
     description: requested url
     returned: always
-    type: string
+    type: str
     sample: http://www.example.com/earthrise.jpg
 msg:
     description: Error message, or HTTP status message from web-server
     returned: always
-    type: string
+    type: str
     sample: OK
 status_code:
     description: HTTP status code

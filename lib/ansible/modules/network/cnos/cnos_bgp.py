@@ -310,7 +310,7 @@ msg:
   description: Success or failure message. Upon any failure, the method returns
    an error display string.
   returned: always
-  type: string
+  type: str
 '''
 
 import sys
@@ -323,7 +323,7 @@ import re
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict

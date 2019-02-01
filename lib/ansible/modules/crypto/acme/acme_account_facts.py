@@ -21,11 +21,14 @@ version_added: "2.7"
 short_description: Retrieves information on ACME accounts
 description:
    - "Allows to retrieve information on accounts a CA supporting the
-      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-14),
+      L(ACME protocol,https://tools.ietf.org/html/draft-ietf-acme-acme-18),
       such as L(Let's Encrypt,https://letsencrypt.org/)."
    - "This module only works with the ACME v2 protocol."
 notes:
    - "The M(acme_account) module allows to modify, create and delete ACME accounts."
+seealso:
+  - module: acme_account
+    description: Allows to create, modify or delete an ACME account.
 extends_documentation_fragment:
   - acme
 '''
@@ -66,7 +69,7 @@ exists:
 account_uri:
   description: ACME account URI, or None if account does not exist.
   returned: always
-  type: string
+  type: str
 
 account:
   description: The account information, as retrieved from the ACME server.
@@ -86,6 +89,11 @@ account:
       sample: valid
     orders:
       description: a URL where a list of orders can be retrieved for this account
+      returned: always
+      type: str
+      sample: https://example.ca/account/1/orders
+    public_account_key:
+      description: the public account key as a L(JSON Web Key,https://tools.ietf.org/html/rfc7517).
       returned: always
       type: str
       sample: https://example.ca/account/1/orders
@@ -129,24 +137,25 @@ def main():
     try:
         account = ACMEAccount(module)
         # Check whether account exists
-        changed = account.init_account(
+        created, account_data = account.setup_account(
             [],
             allow_creation=False,
-            update_contact=False,
             remove_account_uri_if_not_exists=True,
         )
-        if changed:
-            raise AssertionError('Unwanted account change')
-        if account.uri is None:
-            # Account does exist
-            module.exit_json(changed=False, exists=False, account_uri=None)
-        else:
-            # Account exists: retrieve account information
-            data = account.get_account_data()
+        if created:
+            raise AssertionError('Unwanted account creation')
+        result = {
+            'changed': False,
+            'exists': account.uri is not None,
+            'account_uri': account.uri,
+        }
+        if account.uri is not None:
             # Make sure promised data is there
-            if 'contact' not in data:
-                data['contact'] = []
-            module.exit_json(changed=False, exists=True, account_uri=account.uri, account=data)
+            if 'contact' not in account_data:
+                account_data['contact'] = []
+            account_data['public_account_key'] = account.key_data['jwk']
+            result['account'] = account_data
+        module.exit_json(**result)
     except ModuleFailException as e:
         e.do_fail(module)
 

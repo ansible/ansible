@@ -91,7 +91,7 @@ changes_needed:
   sample: { "role": "add", "role grant": "add" }
 had_invalid_entries:
   description: there are invalid (non-ARN) entries in the KMS entry. These don't count as a change, but will be removed if any changes are being made.
-  type: boolean
+  type: bool
   returned: always
 '''
 
@@ -201,7 +201,7 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
             kms.put_key_policy(KeyId=keyarn, PolicyName='default', Policy=policy_json_string)
             # returns nothing, so we have to just assume it didn't throw
             ret['changed'] = True
-    except:
+    except Exception:
         raise
 
     ret['changes_needed'] = changes_needed

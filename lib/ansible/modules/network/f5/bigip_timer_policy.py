@@ -116,20 +116,22 @@ EXAMPLES = r'''
         idle_timeout: 200
         destination_ports:
           - 21
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove a timer policy and all its associated rules
   bigip_timer_policy:
     name: timer1
     description: My timer policy
-    password: secret
-    server: lb.mydomain.com
     state: absent
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -137,7 +139,7 @@ RETURN = r'''
 description:
   description: The new description of the timer policy.
   returned: changed
-  type: string
+  type: str
   sample: true
 '''
 

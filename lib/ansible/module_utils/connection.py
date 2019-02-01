@@ -33,9 +33,11 @@ import socket
 import struct
 import traceback
 import uuid
+from datetime import date, datetime
 
 from functools import partial
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
 
@@ -100,10 +102,7 @@ def exec_command(module, command):
 def request_builder(method_, *args, **kwargs):
     reqid = str(uuid.uuid4())
     req = {'jsonrpc': '2.0', 'method': method_, 'id': reqid}
-
-    params = args or kwargs or None
-    if params:
-        req['params'] = params
+    req['params'] = (args, kwargs)
 
     return req
 
@@ -141,22 +140,8 @@ class Connection(object):
                                   '\nSee the socket_path issue catergory in Network Debug and Troubleshooting Guide')
 
         try:
-            data = json.dumps(req)
+            data = json.dumps(req, cls=AnsibleJSONEncoder)
         except TypeError as exc:
-            data = req.get('params')
-
-            if isinstance(data, dict):
-                data = data.get('var_options', {})
-
-                for key, value in iteritems(data):
-                    try:
-                        dummy = json.dumps(value)
-                    except TypeError:
-                        raise ConnectionError(
-                            "Failed to encode some variables as JSON for communication with ansible-connection. "
-                            "Please open an issue and mention that the culprit is most likely '%s'" % key
-                        )
-
             raise ConnectionError(
                 "Failed to encode some variables as JSON for communication with ansible-connection. "
                 "The original exception was: %s" % to_text(exc)
@@ -217,3 +202,29 @@ class Connection(object):
         sf.close()
 
         return to_text(response, errors='surrogate_or_strict')
+
+
+# NOTE: This is a modified copy of the class in parsing.ajson to get around not
+#       being able to import that directly, nor some of the type classes
+class AnsibleJSONEncoder(json.JSONEncoder):
+    '''
+    Simple encoder class to deal with JSON encoding of Ansible internal types
+    '''
+
+    def default(self, o):
+        if type(o).__name__ == 'AnsibleVaultEncryptedUnicode':
+            # vault object
+            value = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
+        elif type(o).__name__ == 'AnsibleUnsafe':
+            # unsafe object
+            value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
+        elif isinstance(o, Mapping):
+            # hostvars and other objects
+            value = dict(o)
+        elif isinstance(o, (date, datetime)):
+            # date object
+            value = o.isoformat()
+        else:
+            # use default encoder
+            value = super(AnsibleJSONEncoder, self).default(o)
+        return value

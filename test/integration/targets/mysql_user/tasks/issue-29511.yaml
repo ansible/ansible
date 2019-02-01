@@ -1,0 +1,78 @@
+---
+
+- name: Issue test setup - drop database
+  mysql_db:
+    name: "{{ item }}"
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  loop:
+    - foo
+    - bar
+
+- name: Issue test setup - create database
+  mysql_db:
+    name: "{{ item }}"
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
+  loop:
+    - foo
+    - bar
+
+- name: Copy SQL scripts to remote
+  copy:
+    src: "{{ item }}"
+    dest: "{{ remote_tmp_dir }}/{{ item | basename }}"
+  with_items:
+    - create-function.sql
+    - create-procedure.sql
+
+- name: Create function for test
+  shell: "mysql < {{ remote_tmp_dir }}/create-function.sql"
+
+- name: Create procedure for test
+  shell: "mysql < {{ remote_tmp_dir }}/create-procedure.sql"
+
+- name: Create user with FUNCTION and PROCEDURE privileges
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    state: present
+    priv: 'FUNCTION foo.function:EXECUTE/foo.*:SELECT/PROCEDURE bar.procedure:EXECUTE'
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert Create user with FUNCTION and PROCEDURE privileges
+  assert:
+    that:
+      - result is success
+      - result is changed
+
+- name: Create user with FUNCTION and PROCEDURE privileges - Idempotent check
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    password: '{{ user_password_2 }}'
+    state: present
+    priv: 'FUNCTION foo.function:EXECUTE/foo.*:SELECT/PROCEDURE bar.procedure:EXECUTE'
+    login_unix_socket: '{{ mysql_socket }}'
+  register: result
+
+- name: Assert Create user with FUNCTION and PROCEDURE privileges
+  assert:
+    that:
+      - result is success
+      - result is not changed
+
+- name: Remove user
+  mysql_user:
+    name: '{{ user_name_2 }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: Issue test teardown - cleanup databases
+  mysql_db:
+    name: "{{ item }}"
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+  loop:
+    - foo
+    - bar

@@ -38,8 +38,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao <t-haicao@microsoft.com>"
-    - "Yunge Zhu <yungez@microsoft.com>"
+    - "Hai Cao (@caohai) <t-haicao@microsoft.com>"
+    - "Yunge Zhu (@yungezz) <yungez@microsoft.com>"
 '''
 
 EXAMPLES = '''
@@ -210,7 +210,7 @@ from ansible.module_utils.common.dict_transformations import _camel_to_snake
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.common import AzureHttpError
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 

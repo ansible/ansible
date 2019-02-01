@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Copyright: Ansible Project
+
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -70,6 +71,7 @@ options:
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
+    type: bool
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many
@@ -128,8 +130,8 @@ options:
     default: 300
     version_added: "2.1"
 author:
-  - "Bruce Pennypacker (@bpennypacker)"
-  - "Mike Buzzetti <mike.buzzetti@gmail.com>"
+- Bruce Pennypacker (@bpennypacker)
+- Mike Buzzetti (@jimbydamonk)
 extends_documentation_fragment: aws
 '''
 
@@ -171,7 +173,7 @@ set:
     record:
       description: domain name for the record set
       returned: always
-      type: string
+      type: str
       sample: new.foo.com.
     region:
       description: ""
@@ -181,17 +183,17 @@ set:
     ttl:
       description: resource record cache TTL
       returned: always
-      type: string
+      type: str
       sample: '3600'
     type:
       description: record set type
       returned: always
-      type: string
+      type: str
       sample: A
     value:
       description: value
       returned: always
-      type: string
+      type: str
       sample: 52.43.18.27
     values:
       description: values
@@ -202,12 +204,12 @@ set:
     weight:
       description: weight of the record
       returned: always
-      type: string
+      type: str
       sample: '3'
     zone:
       description: zone this record set belongs to
       returned: always
-      type: string
+      type: str
       sample: foo.bar.com.
 '''
 

@@ -21,7 +21,7 @@ short_description: NetApp ONTAP manage iSCSI service
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
 - create, delete, start, stop iSCSI service on SVM.

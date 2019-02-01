@@ -1,16 +1,18 @@
-.. contents:: Topics
-
 .. _inventory_plugins:
 
 Inventory Plugins
 =================
+
+.. contents::
+   :local:
+   :depth: 2
 
 Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either via the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources.
 
 
 .. _enabling_inventory:
 
-Enabling Inventory Plugins
+Enabling inventory plugins
 --------------------------
 
 Most inventory plugins shipped with Ansible are disabled by default and need to be whitelisted in your
@@ -20,7 +22,7 @@ config file that ships with Ansible:
 .. code-block:: ini
 
    [inventory]
-   enable_plugins = host_list, script, yaml, ini, auto
+   enable_plugins = host_list, script, auto, yaml, ini, toml
 
 This list also establishes the order in which each plugin tries to parse an inventory source. Any plugins left out of the list will not be considered, so you can 'optimize' your inventory loading by minimizing it to what you actually use. For example:
 
@@ -32,7 +34,7 @@ This list also establishes the order in which each plugin tries to parse an inve
 
 .. _using_inventory:
 
-Using Inventory Plugins
+Using inventory plugins
 -----------------------
 
 The only requirement for using an inventory plugin after it is enabled is to provide an inventory source to parse.
@@ -53,7 +55,9 @@ Or for the openstack plugin:
     # clouds.yml
     plugin: openstack
 
-The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``::
+The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:
+
+.. code-block:: text
 
     @all:
       |--@aws_ec2:
@@ -86,7 +90,9 @@ You can create dynamic groups using host variables with the constructed ``keyed_
       # set the ansible_host variable to connect with the private IP address without changing the hostname
       ansible_host: private_ip_address
 
-Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``::
+Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``:
+
+.. code-block:: text
 
     @all:
       |--@aws_ec2:
@@ -109,7 +115,7 @@ If a host does not have the variables in the configuration above (i.e. ``tags.Na
 Plugin List
 -----------
 
-You can use ``ansible-doc -t inventory -l`` to see the list of available plugins. 
+You can use ``ansible-doc -t inventory -l`` to see the list of available plugins.
 Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentation and examples.
 
 .. toctree:: :maxdepth: 1
@@ -121,9 +127,9 @@ Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentat
 
    :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`callback`
+   :ref:`callback_plugins`
        Ansible callback plugins
-   :doc:`connection`
+   :ref:`connection_plugins`
        Ansible connection plugins
    :ref:`playbooks_filters`
        Jinja2 filter plugins
@@ -131,7 +137,7 @@ Use ``ansible-doc -t inventory <plugin name>`` to see plugin-specific documentat
        Jinja2 test plugins
    :ref:`playbooks_lookups`
        Jinja2 lookup plugins
-   :doc:`vars`
+   :ref:`vars_plugins`
        Ansible vars plugins
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

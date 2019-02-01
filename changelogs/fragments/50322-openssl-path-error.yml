@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_* - fix error when ``path`` contains a file name without path."

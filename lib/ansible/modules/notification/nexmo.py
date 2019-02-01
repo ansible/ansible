@@ -95,7 +95,7 @@ def send_msg(module):
 
         try:
             responses[number] = json.load(response)
-        except:
+        except Exception:
             failed.append(number)
             responses[number] = dict(failed=True)
         else:

@@ -52,6 +52,7 @@ options:
       - When set for PUT mode, asks for server-side encryption.
     default: True
     version_added: "2.0"
+    type: bool
   encryption_mode:
     description:
       - What encryption mode to use if C(encrypt) is set
@@ -145,6 +146,7 @@ options:
       - Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
     default: false
     version_added: "2.2"
+    type: bool
   src:
     description:
       - The source file path when performing a PUT operation.
@@ -155,6 +157,7 @@ options:
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
         ignore_nonexistent_bucket: True."
     version_added: "2.3"
+    type: bool
   encryption_kms_key_id:
     description:
       - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
@@ -267,12 +270,12 @@ RETURN = '''
 msg:
   description: msg indicating the status of the operation
   returned: always
-  type: string
+  type: str
   sample: PUT operation complete
 url:
   description: url of the object
   returned: (for put and geturl operations)
-  type: string
+  type: str
   sample: https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
 expiry:
   description: number of seconds the presigned url is valid for
@@ -282,7 +285,7 @@ expiry:
 contents:
   description: contents of the object as string
   returned: (for getstr operation)
-  type: string
+  type: str
   sample: "Hello, world!"
 s3_keys:
   description: list of object keys
@@ -580,9 +583,10 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None):
     except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Could not find the key %s." % obj)
 
+    optional_kwargs = {'ExtraArgs': {'VersionId': version}} if version else {}
     for x in range(0, retries + 1):
         try:
-            s3.download_file(bucket, obj, dest)
+            s3.download_file(bucket, obj, dest, **optional_kwargs)
             module.exit_json(msg="GET operation complete", changed=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             # actually fail on last pass through the loop.

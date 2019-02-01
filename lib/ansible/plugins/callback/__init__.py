@@ -29,22 +29,23 @@ from copy import deepcopy
 
 from ansible import constants as C
 from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.six import PY3
+from ansible.module_utils._text import to_text
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
+from ansible.utils.display import Display
 from ansible.vars.clean import strip_internal_keys
 
-try:
-    from __main__ import display as global_display
-except ImportError:
-    from ansible.utils.display import Display
-    global_display = Display()
+if PY3:
+    # OrderedDict is needed for a backwards compat shim on Python3.x only
+    # https://github.com/ansible/ansible/pull/49512
+    from collections import OrderedDict
+else:
+    OrderedDict = None
 
-try:
-    from __main__ import cli
-except ImportError:
-    # using API w/o cli
-    cli = False
+global_display = Display()
+
 
 __all__ = ["CallbackBase"]
 
@@ -65,11 +66,6 @@ class CallbackBase(AnsiblePlugin):
             self._display = display
         else:
             self._display = global_display
-
-        if cli:
-            self._options = cli.options
-        else:
-            self._options = None
 
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
@@ -122,7 +118,18 @@ class CallbackBase(AnsiblePlugin):
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
-        return json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        try:
+            jsonified_results = json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        except TypeError:
+            # Python3 bug: throws an exception when keys are non-homogenous types:
+            # https://bugs.python.org/issue25457
+            # sort into an OrderedDict and then json.dumps() that instead
+            if not OrderedDict:
+                raise
+            jsonified_results = json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
+                                           cls=AnsibleJSONEncoder, indent=indent,
+                                           ensure_ascii=False, sort_keys=False)
+        return jsonified_results
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
@@ -150,6 +157,9 @@ class CallbackBase(AnsiblePlugin):
 
             self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
 
+    def _serialize_diff(self, diff):
+        return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+
     def _get_diff(self, difflist):
 
         if not isinstance(difflist, list):
@@ -169,7 +179,7 @@ class CallbackBase(AnsiblePlugin):
                 # format complex structures into 'files'
                 for x in ['before', 'after']:
                     if isinstance(diff[x], MutableMapping):
-                        diff[x] = json.dumps(diff[x], sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+                        diff[x] = self._serialize_diff(diff[x])
                 if 'before_header' in diff:
                     before_header = u"before: %s" % diff['before_header']
                 else:
@@ -293,7 +303,7 @@ class CallbackBase(AnsiblePlugin):
     def playbook_on_task_start(self, name, is_conditional):
         pass
 
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
         pass
 
     def playbook_on_setup(self):
@@ -377,8 +387,8 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_handler_task_start(self, task):
         pass  # no v1 correspondence
 
-    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
+    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
+        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
 
     # FIXME: not called
     def v2_playbook_on_import_for_host(self, result, imported_file):

@@ -36,7 +36,9 @@ options:
     description:
       - Netmask of the provided virtual address. This value cannot be
         modified after it is set.
-    default: 255.255.255.255
+      - When creating a new virtual address, if this parameter is not specified, the
+        default value is C(255.255.255.255) for IPv4 addresses and
+        C(ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff) for IPv6 addresses.
   connection_limit:
     description:
       - Specifies the number of concurrent connections that the system
@@ -195,22 +197,24 @@ author:
 EXAMPLES = r'''
 - name: Add virtual address
   bigip_virtual_address:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: present
     partition: Common
     address: 10.10.10.10
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Enable route advertisement on the virtual address
   bigip_virtual_address:
-    server: lb.mydomain.net
-    user: admin
-    password: secret
     state: present
     address: 10.10.10.10
     use_route_advertisement: yes
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -223,12 +227,12 @@ use_route_advertisement:
 auto_delete:
   description: New setting for auto deleting virtual address.
   returned: changed
-  type: string
+  type: str
   sample: enabled
 icmp_echo:
   description: New ICMP echo setting applied to virtual address.
   returned: changed
-  type: string
+  type: str
   sample: disabled
 connection_limit:
   description: The new connection limit of the virtual address.
@@ -253,12 +257,12 @@ address:
 state:
   description: The new state of the virtual address.
   returned: changed
-  type: string
+  type: str
   sample: disabled
 spanning:
   description: Whether spanning is enabled or not
   returned: changed
-  type: string
+  type: str
   sample: disabled
 '''
 
@@ -279,6 +283,7 @@ try:
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.ipaddress import compress_address
     from library.module_utils.network.f5.icontrol import tmos_version
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
@@ -291,6 +296,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.ipaddress import compress_address
     from ansible.module_utils.network.f5.icontrol import tmos_version
 
 
@@ -487,7 +493,7 @@ class ModuleParameters(Parameters):
         if self._values['address'] is None:
             return None
         if is_valid_ip(self._values['address']):
-            return self._values['address']
+            return compress_address(self._values['address'])
         else:
             raise F5ModuleError(
                 "The provided 'address' is not a valid IP address"
@@ -713,12 +719,19 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
+
         if self.want.traffic_group is None:
             self.want.update({'traffic_group': '/Common/traffic-group-1'})
         if self.want.arp is None:
             self.want.update({'arp': True})
         if self.want.spanning is None:
             self.want.update({'spanning': False})
+
+        if self.want.netmask is None:
+            if is_valid_ip(self.want.address, type='ipv4'):
+                self.want.update({'netmask': '255.255.255.255'})
+            else:
+                self.want.update({'netmask': 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'})
 
         if self.want.arp and self.want.spanning:
             raise F5ModuleError(
@@ -866,10 +879,7 @@ class ArgumentSpec(object):
             ),
             name=dict(),
             address=dict(),
-            netmask=dict(
-                type='str',
-                default='255.255.255.255',
-            ),
+            netmask=dict(),
             connection_limit=dict(
                 type='int'
             ),

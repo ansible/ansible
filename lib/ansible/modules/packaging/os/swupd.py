@@ -50,12 +50,14 @@ options:
   update:
     description:
       - Updates the OS to the latest version.
+    type: bool
   url:
     description:
       - Overrides both I(contenturl) and I(versionurl).
   verify:
     description:
       - Verify content for OS version.
+    type: bool
   versionurl:
     description:
       - URL for version string download.
@@ -90,11 +92,11 @@ RETURN = '''
 stdout:
   description: stdout of swupd
   returned: always
-  type: string
+  type: str
 stderr:
   description: stderr of swupd
   returned: always
-  type: string
+  type: str
 '''
 
 import os

@@ -8,15 +8,12 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from units.compat import unittest
-from units.compat.mock import Mock
-from units.compat.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -26,25 +23,27 @@ try:
     from library.modules.bigip_device_facts import VirtualAddressesParameters
     from library.modules.bigip_device_facts import ArgumentSpec
     from library.modules.bigip_device_facts import ModuleManager
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from f5.bigip.tm.gtm.pool import A
-    from f5.utils.responses.handlers import Stats
-    from test.unit.modules.utils import set_module_args
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_device_pool import Parameters
-        from ansible.modules.network.f5.bigip_device_pool import VirtualAddressesFactManager
-        from ansible.modules.network.f5.bigip_device_pool import VirtualAddressesParameters
-        from ansible.modules.network.f5.bigip_device_pool import ArgumentSpec
-        from ansible.modules.network.f5.bigip_device_pool import ModuleManager
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from f5.bigip.tm.gtm.pool import A
-        from f5.utils.responses.handlers import Stats
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_device_facts import Parameters
+    from ansible.modules.network.f5.bigip_device_facts import VirtualAddressesFactManager
+    from ansible.modules.network.f5.bigip_device_facts import VirtualAddressesParameters
+    from ansible.modules.network.f5.bigip_device_facts import ArgumentSpec
+    from ansible.modules.network.f5.bigip_device_facts import ModuleManager
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -68,9 +67,9 @@ def load_fixture(name):
     return data
 
 
-class FakeVirtualAddress(A):
+class FakeVirtualAddress:
     def __init__(self, *args, **kwargs):
-        attrs = kwargs.pop('attrs', {})
+        attrs = kwargs.pop('params', {})
         for key, value in iteritems(attrs):
             setattr(self, key, value)
 
@@ -89,6 +88,18 @@ class TestManager(unittest.TestCase):
     def setUp(self):
         self.spec = ArgumentSpec()
 
+        try:
+            self.p1 = patch('library.modules.bigip_device_facts.modules_provisioned')
+            self.m1 = self.p1.start()
+            self.m1.return_value = ['ltm', 'gtm', 'asm']
+        except Exception:
+            self.p1 = patch('ansible.modules.network.f5.bigip_device_facts.modules_provisioned')
+            self.m1 = self.p1.start()
+            self.m1.return_value = ['ltm', 'gtm', 'asm']
+
+    def tearDown(self):
+        self.p1.stop()
+
     def test_get_trunk_facts(self, *args):
         set_module_args(dict(
             gather_subset=['virtual-addresses'],
@@ -98,7 +109,7 @@ class TestManager(unittest.TestCase):
         ))
 
         fixture1 = load_fixture('load_ltm_virtual_address_collection_1.json')
-        collection = [FakeVirtualAddress(attrs=x) for x in fixture1['items']]
+        collection = fixture1['items']
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,

@@ -19,23 +19,27 @@ description:
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
-notes:
-- More information about the internal APIC class B(l2:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(l2:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 options:
   l2_policy:
     description:
     - The name of the Layer 2 interface policy.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description of the Layer 2 interface policy.
+    type: str
     aliases: [ descr ]
   qinq:
     description:
     - Determines if QinQ is disabled or if the port should be considered a core or edge port.
     - The APIC defaults to C(disabled) when unset during creation.
+    type: str
     choices: [ core, disabled, edge ]
   vepa:
     description:
@@ -46,11 +50,13 @@ options:
     description:
     - The scope of the VLAN.
     - The APIC defaults to C(global) when unset during creation.
+    type: str
     choices: [ global, portlocal ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -99,7 +105,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -148,17 +154,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -168,7 +174,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

@@ -18,68 +18,78 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: gcp_compute_global_address
 description:
-    - Represents a Global Address resource. Global addresses are used for HTTP(S) load
-      balancing.
+- Represents a Global Address resource. Global addresses are used for HTTP(S) load
+  balancing.
 short_description: Creates a GCP GlobalAddress
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
-        description:
-            - An optional description of this resource.
-            - Provide this property when you create the resource.
-        required: false
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    ip_version:
-        description:
-            - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
-              The default value is IPV4.
-        required: false
-        choices: ['IPV4', 'IPV6']
-    address_type:
-        description:
-            - The type of the address to reserve, default is EXTERNAL.
-            - "* EXTERNAL indicates public/external single IP address."
-            - "* INTERNAL indicates internal IP ranges belonging to some network."
-        required: false
-        default: EXTERNAL
-        version_added: 2.8
-        choices: ['EXTERNAL', 'INTERNAL']
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  address:
+    description:
+    - The static external IP address represented by this resource.
+    required: false
+    version_added: 2.8
+  description:
+    description:
+    - An optional description of this resource.
+    - Provide this property when you create the resource.
+    required: false
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  ip_version:
+    description:
+    - The IP Version that will be used by this address. Valid options are IPV4 or
+      IPV6. The default value is IPV4.
+    required: false
+    choices:
+    - IPV4
+    - IPV6
+  address_type:
+    description:
+    - The type of the address to reserve, default is EXTERNAL.
+    - "* EXTERNAL indicates public/external single IP address."
+    - "* INTERNAL indicates internal IP ranges belonging to some network."
+    required: false
+    default: EXTERNAL
+    version_added: 2.8
+    choices:
+    - EXTERNAL
+    - INTERNAL
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/latest/globalAddresses)"
-    - "Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/globalAddresses)'
+- 'Reserving a Static External IP Address: U(https://cloud.google.com/compute/docs/ip-addresses/reserve-static-external-ip-address)'
 '''
 
 EXAMPLES = '''
@@ -93,61 +103,55 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    address:
-        description:
-            - The static external IP address represented by this resource.
-        returned: success
-        type: str
-    creationTimestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource.
-            - Provide this property when you create the resource.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource. This identifier is defined by the server.
-        returned: success
-        type: int
-    name:
-        description:
-            - Name of the resource. Provided by the client when the resource is created. The name
-              must be 1-63 characters long, and comply with RFC1035.  Specifically, the name must
-              be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    labelFingerprint:
-        description:
-            - The fingerprint used for optimistic locking of this resource.  Used internally during
-              updates.
-        returned: success
-        type: str
-    ipVersion:
-        description:
-            - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
-              The default value is IPV4.
-        returned: success
-        type: str
-    region:
-        description:
-            - A reference to the region where the regional address resides.
-        returned: success
-        type: str
-    addressType:
-        description:
-            - The type of the address to reserve, default is EXTERNAL.
-            - "* EXTERNAL indicates public/external single IP address."
-            - "* INTERNAL indicates internal IP ranges belonging to some network."
-        returned: success
-        type: str
+address:
+  description:
+  - The static external IP address represented by this resource.
+  returned: success
+  type: str
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  - Provide this property when you create the resource.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource. This identifier is defined by the server.
+  returned: success
+  type: int
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+ipVersion:
+  description:
+  - The IP Version that will be used by this address. Valid options are IPV4 or IPV6.
+    The default value is IPV4.
+  returned: success
+  type: str
+region:
+  description:
+  - A reference to the region where the regional address resides.
+  returned: success
+  type: str
+addressType:
+  description:
+  - The type of the address to reserve, default is EXTERNAL.
+  - "* EXTERNAL indicates public/external single IP address."
+  - "* INTERNAL indicates internal IP ranges belonging to some network."
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -170,10 +174,11 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
+            address=dict(type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
-            address_type=dict(default='EXTERNAL', type='str', choices=['EXTERNAL', 'INTERNAL'])
+            address_type=dict(default='EXTERNAL', type='str', choices=['EXTERNAL', 'INTERNAL']),
         )
     )
 
@@ -189,7 +194,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
@@ -213,27 +218,8 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
-    return fetch_resource(module, self_link(module), kind)
-
-
-def update_fields(module, request, response):
-    pass
-
-
-def label_fingerprint_update(module, request, response):
-    auth = GcpSession(module, 'compute')
-    auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/addresses/{name}/setLabels"
-        ]).format(**module.params),
-        {
-            u'labelFingerprint': response.get('labelFingerprint')
-        }
-    )
+def update(module, link, kind):
+    module.fail_json(msg="GlobalAddress cannot be edited")
 
 
 def delete(module, link, kind):
@@ -244,14 +230,15 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'compute#address',
+        u'address': module.params.get('address'),
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'ipVersion': module.params.get('ip_version'),
-        u'addressType': module.params.get('address_type')
+        u'addressType': module.params.get('address_type'),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -282,8 +269,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -318,10 +305,9 @@ def response_to_hash(module, response):
         u'description': response.get(u'description'),
         u'id': response.get(u'id'),
         u'name': response.get(u'name'),
-        u'labelFingerprint': response.get(u'labelFingerprint'),
         u'ipVersion': response.get(u'ipVersion'),
         u'region': response.get(u'region'),
-        u'addressType': response.get(u'addressType')
+        u'addressType': response.get(u'addressType'),
     }
 
 
@@ -356,11 +342,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

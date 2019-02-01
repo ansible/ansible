@@ -25,6 +25,10 @@ options:
     description:
       - Specifies the name of the data group.
     required: True
+  description:
+    description:
+      - The description of the monitor.
+    version_added: 2.8
   type:
     description:
       - The type of records in this data group.
@@ -134,31 +138,28 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Create a data group of addresses
   bigip_data_group:
     name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
     records:
       - key: 0.0.0.0/32
         value: External_NAT
       - key: 10.10.10.10
         value: No_NAT
     type: address
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create a data group of strings
   bigip_data_group:
     name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
     records:
       - key: caddy
         value: ""
@@ -166,28 +167,28 @@ EXAMPLES = r'''
         value: ""
       - key: cactus
         value: ""
-    type: string
+    type: str
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create a data group of IP addresses from a file
   bigip_data_group:
     name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
-    user: admin
     records_src: /path/to/dg-file
     type: address
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Update an existing internal data group of strings
   bigip_data_group:
     name: foo
-    password: secret
-    server: lb.mydomain.com
-    state: present
     internal: yes
-    user: admin
     records:
       - key: caddy
         value: ""
@@ -195,6 +196,10 @@ EXAMPLES = r'''
         value: ""
       - key: cactus
         value: ""
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Show the data format expected for records_content - address 1
@@ -260,35 +265,35 @@ from ansible.module_utils.basic import env_fallback
 from io import StringIO
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import compare_complex_list
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.ipaddress import is_valid_ip_interface
     from library.module_utils.compat.ipaddress import ip_network
     from library.module_utils.compat.ipaddress import ip_interface
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.icontrol import upload_file
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.common import compare_complex_list
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip_interface
     from ansible.module_utils.compat.ipaddress import ip_network
     from ansible.module_utils.compat.ipaddress import ip_interface
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.icontrol import upload_file
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 LINE_LIMIT = 65000
@@ -503,17 +508,25 @@ class RecordsDecoder(object):
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'externalFileName': 'external_file_name'
+        'externalFileName': 'external_file_name',
     }
 
     api_attributes = [
-        'records', 'type'
+        'records',
+        'type',
+        'description',
     ]
 
-    returnables = []
+    returnables = [
+        'type',
+        'records',
+        'description',
+    ]
 
     updatables = [
-        'records', 'checksum'
+        'records',
+        'checksum',
+        'description',
     ]
 
     @property
@@ -532,10 +545,14 @@ class Parameters(AnsibleF5Parameters):
             return self._values['records_src']
         except AttributeError:
             pass
+
         if self._values['records_src']:
             records = open(self._values['records_src'])
         else:
             records = self._values['records']
+
+        if records is None:
+            return None
 
         # There is a 98% chance that the user will supply a data group that is < 1MB.
         # 99.917% chance it is less than 10 MB. This is well within the range of typical
@@ -580,12 +597,28 @@ class ApiParameters(Parameters):
     def records_list(self):
         return self.records
 
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
+
 
 class ModuleParameters(Parameters):
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
+
     @property
     def checksum(self):
         if self._values['checksum']:
             return self._values['checksum']
+        if self.records_src is None:
+            return None
         result = hashlib.sha1()
         records = self.records_src
         while True:
@@ -612,6 +645,8 @@ class ModuleParameters(Parameters):
     @property
     def records(self):
         results = []
+        if self.records_src is None:
+            return None
         decoder = RecordsDecoder(record_type=self.type, separator=self.separator)
         for record in self.records_src:
             result = decoder.decode(record)
@@ -692,8 +727,14 @@ class Difference(object):
     def checksum(self):
         if self.want.internal:
             return None
+        if self.want.checksum is None:
+            return None
         if self.want.checksum != self.have.checksum:
             return True
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class BaseManager(object):
@@ -715,13 +756,10 @@ class BaseManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -806,43 +844,87 @@ class InternalManager(BaseManager):
         return True
 
     def exists(self):
-        result = self.client.api.tm.ltm.data_group.internals.internal.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/internal/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def create_on_device(self):
-        params = self.want.api_params()
-        self.client.api.tm.ltm.data_group.internals.internal.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/internal/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403, 409]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.ltm.data_group.internals.internal.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/internal/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        resource = self.client.api.tm.ltm.data_group.internals.internal.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/internal/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        resp = self.client.api.delete(uri)
+        if resp.status == 200:
+            return True
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.ltm.data_group.internals.internal.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/internal/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ExternalManager(BaseManager):
@@ -869,7 +951,7 @@ class ExternalManager(BaseManager):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if zero_length(self.want.records_src):
+        if self.changes.records_src and zero_length(self.want.records_src):
             raise F5ModuleError(
                 "An external data group cannot be empty."
             )
@@ -879,84 +961,204 @@ class ExternalManager(BaseManager):
         return True
 
     def exists(self):
-        result = self.client.api.tm.ltm.data_group.externals.external.exists(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/external/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def external_file_exists(self):
-        result = self.client.api.tm.sys.file.data_groups.data_group.exists(
-            name=self.want.external_file_name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/data-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.external_file_name)
         )
-        return result
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def upload_file_to_device(self, content, name):
+        url = 'https://{0}:{1}/mgmt/shared/file-transfer/uploads'.format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        try:
+            upload_file(self.client, url, content, name)
+        except F5ModuleError:
+            raise F5ModuleError(
+                "Failed to upload the file."
+            )
 
     def _upload_to_file(self, name, type, remote_path, update=False):
-        self.client.api.shared.file_transfer.uploads.upload_stringio(self.want.records_src, name)
-        resource = self.client.api.tm.sys.file.data_groups
+        self.upload_file_to_device(self.want.records_src, name)
         if update:
-            resource = resource.data_group.load(
-                name=name,
-                partition=self.want.partition
+            uri = "https://{0}:{1}/mgmt/tm/sys/file/data-group/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, name)
             )
-            resource.modify(
-                sourcePath='file:{0}'.format(remote_path)
-            )
-            resource.refresh()
-            result = resource
+            params = {'sourcePath': 'file:{0}'.format(remote_path)}
+            resp = self.client.api.patch(uri, json=params)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
         else:
-            result = resource.data_group.create(
+            uri = "https://{0}:{1}/mgmt/tm/sys/file/data-group/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+            )
+            params = dict(
                 name=name,
                 type=type,
                 sourcePath='file:{0}'.format(remote_path)
             )
-        return result.name
+            resp = self.client.api.post(uri, json=params)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] in [400, 403]:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+        return response['name']
+
+    def remove_file_on_device(self, remote_path):
+        uri = "https://{0}:{1}/mgmt/tm/util/unix-rm/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        args = dict(
+            command='run',
+            utilCmdArgs=remote_path
+        )
+        resp = self.client.api.post(uri, json=args)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def create_on_device(self):
         name = self.want.external_file_name
         remote_path = '/var/config/rest/downloads/{0}'.format(name)
         external_file = self._upload_to_file(name, self.want.type, remote_path, update=False)
-        self.client.api.tm.ltm.data_group.externals.external.create(
+
+        params = dict(
             name=self.want.name,
             partition=self.want.partition,
-            externalFileName=external_file
+            externalFileName=external_file,
         )
-        self.client.api.tm.util.unix_rm.exec_cmd('run', utilCmdArgs=remote_path)
+        if self.want.description:
+            params['description'] = self.want.description
+
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/external/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        self.remove_file_on_device(remote_path)
 
     def update_on_device(self):
-        name = self.want.external_file_name
-        remote_path = '/var/config/rest/downloads/{0}'.format(name)
-        external_file = self._upload_to_file(name, self.have.type, remote_path, update=True)
-        resource = self.client.api.tm.ltm.data_group.externals.external.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        resource.modify(
-            externalFileName=external_file
+        params = {}
+
+        if self.want.records_src is not None:
+            name = self.want.external_file_name
+            remote_path = '/var/config/rest/downloads/{0}'.format(name)
+            external_file = self._upload_to_file(name, self.have.type, remote_path, update=True)
+            params['externalFileName'] = external_file
+        if self.changes.description is not None:
+            params['description'] = self.changes.description
+
+        if not params:
+            return
+
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/external/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
 
+        resp = self.client.api.patch(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
     def remove_from_device(self):
-        resource = self.client.api.tm.ltm.data_group.externals.external.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/external/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        if resource:
-            resource.delete()
+        resp = self.client.api.delete(uri)
 
         # Remove the remote data group file if asked to
         if self.want.delete_data_group_file:
             self.remove_data_group_file_from_device()
 
-    def remove_data_group_file_from_device(self):
-        resource = self.client.api.tm.sys.file.data_groups.data_group.load(
-            name=self.want.external_file_name,
-            partition=self.want.partition
-        )
-        if resource:
-            resource.delete()
+        if resp.status == 200:
             return True
-        return False
+
+    def remove_data_group_file_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/data-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.external_file_name)
+        )
+        resp = self.client.api.delete(uri)
+
+        if resp.status == 200:
+            return True
+        else:
+            return False
 
     def read_current_from_device(self):
         """Reads the current configuration from the device
@@ -976,18 +1178,48 @@ class ExternalManager(BaseManager):
         Returns:
              ExternalApiParameters: Attributes of the remote resource.
         """
-        resource = self.client.api.tm.ltm.data_group.externals.external.load(
-            name=self.want.name,
-            partition=self.want.partition
+
+        uri = "https://{0}:{1}/mgmt/tm/ltm/data-group/external/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        external_file = os.path.basename(resource.externalFileName)
-        external_file_partition = os.path.dirname(resource.externalFileName).strip('/')
-        resource = self.client.api.tm.sys.file.data_groups.data_group.load(
-            name=external_file,
-            partition=external_file_partition
+        resp_dg = self.client.api.get(uri)
+
+        try:
+            response_dg = resp_dg.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response_dg and response_dg['code'] == 400:
+            if 'message' in response_dg:
+                raise F5ModuleError(response_dg['message'])
+            else:
+                raise F5ModuleError(resp_dg.content)
+
+        external_file = os.path.basename(response_dg['externalFileName'])
+        external_file_partition = os.path.dirname(response_dg['externalFileName']).strip('/')
+
+        uri = "https://{0}:{1}/mgmt/tm/sys/file/data-group/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(external_file_partition, external_file)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        result = ApiParameters(params=response)
+        result.update({'description': response_dg.get('description', None)})
+        return result
 
 
 class ModuleManager(object):
@@ -1031,6 +1263,7 @@ class ArgumentSpec(object):
             records_src=dict(type='path'),
             external_file_name=dict(),
             separator=dict(default=':='),
+            description=dict(),
             state=dict(choices=['absent', 'present'], default='present'),
             partition=dict(
                 default='Common',
@@ -1052,18 +1285,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

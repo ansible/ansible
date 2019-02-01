@@ -3,12 +3,16 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: connection is defined
 
-- set_fact: checkmode='no'
-- set_fact: issu='desired'
-- set_fact: copy_images='yes'
-
 - set_fact: image_dir='/Users/mwiebe/Projects/nxos_ansible/images/'
 
+- set_fact: checkmode='no'
+- set_fact: issu='desired'
+- set_fact: copy_images=True
+
+# Set boot pointers and reload
+- set_fact: force=False
+
+- set_fact: delete_files=True
 - set_fact:
     delete_image_list:
       - nxos.7.0.3.I7.2.bin
@@ -38,18 +42,17 @@
 # Upgrade to 6.0(2)U6(3a)                                 #
 #---------------------------------------------------------#
 
-- set_fact: si='n3000-uk9.6.0.2.U6.3a.bin'
-- set_fact: ki='n3000-uk9-kickstart.6.0.2.U6.3a.bin'
+- set_fact: si='n3000-s2-dk9.8.0.1.bin'
+- set_fact: ki='n3000-s2-kickstart.8.0.1.bin'
 
 - name: Upgrade to U6.3a
   include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml
 
 #---------------------------------------------------------#
-# Upgrade to 7.0(3)I7(3)                                  #
+# Upgrade to 7.0(3)I7(2)                                  #
 #---------------------------------------------------------#
 
 - set_fact: si='nxos.7.0.3.I7.2.bin'
-- set_fact: combined='true'
 
 - name: Upgrade to 7.0.3.I7.2
   include: targets/nxos_install_os/tasks/upgrade/main_os_install.yaml

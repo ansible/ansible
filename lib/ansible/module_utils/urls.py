@@ -71,13 +71,13 @@ urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectH
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
     HAS_URLPARSE = True
-except:
+except Exception:
     HAS_URLPARSE = False
 
 try:
     import ssl
     HAS_SSL = True
-except:
+except Exception:
     HAS_SSL = False
 
 try:
@@ -298,7 +298,9 @@ class NoSSLError(SSLValidationError):
 
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
 # against openssl and thus do not have any HTTPS support.
-CustomHTTPSConnection = CustomHTTPSHandler = None
+CustomHTTPSConnection = None
+CustomHTTPSHandler = None
+HTTPSClientAuthHandler = None
 if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
@@ -342,32 +344,31 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
 
         https_request = AbstractHTTPHandler.do_request_
 
+    class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
+        '''Handles client authentication via cert/key
 
-class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
-    '''Handles client authentication via cert/key
+        This is a fairly lightweight extension on HTTPSHandler, and can be used
+        in place of HTTPSHandler
+        '''
 
-    This is a fairly lightweight extension on HTTPSHandler, and can be used
-    in place of HTTPSHandler
-    '''
+        def __init__(self, client_cert=None, client_key=None, **kwargs):
+            urllib_request.HTTPSHandler.__init__(self, **kwargs)
+            self.client_cert = client_cert
+            self.client_key = client_key
 
-    def __init__(self, client_cert=None, client_key=None, **kwargs):
-        urllib_request.HTTPSHandler.__init__(self, **kwargs)
-        self.client_cert = client_cert
-        self.client_key = client_key
+        def https_open(self, req):
+            return self.do_open(self._build_https_connection, req)
 
-    def https_open(self, req):
-        return self.do_open(self._build_https_connection, req)
-
-    def _build_https_connection(self, host, **kwargs):
-        kwargs.update({
-            'cert_file': self.client_cert,
-            'key_file': self.client_key,
-        })
-        try:
-            kwargs['context'] = self._context
-        except AttributeError:
-            pass
-        return httplib.HTTPSConnection(host, **kwargs)
+        def _build_https_connection(self, host, **kwargs):
+            kwargs.update({
+                'cert_file': self.client_cert,
+                'key_file': self.client_key,
+            })
+            try:
+                kwargs['context'] = self._context
+            except AttributeError:
+                pass
+            return httplib.HTTPSConnection(host, **kwargs)
 
 
 class ParseResultDottedDict(dict):
@@ -436,7 +437,7 @@ def generic_urlparse(parts):
             generic_parts['password'] = password
             generic_parts['hostname'] = hostname
             generic_parts['port'] = port
-        except:
+        except Exception:
             generic_parts['username'] = None
             generic_parts['password'] = None
             generic_parts['hostname'] = parts[1]
@@ -673,7 +674,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             (http_version, resp_code, msg) = re.match(br'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:
                 raise Exception
-        except:
+        except Exception:
             raise ProxyError('Connection to proxy failed')
 
     def detect_no_proxy(self, url):
@@ -784,7 +785,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # cleanup the temp file created, don't worry
             # if it fails for some reason
             os.remove(tmp_ca_cert_path)
-        except:
+        except Exception:
             pass
 
         try:
@@ -792,7 +793,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # if it fails for some reason
             if to_add_ca_cert_path:
                 os.remove(to_add_ca_cert_path)
-        except:
+        except Exception:
             pass
 
         return req
@@ -1180,16 +1181,16 @@ def url_argument_spec():
     that will be requesting content via urllib/urllib2
     '''
     return dict(
-        url=dict(),
-        force=dict(default='no', aliases=['thirsty'], type='bool'),
-        http_agent=dict(default='ansible-httpget'),
-        use_proxy=dict(default='yes', type='bool'),
-        validate_certs=dict(default='yes', type='bool'),
-        url_username=dict(required=False),
-        url_password=dict(required=False, no_log=True),
-        force_basic_auth=dict(required=False, type='bool', default='no'),
-        client_cert=dict(required=False, type='path', default=None),
-        client_key=dict(required=False, type='path', default=None),
+        url=dict(type='str'),
+        force=dict(type='bool', default=False, aliases=['thirsty']),
+        http_agent=dict(type='str', default='ansible-httpget'),
+        use_proxy=dict(type='bool', default=True),
+        validate_certs=dict(type='bool', default=True),
+        url_username=dict(type='str'),
+        url_password=dict(type='str', no_log=True),
+        force_basic_auth=dict(type='bool', default=False),
+        client_cert=dict(type='path'),
+        client_key=dict(type='path'),
     )
 
 
@@ -1305,7 +1306,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         try:
             # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
             info.update(dict((k.lower(), v) for k, v in e.info().items()))
-        except:
+        except Exception:
             pass
 
         info.update({'msg': to_native(e), 'body': body, 'status': e.code})

@@ -576,6 +576,8 @@ class Ec2Inventory(object):
         if self.boto_profile:
             connect_args['profile_name'] = self.boto_profile
             self.boto_fix_security_token_in_profile(connect_args)
+        elif os.environ.get('AWS_SESSION_TOKEN'):
+            connect_args['security_token'] = os.environ.get('AWS_SESSION_TOKEN')
 
         if self.iam_role:
             sts_conn = sts.connect_to_region(region, **connect_args)

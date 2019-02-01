@@ -88,6 +88,6 @@ class LookupModule(LookupBase):
                 if res is None:
                     res = ""
                 ret.append(res)
-            except:
+            except Exception:
                 ret.append("")  # connection failed or key not found
         return ret

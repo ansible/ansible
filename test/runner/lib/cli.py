@@ -43,6 +43,11 @@ from lib.config import (
     ShellConfig,
 )
 
+from lib.env import (
+    EnvConfig,
+    command_env,
+)
+
 from lib.sanity import (
     command_sanity,
     sanity_init,
@@ -287,6 +292,14 @@ def parse_args():
                              action='store_true',
                              help='list matching targets instead of running tests')
 
+    integration.add_argument('--no-temp-workdir',
+                             action='store_true',
+                             help='do not run tests from a temporary directory (use only for verifying broken tests)')
+
+    integration.add_argument('--no-temp-unicode',
+                             action='store_true',
+                             help='avoid unicode characters in temporary directory (use only for verifying broken tests)')
+
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
 
@@ -409,6 +422,10 @@ def parse_args():
     shell.set_defaults(func=command_shell,
                        config=ShellConfig)
 
+    shell.add_argument('--raw',
+                       action='store_true',
+                       help='direct to shell with no setup')
+
     add_environments(shell, tox_version=True)
     add_extra_docker_options(shell)
     add_httptester_options(shell, argparse)
@@ -478,6 +495,21 @@ def parse_args():
                               config=lib.cover.CoverageConfig)
 
     add_extra_coverage_options(coverage_xml)
+
+    env = subparsers.add_parser('env',
+                                parents=[common],
+                                help='show information about the test environment')
+
+    env.set_defaults(func=command_env,
+                     config=EnvConfig)
+
+    env.add_argument('--show',
+                     action='store_true',
+                     help='show environment on stdout')
+
+    env.add_argument('--dump',
+                     action='store_true',
+                     help='dump environment to disk')
 
     if argcomplete:
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)

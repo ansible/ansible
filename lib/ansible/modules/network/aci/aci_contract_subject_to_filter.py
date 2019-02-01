@@ -18,9 +18,15 @@ description:
 - Bind Contract Subjects to Filters on Cisco ACI fabrics.
 notes:
 - The C(tenant), C(contract), C(subject), and C(filter_name) must exist before using this module in your playbook.
-- The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
-- More information about the internal APIC class B(vz:RsSubjFiltAtt) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+  The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
+seealso:
+- module: aci_tenant
+- module: aci_contract
+- module: aci_contract_subject
+- module: aci_filter
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:RsSubjFiltAtt).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -28,30 +34,36 @@ options:
   contract:
     description:
     - The name of the contract.
+    type: str
     aliases: [ contract_name ]
   filter:
     description:
     - The name of the Filter to bind to the Subject.
+    type: str
     aliases: [ filter_name ]
   log:
     description:
     - Determines if the binding should be set to log.
     - The APIC defaults to C(none) when unset during creation.
+    type: str
     choices: [ log, none ]
     aliases: [ directive ]
   subject:
     description:
     - The name of the Contract Subject.
+    type: str
     aliases: [ contract_subject, subject_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
@@ -142,7 +154,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -191,17 +203,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -211,7 +223,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

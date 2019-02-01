@@ -210,6 +210,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_native
 
 
@@ -264,18 +265,24 @@ def main():
     try:
         if secure != 'never':
             try:
-                smtp = smtplib.SMTP_SSL(host=host, port=port, timeout=timeout)
+                if PY3:
+                    smtp = smtplib.SMTP_SSL(host=host, port=port, timeout=timeout)
+                else:
+                    smtp = smtplib.SMTP_SSL(timeout=timeout)
                 code, smtpmessage = smtp.connect(host, port)
                 secure_state = True
             except ssl.SSLError as e:
                 if secure == 'always':
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' %
                                                (host, port, to_native(e)), exception=traceback.format_exc())
-            except:
+            except Exception:
                 pass
 
         if not secure_state:
-            smtp = smtplib.SMTP(host=host, port=port, timeout=timeout)
+            if PY3:
+                smtp = smtplib.SMTP(host=host, port=port, timeout=timeout)
+            else:
+                smtp = smtplib.SMTP(timeout=timeout)
             code, smtpmessage = smtp.connect(host, port)
 
     except smtplib.SMTPException as e:

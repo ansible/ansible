@@ -10,7 +10,7 @@ Filters in Ansible are from Jinja2, and are used for transforming data inside a 
 
 Take into account that templating happens on the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
 
-In addition the ones provided by Jinja2, Ansible ships with it's own and allows users to add their own custom filters.
+In addition the ones provided by Jinja2, Ansible ships with its own and allows users to add their own custom filters.
 
 .. _filters_for_formatting_data:
 
@@ -32,6 +32,17 @@ It's also possible to change the indentation of both (new in version 2.2)::
 
     {{ some_variable | to_nice_json(indent=2) }}
     {{ some_variable | to_nice_yaml(indent=8) }}
+
+
+``to_yaml`` and ``to_nice_yaml`` filters use `PyYAML library`_ which has a default 80 symbol string length limit. That causes unexpected line break after 80th symbol (if there is a space after 80th symbol)
+To avoid such behaviour and generate long lines it is possible to use ``width`` option::
+
+    {{ some_variable | to_yaml(indent=8, width=1337) }}
+    {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
+
+While it would be nicer to use a construction like ``float("inf")`` instead of hardcoded number, unfortunately the filter doesn't support proxying python functions.
+Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
+
 
 Alternatively, you may be reading in some already formatted data::
 
@@ -810,12 +821,6 @@ Some hash types allow providing a rounds parameter::
 
     {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt', rounds=10000) }}
 
-When`Passlib <https://passlib.readthedocs.io/en/stable/>`_ is installed
-`password_hash` supports any crypt scheme and parameter supported by 'Passlib'::
-
-    {{ 'secretpassword' | password_hash('sha256_crypt', 'mysecretsalt', rounds=5000) }}
-    {{ 'secretpassword' | password_hash('bcrypt', ident='2b', rounds=14) }}
-
 .. _combine_filter:
 
 Combining hashes/dictionaries
@@ -899,7 +904,9 @@ style. For example the following::
 
     {{ "Plain style (default)" | comment }}
 
-will produce this output::
+will produce this output:
+
+.. code-block:: text
 
     #
     # Plain style (default)
@@ -918,7 +925,9 @@ above, you can customize it with::
 
   {{ "My Special Case" | comment(decoration="! ") }}
 
-producing::
+producing:
+
+.. code-block:: text
 
   !
   ! My Special Case
@@ -930,7 +939,7 @@ It is also possible to fully customize the comment style::
 
 That will create the following output:
 
-.. code-block:: sh
+.. code-block:: text
 
     #######
     #
@@ -1035,7 +1044,7 @@ To search a string with a regex, use the "regex_search" filter::
     {{ 'ansible' | regex_search('(foobar)') }}
 
     # case insensitive search in multiline mode
-    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
+    {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
 
 To search for all occurrences of regex matches, use the "regex_findall" filter::
@@ -1071,6 +1080,32 @@ To escape special characters within a regex, use the "regex_escape" filter::
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
 
+
+Kubernetes Filters
+``````````````````
+
+Use the "k8s_config_resource_name" filter to obtain the name of a Kubernetes ConfigMap or Secret,
+including its hash::
+
+    {{ configmap_resource_definition | k8s_config_resource_name }}
+
+This can then be used to reference hashes in Pod specifications::
+
+    my_secret:
+      kind: Secret
+      name: my_secret_name
+
+    deployment_resource:
+      kind: Deployment
+      spec:
+        template:
+          spec:
+            containers:
+            - envFrom:
+                - secretRef:
+                    name: {{ my_secret | k8s_config_resource_name }}
+
+.. versionadded:: 2.8
 
 Other Useful Filters
 ````````````````````
@@ -1230,6 +1265,24 @@ Combinations always require a set size::
 
 Also see the :ref:`zip_filter`
 
+Product Filters
+```````````````
+
+The product filter returns the `cartesian product <https://docs.python.org/3/library/itertools.html#itertools.product>`_ of the input iterables.
+
+This is roughly equivalent to nested for-loops in a generator expression.
+
+For example::
+
+  - name: generate multiple hostnames
+    debug:
+      msg: "{{ ['foo', 'bar'] | product(['com']) | map('join', '.') | join(',') }}"
+
+This would result in::
+
+    { "msg": "foo.com,bar.com" }
+
+
 Debugging Filters
 `````````````````
 
@@ -1242,6 +1295,58 @@ type of a variable::
     {{ myvar | type_debug }}
 
 
+Computer Theory Assertions
+```````````````````````````
+
+The ``human_readable`` and ``human_to_bytes`` functions let you test your 
+playbooks to make sure you are using the right size format in your tasks - that 
+you're providing Byte format to computers and human-readable format to people.
+
+Human Readable
+``````````````
+
+Asserts whether the given string is human readable or not.
+
+For example::
+
+  - name: "Human Readable"
+    assert:
+      that:
+        - '"1.00 Bytes" == 1|human_readable'
+        - '"1.00 bits" == 1|human_readable(isbits=True)'
+        - '"10.00 KB" == 10240|human_readable'
+        - '"97.66 MB" == 102400000|human_readable'
+        - '"0.10 GB" == 102400000|human_readable(unit="G")'
+        - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+Human to Bytes
+``````````````
+
+Returns the given string in the Bytes format.
+
+For example::
+
+  - name: "Human to Bytes"
+    assert:
+      that:
+        - "{{'0'|human_to_bytes}}        == 0"
+        - "{{'0.1'|human_to_bytes}}      == 0"
+        - "{{'0.9'|human_to_bytes}}      == 1"
+        - "{{'1'|human_to_bytes}}        == 1"
+        - "{{'10.00 KB'|human_to_bytes}} == 10240"
+        - "{{   '11 MB'|human_to_bytes}} == 11534336"
+        - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
+        - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+
+This would result in::
+
+    { "changed": false, "msg": "All assertions passed" }
+
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
@@ -1249,6 +1354,11 @@ to be added to core so everyone can make use of them.
 .. _Jinja2 map() docs: http://jinja.pocoo.org/docs/dev/templates/#map
 
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
+
+.. _PyYAML library: https://pyyaml.org/
+
+.. _PyYAML documentation: https://pyyaml.org/wiki/PyYAMLDocumentation
+
 
 .. seealso::
 

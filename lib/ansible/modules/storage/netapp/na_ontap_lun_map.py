@@ -23,7 +23,7 @@ short_description: NetApp ONTAP LUN maps
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
 - Map and unmap LUNs on NetApp ONTAP.
@@ -84,27 +84,27 @@ RETURN = """
 lun_node:
     description: NetApp controller that is hosting the LUN.
     returned: success
-    type: string
+    type: str
     sample: node01
 lun_ostype:
     description: Specifies the OS of the host accessing the LUN.
     returned: success
-    type: string
+    type: str
     sample: vmware
 lun_serial:
     description: A unique, 12-byte, ASCII string used to identify the LUN.
     returned: success
-    type: string
+    type: str
     sample: 80E7/]LZp1Tt
 lun_naa_id:
     description: The Network Address Authority (NAA) identifier for the LUN.
     returned: success
-    type: string
+    type: str
     sample: 600a0980383045372f5d4c5a70315474
 lun_state:
     description: Online or offline status of the LUN.
     returned: success
-    type: string
+    type: str
     sample: online
 lun_size:
     description: Size of the LUN in bytes.

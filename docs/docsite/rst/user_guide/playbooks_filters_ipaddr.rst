@@ -324,6 +324,21 @@ This result can be converted to canonical form with ``ipaddr()`` to produce a su
     # {{ net_mask | ipaddr('net') }}
     '192.168.0.0/24'
 
+Getting information about the network in CIDR notation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Given an IP address, the ``ipaddr()`` filter can produce the network address in CIDR notation.
+This can be useful when you want to obtain the network address from the IP address in CIDR format.
+
+Here's an example of IP address::
+
+    ip_address = "{{ ansible_default_ipv4.address }}/{{ ansible_default_ipv4.netmask }}"
+    '192.168.0.11/255.255.255.0'
+
+This can be used to obtain the network address in CIDR notation format::
+
+    # {{ ip_address | ipaddr('network/prefix') }}
+    '192.168.0.0/24'
 
 IP address conversion
 ^^^^^^^^^^^^^^^^^^^^^

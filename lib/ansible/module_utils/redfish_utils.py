@@ -7,6 +7,7 @@ __metaclass__ = type
 import json
 import re
 from ansible.module_utils.urls import open_url
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.error import URLError, HTTPError
 
 HEADERS = {'content-type': 'application/json'}
@@ -35,8 +36,9 @@ class RedfishUtils(object):
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
-        except:
-            return {'ret': False, 'msg': "Unknown error"}
+        except Exception as e:
+            return {'ret': False,
+                    'msg': 'Failed GET operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'data': data}
 
     def post_request(self, uri, pyld, hdrs):
@@ -53,8 +55,9 @@ class RedfishUtils(object):
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
-        except:
-            return {'ret': False, 'msg': "Unknown error"}
+        except Exception as e:
+            return {'ret': False,
+                    'msg': 'Failed POST operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'resp': resp}
 
     def patch_request(self, uri, pyld, hdrs):
@@ -71,8 +74,9 @@ class RedfishUtils(object):
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
-        except:
-            return {'ret': False, 'msg': "Unknown error"}
+        except Exception as e:
+            return {'ret': False,
+                    'msg': 'Failed PATCH operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'resp': resp}
 
     def delete_request(self, uri, pyld, hdrs):
@@ -89,8 +93,9 @@ class RedfishUtils(object):
         except URLError as e:
             return {'ret': False, 'msg': "URL Error: %s" % e.reason}
         # Almost all errors should be caught above, but just in case
-        except:
-            return {'ret': False, 'msg': "Unknown error"}
+        except Exception as e:
+            return {'ret': False,
+                    'msg': 'Failed DELETE operation against Redfish API server: %s' % to_text(e)}
         return {'ret': True, 'resp': resp}
 
     def _init_session(self):
@@ -128,10 +133,14 @@ class RedfishUtils(object):
             if response['ret'] is False:
                 return response
             data = response['data']
-            for member in data[u'Members']:
-                systems_service = member[u'@odata.id']
-            self.systems_uri = systems_service
-            return {'ret': True}
+            if data.get(u'Members'):
+                for member in data[u'Members']:
+                    systems_service = member[u'@odata.id']
+                    self.systems_uri = systems_service
+                    return {'ret': True}
+            else:
+                return {'ret': False,
+                        'msg': "ComputerSystem's Members array is either empty or missing"}
 
     def _find_updateservice_resource(self, uri):
         response = self.get_request(self.root_uri + uri)
@@ -379,7 +388,13 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         data = response['data']
-        action_uri = data[key]["#ComputerSystem.Reset"]["target"]
+        power_state = data["PowerState"]
+        reset_action = data[key]["#ComputerSystem.Reset"]
+        action_uri = reset_action["target"]
+        allowable_vals = reset_action.get("ResetType@Redfish.AllowableValues", [])
+        restart_cmd = "GracefulRestart"
+        if "ForceRestart" in allowable_vals and "GracefulRestart" not in allowable_vals:
+            restart_cmd = "ForceRestart"
 
         # Define payload accordingly
         if command == "PowerOn":
@@ -390,6 +405,11 @@ class RedfishUtils(object):
             payload = {'ResetType': 'GracefulRestart'}
         elif command == "PowerGracefulShutdown":
             payload = {'ResetType': 'GracefulShutdown'}
+        elif command == "PowerReboot":
+            if power_state == "On":
+                payload = {'ResetType': restart_cmd}
+            else:
+                payload = {'ResetType': "On"}
         else:
             return {'ret': False, 'msg': 'Invalid Command'}
 
@@ -486,26 +506,29 @@ class RedfishUtils(object):
 
     def get_firmware_inventory(self):
         result = {}
-        firmware = {}
         response = self.get_request(self.root_uri + self.firmware_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
 
+        result['entries'] = []
         for device in data[u'Members']:
-            d = device[u'@odata.id']
-            d = d.replace(self.firmware_uri, "")    # leave just device name
-            if "Installed" in d:
-                uri = self.root_uri + self.firmware_uri + d
-                # Get details for each device that is relevant
-                response = self.get_request(uri)
-                if response['ret'] is False:
-                    return response
-                result['ret'] = True
-                data = response['data']
-                firmware[data[u'Name']] = data[u'Version']
-        result["entries"] = firmware
+            uri = self.root_uri + device[u'@odata.id']
+            # Get details for each device
+            response = self.get_request(uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+            firmware = {}
+            # Get these standard properties if present
+            for key in ['Name', 'Id', 'Status', 'Version', 'Updateable',
+                        'SoftwareId', 'LowestSupportedVersion', 'Manufacturer',
+                        'ReleaseDate']:
+                if key in data:
+                    firmware[key] = data.get(key)
+            result['entries'].append(firmware)
         return result
 
     def get_manager_attributes(self):
@@ -629,7 +652,7 @@ class RedfishUtils(object):
         response = self.post_request(self.root_uri + reset_bios_settings_uri, {}, HEADERS)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
 
     def set_one_time_boot_device(self, bootdevice):
         result = {}
@@ -664,7 +687,25 @@ class RedfishUtils(object):
         return {'ret': True}
 
     def set_manager_attributes(self, attr):
-        attributes = "Attributes"
+        result = {}
+        # Here I'm making the assumption that the key 'Attributes' is part of the URI.
+        # It may not, but in the hardware I tested with, getting to the final URI where
+        # the Manager Attributes are, appear to be part of a specific OEM extension.
+        key = "Attributes"
+
+        # Search for key entry and extract URI from it
+        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        # Check if attribute exists
+        if attr['mgr_attr_name'] not in data[key]:
+            return {'ret': False, 'msg': "Manager attribute %s not found" % attr['mgr_attr_name']}
 
         # Example: manager_attr = {\"name\":\"value\"}
         # Check if value is a number. If so, convert to int.
@@ -673,11 +714,15 @@ class RedfishUtils(object):
         else:
             manager_attr = "{\"%s\": \"%s\"}" % (attr['mgr_attr_name'], attr['mgr_attr_value'])
 
+        # Find out if value is already set to what we want. If yes, return
+        if data[key][attr['mgr_attr_name']] == attr['mgr_attr_value']:
+            return {'ret': True, 'changed': False, 'msg': "Manager attribute already set"}
+
         payload = {"Attributes": json.loads(manager_attr)}
-        response = self.patch_request(self.root_uri + self.manager_uri + "/" + attributes, payload, HEADERS)
+        response = self.patch_request(self.root_uri + self.manager_uri + "/" + key, payload, HEADERS)
         if response['ret'] is False:
             return response
-        return {'ret': True}
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager attribute %s" % attr['mgr_attr_name']}
 
     def set_bios_attributes(self, attr):
         result = {}
@@ -719,41 +764,6 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
-
-    def create_bios_config_job(self):
-        result = {}
-        key = "Bios"
-        jobs = "Jobs"
-
-        # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-
-        if key not in data:
-            return {'ret': False, 'msg': "Key %s not found" % key}
-
-        bios_uri = data[key]["@odata.id"]
-
-        # Extract proper URI
-        response = self.get_request(self.root_uri + bios_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-        set_bios_attr_uri = data["@Redfish.Settings"]["SettingsObject"]["@odata.id"]
-
-        payload = {"TargetSettingsURI": set_bios_attr_uri, "RebootJobType": "PowerCycle"}
-        response = self.post_request(self.root_uri + self.manager_uri + "/" + jobs, payload, HEADERS)
-        if response['ret'] is False:
-            return response
-
-        response_output = response['resp'].__dict__
-        job_id = response_output["headers"]["Location"]
-        job_id = re.search("JID_.+", job_id).group()
-        return {'ret': True, 'msg': 'Config job created', 'job_id': job_id}
 
     def get_fan_inventory(self):
         result = {}
@@ -835,7 +845,7 @@ class RedfishUtils(object):
         result["entries"] = cpu_results
         return result
 
-    def get_nic_inventory(self):
+    def get_nic_inventory(self, resource_type):
         result = {}
         nic_list = []
         nic_results = []
@@ -845,8 +855,13 @@ class RedfishUtils(object):
                       'NameServers', 'PermanentMACAddress', 'SpeedMbps', 'MTUSize',
                       'AutoNeg', 'Status']
 
-        # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        #  Given resource_type, use the proper URI
+        if resource_type == 'Systems':
+            resource_uri = self.systems_uri
+        elif resource_type == 'Manager':
+            resource_uri = self.manager_uri
+
+        response = self.get_request(self.root_uri + resource_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True

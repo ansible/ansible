@@ -23,7 +23,7 @@ short_description: Check connectivity to MVIP and SVIP.
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.3'
-author: Sumit Kumar (sumit4@netapp.com)
+author: Sumit Kumar (@timuster) <sumit4@netapp.com>
 description:
 - Used to test the management connection to the cluster.
 - The test pings the MVIP and SVIP, and executes a simple API method to verify connectivity.

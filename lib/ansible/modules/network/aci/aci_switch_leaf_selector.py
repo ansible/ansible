@@ -18,10 +18,14 @@ short_description: Bind leaf selectors to switch policy leaf profiles (infra:Lea
 description:
 - Bind leaf selectors (with node block range and policy group) to switch policy leaf profiles on Cisco ACI fabrics.
 notes:
-- This module is to be used with M(aci_switch_policy_leaf_profile)
+- This module is to be used with M(aci_switch_policy_leaf_profile).
   One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
-- More information about the internal APIC classes B(infra:LeafS), B(infra:NodeBlk) and B(infra:RsAccNodePGrp) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_switch_policy_leaf_profile
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:LeafS),
+               B(infra:NodeBlk) and B(infra:RsAccNodePGrp).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -29,21 +33,26 @@ options:
   description:
     description:
     - The description to assign to the C(leaf).
+    type: str
   leaf_profile:
     description:
     - Name of the Leaf Profile to which we add a Selector.
+    type: str
     aliases: [ leaf_profile_name ]
   leaf:
     description:
     - Name of Leaf Selector.
+    type: str
     aliases: [ name, leaf_name, leaf_profile_leaf_name, leaf_selector_name ]
   leaf_node_blk:
     description:
     - Name of Node Block range to be added to Leaf Selector of given Leaf Profile.
+    type: str
     aliases: [ leaf_node_blk_name, node_blk_name ]
   leaf_node_blk_description:
     description:
     - The description to assign to the C(leaf_node_blk)
+    type: str
   from:
     description:
     - Start of Node Block range.
@@ -57,11 +66,13 @@ options:
   policy_group:
     description:
     - Name of the Policy Group to be added to Leaf Selector of given Leaf Profile.
+    type: str
     aliases: [ name, policy_group_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -149,7 +160,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -198,17 +209,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -218,7 +229,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

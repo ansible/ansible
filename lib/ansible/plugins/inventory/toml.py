@@ -100,6 +100,7 @@ from ansible.module_utils.common._collections_compat import MutableMapping, Muta
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin
+from ansible.utils.display import Display
 
 try:
     import toml
@@ -107,12 +108,7 @@ try:
 except ImportError:
     HAS_TOML = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
+display = Display()
 
 WARNING_MSG = (
     'The TOML inventory format is marked as preview, which means that it is not guaranteed to have a backwards '
@@ -129,11 +125,9 @@ if HAS_TOML and hasattr(toml, 'TomlEncoder'):
                 AnsibleSequence: self.dump_funcs.get(list),
                 AnsibleUnicode: self.dump_funcs.get(str),
             })
-            display.warning(WARNING_MSG)
     toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())
 else:
     def toml_dumps(data):
-        display.warning(WARNING_MSG)
         return toml.dumps(convert_yaml_objects_to_native(data))
 
 

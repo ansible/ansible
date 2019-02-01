@@ -34,6 +34,7 @@ from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
 from ansible.module_utils._text import to_native, to_text
+from ansible.utils.display import Display
 
 try:
     from jinja2.filters import do_unique
@@ -41,17 +42,18 @@ try:
 except ImportError:
     HAS_UNIQUE = False
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 @environmentfilter
 def unique(environment, a, case_sensitive=False, attribute=None):
 
-    error = None
+    def _do_fail(e):
+        if case_sensitive or attribute:
+            raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
+                                     "as it does not support the parameters supplied", orig_exc=e)
+
+    error = e = None
     try:
         if HAS_UNIQUE:
             c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
@@ -59,14 +61,13 @@ def unique(environment, a, case_sensitive=False, attribute=None):
                 c = set(c)
             else:
                 c = list(c)
-
+    except TypeError as e:
+        error = e
+        _do_fail(e)
     except Exception as e:
-        if case_sensitive or attribute:
-            raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
-                                     "as it does not support the parameters supplied", orig_exc=e)
-        else:
-            display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
-            error = e
+        error = e
+        _do_fail(e)
+        display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
 
     if not HAS_UNIQUE or error:
 
@@ -139,14 +140,14 @@ def logarithm(x, base=math.e):
         else:
             return math.log(x, base)
     except TypeError as e:
-        raise AnsibleFilterError('log() can only be used on numbers: %s' % str(e))
+        raise AnsibleFilterError('log() can only be used on numbers: %s' % to_native(e))
 
 
 def power(x, y):
     try:
         return math.pow(x, y)
     except TypeError as e:
-        raise AnsibleFilterError('pow() can only be used on numbers: %s' % str(e))
+        raise AnsibleFilterError('pow() can only be used on numbers: %s' % to_native(e))
 
 
 def inversepower(x, base=2):
@@ -156,7 +157,7 @@ def inversepower(x, base=2):
         else:
             return math.pow(x, 1.0 / float(base))
     except (ValueError, TypeError) as e:
-        raise AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
+        raise AnsibleFilterError('root() can only be used on numbers: %s' % to_native(e))
 
 
 def human_readable(size, isbits=False, unit=None):

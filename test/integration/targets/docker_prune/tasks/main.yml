@@ -27,7 +27,7 @@
       images: yes
       networks: yes
       volumes: yes
-      builder_cache: yes
+      builder_cache: "{{ docker_py_version is version('3.3.0', '>=') }}"
     register: result
 
   # Analyze result
@@ -56,5 +56,7 @@
 
   - debug: var=result
 
-  # Skip for CentOS 6
-  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6
+  when: docker_py_version is version('2.1.0', '>=') and docker_api_version is version('1.25', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_prune tests!"
+  when: not(docker_py_version is version('2.1.0', '>=') and docker_api_version is version('1.25', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

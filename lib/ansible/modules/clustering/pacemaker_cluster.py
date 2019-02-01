@@ -60,7 +60,7 @@ changed:
 out:
     description: The output of the current state of the cluster. It return a
                  list of the nodes state.
-    type: string
+    type: str
     sample: 'out: [["  overcloud-controller-0", " Online"]]}'
     returned: always
 rc:

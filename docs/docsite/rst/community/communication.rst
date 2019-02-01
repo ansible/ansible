@@ -42,10 +42,12 @@ General channels
 - ``#ansible-devel`` - For discussions on developer topics and code related to features or bugs.
 - ``#ansible-meeting`` - For public community meetings. We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
+.. _working_group_list:
+
 Working groups
 --------------
 
-Many of our community Working Groups meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets.
+Many of our community Working Groups meet on Freenode IRC channels. If you want to get involved in a working group, join the channel where it meets or comment on the agenda.
 
 - `Amazon (AWS) Working Group <https://github.com/ansible/community/tree/master/group-aws>`_ - ``#ansible-aws``
 - `Ansible Lockdown Working Group <https://ansiblelockdown.io>`_ `gh/ansible/ansible-lockdown <https://github.com/ansible/ansible-lockdown>`_ - ``#ansible-lockdown``- Security playbooks/roles
@@ -54,7 +56,7 @@ Many of our community Working Groups meet on Freenode IRC channels. If you want 
 - `Community Working Group <https://github.com/ansible/community/tree/master/group-community>`_ - ``#ansible-community`` - Including Meetups
 - `Container Working Group <https://github.com/ansible/community/tree/master/group-container>`_ - ``#ansible-container``
 - `Contributor Experience Working Group <https://github.com/ansible/community/tree/master/group-contributor-experience>`_ - ``#ansible-community``
-- `Docker Working Group <https://github.com/ansible/community/issues/379>`_ - ``#ansible-devel``
+- `Docker Working Group <https://github.com/ansible/community/issues/408>`_ - ``#ansible-devel``
 - `Documentation Working Group <https://github.com/ansible/community/tree/master/group-docs>`_- ``#ansible-docs``
 - `Galaxy Working Group <https://github.com/ansible/community/tree/master/group-galaxy>`_ - ``#ansible-galaxy``
 - `JBoss Working Group <https://github.com/ansible/community/tree/master/group-jboss>`_ - ``#ansible-jboss``
@@ -62,6 +64,7 @@ Many of our community Working Groups meet on Freenode IRC channels. If you want 
 - `Linode Working Group <https://github.com/ansible/community/tree/master/group-linode>`_ - ``#ansible-linode``
 - `Molecule <https://molecule.readthedocs.io>`_ - ``#ansible-molecule`` - testing platform for Ansible playbooks and roles
 - `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_ - ``#ansible-network``
+- `Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - ``#ansible-devel``
 - `Testing Working Group <https://github.com/ansible/community/tree/master/group-testing>`_  - ``#ansible-devel``
 - `VMware Working Group <https://github.com/ansible/community/tree/master/group-vmware>`_ - ``#ansible-vmware``
 - `Windows Working Group <https://github.com/ansible/community/tree/master/group-windows>`_ - ``#ansible-windows``

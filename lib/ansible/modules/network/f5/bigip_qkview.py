@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -69,6 +69,10 @@ options:
     type: bool
 notes:
   - This module does not include the "max time" or "restrict to blade" options.
+  - If you are using this module with either Ansible Tower or Ansible AWX, you
+    should be aware of how these Ansible products execute jobs in restricted
+    environments. More informat can be found here
+    https://clouddocs.f5.com/products/orchestration/ansible/devel/usage/module-usage-with-tower.html
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -82,6 +86,10 @@ EXAMPLES = r'''
       - audit
       - secure
     dest: /tmp/localhost.localdomain.qkview
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -92,6 +100,7 @@ RETURN = r'''
 import os
 import re
 import socket
+import ssl
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -272,7 +281,11 @@ class BaseManager(object):
     def present(self):
         if os.path.exists(self.want.dest) and not self.want.force:
             raise F5ModuleError(
-                "The specified 'dest' file already exists"
+                "The specified 'dest' file already exists."
+            )
+        if not os.path.exists(os.path.dirname(self.want.dest)):
+            raise F5ModuleError(
+                "The directory of your 'dest' file does not exist."
             )
         if self.want.exclude:
             choices = ['all', 'audit', 'secure', 'bash_history']
@@ -455,9 +468,14 @@ class BaseManager(object):
         while True:
             try:
                 resp = self.client.api.get(uri, timeout=10)
-            except socket.timeout:
+            except (socket.timeout, ssl.SSLError):
                 continue
-            response = resp.json()
+            try:
+                response = resp.json()
+            except ValueError:
+                # It is possible that the API call can return invalid JSON.
+                # This invalid JSON appears to be just empty strings.
+                continue
             if response['_taskState'] == 'FAILED':
                 raise F5ModuleError(
                     "qkview creation task failed unexpectedly."
@@ -577,8 +595,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

@@ -22,6 +22,7 @@ __metaclass__ = type
 import json
 
 from units.compat.mock import patch
+from ansible.module_utils.basic import get_timestamp
 from ansible.modules.network.ios import ios_command
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
@@ -46,6 +47,7 @@ class TestIosCommandModule(TestIosModule):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
+            timestamps = list()
 
             for item in commands:
                 try:
@@ -55,7 +57,8 @@ class TestIosCommandModule(TestIosModule):
                     command = item['command']
                 filename = str(command).replace(' ', '_')
                 output.append(load_fixture(filename))
-            return output
+                timestamps.append(get_timestamp())
+            return output, timestamps
 
         self.run_commands.side_effect = load_from_file
 

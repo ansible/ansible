@@ -21,8 +21,12 @@ notes:
   is required when the state is C(absent) or C(present).
 - The C(tenant) and C(bd) used must exist before using this module in your playbook.
   The M(aci_tenant) module and M(aci_bd) can be used for these.
-- More information about the internal APIC class B(fv:Subnet) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_bd
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Subnet).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -30,10 +34,12 @@ options:
   bd:
     description:
     - The name of the Bridge Domain.
+    type: str
     aliases: [ bd_name ]
   description:
     description:
     - The description for the Subnet.
+    type: str
     aliases: [ descr ]
   enable_vip:
     description:
@@ -43,6 +49,7 @@ options:
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
+    type: str
     aliases: [ gateway_ip ]
   mask:
     description:
@@ -55,6 +62,7 @@ options:
   nd_prefix_policy:
     description:
     - The IPv6 Neighbor Discovery Prefix Policy to associate with the Subnet.
+    type: str
   preferred:
     description:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
@@ -64,9 +72,11 @@ options:
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
+    type: str
   route_profile_l3_out:
     description:
     - The L3 Out that contains the assocated Route Profile.
+    type: str
   scope:
     description:
     - Determines the scope of the Subnet.
@@ -88,19 +98,23 @@ options:
     - The C(nd_ra) option is used to treate the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
     - The C(no_gw) option is used to remove default gateway functionality from the gateway address.
     - The APIC defaults to C(nd_ra) when unset during creation.
+    type: str
     choices: [ nd_ra, no_gw, querier_ip, unspecified ]
   subnet_name:
     description:
     - The name of the Subnet.
+    type: str
     aliases: [ name ]
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -246,7 +260,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -295,17 +309,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -315,7 +329,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

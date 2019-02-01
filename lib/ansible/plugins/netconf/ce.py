@@ -23,7 +23,7 @@ import json
 import re
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.netconf import NetconfBase
 from ansible.plugins.netconf import ensure_connected
@@ -35,12 +35,6 @@ try:
     from ncclient.xml_ import to_ele, to_xml, new_ele
 except ImportError:
     raise AnsibleError("ncclient is not installed")
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 
 class Netconf(NetconfBase):
@@ -113,10 +107,10 @@ class Netconf(NetconfBase):
                 hostkey_verify=obj.get_option('host_key_checking'),
                 look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj._play_context.timeout
+                timeout=obj.get_option('persistent_connect_timeout')
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
 
         guessed_os = None
         for c in m.server_capabilities:

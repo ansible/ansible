@@ -90,7 +90,7 @@ RETURN = '''# '''
 try:
     import gitlab
     HAS_GITLAB_PACKAGE = True
-except:
+except Exception:
     HAS_GITLAB_PACKAGE = False
 
 from ansible.module_utils.basic import AnsibleModule
@@ -199,7 +199,6 @@ def main():
         group_path = group_name.replace(" ", "_")
 
     group = GitLabGroup(module, git)
-    group_name = group_name.lower()
     group_exists = group.existsGroup(group_name)
 
     if group_exists and state == "absent":

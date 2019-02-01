@@ -19,7 +19,7 @@ short_description: NetApp Element Software Manage VLAN
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create, delete, modify VLAN
 
@@ -112,7 +112,7 @@ from ansible.module_utils.netapp_elementsw_module import NaElementSWModule
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except:
+except Exception:
     HAS_SF_SDK = False
 
 

@@ -42,12 +42,9 @@ from ansible.plugins.loader import module_utils_loader
 # variable to the object and then it never gets updated.
 from ansible.executor import action_write_locks
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
+display = Display()
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
@@ -465,7 +462,10 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
     the module its module_utils files needs.
     """
     # Parse the module and find the imports of ansible.module_utils
-    tree = ast.parse(data)
+    try:
+        tree = ast.parse(data)
+    except (SyntaxError, IndentationError) as e:
+        raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
     finder = ModuleDepFinder()
     finder.visit(tree)
 
@@ -748,7 +748,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                 # the write lock.  Go ahead and read the data from disk
                 # instead of re-creating it.
                 try:
-                    zipdata = open(cached_module_filename, 'rb').read()
+                    with open(cached_module_filename, 'rb') as f:
+                        zipdata = f.read()
                 except IOError:
                     raise AnsibleError('A different worker process failed to create module file. '
                                        'Look at traceback for that process for debugging information.')

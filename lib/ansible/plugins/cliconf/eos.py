@@ -50,8 +50,6 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.plugins.cliconf import CliconfBase, enable_mode
-from ansible.plugins.connection.network_cli import Connection as NetworkCli
-from ansible.plugins.connection.httpapi import Connection as HttpApi
 
 
 class Cliconf(CliconfBase):
@@ -59,20 +57,6 @@ class Cliconf(CliconfBase):
     def __init__(self, *args, **kwargs):
         super(Cliconf, self).__init__(*args, **kwargs)
         self._session_support = None
-
-    def send_command(self, command, **kwargs):
-        """Executes a cli command and returns the results
-        This method will execute the CLI command on the connection and return
-        the results to the caller.  The command output will be returned as a
-        string
-        """
-        if isinstance(self._connection, NetworkCli):
-            resp = super(Cliconf, self).send_command(command, **kwargs)
-        elif isinstance(self._connection, HttpApi):
-            resp = self._connection.send_request(command, **kwargs)
-        else:
-            raise ValueError("Invalid connection type")
-        return resp
 
     @enable_mode
     def get_config(self, source='running', format='text', flags=None):
@@ -288,19 +272,11 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = {}
-        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
-        result['rpc'] = self.get_base_rpc() + rpc_list
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
 
-        if isinstance(self._connection, NetworkCli):
-            result['network_api'] = 'cliconf'
-        elif isinstance(self._connection, HttpApi):
-            result['network_api'] = 'eapi'
-        else:
-            raise ValueError("Invalid connection type")
         return json.dumps(result)
 
     def _get_command_with_output(self, command, output):

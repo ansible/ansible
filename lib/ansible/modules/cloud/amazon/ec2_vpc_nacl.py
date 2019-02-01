@@ -139,7 +139,7 @@ RETURN = '''
 task:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 try:
@@ -153,17 +153,6 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
-
-# Common fields for the default rule that is contained within every VPC NACL.
-DEFAULT_RULE_FIELDS = {
-    'RuleNumber': 32767,
-    'RuleAction': 'deny',
-    'CidrBlock': '0.0.0.0/0',
-    'Protocol': '-1'
-}
-
-DEFAULT_INGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', False)])
-DEFAULT_EGRESS = dict(list(DEFAULT_RULE_FIELDS.items()) + [('Egress', True)])
 
 # VPC-supported IANA protocol numbers
 # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
@@ -236,10 +225,8 @@ def nacls_changed(nacl, client, module):
     nacl_id = nacl['NetworkAcls'][0]['NetworkAclId']
     nacl = describe_network_acl(client, module)
     entries = nacl['NetworkAcls'][0]['Entries']
-    tmp_egress = [entry for entry in entries if entry['Egress'] is True and DEFAULT_EGRESS != entry]
-    tmp_ingress = [entry for entry in entries if entry['Egress'] is False]
-    egress = [rule for rule in tmp_egress if DEFAULT_EGRESS != rule]
-    ingress = [rule for rule in tmp_ingress if DEFAULT_INGRESS != rule]
+    egress = [rule for rule in entries if rule['Egress'] is True and rule['RuleNumber'] < 32767]
+    ingress = [rule for rule in entries if rule['Egress'] is False and rule['RuleNumber'] < 32767]
     if rules_changed(egress, params['egress'], True, nacl_id, client, module):
         changed = True
     if rules_changed(ingress, params['ingress'], False, nacl_id, client, module):
@@ -252,7 +239,8 @@ def tags_changed(nacl_id, client, module):
     tags = dict()
     if module.params.get('tags'):
         tags = module.params.get('tags')
-    tags['Name'] = module.params.get('name')
+    if module.params.get('name') and not tags.get('Name'):
+        tags['Name'] = module.params['name']
     nacl = find_acl_by_id(nacl_id, client, module)
     if nacl['NetworkAcls']:
         nacl_values = [t.values() for t in nacl['NetworkAcls'][0]['Tags']]

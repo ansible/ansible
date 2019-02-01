@@ -137,21 +137,24 @@ import sys
 import re
 
 from termios import tcflush, TCIFLUSH
+from distutils.version import LooseVersion
 from binascii import hexlify
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import (
+    AnsibleAuthenticationFailure,
+    AnsibleConnectionFailure,
+    AnsibleError,
+    AnsibleFileNotFound,
+)
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 AUTHENTICITY_MSG = """
@@ -165,13 +168,14 @@ SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO = False
+PARAMIKO_IMP_ERR = None
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
         import paramiko
         HAVE_PARAMIKO = True
-    except ImportError:
-        pass
+    except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+        PARAMIKO_IMP_ERR = err
 
 
 class MyAddPolicy(object):
@@ -302,10 +306,10 @@ class Connection(ConnectionBase):
         ''' activates the connection object '''
 
         if not HAVE_PARAMIKO:
-            raise AnsibleError("paramiko is not installed")
+            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMP_ERR))
 
         port = self._play_context.port or 22
-        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
+        display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
                     host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
@@ -326,7 +330,7 @@ class Connection(ConnectionBase):
                     pass  # file was not found, but not required to function
             ssh.load_system_host_keys()
 
-        sock_kwarg = self._parse_proxy_command(port)
+        ssh_connect_kwargs = self._parse_proxy_command(port)
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
@@ -340,6 +344,10 @@ class Connection(ConnectionBase):
             if self._play_context.private_key_file:
                 key_filename = os.path.expanduser(self._play_context.private_key_file)
 
+            # paramiko 2.2 introduced auth_timeout parameter
+            if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
+                ssh_connect_kwargs['auth_timeout'] = self._play_context.timeout
+
             ssh.connect(
                 self._play_context.remote_addr.lower(),
                 username=self._play_context.remote_user,
@@ -349,15 +357,18 @@ class Connection(ConnectionBase):
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
                 port=port,
-                **sock_kwarg
+                **ssh_connect_kwargs
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
+        except paramiko.ssh_exception.AuthenticationException as e:
+            msg = 'Invalid/incorrect username/password. {0}'.format(to_text(e))
+            raise AnsibleAuthenticationFailure(msg)
         except Exception as e:
-            msg = str(e)
-            if "PID check failed" in msg:
+            msg = to_text(e)
+            if u"PID check failed" in msg:
                 raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
-            elif "Private key file is encrypted" in msg:
+            elif u"Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
                     self._play_context.remote_user, self._play_context.remote_addr, port, msg)
                 raise AnsibleConnectionFailure(msg)
@@ -380,10 +391,11 @@ class Connection(ConnectionBase):
             self.ssh.get_transport().set_keepalive(5)
             chan = self.ssh.get_transport().open_session()
         except Exception as e:
-            msg = "Failed to open session"
-            if len(str(e)) > 0:
-                msg += ": %s" % str(e)
-            raise AnsibleConnectionFailure(msg)
+            text_e = to_text(e)
+            msg = u"Failed to open session"
+            if text_e:
+                msg += u": %s" % text_e
+            raise AnsibleConnectionFailure(to_native(msg))
 
         # sudo usually requires a PTY (cf. requiretty option), therefore
         # we give it one by default (pty=True in ansible.cfg), and we try
@@ -530,6 +542,10 @@ class Connection(ConnectionBase):
 
         f.close()
 
+    def reset(self):
+        self.close()
+        self._connect()
+
     def close(self):
         ''' terminate the connection '''
 
@@ -587,7 +603,7 @@ class Connection(ConnectionBase):
 
                 os.rename(tmp_keyfile.name, self.keyfile)
 
-            except:
+            except Exception:
 
                 # unable to save keys, including scenario when key was invalid
                 # and caught earlier
@@ -595,3 +611,4 @@ class Connection(ConnectionBase):
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()
+        self._connected = False

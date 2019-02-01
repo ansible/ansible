@@ -155,7 +155,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
-    from com.vmware.vapi.std_client import DynamicID
     from com.vmware.cis.tagging_client import Tag, TagAssociation
     HAS_VCLOUD = True
 except ImportError:

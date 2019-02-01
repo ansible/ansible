@@ -143,7 +143,7 @@ def main():
     if module.params['volume']:
         try:
             system.volumes.get(name=module.params['volume'])
-        except:
+        except Exception:
             module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
 
     if host and state == 'present':

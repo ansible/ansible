@@ -209,7 +209,7 @@ def main():
         ubuntuMode = False
 
     if not is_available(name, ubuntuMode):
-        module.fail_json(msg="The locales you've entered is not available "
+        module.fail_json(msg="The locale you've entered is not available "
                              "on your system.")
 
     if is_present(name):

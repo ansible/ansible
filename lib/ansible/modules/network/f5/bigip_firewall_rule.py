@@ -289,7 +289,7 @@ param1:
 param2:
   description: The new param2 value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: Foo is bar
 '''
 
@@ -1102,12 +1102,15 @@ def main():
         required_one_of=spec.required_one_of
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         exit_json(module, results, client)
     except F5ModuleError as ex:
+        cleanup_tokens(client)
         fail_json(module, ex, client)
 
 

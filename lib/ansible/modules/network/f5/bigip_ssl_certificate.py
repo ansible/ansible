@@ -69,30 +69,33 @@ EXAMPLES = r'''
 - name: Use a file lookup to import PEM Certificate
   bigip_ssl_certificate:
     name: certificate-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/cert.crt') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Use a file lookup to import CA certificate chain
   bigip_ssl_certificate:
     name: ca-chain-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/ca-chain.crt') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete Certificate
   bigip_ssl_certificate:
     name: certificate-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -100,23 +103,23 @@ RETURN = r'''
 cert_name:
   description: The name of the certificate that the user provided
   returned: created
-  type: string
+  type: str
   sample: cert1
 filename:
   description:
     - The name of the SSL certificate.
   returned: created
-  type: string
+  type: str
   sample: cert1.crt
 checksum:
   description: SHA1 checksum of the cert that was provided.
   returned: changed and created
-  type: string
+  type: str
   sample: f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0
 source_path:
   description: Path on BIG-IP where the source of the certificate is stored.
   returned: created
-  type: string
+  type: str
   sample: /var/config/rest/downloads/cert1.crt
 '''
 
@@ -564,6 +567,7 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
+
     client = F5RestClient(**module.params)
 
     try:

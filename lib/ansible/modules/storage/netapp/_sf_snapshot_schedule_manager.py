@@ -22,7 +22,7 @@ short_description: Manage SolidFire snapshot schedules
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.3'
-author: Sumit Kumar (sumit4@netapp.com)
+author: Sumit Kumar (@timuster) <sumit4@netapp.com>
 description:
 - Create, destroy, or update accounts on SolidFire
 
@@ -132,7 +132,7 @@ RETURN = """
 schedule_id:
     description: Schedule ID of the newly created schedule
     returned: success
-    type: string
+    type: str
 """
 import traceback
 

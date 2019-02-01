@@ -106,38 +106,41 @@ options:
       - absent
 extends_documentation_fragment: f5
 author:
-  - Wojciech Wypior(@wojtek0806)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Create HTTP2 profile
   bigip_profile_http2:
     name: my_profile
-    password: secret
-    server: lb.mydomain.com
     insert_header: yes
     insert_header_name: FOO
     state: present
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Remove HTTP profile
   bigip_profile_http2:
     name: my_profile
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add HTTP profile set activation modes
   bigip_profile_http:
     name: my_profile
-    server: lb.mydomain.com
-    user: admin
     activation_modes:
       - always
-    password: secret
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -145,12 +148,12 @@ RETURN = r'''
 description:
   description: Description of the profile.
   returned: changed
-  type: string
+  type: str
   sample: My profile
 insert_header_name:
   description: Specifies the name of the HTTP2 header
   returned: changed
-  type: string
+  type: str
   sample: X-HTTP2
 streams:
   description: The number of outstanding concurrent requests allowed on a single HTTP/2 connection
@@ -562,7 +565,7 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 403]:
+        if 'code' in response and response['code'] in [400, 403, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
@@ -582,7 +585,7 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] == 400:
+        if 'code' in response and response['code'] in [400, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:

@@ -91,12 +91,12 @@ RETURN = '''
 comment:
     description: optional hosted zone comment
     returned: when hosted zone exists
-    type: string
+    type: str
     sample: "Private zone"
 name:
     description: hosted zone name
     returned: when hosted zone exists
-    type: string
+    type: str
     sample: "private.local."
 private_zone:
     description: whether hosted zone is private or public
@@ -106,22 +106,22 @@ private_zone:
 vpc_id:
     description: id of vpc attached to private hosted zone
     returned: for private hosted zone
-    type: string
+    type: str
     sample: "vpc-1d36c84f"
 vpc_region:
     description: region of vpc attached to private hosted zone
     returned: for private hosted zone
-    type: string
+    type: str
     sample: "eu-west-1"
 zone_id:
     description: hosted zone id
     returned: when hosted zone exists
-    type: string
+    type: str
     sample: "Z6JQG9820BEFMW"
 delegation_set_id:
     description: id of the associated reusable delegation set
     returned: for public hosted zones, if they have been associated with a reusable delegation set
-    type: string
+    type: str
     sample: "A1BCDEF2GHIJKL"
 '''
 

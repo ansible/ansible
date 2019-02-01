@@ -107,7 +107,7 @@ def opts_docs(cli_class_name, cli_module_name):
     # parse the common options
     try:
         cli.parse()
-    except:
+    except Exception:
         pass
 
     # base/common cli info
@@ -154,7 +154,7 @@ def opts_docs(cli_class_name, cli_module_name):
 
         try:
             cli.parse()
-        except:
+        except Exception:
             pass
 
         # FIXME/TODO: needed?

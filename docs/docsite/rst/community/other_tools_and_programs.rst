@@ -4,7 +4,8 @@
 Other Tools And Programs
 ########################
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 The Ansible community uses a range of tools for working with the Ansible project. This is a list of some of the most popular of these tools.
 

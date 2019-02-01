@@ -20,8 +20,11 @@ description:
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(fv:Ctx) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Ctx).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -29,27 +32,33 @@ options:
   tenant:
     description:
     - The name of the Tenant the VRF should belong to.
+    type: str
     aliases: [ tenant_name ]
   vrf:
     description:
     - The name of the VRF.
+    type: str
     aliases: [ context, name, vrf_name ]
   policy_control_direction:
     description:
     - Determines if the policy should be enforced by the fabric on ingress or egress.
+    type: str
     choices: [ egress, ingress ]
   policy_control_preference:
     description:
     - Determines if the fabric should enforce contract policies to allow routing and packet forwarding.
+    type: str
     choices: [ enforced, unenforced ]
   description:
     description:
     - The description for the VRF.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -132,7 +141,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -181,17 +190,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -201,7 +210,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

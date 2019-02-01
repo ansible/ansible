@@ -25,6 +25,7 @@ from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
+from ansible.utils.sentinel import Sentinel
 
 
 # For filtering out modules correctly below
@@ -145,8 +146,8 @@ class ModuleArgsParser:
                 if templar._contains_vars(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style "
-                                             "('{{var_name}}')")
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables (without Jinja2 delimiters), "
+                                             "and must use the full variable style ('{{var_name}}')")
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
             else:
@@ -258,7 +259,7 @@ class ModuleArgsParser:
         thing = None
 
         action = None
-        delegate_to = self._task_ds.get('delegate_to', None)
+        delegate_to = self._task_ds.get('delegate_to', Sentinel)
         args = dict()
 
         # This is the standard YAML form for command-type modules. We grab

@@ -3,6 +3,15 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
+# This task is needed to clear out any previous logfile
+# size settings.
+- name: Workaround to clear logging logfile size
+  nxos_config:
+    lines:
+      - logging logfile test 1 size 4194304
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
 - name: Purge logging configuration first
   nxos_logging:
     purge: true
@@ -51,7 +60,7 @@
 - name: Set Baud Rate to less than 38400
   nxos_config:
     lines:
-      - speed 9600
+      - speed 19200
     parents: line console
     provider: "{{ connection }}"
 
@@ -263,7 +272,7 @@
 - block:
   - name: Configure Logging message
     nxos_logging: &logm
-      message: add-interface-description
+      interface_message: add-interface-description
       state: present
       provider: "{{ connection }}"
     register: result
@@ -280,7 +289,7 @@
 
   - name: Remove Logging message
     nxos_logging:
-      message: add-interface-description
+      interface_message: add-interface-description
       state: absent
       provider: "{{ connection }}"
     register: result

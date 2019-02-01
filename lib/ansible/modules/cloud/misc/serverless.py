@@ -56,6 +56,7 @@ options:
         run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
     required: false
     default: true
+    type: bool
   force:
     description:
       - Whether or not to force full deployment, equivalent to serverless `--force` option.
@@ -111,16 +112,16 @@ EXAMPLES = """
 
 RETURN = """
 service_name:
-  type: string
+  type: str
   description: The service name specified in the serverless.yml that was just deployed.
   returned: always
   sample: my-fancy-service-dev
 state:
-  type: string
+  type: str
   description: Whether the stack for the serverless project is present/absent.
   returned: always
 command:
-  type: string
+  type: str
   description: Full `serverless` command run by this module, in case you want to re-run the command outside the module.
   returned: always
   sample: serverless deploy --stage production

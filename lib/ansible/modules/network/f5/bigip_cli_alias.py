@@ -73,12 +73,12 @@ RETURN = r'''
 command:
   description: The new command that is aliased.
   returned: changed
-  type: string
+  type: str
   sample: run /util bash
 description:
   description: The new description of the alias.
   returned: changed
-  type: string
+  type: str
   sample: Run the bash shell
 '''
 
@@ -405,8 +405,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

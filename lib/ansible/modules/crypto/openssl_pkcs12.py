@@ -129,12 +129,12 @@ RETURN = '''
 filename:
     description: Path to the generate PKCS#12 file.
     returned: changed or success
-    type: string
+    type: str
     sample: /opt/certs/ansible.p12
 privatekey:
     description: Path to the TLS/SSL private key the public key was generated from
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/private/ansible.com.pem
 '''
 
@@ -255,8 +255,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         try:
             self.remove()
-
-            p12 = crypto.load_pkcs12(open(self.src, 'rb').read(),
+            with open(self.src, 'rb') as pkcs12_fh:
+                pkcs12_content = pkcs12_fh.read()
+            p12 = crypto.load_pkcs12(pkcs12_content,
                                      self.passphrase)
             pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM,
                                           p12.get_privatekey())
@@ -278,7 +279,7 @@ def main():
     argument_spec = dict(
         action=dict(type='str', default='export',
                     choices=['parse', 'export']),
-        ca_certificates=dict(type='list'),
+        ca_certificates=dict(type='list', elements='path'),
         certificate_path=dict(type='path'),
         force=dict(type='bool', default=False),
         friendly_name=dict(type='str', aliases=['name']),
@@ -312,7 +313,7 @@ def main():
     if not pyopenssl_found:
         module.fail_json(msg='The python pyOpenSSL library is required')
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

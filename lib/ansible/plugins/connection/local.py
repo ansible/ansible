@@ -28,13 +28,9 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):

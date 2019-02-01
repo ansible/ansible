@@ -1,7 +1,6 @@
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -11,12 +10,9 @@ import yaml
 from ansible.module_utils._text import to_text
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def read_docstring(filename, verbose=True, ignore_errors=True):
@@ -29,7 +25,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         'doc': None,
         'plainexamples': None,
         'returndocs': None,
-        'metadata': None
+        'metadata': None,
+        'seealso': None,
     }
 
     string_to_vars = {
@@ -77,7 +74,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
             # Add default metadata
             data['metadata'] = {'supported_by': 'community',
                                 'status': ['preview']}
-    except:
+    except Exception:
         if verbose:
             display.error("unable to parse %s" % filename)
         if not ignore_errors:

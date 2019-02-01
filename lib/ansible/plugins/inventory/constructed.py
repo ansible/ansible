@@ -63,10 +63,10 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.inventory.helpers import get_group_vars
-from ansible.plugins.cache import FactCache
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
 from ansible.utils.vars import combine_vars
+from ansible.vars.fact_cache import FactCache
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable):

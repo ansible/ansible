@@ -65,6 +65,14 @@ class TestOnyxMlagVipModule(TestOnyxModule):
                     'mlag system-mac 00:00:5e:00:01:4e', 'no mlag shutdown']
         self.execute_module(changed=True, commands=commands)
 
+    def test_mlag_send_group_name_only_change(self):
+        self._mlag_enabled = False
+        set_module_args(dict(group_name='neo-mlag-vip-500',
+                             delay=0))
+        commands = ['mlag-vip neo-mlag-vip-500',
+                    'no mlag shutdown']
+        self.execute_module(changed=True, commands=commands)
+
     def test_mlag_absent_no_change(self):
         self._mlag_enabled = False
         set_module_args(dict(state='absent'))

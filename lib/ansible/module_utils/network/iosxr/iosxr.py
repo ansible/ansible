@@ -358,7 +358,10 @@ def get_config_diff(module, running=None, candidate=None):
 def discard_config(module):
     conn = get_connection(module)
     try:
-        conn.discard_changes()
+        if is_netconf(module):
+            conn.discard_changes(remove_ns=True)
+        else:
+            conn.discard_changes()
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
@@ -370,9 +373,9 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None,
     try:
         if is_netconf(module):
             if check:
-                reply = conn.validate()
+                reply = conn.validate(remove_ns=True)
             else:
-                reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist)
+                reply = conn.commit(confirmed=confirmed, timeout=confirm_timeout, persist=persist, remove_ns=True)
         elif is_cliconf(module):
             if check:
                 module.fail_json(msg="Validate configuration is not supported with network_cli connection type")
@@ -389,7 +392,10 @@ def get_oper(module, filter=None):
 
     if filter is not None:
         try:
-            response = conn.get(filter)
+            if is_netconf(module):
+                response = conn.get(filter=filter, remove_ns=True)
+            else:
+                response = conn.get(filter)
         except ConnectionError as exc:
             module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     else:
@@ -404,7 +410,7 @@ def get_config(module, config_filter=None, source='running'):
     # Note: Does not cache config in favour of latest config on every get operation.
     try:
         if is_netconf(module):
-            out = to_xml(conn.get_config(source=source, filter=config_filter))
+            out = to_xml(conn.get_config(source=source, filter=config_filter, remove_ns=True))
         elif is_cliconf(module):
             out = conn.get_config(source=source, flags=config_filter)
         cfg = out.strip()
@@ -436,7 +442,7 @@ def load_config(module, command_filter, commit=False, replace=False,
 
         try:
             for filter in to_list(command_filter):
-                conn.edit_config(filter)
+                conn.edit_config(config=filter, remove_ns=True)
 
             candidate = get_config(module, source='candidate', config_filter=nc_get_filter)
             diff = get_config_diff(module, running, candidate)

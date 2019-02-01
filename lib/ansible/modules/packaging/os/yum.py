@@ -190,6 +190,13 @@ options:
     default: 0
     type: int
     version_added: "2.8"
+  install_weak_deps:
+    description:
+      - Will also install all packages linked by a weak dependency relation.
+      - "NOTE: This feature requires yum >= 4 (RHEL/CentOS 8+)"
+    type: bool
+    default: "yes"
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -219,7 +226,7 @@ requirements:
 - yum
 author:
     - Ansible Core Team
-    - Seth Vidal
+    - Seth Vidal (@skvidal)
     - Eduard Snesarev (@verm666)
     - Berend De Schouwer (@berenddeschouwer)
     - Abhijeet Kasurde (@Akasurde)
@@ -853,7 +860,7 @@ class YumModule(YumDnf):
             downgrade_candidate = False
 
             # check if pkgspec is installed (if possible for idempotence)
-            if spec.endswith('.rpm'):
+            if spec.endswith('.rpm') or '://' in spec:
                 if '://' not in spec and not os.path.exists(spec):
                     res['msg'] += "No RPM file matching '%s' found on system" % spec
                     res['results'].append("No RPM file matching '%s' found on system" % spec)
@@ -863,6 +870,12 @@ class YumModule(YumDnf):
                 if '://' in spec:
                     with self.set_env_proxy():
                         package = fetch_file(self.module, spec)
+                        if not package.endswith('.rpm'):
+                            # yum requires a local file to have the extension of .rpm and we
+                            # can not guarantee that from an URL (redirects, proxies, etc)
+                            new_package_path = '%s.rpm' % package
+                            os.rename(package, new_package_path)
+                            package = new_package_path
                 else:
                     package = spec
 
@@ -1184,7 +1197,9 @@ class YumModule(YumDnf):
                         self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                     # local rpm files can't be updated
-                    if not self.is_installed(repoq, envra):
+                    if self.is_installed(repoq, envra):
+                        pkgs['update'].append(spec)
+                    else:
                         pkgs['install'].append(spec)
                     continue
 
@@ -1199,13 +1214,15 @@ class YumModule(YumDnf):
                         self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                     # local rpm files can't be updated
-                    if not self.is_installed(repoq, envra):
-                        pkgs['install'].append(package)
+                    if self.is_installed(repoq, envra):
+                        pkgs['update'].append(spec)
+                    else:
+                        pkgs['install'].append(spec)
                     continue
 
                 # dep/pkgname  - find it
                 else:
-                    if self.is_installed(repoq, spec) or self.update_only:
+                    if self.is_installed(repoq, spec):
                         pkgs['update'].append(spec)
                     else:
                         pkgs['install'].append(spec)
@@ -1275,7 +1292,10 @@ class YumModule(YumDnf):
                 else:
                     to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
-            res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+            if self.update_only:
+                res['changes'] = dict(installed=[], updated=to_update)
+            else:
+                res['changes'] = dict(installed=pkgs['install'], updated=to_update)
 
             if will_update or pkgs['install']:
                 res['changed'] = True
@@ -1289,7 +1309,18 @@ class YumModule(YumDnf):
         if cmd:     # update all
             rc, out, err = self.module.run_command(cmd)
             res['changed'] = True
-        elif pkgs['install'] or will_update:
+        elif self.update_only:
+            if pkgs['update']:
+                cmd = self.yum_basecmd + ['update'] + pkgs['update']
+                lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+                rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
+                out_lower = out.strip().lower()
+                if not out_lower.endswith("no packages marked for update") and \
+                        not out_lower.endswith("nothing to do"):
+                    res['changed'] = True
+            else:
+                rc, out, err = [0, '', '']
+        elif pkgs['install'] or will_update and not self.update_only:
             cmd = self.yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
             lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
@@ -1407,13 +1438,7 @@ class YumModule(YumDnf):
                         self.module.fail_json(msg="Error setting/accessing repos: %s" % to_native(e))
             except yum.Errors.YumBaseError as e:
                 self.module.fail_json(msg="Error accessing repos: %s" % to_native(e))
-        if self.state in ('installed', 'present'):
-            if self.disable_gpg_check:
-                self.yum_basecmd.append('--nogpgcheck')
-            res = self.install(pkgs, repoq)
-        elif self.state in ('removed', 'absent'):
-            res = self.remove(pkgs, repoq)
-        elif self.state == 'latest':
+        if self.state == 'latest' or self.update_only:
             if self.disable_gpg_check:
                 self.yum_basecmd.append('--nogpgcheck')
             if self.security:
@@ -1421,6 +1446,12 @@ class YumModule(YumDnf):
             if self.bugfix:
                 self.yum_basecmd.append('--bugfix')
             res = self.latest(pkgs, repoq)
+        elif self.state in ('installed', 'present'):
+            if self.disable_gpg_check:
+                self.yum_basecmd.append('--nogpgcheck')
+            res = self.install(pkgs, repoq)
+        elif self.state in ('removed', 'absent'):
+            res = self.remove(pkgs, repoq)
         else:
             # should be caught by AnsibleModule argument_spec
             self.module.fail_json(

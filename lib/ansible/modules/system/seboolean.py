@@ -32,6 +32,12 @@ options:
       - Desired boolean value
     type: bool
     required: true
+  ignore_selinux_state:
+    description:
+    - Useful for scenarios (chrooted environment) that you can't get the real SELinux state.
+    type: bool
+    default: false
+    version_added: '2.8'
 notes:
    - Not tested on any Debian based system.
 requirements:
@@ -65,7 +71,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
+
+
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
 
 
 def has_boolean_value(module, name):
@@ -238,7 +248,7 @@ def semanage_boolean_value(module, name, state):
                 semanage_commit(module, handle)
         semanage_destroy_handle(module, handle)
     except Exception as e:
-        module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
+        module.fail_json(msg=u"Failed to manage policy for boolean %s: %s" % (name, to_text(e)))
     return changed
 
 
@@ -260,6 +270,7 @@ def set_boolean_value(module, name, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            ignore_selinux_state=dict(type='bool', default=False),
             name=dict(type='str', required=True),
             persistent=dict(type='bool', default=False),
             state=dict(type='bool', required=True),
@@ -273,7 +284,9 @@ def main():
     if not HAVE_SEMANAGE:
         module.fail_json(msg="This module requires libsemanage-python support")
 
-    if not selinux.is_selinux_enabled():
+    ignore_selinux_state = module.params['ignore_selinux_state']
+
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     name = module.params['name']
@@ -307,7 +320,7 @@ def main():
                     module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
                 try:
                     selinux.security_commit_booleans()
-                except:
+                except Exception:
                     module.fail_json(msg="Failed to commit pending boolean %s value" % name)
 
     result['changed'] = changed

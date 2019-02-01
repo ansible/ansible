@@ -76,7 +76,7 @@ RETURN = r'''
 description:
   description: The new description of the policy.
   returned: changed
-  type: string
+  type: str
   sample: My firewall policy
 rules:
   description: The list of rules, in the order that they are evaluated, on the device.
@@ -521,8 +521,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

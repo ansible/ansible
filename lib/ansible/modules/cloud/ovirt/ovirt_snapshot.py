@@ -48,6 +48,27 @@ options:
     description:
         description:
             - "Description of the snapshot."
+    disk_id:
+        description:
+            - "Disk id which you want to upload or download"
+            - "To get disk, you need to define disk_id or disk_name"
+        version_added: "2.8"
+    disk_name:
+        description:
+            - "Disk name which you want to upload or download"
+        version_added: "2.8"
+    download_image_path:
+        description:
+            - "Path on a file system where snapshot should be downloaded."
+            - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
+               or you must provide it in C(ca_file) parameter."
+            - "Note that the snapshot is not downloaded when the file already exists,
+               but you can forcibly download the snapshot when using C(force) I (true)."
+        version_added: "2.8"
+    upload_image_path:
+        description:
+            - "Path to disk image, which should be uploaded."
+        version_added: "2.8"
     use_memory:
         description:
             - "If I(true) and C(state) is I(present) save memory of the Virtual
@@ -104,6 +125,21 @@ EXAMPLES = '''
     vm_name: rhel7
     snapshot_id: "{{ snapshot.id }}"
 
+# Upload local image to disk and attach it to vm:
+# Since Ansible 2.8
+- ovirt_snapshot:
+    name: mydisk
+    vm_name: myvm
+    upload_image_path: /path/to/mydisk.qcow2
+
+# Download snapshot to local file system:
+# Since Ansible 2.8
+- ovirt_snapshot:
+    snapshot_id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
+    disk_name: DiskName
+    vm_name: myvm
+    download_image_path: /home/user/mysnaphost.qcow2
+
 # Delete all snapshots older than 2 days
 - ovirt_snapshot:
     vm_name: test
@@ -136,6 +172,14 @@ try:
 except ImportError:
     pass
 
+
+import os
+import ssl
+import time
+
+from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+
 from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ovirt import (
@@ -146,7 +190,136 @@ from ansible.module_utils.ovirt import (
     ovirt_full_argument_spec,
     search_by_name,
     wait,
+    get_id_by_name
 )
+
+
+def transfer(connection, module, direction, transfer_func):
+    transfers_service = connection.system_service().image_transfers_service()
+    transfer = transfers_service.add(
+        otypes.ImageTransfer(
+            image=otypes.Image(
+                id=module.params['disk_id'],
+            ),
+            direction=direction,
+        )
+    )
+    transfer_service = transfers_service.image_transfer_service(transfer.id)
+
+    try:
+        # After adding a new transfer for the disk, the transfer's status will be INITIALIZING.
+        # Wait until the init phase is over. The actual transfer can start when its status is "Transferring".
+        while transfer.phase == otypes.ImageTransferPhase.INITIALIZING:
+            time.sleep(module.params['poll_interval'])
+            transfer = transfer_service.get()
+
+        proxy_url = urlparse(transfer.proxy_url)
+        context = ssl.create_default_context()
+        auth = module.params['auth']
+        if auth.get('insecure'):
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+        elif auth.get('ca_file'):
+            context.load_verify_locations(cafile=auth.get('ca_file'))
+
+        proxy_connection = HTTPSConnection(
+            proxy_url.hostname,
+            proxy_url.port,
+            context=context,
+        )
+
+        transfer_func(
+            transfer_service,
+            proxy_connection,
+            proxy_url,
+            transfer.signed_ticket
+        )
+        return True
+    finally:
+        transfer_service.finalize()
+        while transfer.phase in [
+            otypes.ImageTransferPhase.TRANSFERRING,
+            otypes.ImageTransferPhase.FINALIZING_SUCCESS,
+        ]:
+            time.sleep(module.params['poll_interval'])
+            transfer = transfer_service.get()
+        if transfer.phase in [
+            otypes.ImageTransferPhase.UNKNOWN,
+            otypes.ImageTransferPhase.FINISHED_FAILURE,
+            otypes.ImageTransferPhase.FINALIZING_FAILURE,
+            otypes.ImageTransferPhase.CANCELLED,
+        ]:
+            raise Exception(
+                "Error occurred while uploading image. The transfer is in %s" % transfer.phase
+            )
+        if module.params.get('logical_unit'):
+            disks_service = connection.system_service().disks_service()
+            wait(
+                service=disks_service.service(module.params['id']),
+                condition=lambda d: d.status == otypes.DiskStatus.OK,
+                wait=module.params['wait'],
+                timeout=module.params['timeout'],
+            )
+
+
+def upload_disk_image(connection, module):
+    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+        BUF_SIZE = 128 * 1024
+        path = module.params['upload_image_path']
+
+        image_size = os.path.getsize(path)
+        proxy_connection.putrequest("PUT", proxy_url.path)
+        proxy_connection.putheader('Content-Length', "%d" % (image_size,))
+        proxy_connection.endheaders()
+        with open(path, "rb") as disk:
+            pos = 0
+            while pos < image_size:
+                to_read = min(image_size - pos, BUF_SIZE)
+                chunk = disk.read(to_read)
+                if not chunk:
+                    transfer_service.pause()
+                    raise RuntimeError("Unexpected end of file at pos=%d" % pos)
+                proxy_connection.send(chunk)
+                pos += len(chunk)
+
+    return transfer(
+        connection,
+        module,
+        otypes.ImageTransferDirection.UPLOAD,
+        transfer_func=_transfer,
+    )
+
+
+def download_disk_image(connection, module):
+    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+        BUF_SIZE = 128 * 1024
+        transfer_headers = {
+            'Authorization': transfer_ticket,
+        }
+        proxy_connection.request(
+            'GET',
+            proxy_url.path,
+            headers=transfer_headers,
+        )
+        r = proxy_connection.getresponse()
+        path = module.params["download_image_path"]
+        image_size = int(r.getheader('Content-Length'))
+        with open(path, "wb") as mydisk:
+            pos = 0
+            while pos < image_size:
+                to_read = min(image_size - pos, BUF_SIZE)
+                chunk = r.read(to_read)
+                if not chunk:
+                    raise RuntimeError("Socket disconnected")
+                mydisk.write(chunk)
+                pos += len(chunk)
+
+    return transfer(
+        connection,
+        module,
+        otypes.ImageTransferDirection.DOWNLOAD,
+        transfer_func=_transfer,
+    )
 
 
 def create_snapshot(module, vm_service, snapshots_service):
@@ -239,6 +412,19 @@ def restore_snapshot(module, vm_service, snapshots_service):
     }
 
 
+def get_snapshot_disk_id(module, snapshots_service):
+    snapshot_service = snapshots_service.snapshot_service(module.params.get('snapshot_id'))
+    snapshot_disks_service = snapshot_service.disks_service()
+
+    disk_id = ''
+    if module.params.get('disk_id'):
+        disk_id = module.params.get('disk_id')
+    elif module.params.get('disk_name'):
+        disk_id = get_id_by_name(snapshot_disks_service, module.params.get('disk_name'))
+
+    return disk_id
+
+
 def remove_old_snapshosts(module, vm_service, snapshots_service):
     deleted_snapshots = []
     changed = False
@@ -261,7 +447,11 @@ def main():
         ),
         vm_name=dict(required=True),
         snapshot_id=dict(default=None),
+        disk_id=dict(default=None),
+        disk_name=dict(default=None),
         description=dict(default=None),
+        download_image_path=dict(default=None),
+        upload_image_path=dict(default=None),
         keep_days_old=dict(default=None, type='int'),
         use_memory=dict(
             default=None,
@@ -279,9 +469,9 @@ def main():
     )
 
     check_sdk(module)
-
+    ret = {}
     vm_name = module.params.get('vm_name')
-    auth = module.params.pop('auth')
+    auth = module.params['auth']
     connection = create_connection(auth)
     vms_service = connection.system_service().vms_service()
     vm = search_by_name(vms_service, vm_name)
@@ -295,6 +485,12 @@ def main():
     try:
         state = module.params['state']
         if state == 'present':
+            if module.params.get('disk_id') or module.params.get('disk_name'):
+                module.params['disk_id'] = get_snapshot_disk_id(module, snapshots_service)
+                if module.params['upload_image_path']:
+                    ret['changed'] = upload_disk_image(connection, module)
+                if module.params['download_image_path']:
+                    ret['changed'] = download_disk_image(connection, module)
             if module.params.get('keep_days_old') is not None:
                 ret = remove_old_snapshosts(module, vm_service, snapshots_service)
             else:

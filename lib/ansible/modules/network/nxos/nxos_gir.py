@@ -144,7 +144,7 @@ RETURN = '''
 final_system_mode:
     description: describe the last system mode
     returned: verbose mode
-    type: string
+    type: str
     sample: normal
 updates:
     description: commands sent to the device
@@ -154,7 +154,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

@@ -56,6 +56,7 @@ options:
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
   - ec2
+  - aws
 '''
 
 EXAMPLES = '''
@@ -103,7 +104,7 @@ RETURN = '''
 result:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 import time

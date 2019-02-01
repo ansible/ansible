@@ -30,7 +30,7 @@ HAS_PYCRYPTO_ATFORK = False
 try:
     from Crypto.Random import atfork
     HAS_PYCRYPTO_ATFORK = True
-except:
+except Exception:
     # We only need to call atfork if pycrypto is used because it will need to
     # reinitialize its RNG.  Since old paramiko could be using pycrypto, we
     # need to take charge of calling it.
@@ -40,14 +40,11 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 __all__ = ['WorkerProcess']
+
+display = Display()
 
 
 class WorkerProcess(multiprocessing.Process):
@@ -156,7 +153,7 @@ class WorkerProcess(multiprocessing.Process):
                         task_fields=self._task.dump_attrs(),
                     )
                     self._final_q.put(task_result, block=False)
-                except:
+                except Exception:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
 

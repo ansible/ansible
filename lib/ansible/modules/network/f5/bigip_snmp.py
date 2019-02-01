@@ -71,19 +71,19 @@ EXAMPLES = r'''
 - name: Set snmp contact
   bigip_snmp:
     contact: Joe User
-    password: secret
-    server: lb.mydomain.com
-    user: admin
-    validate_certs: false
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Set snmp location
   bigip_snmp:
     location: US West 1
-    password: secret
-    server: lb.mydomain.com
-    user: admin
-    validate_certs: no
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -91,27 +91,27 @@ RETURN = r'''
 agent_status_traps:
   description: Value that the agent status traps was set to.
   returned: changed
-  type: string
+  type: str
   sample: enabled
 agent_authentication_traps:
   description: Value that the authentication status traps was set to.
   returned: changed
-  type: string
+  type: str
   sample: enabled
 device_warning_traps:
   description: Value that the warning status traps was set to.
   returned: changed
-  type: string
+  type: str
   sample: enabled
 contact:
   description: The new value for the person who administers SNMP on the device.
   returned: changed
-  type: string
+  type: str
   sample: Joe User
 location:
   description: The new value for the system's physical location.
   returned: changed
-  type: string
+  type: str
   sample: US West 1a
 allowed_addresses:
   description: The new allowed addresses for SNMP client connections.

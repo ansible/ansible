@@ -59,8 +59,8 @@ class ModuleFailException(Exception):
         self.msg = msg
         self.module_fail_args = args
 
-    def do_fail(self, module):
-        module.fail_json(msg=self.msg, other=self.module_fail_args)
+    def do_fail(self, module, **arguments):
+        module.fail_json(msg=self.msg, other=self.module_fail_args, **arguments)
 
 
 def nopad_b64(data):
@@ -429,7 +429,7 @@ class ACMEDirectory(object):
     and allows to obtain a Replay-Nonce. The acme_directory URL
     needs to support unauthenticated GET requests; ACME endpoints
     requiring authentication are not supported.
-    https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.1.1
+    https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.1.1
     '''
 
     def __init__(self, module, account):
@@ -500,7 +500,7 @@ class ACMEAccount(object):
     def get_keyauthorization(self, token):
         '''
         Returns the key authorization for the given token
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-8.1
+        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.1
         '''
         accountkey_json = json.dumps(self.jwk, sort_keys=True, separators=(',', ':'))
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
@@ -518,12 +518,16 @@ class ACMEAccount(object):
         else:
             return _parse_key_openssl(self._openssl_bin, self.module, key_file, key_content)
 
-    def sign_request(self, protected, payload, key_data):
+    def sign_request(self, protected, payload, key_data, encode_payload=True):
         try:
             if payload is None:
+                # POST-as-GET
                 payload64 = ''
             else:
-                payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
+                # POST
+                if encode_payload:
+                    payload = self.module.jsonify(payload).encode('utf8')
+                payload64 = nopad_b64(to_bytes(payload))
             protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
         except Exception as e:
             raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
@@ -533,14 +537,14 @@ class ACMEAccount(object):
         else:
             return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
 
-    def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True):
+    def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True, encode_payload=True):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-6.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.2
 
         If payload is None, a POST-as-GET is performed.
-        (https://tools.ietf.org/html/draft-ietf-acme-acme-15#section-6.3)
+        (https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.3)
         '''
         key_data = key_data or self.key_data
         jws_header = jws_header or self.jws_header
@@ -551,7 +555,7 @@ class ACMEAccount(object):
             if self.version != 1:
                 protected["url"] = url
 
-            data = self.sign_request(protected, payload, key_data)
+            data = self.sign_request(protected, payload, key_data, encode_payload=encode_payload)
             if self.version == 1:
                 data["header"] = jws_header
             data = self.module.jsonify(data)
@@ -564,14 +568,14 @@ class ACMEAccount(object):
             try:
                 content = resp.read()
             except AttributeError:
-                content = info.get('body')
+                content = info.pop('body', None)
 
             if content or not parse_json_result:
                 if (parse_json_result and info['content-type'].startswith('application/json')) or 400 <= info['status'] < 600:
                     try:
                         decoded_result = self.module.from_json(content.decode('utf8'))
                         # In case of badNonce error, try again (up to 5 times)
-                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-6.6)
+                        # (https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-6.7)
                         if (400 <= info['status'] < 600 and
                                 decoded_result.get('type') == 'urn:ietf:params:acme:error:badNonce' and
                                 failed_tries <= 5):
@@ -579,6 +583,8 @@ class ACMEAccount(object):
                             continue
                         if parse_json_result:
                             result = decoded_result
+                        else:
+                            result = content
                     except ValueError:
                         raise ModuleFailException("Failed to parse the ACME response: {0} {1}".format(url, content))
                 else:
@@ -586,7 +592,7 @@ class ACMEAccount(object):
 
             return result, info
 
-    def get_request(self, uri, parse_json_result=True, headers=None, get_only=False):
+    def get_request(self, uri, parse_json_result=True, headers=None, get_only=False, fail_on_error=True):
         '''
         Perform a GET-like request. Will try POST-as-GET for ACMEv2, with fallback
         to GET if server replies with a status code of 405.
@@ -608,7 +614,7 @@ class ACMEAccount(object):
             try:
                 content = resp.read()
             except AttributeError:
-                content = info.get('body')
+                content = info.pop('body', None)
 
         # Process result
         if parse_json_result:
@@ -624,7 +630,7 @@ class ACMEAccount(object):
         else:
             result = content
 
-        if info['status'] >= 400:
+        if fail_on_error and info['status'] >= 400:
             raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
         return result, info
 
@@ -640,12 +646,14 @@ class ACMEAccount(object):
 
     def _new_reg(self, contact=None, agreement=None, terms_agreed=False, allow_creation=True):
         '''
-        Registers a new ACME account. Returns True if the account was
-        created and False if it already existed (e.g. it was not newly
-        created).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3
+        Registers a new ACME account. Returns a pair ``(created, data)``.
+        Here, ``created`` is ``True`` if the account was created and
+        ``False`` if it already existed (e.g. it was not newly created),
+        or does not exist. In case the account was created or exists,
+        ``data`` contains the account data; otherwise, it is ``None``.
+        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
         '''
-        contact = [] if contact is None else contact
+        contact = contact or []
 
         if self.version == 1:
             new_reg = {
@@ -662,31 +670,44 @@ class ACMEAccount(object):
                 'contact': contact
             }
             if not allow_creation:
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.1
                 new_reg['onlyReturnExisting'] = True
             if terms_agreed:
                 new_reg['termsOfServiceAgreed'] = True
             url = self.directory['newAccount']
 
         result, info = self.send_signed_request(url, new_reg)
-        if 'location' in info:
-            self.set_account_uri(info['location'])
 
         if info['status'] in ([200, 201] if self.version == 1 else [201]):
             # Account did not exist
-            return True
+            if 'location' in info:
+                self.set_account_uri(info['location'])
+            return True, result
         elif info['status'] == (409 if self.version == 1 else 200):
             # Account did exist
-            return False
+            if result.get('status') == 'deactivated':
+                # A probable bug in Pebble (https://github.com/letsencrypt/pebble/issues/179)
+                # and Boulder: this should not return a valid account object according to
+                # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.6:
+                #     "Once an account is deactivated, the server MUST NOT accept further
+                #      requests authorized by that account's key."
+                if not allow_creation:
+                    return False, None
+                else:
+                    raise ModuleFailException("Account is deactivated")
+            if 'location' in info:
+                self.set_account_uri(info['location'])
+            return False, result
         elif info['status'] == 400 and result['type'] == 'urn:ietf:params:acme:error:accountDoesNotExist' and not allow_creation:
             # Account does not exist (and we didn't try to create it)
-            return False
+            return False, None
         else:
             raise ModuleFailException("Error registering: {0} {1}".format(info['status'], result))
 
     def get_account_data(self):
         '''
         Retrieve account information. Can only be called when the account
-        URI is already known (such as after calling init_account).
+        URI is already known (such as after calling setup_account).
         Return None if the account was deactivated, or a dict otherwise.
         '''
         if self.uri is None:
@@ -714,66 +735,82 @@ class ACMEAccount(object):
             raise ModuleFailException("Error getting account data from {2}: {0} {1}".format(info['status'], result, self.uri))
         return result
 
-    def init_account(self, contact, agreement=None, terms_agreed=False, allow_creation=True, update_contact=True, remove_account_uri_if_not_exists=False):
+    def setup_account(self, contact=None, agreement=None, terms_agreed=False, allow_creation=True, remove_account_uri_if_not_exists=False):
         '''
-        Create or update an account on the ACME server. For ACME v1,
+        Detect or create an account on the ACME server. For ACME v1,
         as the only way (without knowing an account URI) to test if an
         account exists is to try and create one with the provided account
         key, this method will always result in an account being present
         (except on error situations). For ACME v2, a new account will
-        only be created if allow_creation is set to True.
+        only be created if ``allow_creation`` is set to True.
 
-        For ACME v2, check_mode is fully respected. For ACME v1, the account
-        might be created if it does not yet exist.
+        For ACME v2, ``check_mode`` is fully respected. For ACME v1, the
+        account might be created if it does not yet exist.
 
-        If the account already exists and if update_contact is set to
-        True, this method will update the contact information.
+        Return a pair ``(created, account_data)``. Here, ``created`` will
+        be ``True`` in case the account was created or would be created
+        (check mode). ``account_data`` will be the current account data,
+        or ``None`` if the account does not exist.
 
-        Return True in case something changed (account was created, contact
-        info updated) or would be changed (check_mode). The account URI
-        will be stored in self.uri; if it is None, the account does not
-        exist.
+        The account URI will be stored in ``self.uri``; if it is ``None``,
+        the account does not exist.
 
-        https://tools.ietf.org/html/draft-ietf-acme-acme-14#section-7.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3
         '''
 
-        new_account = True
-        changed = False
         if self.uri is not None:
-            new_account = False
-            if not update_contact:
-                # Verify that the account key belongs to the URI.
-                # (If update_contact is True, this will be done below.)
-                if self.get_account_data() is None:
-                    if remove_account_uri_if_not_exists and not allow_creation:
-                        self.uri = None
-                        return False
+            created = False
+            # Verify that the account key belongs to the URI.
+            # (If update_contact is True, this will be done below.)
+            account_data = self.get_account_data()
+            if account_data is None:
+                if remove_account_uri_if_not_exists and not allow_creation:
+                    self.uri = None
+                else:
                     raise ModuleFailException("Account is deactivated or does not exist!")
         else:
-            new_account = self._new_reg(
+            created, account_data = self._new_reg(
                 contact,
                 agreement=agreement,
                 terms_agreed=terms_agreed,
                 allow_creation=allow_creation and not self.module.check_mode
             )
             if self.module.check_mode and self.uri is None and allow_creation:
-                return True
-        if not new_account and self.uri and update_contact:
-            result = self.get_account_data()
-            if result is None:
-                if not allow_creation:
-                    self.uri = None
-                    return False
-                raise ModuleFailException("Account is deactivated or does not exist!")
+                created = True
+                account_data = {
+                    'contact': contact or []
+                }
+        return created, account_data
 
-            # ...and check if update is necessary
-            if result.get('contact', []) != contact:
-                if not self.module.check_mode:
-                    upd_reg = result
-                    upd_reg['contact'] = contact
-                    result, dummy = self.send_signed_request(self.uri, upd_reg)
-                changed = True
-        return new_account or changed
+    def update_account(self, account_data, contact=None):
+        '''
+        Update an account on the ACME server. Check mode is fully respected.
+
+        The current account data must be provided as ``account_data``.
+
+        Return a pair ``(updated, account_data)``, where ``updated`` is
+        ``True`` in case something changed (contact info updated) or
+        would be changed (check mode), and ``account_data`` the updated
+        account data.
+
+        https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.2
+        '''
+        # Create request
+        update_request = {}
+        if contact is not None and account_data.get('contact', []) != contact:
+            update_request['contact'] = list(contact)
+
+        # No change?
+        if not update_request:
+            return False, dict(account_data)
+
+        # Apply change
+        if self.module.check_mode:
+            account_data = dict(account_data)
+            account_data.update(update_request)
+        else:
+            account_data, dummy = self.send_signed_request(self.uri, update_request)
+        return True, account_data
 
 
 def cryptography_get_csr_domains(module, csr_filename):
@@ -793,7 +830,7 @@ def cryptography_get_csr_domains(module, csr_filename):
     return domains
 
 
-def cryptography_get_cert_days(module, cert_file):
+def cryptography_get_cert_days(module, cert_file, now=None):
     '''
     Return the days the certificate in cert_file remains valid and -1
     if the file was not found. If cert_file contains more than one
@@ -806,7 +843,8 @@ def cryptography_get_cert_days(module, cert_file):
         cert = cryptography.x509.load_pem_x509_certificate(read_file(cert_file), _cryptography_backend)
     except Exception as e:
         raise ModuleFailException('Cannot parse certificate {0}: {1}'.format(cert_file, e))
-    now = datetime.datetime.now()
+    if now is None:
+        now = datetime.datetime.now()
     return (cert.not_valid_after - now).days
 
 

@@ -341,11 +341,11 @@ deployment:
   sample:
       group_name:
         description: Name of the resource group
-        type: string
+        type: str
         returned: always
       id:
         description: The Azure ID of the deployment
-        type: string
+        type: str
         returned: always
       instances:
         description: Provides the public IP addresses for each VM instance.
@@ -353,7 +353,7 @@ deployment:
         returned: always
       name:
         description: Name of the deployment
-        type: string
+        type: str
         returned: always
       outputs:
         description: Dictionary of outputs received from the deployment
@@ -590,7 +590,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                 )
                 for op in self._get_failed_nested_operations(operations)
             ]
-        except:
+        except Exception:
             # If we fail here, the original error gets lost and user receives wrong error message/stacktrace
             pass
         self.log(dict(failed_deployment_operations=results), pretty_print=True)

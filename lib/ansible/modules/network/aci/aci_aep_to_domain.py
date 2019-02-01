@@ -20,8 +20,12 @@ description:
 notes:
 - The C(aep) and C(domain) parameters should exist before using this module.
   The M(aci_aep) and M(aci_domain) can be used for these.
-- More information about the internal APIC class B(infra:RsDomP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_aep
+- module: aci_domain
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:RsDomP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
@@ -29,20 +33,24 @@ options:
   aep:
     description:
     - The name of the Attachable Access Entity Profile.
+    type: str
     aliases: [ aep_name ]
   domain:
     description:
     - Name of the physical or virtual domain being associated with the AEP.
+    type: str
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
     - Determines if the Domain is physical (phys) or virtual (vmm).
+    type: str
     choices: [ fc, l2dom, l3dom, phys, vmm ]
     aliases: [ type ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   vm_provider:
@@ -50,6 +58,7 @@ options:
     - The VM platform for VMM Domains.
     - Support for Kubernetes was added in ACI v3.0.
     - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
+    type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
@@ -131,7 +140,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -180,17 +189,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -200,7 +209,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

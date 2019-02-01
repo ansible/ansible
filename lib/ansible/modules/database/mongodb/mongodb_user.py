@@ -61,6 +61,7 @@ options:
         version_added: "1.8"
         description:
             - Whether to use an SSL connection when connecting to the database
+        type: bool
     ssl_cert_reqs:
         version_added: "2.2"
         description:
@@ -76,7 +77,6 @@ options:
               'dbAdminAnyDatabase'
             - "Or the following dictionary '{ db: DATABASE_NAME, role: ROLE_NAME }'."
             - "This param requires pymongo 2.5+. If it is a string, mongodb 2.4+ is also required. If it is a dictionary, mongo 2.6+  is required."
-        default: "readWrite"
     state:
         description:
             - The database user state
@@ -95,7 +95,7 @@ notes:
 requirements: [ "pymongo" ]
 author:
     - "Elliott Foster (@elliotttf)"
-    - "Julien Thebault (@lujeni)"
+    - "Julien Thebault (@Lujeni)"
 '''
 
 EXAMPLES = '''
@@ -171,7 +171,7 @@ RETURN = '''
 user:
     description: The name of the user to add or remove.
     returned: success
-    type: string
+    type: str
 '''
 
 import os

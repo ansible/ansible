@@ -41,12 +41,9 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection as SocketConnection, write_to_file_descriptor
 from ansible.errors import AnsibleError
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -136,8 +133,16 @@ class Connection(ConnectionBase):
                 result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
         if 'messages' in result:
-            for msg in result.get('messages'):
-                display.vvvv('%s' % msg, host=self._play_context.remote_addr)
+            for level, message in result['messages']:
+                if level == 'log':
+                    display.display(message, log_only=True)
+                elif level in ('debug', 'v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'vvvvvv'):
+                    getattr(display, level)(message, host=self._play_context.remote_addr)
+                else:
+                    if hasattr(display, level):
+                        getattr(display, level)(message)
+                    else:
+                        display.vvvv(message, host=self._play_context.remote_addr)
 
         if 'error' in result:
             if self._play_context.verbosity > 2:

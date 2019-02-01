@@ -70,7 +70,7 @@ EXAMPLES = '''
 # Register an IP address target to a target group
 - elb_target:
     target_group_name: myiptargetgroup
-    target_id: 10.0.0.10
+    target_id: i-1234567
     state: present
 
 # Register an instance target to a target group

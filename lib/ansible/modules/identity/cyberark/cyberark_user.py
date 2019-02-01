@@ -13,7 +13,10 @@ DOCUMENTATION = '''
 ---
 module: cyberark_user
 short_description: Module for CyberArk User Management using PAS Web Services SDK
-author: Edward Nunez @ CyberArk BizDev (@enunez-cyberark, @cyberark-bizdev, @erasmix)
+author:
+  - Edward Nunez (@enunez-cyberark) CyberArk BizDev
+  - Cyberark Bizdev (@cyberark-bizdev)
+  - erasmix (@erasmix)
 version_added: 2.4
 description:
     - CyberArk User Management using PAS Web Services SDK. It currently supports the following

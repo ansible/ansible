@@ -53,6 +53,8 @@ options:
             - Creates a wrapper script and exports the path as GIT_SSH
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
+              (although this particular option is better set via
+              C(accept_hostkey)).
         version_added: "1.5"
     key_file:
         description:
@@ -92,7 +94,7 @@ options:
         version_added: "1.2"
     clone:
         description:
-            - If C(no), do not clone the repository if it does not exist locally
+            - If C(no), do not clone the repository even if it does not exist locally
         type: bool
         default: 'yes'
         version_added: "1.9"
@@ -187,7 +189,7 @@ EXAMPLES = '''
 
 # Example read-write git checkout from github
 - git:
-    repo: ssh://git@github.com/mylogin/hello.git
+    repo: git@github.com:mylogin/hello.git
     dest: /home/mylogin/hello
 
 # Example just ensuring the repo checkout exists
@@ -227,32 +229,32 @@ RETURN = '''
 after:
     description: last commit revision of the repository retrieved during the update
     returned: success
-    type: string
+    type: str
     sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
 before:
     description: commit revision before the repository was updated, "null" for new repository
     returned: success
-    type: string
+    type: str
     sample: 67c04ebe40a003bda0efb34eacfb93b0cafdf628
 remote_url_changed:
     description: Contains True or False whether or not the remote URL was changed.
     returned: success
-    type: boolean
+    type: bool
     sample: True
 warnings:
     description: List of warnings if requested features were not available due to a too old git version.
     returned: error
-    type: string
+    type: str
     sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
 git_dir_now:
     description: Contains the new path of .git directory if it's changed
     returned: success
-    type: string
+    type: str
     sample: /path/to/new/git/dir
 git_dir_before:
     description: Contains the original path of .git directory if it's changed
     returned: success
-    type: string
+    type: str
     sample: /path/to/old/git/dir
 '''
 
@@ -268,7 +270,7 @@ from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
 from ansible.module_utils.six import b, string_types
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 
 def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
@@ -286,7 +288,7 @@ def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
             # if we already moved the .git dir, roll it back
             if os.path.exists(repo_dir):
                 shutil.move(repo_dir, old_repo_dir)
-            module.fail_json(msg='Unable to move git dir. %s' % str(err))
+            module.fail_json(msg=u'Unable to move git dir. %s' % to_text(err))
 
 
 def head_splitter(headfile, remote, module=None, fail_on_error=False):
@@ -300,7 +302,7 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
             f = open(headfile, 'r')
             rawdata = f.readline()
             f.close()
-        except:
+        except Exception:
             if fail_on_error and module:
                 module.fail_json(msg="Unable to read %s" % headfile)
         if rawdata:
@@ -310,7 +312,7 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
                 newref = refparts[-1]
                 nrefparts = newref.split('/', 2)
                 res = nrefparts[-1].rstrip('\n')
-            except:
+            except Exception:
                 if fail_on_error and module:
                     module.fail_json(msg="Unable to split head from '%s'" % rawdata)
     return res
@@ -448,7 +450,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     dest_dirname = os.path.dirname(dest)
     try:
         os.makedirs(dest_dirname)
-    except:
+    except Exception:
         pass
     cmd = [git_path, 'clone']
 
@@ -690,7 +692,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
         module.fail_json(
             msg='Current repo does not have a valid reference to a '
             'separate Git dir or it refers to the invalid path',
-            details=str(err),
+            details=to_text(err),
         )
     # Read .git/HEAD for the name of the branch.
     # If we're in a detached HEAD state, look up the branch associated with
@@ -992,8 +994,8 @@ def create_archive(git_path, module, dest, archive, version, repo, result):
             except OSError as e:
                 module.fail_json(msg="Failed to move %s to %s" %
                                      (new_archive, archive),
-                                 details="Error occured while moving : %s"
-                                         % to_native(e))
+                                 details=u"Error occured while moving : %s"
+                                         % to_text(e))
     else:
         # Perform archive from local directory
         git_archive(git_path, module, dest, archive, archive_fmt, version)
@@ -1065,7 +1067,7 @@ def main():
             module.fail_json(msg="umask must be defined as a quoted octal integer")
         try:
             umask = int(umask, 8)
-        except:
+        except Exception:
             module.fail_json(msg="umask must be an octal integer",
                              details=str(sys.exc_info()[1]))
         os.umask(umask)
@@ -1100,7 +1102,7 @@ def main():
             module.fail_json(
                 msg='Current repo does not have a valid reference to a '
                 'separate Git dir or it refers to the invalid path',
-                details=str(err),
+                details=to_text(err),
             )
         gitconfig = os.path.join(repo_path, 'config')
 

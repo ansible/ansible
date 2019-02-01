@@ -66,15 +66,15 @@ subnet_group:
         name:
             description: The name of the DB subnet group
             returned: I(state=present)
-            type: string
+            type: str
         description:
             description: The description of the DB subnet group
             returned: I(state=present)
-            type: string
+            type: str
         vpc_id:
             description: The VpcId of the DB subnet group
             returned: I(state=present)
-            type: string
+            type: str
         subnet_ids:
             description: Contains a list of Subnet IDs
             returned: I(state=present)
@@ -82,7 +82,7 @@ subnet_group:
         status:
             description: The status of the DB subnet group
             returned: I(state=present)
-            type: string
+            type: str
 '''
 
 try:

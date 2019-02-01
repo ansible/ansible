@@ -241,6 +241,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         if self.security_group:
             nsg = self.parse_nsg()
 
+        route_table = dict()
         if self.route_table:
             route_table = self.parse_resource_to_dict(self.route_table)
             self.route_table = format_resource_id(val=route_table['name'],
@@ -276,7 +277,7 @@ class AzureRMSubnet(AzureRMModuleBase):
                 if self.route_table != results['route_table'].get('id'):
                     changed = True
                     results['route_table']['id'] = self.route_table
-                    self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table['name']))
+                    self.log("CHANGED: subnet {0} route_table to {1}".format(self.name, route_table.get('name')))
 
                 if self.service_endpoints:
                     oldd = {}
@@ -322,7 +323,7 @@ class AzureRMSubnet(AzureRMModuleBase):
                         address_prefix=results['address_prefix']
                     )
                     if results['network_security_group'].get('id'):
-                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(results['network_security_group'].get('id'))
+                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=results['network_security_group'].get('id'))
                     if self.route_table:
                         subnet.route_table = self.network_models.RouteTable(id=self.route_table)
 

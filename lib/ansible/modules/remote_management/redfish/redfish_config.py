@@ -34,36 +34,41 @@ options:
     required: true
     description:
       - Base URI of OOB controller
-  user:
+  username:
     required: true
     description:
       - User for authentication with OOB controller
+    version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
-  bios_attr_name:
+  bios_attribute_name:
     required: false
     description:
       - name of BIOS attribute to update
     default: 'null'
-  bios_attr_value:
+    version_added: "2.8"
+  bios_attribute_value:
     required: false
     description:
       - value of BIOS attribute to update
     default: 'null'
-  mgr_attr_name:
+    version_added: "2.8"
+  manager_attribute_name:
     required: false
     description:
       - name of Manager attribute to update
     default: 'null'
-  mgr_attr_value:
+    version_added: "2.8"
+  manager_attribute_value:
     required: false
     description:
       - value of Manager attribute to update
     default: 'null'
+    version_added: "2.8"
 
-author: "Jose Delarosa (github: jose-delarosa)"
+author: "Jose Delarosa (@jose-delarosa)"
 '''
 
 EXAMPLES = '''
@@ -71,30 +76,30 @@ EXAMPLES = '''
     redfish_config:
       category: Systems
       command: SetBiosAttributes
-      bios_attr_name: BootMode
-      bios_attr_value: Uefi
+      bios_attribute_name: BootMode
+      bios_attribute_value: Uefi
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Set BootMode to Legacy BIOS
     redfish_config:
       category: Systems
       command: SetBiosAttributes
-      bios_attr_name: BootMode
-      bios_attr_value: Bios
+      bios_attribute_name: BootMode
+      bios_attribute_value: Bios
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Enable PXE Boot for NIC1
     redfish_config:
       category: Systems
       command: SetBiosAttributes
-      bios_attr_name: PxeDev1EnDis
-      bios_attr_value: Enabled
+      bios_attribute_name: PxeDev1EnDis
+      bios_attribute_value: Enabled
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Set BIOS default settings
@@ -102,37 +107,37 @@ EXAMPLES = '''
       category: Systems
       command: SetBiosDefaultSettings
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Enable NTP in the OOB Controller
     redfish_config:
       category: Manager
       command: SetManagerAttributes
-      mgr_attr_name: NTPConfigGroup.1.NTPEnable
-      mgr_attr_value: Enabled
+      manager_attribute_name: NTPConfigGroup.1.NTPEnable
+      manager_attribute_value: Enabled
       baseuri: "{{ baseuri }}"
-      user: "{{ user}}"
+      username: "{{ username}}"
       password: "{{ password }}"
 
   - name: Set NTP server 1 to {{ ntpserver1 }} in the OOB Controller
     redfish_config:
       category: Manager
       command: SetManagerAttributes
-      mgr_attr_name: NTPConfigGroup.1.NTP1
-      mgr_attr_value: "{{ ntpserver1 }}"
+      manager_attribute_name: NTPConfigGroup.1.NTP1
+      manager_attribute_value: "{{ ntpserver1 }}"
       baseuri: "{{ baseuri }}"
-      user: "{{ user}}"
+      username: "{{ username}}"
       password: "{{ password }}"
 
   - name: Set Timezone to {{ timezone }} in the OOB Controller
     redfish_config:
       category: Manager
       command: SetManagerAttributes
-      mgr_attr_name: Time.1.Timezone
-      mgr_attr_value: "{{ timezone }}"
+      manager_attribute_name: Time.1.Timezone
+      manager_attribute_value: "{{ timezone }}"
       baseuri: "{{ baseuri }}"
-      user: "{{ user}}"
+      username: "{{ username}}"
       password: "{{ password }}"
 '''
 
@@ -140,7 +145,7 @@ RETURN = '''
 msg:
     description: Message with action result or error description
     returned: always
-    type: string
+    type: str
     sample: "Action was successful"
 '''
 
@@ -163,12 +168,12 @@ def main():
             category=dict(required=True),
             command=dict(required=True, type='list'),
             baseuri=dict(required=True),
-            user=dict(required=True),
+            username=dict(required=True),
             password=dict(required=True, no_log=True),
-            mgr_attr_name=dict(default='null'),
-            mgr_attr_value=dict(default='null'),
-            bios_attr_name=dict(default='null'),
-            bios_attr_value=dict(default='null'),
+            manager_attribute_name=dict(default='null'),
+            manager_attribute_value=dict(default='null'),
+            bios_attribute_name=dict(default='null'),
+            bios_attribute_value=dict(default='null'),
         ),
         supports_check_mode=False
     )
@@ -177,15 +182,15 @@ def main():
     command_list = module.params['command']
 
     # admin credentials used for authentication
-    creds = {'user': module.params['user'],
+    creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
     # Manager attributes to update
-    mgr_attributes = {'mgr_attr_name': module.params['mgr_attr_name'],
-                      'mgr_attr_value': module.params['mgr_attr_value']}
+    mgr_attributes = {'mgr_attr_name': module.params['manager_attribute_name'],
+                      'mgr_attr_value': module.params['manager_attribute_value']}
     # BIOS attributes to update
-    bios_attributes = {'bios_attr_name': module.params['bios_attr_name'],
-                       'bios_attr_value': module.params['bios_attr_value']}
+    bios_attributes = {'bios_attr_name': module.params['bios_attribute_name'],
+                       'bios_attr_value': module.params['bios_attribute_value']}
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']

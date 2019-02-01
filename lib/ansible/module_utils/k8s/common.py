@@ -32,8 +32,10 @@ try:
     from openshift.dynamic import DynamicClient
     from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError
     HAS_K8S_MODULE_HELPER = True
-except ImportError:
+    k8s_import_exception = None
+except ImportError as e:
     HAS_K8S_MODULE_HELPER = False
+    k8s_import_exception = e
 
 try:
     import yaml
@@ -136,11 +138,11 @@ class K8sAnsibleMixin(object):
         auth = copy.deepcopy(auth_params)
 
         # If authorization variables aren't defined, look for them in environment variables
-        for key, value in iteritems(auth_params):
-            if key in auth_args and value is None:
-                env_value = os.getenv('K8S_AUTH_{0}'.format(key.upper()), None)
+        for arg in auth_args:
+            if auth_params.get(arg) is None:
+                env_value = os.getenv('K8S_AUTH_{0}'.format(arg.upper()), None)
                 if env_value is not None:
-                    auth[key] = env_value
+                    auth[arg] = env_value
 
         def auth_set(*names):
             return all([auth.get(name) for name in names])
@@ -242,7 +244,7 @@ class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
         AnsibleModule.__init__(self, *args, **kwargs)
 
         if not HAS_K8S_MODULE_HELPER:
-            self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`")
+            self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`", error=str(k8s_import_exception))
         self.openshift_version = openshift.__version__
 
         if not HAS_YAML:

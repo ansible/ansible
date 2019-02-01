@@ -32,7 +32,7 @@ module: manageiq_tenant
 short_description: Management of tenants in ManageIQ.
 extends_documentation_fragment: manageiq
 version_added: '2.8'
-author: Evert Mulder
+author: Evert Mulder (@evertmulder)
 description:
   - The manageiq_tenant module supports adding, updating and deleting tenants in ManageIQ.
 
@@ -149,11 +149,11 @@ tenant:
     name:
       description: The tenant name
       returned: success
-      type: string
+      type: str
     description:
       description: The tenant description
       returned: success
-      type: string
+      type: str
     parent_id:
       description: The id of the parent tenant
       returned: success

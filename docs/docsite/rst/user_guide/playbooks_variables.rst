@@ -375,8 +375,8 @@ This will return a large amount of variable data, which may look like this on An
             "SELINUX_USE_CURRENT_RANGE": "",
             "SHELL": "/bin/bash",
             "SHLVL": "2",
-            "SSH_CLIENT": "23.253.245.60 55672 22",
-            "SSH_CONNECTION": "23.253.245.60 55672 104.130.127.149 22",
+            "SSH_CLIENT": "REDACTED 55672 22",
+            "SSH_CONNECTION": "REDACTED 55672 REDACTED 22",
             "USER": "zuul",
             "XDG_RUNTIME_DIR": "/run/user/1000",
             "XDG_SESSION_ID": "1",
@@ -790,12 +790,10 @@ directory (ansible will attempt to create the directory if one does not exist).
 Registering variables
 =====================
 
-Another major use of variables is running a command and registering the result of that command as a variable. Results will vary from module to module. Use of ``-v`` when executing playbooks will show possible values for the results.
-
-The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
+Another major use of variables is running a command and registering the result of that command as a variable. When you execute a task and save the return value in a variable for use in later tasks, you create a registered variable. There are more examples of this in the
 :ref:`playbooks_conditionals` chapter.
 
-While it's mentioned elsewhere in that document too, here's a quick syntax example::
+For example::
 
    - hosts: web_servers
 
@@ -808,10 +806,11 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
         - shell: /usr/bin/bar
           when: foo_result.rc == 5
 
-Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
-in Ansible.  Effectively registered variables are just like facts.
+Results will vary from module to module. Each module's documentation includes a ``RETURN`` section describing that module's return values. To see the values for a particular task, run your playbook with ``-v``.
 
-When using ``register`` with a loop, the data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :ref:`playbooks_loops` section on using register with a loop.
+Registered variables are similar to facts, with a few key differences. Like facts, registered variables are host-level variables. However, registered variables are only stored in memory. (Ansible facts are backed by whatever cache plugin you have configured.) Registered variables are only valid on the host for the rest of the current playbook run. Finally, registered variables and facts have different :ref:`precedence levels <ansible_variable_precedence>`.
+
+When you register a variable in a task with a loop, the registered variable contains a value for each item in the loop. The data structure placed in the variable during the loop will contain a ``results`` attribute, that is a list of all responses from the module. For a more in-depth example of how this works, see the :ref:`playbooks_loops` section on using register with a loop.
 
 .. note:: If a task fails or is skipped, the variable still is registered with a failure or skipped status, the only way to avoid registering a variable is using tags.
 
@@ -963,30 +962,10 @@ key=value format::
 .. note:: Values passed in using the ``key=value`` syntax are interpreted as strings.
           Use the JSON format if you need to pass in anything that shouldn't be a string (Booleans, integers, floats, lists etc).
 
-.. versionadded:: 1.2
-
 JSON string format::
 
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
-
-.. versionadded:: 1.3
-
-YAML string format::
-
-    ansible-playbook release.yml --extra-vars '
-    version: "1.23.45"
-    other_variable: foo'
-
-    ansible-playbook arcade.yml --extra-vars '
-    pacman: mrs
-    ghosts:
-    - inky
-    - pinky
-    - clyde
-    - sue'
-
-.. versionadded:: 1.3
 
 vars from a JSON or YAML file::
 
@@ -996,16 +975,12 @@ This is useful for, among other things, setting the hosts group or the user for 
 
 Escaping quotes and other special characters:
 
-.. versionadded:: 1.2
-
 Ensure you're escaping quotes appropriately for both your markup (e.g. JSON), and for
 the shell you're operating in.::
 
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
     ansible-playbook script.yml --extra-vars "{\"dialog\":\"He said \\\"I just can\'t get enough of those single and double-quotes"\!"\\\"\"}"
-
-.. versionadded:: 1.3
 
 In these cases, it's probably best to use a JSON or YAML file containing the variable
 definitions.

@@ -33,12 +33,9 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 _SAFE_GROUP = re.compile("[^A-Za-z0-9_]")
 
@@ -346,7 +343,7 @@ class Constructable(object):
                         key = self._compose(keyed.get('key'), variables)
                     except Exception as e:
                         if strict:
-                            raise AnsibleParserError("Could not generate group from %s entry: %s" % (keyed.get('key'), to_native(e)))
+                            raise AnsibleParserError("Could not generate group for host %s from %s entry: %s" % (host, keyed.get('key'), to_native(e)))
                         continue
 
                     if key:

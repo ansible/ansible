@@ -22,32 +22,37 @@ options:
   name:
     description:
       - Name of the powershell module that has to be installed.
+    type: str
     required: yes
   allow_clobber:
     description:
       - If C(yes) imports all commands, even if they have the same names as commands that already exists. Available only in Powershell 5.1 or higher.
     type: bool
-    default: 'no'
+    default: no
   repository:
     description:
       - Name of the custom repository to register or use.
+    type: str
   url:
     description:
       - URL of the custom repository to register.
+    type: str
   state:
     description:
       - If C(present) a new module is installed.
       - If C(absent) a module is removed.
+    type: str
     choices: [ absent, present ]
     default: present
 notes:
    -  Powershell 5.0 or higher is needed.
-
+seealso:
+- module: win_psrepository
 author:
-- Daniele Lazzari
+- Daniele Lazzari (@dlazz)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ---
 - name: Add a powershell module
   win_psmodule:
@@ -79,21 +84,21 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 output:
-  description: a message describing the task result.
+  description: A message describing the task result.
   returned: always
   sample: "Module PowerShellCookbook installed"
-  type: string
+  type: str
 nuget_changed:
-  description: true when Nuget package provider is installed
+  description: True when Nuget package provider is installed.
   returned: always
-  type: boolean
-  sample: True
+  type: bool
+  sample: true
 repository_changed:
-  description: true when a custom repository is installed or removed
+  description: True when a custom repository is installed or removed.
   returned: always
-  type: boolean
-  sample: True
+  type: bool
+  sample: true
 '''

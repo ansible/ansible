@@ -30,6 +30,12 @@ options:
       - Use with state C(present) to archive an image to a .tar file.
     required: false
     version_added: "2.1"
+  cache_from:
+    description:
+      - List of image names to consider as cache source.
+    required: false
+    type: list
+    version_added: "2.8"
   load_path:
     description:
       - Use with state C(present) to load an image from a .tar file.
@@ -88,6 +94,11 @@ options:
     required: false
     version_added: "2.1"
     type: bool
+  network:
+    description:
+      - The network to use for C(RUN) build instructions.
+    required: false
+    version_added: "2.8"
   nocache:
     description:
       - Do not use cache when building an image.
@@ -193,17 +204,23 @@ EXAMPLES = '''
 
 - name: Tag and push to docker hub
   docker_image:
-    name: pacur/centos-7
-    repository: dcoppenhagan/myimage
-    tag: 7.0
+    name: pacur/centos-7:56
+    repository: dcoppenhagan/myimage:7.56
     push: yes
 
 - name: Tag and push to local registry
   docker_image:
+     # Image will be centos:7
      name: centos
+     # Will be pushed to localhost:5000/centos:7
      repository: localhost:5000/centos
      tag: 7
      push: yes
+
+- name: Add tag latest to image
+  docker_image:
+    name: myimage:7.1.2
+    repository: myimage:latest
 
 - name: Remove image
   docker_image:
@@ -238,6 +255,15 @@ EXAMPLES = '''
      buildargs:
        log_volume: /var/log/myapp
        listen_port: 8080
+
+- name: Build image using cache source
+  docker_image:
+    name: myimage:latest
+    path: /path/to/build/dir
+    # Use as cache source for building myimage
+    cache_from:
+      - nginx:latest
+      - alpine:3.8
 '''
 
 RETURN = '''
@@ -278,11 +304,13 @@ class ImageManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
 
         self.archive_path = parameters.get('archive_path')
+        self.cache_from = parameters.get('cache_from')
         self.container_limits = parameters.get('container_limits')
         self.dockerfile = parameters.get('dockerfile')
         self.force = parameters.get('force')
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
+        self.network = parameters.get('network')
         self.nocache = parameters.get('nocache')
         self.path = parameters.get('path')
         self.pull = parameters.get('pull')
@@ -521,7 +549,7 @@ class ImageManager(DockerBaseClass):
             pull=self.pull,
             forcerm=self.rm,
             dockerfile=self.dockerfile,
-            decode=True
+            decode=True,
         )
         if not HAS_DOCKER_PY_3:
             params['stream'] = True
@@ -534,6 +562,10 @@ class ImageManager(DockerBaseClass):
             for key, value in self.buildargs.items():
                 self.buildargs[key] = to_native(value)
             params['buildargs'] = self.buildargs
+        if self.cache_from:
+            params['cache_from'] = self.cache_from
+        if self.network:
+            params['network_mode'] = self.network
 
         for line in self.client.build(**params):
             # line = json.loads(line)
@@ -583,12 +615,19 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         archive_path=dict(type='path'),
-        container_limits=dict(type='dict'),
+        cache_from=dict(type='list', elements='str'),
+        container_limits=dict(type='dict', options=dict(
+            memory=dict(type='int'),
+            memswap=dict(type='int'),
+            cpushares=dict(type='int'),
+            cpusetcpus=dict(type='str'),
+        )),
         dockerfile=dict(type='str'),
         force=dict(type='bool', default=False),
         http_timeout=dict(type='int'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
+        network=dict(type='str'),
         nocache=dict(type='bool', default=False),
         path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
@@ -601,10 +640,17 @@ def main():
         buildargs=dict(type='dict', default=None),
     )
 
+    option_minimal_versions = dict(
+        cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        network=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        min_docker_version='1.8.0',
         min_docker_api_version='1.20',
+        option_minimal_versions=option_minimal_versions,
     )
 
     results = dict(

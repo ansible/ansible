@@ -73,37 +73,37 @@ RETURN = '''
 cloudstack_availability_zone:
   description: zone the instance is deployed in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 cloudstack_instance_id:
   description: UUID of the instance.
   returned: success
-  type: string
+  type: str
   sample: ab4e80b0-3e7e-4936-bdc5-e334ba5b0139
 cloudstack_local_hostname:
   description: local hostname of the instance.
   returned: success
-  type: string
+  type: str
   sample: VM-ab4e80b0-3e7e-4936-bdc5-e334ba5b0139
 cloudstack_local_ipv4:
   description: local IPv4 of the instance.
   returned: success
-  type: string
+  type: str
   sample: 185.19.28.35
 cloudstack_public_hostname:
   description: public IPv4 of the router. Same as C(cloudstack_public_ipv4).
   returned: success
-  type: string
+  type: str
   sample: VM-ab4e80b0-3e7e-4936-bdc5-e334ba5b0139
 cloudstack_public_ipv4:
   description: public IPv4 of the router.
   returned: success
-  type: string
+  type: str
   sample: 185.19.28.35
 cloudstack_service_offering:
   description: service offering of the instance.
   returned: success
-  type: string
+  type: str
   sample: Micro 512mb 1cpu
 cloudstack_user_data:
   description: data of the instance provided by users.
@@ -165,7 +165,7 @@ class CloudStackFacts(object):
         try:
             # this data come form users, we try what we can to parse it...
             return yaml.safe_load(self._fetch(CS_USERDATA_BASE_URL))
-        except:
+        except Exception:
             return None
 
     def _fetch(self, path):

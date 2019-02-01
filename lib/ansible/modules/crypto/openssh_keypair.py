@@ -96,17 +96,17 @@ size:
 type:
     description: Algorithm used to generate the SSH private key
     returned: changed or success
-    type: string
+    type: str
     sample: rsa
 filename:
     description: Path to the generated SSH private key file
     returned: changed or success
-    type: string
+    type: str
     sample: /tmp/id_ssh_rsa
 fingerprint:
     description: The fingerprint of the key.
     returned: changed or success
-    type: string
+    type: str
     sample: 4096 SHA256:r4YCZxihVjedH2OlfjVGI6Y5xAYtdCwk8VxKyzVyYfM example@example.com (RSA)
 '''
 
@@ -272,7 +272,7 @@ def main():
     )
 
     # Check if Path exists
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

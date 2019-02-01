@@ -23,7 +23,7 @@ short_description: NetApp Element Software Manage Snapshots
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
     - Create, Modify or Delete Snapshot on Element OS Cluster.
 
@@ -135,7 +135,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
 
 """
 import traceback

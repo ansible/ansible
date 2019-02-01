@@ -70,6 +70,7 @@ options:
       - Rewrite the shebang line on installed scripts to use /usr/bin/env.
     required: false
     default: "no"
+    type: bool
     version_added: "2.2"
   version:
     description:
@@ -80,12 +81,14 @@ options:
       - Allow installation of pre-release versions of the gem.
     required: false
     default: "no"
+    type: bool
     version_added: "1.6"
   include_doc:
     description:
       - Install with or without docs.
     required: false
     default: "no"
+    type: bool
     version_added: "2.0"
   build_flags:
     description:
@@ -94,7 +97,7 @@ options:
     version_added: "2.0"
 author:
     - "Ansible Core Team"
-    - "Johan Wiren"
+    - "Johan Wiren (@johanwiren)"
 '''
 
 EXAMPLES = '''

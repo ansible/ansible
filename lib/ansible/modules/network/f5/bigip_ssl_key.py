@@ -67,20 +67,22 @@ EXAMPLES = r'''
 - name: Use a file lookup to import key
   bigip_ssl_key:
     name: key-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: present
     content: "{{ lookup('file', '/path/to/key.key') }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Delete key
   bigip_ssl_key:
     name: key-name
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -91,17 +93,17 @@ key_filename:
       C(cert_filename) will be similar to each other, however the
       C(key_filename) will have a C(.key) extension.
   returned: created
-  type: string
+  type: str
   sample: cert1.key
 key_checksum:
   description: SHA1 checksum of the key that was provided.
   returned: changed and created
-  type: string
+  type: str
   sample: cf23df2207d99a74fbe169e3eba035e633b65d94
 key_source_path:
   description: Path on BIG-IP where the source of the key is stored
   returned: created
-  type: string
+  type: str
   sample: /var/config/rest/downloads/cert1.key
 '''
 

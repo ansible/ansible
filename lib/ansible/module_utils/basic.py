@@ -156,7 +156,19 @@ from ansible.module_utils.common._collections_compat import (
     Set, MutableSet,
 )
 from ansible.module_utils.common.process import get_bin_path
-from ansible.module_utils.common.file import is_executable
+from ansible.module_utils.common.file import (
+    _PERM_BITS as PERM_BITS,
+    _EXEC_PERM_BITS as EXEC_PERM_BITS,
+    _DEFAULT_PERM as DEFAULT_PERM,
+    is_executable,
+    format_attributes,
+    get_flags_from_attributes,
+)
+from ansible.module_utils.common.sys_info import (
+    get_distribution,
+    get_distribution_version,
+    get_platform_subclass,
+)
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
@@ -170,6 +182,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
 
@@ -249,11 +262,6 @@ MODE_OPERATOR_RE = re.compile(r'[+=-]')
 USERS_RE = re.compile(r'[^ugo]')
 PERMS_RE = re.compile(r'[^rwxXstugo]')
 
-
-PERM_BITS = 0o7777       # file mode permission bits
-EXEC_PERM_BITS = 0o0111  # execute permission bits
-DEFAULT_PERM = 0o0666    # default file permission bits
-
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 _PY3_MIN = sys.version_info[:2] >= (3, 5)
@@ -267,89 +275,40 @@ if not _PY_MIN:
     sys.exit(1)
 
 
+#
+# Deprecated functions
+#
+
 def get_platform():
-    ''' what's the platform?  example: Linux is a platform. '''
+    '''
+    **Deprecated** Use :py:func:`platform.system` directly.
+
+    :returns: Name of the platform the module is running on in a native string
+
+    Returns a native string that labels the platform ("Linux", "Solaris", etc). Currently, this is
+    the result of calling :py:func:`platform.system`.
+    '''
     return platform.system()
 
-
-def get_distribution():
-    ''' return the distribution name '''
-    if platform.system() == 'Linux':
-        try:
-            supported_dists = platform._supported_dists + ('arch', 'alpine', 'devuan')
-            distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
-            if not distribution and os.path.isfile('/etc/system-release'):
-                distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
-                if 'Amazon' in distribution:
-                    distribution = 'Amazon'
-                else:
-                    distribution = 'OtherLinux'
-        except:
-            # FIXME: MethodMissing, I assume?
-            distribution = platform.dist()[0].capitalize()
-    else:
-        distribution = None
-    return distribution
+# End deprecated functions
 
 
-def get_distribution_version():
-    ''' return the distribution version '''
-    if platform.system() == 'Linux':
-        try:
-            distribution_version = platform.linux_distribution()[1]
-            if not distribution_version and os.path.isfile('/etc/system-release'):
-                distribution_version = platform.linux_distribution(supported_dists=['system'])[1]
-        except:
-            # FIXME: MethodMissing, I assume?
-            distribution_version = platform.dist()[1]
-    else:
-        distribution_version = None
-    return distribution_version
+#
+# Compat shims
+#
+
+def load_platform_subclass(cls, *args, **kwargs):
+    """**Deprecated**: Use ansible.module_utils.common.sys_info.get_platform_subclass instead"""
+    platform_cls = get_platform_subclass(cls)
+    return super(cls, platform_cls).__new__(platform_cls)
 
 
 def get_all_subclasses(cls):
-    '''
-    used by modules like Hardware or Network fact classes to retrieve all subclasses of a given class.
-    __subclasses__ return only direct sub classes. This one go down into the class tree.
-    '''
-    # Retrieve direct subclasses
-    subclasses = cls.__subclasses__()
-    to_visit = list(subclasses)
-    # Then visit all subclasses
-    while to_visit:
-        for sc in to_visit:
-            # The current class is now visited, so remove it from list
-            to_visit.remove(sc)
-            # Appending all subclasses to visit and keep a reference of available class
-            for ssc in sc.__subclasses__():
-                subclasses.append(ssc)
-                to_visit.append(ssc)
-    return subclasses
+    """**Deprecated**: Use ansible.module_utils.common._utils.get_all_subclasses instead"""
+    return list(_get_all_subclasses(cls))
 
 
-def load_platform_subclass(cls, *args, **kwargs):
-    '''
-    used by modules like User to have different implementations based on detected platform.  See User
-    module for an example.
-    '''
-
-    this_platform = get_platform()
-    distribution = get_distribution()
-    subclass = None
-
-    # get the most specific superclass for this platform
-    if distribution is not None:
-        for sc in get_all_subclasses(cls):
-            if sc.distribution is not None and sc.distribution == distribution and sc.platform == this_platform:
-                subclass = sc
-    if subclass is None:
-        for sc in get_all_subclasses(cls):
-            if sc.platform == this_platform and sc.distribution is None:
-                subclass = sc
-    if subclass is None:
-        subclass = cls
-
-    return super(cls, subclass).__new__(subclass)
+# End compat shims
 
 
 def json_dict_unicode_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
@@ -621,16 +580,15 @@ def bytes_to_human(size, isbits=False, unit=None):
 def human_to_bytes(number, default_unit=None, isbits=False):
 
     '''
-    Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument
-    ex:
-      human_to_bytes('10M') <=> human_to_bytes(10, 'M')
+    Convert number in string format into bytes (ex: '2K' => 2048) or using unit argument.
+    example: human_to_bytes('10M') <=> human_to_bytes(10, 'M')
     '''
     m = re.search(r'^\s*(\d*\.?\d*)\s*([A-Za-z]+)?', str(number), flags=re.IGNORECASE)
     if m is None:
         raise ValueError("human_to_bytes() can't interpret following string: %s" % str(number))
     try:
         num = float(m.group(1))
-    except:
+    except Exception:
         raise ValueError("human_to_bytes() can't interpret following number: %s (original input string: %s)" % (m.group(1), number))
 
     unit = m.group(2)
@@ -643,7 +601,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
     range_key = unit[0].upper()
     try:
         limit = SIZE_RANGES[range_key]
-    except:
+    except Exception:
         raise ValueError("human_to_bytes() failed to convert %s (unit = %s). The suffix must be one of %s" % (number, unit, ", ".join(SIZE_RANGES.keys())))
 
     # default value
@@ -745,22 +703,6 @@ def _lenient_lowercase(lst):
     return lowered
 
 
-def format_attributes(attributes):
-    attribute_list = []
-    for attr in attributes:
-        if attr in FILE_ATTRIBUTES:
-            attribute_list.append(FILE_ATTRIBUTES[attr])
-    return attribute_list
-
-
-def get_flags_from_attributes(attributes):
-    flags = []
-    for key, attr in FILE_ATTRIBUTES.items():
-        if attr in attributes:
-            flags.append(key)
-    return ''.join(flags)
-
-
 def _json_encode_fallback(obj):
     if isinstance(obj, Set):
         return list(obj)
@@ -802,9 +744,11 @@ class AnsibleModule(object):
                  required_if=None):
 
         '''
-        common code for quickly building an ansible module in Python
-        (although you can write modules in anything that can return JSON)
-        see library/* for examples
+        Common code for quickly building an ansible module in Python
+        (although you can write modules with anything that can return JSON).
+
+        See :ref:`developing_modules_general` for a general introduction
+        and :ref:`developing_program_flow_modules` for more detailed explanation.
         '''
 
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
@@ -1119,7 +1063,7 @@ class AnsibleModule(object):
             f = open('/proc/mounts', 'r')
             mount_data = f.readlines()
             f.close()
-        except:
+        except Exception:
             return (False, None)
         path_mount_point = self.find_mount_point(path)
         for line in mount_data:
@@ -1401,7 +1345,7 @@ class AnsibleModule(object):
                     output['attr_flags'] = res[1].replace('-', '').strip()
                     output['version'] = res[0].strip()
                     output['attributes'] = format_attributes(output['attr_flags'])
-            except:
+            except Exception:
                 pass
         return output
 
@@ -1911,7 +1855,7 @@ class AnsibleModule(object):
             if value.startswith("{"):
                 try:
                     return json.loads(value)
-                except:
+                except Exception:
                     (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
                     if exc is not None:
                         raise TypeError('unable to evaluate string as dictionary')
@@ -2254,7 +2198,7 @@ class AnsibleModule(object):
             if not os.access(cwd, os.F_OK | os.R_OK):
                 raise Exception()
             return cwd
-        except:
+        except Exception:
             # we don't have access to the cwd, probably because of sudo.
             # Try and move to a neutral location to prevent errors
             for cwd in [self.tmpdir, os.path.expandvars('$HOME'), tempfile.gettempdir()]:
@@ -2262,7 +2206,7 @@ class AnsibleModule(object):
                     if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
                         return cwd
-                except:
+                except Exception:
                     pass
         # we won't error here, as it may *not* be a problem,
         # and we don't want to break modules unnecessarily
@@ -2270,11 +2214,12 @@ class AnsibleModule(object):
 
     def get_bin_path(self, arg, required=False, opt_dirs=None):
         '''
-        find system executable in PATH.
-        Optional arguments:
-           - required:  if executable is not found and required is true, fail_json
-           - opt_dirs:  optional list of directories to search in addition to PATH
-        if found return full path; otherwise return None
+        Find system executable in PATH.
+
+        :param arg: The executable to find.
+        :param required: if executable is not found and required is ``True``, fail_json
+        :param opt_dirs: optional list of directories to search in addition to ``PATH``
+        :returns: if found return full path; otherwise return None
         '''
 
         bin_path = None
@@ -2286,7 +2231,7 @@ class AnsibleModule(object):
         return bin_path
 
     def boolean(self, arg):
-        ''' return a bool for the arg '''
+        '''Convert the argument to a boolean'''
         if arg is None:
             return arg
 
@@ -2710,7 +2655,7 @@ class AnsibleModule(object):
         :kw data: If given, information to write to the stdin of the command
         :kw binary_data: If False, append a newline to the data.  Default False
         :kw path_prefix: If given, additional path to find the command in.
-            This adds to the PATH environment vairable so helper commands in
+            This adds to the PATH environment variable so helper commands in
             the same directory can also be found
         :kw cwd: If given, working directory to run the command inside
         :kw use_unsafe_shell: See `args` parameter.  Default False
@@ -2973,3 +2918,7 @@ class AnsibleModule(object):
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
+
+
+def get_timestamp():
+    return datetime.datetime.now().replace(microsecond=0).isoformat()

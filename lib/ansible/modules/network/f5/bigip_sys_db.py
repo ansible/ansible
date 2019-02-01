@@ -48,29 +48,32 @@ author:
 EXAMPLES = r'''
 - name: Set the boot.quiet DB variable on the BIG-IP
   bigip_sys_db:
-    user: admin
-    password: secret
-    server: lb.mydomain.com
     key: boot.quiet
     value: disable
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Disable the initial setup screen
   bigip_sys_db:
-    user: admin
-    password: secret
-    server: lb.mydomain.com
     key: setup.run
     value: false
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 
 - name: Reset the initial setup screen
   bigip_sys_db:
-    user: admin
-    password: secret
-    server: lb.mydomain.com
     key: setup.run
     state: reset
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -78,17 +81,17 @@ RETURN = r'''
 name:
   description: The key in the system database that was specified
   returned: changed and success
-  type: string
+  type: str
   sample: setup.run
 default_value:
   description: The default value of the key
   returned: changed and success
-  type: string
+  type: str
   sample: true
 value:
   description: The value that you set the key to
   returned: changed and success
-  type: string
+  type: str
   sample: false
 '''
 

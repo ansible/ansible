@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -38,8 +38,6 @@ options:
       - IP address part of the IP/port definition. If this parameter is not
         provided when creating a new monitor, then the default value will be
         '*'.
-      - If this value is an IP address, and the C(type) is C(tcp) (the default),
-        then a C(port) number must be specified.
   interval:
     description:
       - The interval specifying how frequently the monitor instance of this
@@ -88,20 +86,22 @@ EXAMPLES = r'''
 - name: Create TCP Echo Monitor
   bigip_monitor_tcp_echo:
     state: present
-    server: lb.mydomain.com
-    user: admin
     ip: 10.10.10.10
-    password: secret
     name: my_tcp_monitor
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove TCP Echo Monitor
   bigip_monitor_tcp_echo:
     state: absent
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     name: my_tcp_monitor
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 '''
 
@@ -109,12 +109,12 @@ RETURN = r'''
 parent:
   description: New parent template of the monitor.
   returned: changed
-  type: string
+  type: str
   sample: tcp
 ip:
   description: The new IP of IP/port definition.
   returned: changed
-  type: string
+  type: str
   sample: 10.12.13.14
 description:
   description: The description of the monitor.
@@ -153,6 +153,7 @@ try:
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.ipaddress import is_valid_ip
+    from library.module_utils.network.f5.compare import cmp_str_with_none
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -163,6 +164,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
 
 
 class Parameters(AnsibleF5Parameters):
@@ -172,16 +174,29 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'timeUntilUp', 'defaultsFrom', 'interval', 'timeout', 'destination',
+        'timeUntilUp',
+        'defaultsFrom',
+        'interval',
+        'timeout',
+        'destination',
         'description',
     ]
 
     returnables = [
-        'parent', 'ip', 'interval', 'timeout', 'time_until_up', 'description',
+        'parent',
+        'ip',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
     ]
 
     updatables = [
-        'ip', 'interval', 'timeout', 'time_until_up', 'description',
+        'ip',
+        'interval',
+        'timeout',
+        'time_until_up',
+        'description',
     ]
 
     @property
@@ -244,11 +259,21 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ApiParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] in [None, 'none']:
+            return None
+        return self._values['description']
 
 
 class ModuleParameters(Parameters):
-    pass
+    @property
+    def description(self):
+        if self._values['description'] is None:
+            return None
+        elif self._values['description'] in ['none', '']:
+            return ''
+        return self._values['description']
 
 
 class Changes(Parameters):
@@ -326,6 +351,10 @@ class Difference(object):
                 return attr1
         except AttributeError:
             return attr1
+
+    @property
+    def description(self):
+        return cmp_str_with_none(self.want.description, self.have.description)
 
 
 class ModuleManager(object):
@@ -555,6 +584,7 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
     )
+
     client = F5RestClient(**module.params)
 
     try:

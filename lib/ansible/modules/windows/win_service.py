@@ -73,6 +73,7 @@ options:
   path:
     description:
     - The path to the executable to set for the service.
+    type: str
     version_added: '2.3'
   password:
     description:
@@ -80,12 +81,14 @@ options:
     - This and the C(username) argument must be supplied together.
     - If specifying C(LocalSystem), C(NetworkService) or C(LocalService) this field
       must be an empty string and not null.
+    type: str
     version_added: '2.3'
   start_mode:
     description:
     - Set the startup type for the service.
     - A newly created service will default to C(auto).
     - C(delayed) added in Ansible 2.3
+    type: str
     choices: [ auto, delayed, disabled, manual ]
   state:
     description:
@@ -99,6 +102,7 @@ options:
       check the return value C(can_pause_and_continue).
     - You can only pause a service that is already started.
     - A newly created service will default to C(stopped).
+    type: str
     choices: [ absent, paused, started, stopped, restarted ]
   username:
     description:
@@ -107,9 +111,11 @@ options:
       a local or domain account.
     - Set to C(LocalSystem) to use the SYSTEM account.
     - A newly created service will default to C(LocalSystem).
+    type: str
     version_added: '2.3'
-notes:
-- For non-Windows targets, use the M(service) module instead.
+seealso:
+- module: service
+- module: win_nssm
 author:
 - Chris Hoffman (@chrishoffman)
 '''
@@ -229,61 +235,61 @@ RETURN = r'''
 exists:
     description: Whether the service exists or not.
     returned: success
-    type: boolean
+    type: bool
     sample: true
 name:
     description: The service name or id of the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: CoreMessagingRegistrar
 display_name:
     description: The display name of the installed service.
     returned: success and service exists
-    type: string
+    type: str
     sample: CoreMessaging
 state:
     description: The current running status of the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: stopped
 start_mode:
     description: The startup type of the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: manual
 path:
     description: The path to the service executable.
     returned: success and service exists
-    type: string
+    type: str
     sample: C:\Windows\system32\svchost.exe -k LocalServiceNoNetwork
 can_pause_and_continue:
     description: Whether the service can be paused and unpaused.
     returned: success and service exists
     type: bool
-    sample: True
+    sample: true
 description:
     description: The description of the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: Manages communication between system components.
 username:
     description: The username that runs the service.
     returned: success and service exists
-    type: string
+    type: str
     sample: LocalSystem
 desktop_interact:
     description: Whether the current user is allowed to interact with the desktop.
     returned: success and service exists
-    type: boolean
-    sample: False
+    type: bool
+    sample: false
 dependencies:
     description: A list of services that is depended by this service.
     returned: success and service exists
     type: list
-    sample: False
+    sample: false
 depended_by:
     description: A list of services that depend on this service.
     returned: success and service exists
     type: list
-    sample: False
+    sample: false
 '''

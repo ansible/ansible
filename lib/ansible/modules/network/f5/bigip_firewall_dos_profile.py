@@ -79,17 +79,17 @@ RETURN = r'''
 threshold_sensitivity:
   description: The new threshold sensitivity of the profile.
   returned: changed
-  type: string
+  type: str
   sample: low
 default_whitelist:
   description: The new whitelist attached to the profile.
   returned: changed
-  type: string
+  type: str
   sample: /Common/whitelist1
 description:
   description: The description of the profile.
   returned: changed
-  type: string
+  type: str
   sample: New description
 '''
 
@@ -105,7 +105,6 @@ try:
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
-    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import transform_name
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
@@ -116,7 +115,6 @@ except ImportError:
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
-    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import transform_name
 
 
@@ -416,8 +414,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

@@ -39,8 +39,7 @@ except ImportError:
     from configparser import ConfigParser
 
 DOCKER_COMPLETION = {}
-
-coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
+COVERAGE_PATHS = {}  # type: dict[str, str]
 
 
 def get_docker_completion():
@@ -196,10 +195,10 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
         env = common_environment()
 
     cmd = list(cmd)
-    inject_path = get_coverage_path(args)
-    config_path = os.path.join(inject_path, 'injector.json')
     version = python_version or args.python_version
     interpreter = find_python(version, path)
+    inject_path = get_coverage_path(args, interpreter)
+    config_path = os.path.join(inject_path, 'injector.json')
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
@@ -223,12 +222,13 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 
 
-def get_coverage_path(args):
+def get_coverage_path(args, interpreter):
     """
     :type args: TestConfig
+    :type interpreter: str
     :rtype: str
     """
-    global coverage_path  # pylint: disable=locally-disabled, global-statement, invalid-name
+    coverage_path = COVERAGE_PATHS.get(interpreter)
 
     if coverage_path:
         return os.path.join(coverage_path, 'coverage')
@@ -255,13 +255,27 @@ def get_coverage_path(args):
         os.mkdir(os.path.join(coverage_path, directory))
         os.chmod(os.path.join(coverage_path, directory), stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
-    atexit.register(cleanup_coverage_dir)
+    os.symlink(interpreter, os.path.join(coverage_path, 'coverage', 'python'))
+
+    if not COVERAGE_PATHS:
+        atexit.register(cleanup_coverage_dirs)
+
+    COVERAGE_PATHS[interpreter] = coverage_path
 
     return os.path.join(coverage_path, 'coverage')
 
 
-def cleanup_coverage_dir():
-    """Copy over coverage data from temporary directory and purge temporary directory."""
+def cleanup_coverage_dirs():
+    """Clean up all coverage directories."""
+    for path in COVERAGE_PATHS.values():
+        display.info('Cleaning up coverage directory: %s' % path, verbosity=2)
+        cleanup_coverage_dir(path)
+
+
+def cleanup_coverage_dir(coverage_path):
+    """Copy over coverage data from temporary directory and purge temporary directory.
+    :type coverage_path: str
+    """
     output_dir = os.path.join(coverage_path, 'output')
 
     for filename in os.listdir(output_dir):
@@ -723,10 +737,13 @@ class MissingEnvironmentVariable(ApplicationError):
 
 class CommonConfig(object):
     """Configuration common to all commands."""
-    def __init__(self, args):
+    def __init__(self, args, command):
         """
         :type args: any
+        :type command: str
         """
+        self.command = command
+
         self.color = args.color  # type: bool
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
@@ -737,6 +754,8 @@ class CommonConfig(object):
         if is_shippable():
             self.redact = True
 
+        self.cache = {}
+
 
 def docker_qualify_image(name):
     """
@@ -746,6 +765,29 @@ def docker_qualify_image(name):
     config = get_docker_completion().get(name, {})
 
     return config.get('name', name)
+
+
+@contextlib.contextmanager
+def named_temporary_file(args, prefix, suffix, directory, content):
+    """
+    :param args: CommonConfig
+    :param prefix: str
+    :param suffix: str
+    :param directory: str
+    :param content: str | bytes | unicode
+    :rtype: str
+    """
+    if not isinstance(content, bytes):
+        content = content.encode('utf-8')
+
+    if args.explain:
+        yield os.path.join(directory, '%stemp%s' % (prefix, suffix))
+    else:
+        with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=directory) as tempfile_fd:
+            tempfile_fd.write(content)
+            tempfile_fd.flush()
+
+            yield tempfile_fd.name
 
 
 def parse_to_list_of_dict(pattern, value):

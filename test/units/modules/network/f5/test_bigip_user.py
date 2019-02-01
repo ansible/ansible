@@ -11,9 +11,8 @@ import json
 import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -33,23 +32,21 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_user import Parameters
-        from ansible.modules.network.f5.bigip_user import ModuleManager
-        from ansible.modules.network.f5.bigip_user import ArgumentSpec
-        from ansible.modules.network.f5.bigip_user import UnpartitionedManager
-        from ansible.modules.network.f5.bigip_user import PartitionedManager
+    from ansible.modules.network.f5.bigip_user import Parameters
+    from ansible.modules.network.f5.bigip_user import ModuleManager
+    from ansible.modules.network.f5.bigip_user import ArgumentSpec
+    from ansible.modules.network.f5.bigip_user import UnpartitionedManager
+    from ansible.modules.network.f5.bigip_user import PartitionedManager
 
-        from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import F5ModuleError
 
-        # Ansible 2.8 imports
-        from units.compat import unittest
-        from units.compat.mock import Mock
-        from units.compat.mock import patch
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
 
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -171,39 +168,6 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['partition_access'] == access
-
-    def test_create_user_raises(self, *args):
-        access = [{'name': 'Common', 'role': 'guest'}]
-        set_module_args(dict(
-            username_credential='someuser',
-            password_credential='testpass',
-            partition_access=access,
-            password='password',
-            server='localhost',
-            user='admin'
-        ))
-
-        module = AnsibleModule(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
-        )
-
-        # Override methods to force specific logic in the module to happen
-        pm = PartitionedManager(module=module, params=module.params)
-        pm.create_on_device = Mock(return_value=True)
-        pm.exists = Mock(return_value=False)
-
-        mm = ModuleManager(module=module)
-        mm.is_version_less_than_13 = Mock(return_value=False)
-        mm.get_manager = Mock(return_value=pm)
-
-        msg = "The 'update_password' option " \
-              "needs to be set to 'on_create' when creating " \
-              "a resource with a password."
-
-        with pytest.raises(F5ModuleError) as ex:
-            mm.exec_module()
-        assert str(ex.value) == msg
 
     def test_create_user_partition_access_raises(self, *args):
         set_module_args(dict(
@@ -591,39 +555,6 @@ class TestLegacyManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['partition_access'] == access
-
-    def test_create_user_raises(self, *args):
-        access = [{'name': 'Common', 'role': 'guest'}]
-        set_module_args(dict(
-            username_credential='someuser',
-            password_credential='testpass',
-            partition_access=access,
-            password='password',
-            server='localhost',
-            user='admin'
-        ))
-
-        module = AnsibleModule(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode
-        )
-
-        # Override methods to force specific logic in the module to happen
-        upm = UnpartitionedManager(module=module, params=module.params)
-        upm.create_on_device = Mock(return_value=True)
-        upm.exists = Mock(return_value=False)
-
-        mm = ModuleManager(module=module)
-        mm.is_version_less_than_13 = Mock(return_value=True)
-        mm.get_manager = Mock(return_value=upm)
-
-        msg = "The 'update_password' option " \
-              "needs to be set to 'on_create' when creating " \
-              "a resource with a password."
-
-        with pytest.raises(F5ModuleError) as ex:
-            mm.exec_module()
-        assert str(ex.value) == msg
 
     def test_create_user_partition_access_raises(self, *args):
         set_module_args(dict(

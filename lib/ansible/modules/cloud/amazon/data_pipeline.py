@@ -16,8 +16,8 @@ DOCUMENTATION = '''
 module: data_pipeline
 version_added: "2.4"
 author:
-  - Raghu Udiyar <raghusiddarth@gmail.com> (@raags)
-  - Sloane Hertel <shertel@redhat.com>
+  - Raghu Udiyar (@raags) <raghusiddarth@gmail.com>
+  - Sloane Hertel (@s-hertel) <shertel@redhat.com>
 requirements: [ "boto3" ]
 short_description: Create and manage AWS Datapipelines
 extends_documentation_fragment:

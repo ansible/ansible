@@ -26,13 +26,10 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.utils.display import Display
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayIterator']
@@ -180,7 +177,7 @@ class PlayIterator:
         }
 
         # Unless play is specifically tagged, gathering should 'always' run
-        if self._play.tags is None:
+        if not self._play.tags:
             setup_task.tags = ['always']
 
         if gather_timeout:
@@ -195,16 +192,11 @@ class PlayIterator:
 
         setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)
         self._blocks.append(setup_block)
-        self.cache_block_tasks(setup_block)
 
         for block in self._play.compile():
             new_block = block.filter_tagged_tasks(play_context, all_vars)
             if new_block.has_tasks():
-                self.cache_block_tasks(new_block)
                 self._blocks.append(new_block)
-
-        for handler_block in self._play.handlers:
-            self.cache_block_tasks(handler_block)
 
         self._host_states = {}
         start_at_matched = False

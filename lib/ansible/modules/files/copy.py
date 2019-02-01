@@ -15,114 +15,130 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: copy
-version_added: "historical"
-short_description: Copies files to remote locations
+version_added: historical
+short_description: Copy files to remote locations
 description:
     - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
-      Use the M(fetch) module to copy files from remote locations to the local box.
-      If you need variable interpolation in copied files, use the M(template) module.
+    - Use the M(fetch) module to copy files from remote locations to the local box.
+    - If you need variable interpolation in copied files, use the M(template) module. Using a variable in the C(content)
+      field will result in unpredictable output.
     - For Windows targets, use the M(win_copy) module instead.
 options:
   src:
     description:
-      - Local path to a file to copy to the remote server; can be absolute or relative.
-        If path is a directory, it is copied recursively. In this case, if path ends
-        with "/", only inside contents of that directory are copied to destination.
-        Otherwise, if it does not end with "/", the directory itself with all contents
-        is copied. This behavior is similar to Rsync.
+    - Local path to a file to copy to the remote server.
+    - This can be absolute or relative.
+    - If path is a directory, it is copied recursively. In this case, if path ends
+      with "/", only inside contents of that directory are copied to destination.
+      Otherwise, if it does not end with "/", the directory itself with all contents
+      is copied. This behavior is similar to the C(rsync) command line tool.
+    type: path
   content:
     description:
-      - When used instead of I(src), sets the contents of a file directly to the specified value.
-        For anything advanced or with formatting also look at the template module.
-    version_added: "1.1"
+    - When used instead of C(src), sets the contents of a file directly to the specified value.
+    - For advanced formatting or if C(content) contains a variable, use the C(template) module.
+    type: str
+    version_added: '1.1'
   dest:
     description:
-      - 'Remote absolute path where the file should be copied to. If I(src) is a directory, this must be a directory too.
-        If I(dest) is a nonexistent path and if either I(dest) ends with "/" or I(src) is a directory, I(dest) is created.
-        If I(src) and I(dest) are files, the parent directory of I(dest) isn''t created: the task fails if it doesn''t already exist.'
+    - Remote absolute path where the file should be copied to.
+    - If C(src) is a directory, this must be a directory too.
+    - If C(dest) is a non-existent path and if either C(dest) ends with "/" or C(src) is a directory, C(dest) is created.
+    - If I(dest) is a relative path, the starting directory is determined by the remote host.
+    - If C(src) and C(dest) are files, the parent directory of C(dest) is not created and the task fails if it does not already exist.
+    type: path
     required: yes
   backup:
     description:
-      - Create a backup file including the timestamp information so you can get
-        the original file back if you somehow clobbered it incorrectly.
+    - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: 'no'
-    version_added: "0.7"
+    default: no
+    version_added: '0.7'
   force:
     description:
-      - the default is C(yes), which will replace the remote file when contents
-        are different than the source. If C(no), the file will only be transferred
-        if the destination does not exist.
+    - Influence whether the remote file must always be replaced.
+    - If C(yes), the remote file will be replaced when contents are different than the source.
+    - If C(no), the file will only be transferred if the destination does not exist.
     type: bool
-    default: 'yes'
+    default: yes
     aliases: [ thirsty ]
-    version_added: "1.1"
+    version_added: '1.1'
   mode:
     description:
-      - "Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that
-        modes are actually octal numbers. You must either add a leading zero so that Ansible's
-        YAML parser knows it is an octal number (like C(0644) or C(01777)) or quote it
-        (like C('644') or C('1777')) so Ansible receives a string and can do its own conversion from
-        string into number.  Giving Ansible a number without following one of these rules will end
-        up with a decimal number which will have unexpected results.  As of version 1.8, the mode
-        may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).  As of
-        version 2.3, the mode may also be the special string C(preserve).  C(preserve) means that
-        the file will be given the same permissions as the source file."
+    - The permissions of the destination file or directory.
+    - For those used to C(/usr/bin/chmod) remember that modes are actually octal numbers.
+      You must either add a leading zero so that Ansible's YAML parser knows it is an octal number
+      (like C(0644) or C(01777))or quote it (like C('644') or C('1777')) so Ansible receives a string
+      and can do its own conversion from string into number. Giving Ansible a number without following
+      one of these rules will end up with a decimal number which will have unexpected results.
+    - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
+    - As of Ansible 2.3, the mode may also be the special string C(preserve).
+    - C(preserve) means that the file will be given the same permissions as the source file.
+    type: path
   directory_mode:
     description:
-      - When doing a recursive copy set the mode for the directories. If this is not set we will use the system
-        defaults. The mode is only set on directories which are newly created, and will not affect those that
-        already existed.
-    version_added: "1.5"
+    - When doing a recursive copy set the mode for the directories.
+    - If this is not set we will use the system defaults.
+    - The mode is only set on directories which are newly created, and will not affect those that already existed.
+    type: raw
+    version_added: '1.5'
   remote_src:
     description:
-      - If C(no), it will search for I(src) at originating/master machine.
-      - If C(yes) it will go to the remote/target machine for the I(src). Default is C(no).
-      - I(remote_src) supports recursive copying as of version 2.8.
-      - I(remote_src) only works with C(mode=preserve) as of version 2.6.
+    - Influence whether C(src) needs to be transferred or already is present remotely.
+    - If C(no), it will search for C(src) at originating/master machine.
+    - If C(yes) it will go to the remote/target machine for the C(src).
+    - C(remote_src) supports recursive copying as of version 2.8.
+    - C(remote_src) only works with C(mode=preserve) as of version 2.6.
     type: bool
-    default: 'no'
-    version_added: "2.0"
+    default: no
+    version_added: '2.0'
   follow:
     description:
-      - This flag indicates that filesystem links in the destination, if they exist, should be followed.
+    - This flag indicates that filesystem links in the destination, if they exist, should be followed.
     type: bool
-    default: 'no'
-    version_added: "1.8"
+    default: no
+    version_added: '1.8'
   local_follow:
     description:
-      - This flag indicates that filesystem links in the source tree, if they exist, should be followed.
+    - This flag indicates that filesystem links in the source tree, if they exist, should be followed.
     type: bool
-    default: 'yes'
-    version_added: "2.4"
+    default: yes
+    version_added: '2.4'
   checksum:
     description:
-      - SHA1 checksum of the file being transferred. Used to validate that the copy of the file was successful.
-      - If this is not provided, ansible will use the local calculated checksum of the src file.
+    - SHA1 checksum of the file being transferred.
+    - Used to validate that the copy of the file was successful.
+    - If this is not provided, ansible will use the local calculated checksum of the src file.
+    type: str
     version_added: '2.5'
 extends_documentation_fragment:
-    - files
-    - validate
-    - decrypt
-author:
-    - Ansible Core Team
-    - Michael DeHaan
+- decrypt
+- files
+- validate
 notes:
-   - The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
-     For alternative, see M(synchronize) module, which is a wrapper around C(rsync).
-   - For Windows targets, use the M(win_copy) module instead.
+- The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
+seealso:
+- module: assemble
+- module: fetch
+- module: file
+- module: synchronize
+- module: template
+- module: win_copy
+author:
+- Ansible Core Team
+- Michael DeHaan
 '''
 
 EXAMPLES = r'''
-- name: example copying file with owner and permissions
+- name: Copy file with owner and permissions
   copy:
     src: /srv/myfiles/foo.conf
     dest: /etc/foo.conf
     owner: foo
     group: foo
-    mode: 0644
+    mode: '0644'
 
-- name: The same example as above, but using a symbolic mode equivalent to 0644
+- name: Copy file with owner and permission, using symbolic representation
   copy:
     src: /srv/myfiles/foo.conf
     dest: /etc/foo.conf
@@ -144,7 +160,7 @@ EXAMPLES = r'''
     dest: /etc/ntp.conf
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'
     backup: yes
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
@@ -160,84 +176,84 @@ EXAMPLES = r'''
     remote_src: yes
     validate: /usr/sbin/visudo -cf %s
 
-- name: Copy using the 'content' for inline data
+- name: Copy using inline content
   copy:
     content: '# This file was moved to /etc/other.conf'
     dest: /etc/mine.conf
 
-- name: if follow is true, /path/to/file will be overwritten by contents of foo.conf
+- name: If follow=yes, /path/to/file will be overwritten by contents of foo.conf
   copy:
     src: /etc/foo.conf
-    dest: /path/to/link # /path/to/link is link to /path/to/file
-    follow: True
+    dest: /path/to/link  # link to /path/to/file
+    follow: yes
 
-- name: if follow is False, /path/to/link will become a file and be overwritten by contents of foo.conf
+- name: If follow=no, /path/to/link will become a file and be overwritten by contents of foo.conf
   copy:
     src: /etc/foo.conf
-    dest: /path/to/link # /path/to/link is link to /path/to/file
-    follow: False
+    dest: /path/to/link  # link to /path/to/file
+    follow: no
 '''
 
 RETURN = r'''
 dest:
-    description: destination file/path
+    description: Destination file/path
     returned: success
-    type: string
+    type: str
     sample: /path/to/file.txt
 src:
-    description: source file used for the copy on the target machine
+    description: Source file used for the copy on the target machine
     returned: changed
-    type: string
+    type: str
     sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
 md5sum:
-    description: md5 checksum of the file after running copy
+    description: MD5 checksum of the file after running copy
     returned: when supported
-    type: string
+    type: str
     sample: 2a5aeecc61dc98c4d780b14b330e3282
 checksum:
-    description: sha1 checksum of the file after running copy
+    description: SHA1 checksum of the file after running copy
     returned: success
-    type: string
+    type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 backup_file:
-    description: name of backup file created
+    description: Name of backup file created
     returned: changed and if backup=yes
-    type: string
+    type: str
     sample: /path/to/file.txt.2015-02-12@22:09~
 gid:
-    description: group id of the file, after execution
+    description: Group id of the file, after execution
     returned: success
     type: int
     sample: 100
 group:
-    description: group of the file, after execution
+    description: Group of the file, after execution
     returned: success
-    type: string
+    type: str
     sample: httpd
 owner:
-    description: owner of the file, after execution
+    description: Owner of the file, after execution
     returned: success
-    type: string
+    type: str
     sample: httpd
 uid:
-    description: owner id of the file, after execution
+    description: Owner id of the file, after execution
     returned: success
     type: int
     sample: 100
 mode:
-    description: permissions of the target, after execution
+    description: Permissions of the target, after execution
     returned: success
-    type: string
+    type: str
     sample: 0644
 size:
-    description: size of the target, after execution
+    description: Size of the target, after execution
     returned: success
     type: int
     sample: 1220
 state:
-    description: state of the target, after execution
+    description: State of the target, after execution
     returned: success
-    type: string
+    type: str
     sample: file
 '''
 
@@ -464,7 +480,7 @@ def main():
             directory_mode=dict(type='raw'),
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
-            checksum=dict(),
+            checksum=dict(type='str'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,

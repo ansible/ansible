@@ -102,7 +102,7 @@ options:
     version_added: "2.7"
   update_cache:
     description:
-      - Force yum to check if cache is out of date and redownload if needed.
+      - Force dnf to check if cache is out of date and redownload if needed.
         Has an effect only if state is I(present) or I(latest).
     type: bool
     default: "no"
@@ -141,7 +141,7 @@ options:
     description:
       - Disable the excludes defined in DNF config files.
       - If set to C(all), disables all excludes.
-      - If set to C(main), disable excludes defined in [main] in yum.conf.
+      - If set to C(main), disable excludes defined in [main] in dnf.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
     version_added: "2.7"
   validate_certs:
@@ -183,6 +183,12 @@ options:
     required: false
     default: 0
     type: int
+    version_added: "2.8"
+  install_weak_deps:
+    description:
+      - Will also install all packages linked by a weak dependency relation.
+    type: bool
+    default: "yes"
     version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
@@ -254,6 +260,21 @@ EXAMPLES = '''
     name: httpd
     state: absent
     autoremove: no
+
+- name: install a modularity appstream with defined stream and profile
+  dnf:
+    name: '@postgresql:9.6/client'
+    state: present
+
+- name: install a modularity appstream with defined stream
+  dnf:
+    name: '@postgresql:9.6'
+    state: present
+
+- name: install a modularity appstream with defined profile
+  dnf:
+    name: '@postgresql/client'
+    state: present
 '''
 
 import os
@@ -296,6 +317,11 @@ class DnfModule(YumDnf):
         self.lockfile = "/var/cache/dnf/*_lock.pid"
         self.pkg_mgr_name = "dnf"
 
+        try:
+            self.with_modules = dnf.base.WITH_MODULES
+        except AttributeError:
+            self.with_modules = False
+
     def _sanitize_dnf_error_msg(self, spec, error):
         """
         For unhandled dnf.exceptions.Error scenarios, there are certain error
@@ -320,11 +346,10 @@ class DnfModule(YumDnf):
         result['nevra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(
             **result)
 
-        # Added for YUM3/YUM4 compat
-        if package.repoid == 'installed':
-            result['yumstate'] = 'installed'
-        else:
+        if package.installtime == 0:
             result['yumstate'] = 'available'
+        else:
+            result['yumstate'] = 'installed'
 
         return result
 
@@ -476,14 +501,21 @@ class DnfModule(YumDnf):
     def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):
         """Configure the dnf Base object."""
 
-        if self.enable_plugin and self.disable_plugin:
-            base.init_plugins(self.disable_plugin, self.enable_plugin)
-        elif self.enable_plugin:
-            base.init_plugins(enable_plugins=self.enable_plugin)
-        elif self.disable_plugin:
-            base.init_plugins(self.disable_plugin)
-
         conf = base.conf
+
+        # Change the configuration file path if provided, this must be done before conf.read() is called
+        if conf_file:
+            # Fail if we can't read the configuration file.
+            if not os.access(conf_file, os.R_OK):
+                self.module.fail_json(
+                    msg="cannot read configuration file", conf_file=conf_file,
+                    results=[],
+                )
+            else:
+                conf.config_file_path = conf_file
+
+        # Read the configuration file
+        conf.read()
 
         # Turn off debug messages in the output
         conf.debuglevel = 0
@@ -497,6 +529,9 @@ class DnfModule(YumDnf):
 
         # Set installroot
         conf.installroot = installroot
+
+        # Load substitutions from the filesystem
+        conf.substitutions.update_from_etc(installroot)
 
         # Handle different DNF versions immutable mutable datatypes and
         # dnf v1/v2/v3
@@ -530,22 +565,11 @@ class DnfModule(YumDnf):
         if self.download_only:
             conf.downloadonly = True
 
-        # Change the configuration file path if provided
-        if conf_file:
-            # Fail if we can't read the configuration file.
-            if not os.access(conf_file, os.R_OK):
-                self.module.fail_json(
-                    msg="cannot read configuration file", conf_file=conf_file,
-                    results=[],
-                )
-            else:
-                conf.config_file_path = conf_file
-
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
 
-        # Read the configuration file
-        conf.read()
+        # Default in dnf (and module default) is True
+        conf.install_weak_deps = self.install_weak_deps
 
     def _specify_repositories(self, base, disablerepo, enablerepo):
         """Enable and disable repositories matching the provided patterns."""
@@ -570,6 +594,21 @@ class DnfModule(YumDnf):
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
         self._specify_repositories(base, disablerepo, enablerepo)
         try:
+            base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
+            base.pre_configure_plugins()
+            base.configure_plugins()
+        except AttributeError:
+            pass  # older versions of dnf didn't require this and don't have these methods
+        try:
+            if self.update_cache:
+                try:
+                    base.update_cache()
+                except dnf.exceptions.RepoError as e:
+                    self.module.fail_json(
+                        msg="{0}".format(to_text(e)),
+                        results=[],
+                        rc=1
+                    )
             base.fill_sack(load_system_repo='auto')
         except dnf.exceptions.RepoError as e:
             self.module.fail_json(
@@ -583,15 +622,7 @@ class DnfModule(YumDnf):
         if self.security:
             key = {'advisory_type__eq': 'security'}
             base._update_security_filters = [base.sack.query().filter(**key)]
-        if self.update_cache:
-            try:
-                base.update_cache()
-            except dnf.exceptions.RepoError as e:
-                self.module.fail_json(
-                    msg="{0}".format(to_text(e)),
-                    results=[],
-                    rc=1
-                )
+
         return base
 
     def list_items(self, command):
@@ -719,18 +750,48 @@ class DnfModule(YumDnf):
                     "results": []
                 }
 
+    def _whatprovides(self, filepath):
+        available = self.base.sack.query().available()
+        pkg_spec = available.filter(provides=filepath).run()
+
+        if pkg_spec:
+            return pkg_spec[0].name
+
     def _parse_spec_group_file(self):
-        pkg_specs, grp_specs, filenames = [], [], []
+        pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
+        already_loaded_comps = False  # Only load this if necessary, it's slow
+
         for name in self.names:
-            if name.endswith(".rpm"):
-                if '://' in name:
-                    name = self.fetch_rpm_from_url(name)
+            if '://' in name:
+                name = self.fetch_rpm_from_url(name)
                 filenames.append(name)
-            elif name.startswith("@"):
-                grp_specs.append(name[1:])
+            elif name.endswith(".rpm"):
+                filenames.append(name)
+            elif name.startswith("@") or ('/' in name):
+                # like "dnf install /usr/bin/vi"
+                if '/' in name:
+                    pkg_spec = self._whatprovides(name)
+                    if pkg_spec:
+                        pkg_specs.append(pkg_spec)
+                        continue
+
+                if not already_loaded_comps:
+                    self.base.read_comps()
+                    already_loaded_comps = True
+
+                grp_env_mdl_candidate = name[1:].strip()
+
+                if self.with_modules:
+                    mdl = self.module_base._get_modules(grp_env_mdl_candidate)
+                    if mdl[0]:
+                        module_specs.append(grp_env_mdl_candidate)
+                    else:
+                        grp_specs.append(grp_env_mdl_candidate)
+                else:
+                    grp_specs.append(grp_env_mdl_candidate)
             else:
                 pkg_specs.append(name)
-        return pkg_specs, grp_specs, filenames
+        return pkg_specs, grp_specs, module_specs, filenames
 
     def _update_only(self, pkgs):
         not_installed = []
@@ -784,6 +845,16 @@ class DnfModule(YumDnf):
                         rc=1,
                     )
 
+    def _is_module_installed(self, module_spec):
+        if self.with_modules:
+            module_spec = module_spec.strip()
+            module_list, nsv = self.module_base._get_modules(module_spec)
+
+            if nsv.stream in self.base._moduleContainer.getEnabledStream(nsv.name):
+                return True
+
+        return False  # seems like a sane default
+
     def ensure(self):
         allow_erasing = False
 
@@ -816,9 +887,7 @@ class DnfModule(YumDnf):
                 failure_response['msg'] = "Depsolve Error occured attempting to upgrade all packages"
                 self.module.fail_json(**failure_response)
         else:
-            pkg_specs, group_specs, filenames = self._parse_spec_group_file()
-            if group_specs:
-                self.base.read_comps()
+            pkg_specs, group_specs, module_specs, filenames = self._parse_spec_group_file()
 
             pkg_specs = [p.strip() for p in pkg_specs]
             filenames = [f.strip() for f in filenames]
@@ -843,6 +912,23 @@ class DnfModule(YumDnf):
                 self._install_remote_rpms(filenames)
                 for filename in filenames:
                     response['results'].append("Installed {0}".format(filename))
+
+                # Install modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if not self._is_module_installed(module):
+                                response['results'].append("Module {0} installed.".format(module))
+                            self.module_base.install([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
 
                 # Install groups.
                 for group in groups:
@@ -870,6 +956,13 @@ class DnfModule(YumDnf):
                     except dnf.exceptions.Error as e:
                         failure_response['failures'].append(" ".join((environment, to_native(e))))
 
+                if module_specs and not self.with_modules:
+                    # This means that the group or env wasn't found in comps
+                    self.module.fail_json(
+                        msg="No group {0} available.".format(module_specs[0]),
+                        results=[],
+                    )
+
                 # Install packages.
                 if self.update_only:
                     not_installed = self._update_only(pkg_specs)
@@ -889,6 +982,23 @@ class DnfModule(YumDnf):
                 self._install_remote_rpms(filenames)
                 for filename in filenames:
                     response['results'].append("Installed {0}".format(filename))
+
+                # Upgrade modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} upgraded.".format(module))
+                            self.module_base.upgrade([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
 
                 for group in groups:
                     try:
@@ -942,6 +1052,24 @@ class DnfModule(YumDnf):
                         results=[],
                     )
 
+                # Remove modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} removed.".format(module))
+                            self.module_base.disable([module])
+                            self.module_base.remove([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(
+                                " ".join(
+                                    (
+                                        ' '.join(module),
+                                        to_native(e)
+                                    )
+                                )
+                            )
+
                 for group in groups:
                     try:
                         self.base.group_remove(group)
@@ -986,10 +1114,10 @@ class DnfModule(YumDnf):
                 self.module.exit_json(**response)
             else:
                 response['changed'] = True
+                if failure_response['failures']:
+                    failure_response['msg'] = 'Failed to install some of the specified packages',
+                    self.module.fail_json(**failure_response)
                 if self.module.check_mode:
-                    if failure_response['failures']:
-                        failure_response['msg'] = 'Failed to install some of the specified packages',
-                        self.module.fail_json(**failure_response)
                     response['msg'] = "Check mode: No changes made, but would have if not in check mode"
                     self.module.exit_json(**response)
 
@@ -1079,6 +1207,9 @@ class DnfModule(YumDnf):
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
                 self.enablerepo, self.installroot
             )
+
+            if self.with_modules:
+                self.module_base = dnf.module.module_base.ModuleBase(self.base)
 
             self.ensure()
 

@@ -58,6 +58,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -67,10 +68,11 @@ EXAMPLES = r'''
     ports:
       - 80
       - 443
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Override the above list of ports with a new list
@@ -80,10 +82,11 @@ EXAMPLES = r'''
       - 3389
       - 8080
       - 25
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create port list with series of ranges
@@ -93,10 +96,11 @@ EXAMPLES = r'''
       - 25-30
       - 80-500
       - 50-78
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Use multiple types of port arguments
@@ -109,29 +113,32 @@ EXAMPLES = r'''
     ports:
       - 8080
       - 443
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Remove port list
   bigip_firewall_port_list:
     name: foo
-    password: secret
-    server: lb.mydomain.com
     state: absent
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 
 - name: Create port list from a file with one port per line
   bigip_firewall_port_list:
     name: lot-of-ports
     ports: "{{ lookup('file', 'my-large-port-list.txt').split('\n') }}"
-    password: secret
-    server: lb.mydomain.com
     state: present
-    user: admin
+    provider:
+      password: secret
+      server: lb.mydomain.com
+      user: admin
   delegate_to: localhost
 '''
 
@@ -139,7 +146,7 @@ RETURN = r'''
 description:
   description: The new description of the port list.
   returned: changed
-  type: string
+  type: str
   sample: My port list
 ports:
   description: The new list of ports applied to the port list.
@@ -162,46 +169,44 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 
 try:
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.icontrol import module_provisioned
 except ImportError:
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.icontrol import module_provisioned
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
-        'portLists': 'port_lists'
+        'portLists': 'port_lists',
     }
 
     api_attributes = [
-        'portLists', 'ports', 'description'
+        'portLists', 'ports', 'description',
     ]
 
     returnables = [
-        'ports', 'port_ranges', 'port_lists', 'description'
+        'ports', 'port_ranges', 'port_lists', 'description',
     ]
 
     updatables = [
-        'description', 'ports', 'port_ranges', 'port_lists'
+        'description', 'ports', 'port_ranges', 'port_lists',
     ]
 
 
@@ -446,17 +451,18 @@ class ModuleManager(object):
         return False
 
     def exec_module(self):
+        if not module_provisioned(self.client, 'afm'):
+            raise F5ModuleError(
+                "AFM must be provisioned to use this module."
+            )
         changed = False
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -479,12 +485,10 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def exists(self):
-        result = self.client.api.tm.security.firewall.port_lists.port_list.exists(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        return result
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -510,42 +514,91 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
-    def create_on_device(self):
-        params = self.changes.api_params()
-        self.client.api.tm.security.firewall.port_lists.port_list.create(
-            name=self.want.name,
-            partition=self.want.partition,
-            **params
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/security/firewall/port-list/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update_on_device(self):
         params = self.changes.api_params()
-        resource = self.client.api.tm.security.firewall.port_lists.port_list.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/security/firewall/port-list/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
-
-    def remove_from_device(self):
-        resource = self.client.api.tm.security.firewall.port_lists.port_list.load(
-            name=self.want.name,
-            partition=self.want.partition
-        )
-        if resource:
-            resource.delete()
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        resource = self.client.api.tm.security.firewall.port_lists.port_list.load(
-            name=self.want.name,
-            partition=self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/security/firewall/port-list/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
         )
-        result = resource.attrs
-        return ApiParameters(params=result)
+        resp = self.client.api.get(uri)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
+
+    def create_on_device(self):
+        params = self.changes.api_params()
+        params['name'] = self.want.name
+        params['partition'] = self.want.partition
+        uri = "https://{0}:{1}/mgmt/tm/security/firewall/port-list/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
+
+    def remove_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/security/firewall/port-list/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.name)
+        )
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):
@@ -578,18 +631,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

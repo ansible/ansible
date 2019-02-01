@@ -107,7 +107,7 @@ RETURN = """
 result:
     description: information about performed operation
     returned: always
-    type: string
+    type: str
     sample: "'com.acme.Extension' installed."
 """
 
@@ -119,7 +119,7 @@ except ImportError:
 import datetime
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import (PyVmomi, connect_to_api, vmware_argument_spec)
+from ansible.module_utils.vmware import connect_to_api, vmware_argument_spec
 
 
 def main():

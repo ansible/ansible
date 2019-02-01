@@ -79,7 +79,7 @@ def backup(module, running_config):
     if not os.path.exists(backup_path):
         try:
             os.mkdir(backup_path)
-        except:
+        except Exception:
             module.fail_json(msg="Can't create directory {0} Permission denied ?".format(backup_path))
     tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
     if 0 < len(backup_filename):
@@ -88,7 +88,7 @@ def backup(module, running_config):
         filename = '%s/%s_config.%s' % (backup_path, module.params['host'], tstamp)
     try:
         open(filename, 'w').write(running_config)
-    except:
+    except Exception:
         module.fail_json(msg="Can't create backup file {0} Permission denied ?".format(filename))
 
 

@@ -55,6 +55,7 @@ import base64
 import os
 import re
 import shlex
+import pkgutil
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
@@ -208,9 +209,11 @@ class ShellModule(ShellBase):
         return self._encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
+        bootstrap_wrapper = pkgutil.get_data("ansible.executor.powershell", "bootstrap_wrapper.ps1")
+
         # pipelining bypass
         if cmd == '':
-            return '-'
+            return self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
 
         # non-pipelining
 
@@ -218,8 +221,10 @@ class ShellModule(ShellBase):
         cmd_parts = list(map(to_text, cmd_parts))
         if shebang and shebang.lower() == '#!powershell':
             if not self._unquote(cmd_parts[0]).lower().endswith('.ps1'):
+                # we're running a module via the bootstrap wrapper
                 cmd_parts[0] = '"%s.ps1"' % self._unquote(cmd_parts[0])
-            cmd_parts.insert(0, '&')
+            wrapper_cmd = "type " + cmd_parts[0] + " | " + self._encode_script(script=bootstrap_wrapper, strict_mode=False, preserve_rc=False)
+            return wrapper_cmd
         elif shebang and shebang.startswith('#!'):
             cmd_parts.insert(0, shebang[2:])
         elif not shebang:

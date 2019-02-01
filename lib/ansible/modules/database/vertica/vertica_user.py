@@ -42,10 +42,12 @@ options:
   expired:
     description:
       - Sets the user's password expiration.
+    type: bool
   ldap:
     description:
       - Set to true if users are authenticated via LDAP.
       - The user will be created with password expired and set to I($ldap$).
+    type: bool
   roles:
     description:
       - Comma separated list of roles to assign to the user.

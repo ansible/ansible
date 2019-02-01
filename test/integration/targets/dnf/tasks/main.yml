@@ -21,20 +21,21 @@
 
 - include: 'dnf.yml'
   when:
-    - ansible_distribution == 'Fedora'
-    - ansible_distribution_major_version|int >= 23
+    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23) or (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8)
 
 - include: 'repo.yml'
   when:
-    - ansible_distribution == 'Fedora'
-    - ansible_distribution_major_version|int >= 23
+    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23) or (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8)
 
 - include: 'dnfinstallroot.yml'
   when:
-    - ansible_distribution == 'Fedora'
-    - ansible_distribution_major_version|int >= 23
+    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23) or (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8)
 
+# Attempting to install a different RHEL release in a tmpdir doesn't work (rhel8 beta)
 - include: 'dnfreleasever.yml'
   when:
-    - ansible_distribution == 'Fedora'
-    - ansible_distribution_major_version|int >= 23
+    - ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 23
+
+- import_tasks: 'modularity.yml'
+  when:
+    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 29) or (ansible_distribution == 'RedHat' and ansible_distribution_major_version|int >= 8)

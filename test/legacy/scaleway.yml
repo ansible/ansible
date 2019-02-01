@@ -11,6 +11,7 @@
     - { role: scaleway_ip, tags: test_scaleway_ip }
     - { role: scaleway_ip_facts, tags: test_scaleway_ip_facts }
     - { role: scaleway_organization_facts, tags: test_scaleway_organization_facts }
+    - { role: scaleway_s3, tags: test_scaleway_s3 }
     - { role: scaleway_security_group_facts, tags: test_scaleway_security_group_facts }
     - { role: scaleway_server_facts, tags: test_scaleway_server_facts }
     - { role: scaleway_snapshot_facts, tags: test_scaleway_snapshot_facts }

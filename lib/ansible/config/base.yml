@@ -318,6 +318,19 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+CONDITINAL_BARE_VARS:
+  name: Allow bare variable evaluation in conditionals
+  default: True
+  type: boolean
+  description:
+    - With this setting on (True), runing conditional evaluation 'var' is treated differently 'var.subkey' as the first is evaluted
+      directly while the second goes though the Jinja2 parser. But 'false' strings in 'var' get evaluated as booleans.
+    - With this settting off they both evalutate the same but in cases in which 'var' was 'false' (a string) it won't get evaluated as a boolean anymore.
+    - Currently this setting defaults to 'True' but will soon change to 'False' and the setting itself will be removed in the future.
+    - Expect the default to change in version 2.10 and that this setting eventually will be deprecated after 2.12
+  env: [{name: ANSIBLE_CONDITIONAL_BARE_VARS}]
+  ini:
+  - {key: conditional_bare_variables, section: defaults}
 ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
@@ -352,6 +365,14 @@ LOCALHOST_WARNING:
   - {key: localhost_warning, section: defaults}
   type: boolean
   version_added: "2.6"
+DOC_FRAGMENT_PLUGIN_PATH:
+  name: documentation fragment plugins path
+  default: ~/.ansible/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments
+  description: Colon separated paths in which Ansible will search for Documentation Fragments Plugins.
+  env: [{name: ANSIBLE_DOC_FRAGMENT_PLUGINS}]
+  ini:
+  - {key: doc_fragment_plugins, section: defaults}
+  type: pathspec
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
   default: ~/.ansible/plugins/action:/usr/share/ansible/plugins/action
@@ -461,7 +482,7 @@ DEFAULT_BECOME_FLAGS:
   - {key: become_flags, section: privilege_escalation}
 DEFAULT_BECOME_USER:
   # FIXME: should really be blank and make -u passing optional depending on it
-  name: Set the user you 'become' via privlege escalation
+  name: Set the user you 'become' via privilege escalation
   default: root
   description: The user your login/remote user 'becomes' when using privilege escalation, most systems will use 'root' when no user is specified.
   env: [{name: ANSIBLE_BECOME_USER}]
@@ -1383,6 +1404,15 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+HOST_PATTERN_MISMATCH:
+  name: Control host pattern mismatch behaviour
+  default: 'warning'
+  description: This setting changes the behaviour of mismatched host patterns, it allows you to force a fatal error, a warning or just ignore it
+  env: [{name: ANSIBLE_HOST_PATTERN_MISMATCH}]
+  ini:
+  - {key: host_pattern_mismatch, section: inventory}
+  choices: ['warning', 'error', 'ignore']
+  version_added: "2.8"
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
   default: True
@@ -1406,9 +1436,43 @@ INVENTORY_ANY_UNPARSED_IS_FAILED:
   ini:
     - {key: any_unparsed_is_failed, section: inventory}
   version_added: "2.7"
+INVENTORY_CACHE_ENABLED:
+  name: Inventory caching enabled
+  default: False
+  description: Toggle to turn on inventory caching
+  env: [{name: ANSIBLE_INVENTORY_CACHE}]
+  ini:
+  - {key: cache, section: inventory}
+  type: bool
+INVENTORY_CACHE_PLUGIN:
+  name: Inventory cache plugin
+  description: The plugin for caching inventory. If INVENTORY_CACHE_PLUGIN is not provided CACHE_PLUGIN can be used instead.
+  env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN}]
+  ini:
+  - {key: cache_plugin, section: inventory}
+INVENTORY_CACHE_PLUGIN_CONNECTION:
+  name: Inventory cache plugin URI to override the defaults section
+  description: The inventory cache connection. If INVENTORY_CACHE_PLUGIN_CONNECTION is not provided CACHE_PLUGIN_CONNECTION can be used instead.
+  env: [{name: ANSIBLE_INVENTORY_CACHE_CONNECTION}]
+  ini:
+  - {key: cache_connection, section: inventory}
+INVENTORY_CACHE_PLUGIN_PREFIX:
+  name: Inventory cache plugin table prefix
+  description: The table prefix for the cache plugin. If INVENTORY_CACHE_PLUGIN_PREFIX is not provided CACHE_PLUGIN_PREFIX can be used instead.
+  env: [{name: ANSIBLE_INVENTORY_CACHE_PLUGIN_PREFIX}]
+  default: ansible_facts
+  ini:
+  - {key: cache_prefix, section: inventory}
+INVENTORY_CACHE_TIMEOUT:
+  name: Inventory cache plugin expiration timeout
+  description: Expiration timeout for the inventory cache plugin data. If INVENTORY_CACHE_TIMEOUT is not provided CACHE_TIMEOUT can be used instead.
+  default: 3600
+  env: [{name: ANSIBLE_INVENTORY_CACHE_TIMEOUT}]
+  ini:
+  - {key: cache_timeout, section: inventory}
 INVENTORY_ENABLED:
   name: Active Inventory plugins
-  default: ['host_list', 'script', 'yaml', 'ini', 'toml', 'auto']
+  default: ['host_list', 'script', 'auto', 'yaml', 'ini', 'toml']
   description: List of enabled inventory plugins, it also determines the order in which they are used.
   env: [{name: ANSIBLE_INVENTORY_ENABLED}]
   ini:
@@ -1520,7 +1584,7 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
   type: integer
 PERSISTENT_COMMAND_TIMEOUT:
   name: Persistence command timeout
-  default: 10
+  default: 30
   description: This controls the amount of time to wait for response from remote device before timing out presistent connection.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:

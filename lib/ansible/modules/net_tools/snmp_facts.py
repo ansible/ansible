@@ -91,12 +91,12 @@ RETURN = '''
 ansible_sysdescr:
   description: A textual description of the entity.
   returned: success
-  type: string
+  type: str
   sample: Linux ubuntu-user 4.4.0-93-generic #116-Ubuntu SMP Fri Aug 11 21:17:51 UTC 2017 x86_64
 ansible_sysobjectid:
   description: The vendor's authoritative identification of the network management subsystem contained in the entity.
   returned: success
-  type: string
+  type: str
   sample: 1.3.6.1.4.1.8072.3.2.10
 ansible_sysuptime:
   description: The time (in hundredths of a second) since the network management portion of the system was last re-initialized.
@@ -106,17 +106,17 @@ ansible_sysuptime:
 ansible_syscontact:
   description: The textual identification of the contact person for this managed node, together with information on how to contact this person.
   returned: success
-  type: string
+  type: str
   sample: Me <me@example.org>
 ansible_sysname:
   description: An administratively-assigned name for this managed node.
   returned: success
-  type: string
+  type: str
   sample: ubuntu-user
 ansible_syslocation:
   description: The physical location of this node (e.g., `telephone closet, 3rd floor').
   returned: success
-  type: string
+  type: str
   sample: Sitting on the Dock of the Bay
 ansible_all_ipv4_addresses:
   description: List of all IPv4 addresses.
@@ -169,7 +169,7 @@ from collections import defaultdict
 try:
     from pysnmp.entity.rfc3413.oneliner import cmdgen
     has_pysnmp = True
-except:
+except Exception:
     has_pysnmp = False
 
 from ansible.module_utils.basic import AnsibleModule

@@ -68,27 +68,26 @@ RETURN = r'''
 enforced_policy:
   description: The new global Enforced Policy.
   returned: changed
-  type: string
+  type: str
   sample: /Common/enforced1
 service_policy:
   description: The new global Service Policy.
   returned: changed
-  type: string
+  type: str
   sample: /Common/service1
 staged_policy:
   description: The new global Staged Policy.
   returned: changed
-  type: string
+  type: str
   sample: /Common/staged1
 description:
   description: The new description.
   returned: changed
-  type: string
+  type: str
   sample: My description
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import env_fallback
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient

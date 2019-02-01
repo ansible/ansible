@@ -58,7 +58,9 @@ options:
     suboptions:
       ipv4addr:
         description:
-          - Configures the IPv4 address for the host record
+          - Configures the IPv4 address for the host record. Users can dynamically
+            allocate ipv4 address to host record by passing dictionary containing,
+            I(nios_next_ip) and I(CIDR network range). See example
         required: true
         aliases:
           - address
@@ -192,6 +194,18 @@ EXAMPLES = '''
       - address: 192.168.10.1
         dhcp: true
         mac: 00-80-C8-E3-4C-BD
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: dynamically add host record to next available ip
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      - address: {nios_next_ip: 192.168.10.0/24}
+    comment: this is a test comment
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"

@@ -21,7 +21,7 @@ description:
   - This module controls active and configured mount points in C(/etc/fstab).
 author:
   - Ansible Core Team
-  - Seth Vidal
+  - Seth Vidal (@skvidal)
 version_added: "0.6"
 options:
   path:
@@ -432,7 +432,7 @@ def remount(module, args):
             rc = 1
         else:
             rc, out, err = module.run_command(cmd)
-    except:
+    except Exception:
         rc = 1
 
     msg = ''

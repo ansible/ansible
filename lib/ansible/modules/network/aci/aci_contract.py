@@ -21,8 +21,12 @@ notes:
   Contract Subjects can still be removed using this module.
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(vz:BrCP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_contract_subject
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:BrCP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -30,37 +34,44 @@ options:
   contract:
     description:
     - The name of the contract.
+    type: str
     required: yes
     aliases: [ contract_name, name ]
   description:
     description:
     - Description for the contract.
+    type: str
     aliases: [ descr ]
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
   scope:
     description:
     - The scope of a service contract.
     - The APIC defaults to C(context) when unset during creation.
+    type: str
     choices: [ application-profile, context, global, tenant ]
   priority:
     description:
     - The desired QoS class to be used.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ level1, level2, level3, unspecified ]
   dscp:
     description:
     - The target Differentiated Service (DSCP) value.
     - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
     aliases: [ target ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -142,7 +153,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -191,17 +202,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -211,7 +222,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 

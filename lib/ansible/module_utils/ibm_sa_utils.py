@@ -19,7 +19,10 @@ AVAILABLE_PYXCLI_FIELDS = ['pool', 'size', 'snapshot_size',
                            'domain', 'perf_class', 'vol',
                            'iscsi_chap_name', 'iscsi_chap_secret',
                            'cluster', 'host', 'lun', 'override',
-                           'fcaddress', 'iscsi_name']
+                           'fcaddress', 'iscsi_name', 'max_dms',
+                           'max_cgs', 'ldap_id', 'max_mirrors',
+                           'max_pools', 'max_volumes', 'hard_capacity',
+                           'soft_capacity']
 
 
 def xcli_wrapper(func):
@@ -73,7 +76,7 @@ def build_pyxcli_command(fields):
     """ Builds the args for pyxcli using the exact args from ansible"""
     pyxcli_args = {}
     for field in fields:
-        if field in AVAILABLE_PYXCLI_FIELDS and fields[field]:
+        if field in AVAILABLE_PYXCLI_FIELDS and fields[field] != '':
             pyxcli_args[field] = fields[field]
     return pyxcli_args
 

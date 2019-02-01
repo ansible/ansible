@@ -4,6 +4,7 @@
 # Copyright 2006-2017 by the Pygments team, see AUTHORS at
 # https://bitbucket.org/birkenfeld/pygments-main/raw/7941677dc77d4f2bf0bbd6140ade85a9454b8b80/AUTHORS
 # Copyright by Kirill Simonov (original author of YAML lexer).
+# Copyright by Norman Richards (original author of JSON lexer).
 #
 # Licensed under BSD license:
 #
@@ -35,9 +36,11 @@
 
 from __future__ import absolute_import, print_function
 
-from pygments.lexer import LexerContext, ExtendedRegexLexer, DelegatingLexer, bygroups, include
-from pygments.lexers import DjangoLexer
+from pygments.lexer import LexerContext, ExtendedRegexLexer, DelegatingLexer, RegexLexer, bygroups, include
+from pygments.lexers import DiffLexer
 from pygments import token
+
+import re
 
 
 class AnsibleYamlLexerContext(LexerContext):
@@ -254,7 +257,7 @@ class AnsibleYamlLexer(ExtendedRegexLexer):
             # whitespaces separating tokens
             (r'[ ]+', token.Text),
             # key with colon
-            (r'([^,:?\[\]{}\n]+)(:)(?=[ ]|$)',
+            (r'''([^,:?\[\]{}"'\n]+)(:)(?=[ ]|$)''',
              bygroups(token.Name.Tag, set_indent(token.Punctuation, implicit=True))),
             # tags, anchors and aliases,
             include('descriptors'),
@@ -333,7 +336,7 @@ class AnsibleYamlLexer(ExtendedRegexLexer):
         # a flow mapping indicated by '{' and '}'
         'flow-mapping': [
             # key with colon
-            (r'([^,:?\[\]{}\n]+)(:)(?=[ ]|$)',
+            (r'''([^,:?\[\]{}"'\n]+)(:)(?=[ ]|$)''',
              bygroups(token.Name.Tag, token.Punctuation)),
             # include flow collection rules
             include('flow-collection'),
@@ -457,6 +460,89 @@ class AnsibleYamlLexer(ExtendedRegexLexer):
         return super(AnsibleYamlLexer, self).get_tokens_unprocessed(text, context)
 
 
+class AnsibleDjangoLexer(RegexLexer):
+    """
+    Generic `django <http://www.djangoproject.com/documentation/templates/>`_
+    and `jinja <http://wsgiarea.pocoo.org/jinja/>`_ template lexer.
+
+    It just highlights django/jinja code between the preprocessor directives,
+    other data is left untouched by the lexer.
+    """
+
+    name = 'Django/Jinja'
+    aliases = ['django', 'jinja']
+    mimetypes = ['application/x-django-templating', 'application/x-jinja']
+
+    flags = re.M | re.S
+
+    tokens = {
+        'root': [
+            (r'[^{]+', token.Other),
+            (r'\{\{', token.Comment.Preproc, 'var'),
+            # jinja/django comments
+            (r'\{[*#].*?[*#]\}', token.Comment),
+            # django comments
+            (r'(\{%)(-?\s*)(comment)(\s*-?)(%\})(.*?)'
+             r'(\{%)(-?\s*)(endcomment)(\s*-?)(%\})',
+             bygroups(token.Comment.Preproc, token.Text, token.Keyword, token.Text, token.Comment.Preproc,
+                      token.Comment, token.Comment.Preproc, token.Text, token.Keyword, token.Text,
+                      token.Comment.Preproc)),
+            # raw jinja blocks
+            (r'(\{%)(-?\s*)(raw)(\s*-?)(%\})(.*?)'
+             r'(\{%)(-?\s*)(endraw)(\s*-?)(%\})',
+             bygroups(token.Comment.Preproc, token.Text, token.Keyword, token.Text, token.Comment.Preproc,
+                      token.Text, token.Comment.Preproc, token.Text, token.Keyword, token.Text,
+                      token.Comment.Preproc)),
+            # filter blocks
+            (r'(\{%)(-?\s*)(filter)(\s+)([a-zA-Z_]\w*)',
+             bygroups(token.Comment.Preproc, token.Text, token.Keyword, token.Text, token.Name.Function),
+             'block'),
+            (r'(\{%)(-?\s*)([a-zA-Z_]\w*)',
+             bygroups(token.Comment.Preproc, token.Text, token.Keyword), 'block'),
+            (r'\{', token.Other)
+        ],
+        'varnames': [
+            (r'(\|)(\s*)([a-zA-Z_]\w*)',
+             bygroups(token.Operator, token.Text, token.Name.Function)),
+            (r'(is)(\s+)(not)?(\s+)?([a-zA-Z_]\w*)',
+             bygroups(token.Keyword, token.Text, token.Keyword, token.Text, token.Name.Function)),
+            (r'(_|true|false|none|True|False|None)\b', token.Keyword.Pseudo),
+            (r'(in|as|reversed|recursive|not|and|or|is|if|else|import|'
+             r'with(?:(?:out)?\s*context)?|scoped|ignore\s+missing)\b',
+             token.Keyword),
+            (r'(loop|block|super|forloop)\b', token.Name.Builtin),
+            (r'[a-zA-Z_][\w-]*', token.Name.Variable),
+            (r'\.\w+', token.Name.Variable),
+            (r':?"(\\\\|\\"|[^"])*"', token.String.Double),
+            (r":?'(\\\\|\\'|[^'])*'", token.String.Single),
+            (r'([{}()\[\]+\-*/%,:~]|[><=]=?|!=)', token.Operator),
+            (r"[0-9](\.[0-9]*)?(eE[+-][0-9])?[flFLdD]?|"
+             r"0[xX][0-9a-fA-F]+[Ll]?", token.Number),
+        ],
+        'var': [
+            (r'\s+', token.Text),
+            (r'(-?)(\}\})', bygroups(token.Text, token.Comment.Preproc), '#pop'),
+            include('varnames')
+        ],
+        'block': [
+            (r'\s+', token.Text),
+            (r'(-?)(%\})', bygroups(token.Text, token.Comment.Preproc), '#pop'),
+            include('varnames'),
+            (r'.', token.Punctuation)
+        ]
+    }
+
+    def analyse_text(text):
+        rv = 0.0
+        if re.search(r'\{%\s*(block|extends)', text) is not None:
+            rv += 0.4
+        if re.search(r'\{%\s*if\s*.*?%\}', text) is not None:
+            rv += 0.1
+        if re.search(r'\{\{.*?\}\}', text) is not None:
+            rv += 0.1
+        return rv
+
+
 class AnsibleYamlJinjaLexer(DelegatingLexer):
     """
     Subclass of the `DjangoLexer` that highlights unlexed data with the
@@ -473,7 +559,128 @@ class AnsibleYamlJinjaLexer(DelegatingLexer):
     mimetypes = ['text/x-yaml+jinja']
 
     def __init__(self, **options):
-        super(AnsibleYamlJinjaLexer, self).__init__(AnsibleYamlLexer, DjangoLexer, **options)
+        super(AnsibleYamlJinjaLexer, self).__init__(AnsibleYamlLexer, AnsibleDjangoLexer, **options)
+
+
+class AnsibleOutputPrimaryLexer(RegexLexer):
+    name = 'Ansible-output-primary'
+
+    # The following definitions are borrowed from Pygment's JSON lexer.
+    # It has been originally authored by Norman Richards.
+
+    # integer part of a number
+    int_part = r'-?(0|[1-9]\d*)'
+
+    # fractional part of a number
+    frac_part = r'\.\d+'
+
+    # exponential part of a number
+    exp_part = r'[eE](\+|-)?\d+'
+
+    tokens = {
+        # #########################################
+        # # BEGIN: states from JSON lexer #########
+        # #########################################
+        'whitespace': [
+            (r'\s+', token.Text),
+        ],
+
+        # represents a simple terminal value
+        'simplevalue': [
+            (r'(true|false|null)\b', token.Keyword.Constant),
+            (('%(int_part)s(%(frac_part)s%(exp_part)s|'
+              '%(exp_part)s|%(frac_part)s)') % vars(),
+             token.Number.Float),
+            (int_part, token.Number.Integer),
+            (r'"(\\\\|\\"|[^"])*"', token.String),
+        ],
+
+
+        # the right hand side of an object, after the attribute name
+        'objectattribute': [
+            include('value'),
+            (r':', token.Punctuation),
+            # comma terminates the attribute but expects more
+            (r',', token.Punctuation, '#pop'),
+            # a closing bracket terminates the entire object, so pop twice
+            (r'\}', token.Punctuation, '#pop:2'),
+        ],
+
+        # a json object - { attr, attr, ... }
+        'objectvalue': [
+            include('whitespace'),
+            (r'"(\\\\|\\"|[^"])*"', token.Name.Tag, 'objectattribute'),
+            (r'\}', token.Punctuation, '#pop'),
+        ],
+
+        # json array - [ value, value, ... }
+        'arrayvalue': [
+            include('whitespace'),
+            include('value'),
+            (r',', token.Punctuation),
+            (r'\]', token.Punctuation, '#pop'),
+        ],
+
+        # a json value - either a simple value or a complex value (object or array)
+        'value': [
+            include('whitespace'),
+            include('simplevalue'),
+            (r'\{', token.Punctuation, 'objectvalue'),
+            (r'\[', token.Punctuation, 'arrayvalue'),
+        ],
+        # #########################################
+        # # END: states from JSON lexer ###########
+        # #########################################
+
+        'host-postfix': [
+            (r'\n', token.Text, '#pop:3'),
+            (r'( )(=>)( )(\{)',
+                bygroups(token.Text, token.Punctuation, token.Text, token.Punctuation),
+                'objectvalue'),
+        ],
+
+        'host-error': [
+            (r'(?:(:)( )(UNREACHABLE|FAILED)(!))?',
+                bygroups(token.Punctuation, token.Text, token.Keyword, token.Punctuation),
+                'host-postfix'),
+            (r'', token.Text, 'host-postfix'),
+        ],
+
+        'host-name': [
+            (r'(\[)([^ \]]+)(?:( )(=>)( )([^\]]+))?(\])',
+                bygroups(token.Punctuation, token.Name.Variable, token.Text, token.Punctuation, token.Text, token.Name.Variable, token.Punctuation),
+                'host-error')
+        ],
+
+        'host-result': [
+            (r'\n', token.Text, '#pop'),
+            (r'( +)(ok|changed|failed|skipped|unreachable)(=)([0-9]+)',
+                bygroups(token.Text, token.Keyword, token.Punctuation, token.Number.Integer)),
+        ],
+
+        'root': [
+            (r'(PLAY|TASK|PLAY RECAP)(?:( )(\[)([^\]]+)(\]))?( )(\*+)(\n)',
+                bygroups(token.Keyword, token.Text, token.Punctuation, token.Literal, token.Punctuation, token.Text, token.Name.Variable, token.Text)),
+            (r'(fatal|ok|changed|skipping)(:)( )',
+                bygroups(token.Keyword, token.Punctuation, token.Text),
+                'host-name'),
+            (r'(\[)(WARNING)(\]:)([^\n]+)',
+                bygroups(token.Punctuation, token.Keyword, token.Punctuation, token.Text)),
+            (r'([^ ]+)( +)(:)',
+                bygroups(token.Name, token.Text, token.Punctuation),
+                'host-result'),
+            (r'(\tto retry, use: )(.*)(\n)', bygroups(token.Text, token.Literal.String, token.Text)),
+            (r'.*\n', token.Other),
+        ],
+    }
+
+
+class AnsibleOutputLexer(DelegatingLexer):
+    name = 'Ansible-output'
+    aliases = ['ansible-output']
+
+    def __init__(self, **options):
+        super(AnsibleOutputLexer, self).__init__(DiffLexer, AnsibleOutputPrimaryLexer, **options)
 
 
 # ####################################################################################################
@@ -490,7 +697,12 @@ def setup(app):
     """ Initializer for Sphinx extension API.
         See http://www.sphinx-doc.org/en/stable/extdev/index.html#dev-extensions.
     """
-    for lexer in [AnsibleYamlLexer(startinline=True), AnsibleYamlJinjaLexer(startinline=True)]:
+    for lexer in [
+        AnsibleDjangoLexer(startinline=True),
+        AnsibleYamlLexer(startinline=True),
+        AnsibleYamlJinjaLexer(startinline=True),
+        AnsibleOutputLexer(startinline=True)
+    ]:
         app.add_lexer(lexer.name, lexer)
         for alias in lexer.aliases:
             app.add_lexer(alias, lexer)

@@ -83,6 +83,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
@@ -111,27 +112,27 @@ RETURN = r'''
 id:
   description: UUID of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 gateway:
   description: IP address of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.100.212.10
 domain:
   description: Domain the VPN customer gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the VPN customer gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the VPN customer gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 dpd:
   description: Whether dead pear detection is enabled or not.
@@ -146,7 +147,7 @@ esp_lifetime:
 esp_policy:
   description: IKE policy of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: aes256-sha1;modp1536
 force_encap:
   description: Whether encapsulation for NAT traversal is enforced or not.
@@ -161,12 +162,12 @@ ike_lifetime:
 ike_policy:
   description: ESP policy of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: aes256-sha1;modp1536
 name:
   description: Name of this customer gateway.
   returned: success
-  type: string
+  type: str
   sample: my vpn customer gateway
 cidrs:
   description: List of CIDRs of this customer gateway.

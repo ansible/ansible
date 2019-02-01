@@ -44,13 +44,14 @@ options:
         type: bool
     daemon_reload:
         description:
-            - run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+            - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+            - When set to C(yes), runs daemon-reload even if the module does not start or stop anything.
         type: bool
         default: 'no'
         aliases: [ daemon-reload ]
     daemon_reexec:
         description:
-            - run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
+            - Run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
         type: bool
         default: 'no'
         aliases: [ daemon-reexec ]
@@ -66,6 +67,9 @@ options:
         description:
             - run systemctl within a given service manager scope, either as the default system scope (system),
               the current user's scope (user), or the scope of all users (global).
+            - "For systemd to work with 'user', the executing user must have its own instance of dbus started (systemd requirement).
+              The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
+              Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
         choices: [ system, user, global ]
         default: 'system'
         version_added: "2.7"
@@ -252,7 +256,10 @@ status:
         }
 '''  # NOQA
 
+import os
+
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
 from ansible.module_utils._text import to_native
 
@@ -324,6 +331,9 @@ def main():
     )
 
     systemctl = module.get_bin_path('systemctl', True)
+
+    if os.getenv('XDG_RUNTIME_DIR') is None:
+        os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
 
     ''' Set CLI options depending on params '''
     if module.params['user'] is not None:
@@ -492,6 +502,9 @@ def main():
                         (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+            # check for chroot
+            elif is_chroot():
+                module.warn("Target is a chroot. This can lead to false positives or prevent the init system tools from working.")
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])
