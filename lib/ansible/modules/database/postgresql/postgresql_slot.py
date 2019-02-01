@@ -18,7 +18,7 @@ module: postgresql_slot
 short_description: Add or remove slots from a PostgreSQL database.
 description:
   - Adds or removes physical or logical slots from a PostgreSQL database.
-version_added: "2.6"
+version_added: "2.8"
 options:
   slot_name:
     description:
@@ -159,7 +159,7 @@ def main():
         argument_spec=dict(
             login_user=dict(default="postgres"),
             login_password=dict(default="", no_log=True),
-            login_host=dict(default="localhost"),
+            login_host=dict(default="localhost"),:
             port=dict(default="5432"),
             db=dict(required=False),
             slot_name=dict(required=True),
@@ -221,7 +221,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=changed, db=db, slot=slot)
+    module.exit_json(changed=changed, db=db, slot_name=slot)
 
 if __name__ == '__main__':
     main()
