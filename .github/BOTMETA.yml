@@ -109,16 +109,20 @@ files:
   $modules/cloud/cloudstack/:
     maintainers: $team_cloudstack
     labels: cloudstack
-  $modules/cloud/digital_ocean/: BondAnthony
-  $modules/cloud/digital_ocean/_digital_ocean.py: alukovenko
-  $modules/cloud/digital_ocean/digital_ocean_domain.py: alukovenko
-  $modules/cloud/digital_ocean/digital_ocean_sshkey.py: alukovenko mgregson
+  $modules/cloud/digital_ocean/: &digital_ocean
+    keywords: [ digital ocean, droplet ]
+    labels: [ cloud, digital_ocean ]
+    maintainers: $team_digital_ocean
+    support: community
   $modules/cloud/dimensiondata/dimensiondata_network.py: tintoy
-  $modules/cloud/docker/:
+  $modules/cloud/docker/: &docker
     ignored: ThomasSteinbach
+    labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
-  $modules/cloud/docker/docker_network.py: olsaki
+  $modules/cloud/docker/docker_network.py:
+    <<: *docker
+    maintainers: $team_docker olsaki
   $modules/cloud/google/:
     supershipit: $team_google
     maintainers: $team_google
@@ -430,10 +434,14 @@ files:
   $modules/web_infrastructure/htpasswd.py: $team_ansible
   $modules/web_infrastructure/jboss: $team_jboss
   $modules/web_infrastructure/jira.py: Slezhuk
-  $modules/windows/:
-    maintainers: $team_windows
+  $modules/windows/: &windows
     ignored: angstwad georgefrank h0nIg
-  $modules/windows/win_security_policy.py: defionscode
+    keywords: [ powershell, psrp, winrm ]
+    maintainers: $team_windows
+    labels: windows
+  $modules/windows/win_security_policy.py:
+    <<: *windows
+    maintainers: defionscode
   bin/ansible-connection:
     keywords:
       - persistent connection
@@ -447,16 +455,8 @@ files:
       - inventory script
     labels: c:inventory/contrib_script
     support: community
-  contrib/inventory/digital_ocean.py:
-    keywords:
-      - digital_ocean dynamic inventory script
-    maintainers: BondAnthony
-    labels:
-      - cloud
-    support: community
-  contrib/inventory/docker:
-    maintainers: $team_docker
-    supershipit: felixfontein
+  contrib/inventory/digital_ocean.py: *digital_ocean
+  contrib/inventory/docker: *docker
   contrib/inventory/linode:
     keywords:
       - linode dynamic inventory script
@@ -577,14 +577,11 @@ files:
   $module_utils/crypto.py:
     maintainers: Spredzy
     notified: felixfontein
-  $module_utils/csharp:
-    support: core
+  $module_utils/csharp: &windows_core
+    labels: windows
     maintainers: $team_windows_core
-    labels:
-      - windows
-  $module_utils/docker_common.py:
-    maintainers: $team_docker
-    supershipit: felixfontein
+    support: core
+  $module_utils/docker_common.py: *docker
   $module_utils/ec2.py:
     support: core
     labels:
@@ -749,11 +746,7 @@ files:
     labels:
       - cloud
   $module_utils/postgres.py: *postgresql
-  $module_utils/powershell:
-    support: core
-    maintainers: $team_windows_core
-    labels:
-      - windows
+  $module_utils/powershell: *windows_core
   $module_utils/pure.py:
     maintainers: $team_purestorage
     labels: pure_storage
@@ -869,9 +862,7 @@ files:
     support: core
   $plugins/action/wait_for_connection.py:
     support: core
-  $plugins/action/win:
-    support: core
-    labels: windows
+  $plugins/action/win: *windows_core
   $plugins/action/yum.py:
     support: core
   $plugins/action/asa:
@@ -1015,9 +1006,8 @@ files:
   $plugins/connection/:
     support: core
   $plugins/connection/docker.py:
+    <<: *docker
     support: community
-    maintainers: $team_docker
-    supershipit: felixfontein
   $plugins/connection/httpapi.py:
     support: network
     maintainers: $team_networking
@@ -1038,12 +1028,10 @@ files:
   $plugins/connection/persistent.py:
     maintainers: $team_networking
     labels: networking
+  $plugins/connection/psrp.py: *windows_core
   $plugins/connection/saltstack.py:
     support: community
-  $plugins/connection/winrm.py:
-    maintainers: $team_windows_core
-    labels:
-      - windows
+  $plugins/connection/winrm.py: *windows_core
 ###############################
 # plugins/doc_fragments
   $plugins/doc_fragments/:
@@ -1057,9 +1045,8 @@ files:
     maintainers: $team_cloudstack
     labels: cloudstack
   $plugins/doc_fragments/docker.py:
+    <<: *docker
     support: community
-    maintainers: $team_docker
-    supershipit: felixfontein
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
   $plugins/doc_fragments/postgres.py: *postgresql
@@ -1174,11 +1161,7 @@ files:
 # plugins/shell
   $plugins/shell/:
     support: core
-  $plugins/shell/powershell.py:
-    support: core
-    maintainers: $team_windows_core
-    labels:
-      - windows
+  $plugins/shell/powershell.py: *windows_core
 ###############################
 # plugins/strategy
   $plugins/strategy/:
@@ -1245,12 +1228,7 @@ files:
 
 ##############################
 # other lib
-
-  lib/ansible/executor/powershell:
-    labels:
-    - windows
-    maintainers: $team_windows_core
-    support: core
+  lib/ansible/executor/powershell: *windows_core
   lib/ansible/template:
     keywords:
       - jinja
@@ -1277,9 +1255,7 @@ files:
     maintainers:
       - samccann
   docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
-  docs/docsite/rst/scenario_guides/guide_docker.rst:
-    maintainers: $team_docker
-    labels: docker
+  docs/docsite/rst/scenario_guides/guide_docker.rst: *docker
   docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
 ###############################
 # 'test' is a component path, then 'test' label will be automatically added
@@ -1297,9 +1273,7 @@ files:
   test/integration/targets/cs_:
     maintainers: $team_cloudstack
     labels: cloudstack
-  test/integration/targets/docker:
-    maintainers: $team_docker
-    supershipit: felixfontein
+  test/integration/targets/docker: *docker
   test/integration/targets/gcp:
     maintainers: $team_google
     supershipit: $team_google
@@ -1329,9 +1303,7 @@ files:
     <<: *scaleway
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
-  test/units/modules/cloud/docker:
-    maintainers: $team_docker
-    supershipit: felixfontein
+  test/units/modules/cloud/docker: *docker
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
@@ -1362,6 +1334,7 @@ macros:
   team_cloudstack: resmo dpassante rhtyd
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
+  team_digital_ocean: aluvenko, BondAnthony, mgregson
   team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet
   team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
