@@ -109,7 +109,7 @@ foreach ($disk in $disks) {
             }
         }
     }
-    $win32_disk_drive = Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue | Where-Object {
+    $win32_disk_drive = Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction SilentlyContinue | Where-Object {
         $_.SerialNumber -eq $disk.SerialNumber
     }
     if ($win32_disk_drive) {
