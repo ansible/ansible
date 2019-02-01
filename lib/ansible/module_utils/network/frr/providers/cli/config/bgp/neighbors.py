@@ -169,7 +169,7 @@ class AFNeighbors(CliProvider):
             return cmd
 
     def _render_remove_private_as(self, item, config=None):
-        cmd = 'neighbor %s remove-private-as' % item['neighbor']
+        cmd = 'neighbor %s remove-private-AS' % item['neighbor']
         if item['remove_private_as'] is False:
             if not config or cmd in config:
                 cmd = 'no %s' % cmd

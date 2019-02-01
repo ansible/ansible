@@ -156,4 +156,4 @@ class AddressFamily(CliProvider):
     def _render_neighbors(self, item, config):
         """ generate bgp neighbor configuration
         """
-        return AFNeighbors(self.params).render(config, nbr_list = item['neighbors'])
+        return AFNeighbors(self.params).render(config, nbr_list=item['neighbors'])
