@@ -103,7 +103,7 @@
       - query_snapshot is not failed
       - query_snapshot is not changed
       - '"class/configSnapshot.json" in query_snapshot.url'
-      - '"configSnapshot.name, \"{{ test_snapshot }}\"" in query_snapshot.filter_string'
+      - '"configSnapshot.name, \"{{ test_snapshot }}\"" in query_snapshot.filter_string|urldecode'
       - query_all is not failed
       - query_all is not changed
       - '"class/configSnapshot.json" in query_all.url'
