@@ -170,7 +170,7 @@
       - query_tenant is not changed
       - query_tenant.current | length == 1
       - query_tenant.current.0.fvTenant.attributes.name == "anstest"
-      - '"rsp-subtree-class=vzBrCP,vzSubj" in query_tenant.filter_string'
+      - '"rsp-subtree-class=vzBrCP,vzSubj" in query_tenant.filter_string|urldecode'
       - '"tn-anstest.json" in query_tenant.url'
       - query_contract is not changed
       - query_contract.current.0.vzBrCP.attributes.name == "anstest"
