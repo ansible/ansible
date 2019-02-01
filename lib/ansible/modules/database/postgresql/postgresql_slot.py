@@ -15,12 +15,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: postgresql_slot
-short_description: Add or remove physical or logical slots from a PostgreSQL database.
+short_description: Add or remove slots from a PostgreSQL database.
 description:
-  - Add or remove slots from a postgresql database.
+  - Adds or removes physical or logical slots from a PostgreSQL database.
 version_added: "2.6"
 options:
-  slot:
+  slot_name:
     description:
       - name of the slot to add or remove
     required: true
@@ -32,11 +32,11 @@ options:
     choices: [ "physical", "logical" ]
   db:
     description:
-      - name of the database to add or remove only the logical slot to/from
+      - Name of the database where you're connecting in order to add or remove only the logical slot to/from
     required: false
   decoder:
     description:
-      - all logical slots must indicate which decoder they're using
+      - All logical slots must indicate which decoder they're using. This parameter does not apply to physical slots.
     required: false
     default: "test_decoding"
   login_user:
@@ -56,11 +56,14 @@ options:
     default: 5432
   state:
     description:
-      - The slot state
+      - The slot state. Whether you wish the slot to be present in the system or to not be present there.
     default: present
     choices: [ "present", "absent" ]
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
+  - Physical replication slots were introduced to PostgreSQL with version 9.4, while logical replication slots were added beginning with version 10.0.
+    Physical slots are explained in https://www.postgresql.org/docs/9.4/protocol-replication.html and logical slots which were a later edition are
+    described in https://www.postgresql.org/docs/10/logicaldecoding-explanation.html
   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL
     must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and
@@ -72,19 +75,19 @@ author: "John Scalia (@jscalia)"
 EXAMPLES = '''
 # Adds physical_slot_one to the cluster running on target host default port 5432
 - postgresql_slot:
-    slot: physical_slot_one
+    slot_name: physical_slot_one
     state: present
 
 # Add a logical_slot_one to the database "acme" on target host default port 5432
 - postgresql_slot:
-    slot: logical_slot_one
+    slot_name: logical_slot_one
     type: logical
     state: present
     decoder: custom_decoder_one
 '''
 
 RETURN = '''
-slot:
+slot_name:
     description: Name of the slot
     returned: success, changed
     type: string
@@ -159,7 +162,7 @@ def main():
             login_host=dict(default="localhost"),
             port=dict(default="5432"),
             db=dict(required=False),
-            slot=dict(required=True),
+            slot_name=dict(required=True),
             type=dict(default="physical", choices=["physical", "logical"]),
             decoder=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
@@ -171,7 +174,7 @@ def main():
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
-    slot = module.params["slot"]
+    slot = module.params["slot_name"]
     type = module.params["type"]
     state = module.params["state"]
     decoder = module.params["decoder"]
