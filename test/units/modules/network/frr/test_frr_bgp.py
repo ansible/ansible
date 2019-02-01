@@ -67,8 +67,9 @@ class TestFrrBgpModule(TestFrrModule):
         obj = Provider(params=dict(config=config, operation='merge'))
 
         commands = obj.render(self._bgp_config)
-        self.assertEqual(sorted(commands), sorted(['router bgp 64496', 'address-family ipv4 unicast', 'redistribute ospf 233 metric 90',
-                                    'exit-address-family', 'exit']))
+        cmd = ['router bgp 64496', 'address-family ipv4 unicast', 'redistribute ospf 233 metric 90',
+               'exit-address-family', 'exit']
+        self.assertEqual(sorted(commands), sorted(cmd))
 
     def test_frr_bgp_address_family_redistribute_idempotent(self):
         rd_1 = dict(protocol='eigrp', metric=10, route_map='RMAP_3', id=None)
@@ -90,9 +91,10 @@ class TestFrrBgpModule(TestFrrModule):
         obj = Provider(params=dict(config=config, operation='merge'))
 
         commands = obj.render(self._bgp_config)
-        self.assertEqual(sorted(commands), sorted(['router bgp 64496', 'address-family ipv4 multicast', 'neighbor 192.51.100.1 activate',
-                                    'neighbor 192.51.100.1 maximum-prefix 35', 'neighbor 192.51.100.3 activate',
-                                    'neighbor 192.51.100.3 route-reflector-client', 'exit-address-family', 'exit']))
+        cmd = ['router bgp 64496', 'address-family ipv4 multicast', 'neighbor 192.51.100.1 activate',
+               'neighbor 192.51.100.1 maximum-prefix 35', 'neighbor 192.51.100.3 activate',
+               'neighbor 192.51.100.3 route-reflector-client', 'exit-address-family', 'exit']
+        self.assertEqual(sorted(commands), sorted(cmd))
 
     def test_frr_bgp_address_family_neighbors_idempotent(self):
         af_nbr_1 = dict(neighbor='2.2.2.2', remove_private_as=True, maximum_prefix=100)
@@ -113,8 +115,9 @@ class TestFrrBgpModule(TestFrrModule):
         obj = Provider(params=dict(config=config, operation='merge'))
 
         commands = obj.render(self._bgp_config)
-        self.assertEqual(sorted(commands), sorted(['router bgp 64496', 'address-family ipv4 multicast', 'network 1.0.0.0/8 route-map RMAP_1',
-                                    'network 192.168.1.0/24 route-map RMAP_2', 'exit-address-family', 'exit' ]))
+        cmd = ['router bgp 64496', 'address-family ipv4 multicast', 'network 1.0.0.0/8 route-map RMAP_1',
+               'network 192.168.1.0/24 route-map RMAP_2', 'exit-address-family', 'exit']
+        self.assertEqual(sorted(commands), sorted(cmd))
 
     def test_frr_bgp_address_family_networks_idempotent(self):
         net = dict(prefix='10.0.0.0', masklen=8, route_map='RMAP_1')
@@ -158,7 +161,6 @@ class TestFrrBgpModule(TestFrrModule):
 
         af_1 = dict(afi='ipv4', safi='unicast', redistribute=[rd])
         af_2 = dict(afi='ipv4', safi='multicast', networks=[net, net2])
-
 
         config = dict(bgp_as=64496, address_family=[af_1, af_2])
         obj = Provider(params=dict(config=config, operation='replace'))
