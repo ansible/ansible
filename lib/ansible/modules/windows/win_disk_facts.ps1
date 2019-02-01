@@ -109,6 +109,41 @@ foreach ($disk in $disks) {
             }
         }
     }
+    $win32_disk_drive = Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue | Where-Object {
+        $_.SerialNumber -eq $disk.SerialNumber
+    }
+    if ($win32_disk_drive) {
+        $disk_info["win32_disk_drive"] += @{
+            status=$win32_disk_drive.status
+            device_id=$win32_disk_drive.DeviceID
+            partitions=$win32_disk_drive.Partitions
+            bytes_per_sector=$win32_disk_drive.BytesPerSector
+            interface_type=$win32_disk_drive.InterfaceType
+            sectors_per_track=$win32_disk_drive.SectorsPerTrack
+            size=$win32_disk_drive.Size
+            total_cylinders=$win32_disk_drive.TotalCylinders
+            total_heads=$win32_disk_drive.TotalHeads
+            total_sectors=$win32_disk_drive.TotalSectors
+            total_tracks=$win32_disk_drive.TotalTracks
+            tracks_per_cylinder=$win32_disk_drive.TracksPerCylinder
+            caption=$win32_disk_drive.Caption
+            description=$win32_disk_drive.Description
+            name=$win32_disk_drive.Name
+            pnp_device_id=$win32_disk_drive.PNPDeviceID
+            power_management_capabilities=$win32_disk_drive.PowerManagementCapabilities
+            power_management_supported=$win32_disk_drive.PowerManagementSupported
+            firmware_revision=$win32_disk_drive.FirmwareRevision
+            manufacturer=$win32_disk_drive.Manufacturer
+            media_loaded=$win32_disk_drive.MediaLoaded
+            media_type=$win32_disk_drive.MediaType
+            model=$win32_disk_drive.Model
+            scsi_bus=$win32_disk_drive.SCSIBus
+            scsi_logical_unit=$win32_disk_drive.SCSILogicalUnit
+            scsi_port=$win32_disk_drive.SCSIPort
+            scsi_target_id=$win32_disk_drive.SCSITargetId
+            serial_number=$win32_disk_drive.SerialNumber
+        }
+    }
     $disk_info.number = $disk.Number
     $disk_info.size = $disk.Size
     $disk_info.bus_type = $disk.BusType
