@@ -142,7 +142,7 @@ files:
   $modules/cloud/scaleway/scaleway_volume.py:
     ignored: hekonsek
   $modules/cloud/smartos/: &solaris
-    keywords: [ beadm, dladm, illumos, ipadm, smartos, solaris, sunos, zfs, zpool ]
+    keywords: [ beadm, dladm, illumos, ipadm, nexenta, omnios, openindiana, pfexec, smartos, solaris, sunos, zfs, zpool ]
     labels: solaris
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
@@ -176,9 +176,11 @@ files:
     keywords: [ mariadb ]
     labels: mysql
     maintainers: $team_mysql
-  $modules/database/postgresql/: matburt
-  $modules/database/postgresql/postgresql_db.py: $team_ansible
-  $modules/database/postgresql/postgresql_user.py: $team_ansible nerzhul
+  $modules/database/postgresql/: &postgresql
+    keywords: [ postgres, postgresql ]
+    labels: postgresql
+    maintainers: $team_postgresql
+    notified: jbscalia
   $modules/database/proxysql/: bmildren
   $modules/database/vertica/: dareko
   $modules/files/acl.py:
@@ -527,13 +529,16 @@ files:
 # MODULE_UTILS
   $module_utils:
     support: community
+  $module_utils/acme.py:
+    maintainers: resmo felixfontein
+  $module_utils/ansible_tower.py:
+    support: community
+    maintainers: $team_tower
   $module_utils/azure_rm_common.py:
     maintainers: $team_azure
     labels:
       - azure
       - cloud
-  $module_utils/acme.py:
-    maintainers: resmo felixfontein
   $module_utils/basic.py:
     support: core
   $module_utils/urls.py:
@@ -544,7 +549,6 @@ files:
     support: core
   $module_utils/compat:
     support: core
-  $module_utils/mysql.py: *mysql
   $module_utils/_text.py:
     support: core
   $module_utils/parsing:
@@ -626,12 +630,18 @@ files:
     maintainers: eikef
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
+  $module_utils/memset.py:
+    maintainers: glitchcrab
+    labels: cloud
+  $module_utils/mysql.py: *mysql
   $module_utils/net_tools/nios/:
     support: core
     labels:
       - networking
       - infoblox
     maintainers: $team_networking sganesh-infoblox
+  $module_utils/netapp:
+    maintainers: $team_netapp
   $module_utils/network:
     labels: networking
   $module_utils/network/a10:
@@ -738,11 +748,15 @@ files:
     maintainers: joshainglis karmab machacekondra
     labels:
       - cloud
+  $module_utils/postgres.py: *postgresql
   $module_utils/powershell:
     support: core
     maintainers: $team_windows_core
     labels:
       - windows
+  $module_utils/pure.py:
+    maintainers: $team_purestorage
+    labels: pure_storage
   $module_utils/redfish_utils.py:
     maintainers: $team_redfish
   $module_utils/remote_management/ucs:
@@ -750,29 +764,18 @@ files:
     labels: ucs
   $module_utils/remote_management/dellemc:
     maintainers: rajeevarakkal
-  $module_utils/pure.py:
-    maintainers: $team_purestorage
-    labels: pure_storage
-  $module_utils/netapp:
-    maintainers: $team_netapp
-  $module_utils/vultr.py: &vultr
-    maintainers: $team_vultr
+  $module_utils/scaleway.py: &scaleway
+    maintainers: $team_scaleway
     labels:
       - cloud
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
   $module_utils/vmware:
     maintainers: $team_vmware
-  $module_utils/memset.py:
-    maintainers: glitchcrab
-    labels: cloud
-  $module_utils/scaleway.py: &scaleway
-    maintainers: $team_scaleway
+  $module_utils/vultr.py: &vultr
+    maintainers: $team_vultr
     labels:
       - cloud
-  $module_utils/ansible_tower.py:
-    support: community
-    maintainers: $team_tower
   $module_utils/xenserver.py:
       maintainers: bvitnik
 
@@ -1059,6 +1062,7 @@ files:
     supershipit: felixfontein
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
+  $plugins/doc_fragments/postgres.py: *postgresql
   $plugins/doc_fragments/vultr.py:
     maintainers: $team_vultr
     labels: cloud
@@ -1306,6 +1310,7 @@ files:
     maintainers: $team_nxos
     labels:
       - networking
+  test/integration/targets/postgresql: *postgresql
   test/integration/targets/setup_acme:
     maintainers: resmo felixfontein
   test/integration/targets/setup_mysql_db: *mysql
@@ -1381,6 +1386,7 @@ macros:
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
+  team_postgresql: amenonsen Andersson007 andytom dagwieers kostiantyn-nemchenko matburt nerzhul
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
