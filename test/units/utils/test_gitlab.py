@@ -7,17 +7,6 @@ from httmock import response  # noqa
 from httmock import urlmatch  # noqa
 
 
-class FakeAnsibleModule(object):
-    def __init__(self):
-        self.check_mode = False
-
-    def fail_json(self, **args):
-        pass
-
-    def exit_json(self, **args):
-        pass
-
-
 # Python 2.7+ is needed for python-gitlab
 GITLAB_MINIMUM_PYTHON_VERSION = (2, 7)
 
