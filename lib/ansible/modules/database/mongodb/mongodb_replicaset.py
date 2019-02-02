@@ -22,11 +22,11 @@ version_added: "2.8"
 options:
     login_user:
         description:
-            - The username used to authenticate with.
+            - The username to authenticate with.
         required: false
     login_password:
         description:
-            - The password used to authenticate with.
+            - The password to authenticate with.
         required: false
     login_database:
         description:
