@@ -13,7 +13,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -24,7 +24,7 @@ module: xfs_quota
 short_description: Set Quotas on XFS filesystems
 description:
   - Configure Quotas on XFS filesystems. /etc/projects and /etc/projid needs to be configured before calling this module when setting project quotas.
-version_added: "2.3"
+version_added: "2.8"
 author: "William Leemans (@bushvin) <willie@elaba.net>"
 options:
   type:
@@ -113,7 +113,7 @@ def main():
         argument_spec=dict(
             type=dict(required=True, choices=['user', 'group', 'project']),
             name=dict(required=False, default=None),
-            mountpoint=dict(aliases=['path'], required=True),
+            mountpoint=dict(required=True),
             bhard=dict(required=False, default=None),
             bsoft=dict(required=False, default=None),
             ihard=dict(required=False, default=None),
@@ -290,6 +290,8 @@ def main():
         changed = True
 
     module.exit_json(changed=changed)
+
+    return True
 
 
 def quota_report(module, mountpoint, name, quota_type, used_type):
