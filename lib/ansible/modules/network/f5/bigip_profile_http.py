@@ -359,7 +359,7 @@ class ModuleParameters(Parameters):
     @property
     def proxy_type(self):
         if self._values['proxy_type'] is None:
-                return None
+            return None
         if self._values['proxy_type'] == 'explicit':
             if self.dns_resolver is None or self.dns_resolver == '':
                 raise F5ModuleError(
@@ -626,7 +626,7 @@ class Difference(object):
             else:
                 return self.want.encrypt_cookies
         if set(self.want.encrypt_cookies) != set(self.have.encrypt_cookies):
-                return self.want.encrypt_cookies
+            return self.want.encrypt_cookies
 
     @property
     def encrypt_cookie_secret(self):
