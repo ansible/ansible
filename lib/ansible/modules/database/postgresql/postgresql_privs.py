@@ -70,6 +70,11 @@ options:
         for the implicitly defined PUBLIC group.
       - 'Alias: I(role)'
     required: yes
+  session_role:
+    version_added: "2.8"
+    description: |
+      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   grant_option:
     description:
       - Whether C(role) may grant/revoke the specified privileges/group
@@ -668,6 +673,7 @@ def main():
             objs=dict(required=False, aliases=['obj']),
             schema=dict(required=False),
             roles=dict(required=True, aliases=['role']),
+            session_role=dict(required=False),
             grant_option=dict(required=False, type='bool',
                               aliases=['admin_option']),
             host=dict(default='', aliases=['login_host']),
@@ -721,6 +727,12 @@ def main():
     except ValueError as e:
         # We raise this when the psycopg library is too old
         module.fail_json(msg=to_native(e))
+
+    if p.session_role:
+        try:
+            conn.cursor.execute('SET ROLE %s' % pg_quote_identifier(p.session_role, 'role'))
+        except Exception as e:
+            module.fail_json(msg="Could not switch to role %s: %s" % (p.session_role, to_native(e)), exception=traceback.format_exc())
 
     try:
         # privs
