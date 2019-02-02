@@ -98,18 +98,6 @@
       - cloudscale_server.image.slug == '{{ cloudscale_server_facts_image }}'
       - cloudscale_server.state == 'running'
 
-# TODO: Why we need to stop manually before absent?
-- name: Stop server
-  cloudscale_server:
-    name: '{{ cloudscale_resource_prefix }}-test-facts'
-    state: stopped
-  register: server
-- name: Verify stop server
-  assert:
-    that:
-      - server is successful
-      - server.name == '{{ cloudscale_resource_prefix }}-test-facts'
-
 - name: Cleanup server
   cloudscale_server:
     name: '{{ cloudscale_resource_prefix }}-test-facts'
