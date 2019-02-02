@@ -1,12 +1,14 @@
 # Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import
+
 from ansible.modules.source_control.gitlab_runner import GitLabRunner
 
-from units.utils.test_gitlab import (GitlabModuleTestCase,
-                                     python_version_match_requirement,
-                                     resp_find_runners, resp_get_runner,
-                                     resp_create_runner, resp_delete_runner)
+from .gitlab import (GitlabModuleTestCase,
+                     python_version_match_requirement,
+                     resp_find_runners, resp_get_runner,
+                     resp_create_runner, resp_delete_runner)
 
 # Gitlab module requirements
 if python_version_match_requirement():

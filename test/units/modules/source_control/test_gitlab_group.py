@@ -1,12 +1,14 @@
 # Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import
+
 from ansible.modules.source_control.gitlab_group import GitLabGroup
 
-from units.utils.test_gitlab import (GitlabModuleTestCase,
-                                     python_version_match_requirement,
-                                     resp_get_group, resp_get_missing_group, resp_create_group,
-                                     resp_create_subgroup, resp_delete_group, resp_find_group_project)
+from .gitlab import (GitlabModuleTestCase,
+                     python_version_match_requirement,
+                     resp_get_group, resp_get_missing_group, resp_create_group,
+                     resp_create_subgroup, resp_delete_group, resp_find_group_project)
 
 # Gitlab module requirements
 if python_version_match_requirement():

@@ -1,14 +1,16 @@
 # Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import
+
 from ansible.modules.source_control.gitlab_user import GitLabUser
 
-from units.utils.test_gitlab import (GitlabModuleTestCase,
-                                     python_version_match_requirement,
-                                     resp_find_user, resp_get_user, resp_get_user_keys,
-                                     resp_create_user_keys, resp_create_user, resp_delete_user,
-                                     resp_get_member, resp_get_group, resp_add_member,
-                                     resp_update_member, resp_get_member)
+from .gitlab import (GitlabModuleTestCase,
+                     python_version_match_requirement,
+                     resp_find_user, resp_get_user, resp_get_user_keys,
+                     resp_create_user_keys, resp_create_user, resp_delete_user,
+                     resp_get_member, resp_get_group, resp_add_member,
+                     resp_update_member, resp_get_member)
 
 # Gitlab module requirements
 if python_version_match_requirement():

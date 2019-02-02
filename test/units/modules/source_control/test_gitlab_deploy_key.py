@@ -1,12 +1,14 @@
 # Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import
+
 from ansible.modules.source_control.gitlab_deploy_key import GitLabDeployKey
 
-from units.utils.test_gitlab import (GitlabModuleTestCase,
-                                     python_version_match_requirement,
-                                     resp_get_project, resp_find_project_deploy_key,
-                                     resp_create_project_deploy_key, resp_delete_project_deploy_key)
+from .gitlab import (GitlabModuleTestCase,
+                     python_version_match_requirement,
+                     resp_get_project, resp_find_project_deploy_key,
+                     resp_create_project_deploy_key, resp_delete_project_deploy_key)
 
 # Gitlab module requirements
 if python_version_match_requirement():
