@@ -115,8 +115,10 @@ def packages_installed(module, names):
     ''' Check if each package is installed and return list of the ones present '''
     pkgs = []
     for pkg in names:
+        if pkg.startswith('CSW'):
+            continue
         rc, out, err = run_command(module, ['pkginfo', '-q', pkg])
-        if rc == 0 and 'CSW' in pkg:
+        if rc == 0:
             pkgs.append(pkg)
     return pkgs
 
@@ -136,9 +138,8 @@ def packages_not_latest(module, names, site, update_catalog):
     # Find packages in the catalog which are not up to date
     packages = []
     for line in out.split('\n')[1:-1]:
-        if 'catalog' not in line:
-            if 'SAME' not in line:
-                packages.append(line.split(' ')[0])
+        if 'catalog' not in line and 'SAME' not in line:
+            packages.append(line.split(' ')[0])
 
     # Remove duplicates
     return list(set(packages))
@@ -217,7 +218,7 @@ def main():
     if state in ['installed', 'present']:
         # Fail with an explicit error when trying to "install" '*'
         if name == ['*']:
-            module.fail_json(msg="Can not use state: present with name: *")
+            module.fail_json(msg="Can not use 'state: present' with name: '*'")
 
         # Build list of packages that are actually not installed from the ones requested
         pkgs = packages_not_installed(module, name)
