@@ -99,6 +99,8 @@ EXAMPLES = r'''
 
 '''
 
+RETURN = ''' # '''
+
 import os
 import sys
 import json
@@ -107,6 +109,7 @@ import grp
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import human_to_bytes
+
 
 def main():
     module = AnsibleModule(
