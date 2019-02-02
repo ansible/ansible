@@ -177,7 +177,7 @@ def main():
             )
         try:
             pwd.getpwnam(name)
-        except:
+        except KeyError as e:
             module.fail_json(msg='User %s doesn\'t exist.' % name)
 
     if quota_type == 'group':
@@ -193,7 +193,7 @@ def main():
             )
         try:
             grp.getgrnam(name)
-        except:
+        except KeyError as e:
             module.fail_json(msg='User %s doesn\'t exist.' % name)
 
     elif quota_type == 'project':
@@ -257,10 +257,10 @@ def main():
         current_rtbsoft, current_rtbhard = quota_report(module, mountpoint, name, quota_type, 'rtb')
 
     limit = []
-    if bsoft is not None and int(bsoft/1024) != current_bsoft:
+    if bsoft is not None and int(bsoft / 1024) != current_bsoft:
         limit.append('bsoft=%s' % bsoft)
 
-    if bhard is not None and int(bhard/1024) != current_bhard:
+    if bhard is not None and int(bhard / 1024) != current_bhard:
         limit.append('bhard=%s' % bhard)
 
     if isoft is not None and isoft != current_isoft:
@@ -269,10 +269,10 @@ def main():
     if ihard is not None and ihard != current_ihard:
         limit.append('ihard=%s' % ihard)
 
-    if rtbsoft is not None and int(rtbsoft/1024) != current_rtbsoft:
+    if rtbsoft is not None and int(rtbsoft / 1024) != current_rtbsoft:
         limit.append('rtbsoft=%s' % rtbsoft)
 
-    if rtbhard is not None and int(rtbhard/1024) != current_rtbhard:
+    if rtbhard is not None and int(rtbhard / 1024) != current_rtbhard:
         limit.append('rtbhard=%s' % rtbhard)
 
     if len(limit) > 0 and not module.check_mode:
