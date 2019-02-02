@@ -262,8 +262,8 @@ files:
   $modules/network/eos/: trishnaguha
   $modules/network/exos/: rdvencioneck
   $modules/network/f5/:
-    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg wojtek0806 JoeReifel $team_networking
-    maintainers: caphrim007
+    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
+    maintainers: caphrim007 wojtek0806
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
   $modules/network/fortimanager/: $team_fortimanager
@@ -685,9 +685,9 @@ files:
   $module_utils/network/exos:
     maintainers: rdvencioneck
   $module_utils/network/f5:
-    maintainers: caphrim007
+    maintainers: caphrim007 wojtek0806
   $module_utils/f5_utils.py:
-    maintainers: caphrim007
+    maintainers: caphrim007 wojtek0806
     labels:
       - f5
   $module_utils/network/fortios:
@@ -877,10 +877,10 @@ files:
     maintainers: jmighion
     labels: networking
   $plugins/action/bigip:
-    maintainers: caphrim007
+    maintainers: caphrim007 wojtek0806
     labels: networking
   $plugins/action/bigiq:
-    maintainers: caphrim007
+    maintainers: caphrim007 wojtek0806
     labels: networking
   $plugins/action/dellos:
     maintainers: skg-net
