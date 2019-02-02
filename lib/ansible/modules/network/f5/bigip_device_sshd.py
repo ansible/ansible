@@ -282,7 +282,7 @@ class Difference(object):
         if self.have.allow is None:
             return self.want.allow
         if set(self.want.allow) != set(self.have.allow):
-                return self.want.allow
+            return self.want.allow
 
 
 class ModuleManager(object):

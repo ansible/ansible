@@ -283,7 +283,7 @@ class Difference(object):
         if self.have.name_servers is None:
             return self.want.name_servers
         if set(self.want.name_servers) != set(self.have.name_servers):
-                return self.want.name_servers
+            return self.want.name_servers
 
     @property
     def search(self):
@@ -305,7 +305,7 @@ class Difference(object):
         if self.have.search is None:
             return self.want.search
         if set(self.want.search) != set(self.have.search):
-                return self.want.search
+            return self.want.search
 
 
 class ModuleManager(object):

@@ -351,7 +351,7 @@ class ModuleParameters(Parameters):
             return self._values['name']
 
         if self._signature_set_exists_on_device(self._values['name']):
-                return self._values['name']
+            return self._values['name']
 
         raise F5ModuleError(
             "The specified signature {0} set does not exist.".format(
