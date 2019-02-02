@@ -86,6 +86,11 @@ options:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER."
       - Note that '[NO]CREATEUSER' is deprecated.
     choices: ["[NO]SUPERUSER", "[NO]CREATEROLE", "[NO]CREATEDB", "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS"]
+  session_role:
+    version_added: "2.8"
+    description: |
+      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   state:
     description:
       - The user (role) state.
@@ -743,7 +748,8 @@ def main():
         ssl_mode=dict(default='prefer', choices=[
             'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(default=None),
-        conn_limit=dict(type='int', default=None)
+        conn_limit=dict(type='int', default=None),
+        session_role=dict(),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -755,6 +761,7 @@ def main():
     state = module.params["state"]
     fail_on_user = module.params["fail_on_user"]
     db = module.params["db"]
+    session_role = module.params["session_role"]
     if db == '' and module.params["priv"] is not None:
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
@@ -807,6 +814,12 @@ def main():
 
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
+    if session_role:
+        try:
+            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+        except Exception as e:
+            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         role_attr_flags = parse_role_attrs(cursor, module.params["role_attr_flags"])
