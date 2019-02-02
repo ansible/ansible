@@ -1,0 +1,116 @@
+# Test code for the pkgutil module
+
+# Copyright: (c) 2019, Dag Wieers (@dagwieers) <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+# CLEAN ENVIRONMENT
+- name: Remove CSWtop
+  pkgutil:
+    name: CSWtop
+    state: absent
+  register: originally_installed
+
+
+# ADD PACKAGE
+- name: Add package (check_mode)
+  pkgutil:
+    name: CSWtop
+    state: present
+  check_mode: yes
+  register: cm_add_package
+
+- name: Verify cm_add_package
+  assert:
+    that:
+    - cm_add_package is changed
+
+- name: Add package (normal mode)
+  pkgutil:
+    name: CSWtop
+    state: present
+  register: nm_add_package
+
+- name: Verify nm_add_package
+  assert:
+    that:
+    - nm_add_package is changed
+
+- name: Add package again (check_mode)
+  pkgutil:
+    name: CSWtop
+    state: present
+  check_mode: yes
+  register: cm_add_package_again
+
+- name: Verify cm_add_package_again
+  assert:
+    that:
+    - cm_add_package_again is not changed
+
+- name: Add package again (normal mode)
+  pkgutil:
+    name: CSWtop
+    state: present
+  register: nm_add_package_again
+
+- name: Verify nm_add_package_again
+  assert:
+    that:
+    - nm_add_package_again is not changed
+
+
+# REMOVE PACKAGE
+- name: Remove package (check_mode)
+  pkgutil:
+    name: CSWtop
+    state: absent
+  check_mode: yes
+  register: cm_remove_package
+
+- name: Verify cm_remove_package
+  assert:
+    that:
+    - cm_remove_package is changed
+
+- name: Remove package (normal mode)
+  pkgutil:
+    name: CSWtop
+    state: absent
+  register: nm_remove_package
+
+- name: Verify nm_remove_package
+  assert:
+    that:
+    - nm_remove_package is changed
+
+- name: Remove package again (check_mode)
+  pkgutil:
+    name: CSWtop
+    state: absent
+  check_mode: yes
+  register: cm_remove_package_again
+
+- name: Verify cm_remove_package_again
+  assert:
+    that:
+    - cm_remove_package_again is not changed
+
+- name: Remove package again (normal mode)
+  pkgutil:
+    name: CSWtop
+    state: absent
+  register: nm_remove_package_again
+
+- name: Verify nm_remove_package_again
+  assert:
+    that:
+    - nm_remove_package_again is not changed
+
+
+# RESTORE ENVIRONMENT
+- name: Reinstall CSWtop
+  pkgutil:
+    name: CSWtop
+    state: present
+  when: originally_installed is changed

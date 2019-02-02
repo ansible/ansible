@@ -19,47 +19,46 @@ DOCUMENTATION = r'''
 module: pkgutil
 short_description: Manage CSW-Packages on Solaris
 description:
-    - Manages CSW packages (SVR4 format) on Solaris 10 and 11.
-    - These were the native packages on Solaris <= 10 and are available
-      as a legacy feature in Solaris 11.
-    - Pkgutil is an advanced packaging system, which resolves dependency on installation.
-      It is designed for CSW packages.
-version_added: "1.3"
+- Manages CSW packages (SVR4 format) on Solaris 10 and 11.
+- These were the native packages on Solaris <= 10 and are available as a legacy feature in Solaris 11.
+- Pkgutil is an advanced packaging system, which resolves dependency on installation.
+  It is designed for CSW packages.
+version_added: '1.3'
 author:
-    - Alexander Winkler (@dermute)
-    - David Ponessa (@scathatheworm)
+- Alexander Winkler (@dermute)
+- David Ponessa (@scathatheworm)
 options:
   name:
     description:
-      - The name of the package.
-      - When using C(state=latest), this can be C('*'), which updates all installed packages managed by pkgutil.
+    - The name of the package.
+    - When using C(state=latest), this can be C('*'), which updates all installed packages managed by pkgutil.
     type: list
     required: true
     aliases: [ pkg ]
   site:
     description:
-      - The repository path to install the package from.
-      - Its global definition is done in C(/etc/opt/csw/pkgutil.conf).
+    - The repository path to install the package from.
+    - Its global definition is done in C(/etc/opt/csw/pkgutil.conf).
   state:
     description:
-      - Whether to install (C(present)), or remove (C(absent)) packages.
-      - The upgrade (C(latest)) operation will update/install the packages to the latest version available.
+    - Whether to install (C(present)), or remove (C(absent)) packages.
+    - The upgrade (C(latest)) operation will update/install the packages to the latest version available.
     type: str
     choices: [ absent, latest, present ]
     default: present
   update_catalog:
     description:
-      - If you want to refresh your catalog from the mirror, set this to (C(yes)).
+    - If you want to refresh your catalog from the mirror, set this to (C(yes)).
     type: bool
     default: no
-    version_added: "2.1"
+    version_added: '2.1'
   force:
     description:
-      - Allows the update process to downgrade packages to what is present in the repostory set this to (C(yes)).
-      - It is useful as a rollback to stable from testing, and similar operations.
+    - Allows the update process to downgrade packages to what is present in the repostory set this to (C(yes)).
+    - It is useful as a rollback to stable from testing, and similar operations.
     type: bool
     default: no
-    version_added: "2.5"
+    version_added: '2.8'
 '''
 
 EXAMPLES = r'''
@@ -97,6 +96,8 @@ EXAMPLES = r'''
     state: latest
     force: yes
 '''
+
+RETURN = r''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 
