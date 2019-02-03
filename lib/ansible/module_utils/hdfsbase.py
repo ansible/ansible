@@ -818,7 +818,9 @@ class HDFSAnsibleModule(object):
         for key, value in X_perms.items():
             user_perms_to_modes[key].update(value)
 
-        or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
+        def or_reduce(mode, perm):
+            return mode | user_perms_to_modes[user][perm]
+
         return reduce(or_reduce, perms, 0)
 
     def _symbolic_mode_to_octal(self, path, symbolic_mode):
