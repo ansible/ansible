@@ -391,7 +391,7 @@ class HDFSAnsibleModule(object):
                 else:
                     urls = [str(url) for url in re.split(r',|;', str(nameservice["urls"]).strip(' ').strip('"').strip('\''))]
             else:
-                raise HdfsError('missing urls parameter in namespace %s.', nameservice)
+                raise HdfsError('missing urls parameter in namespace %s.' % nameservice)
             if "mounts" in nameservice:
                 if isinstance(nameservice["mounts"], list):
                     # list of mounts
@@ -420,8 +420,8 @@ class HDFSAnsibleModule(object):
 
         try:
             nameservices = ast.literal_eval(params.get('nameservices'))
-            raise HdfsError('nameservices parameter "%s" does not have a valid format, it need to be json.', params.get('nameservices'))
         except Exception:
+            raise HdfsError('nameservices parameter "%s" does not have a valid format, it need to be json.' % params.get('nameservices'))
 
         # nameservices could be parsed, check its format now
         if not isinstance(nameservices, list):
