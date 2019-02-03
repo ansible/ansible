@@ -321,6 +321,8 @@ class AzureRMServers(AzureRMModuleBase):
                                                             server_name=self.name,
                                                             parameters=self.parameters)
             else:
+                # structure of parameters for update must be changed
+                self.parameters.update(self.parameters.pop("properties", {}))
                 response = self.mysql_client.servers.update(resource_group_name=self.resource_group,
                                                             server_name=self.name,
                                                             parameters=self.parameters)
