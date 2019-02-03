@@ -394,7 +394,6 @@ class HDFSAnsibleModule(object):
         options = {}
 
         try:
-            #nameservices = json.loads(params.get('nameservices'))
             nameservices = ast.literal_eval(params.get('nameservices'))
         except:
             raise HdfsError('nameservices parameter "%s" does not have a valid format, it need to be json.', params.get('nameservices'))
@@ -508,7 +507,7 @@ class HDFSAnsibleModule(object):
         if status is not None:
             if status['type'] == 'DIRECTORY':
                 return 'directory'
-            else: #FILE'
+            else:
                 return 'file'
         return 'absent'
 
@@ -601,7 +600,7 @@ class HDFSAnsibleModule(object):
     def hdfs_touch(self, path, permission=None):
         try:
             self.client.write(path, data="")
-            ## files are written asynchroniously need to force a wait ##
+            # files are written asynchroniously need to force a wait
             content = self.client.read_file(path)
         except HdfsError as e:
             self.hdfs_fail_json(msg="hdfs error, touch failed: %s" % e)
