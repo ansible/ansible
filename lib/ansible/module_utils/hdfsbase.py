@@ -920,7 +920,7 @@ class HDFSAnsibleModule(object):
                 else:
                     return None
             else:
-                self.hdfs_fail_json(msg="Hdfs error, renew delegation token failed: %s" % str(e))
+                self.hdfs_fail_json(msg="Hdfs error, renew delegation token failed: %s" % e)
         except Exception as e:
             self.hdfs_fail_json(msg="Unknown error, renew delegation token failed: %s" % e)
         return expiration_date
@@ -935,7 +935,7 @@ class HDFSAnsibleModule(object):
                 else:
                     return False
             else:
-                self.hdfs_fail_json(msg="Hdfs error, cancel delegation token failed: %s" % str(e))
+                self.hdfs_fail_json(msg="Hdfs error, cancel delegation token failed: %s" % e)
         except Exception as e:
             self.hdfs_fail_json(msg="Unknown error, cancel delegation token failed: %s" % e)
         return True
