@@ -51,8 +51,27 @@ options:
       - With state C(present) causes the volume to be deleted and recreated if the volume already
         exist and the driver, driver options or labels differ. This will cause any data in the existing
         volume to be lost.
+      - Deprecated. Will be removed in Ansible 2.12. Set I(recreate) to C(options-changed) instead
+        for the same behavior of setting I(force) to C(yes).
     type: bool
-    default: 'no'
+    default: no
+
+  recreate:
+    version_added: "2.8"
+    description:
+      - Controls when a volume will be recreated when I(state) is C(present). Please
+        note that recreating an existing volume will cause I(any data in the existing volume
+        to be lost!) The volume will be deleted and a new volume with the same name will be
+        created.
+      - The value C(always) forces the volume to be always recreated.
+      - The value C(never) makes sure the volume will not be recreated.
+      - The value C(options-changed) makes sure the volume will be recreated if the volume
+        already exist and the driver, driver options or labels differ.
+    choices:
+    - always
+    - never
+    - options-changed
+    default: never
 
   state:
     description:
@@ -133,10 +152,21 @@ class TaskParameters(DockerBaseClass):
         self.driver_options = None
         self.labels = None
         self.force = None
+        self.recreate = None
         self.debug = None
 
         for key, value in iteritems(client.module.params):
             setattr(self, key, value)
+
+        if self.force is not None:
+            if self.recreate != 'never':
+                client.module.fail_json(msg='Cannot use the deprecated "force" '
+                                            'option when "recreate" is set. Please stop '
+                                            'using the force option.')
+            client.module.warn('The "force" option of docker_volume has been deprecated '
+                               'in Ansible 2.8. Please use the "recreate" '
+                               'option, which provides the same functionality as "force".')
+            self.recreate = 'options-changed' if self.force else 'never'
 
 
 class DockerVolumeManager(object):
@@ -249,7 +279,7 @@ class DockerVolumeManager(object):
             differences = self.has_different_config()
 
         self.diff_tracker.add('exists', parameter=True, active=self.existing_volume is not None)
-        if not differences.empty and self.parameters.force:
+        if (not differences.empty and self.parameters.recreate == 'options-changed') or self.parameters.recreate == 'always':
             self.remove_volume()
             self.existing_volume = None
 
@@ -276,7 +306,8 @@ def main():
         driver=dict(type='str', default='local'),
         driver_options=dict(type='dict', default={}),
         labels=dict(type='dict'),
-        force=dict(type='bool', default=False),
+        force=dict(type='bool', removed_in_version='2.12'),
+        recreate=dict(type='str', default='never', choices=['always', 'never', 'options-changed']),
         debug=dict(type='bool', default=False)
     )
 
