@@ -227,7 +227,7 @@ class AzureRMServers(AzureRMModuleBase):
                 elif key == "location":
                     self.parameters["location"] = kwargs[key]
                 elif key == "storage_mb":
-                    self.parameters.setdefault("properties", {})["storage_mb"] = kwargs[key]
+                    self.parameters.setdefault("properties", {}).setdefault("storage_profile", {})["storage_mb"] = kwargs[key]
                 elif key == "version":
                     self.parameters.setdefault("properties", {})["version"] = kwargs[key]
                 elif key == "enforce_ssl":
