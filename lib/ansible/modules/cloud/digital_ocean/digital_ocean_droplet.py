@@ -257,8 +257,27 @@ class DODroplet(object):
         if response.status_code >= 400:
             self.module.fail_json(changed=False, msg=json_data['message'])
         if self.wait:
-            json_data = self.ensure_power_on(json_data['droplet']['id'])
+            json_data = self.ensure_active(json_data['droplet']['id'])
             droplet_data = self.get_addresses(json_data)
+        self.module.exit_json(changed=True, data=droplet_data)
+
+    def rebuild(self):
+        json_data = self.get_droplet()
+        if not json_data:
+            self.module.fail_json(changed=False, msg='Rebuild: droplet not found')
+        if self.module.check_mode:
+            self.module.exit_json(changed=True)
+        droplet_id = json_data['droplet']['id']
+        curr_image = json_data['droplet']['image']['id']
+        do_image = self.module.params['image'] if 'image' in self.module.params and self.module.params['image'] \
+            else curr_image
+        cmd_data = {'type': "rebuild", 'image': do_image}
+        response = self.rest.post('droplets/{0}/actions'.format(droplet_id), data=cmd_data)
+        json_data = response.json
+        if response.status_code >= 400:
+            self.module.fail_json(changed=False, msg=json_data['message'])
+        json_data = self.ensure_unlocked(droplet_id)  # wait for rebuild to finish
+        droplet_data = self.get_addresses(json_data)
         self.module.exit_json(changed=True, data=droplet_data)
 
     def delete(self):
@@ -274,7 +293,17 @@ class DODroplet(object):
         else:
             self.module.exit_json(changed=False, msg='Droplet not found')
 
-    def ensure_power_on(self, droplet_id):
+    def ensure_unlocked(self, droplet_id):
+        end_time = time.time() + self.wait_timeout
+        while time.time() < end_time:
+            response = self.rest.get('droplets/{0}'.format(droplet_id))
+            json_data = response.json
+            if not json_data['droplet']['locked']:
+                return json_data
+            time.sleep(min(2, end_time - time.time()))
+        self.module.fail_json(msg='Droplet action finish timeout')
+
+    def ensure_active(self, droplet_id):
         end_time = time.time() + self.wait_timeout
         while time.time() < end_time:
             response = self.rest.get('droplets/{0}'.format(droplet_id))
@@ -290,6 +319,8 @@ def core(module):
     droplet = DODroplet(module)
     if state == 'present':
         droplet.create()
+    elif state == 'pristine':
+        droplet.rebuild()
     elif state == 'absent':
         droplet.delete()
 
@@ -297,7 +328,7 @@ def core(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(choices=['present', 'absent'], default='present'),
+            state=dict(choices=['present', 'pristine', 'absent'], default='present'),
             oauth_token=dict(
                 aliases=['API_TOKEN'],
                 no_log=True,
