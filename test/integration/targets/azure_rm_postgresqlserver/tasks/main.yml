@@ -69,7 +69,6 @@
       tier: Basic
     location: westus2
     storage_mb: 128000
-    version: 5.6
     enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
