@@ -76,7 +76,6 @@ except ImportError:
     except ImportError:
         pass
 
-from ansible.module_utils.pycompat24 import get_exception
 
 PERM_BITS = 0o7777          # file mode permission bits
 EXEC_PERM_BITS = 0o0111     # execute permission bits
@@ -266,22 +265,22 @@ class HDFSAnsibleModule(object):
             keytab = module.params['keytab']
             try:
                 kinit(principal, password, keytab)
-            except Exception:
-                self.hdfs_fail_json(msg="Kerberos authentication failed: %s." % str(get_exception()))
+            except Exception as e:
+                self.hdfs_fail_json(msg="Kerberos authentication failed: %s." % e)
 
         # Get the client
         try:
             self.client = self.get_client()
-        except Exception:
-            self.hdfs_fail_json(msg="Error instanciating pywhdfs client: %s." % str(get_exception()))
+        except Exception as e:
+            self.hdfs_fail_json(msg="Error instantiating pywhdfs client: %s." % e)
 
     def __del__(self):
         authentication = self.module.params.get('authentication')
         if authentication == 'kerberos':
             try:
                 kdestroy()
-            except Exception:
-                self.hdfs_fail_json(msg="failed to clean kerberos TGT: %s." % str(get_exception()))
+            except Exception as e:
+                self.hdfs_fail_json(msg="failed to clean kerberos TGT: %s." % e)
 
     '''
        Note: about error handling and clean up.
@@ -503,8 +502,8 @@ class HDFSAnsibleModule(object):
         ''' Find out current state '''
         try:
             status = self.client.status(path, strict=False)
-        except Exception:
-            self.hdfs_fail_json(msg = str(get_exception()))
+        except Exception as e:
+            self.hdfs_fail_json(msg=str(e))
 
         if status is not None:
             if status['type'] == 'DIRECTORY':
@@ -517,8 +516,7 @@ class HDFSAnsibleModule(object):
         ''' Find out current state '''
         try:
             status = self.client.status(path, strict=True)
-        except HdfsError:
-            e = get_exception()
+        except HdfsError as e:
             if not strict:
                 # seems there is a problem with strict, it ignores almost all errors.
                 # need to skip only file not found
@@ -529,16 +527,15 @@ class HDFSAnsibleModule(object):
                     self.hdfs_fail_json(msg = str(e))
             else:
                 self.hdfs_fail_json(msg = str(e))
-        except Exception:
-            self.hdfs_fail_json(msg = str(get_exception()))
+        except Exception as e:
+            self.hdfs_fail_json(msg=str(e))
         return status
 
     def hdfs_content(self, path, strict=False):
         ''' Find out current state '''
         try:
             content = self.client.content(path, strict=strict)
-        except HdfsError:
-            e = get_exception()
+        except HdfsError as e:
             if not strict:
                 # seems there is a problem with strict, it ignores almost all errors.
                 # need to skip only file not found
@@ -549,16 +546,15 @@ class HDFSAnsibleModule(object):
                     self.hdfs_fail_json(msg = str(e))
             else:
                 self.hdfs_fail_json(msg = str(e))
-        except Exception:
-            self.hdfs_fail_json(msg = str(get_exception()))
+        except Exception as e:
+            self.hdfs_fail_json(msg=str(e))
         return content
 
     def hdfs_checksum(self, path, strict=False):
         ''' Find out current state '''
         try:
             checksum = self.client.checksum(path)
-        except HdfsError:
-            e = get_exception()
+        except HdfsError as e:
             if not strict:
                 # seems there is a problem with strict, it ignores almost all errors.
                 # need to skip only file not found
@@ -569,8 +565,8 @@ class HDFSAnsibleModule(object):
                     self.hdfs_fail_json(msg = str(e))
             else:
                 self.hdfs_fail_json(msg = str(e))
-        except Exception:
-            self.hdfs_fail_json(msg = str(get_exception()))
+        except Exception as e:
+            self.hdfs_fail_json(msg=str(e))
         return checksum
 
     def hdfs_delete(self, path, recursive=True):
@@ -578,28 +574,28 @@ class HDFSAnsibleModule(object):
             # By default, this method will raise an HdfsError if trying to delete a non-empty directory.
             # returns True if the deletion was successful and False if no file or directory previously existed at hdfs_path
             result = self.client.delete(path, recursive=recursive)
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, delete failed: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, delete failed: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, delete failed: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, delete failed: %s" % e)
         return result
 
     def hdfs_makedirs(self, path, permission=None):
         try:
             self.client.makedirs(path, permission=permission)
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, mkdir failed: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, mkdir failed: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, mkdir failed: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, mkdir failed: %s" % e)
         return True
 
     def hdfs_set_times(self, path, access_time=None, modification_time=None):
         try:
             self.client.set_times(path, access_time=access_time, modification_time=modification_time)
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, updating times failed: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, updating times failed: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, updating times failed: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, updating times failed: %s" % e)
         return True
 
     def hdfs_touch(self, path, permission=None):
@@ -607,10 +603,10 @@ class HDFSAnsibleModule(object):
             self.client.write(path, data="")
             ## files are written asynchroniously need to force a wait ##
             content = self.client.read_file(path)
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, touch failed: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, touch failed: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, touch failed: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, touch failed: %s" % e)
 
     def hdfs_is_dir(self,path):
         status = self.hdfs_status(path, strict=False)
@@ -639,10 +635,10 @@ class HDFSAnsibleModule(object):
             return False
         try:
             self.client.set_owner(path, owner=owner)
-        except HdfsError:
-            self.hdfs_fail_json(path=path, msg="Hdfs error, set owner failed: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, set owner failed: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(path=path, msg="Hdfs error, set owner failed: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, set owner failed: %s" % e)
         return True
 
     def hdfs_set_group(self, path, group):
@@ -651,10 +647,10 @@ class HDFSAnsibleModule(object):
             return False
         try:
             self.client.set_owner(path, group=group)
-        except HdfsError:
-            self.hdfs_fail_json(path=path, msg="Hdfs error, set group failed: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, set group failed: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(path=path, msg="Hdfs error, set group failed: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, set group failed: %s" % e)
         return True
 
     def hdfs_set_replication(self, path, replication):
@@ -663,10 +659,10 @@ class HDFSAnsibleModule(object):
             return False
         try:
             self.client.set_replication(path, replication=replication)
-        except HdfsError:
-            self.hdfs_fail_json(path=path, msg="Hdfs error, set replication failed: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, set replication failed: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(path=path, msg="Hdfs error, set replication failed: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, set replication failed: %s" % e)
         return True
 
     #####################################################################################
@@ -683,14 +679,14 @@ class HDFSAnsibleModule(object):
         if quota == "-1" :
             try:
                 call("hdfs dfsadmin -clrQuota %s" % path, shell=True)
-            except Exception:
-                self.hdfs_fail_json( path=path, msg="clear name quota failed : %s" % str(get_exception()))
+            except Exception as e:
+                self.hdfs_fail_json(path=path, msg="clear name quota failed : %s" % e)
         else:
             try:
                 # I don't know why this seems to work only this way
                 call("hdfs dfsadmin -setQuota %s %s" % (quota, path), shell=True)
-            except Exception:
-                self.hdfs_fail_json(path=path, msg="set name quota failed : %s" % str(get_exception()))
+            except Exception as e:
+                self.hdfs_fail_json(path=path, msg="set name quota failed : %s" % e)
         return True
 
     def hdfs_set_spacequota(self, path, quota):
@@ -701,13 +697,13 @@ class HDFSAnsibleModule(object):
         if quota == "-1" :
             try:
                 call("hdfs dfsadmin -clrSpaceQuota %s" % path, shell=True)
-            except Exception:
-                self.hdfs_fail_json(path=path, msg="set space quota failed : %s" % str(get_exception()))
+            except Exception as e:
+                self.hdfs_fail_json(path=path, msg="set space quota failed : %s" % e)
         else:
             try:
                 call("hdfs dfsadmin -setSpaceQuota %s %s" % (quota, path), shell=True)
-            except Exception:
-                self.hdfs_fail_json(path=path, msg="set space quota failed : %s" % str(get_exception()))
+            except Exception as e:
+                self.hdfs_fail_json(path=path, msg="set space quota failed : %s" % e)
         return True
 
     #################################################################################################################
@@ -839,10 +835,10 @@ class HDFSAnsibleModule(object):
             except Exception:
                 try:
                     mode = self._symbolic_mode_to_octal(path, mode)
-                except Exception:
+                except Exception as e:
                     self.hdfs_fail_json(path=path,
                                    msg="mode must be in octal or symbolic form : %s " % mode,
-                                   details=str(get_exception()))
+                                        details=str(e))
 
                 if mode != stat.S_IMODE(mode):
                     # prevent mode from having extra info orbeing invalid long number
@@ -854,10 +850,10 @@ class HDFSAnsibleModule(object):
             try:
                 # The hdfs setmode does not suport convertings ints to oct
                 self.client.set_permission(path, int(oct(mode),10))
-            except HdfsError:
-                self.hdfs_fail_json(path=path, msg="Hdfs error, set permissions failed: %s" % str(get_exception()))
-            except Exception:
-                self.hdfs_fail_json(path=path, msg="unknown error, set permissions failed: %s" % str(get_exception()))
+            except HdfsError as e:
+                self.hdfs_fail_json(path=path, msg="Hdfs error, set permissions failed: %s" % e)
+            except Exception as e:
+                self.hdfs_fail_json(path=path, msg="unknown error, set permissions failed: %s" % e)
             return True
         else:
             return False
@@ -915,17 +911,16 @@ class HDFSAnsibleModule(object):
     def hdfs_get_token(self, renewer, kind=None, service= None):
         try:
             token = self.client.getDelegationToken(renewer=renewer, kind=kind, service=service)
-        except HdfsError:
-            self.hdfs_fail_json(msg="Hdfs error, create delegation token failed: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="Unknown error, create delegation token failed: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="Hdfs error, create delegation token failed: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="Unknown error, create delegation token failed: %s" % e)
         return token['urlString']
 
     def hdfs_renew_token(self, tokenid, strict=True):
         try:
             expiration_date = self.client.renewDelegationToken(token=tokenid)
-        except HdfsError:
-            e = get_exception()
+        except HdfsError as e:
             if e.message is None:
                 if strict:
                     self.hdfs_fail_json(msg="Hdfs error, renew delegation token failed: token id %s is not a valid token." % tokenid)
@@ -933,15 +928,14 @@ class HDFSAnsibleModule(object):
                     return None
             else:
                 self.hdfs_fail_json(msg="Hdfs error, renew delegation token failed: %s" % str(e))
-        except Exception:
-            self.hdfs_fail_json(msg="Unknown error, renew delegation token failed: %s" % str(get_exception()))
+        except Exception as e:
+            self.hdfs_fail_json(msg="Unknown error, renew delegation token failed: %s" % e)
         return expiration_date
 
     def hdfs_cancel_token(self, tokenid, strict=True):
         try:
             self.client.cancelDelegationToken(token=tokenid)
-        except HdfsError:
-            e = get_exception()
+        except HdfsError as e:
             if e.message is None:
                 if strict:
                     self.hdfs_fail_json(msg="Hdfs error, cancel delegation token failed: token id %s is not a valid token." % tokenid)
@@ -949,8 +943,8 @@ class HDFSAnsibleModule(object):
                     return False
             else:
                 self.hdfs_fail_json(msg="Hdfs error, cancel delegation token failed: %s" % str(e))
-        except Exception:
-            self.hdfs_fail_json(msg="Unknown error, cancel delegation token failed: %s" % str(get_exception()))
+        except Exception as e:
+            self.hdfs_fail_json(msg="Unknown error, cancel delegation token failed: %s" % e)
         return True
 
     #################################################################################################################
@@ -960,21 +954,21 @@ class HDFSAnsibleModule(object):
     def hdfs_create_snapshot(self, path, name):
         try:
             sspath=self.client.create_snapshot(hdfs_path=path, snapshotname=name)
-        except Exception:
-            self.hdfs_fail_json(msg="error, could not create snapshot on path %s : %s" % (path,str(get_exception())))
+        except Exception as e:
+            self.hdfs_fail_json(msg="error, could not create snapshot on path %s : %s" % (path, e))
         return sspath
 
     def hdfs_delete_snapshot(self, path, name):
         try:
             self.client.delete_snapshot(hdfs_path=path, snapshotname=name)
-        except Exception:
-            self.hdfs_fail_json(msg="error, could not delete snapshot %s on path %s : %s" % (name,path,str(get_exception())))
+        except Exception as e:
+            self.hdfs_fail_json(msg="error, could not delete snapshot %s on path %s : %s" % (name, path, e))
 
     def hdfs_rename_snapshot(self, path, old_name, new_name):
         try:
             self.client.rename_snapshot(hdfs_path=path, oldsnapshotname=old_name, snapshotname=new_name)
-        except Exception:
-            self.hdfs_fail_json(msg="error, could not rename snapshot %s to %s on path %s : %s" % (old_name,new_name,path,str(get_exception())))
+        except Exception as e:
+            self.hdfs_fail_json(msg="error, could not rename snapshot %s to %s on path %s : %s" % (old_name, new_name, path, e))
 
     def hdfs_list_snapshots(self, path):
         snapshots_path = self.hdfs_resolvepath(path) + "/.snapshot"
@@ -982,8 +976,8 @@ class HDFSAnsibleModule(object):
             self.hdfs_fail_json(msg="error, hdfs path %s is not a valid snapshottable directory" % (path))
         try:
             res = self.client.list(hdfs_path=snapshots_path)
-        except Exception:
-            self.hdfs_fail_json(msg="error, could not list snapshots for path %s : %s" % (path,str(get_exception())))
+        except Exception as e:
+            self.hdfs_fail_json(msg="error, could not list snapshots for path %s : %s" % (path, e))
         return res
 
     #################################################################################################################
@@ -993,27 +987,27 @@ class HDFSAnsibleModule(object):
     def hdfs_getxattrs(self, path, key=None, strict=False):
         try:
             xattr = self.client.getxattrs(hdfs_path=path, key=key, strict=strict)
-        except Exception:
-            self.hdfs_fail_json(msg="error, could not fetch extended attribute on path %s : %s" % (path,str(get_exception())))
+        except Exception as e:
+            self.hdfs_fail_json(msg="error, could not fetch extended attribute on path %s : %s" % (path, e))
         return xattr
 
     def hdfs_listxattrs(self, path, strict=False):
         try:
             xattr = self.client.listxattrs(hdfs_path=path, strict=strict)
-        except Exception:
-            self.hdfs_fail_json(msg="error, could not fetch extended attribute keys for path %s : %s" % (path,str(get_exception())))
+        except Exception as e:
+            self.hdfs_fail_json(msg="error, could not fetch extended attribute keys for path %s : %s" % (path, e))
         return xattr
 
     def hdfs_setxattr(self, path, key, value, overwrite=True):
         changed = False
 
-        current=self.hdfs_getxattrs(path=path,key=key)
-        if current is None or not key in current or value != current[key]:
+        current = self.hdfs_getxattrs(path=path, key=key)
+        if current is None or key not in current or value != current[key]:
             try:
                 xattr = self.client.setxattr(hdfs_path=path, key=key, value=value, overwrite=overwrite)
                 changed = True
-            except Exception:
-                self.hdfs_fail_json(msg="error, could set extended attribute %s for path %s : %s" % (key,path,str(get_exception())))
+            except Exception as e:
+                self.hdfs_fail_json(msg="error, could set extended attribute %s for path %s : %s" % (key, path, e))
         return changed
 
     def hdfs_rmxattr(self, path, key, strict=False):
@@ -1023,8 +1017,8 @@ class HDFSAnsibleModule(object):
         if current is not None and key in current:
             try:
                 changed = self.client.removexattr(hdfs_path=path, key=key, strict=strict)
-            except Exception:
-                self.hdfs_fail_json(msg="error, could remove extended attribute %s for path %s : %s" % (key,path,str(get_exception())))
+            except Exception as e:
+                self.hdfs_fail_json(msg="error, could remove extended attribute %s for path %s : %s" % (key, path, e))
         return changed
 
     #################################################################################################################
@@ -1063,10 +1057,10 @@ class HDFSAnsibleModule(object):
         try:
             raw_entries = self.client.getAclStatus(hdfs_path=path, strict=strict)
             entries = [ entry for entry in raw_entries['entries'] ]
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, could not fetch file acls: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, could not fetch file acls: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, could not fetch file acls: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, could not fetch file acls: %s" % e)
         return entries
 
     def hdfs_remove_all_file_acl(self, path, strict=False):
@@ -1083,10 +1077,10 @@ class HDFSAnsibleModule(object):
             new_entries = self.hdfs_getacls(path=path,strict=strict)
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, could not remove file acls: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, could not remove file acls: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, could not remove file acls: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, could not remove file acls: %s" % e)
         return changed
 
     def hdfs_remove_allacls(self, path, recursive=False, strict=False):
@@ -1119,10 +1113,10 @@ class HDFSAnsibleModule(object):
             new_entries = self.hdfs_getacls(path=path,strict=strict)
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, could not remove file acls: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, could not remove file acls: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, could not remove file acls: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, could not remove file acls: %s" % e)
         return changed
 
     def hdfs_remove_acls(self, path, entries, recursive=False, strict=False):
@@ -1179,10 +1173,10 @@ class HDFSAnsibleModule(object):
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
 
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, could not add file acls: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, could not add file acls: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, could not add file acls: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, could not add file acls: %s" % e)
         return changed
 
     def hdfs_addacls(self, path, entries, recursive=False, strict=False):
@@ -1227,10 +1221,10 @@ class HDFSAnsibleModule(object):
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
 
-        except HdfsError:
-            self.hdfs_fail_json(msg="hdfs error, could not set file acls: %s" % str(get_exception()))
-        except Exception:
-            self.hdfs_fail_json(msg="unknown error, could not set file acls: %s" % str(get_exception()))
+        except HdfsError as e:
+            self.hdfs_fail_json(msg="hdfs error, could not set file acls: %s" % e)
+        except Exception as e:
+            self.hdfs_fail_json(msg="unknown error, could not set file acls: %s" % e)
         return changed
 
     def hdfs_setacls(self, path, entries, recursive=False, strict=False):
