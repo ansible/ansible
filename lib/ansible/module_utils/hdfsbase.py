@@ -342,7 +342,7 @@ class HDFSAnsibleModule(object):
                             os.remove(f)
                         else:
                             os.removedirs(f)
-                except:
+                except Exception:
                     pass
 
         if self.local_file_restore_onfail is not None and len(self.local_file_restore_onfail) != 0:
@@ -355,7 +355,7 @@ class HDFSAnsibleModule(object):
                             os.removedirs(restore_path)
                     if osp.exists(backup_path):
                         os.rename(backup_path, restore_path)
-                except:
+                except Exception:
                     pass
 
         if self.file_cleanup_onfail is not None and len(self.file_cleanup_onfail) != 0:
@@ -365,7 +365,7 @@ class HDFSAnsibleModule(object):
                         self.client.delete(f, recursive=True)
                     else:
                         self.client.delete(f)
-                except:
+                except Exception:
                     pass
 
         if self.file_restore_onfail is not None and len(self.file_restore_onfail) != 0:
@@ -373,7 +373,7 @@ class HDFSAnsibleModule(object):
                 try:
                     self.client.delete(restore_path)
                     self.client.rename(backup_path, restore_path)
-                except:
+                except Exception:
                     pass
 
     def _parse_nameservice_parameter(self, nameservice):
@@ -420,8 +420,8 @@ class HDFSAnsibleModule(object):
 
         try:
             nameservices = ast.literal_eval(params.get('nameservices'))
-        except:
             raise HdfsError('nameservices parameter "%s" does not have a valid format, it need to be json.', params.get('nameservices'))
+        except Exception:
 
         # nameservices could be parsed, check its format now
         if not isinstance(nameservices, list):
