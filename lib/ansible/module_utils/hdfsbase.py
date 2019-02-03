@@ -546,7 +546,6 @@ class HDFSAnsibleModule(object):
                 # need to skip only file not found
                 if "File does not exist" in str(e):
                     status = None
-                    pass
                 else:
                     self.hdfs_fail_json(msg=str(e))
             else:
@@ -565,7 +564,6 @@ class HDFSAnsibleModule(object):
                 # need to skip only file not found
                 if "File does not exist" in str(e):
                     content = None
-                    pass
                 else:
                     self.hdfs_fail_json(msg=str(e))
             else:
@@ -584,7 +582,6 @@ class HDFSAnsibleModule(object):
                 # need to skip only file not found
                 if 'File %s not found.' % path in str(e):
                     checksum = None
-                    pass
                 else:
                     self.hdfs_fail_json(msg=str(e))
             else:
