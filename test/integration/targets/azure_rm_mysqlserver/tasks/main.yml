@@ -76,12 +76,12 @@
     enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!
-#  register: output
-#- name: Assert the state has not changed
-#  assert:
-#    that:
-#      - output.changed
-#      - output.state == 'Ready'
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
 - debug:
     var: output
 
@@ -90,8 +90,6 @@
     resource_group: "{{ resource_group }}"
     name: mysqlsrv{{ rpfx }}
   register: output
-- debug:
-    var: output
 - name: Assert that storage size is correct
   assert:
     that:
