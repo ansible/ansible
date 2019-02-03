@@ -85,7 +85,7 @@ EXAMPLES = '''
     password: cisco
     login_prompt: "Username: "
     prompts:
-      - "[>|#]"
+      - "[>#]"
     command:
       - terminal length 0
       - configure terminal
@@ -97,7 +97,7 @@ EXAMPLES = '''
     password: cisco
     login_prompt: "Username: "
     prompts:
-      - "[>|#]"
+      - "[>#]"
     command:
       - terminal length 0
       - show version
