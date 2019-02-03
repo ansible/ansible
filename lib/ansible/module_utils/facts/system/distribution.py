@@ -473,7 +473,10 @@ class Distribution(object):
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
                      'FreeBSD': ['FreeBSD', 'TrueOS'],
-                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix']}
+                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix'],
+                     'DragonFly': ['DragonFly'],
+                     'OpenBSD': ['OpenBSD'],
+                     'NetBSD': ['NetBSD']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
