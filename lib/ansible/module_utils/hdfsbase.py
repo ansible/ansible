@@ -162,6 +162,10 @@ def hdfs_required_together():
 
 
 def hdfs_mutually_exclusive():
+    """Return a sequence of [arg1, arg2] mutually exlcusive argument names.
+
+    If `arg1` is passed, then it is an error to pass `arg2`, and vice versa.
+    """
     return [
         ['password', 'keytab'],
         ['user', 'principal'],
@@ -173,12 +177,21 @@ def hdfs_mutually_exclusive():
 
 
 def hdfs_required_one_of_if():
+    """Return a sequence of (argument, value, [required_arg, ...]).
+
+    If `argument`=`value` is passed, then exactly one of `required_arg` must
+    be passed.
+    """
     return [
         ('authentication', 'kerberos', ['password', 'keytab']),
     ]
 
 
 def hdfs_required_if():
+    """Return a sequence of (argument, value, [required_arg, ...]).
+
+    If `argument`=`value` is passed, then every `required_arg` must be passed.
+    """
     return [
         ('authentication', 'kerberos', ['principal']),
         ('authentication', 'token', ['token']),
@@ -186,6 +199,11 @@ def hdfs_required_if():
 
 
 def hdfs_invalid_if():
+    """Return a sequence of (argument, value, [clashing_arg, ...]).
+
+    If `argument`=`value` is passed, then it is an error to also pass any of
+    `clashing_arg`.
+    """
     return [
         ('verify', False, ['truststore']),
         ('authentication', 'none', ['principal', 'password', 'keytab', 'token']),
@@ -195,6 +213,9 @@ def hdfs_invalid_if():
 
 
 def kinit(principal, password=None, keytab=None):
+    """Get a Kerberos ticket for `principal`, authenticated with `password`
+    or `keytab`.
+    """
     kinit = '/usr/bin/kinit'
     if password is not None:
         kinit_args = [kinit, principal]
@@ -216,6 +237,8 @@ def kinit(principal, password=None, keytab=None):
 
 
 def kdestroy():
+    """Discard all Kerberos tickets held by the process.
+    """
     try:
         kdestroy = '/usr/bin/kdestroy'
         kdestroy_args = [kdestroy, '-q', '-A']

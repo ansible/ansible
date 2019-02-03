@@ -150,6 +150,11 @@ from ansible.module_utils.hdfsbase import HDFSAnsibleModule, hdfs_argument_spec,
 
 # recursive,spacequota and namequota  options requires state to be 'directory'
 def invalid_if():
+    """Return a sequence of (argument, value, [clashing_arg, ...]).
+
+    If `argument`=`value` is passed, then it is an error to also pass any of
+    `clashing_arg`.
+    """
     return [
         ('state', 'file', ['recursive', 'spacequota', 'namequota']),
         ('state', 'touch', ['recursive', 'spacequota', 'namequota']),
