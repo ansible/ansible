@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: digital_ocean_droplet
 short_description: Create and delete a DigitalOcean droplet
 description:
-     - Create and delete a droplet in DigitalOcean and optionally wait for it to be active.
+     - Create, rebuild, or delete a droplet in DigitalOcean and optionally wait for it to be active.
 version_added: "2.8"
 author: "Gurchet Rai (@gurch101)"
 options:
@@ -25,14 +25,14 @@ options:
     description:
      - Indicate desired state of the target.
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'pristine', 'absent']
   id:
     description:
      - Numeric, the droplet id you want to operate on.
     aliases: ['droplet_id']
   name:
     description:
-     - String, this is the name of the droplet - must be formatted by hostname rules.
+     - String, this is the name of the droplet - must be a valid hostname or a FQDN.
   unique_name:
     description:
      - require unique hostnames.  By default, DigitalOcean allows multiple hosts with the same name.  Setting this to "yes" allows only one host
@@ -135,6 +135,13 @@ EXAMPLES = '''
     region: sfo1
     image: ubuntu-16-04-x64
     wait_timeout: 500
+
+- name: ensure a droplet is like new
+  digital_ocean_droplet:
+    state: pristine
+    name: mydroplet.example.com
+    oauth_token: XXX
+    image: debian-9-x64  # optional, may be omitted.
 '''
 
 
