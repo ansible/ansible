@@ -88,7 +88,7 @@
 - name: Gather facts MySQL Server
   azure_rm_mysqlserver_facts:
     resource_group: "{{ resource_group }}"
-    name: mysqlsrv{{ rpfx }}second
+    name: mysqlsrv{{ rpfx }}
   register: output
 - debug:
     var: output
