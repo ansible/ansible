@@ -264,20 +264,20 @@ def main():
         module.exit_json(path=path, changed=changed)
 
     elif state == 'touch':
-            if prev_state == 'absent':
-                hdfs.hdfs_touch(path)
-            elif prev_state in ['file', 'directory']:
-                ts = int(time.time() * 1000)
-                hdfs.hdfs_set_times(path, access_time=ts, modification_time=ts)
-            else:
-                hdfs.hdfs_fail_json(msg='Cannot touch other than files, directories (%s is %s)' % (path, prev_state))
+        if prev_state == 'absent':
+            hdfs.hdfs_touch(path)
+        elif prev_state in ['file', 'directory']:
+            ts = int(time.time() * 1000)
+            hdfs.hdfs_set_times(path, access_time=ts, modification_time=ts)
+        else:
+            hdfs.hdfs_fail_json(msg='Cannot touch other than files, directories (%s is %s)' % (path, prev_state))
 
-            # If the set attribute fails we need make sure to delete the created file
-            # No way to catch errors at this stage : maybe a function at the hdfsbase level could help
-            #  client.delete(path)
-            hdfs.hdfs_set_attributes(path=path, owner=owner, group=group, replication=replication, permission=mode)
+        # If the set attribute fails we need make sure to delete the created file
+        # No way to catch errors at this stage : maybe a function at the hdfsbase level could help
+        #  client.delete(path)
+        hdfs.hdfs_set_attributes(path=path, owner=owner, group=group, replication=replication, permission=mode)
 
-            module.exit_json(path=path, changed=True)
+        module.exit_json(path=path, changed=True)
 
     hdfs.hdfs_fail_json(path=path, msg='unexpected position reached')
 
