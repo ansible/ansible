@@ -54,7 +54,7 @@
         - PackageManagement
         - PowerShellGet
 
-        - name: create required folder
+    - name: create required folder
       win_file:
         path:  "{{ psmodulepath.stdout | trim }}"
         state: directory
