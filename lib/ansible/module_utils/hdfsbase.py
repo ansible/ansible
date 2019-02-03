@@ -81,6 +81,7 @@ PERM_BITS = 0o7777          # file mode permission bits
 EXEC_PERM_BITS = 0o0111     # execute permission bits
 DEFAULT_PERM = 0o666        # default file permission bits
 
+
 def _check_required_if(module, spec):
         ''' ensure that parameters which conditionally required are present '''
         if spec is None:
@@ -129,7 +130,7 @@ def _check_required_one_of_if(module, spec):
 def hdfs_argument_spec():
     return dict(
         # Dtermines which type of client we will actually user : InsecureClient, TokenClient or KerberosClient
-        authentication=dict(choices=['none','kerberos','token'], default='none'),
+        authentication=dict(choices=['none', 'kerberos', 'token'], default='none'),
         # When security is off, the authenticated user is the username specified in the user.name query parameter, specified by this parameter.
         # Defaults to the current user's (as determined by `whoami`).
         user=dict(required=False, default=None),
@@ -173,7 +174,7 @@ def hdfs_mutually_exclusive():
 
 def hdfs_required_one_of_if():
     return [
-        ('authentication', 'kerberos', ['password','keytab']),
+        ('authentication', 'kerberos', ['password', 'keytab']),
     ]
 
 
@@ -185,7 +186,8 @@ def hdfs_required_if():
 
 
 def hdfs_invalid_if():
-    return [('verify', False, ['truststore']),
+    return [
+        ('verify', False, ['truststore']),
         ('authentication', 'none', ['principal', 'password', 'keytab', 'token']),
         ('authentication', 'token', ['principal', 'password', 'keytab', 'user']),
         ('authentication', 'kerberos', ['token', 'user']),
@@ -224,7 +226,6 @@ def kdestroy():
 
 
 class HDFSAnsibleModule(object):
-
     def __init__(self, module, bypass_checks=False, required_if=None, required_one_of_if=None, invalid_if=None):
         self.module = module
 
@@ -254,9 +255,9 @@ class HDFSAnsibleModule(object):
         # Need to be performed here since ansible does not provide yet a way to check
         # required one of with if
         if not bypass_checks:
-            _check_required_if(module,self.hdfs_required_if)
-            _check_required_one_of_if(module,self.hdfs_required_one_of_if)
-            _check_invalid_if(module,self.hdfs_invalid_if)
+            _check_required_if(module, self.hdfs_required_if)
+            _check_required_one_of_if(module, self.hdfs_required_one_of_if)
+            _check_invalid_if(module, self.hdfs_invalid_if)
 
         # Request a TGT if the authentication uses kerberos
         if authentication == 'kerberos':
@@ -372,7 +373,7 @@ class HDFSAnsibleModule(object):
                     mounts = [str(mount).strip(' ').strip('"').strip('\'') for mount in nameservice["mounts"]]
                 else:
                     # only one mount point or comma separated list of mounts
-                    mounts =  [str(mount) for mount in re.split(r',|;', str(nameservice["mounts"]).strip(' ').strip('"').strip('\''))]
+                    mounts = [str(mount) for mount in re.split(r',|;', str(nameservice["mounts"]).strip(' ').strip('"').strip('\''))]
             else:
                 # no mount point provided so mount to /
                 mounts = ["/"]
@@ -406,28 +407,28 @@ class HDFSAnsibleModule(object):
             # provided a list of namespaces
             options['nameservices'] = [self._parse_nameservice_parameter(nameservice) for nameservice in nameservices]
 
-        options.update ({
-            'root'          : params.get('root', None),
-            'proxy'         : params.get('proxy', None),
-            'timeout'       : params.get('timeout', None),
-            'verify'        : params.get('verify', False),
-            'truststore'    : params.get('truststore', None),
-            })
+        options.update({
+            'root': params.get('root', None),
+            'proxy': params.get('proxy', None),
+            'timeout': params.get('timeout', None),
+            'verify': params.get('verify', False),
+            'truststore': params.get('truststore', None),
+        })
         authentication = params.get('authentication', 'none')
 
         if (authentication == 'token'):
             options.update({
-                'auth_mechanism' : 'TOKEN',
-                'token'    : params.get('token'),
+                'auth_mechanism': 'TOKEN',
+                'token': params.get('token'),
             })
         elif (authentication == 'kerberos'):
             options.update({
-                'auth_mechanism' : 'GSSAPI',
+                'auth_mechanism': 'GSSAPI',
             })
         else:
             options.update({
-                'auth_mechanism' : 'NONE',
-                'user'     : params.get('user', None),
+                'auth_mechanism': 'NONE',
+                'user': params.get('user', None),
             })
 
         return WebHDFSClient(**options)
@@ -440,7 +441,6 @@ class HDFSAnsibleModule(object):
     #################################################################################################################
 
     def hdfs_set_attributes(self, path, owner=None, group=None, replication=None, quota=None, spaceQuota=None, permission=None):
-
         changed = False
 
         # performance improvement: get status and content only once
@@ -490,15 +490,15 @@ class HDFSAnsibleModule(object):
             for fsobj in dirs + files:
                 # still works in hdfs :)
                 path = os.path.join(root, fsobj)
-                changed |= self.hdfs_set_attributes( path=path, owner=owner, group=group,
-                                                     replication=replication, quota=quota,
-                                                     spaceQuota=spaceQuota, permission=permission)
+                changed |= self.hdfs_set_attributes(path=path, owner=owner, group=group,
+                                                    replication=replication, quota=quota,
+                                                    spaceQuota=spaceQuota, permission=permission)
         return changed
 
     def hdfs_resolvepath(self, hdfs_path):
         return self.client.resolvepath(hdfs_path)
 
-    def get_state(self,path):
+    def get_state(self, path):
         ''' Find out current state '''
         try:
             status = self.client.status(path, strict=False)
@@ -521,12 +521,12 @@ class HDFSAnsibleModule(object):
                 # seems there is a problem with strict, it ignores almost all errors.
                 # need to skip only file not found
                 if "File does not exist" in str(e):
-                    status=None
+                    status = None
                     pass
                 else:
-                    self.hdfs_fail_json(msg = str(e))
+                    self.hdfs_fail_json(msg=str(e))
             else:
-                self.hdfs_fail_json(msg = str(e))
+                self.hdfs_fail_json(msg=str(e))
         except Exception as e:
             self.hdfs_fail_json(msg=str(e))
         return status
@@ -540,12 +540,12 @@ class HDFSAnsibleModule(object):
                 # seems there is a problem with strict, it ignores almost all errors.
                 # need to skip only file not found
                 if "File does not exist" in str(e):
-                    content=None
+                    content = None
                     pass
                 else:
-                    self.hdfs_fail_json(msg = str(e))
+                    self.hdfs_fail_json(msg=str(e))
             else:
-                self.hdfs_fail_json(msg = str(e))
+                self.hdfs_fail_json(msg=str(e))
         except Exception as e:
             self.hdfs_fail_json(msg=str(e))
         return content
@@ -558,13 +558,13 @@ class HDFSAnsibleModule(object):
             if not strict:
                 # seems there is a problem with strict, it ignores almost all errors.
                 # need to skip only file not found
-                if 'File %s not found.' %path in str(e):
-                    checksum=None
+                if 'File %s not found.' % path in str(e):
+                    checksum = None
                     pass
                 else:
-                    self.hdfs_fail_json(msg = str(e))
+                    self.hdfs_fail_json(msg=str(e))
             else:
-                self.hdfs_fail_json(msg = str(e))
+                self.hdfs_fail_json(msg=str(e))
         except Exception as e:
             self.hdfs_fail_json(msg=str(e))
         return checksum
@@ -608,14 +608,14 @@ class HDFSAnsibleModule(object):
         except Exception as e:
             self.hdfs_fail_json(msg="unknown error, touch failed: %s" % e)
 
-    def hdfs_is_dir(self,path):
+    def hdfs_is_dir(self, path):
         status = self.hdfs_status(path, strict=False)
         if status is not None and status['type'] == 'DIRECTORY':
             return True
         else:
             return False
 
-    def hdfs_exist(self,path):
+    def hdfs_exist(self, path):
         ''' Find out current state '''
         status = self.hdfs_status(path, strict=False)
         if status is not None:
@@ -629,8 +629,7 @@ class HDFSAnsibleModule(object):
         else:
             return False
 
-    def hdfs_set_owner(self ,path, owner):
-
+    def hdfs_set_owner(self, path, owner):
         if owner is None:
             return False
         try:
@@ -642,7 +641,6 @@ class HDFSAnsibleModule(object):
         return True
 
     def hdfs_set_group(self, path, group):
-
         if group is None:
             return False
         try:
@@ -654,7 +652,6 @@ class HDFSAnsibleModule(object):
         return True
 
     def hdfs_set_replication(self, path, replication):
-
         if replication is None:
             return False
         try:
@@ -673,10 +670,9 @@ class HDFSAnsibleModule(object):
     #####################################################################################
 
     def hdfs_set_namequota(self, path, quota):
-
         if quota is None:
             return False
-        if quota == "-1" :
+        if quota == "-1":
             try:
                 call("hdfs dfsadmin -clrQuota %s" % path, shell=True)
             except Exception as e:
@@ -690,11 +686,10 @@ class HDFSAnsibleModule(object):
         return True
 
     def hdfs_set_spacequota(self, path, quota):
-
         if quota is None:
             return False
 
-        if quota == "-1" :
+        if quota == "-1":
             try:
                 call("hdfs dfsadmin -clrSpaceQuota %s" % path, shell=True)
             except Exception as e:
@@ -711,7 +706,6 @@ class HDFSAnsibleModule(object):
     #################################################################################################################
 
     def get_norm_permissions(self, path):
-
         status = self.hdfs_status(path, strict=False)
         aclStatus = self.client.getAclStatus(path, strict=False)
 
@@ -724,10 +718,10 @@ class HDFSAnsibleModule(object):
             else:
                 permission = "0" + permission
 
-        return int(permission,8)
+        return int(permission, 8)
 
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
-        if operator  ==  '=':
+        if operator == '=':
             if user == 'u':
                 mask = stat.S_IRWXU | stat.S_ISUID
             elif user == 'g':
@@ -775,7 +769,8 @@ class HDFSAnsibleModule(object):
                 't': 0,
                 'u': prev_mode & stat.S_IRWXU,
                 'g': (prev_mode & stat.S_IRWXG) << 3,
-                'o': (prev_mode & stat.S_IRWXO) << 6 },
+                'o': (prev_mode & stat.S_IRWXO) << 6,
+            },
             'g': {
                 'r': stat.S_IRGRP,
                 'w': stat.S_IWGRP,
@@ -784,7 +779,8 @@ class HDFSAnsibleModule(object):
                 't': 0,
                 'u': (prev_mode & stat.S_IRWXU) >> 3,
                 'g': prev_mode & stat.S_IRWXG,
-                'o': (prev_mode & stat.S_IRWXO) << 3 },
+                'o': (prev_mode & stat.S_IRWXO) << 3,
+            },
             'o': {
                 'r': stat.S_IROTH,
                 'w': stat.S_IWOTH,
@@ -793,7 +789,8 @@ class HDFSAnsibleModule(object):
                 't': stat.S_ISVTX,
                 'u': (prev_mode & stat.S_IRWXU) >> 6,
                 'g': (prev_mode & stat.S_IRWXG) >> 3,
-                'o': prev_mode & stat.S_IRWXO }
+                'o': prev_mode & stat.S_IRWXO,
+            }
         }
 
         # Insert X_perms into user_perms_to_modes
@@ -825,7 +822,6 @@ class HDFSAnsibleModule(object):
         return new_mode
 
     def hdfs_set_mode(self, path, mode):
-
         if mode is None:
             return False
 
@@ -837,7 +833,7 @@ class HDFSAnsibleModule(object):
                     mode = self._symbolic_mode_to_octal(path, mode)
                 except Exception as e:
                     self.hdfs_fail_json(path=path,
-                                   msg="mode must be in octal or symbolic form : %s " % mode,
+                                        msg="mode must be in octal or symbolic form : %s " % mode,
                                         details=str(e))
 
                 if mode != stat.S_IMODE(mode):
@@ -849,7 +845,7 @@ class HDFSAnsibleModule(object):
         if curr_mode != mode:
             try:
                 # The hdfs setmode does not suport convertings ints to oct
-                self.client.set_permission(path, int(oct(mode),10))
+                self.client.set_permission(path, int(oct(mode), 10))
             except HdfsError as e:
                 self.hdfs_fail_json(path=path, msg="Hdfs error, set permissions failed: %s" % e)
             except Exception as e:
@@ -884,11 +880,10 @@ class HDFSAnsibleModule(object):
 
         chunk_size = 64 * 1024
 
-        for chunk in self.client.read_stream(filename,chunk_size=chunk_size):
+        for chunk in self.client.read_stream(filename, chunk_size=chunk_size):
             digest_method.update(chunk)
 
         return digest_method.hexdigest()
-
 
     def hdfs_md5(self, filename):
         if 'md5' not in AVAILABLE_HASH_ALGORITHMS:
@@ -903,12 +898,11 @@ class HDFSAnsibleModule(object):
         ''' Return SHA-256 hex digest of local file using digest_from_file(). '''
         return self.hdfs_digest_from_file(filename, 'sha256')
 
-
     #################################################################################################################
     #                                         Tocken functions
     #################################################################################################################
 
-    def hdfs_get_token(self, renewer, kind=None, service= None):
+    def hdfs_get_token(self, renewer, kind=None, service=None):
         try:
             token = self.client.getDelegationToken(renewer=renewer, kind=kind, service=service)
         except HdfsError as e:
@@ -953,7 +947,7 @@ class HDFSAnsibleModule(object):
 
     def hdfs_create_snapshot(self, path, name):
         try:
-            sspath=self.client.create_snapshot(hdfs_path=path, snapshotname=name)
+            sspath = self.client.create_snapshot(hdfs_path=path, snapshotname=name)
         except Exception as e:
             self.hdfs_fail_json(msg="error, could not create snapshot on path %s : %s" % (path, e))
         return sspath
@@ -1013,7 +1007,7 @@ class HDFSAnsibleModule(object):
     def hdfs_rmxattr(self, path, key, strict=False):
         changed = False
 
-        current=self.hdfs_getxattrs(path=path,key=key,strict=False)
+        current = self.hdfs_getxattrs(path=path, key=key, strict=False)
         if current is not None and key in current:
             try:
                 changed = self.client.removexattr(hdfs_path=path, key=key, strict=strict)
@@ -1051,12 +1045,11 @@ class HDFSAnsibleModule(object):
                 return False
         return True
 
-
     def hdfs_getacls(self, path, strict=False):
         entries = None
         try:
             raw_entries = self.client.getAclStatus(hdfs_path=path, strict=strict)
-            entries = [ entry for entry in raw_entries['entries'] ]
+            entries = [entry for entry in raw_entries['entries']]
         except HdfsError as e:
             self.hdfs_fail_json(msg="hdfs error, could not fetch file acls: %s" % e)
         except Exception as e:
@@ -1066,15 +1059,15 @@ class HDFSAnsibleModule(object):
     def hdfs_remove_all_file_acl(self, path, strict=False):
         changed = False
 
-        status = self.hdfs_status(path=path,strict=False)
+        status = self.hdfs_status(path=path, strict=False)
         if status is None:
             return False
 
         try:
-            orig_entries = self.hdfs_getacls(path=path,strict=strict)
+            orig_entries = self.hdfs_getacls(path=path, strict=strict)
             self.client.removeAcl(hdfs_path=path, strict=strict)
             self.client.removeDefaultAcl(hdfs_path=path, strict=strict)
-            new_entries = self.hdfs_getacls(path=path,strict=strict)
+            new_entries = self.hdfs_getacls(path=path, strict=strict)
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
         except HdfsError as e:
@@ -1085,7 +1078,7 @@ class HDFSAnsibleModule(object):
 
     def hdfs_remove_allacls(self, path, recursive=False, strict=False):
         # Fail if file does not exist
-        status = self.hdfs_status(path=path,strict=strict)
+        status = self.hdfs_status(path=path, strict=strict)
         if status is None:
             return False
 
@@ -1102,15 +1095,15 @@ class HDFSAnsibleModule(object):
     def hdfs_remove_file_acl(self, path, entries, strict=False):
         changed = False
 
-        status = self.hdfs_status(path=path,strict=False)
+        status = self.hdfs_status(path=path, strict=False)
         if status is None:
             return False
 
         try:
-            orig_entries = self.hdfs_getacls(path=path,strict=strict)
+            orig_entries = self.hdfs_getacls(path=path, strict=strict)
             raw_entries = ','.join(entries)
             self.client.removeAclEntries(hdfs_path=path, aclspec=raw_entries, strict=strict)
-            new_entries = self.hdfs_getacls(path=path,strict=strict)
+            new_entries = self.hdfs_getacls(path=path, strict=strict)
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
         except HdfsError as e:
@@ -1126,11 +1119,11 @@ class HDFSAnsibleModule(object):
             entry_tab = entry.split(":")
             if entry_tab[0] != 'default' and entry_tab[1] == "":
                 self.hdfs_fail_json(msg="Invalid ACLs entry %r the user, group, other and mask base entries are required" % entry, changed=False)
-            if ( entry_tab[0] != 'default' and entry_tab[2] != "" ) or ( entry_tab[0] == 'default' and entry_tab[3] != "" ):
+            if (entry_tab[0] != 'default' and entry_tab[2] != "") or (entry_tab[0] == 'default' and entry_tab[3] != ""):
                 self.hdfs_fail_json(msg="Invalid ACLs entry %r the permission need to be null in delete." % entry, changed=False)
 
         # Fail if file does not exist
-        status = self.hdfs_status(path=path,strict=strict)
+        status = self.hdfs_status(path=path, strict=strict)
         if status is None:
             return False
 
@@ -1148,7 +1141,7 @@ class HDFSAnsibleModule(object):
     def hdfs_add_file_acl(self, path, entries, strict=False):
         changed = False
 
-        status = self.hdfs_status(path=path,strict=False)
+        status = self.hdfs_status(path=path, strict=False)
         if status is None:
             return False
         elif status['type'] == 'FILE':
@@ -1161,7 +1154,7 @@ class HDFSAnsibleModule(object):
         # if directory keep it as it is
 
         try:
-            orig_entries = self.hdfs_getacls(path=path,strict=strict)
+            orig_entries = self.hdfs_getacls(path=path, strict=strict)
 
             raw_entries = ','.join(entries)
             self.client.modifyAclEntries(hdfs_path=path, aclspec=raw_entries)
@@ -1169,7 +1162,7 @@ class HDFSAnsibleModule(object):
             # It looks like the getacls does not print all acls, so we can really know if the acls
             # we are going to put really change something or not. so the only way is to always run
             # then perform the check, so that we know if something have changed or not.
-            new_entries = self.hdfs_getacls(path=path,strict=strict)
+            new_entries = self.hdfs_getacls(path=path, strict=strict)
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
 
@@ -1180,9 +1173,8 @@ class HDFSAnsibleModule(object):
         return changed
 
     def hdfs_addacls(self, path, entries, recursive=False, strict=False):
-
         # Fail if file does not exist
-        status = self.hdfs_status(path=path,strict=strict)
+        status = self.hdfs_status(path=path, strict=strict)
         if status is None:
             return False
 
@@ -1199,7 +1191,7 @@ class HDFSAnsibleModule(object):
     def hdfs_set_file_acl(self, path, entries, strict=False):
         changed = False
 
-        status = self.hdfs_status(path=path,strict=False)
+        status = self.hdfs_status(path=path, strict=False)
         if status is None:
             return False
         elif status['type'] == 'FILE':
@@ -1212,12 +1204,12 @@ class HDFSAnsibleModule(object):
         # if directory keep it as it is
 
         try:
-            orig_entries = self.hdfs_getacls(path=path,strict=strict)
+            orig_entries = self.hdfs_getacls(path=path, strict=strict)
 
             raw_entries = ','.join(entries)
             self.client.setAcl(hdfs_path=path, aclspec=raw_entries)
 
-            new_entries = self.hdfs_getacls(path=path,strict=strict)
+            new_entries = self.hdfs_getacls(path=path, strict=strict)
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
 
@@ -1228,7 +1220,6 @@ class HDFSAnsibleModule(object):
         return changed
 
     def hdfs_setacls(self, path, entries, recursive=False, strict=False):
-
         # check that entries for user, group, and others are provided
         u_valid = False
         g_valid = False
@@ -1241,11 +1232,11 @@ class HDFSAnsibleModule(object):
                 g_valid = True
             if entry_tab[0] == 'other' and entry_tab[1] == "" and entry_tab[2] != "":
                 o_valid = True
-        if not g_valid or not u_valid or not o_valid :
+        if not g_valid or not u_valid or not o_valid:
             self.hdfs_fail_json(msg="Invalid ACLs the user, group and other entries are required")
 
         # Fail if file does not exist
-        status = self.hdfs_status(path=path,strict=strict)
+        status = self.hdfs_status(path=path, strict=strict)
         if status is None:
             return False
 

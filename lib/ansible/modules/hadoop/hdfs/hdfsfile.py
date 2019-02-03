@@ -158,7 +158,6 @@ def invalid_if():
 
 
 def main():
-
     argument_spec = hdfs_argument_spec()
     argument_spec.update(
         state=dict(choices=['file', 'directory', 'touch', 'absent'], default='file'),
@@ -219,8 +218,8 @@ def main():
             module.exit_json(path=path, changed=True)
         else:
             module.exit_json(path=path, changed=False)
-    elif state == 'file':
 
+    elif state == 'file':
         if prev_state != 'file':
             # file is not absent and any other state is a conflict
             hdfs.hdfs_fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
@@ -236,7 +235,6 @@ def main():
         module.exit_json(path=path, changed=changed)
 
     elif state == 'directory':
-
         if prev_state == 'absent':
             changed = True
             curpath = ''
