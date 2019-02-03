@@ -94,7 +94,7 @@ def _check_required_if(module, spec):
                     if count == 0:
                         missing.append(check)
             if len(missing) > 0:
-                hdfs_fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
+                module.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
 
 def _check_invalid_if(module, spec):
@@ -109,7 +109,7 @@ def _check_invalid_if(module, spec):
                     if count != 0:
                         invalids.append(check)
             if len(invalids) > 0:
-                hdfs_fail_json(msg="%s is %s but the following are present: %s" % (key, val, ','.join(invalids)))
+                module.fail_json(msg="%s is %s but the following are present: %s" % (key, val, ','.join(invalids)))
 
 
 def _check_required_one_of_if(module, spec):
@@ -124,7 +124,7 @@ def _check_required_one_of_if(module, spec):
                     if count == 0:
                         missing.append(check)
             if len(missing) == 1:
-                hdfs_fail_json(msg="%s is %s but one of the following are missing: %s" % (key, val, ','.join(missing)))
+                module.fail_json(msg="%s is %s but one of the following are missing: %s" % (key, val, ','.join(missing)))
 
 
 def hdfs_argument_spec():
