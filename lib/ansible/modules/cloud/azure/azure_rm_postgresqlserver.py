@@ -317,9 +317,11 @@ class AzureRMServers(AzureRMModuleBase):
             self.parameters['tags'] = self.tags
             if self.to_do == Actions.Create:
                 response = self.postgresql_client.servers.create(resource_group_name=self.resource_group,
-                                                                 server_name=self.name,
-                                                                 parameters=self.parameters)
+                                                                            server_name=self.name,
+                                                                            parameters=self.parameters)
             else:
+                # structure of parameters for update must be changed
+                self.parameters.update(self.parameters.pop("properties", {}))
                 response = self.postgresql_client.servers.update(resource_group_name=self.resource_group,
                                                                  server_name=self.name,
                                                                  parameters=self.parameters)
