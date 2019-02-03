@@ -52,7 +52,6 @@
       docker_volume:
         name: "{{ item }}"
         state: absent
-        force: yes
       loop: "{{ volume_names }}"
       ignore_errors: yes
 
