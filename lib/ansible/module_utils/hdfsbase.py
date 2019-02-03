@@ -38,6 +38,8 @@ import ast
 import os.path as osp
 from subprocess import call, Popen, PIPE
 
+from ansible.module_utils.six.moves import reduce
+
 try:
     from pywhdfs.client import WebHDFSClient
     from pywhdfs.utils.utils import HdfsError
