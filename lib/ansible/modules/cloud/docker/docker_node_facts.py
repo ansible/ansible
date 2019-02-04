@@ -75,8 +75,9 @@ node_facts:
 
 '''
 
-from ansible.module_utils.docker_common import AnsibleDockerClient
 from ansible.module_utils._text import to_native
+
+from ansible.module_utils.docker_swarm import AnsibleDockerSwarmClient
 
 try:
     from docker.errors import APIError, NotFound
@@ -103,7 +104,7 @@ def main():
         name=dict(type='str', required=True),
     )
 
-    client = AnsibleDockerClient(
+    client = AnsibleDockerSwarmClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
         min_docker_version='1.10.0',
