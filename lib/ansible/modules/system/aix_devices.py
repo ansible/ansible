@@ -31,6 +31,7 @@ options:
     description:
     - The name of the device.
     - C(all) is valid to rescan C(available) all devices (AIX cfgmgr command).
+    type: str
     required: true
   force:
     description:
@@ -48,6 +49,7 @@ options:
     - C(available) (alias C(present)) rescan a specific device or all devices (when C(device) is not specified).
     - C(removed) (alias C(absent) removes a device.
     - C(defined) changes device to Defined state.
+    type: str
     choices: [ available, defined, removed ]
     default: available
 '''
@@ -183,10 +185,8 @@ def _check_device_attr(module, device, attr):
     elif rc != 0:
         module.fail_json(msg="Failed to run lsattr: %s" % err, rc=rc, err=err)
 
-    else:
-        current_param = lsattr_out.split()[1]
-
-        return current_param
+    current_param = lsattr_out.split()[1]
+    return current_param
 
 
 def discover_device(module, device):
@@ -304,7 +304,7 @@ def main():
             device=dict(type='str'),
             force=dict(type='bool', default=False),
             recursive=dict(type='bool', default=False),
-            state=dict(type='str', default='available', choices=['removed', 'defined', 'available']),
+            state=dict(type='str', default='available', choices=['available', 'defined', 'removed']),
         ),
         supports_check_mode=True,
     )
