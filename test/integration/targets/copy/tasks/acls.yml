@@ -1,21 +1,28 @@
-- file:
-    path: "{{ remote_dir }}"
-    state: directory
-  become: yes
-  become_user: '{{ remote_unprivileged_user }}'
+- block:
+  - block:
+    - file:
+        path: "{{ remote_dir }}"
+        state: directory
 
-- copy:
-    content: "TEST"
-    dest: "{{ remote_dir }}/test.txt"
-  become: yes
-  become_user: "{{ remote_unprivileged_user }}"
+    - copy:
+        content: "TEST"
+        dest: "{{ remote_dir }}/test.txt"
+        remote_src: "{{ remote_src_toggle | default('no') }}"
 
-- command: "getfacl {{ remote_dir }}/test.txt"
-  register: acls
-  become: yes
-  become_user: '{{ remote_unprivileged_user }}'
-- debug:
-    var: acls
-- assert:
-    that:
-      - "'user:{{ remote_unprivileged_user }}:r-x\t#effective:r--' not in acls.stdout_lines"
+    - command: "getfacl {{ remote_dir }}/test.txt"
+      register: acls
+
+    become: yes
+    become_user: "{{ remote_unprivileged_user }}"
+
+  - assert:
+      that:
+        - "'user:{{ remote_unprivileged_user }}:r-x\t#effective:r--' not in acls.stdout_lines"
+
+  always:
+    - name: Clean up
+      file:
+        path: "{{ remote_dir }}/test.txt"
+        state: absent
+      become: yes
+      become_user: "{{ remote_unprivileged_user }}"
