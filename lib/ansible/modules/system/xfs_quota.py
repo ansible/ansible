@@ -123,16 +123,16 @@ from ansible.module_utils.basic import human_to_bytes
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            type=dict(required=True, choices=['user', 'group', 'project']),
-            name=dict(required=False, default=None),
-            mountpoint=dict(required=True),
             bhard=dict(required=False, default=None),
             bsoft=dict(required=False, default=None),
             ihard=dict(required=False, default=None),
             isoft=dict(required=False, default=None),
+            mountpoint=dict(required=True),
+            name=dict(required=False, default=None),
             rtbhard=dict(required=False, default=None),
             rtbsoft=dict(required=False, default=None),
-            state=dict(required=False, default='present', choices=['present', 'absent'])
+            state=dict(required=False, default='present', choices=['present', 'absent']),
+            type=dict(required=True, choices=['user', 'group', 'project'])
         ),
         supports_check_mode=True
     )
