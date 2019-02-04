@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -28,6 +28,10 @@ DOCUMENTATION = """
 module: pn_vlag
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
+deprecated:
+  removed_in: '2.12'
+  why: Updated modules released with increased functionality
+  alternative will be pushed in future version of ansible.
 short_description: CLI command to create/delete/modify vlag.
 description:
   - Execute vlag-create/vlag-delete/vlag-modify command.

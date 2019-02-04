@@ -1,5 +1,5 @@
 #!/usr/bin/python
-""" PN CLI vrouter-loopback-interface-add/remove """
+""" PN-CLI vrouter-ospf-add/remove """
 
 #
 # This file is part of Ansible
@@ -19,22 +19,24 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = """
 ---
-module: pn_vrouterlbif
+module: pn_ospf
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-short_description: CLI command to add/remove vrouter-loopback-interface.
+deprecated:
+  removed_in: '2.12'
+  why: Updated modules released with increased functionality
+  alternative will be pushed in future version of ansible.
+short_description: CLI command to add/remove ospf protocol to a vRouter.
 description:
-  - Execute vrouter-loopback-interface-add, vrouter-loopback-interface-remove
-    commands.
-  - Each fabric, cluster, standalone switch, or virtual network (VNET) can
-    provide its tenants with a virtual router (vRouter) service that forwards
-    traffic between networks and implements Layer 3 protocols.
+  - Execute vrouter-ospf-add, vrouter-ospf-remove command.
+  - This command adds/removes Open Shortest Path First(OSPF) routing
+    protocol to a virtual router(vRouter) service.
 options:
   pn_cliusername:
     description:
@@ -46,39 +48,40 @@ options:
     required: False
   pn_cliswitch:
     description:
-      - Target switch(es) to run the cli on.
+      - Target switch to run the CLI on.
     required: False
   state:
     description:
-      - State the action to perform. Use 'present' to add vrouter loopback
-        interface and 'absent' to remove vrouter loopback interface.
+      - Assert the state of the ospf. Use 'present' to add ospf
+        and 'absent' to remove ospf.
     required: True
+    default: present
     choices: ['present', 'absent']
   pn_vrouter_name:
     description:
       - Specify the name of the vRouter.
     required: True
-  pn_index:
+  pn_network_ip:
     description:
-      - Specify the interface index from 1 to 255.
-  pn_interface_ip:
-    description:
-      - Specify the IP address.
+      - Specify the network IP (IPv4 or IPv6) address.
     required: True
+  pn_ospf_area:
+    description:
+    - Stub area number for the configuration. Required for vrouter-ospf-add.
 """
 
 EXAMPLES = """
-- name: add vrouter-loopback-interface
-  pn_vrouterlbif:
-    state: 'present'
-    pn_vrouter_name: 'ansible-vrouter'
-    pn_interface_ip: '104.104.104.1'
+- name: "Add OSPF to vrouter"
+  pn_ospf:
+    state: present
+    pn_vrouter_name: name-string
+    pn_network_ip: 192.168.11.2/24
+    pn_ospf_area: 1.0.0.0
 
-- name: remove vrouter-loopback-interface
-  pn_vrouterlbif:
-    state: 'absent'
-    pn_vrouter_name: 'ansible-vrouter'
-    pn_interface_ip: '104.104.104.1'
+- name: "Remove OSPF from vrouter"
+  pn_ospf:
+    state: absent
+    pn_vrouter_name: name-string
 """
 
 RETURN = """
@@ -87,11 +90,11 @@ command:
   returned: always
   type: str
 stdout:
-  description: The set of responses from the vrouterlb command.
+  description: The set of responses from the ospf command.
   returned: always
   type: list
 stderr:
-  description: The set of error responses from the vrouterlb command.
+  description: The set of error responses from the ospf command.
   returned: on error
   type: list
 changed:
@@ -102,14 +105,11 @@ changed:
 
 import shlex
 
-# Ansible boiler-plate
+# AnsibleModule boilerplate
 from ansible.module_utils.basic import AnsibleModule
 
 VROUTER_EXISTS = None
-LB_INTERFACE_EXISTS = None
-# Index range
-MIN_INDEX = 1
-MAX_INDEX = 255
+NETWORK_EXISTS = None
 
 
 def pn_cli(module):
@@ -138,21 +138,19 @@ def pn_cli(module):
 def check_cli(module, cli):
     """
     This method checks if vRouter exists on the target node.
-    This method also checks for idempotency using the
-    vrouter-loopback-interface-show command.
+    This method also checks for idempotency using the vrouter-ospf-show command.
     If the given vRouter exists, return VROUTER_EXISTS as True else False.
-    If a loopback interface with the given ip exists on the given vRouter,
-    return LB_INTERFACE_EXISTS as True else False.
+    If an OSPF network with the given ip exists on the given vRouter,
+    return NETWORK_EXISTS as True else False.
 
     :param module: The Ansible module to fetch input parameters
     :param cli: The CLI string
-    :return Global Booleans: VROUTER_EXISTS, LB_INTERFACE_EXISTS
+    :return Global Booleans: VROUTER_EXISTS, NETWORK_EXISTS
     """
     vrouter_name = module.params['pn_vrouter_name']
-    interface_ip = module.params['pn_interface_ip']
-
+    network_ip = module.params['pn_network_ip']
     # Global flags
-    global VROUTER_EXISTS, LB_INTERFACE_EXISTS
+    global VROUTER_EXISTS, NETWORK_EXISTS
 
     # Check for vRouter
     check_vrouter = cli + ' vrouter-show format name no-show-headers '
@@ -165,17 +163,17 @@ def check_cli(module, cli):
     else:
         VROUTER_EXISTS = False
 
-    # Check for loopback interface
-    show = (cli + ' vrouter-loopback-interface-show vrouter-name %s format ip '
-            'no-show-headers' % vrouter_name)
+    # Check for OSPF networks
+    show = cli + ' vrouter-ospf-show vrouter-name %s ' % vrouter_name
+    show += 'format network no-show-headers'
     show = shlex.split(show)
     out = module.run_command(show)[1]
     out = out.split()
 
-    if interface_ip in out:
-        LB_INTERFACE_EXISTS = True
+    if network_ip in out:
+        NETWORK_EXISTS = True
     else:
-        LB_INTERFACE_EXISTS = False
+        NETWORK_EXISTS = False
 
 
 def run_cli(module, cli):
@@ -188,11 +186,8 @@ def run_cli(module, cli):
     cliswitch = module.params['pn_cliswitch']
     state = module.params['state']
     command = get_command_from_state(state)
-
     cmd = shlex.split(cli)
 
-    # 'out' contains the output
-    # 'err' contains the error messages
     result, out, err = module.run_command(cmd)
 
     print_cli = cli.split(cliswitch)[1]
@@ -230,97 +225,73 @@ def get_command_from_state(state):
     """
     command = None
     if state == 'present':
-        command = 'vrouter-loopback-interface-add'
+        command = 'vrouter-ospf-add'
     if state == 'absent':
-        command = 'vrouter-loopback-interface-remove'
+        command = 'vrouter-ospf-remove'
     return command
 
 
 def main():
-    """ This portion is for arguments parsing """
+    """ This section is for arguments parsing """
     module = AnsibleModule(
         argument_spec=dict(
             pn_cliusername=dict(required=False, type='str'),
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
-            state=dict(required=True, type='str',
-                       choices=['present', 'absent']),
+            state=dict(type='str', default='present', choices=['present',
+                                                               'absent']),
             pn_vrouter_name=dict(required=True, type='str'),
-            pn_interface_ip=dict(type='str'),
-            pn_index=dict(type='int')
+            pn_network_ip=dict(required=True, type='str'),
+            pn_ospf_area=dict(type='str')
         ),
         required_if=(
-            ["state", "present",
-             ["pn_vrouter_name", "pn_interface_ip"]],
-            ["state", "absent",
-             ["pn_vrouter_name", "pn_interface_ip"]]
+            ['state', 'present',
+             ['pn_network_ip', 'pn_ospf_area']],
+            ['state', 'absent', ['pn_network_ip']]
         )
     )
 
     # Accessing the arguments
     state = module.params['state']
     vrouter_name = module.params['pn_vrouter_name']
-    interface_ip = module.params['pn_interface_ip']
-    index = module.params['pn_index']
+    network_ip = module.params['pn_network_ip']
+    ospf_area = module.params['pn_ospf_area']
 
     command = get_command_from_state(state)
 
     # Building the CLI command string
     cli = pn_cli(module)
+    check_cli(module, cli)
 
-    if index:
-        if not MIN_INDEX <= index <= MAX_INDEX:
-            module.exit_json(
-                msg="Index must be between 1 and 255",
-                changed=False
-            )
-        index = str(index)
-
-    if command == 'vrouter-loopback-interface-remove':
-        check_cli(module, cli)
+    if state == 'present':
         if VROUTER_EXISTS is False:
             module.exit_json(
                 skipped=True,
                 msg='vRouter %s does not exist' % vrouter_name
             )
-        if LB_INTERFACE_EXISTS is False:
+        if NETWORK_EXISTS is True:
             module.exit_json(
                 skipped=True,
-                msg=('Loopback interface with IP %s does not exist on %s'
-                     % (interface_ip, vrouter_name))
+                msg=('OSPF with network ip %s already exists on %s'
+                     % (network_ip, vrouter_name))
             )
-        if not index:
-            # To remove loopback interface, we need the index.
-            # If index is not specified, get the Loopback interface index
-            # using the given interface ip.
-            get_index = cli
-            get_index += (' vrouter-loopback-interface-show vrouter-name %s ip '
-                          '%s ' % (vrouter_name, interface_ip))
-            get_index += 'format index no-show-headers'
+        cli += (' %s vrouter-name %s network %s ospf-area %s'
+                % (command, vrouter_name, network_ip, ospf_area))
 
-            get_index = shlex.split(get_index)
-            out = module.run_command(get_index)[1]
-            index = out.split()[1]
-
-        cli += ' %s vrouter-name %s index %s' % (command, vrouter_name, index)
-
-    if command == 'vrouter-loopback-interface-add':
-        check_cli(module, cli)
+    if state == 'absent':
         if VROUTER_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg=('vRouter %s does not exist' % vrouter_name)
+                msg='vRouter %s does not exist' % vrouter_name
             )
-        if LB_INTERFACE_EXISTS is True:
+        if NETWORK_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg=('Loopback interface with IP %s already exists on %s'
-                     % (interface_ip, vrouter_name))
+                msg=('OSPF with network ip %s already exists on %s'
+                     % (network_ip, vrouter_name))
             )
-        cli += (' %s vrouter-name %s ip %s'
-                % (command, vrouter_name, interface_ip))
-        if index:
-            cli += ' index %s ' % index
+        cli += (' %s vrouter-name %s network %s'
+                % (command, vrouter_name, network_ip))
 
     run_cli(module, cli)
 

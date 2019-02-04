@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -28,6 +28,10 @@ DOCUMENTATION = """
 module: pn_ospfarea
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
+deprecated:
+  removed_in: '2.12'
+  why: Updated modules released with increased functionality
+  alternative will be pushed in future version of ansible.
 short_description: CLI command to add/remove ospf area to/from a vrouter.
 description:
   - Execute vrouter-ospf-add, vrouter-ospf-remove command.

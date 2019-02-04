@@ -1,5 +1,5 @@
 #!/usr/bin/python
-""" PN CLI cluster-create/cluster-delete """
+""" PN CLI vrouter-loopback-interface-add/remove """
 
 #
 # This file is part of Ansible
@@ -19,24 +19,26 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = """
 ---
-module: pn_cluster
+module: pn_vrouterlbif
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-short_description: CLI command to create/delete a cluster.
+deprecated:
+  removed_in: '2.12'
+  why: Updated modules released with increased functionality
+  alternative will be pushed in future version of ansible.
+short_description: CLI command to add/remove vrouter-loopback-interface.
 description:
-  - Execute cluster-create or cluster-delete command.
-  - A cluster allows two switches to cooperate in high-availability (HA)
-    deployments. The nodes that form the cluster must be members of the same
-    fabric. Clusters are typically used in conjunction with a virtual link
-    aggregation group (VLAG) that allows links physically connected to two
-    separate switches appear as a single trunk to a third device. The third
-    device can be a switch,server, or any Ethernet device.
+  - Execute vrouter-loopback-interface-add, vrouter-loopback-interface-remove
+    commands.
+  - Each fabric, cluster, standalone switch, or virtual network (VNET) can
+    provide its tenants with a virtual router (vRouter) service that forwards
+    traffic between networks and implements Layer 3 protocols.
 options:
   pn_cliusername:
     description:
@@ -48,47 +50,39 @@ options:
     required: False
   pn_cliswitch:
     description:
-      - Target switch to run the cli on.
+      - Target switch(es) to run the cli on.
     required: False
   state:
     description:
-      - Specify action to perform. Use 'present' to create cluster and 'absent'
-        to delete cluster.
-    required: true
+      - State the action to perform. Use 'present' to add vrouter loopback
+        interface and 'absent' to remove vrouter loopback interface.
+    required: True
     choices: ['present', 'absent']
-  pn_name:
+  pn_vrouter_name:
     description:
-      - Specify the name of the cluster.
-    required: true
-  pn_cluster_node1:
+      - Specify the name of the vRouter.
+    required: True
+  pn_index:
     description:
-      - Specify the name of the first switch in the cluster.
-      - Required for 'cluster-create'.
-  pn_cluster_node2:
+      - Specify the interface index from 1 to 255.
+  pn_interface_ip:
     description:
-      - Specify the name of the second switch in the cluster.
-      - Required for 'cluster-create'.
-  pn_validate:
-    description:
-      - Validate the inter-switch links and state of switches in the cluster.
-    type: bool
+      - Specify the IP address.
+    required: True
 """
 
 EXAMPLES = """
-- name: create spine cluster
-  pn_cluster:
+- name: add vrouter-loopback-interface
+  pn_vrouterlbif:
     state: 'present'
-    pn_name: 'spine-cluster'
-    pn_cluster_node1: 'spine01'
-    pn_cluster_node2: 'spine02'
-    pn_validate: validate
-    pn_quiet: True
+    pn_vrouter_name: 'ansible-vrouter'
+    pn_interface_ip: '104.104.104.1'
 
-- name: delete spine cluster
-  pn_cluster:
+- name: remove vrouter-loopback-interface
+  pn_vrouterlbif:
     state: 'absent'
-    pn_name: 'spine-cluster'
-    pn_quiet: True
+    pn_vrouter_name: 'ansible-vrouter'
+    pn_interface_ip: '104.104.104.1'
 """
 
 RETURN = """
@@ -97,11 +91,11 @@ command:
   returned: always
   type: str
 stdout:
-  description: The set of responses from the cluster command.
+  description: The set of responses from the vrouterlb command.
   returned: always
   type: list
 stderr:
-  description: The set of error responses from the cluster command.
+  description: The set of error responses from the vrouterlb command.
   returned: on error
   type: list
 changed:
@@ -112,12 +106,14 @@ changed:
 
 import shlex
 
-# AnsibleModule boilerplate
+# Ansible boiler-plate
 from ansible.module_utils.basic import AnsibleModule
 
-NAME_EXISTS = None
-NODE1_EXISTS = None
-NODE2_EXISTS = None
+VROUTER_EXISTS = None
+LB_INTERFACE_EXISTS = None
+# Index range
+MIN_INDEX = 1
+MAX_INDEX = 255
 
 
 def pn_cli(module):
@@ -145,40 +141,45 @@ def pn_cli(module):
 
 def check_cli(module, cli):
     """
-    This method checks for idempotency using the cluster-show command.
-    If a cluster with given name exists, return NAME_EXISTS as True else False.
-    If the given cluster-node-1 is already a part of another cluster, return
-    NODE1_EXISTS as True else False.
-    If the given cluster-node-2 is already a part of another cluster, return
-    NODE2_EXISTS as True else False.
+    This method checks if vRouter exists on the target node.
+    This method also checks for idempotency using the
+    vrouter-loopback-interface-show command.
+    If the given vRouter exists, return VROUTER_EXISTS as True else False.
+    If a loopback interface with the given ip exists on the given vRouter,
+    return LB_INTERFACE_EXISTS as True else False.
+
     :param module: The Ansible module to fetch input parameters
     :param cli: The CLI string
-    :return Global Booleans: NAME_EXISTS, NODE1_EXISTS, NODE2_EXISTS
+    :return Global Booleans: VROUTER_EXISTS, LB_INTERFACE_EXISTS
     """
-    name = module.params['pn_name']
-    node1 = module.params['pn_cluster_node1']
-    node2 = module.params['pn_cluster_node2']
+    vrouter_name = module.params['pn_vrouter_name']
+    interface_ip = module.params['pn_interface_ip']
 
-    show = cli + ' cluster-show  format name,cluster-node-1,cluster-node-2 '
+    # Global flags
+    global VROUTER_EXISTS, LB_INTERFACE_EXISTS
+
+    # Check for vRouter
+    check_vrouter = cli + ' vrouter-show format name no-show-headers '
+    check_vrouter = shlex.split(check_vrouter)
+    out = module.run_command(check_vrouter)[1]
+    out = out.split()
+
+    if vrouter_name in out:
+        VROUTER_EXISTS = True
+    else:
+        VROUTER_EXISTS = False
+
+    # Check for loopback interface
+    show = (cli + ' vrouter-loopback-interface-show vrouter-name %s format ip '
+            'no-show-headers' % vrouter_name)
     show = shlex.split(show)
     out = module.run_command(show)[1]
-
     out = out.split()
-    # Global flags
-    global NAME_EXISTS, NODE1_EXISTS, NODE2_EXISTS
 
-    if name in out:
-        NAME_EXISTS = True
+    if interface_ip in out:
+        LB_INTERFACE_EXISTS = True
     else:
-        NAME_EXISTS = False
-    if node1 in out:
-        NODE1_EXISTS = True
-    else:
-        NODE2_EXISTS = False
-    if node2 in out:
-        NODE2_EXISTS = True
-    else:
-        NODE2_EXISTS = False
+        LB_INTERFACE_EXISTS = False
 
 
 def run_cli(module, cli):
@@ -233,14 +234,14 @@ def get_command_from_state(state):
     """
     command = None
     if state == 'present':
-        command = 'cluster-create'
+        command = 'vrouter-loopback-interface-add'
     if state == 'absent':
-        command = 'cluster-delete'
+        command = 'vrouter-loopback-interface-remove'
     return command
 
 
 def main():
-    """ This section is for arguments parsing """
+    """ This portion is for arguments parsing """
     module = AnsibleModule(
         argument_spec=dict(
             pn_cliusername=dict(required=False, type='str'),
@@ -248,68 +249,82 @@ def main():
             pn_cliswitch=dict(required=False, type='str', default='local'),
             state=dict(required=True, type='str',
                        choices=['present', 'absent']),
-            pn_name=dict(required=True, type='str'),
-            pn_cluster_node1=dict(type='str'),
-            pn_cluster_node2=dict(type='str'),
-            pn_validate=dict(type='bool')
+            pn_vrouter_name=dict(required=True, type='str'),
+            pn_interface_ip=dict(type='str'),
+            pn_index=dict(type='int')
         ),
         required_if=(
             ["state", "present",
-             ["pn_name", "pn_cluster_node1", "pn_cluster_node2"]],
-            ["state", "absent", ["pn_name"]]
+             ["pn_vrouter_name", "pn_interface_ip"]],
+            ["state", "absent",
+             ["pn_vrouter_name", "pn_interface_ip"]]
         )
     )
 
-    # Accessing the parameters
+    # Accessing the arguments
     state = module.params['state']
-    name = module.params['pn_name']
-    cluster_node1 = module.params['pn_cluster_node1']
-    cluster_node2 = module.params['pn_cluster_node2']
-    validate = module.params['pn_validate']
+    vrouter_name = module.params['pn_vrouter_name']
+    interface_ip = module.params['pn_interface_ip']
+    index = module.params['pn_index']
 
     command = get_command_from_state(state)
 
     # Building the CLI command string
     cli = pn_cli(module)
 
-    if command == 'cluster-create':
+    if index:
+        if not MIN_INDEX <= index <= MAX_INDEX:
+            module.exit_json(
+                msg="Index must be between 1 and 255",
+                changed=False
+            )
+        index = str(index)
 
+    if command == 'vrouter-loopback-interface-remove':
         check_cli(module, cli)
-
-        if NAME_EXISTS is True:
+        if VROUTER_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg='Cluster with name %s already exists' % name
+                msg='vRouter %s does not exist' % vrouter_name
             )
-        if NODE1_EXISTS is True:
+        if LB_INTERFACE_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg='Node %s already part of a cluster' % cluster_node1
+                msg=('Loopback interface with IP %s does not exist on %s'
+                     % (interface_ip, vrouter_name))
             )
-        if NODE2_EXISTS is True:
-            module.exit_json(
-                skipped=True,
-                msg='Node %s already part of a cluster' % cluster_node2
-            )
+        if not index:
+            # To remove loopback interface, we need the index.
+            # If index is not specified, get the Loopback interface index
+            # using the given interface ip.
+            get_index = cli
+            get_index += (' vrouter-loopback-interface-show vrouter-name %s ip '
+                          '%s ' % (vrouter_name, interface_ip))
+            get_index += 'format index no-show-headers'
 
-        cli += ' %s name %s ' % (command, name)
-        cli += 'cluster-node-1 %s cluster-node-2 %s ' % (cluster_node1,
-                                                         cluster_node2)
-        if validate is True:
-            cli += ' validate '
-        if validate is False:
-            cli += ' no-validate '
+            get_index = shlex.split(get_index)
+            out = module.run_command(get_index)[1]
+            index = out.split()[1]
 
-    if command == 'cluster-delete':
+        cli += ' %s vrouter-name %s index %s' % (command, vrouter_name, index)
 
+    if command == 'vrouter-loopback-interface-add':
         check_cli(module, cli)
-
-        if NAME_EXISTS is False:
+        if VROUTER_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg='Cluster with name %s does not exist' % name
+                msg=('vRouter %s does not exist' % vrouter_name)
             )
-        cli += ' %s name %s ' % (command, name)
+        if LB_INTERFACE_EXISTS is True:
+            module.exit_json(
+                skipped=True,
+                msg=('Loopback interface with IP %s already exists on %s'
+                     % (interface_ip, vrouter_name))
+            )
+        cli += (' %s vrouter-name %s ip %s'
+                % (command, vrouter_name, interface_ip))
+        if index:
+            cli += ' index %s ' % index
 
     run_cli(module, cli)
 
