@@ -161,7 +161,7 @@ def main():
             db=dict(required=False),
             slot_name=dict(required=True),
             slot_type=dict(default="physical", choices=["physical", "logical"]),
-            decoder=dict(default="test_decoding"),
+            output_plugin=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
         ),
         supports_check_mode=True
