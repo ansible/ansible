@@ -80,8 +80,6 @@ options:
       - present
       - absent
 
-notes:
-   - Not tested on any debian based system
 requirements:
    - xfsprogs
 '''
