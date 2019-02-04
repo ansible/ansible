@@ -123,7 +123,7 @@ servers:
                 - "The administrator's login name of a server."
             returned: always
             type: str
-            sample: serveradmin        
+            sample: serveradmin
         version:
             description:
                 - Server version.
