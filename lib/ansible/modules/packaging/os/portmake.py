@@ -74,13 +74,9 @@ EXAMPLES = '''
 
 import os
 import re
-import sys
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import shlex_quote
-from subprocess import Popen, PIPE
-import time
 from tempfile import mkstemp
-from os import fdopen, remove
 import shutil
 
 
@@ -90,7 +86,7 @@ class PortMake(object):
         self.module = module
         self.pkgng = None
 
-        # if pkg_info not found assume pkgng 
+        # if pkg_info not found assume pkgng
         if self.module.get_bin_path('pkg_info', False):
             self.pkg_info_path = self.module.get_bin_path('pkg_info', False)
             self.pkgng = False
@@ -101,7 +97,8 @@ class PortMake(object):
 
         # If pkg_delete not found, we assume pkgng
         if self.module.get_bin_path('pkg_delete', False):
-            self.pkg_delete_path = self.module.get_bin_path('pkg_delete', False)
+            self.pkg_delete_path = self.module.get_bin_path(
+                'pkg_delete', False)
             self.pkgng = False
         else:
             pkg_delete_path = self.module.get_bin_path('pkg', True)
@@ -111,10 +108,10 @@ class PortMake(object):
         if self.module.get_bin_path('ports_glob', False):
             self.ports_glob_path = module.get_bin_path('ports_glob', False)
         else:
-            rc, out, err = self.module.run_command("pkg install -y portupgrade")
+            rc, out, err = self.module.run_command(
+                "pkg install -y portupgrade")
             #self.install_packages("ports-mgmt/portupgrade", "","", "")
             self.ports_glob_path = module.get_bin_path('ports_glob', True)
-
 
     def package_installed(self, package):
         """
@@ -124,9 +121,11 @@ class PortMake(object):
         found = False
 
         if not self.pkgng:
-            rc, out, err = self.module.run_command("%s -e `ports_glob %s`"  % (self.pkg_info_path, shlex_quote(package)), use_unsafe_shell=True)
+            rc, out, err = self.module.run_command(
+                "%s -e `ports_glob %s`" % (self.pkg_info_path, shlex_quote(package)), use_unsafe_shell=True)
         else:
-            rc, out, err = self.module.run_command("%s --exists %s" % (self.pkg_info_path, package))
+            rc, out, err = self.module.run_command(
+                "%s --exists %s" % (self.pkg_info_path, package))
         if rc == 0:
             found = True
 
@@ -136,35 +135,35 @@ class PortMake(object):
             # some package is installed
             package_without_digits = re.sub('[0-9]', '', package)
             if package != package_without_digits:
-                rc, out, err = self.module.run_command("%s %s" % (self.pkg_info_path, package_without_digits))
+                rc, out, err = self.module.run_command(
+                    "%s %s" % (self.pkg_info_path, package_without_digits))
             if rc == 0:
                 found = True
 
         return found
-
 
     def get_package_options(self, package):
         """
         get a string of options package has been compiled with
         """
 
-        rc, out, err = self.module.run_command("%s %s" % (self.pkg_info_path, package))
+        rc, out, err = self.module.run_command(
+            "%s %s" % (self.pkg_info_path, package))
 
         re_opt = re.compile(r"\s+(\w+)\s+:\s+on", re.IGNORECASE)
         options_list = re_opt.findall(out)
 
-        options = " ".join(options_list)    
+        options = " ".join(options_list)
 
         return options
-
-
 
     def package_options_match(self, package, options_set, options_unset):
         """
         for found package check if all the set options match the ones of the installed package info
         """
 
-        rc, out, err = self.module.run_command("%s %s" % (self.pkg_info_path, package))
+        rc, out, err = self.module.run_command(
+            "%s %s" % (self.pkg_info_path, package))
 
         options = options_set
         for opt_set in options.split():
@@ -179,43 +178,43 @@ class PortMake(object):
 
         return True
 
-
-
     def matching_packages(self, package):
         """
         counts the number of packages found
         """
         #rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" %(package.split('/')[-1]))
 
-        rc, out, err = self.module.run_command("%s %s" % (self.ports_glob_path, package))
+        rc, out, err = self.module.run_command(
+            "%s %s" % (self.ports_glob_path, package))
 
         occurrences = out.count('\n')
         if occurrences == 0:
             package_without_digits = re.sub('[0-9]', '', package)
             if package != package_without_digits:
-                rc, out, err = self.module.run_command("%s %s" % (self.ports_glob_path, package_without_digits))
+                rc, out, err = self.module.run_command("%s %s" % (
+                    self.ports_glob_path, package_without_digits))
                 occurrences = out.count('\n')
                 #rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" % (package_without_digits))
         return occurrences
-
-
 
     def remove_package(self, package):
         """
         removes a single package using system's pkg
         """
-        rc, out, err = self.module.run_command("%s %s" % (self.pkg_delete_path, shlex_quote(package)), use_unsafe_shell=True)
-        
+        rc, out, err = self.module.run_command("%s %s" % (
+            self.pkg_delete_path, shlex_quote(package)), use_unsafe_shell=True)
+
         if self.package_installed(package):
             name_without_digits = re.sub('[0-9]', '', package)
-            rc, out, err = self.module.run_command("%s %s" % (self.pkg_delete_path, shlex_quote(name_without_digits)), use_unsafe_shell=True)
+            rc, out, err = self.module.run_command("%s %s" % (
+                self.pkg_delete_path, shlex_quote(name_without_digits)), use_unsafe_shell=True)
         if self.package_installed(package):
-            self.module.fail_json(msg="failed to remove %s: %s" % (package, out))
+            self.module.fail_json(
+                msg="failed to remove %s: %s" % (package, out))
         else:
             mf = MakeFile(self.module)
             mf.remove_port_options(package)
 
-    
     def remove_packages(self, packages):
         """
         removes a list of packages
@@ -233,15 +232,15 @@ class PortMake(object):
 
         return remove_c
 
-
     def get_options_name(self, package):
-        rc, out, err = self.module.run_command("make -C /usr/ports/%s -V OPTIONS_NAME" % (package))
+        rc, out, err = self.module.run_command(
+            "make -C /usr/ports/%s -V OPTIONS_NAME" % (package))
         if rc == 0:
             options_name = out.rstrip()
             return options_name
         else:
-            self.module.fail_json(msg="failed to figure out configure options name for %s: %s" % (package, out))
-
+            self.module.fail_json(
+                msg="failed to figure out configure options name for %s: %s" % (package, out))
 
     def install_packages(self, packages, options_set_list, options_unset_list, disable_vulnerabilities=False):
         """
@@ -262,10 +261,10 @@ class PortMake(object):
 
             # install package as it is not here yet or has just been uninstalled
             matches = self.matching_packages(package)
-            if matches == 1:            
+            if matches == 1:
                 # unset seems to have higher prio than set
                 # empty unset variables to override any set ones in /var/db/ports/*/*/options
-                # could not get portinstall to pass settings to make via --make-args, using ENV 
+                # could not get portinstall to pass settings to make via --make-args, using ENV
 
                 options_name = self.get_options_name(package)
 
@@ -278,27 +277,33 @@ class PortMake(object):
                 compile_options = ""
                 if disable_vulnerabilities:
                     compile_options = compile_options + "-DDISABLE_VULNERABILITIES"
-                
-                rc, out, err = self.module.run_command("make -C /usr/ports/%s clean" % (package))
-                rc, out, err = self.module.run_command("make -C /usr/ports/%s install %s BATCH=yes" % (package, compile_options))
-                rc, out, err = self.module.run_command("make -C /usr/ports/%s clean" % (package))
+
+                rc, out, err = self.module.run_command(
+                    "make -C /usr/ports/%s clean" % (package))
+                rc, out, err = self.module.run_command(
+                    "make -C /usr/ports/%s install %s BATCH=yes" % (package, compile_options))
+                rc, out, err = self.module.run_command(
+                    "make -C /usr/ports/%s clean" % (package))
 
                 if self.package_installed(package):
                     install_c += 1
                 else:
-                    self.module.fail_json(msg="failed to install %s: %s" % (package, out))
+                    self.module.fail_json(
+                        msg="failed to install %s: %s" % (package, out))
 
             elif matches == 0:
-                self.module.fail_json(msg="no matches for package %s" % (package))
+                self.module.fail_json(
+                    msg="no matches for package %s" % (package))
 
             else:
-                self.module.fail_json(msg="%s matches found for package name %s" % (matches, package))
+                self.module.fail_json(
+                    msg="%s matches found for package name %s" % (matches, package))
 
         if install_c > 0:
-            self.module.exit_json(changed=True, msg="present %s package(s)" % (install_c))
+            self.module.exit_json(
+                changed=True, msg="present %s package(s)" % (install_c))
 
         self.module.exit_json(changed=False, msg="package(s) already present")
-
 
 
 class MakeFile():
@@ -311,16 +316,14 @@ class MakeFile():
         fd, self.tempfile = mkstemp(dir=os.path.dirname(self.make_conf))
         self.make_config = []
 
-
     def _read_make_conf(self):
         if os.path.isfile(self.make_conf):
             shutil.copy(self.make_conf, self.tempfile)
 
         self.make_config = []
-        with open(self.tempfile, 'r') as tempfile:  
+        with open(self.tempfile, 'r') as tempfile:
             for line in tempfile:
                 self.make_config.append(line)
-
 
     def _write_make_conf(self):
         with open(self.tempfile, 'w') as tempfile:
@@ -329,7 +332,6 @@ class MakeFile():
         # atomic operation
         os.rename(self.tempfile, self.make_conf)
 
-
     def _port_option_is_set(self, option, value):
         option_value_pattern = "%s\+=%s" % (option, value)
         for line in self.make_config:
@@ -337,14 +339,11 @@ class MakeFile():
                 return True
         return False
 
-
     def set_port_option(self, option, values):
         self._port_option(option, values, kind="SET")
 
-
     def unset_port_option(self, option, values):
         self._port_option(option, values, kind="UNSET")
-
 
     def _port_option(self, option, values, kind=None):
         self._read_make_conf()
@@ -353,7 +352,6 @@ class MakeFile():
             if not self._port_option_is_set(option_set, value):
                 self.make_config.append("%s+=%s\n" % (option_set, value))
         self._write_make_conf()
-
 
     def remove_port_options(self, package):
         self._read_make_conf()
@@ -369,21 +367,20 @@ class MakeFile():
             # we might be trying to remove a package which is not in
             #  the ports tree anymore, thus failing here
             pass
-        
-        self._write_make_conf()
 
+        self._write_make_conf()
 
 
 def main():
     module = AnsibleModule(
-        argument_spec    = dict(
-            state        = dict(default="present", choices=["present","absent"]),
-            name         = dict(type='str', required=True),
-            options_set  = dict(type='list', required=False),
-            options_unset= dict(type='list', required=False),
-            disable_vulnerabilities = dict(type='bool', required=False)
-           )
+        argument_spec=dict(
+            state=dict(default="present", choices=["present", "absent"]),
+            name=dict(type='str', required=True),
+            options_set=dict(type='list', required=False),
+            options_unset=dict(type='list', required=False),
+            disable_vulnerabilities=dict(type='bool', required=False)
         )
+    )
 
     params = module.params
 
@@ -404,32 +401,32 @@ def main():
         for pkg in pkg_list:
             options_unset_list.append("")
 
-    if ( len(pkg_list) != len(options_set_list) or
-         len(pkg_list) != len(options_unset_list)):
-        module.fail_json( msg="""
+    if (len(pkg_list) != len(options_set_list) or
+            len(pkg_list) != len(options_unset_list)):
+        module.fail_json(msg="""
             %s packages given. This does not match the
             %s options_set or %s options_unset lists specified."""
-            % ( len(pkg_list), len(options_set_list), len(options_unset_list))
-        )
+                         % (len(pkg_list), len(options_set_list), len(options_unset_list))
+                         )
 
     if params["disable_vulnerabilities"]:
         disable_vulnerabilities = params["disable_vulnerabilities"]
     else:
         disable_vulnerabilities = False
-        
 
     pm = PortMake(module)
-                
+
     if params["state"] == "present":
-        pm.install_packages(pkg_list, options_set_list, options_unset_list, \
+        pm.install_packages(pkg_list, options_set_list, options_unset_list,
                             disable_vulnerabilities=disable_vulnerabilities)
 
     elif params["state"] == "absent":
         remove_count = pm.remove_packages(pkg_list)
-        if remove_count > 0:    
-            module.exit_json(changed=True, msg="removed %s package(s)" % remove_count)
+        if remove_count > 0:
+            module.exit_json(
+                changed=True, msg="removed %s package(s)" % remove_count)
         module.exit_json(changed=False, msg="package(s) already absent")
-                                        
+
 
 if __name__ == '__main__':
     main()
