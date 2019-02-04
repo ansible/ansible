@@ -80,12 +80,12 @@ options:
       - Path to a Unix domain socket for local connections.
   priv:
     description:
-      - "Slash-separated PostgreSQL privileges string: C(priv1/priv2), where 
-        priviliges can be defined for database ( allowed options - 'CREATE', 
-        'CONNECT', 'TEMPORARY', 'TEMP', 'ALL'. For example C(CONNECT) ) or 
-        for table ( allowed options - 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 
+      - "Slash-separated PostgreSQL privileges string: C(priv1/priv2), where
+        priviliges can be defined for database ( allowed options - 'CREATE',
+        'CONNECT', 'TEMPORARY', 'TEMP', 'ALL'. For example C(CONNECT) ) or
+        for table ( allowed options - 'SELECT', 'INSERT', 'UPDATE', 'DELETE',
         'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL'. For example
-        C(table:SELECT) ). Mixed example of this string: 
+        C(table:SELECT) ). Mixed example of this string:
         C(CONNECT/CREATE/table1:SELECT/table2:INSERT)."
   role_attr_flags:
     description:
