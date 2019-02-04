@@ -10,10 +10,10 @@ def count_terms(check, params):
     """Count the number of occurrences of a key in a given dictionary
 
     :arg params: Dictionary of module parameters
-    :arg check: String to check
+    :arg check: List of values to check
 
-    :returns: An integer that is the number of occurrences of the key in the
-        provided dictionary.
+    :returns: An integer that is the number of occurrences of the check values
+        in the provided dictionary.
     """
     count = 0
     for term in check:
