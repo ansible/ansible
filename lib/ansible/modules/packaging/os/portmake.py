@@ -25,7 +25,7 @@ description:
     - Set or unset  make configure options per Port
     - Saves the ports configure options to /etc/make.conf making them persistent for eg a portsupgrade
     - Allows overriding DISABLE_VULNERABILITIES to install Ports regardless of vulnerabilities known to make ansible run succeed.
-version_added: "2.4"
+version_added: "2.8"
 options:
     name:
         description:
@@ -48,8 +48,10 @@ options:
     disable_vulnerabilities:
         description:
             - override DISABLE_VULNERABILITIES to install Ports regardless of vulnerabilities. Ensure ansible run installs required ports regardless.
-
-author: "Daniel Winter <daniel@planets.world>"
+        required: false
+        choices: [ 'true', 'false' ]
+        default: false
+author: "Daniel Winter (@planet-winter)"
 '''
 
 EXAMPLES = '''
@@ -157,14 +159,14 @@ class PortMake(object):
 
 
 
-    def package_options_match(self, package, options_set, options_unset, options_add):
+    def package_options_match(self, package, options_set, options_unset):
         """
         for found package check if all the set options match the ones of the installed package info
         """
 
         rc, out, err = self.module.run_command("%s %s" % (self.pkg_info_path, package))
 
-        options = options_add + options_set
+        options = options_set
         for opt_set in options.split():
             re_opt_set = re.compile(r"\s+?%s\s+?:\s+?on" % (opt_set))
             if not re_opt_set.findall(out):
@@ -241,23 +243,21 @@ class PortMake(object):
             self.module.fail_json(msg="failed to figure out configure options name for %s: %s" % (package, out))
 
 
-    def install_packages(self, packages, options_set_list, options_unset_list, options_add_list, disable_vulnerabilities=False):
+    def install_packages(self, packages, options_set_list, options_unset_list, disable_vulnerabilities=False):
         """
         installs a list of packages using portinstall with make options given
         """
         install_c = 0
 
-        for (package, options_set, options_unset, options_add) in zip(packages, options_set_list, options_unset_list, options_add_list):
+        for (package, options_set, options_unset) in zip(packages, options_set_list, options_unset_list):
             if self.package_installed(package):
                 # package is installed. check options
-                if self.package_options_match(package, options_set, options_unset, options_add):
+                if self.package_options_match(package, options_set, options_unset):
                     # all ok no need to do anything for this package
                     continue
                 else:
                     # some options differ
-                    if options_add:
-                        # if we added options differing remember the oldpackage options
-                        old_options_set = self.get_package_options(package)
+                    # remove package to be built with proper options
                     self.remove_package(package)
 
             # install package as it is not here yet or has just been uninstalled
@@ -270,8 +270,8 @@ class PortMake(object):
                 options_name = self.get_options_name(package)
 
                 mf = MakeFile(self.module)
-                if options_set != [] or options_add != []:
-                    mf.set_port_option(options_name, options_set + " " + options_add)
+                if options_set != []:
+                    mf.set_port_option(options_name, options_set)
                 if options_unset != []:
                     mf.unset_port_option(options_name, options_unset)
 
@@ -280,9 +280,7 @@ class PortMake(object):
                     compile_options = compile_options + "-DDISABLE_VULNERABILITIES"
                 
                 rc, out, err = self.module.run_command("make -C /usr/ports/%s clean" % (package))
-               
                 rc, out, err = self.module.run_command("make -C /usr/ports/%s install %s BATCH=yes" % (package, compile_options))
-
                 rc, out, err = self.module.run_command("make -C /usr/ports/%s clean" % (package))
                 
                 if self.package_installed(package):
@@ -380,10 +378,9 @@ def main():
     module = AnsibleModule(
         argument_spec    = dict(
             state        = dict(default="present", choices=["present","absent"]),
-            name         = dict(type='str', aliases=["pkg"], required=True),
+            name         = dict(type='str', required=True),
             options_set  = dict(type='list', required=False),
             options_unset= dict(type='list', required=False),
-            options_add  = dict(type='list', required=False),
             disable_vulnerabilities = dict(type='bool', required=False)
            )
         )
@@ -407,21 +404,12 @@ def main():
         for pkg in pkg_list:
             options_unset_list.append("")
 
-    if params["options_add"]:
-        options_add_list = params["options_add"]
-    else:
-        options_add_list = []
-        for pkg in pkg_list:
-            options_add_list.append("")
-
     if ( len(pkg_list) != len(options_set_list) or
-         len(pkg_list) != len(options_unset_list) or
-         len(pkg_list) != len(options_add_list) ):
+         len(pkg_list) != len(options_unset_list)):
         module.fail_json( msg="""
             %s packages given. This does not match the
-            %s options_set, %s options_unset, or %s options
-            add lists specified."""
-            % ( len(pkg_list), len(options_set_list), len(options_unset_list), len(options_add_list) )
+            %s options_set or %s options_unset lists specified."""
+            % ( len(pkg_list), len(options_set_list), len(options_unset_list))
         )
 
     if params["disable_vulnerabilities"]:
@@ -433,7 +421,7 @@ def main():
     pm = PortMake(module)
                 
     if params["state"] == "present":
-        pm.install_packages(pkg_list, options_set_list, options_unset_list, options_add_list, \
+        pm.install_packages(pkg_list, options_set_list, options_unset_list, \
                             disable_vulnerabilities=disable_vulnerabilities)
 
     elif params["state"] == "absent":
