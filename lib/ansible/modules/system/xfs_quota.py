@@ -165,14 +165,14 @@ def main():
     )
 
     if os.getuid() != 0:
-        module.fail_json(msg='You need to be root to run this module')
+        module.fail_json(msg='You need to be root to run this module', **result)
 
     if not os.path.ismount(mountpoint):
-        module.fail_json(msg='%s is not a mountpoint' % mountpoint)
+        module.fail_json(msg='%s is not a mountpoint' % mountpoint, **result)
 
     mp = get_fs_by_mountpoint(mountpoint)
     if mp is None:
-        module.fail_json(msg='%s is not a mountpoint or not located on an xfs filesystem.' % mountpoint)
+        module.fail_json(msg='%s is not a mountpoint or not located on an xfs filesystem.' % mountpoint, **result)
 
     if quota_type == 'user':
         type_arg = '-u'
@@ -187,12 +187,12 @@ def main():
                 and 'qnoenforce' not in mp['mntopts']:
             module.fail_json(
                 msg='%s is not mounted with the uquota/usrquota/quota/uqnoenforce/qnoenforce option.'
-                    % mountpoint
+                    % mountpoint, **result
             )
         try:
             pwd.getpwnam(name)
         except KeyError as e:
-            module.fail_json(msg='User %s doesn\'t exist.' % name)
+            module.fail_json(msg='User %s doesn\'t exist.' % name, **result)
 
     if quota_type == 'group':
         type_arg = '-g'
@@ -203,12 +203,12 @@ def main():
         if 'gquota' not in mp['mntopts'] and 'grpquota' not in mp['mntopts'] and 'gqnoenforce' not in mp['mntopts']:
             module.fail_json(
                 msg='%s is not mounted with the gquota/grpquota/gqnoenforce option. (current options: %s)'
-                    % (mountpoint, mp['mntopts'])
+                    % (mountpoint, mp['mntopts']), **result
             )
         try:
             grp.getgrnam(name)
         except KeyError as e:
-            module.fail_json(msg='User %s doesn\'t exist.' % name)
+            module.fail_json(msg='User %s doesn\'t exist.' % name, **result)
 
     elif quota_type == 'project':
         type_arg = '-p'
@@ -217,23 +217,25 @@ def main():
             name = quota_default
 
         if 'pquota' not in mp['mntopts'] and 'prjquota' not in mp['mntopts'] and 'pqnoenforce' not in mp['mntopts']:
-            module.fail_json(msg='%s is not mounted with the pquota/prjquota/pqnoenforce option.' % mountpoint)
+            module.fail_json(msg='%s is not mounted with the pquota/prjquota/pqnoenforce option.' % mountpoint, **result)
 
         if name != quota_default and not os.path.isfile('/etc/projects'):
-            module.fail_json(msg='/etc/projects doesn\'t exist.')
+            module.fail_json(msg='/etc/projects doesn\'t exist.', **result)
 
         if name != quota_default and not os.path.isfile('/etc/projid'):
-            module.fail_json(msg='/etc/projid doesn\'t exist.')
+            module.fail_json(msg='/etc/projid doesn\'t exist.', **result)
 
         if name != quota_default and name is not None and get_project_id(name) is None:
-            module.fail_json(msg='%s hasn\'t been defined in /etc/projid.' % name)
+            module.fail_json(msg='%s hasn\'t been defined in /etc/projid.' % name, **result)
 
         prj_set = True
         if name != quota_default:
             cmd = 'project %s' % name
             r = exec_quota(module, cmd, mountpoint)
             if r['rc'] != 0:
-                module.fail_json(msg='Could not get project state.', cmd=cmd, retval=r)
+                result['cmd'] = cmd
+                result['retvar'] = r
+                module.fail_json(msg='Could not get project state.', **result)
             else:
                 for line in r['stdout']:
                     if '%s - project identifier is not set' in line:
@@ -244,7 +246,9 @@ def main():
             cmd = 'project -s'
             r = exec_quota(module, cmd, mountpoint)
             if r['rc'] != 0:
-                module.fail_json(msg='Could not get quota realtime block report.', cmd=cmd, retval=r)
+                result['cmd'] = cmd
+                result['retvar'] = r
+                module.fail_json(msg='Could not get quota realtime block report.', **result)
             else:
                 result['changed'] = True
         elif not prj_set and module.check_mode:
@@ -297,7 +301,9 @@ def main():
 
         r = exec_quota(module, cmd, mountpoint)
         if r['rc'] != 0:
-            module.fail_json(msg='Could not set limits.', cmd=cmd, retval=r)
+            result['cmd'] = cmd
+            result['retvar'] = r
+            module.fail_json(msg='Could not set limits.', **result)
         else:
             result['changed'] = True
     elif len(limit) > 0 and module.check_mode:
@@ -332,7 +338,7 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
     r = exec_quota(module, 'report %s %s' % (type_arg, used_arg), mountpoint)
 
     if r['rc'] != 0:
-        module.fail_json(msg='Could not get quota report for %s (%s).' % (used_name, r['stderr']))
+        module.fail_json(msg='Could not get quota report for %s (%s).' % (used_name, r['stderr']), **result)
     else:
         for line in r['stdout']:
             line = line.strip().split()
