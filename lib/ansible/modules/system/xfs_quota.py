@@ -342,7 +342,7 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
     else:
         for line in r['stdout']:
             line = line.strip().split()
-            if len(line) and line[0] == name:
+            if len(line) > 3 and line[0] == name:
                 soft = int(line[2])
                 hard = int(line[3])
                 break
