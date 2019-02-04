@@ -19,7 +19,9 @@ description:
   - When the project does exists and state=absent, the project will be deleted.
   - When changes are made to the project, the project will be updated.
 version_added: "2.1"
-author: "Werner Dijkerman (@dj-wasabi)"
+author:
+  - "Werner Dijkerman (@dj-wasabi)"
+  - "Guillaume Martinez (@Lunik)"
 requirements:
   - python >= 2.7
   - python-gitlab python module

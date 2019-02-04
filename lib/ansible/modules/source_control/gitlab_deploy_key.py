@@ -18,7 +18,9 @@ short_description: Manages GitLab project deploy keys.
 description:
      - Adds, updates and removes project deploy keys
 version_added: "2.6"
-author: "Marcus Watkins (@marwatk)"
+author:
+  - "Marcus Watkins (@marwatk)"
+  - "Guillaume Martinez (@Lunik)"
 requirements:
   - python >= 2.7
   - python-gitlab python module

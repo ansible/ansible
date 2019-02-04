@@ -19,7 +19,9 @@ description:
   - When the user does exists and state=absent, the user will be deleted.
   - When changes are made to user, the user will be updated.
 version_added: "2.1"
-author: "Werner Dijkerman (@dj-wasabi)"
+author:
+  - "Werner Dijkerman (@dj-wasabi)"
+  - "Guillaume Martinez (@Lunik)"
 requirements:
   - python >= 2.7
   - python-gitlab python module

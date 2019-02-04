@@ -18,7 +18,9 @@ description:
   - When the group does not exist in Gitlab, it will be created.
   - When the group does exist and state=absent, the group will be deleted.
 version_added: "2.1"
-author: "Werner Dijkerman (@dj-wasabi)"
+author:
+  - "Werner Dijkerman (@dj-wasabi)"
+  - "Guillaume Martinez (@Lunik)"
 requirements:
   - python >= 2.7
   - python-gitlab python module
