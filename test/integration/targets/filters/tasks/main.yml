@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- include_tasks: probe.yml
+
 - name: a dummy task to test the changed and success filters
   shell: echo hi
   register: some_registered_var
