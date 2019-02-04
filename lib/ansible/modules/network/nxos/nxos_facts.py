@@ -172,6 +172,7 @@ vlan_list:
 """
 import re
 
+from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
 from ansible.module_utils.network.nxos.nxos import get_capabilities, get_interface_type
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
@@ -451,7 +452,11 @@ class Interfaces(FactsBase):
 
     def populate_structured_interfaces(self, data):
         interfaces = dict()
-        for item in data['TABLE_interface']['ROW_interface']:
+        data = data['TABLE_interface']['ROW_interface']
+
+            if isinstance(data, dict):
+                data = to_list(data)
+
             name = item['interface']
 
             intf = dict()
@@ -477,7 +482,7 @@ class Interfaces(FactsBase):
             data = data['TABLE_intf']
             if data:
                 if isinstance(data, dict):
-                    data = [data]
+                    data = to_list(data)
                 for item in data:
                     name = item['ROW_intf']['intf-name']
                     intf = self.facts['interfaces'][name]
@@ -497,7 +502,7 @@ class Interfaces(FactsBase):
         data = data['TABLE_nbor']['ROW_nbor']
 
         if isinstance(data, dict):
-            data = [data]
+            data = to_list(data)
 
         for item in data:
             local_intf = normalize_interface(item['l_port_id'])
@@ -514,7 +519,7 @@ class Interfaces(FactsBase):
         data = data['TABLE_cdp_neighbor_detail_info']['ROW_cdp_neighbor_detail_info']
 
         if isinstance(data, dict):
-            data = [data]
+            data = to_list(data)
 
         for item in data:
             local_intf = item['intf_id']
@@ -820,7 +825,7 @@ class Legacy(FactsBase):
     def parse_structured_module(self, data):
         data = data['TABLE_modinfo']['ROW_modinfo']
         if isinstance(data, dict):
-            data = [data]
+            data = to_list(data)
         objects = list(self.transform_iterable(data, self.MODULE_MAP))
         return objects
 
