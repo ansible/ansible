@@ -28,11 +28,11 @@ DOCUMENTATION = """
 module: pn_vlag
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
+short_description: CLI command to create/delete/modify vlag.
 deprecated:
   removed_in: '2.12'
-  why: Updated modules released with increased functionality
-  alternative will be pushed in future version of ansible.
-short_description: CLI command to create/delete/modify vlag.
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
   - Execute vlag-create/vlag-delete/vlag-modify command.
   - A virtual link aggregation group (VLAG) allows links that are physically
@@ -53,6 +53,7 @@ options:
   pn_cliswitch:
     description:
       - Target switch(es) to run this command on.
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to create vlag,
@@ -271,7 +272,7 @@ def main():
                               'off', 'passive', 'active']),
             pn_lacp_timeout=dict(type='str', choices=['slow', 'fast']),
             pn_lacp_fallback=dict(type='str', choices=[
-                                  'individual', 'bundled']),
+                                  'bundle', 'individual']),
             pn_lacp_fallback_timeout=dict(type='str')
         ),
         required_if=(
