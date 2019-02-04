@@ -68,6 +68,7 @@ options:
         certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
 notes:
+   - PostgreSQL server must be 9.4 version or later.
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
    - This module uses psycopg2, a Python PostgreSQL database adapter. You must
@@ -355,8 +356,8 @@ class PgClusterFacts(object):
         Get information about replication if the server is a master.
         """
         query = ("SELECT r.pid, a.rolname, r.application_name, r.client_addr, "
-                 "r.client_hostname, r.backend_start::text, r.state "
-                 "FROM pg_stat_replication AS r "
+                 "r.client_hostname, r.backend_start::text, r.state, "
+                 "r.replay_lag::text FROM pg_stat_replication AS r "
                  "JOIN pg_authid AS a ON r.usesysid = a.oid")
         res = self.__exec_sql(query)
         repl_dict = {}
@@ -382,6 +383,7 @@ class PgClusterFacts(object):
 
             repl_info["backend_start"] = i[5]
             repl_info["state"] = i[6]
+            repl_info["reply_lag"] = i[7]
 
             repl_dict[repl_pid] = repl_info
 
