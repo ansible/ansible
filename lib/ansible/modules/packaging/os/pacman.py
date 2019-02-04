@@ -198,7 +198,7 @@ def query_package(module, pacman_path, name, state="present"):
         else:
             # a non-zero exit code doesn't always mean the package is installed
             # for example, if the package name queried is "provided" by another package
-            installed_name = get_name(lstdout)
+            installed_name = get_name(module, lstdout)
             if installed_name != name:
                 return False, False, False
 
