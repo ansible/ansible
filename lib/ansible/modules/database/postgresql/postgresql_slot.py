@@ -22,7 +22,7 @@ options:
     description:
       - name of the slot to add or remove
     required: true
-  type:
+  slot_type:
     description:
       - slots come in two distinct flavors, physical and logical
     required: false
@@ -79,7 +79,7 @@ EXAMPLES = '''
 # Add a logical_slot_one to the database "acme" on target host default port 5432
 - postgresql_slot:
     slot_name: logical_slot_one
-    type: logical
+    slot_type: logical
     state: present
     decoder: custom_decoder_one
 '''
@@ -160,7 +160,7 @@ def main():
             port=dict(default="5432"),
             db=dict(required=False),
             slot_name=dict(required=True),
-            type=dict(default="physical", choices=["physical", "logical"]),
+            slot_type=dict(default="physical", choices=["physical", "logical"]),
             decoder=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
         ),
@@ -172,7 +172,7 @@ def main():
 
     db = module.params["db"]
     slot = module.params["slot_name"]
-    type = module.params["type"]
+    slot_type = module.params["slot_type"]
     state = module.params["state"]
     decoder = module.params["decoder"]
     changed = False
@@ -209,7 +209,7 @@ def main():
             if state == "absent":
                 changed = slot_delete(cursor, slot)
             elif state == "present":
-                if type == "physical":
+                if slot_type == "physical":
                     changed = slot_create_physical(cursor, slot)
                 else:
                     changed = slot_create_logical(cursor, slot, decoder)
