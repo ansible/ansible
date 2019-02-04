@@ -26,7 +26,7 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.1'}
+                    'metadata_version': '1.2'}
 
 DOCUMENTATION = '''
 ---
@@ -159,6 +159,13 @@ options:
     description:
       - A list of dictionaries with network parameters. See examples for more details.
     default: []
+  vm_group:
+    description:
+      - A dictionary of key/value attributes to add new instances into a vm group. Accpetable keys':'
+      - vmgroup_name':' the vm group name vms to be added in. It must exist beforehand.
+      - role':' vm role in the vm group. It must exist beforehand.
+      - vmgroup_id':' alterntative way to specify a vm group than I(vmgroup_name).
+      - vmgroup_uid':' if mulitiple vm groupd have same name, you can select one by group owner uid.
   disk_saveas:
     description:
       - Creates an image from a VM disk.
@@ -283,6 +290,14 @@ EXAMPLES = '''
     template_id: 53
     networks:
       - NETWORK_ID: 27
+  register: vm
+
+# Deploy an new instance with a vm group
+- one_vm:
+    template_id: 53
+    vm_group:
+      vmgroup_name: my_group
+      role: my_app
   register: vm
 
 # Wait for SSH to come up
@@ -824,7 +839,7 @@ def create_disk_str(module, client, template_id, disk_size_str):
     return result
 
 
-def create_attributes_str(attributes_dict, labels_list):
+def create_attributes_str(attributes_dict, labels_list, vm_group_dict):
 
     attributes_str = ''
 
@@ -832,6 +847,9 @@ def create_attributes_str(attributes_dict, labels_list):
         attributes_str += 'LABELS="' + ','.join('{label}'.format(label=label) for label in labels_list) + '"\n'
     if attributes_dict:
         attributes_str += '\n'.join('{key}="{val}"'.format(key=key.upper(), val=val) for key, val in attributes_dict.items()) + '\n'
+    if vm_group_dict:
+        vm_group_str = ','.join('{key}="{val}"'.format(key=key, val=val) for key, val in vm_group_dict.items())
+        attributes_str += 'VMGROUP = [' + vm_group_str + ']\n'
 
     return attributes_str
 
@@ -847,13 +865,15 @@ def create_nics_str(network_attrs_list):
     return nics_str
 
 
-def create_vm(module, client, template_id, attributes_dict, labels_list, disk_size, network_attrs_list):
+def create_vm(module, client, template_id, attributes_dict, labels_list,
+              disk_size, network_attrs_list, vm_group_dict):
 
     if attributes_dict:
         vm_name = attributes_dict.get('NAME', '')
 
     disk_str = create_disk_str(module, client, template_id, disk_size)
-    vm_extra_template_str = create_attributes_str(attributes_dict, labels_list) + create_nics_str(network_attrs_list) + disk_str
+    vm_extra_template_str = create_attributes_str(attributes_dict, labels_list,
+                                                  vm_group_dict) + create_nics_str(network_attrs_list) + disk_str
     vm_id = client.call('template.instantiate', template_id, vm_name, False, vm_extra_template_str)
     vm = get_vm_by_id(client, vm_id)
 
@@ -946,7 +966,8 @@ def get_all_vms_by_attributes(client, attributes_dict, labels_list):
     return vm_list
 
 
-def create_count_of_vms(module, client, template_id, count, attributes_dict, labels_list, disk_size, network_attrs_list, wait, wait_timeout):
+def create_count_of_vms(module, client, template_id, count, attributes_dict,
+                        labels_list, disk_size, network_attrs_list, vm_group_dict, wait, wait_timeout):
     new_vms_list = []
 
     vm_name = ''
@@ -975,7 +996,8 @@ def create_count_of_vms(module, client, template_id, count, attributes_dict, lab
             new_vm_name += next_index
         # Update NAME value in the attributes in case there is index
         attributes_dict['NAME'] = new_vm_name
-        new_vm_dict = create_vm(module, client, template_id, attributes_dict, labels_list, disk_size, network_attrs_list)
+        new_vm_dict = create_vm(module, client, template_id, attributes_dict,
+                                labels_list, disk_size, network_attrs_list, vm_group_dict)
         new_vm_id = new_vm_dict.get('vm_id')
         new_vm = get_vm_by_id(client, new_vm_id)
         new_vms_list.append(new_vm)
@@ -989,7 +1011,8 @@ def create_count_of_vms(module, client, template_id, count, attributes_dict, lab
 
 
 def create_exact_count_of_vms(module, client, template_id, exact_count, attributes_dict, count_attributes_dict,
-                              labels_list, count_labels_list, disk_size, network_attrs_list, hard, wait, wait_timeout):
+                              labels_list, count_labels_list, disk_size,
+                              network_attrs_list, vm_group_dict, hard, wait, wait_timeout):
 
     vm_list = get_all_vms_by_attributes(client, count_attributes_dict, count_labels_list)
 
@@ -1006,7 +1029,10 @@ def create_exact_count_of_vms(module, client, template_id, exact_count, attribut
     if vm_count_diff > 0:
         # Add more VMs
         changed, instances_list, tagged_instances = create_count_of_vms(module, client, template_id, vm_count_diff, attributes_dict,
-                                                                        labels_list, disk_size, network_attrs_list, wait, wait_timeout)
+                                                                        labels_list,
+                                                                        disk_size,
+                                                                        network_attrs_list,
+                                                                        vm_group_dict, wait, wait_timeout)
 
         tagged_instances_list += instances_list
     elif vm_count_diff < 0:
@@ -1256,6 +1282,7 @@ def main():
         "vcpu": {"required": False, "type": "int"},
         "disk_size": {"required": False, "type": "str"},
         "networks": {"default": [], "type": "list"},
+        "vm_group": {"required": False, "type": "dict"},
         "count": {"default": 1, "type": "int"},
         "exact_count": {"required": False, "type": "int"},
         "attributes": {"default": {}, "type": "dict"},
@@ -1304,6 +1331,7 @@ def main():
     vcpu = params.get('vcpu')
     disk_size = params.get('disk_size')
     networks = params.get('networks')
+    vm_group = params.get('vm_group')
     count = params.get('count')
     exact_count = params.get('exact_count')
     attributes = params.get('attributes')
@@ -1376,12 +1404,17 @@ def main():
         # Deploy an exact count of VMs
         changed, instances_list, tagged_instances_list = create_exact_count_of_vms(module, client, template_id, exact_count, attributes,
                                                                                    count_attributes, labels, count_labels, disk_size,
-                                                                                   networks, hard, wait, wait_timeout)
+                                                                                   networks,
+                                                                                   vm_group, hard, wait, wait_timeout)
         vms = tagged_instances_list
     elif template_id is not None and state == 'present':
         # Deploy count VMs
         changed, instances_list, tagged_instances_list = create_count_of_vms(module, client, template_id, count,
-                                                                             attributes, labels, disk_size, networks, wait, wait_timeout)
+                                                                             attributes,
+                                                                             labels,
+                                                                             disk_size,
+                                                                             networks,
+                                                                             vm_group, wait, wait_timeout)
         # instances_list - new instances
         # tagged_instances_list - all instances with specified `count_attributes` and `count_labels`
         vms = instances_list
