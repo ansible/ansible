@@ -34,15 +34,17 @@ requirements:
 options:
     tag_names:
       description:
-      - List of tag(s) to be manage.
+      - List of tag(s) to be managed.
+      - You can also specify category name by specifying colon separated value. For example, "category_name:tag_name".
+      - You can skip category name if you have unique tag names.
       required: True
-    action:
+    state:
       description:
-      - C(add) will add the tags to the existing tag list of the given object.
-      - C(remove) will remove the tags from the existing tag list of the given object.
-      - C(set) will replace the tags of the given objects with user defined list of tags.
+      - If C(state) is set to C(add) or C(present) will add the tags to the existing tag list of the given object.
+      - If C(state) is set to C(remove) or C(absent) will remove the tags from the existing tag list of the given object.
+      - If C(state) is set to C(set) will replace the tags of the given objects with the user defined list of tags.
       default: add
-      choices: [ add, remove, set ]
+      choices: [ present, absent, add, remove, set ]
     object_type:
       description:
       - Type of object to work with.
@@ -56,7 +58,7 @@ extends_documentation_fragment: vmware_rest_client.documentation
 '''
 
 EXAMPLES = r'''
-- name: Assign a tag to a virtual machine
+- name: Add tags to a virtual machine
   vmware_tag_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -64,6 +66,7 @@ EXAMPLES = r'''
     validate_certs: no
     tag_names:
       - Sample_Tag_0002
+      - Category_0001:Sample_Tag_0003
     object_name: Fedora_VM
     object_type: VirtualMachine
     state: add
@@ -108,7 +111,7 @@ from ansible.module_utils.vmware_rest_client import VmwareRestClient
 from ansible.module_utils.vmware import PyVmomi
 try:
     from com.vmware.vapi.std_client import DynamicID
-    from com.vmware.cis.tagging_client import Tag, TagAssociation
+    from com.vmware.cis.tagging_client import Tag, TagAssociation, Category
 except ImportError:
     pass
 
@@ -132,24 +135,16 @@ class VmwareTagManager(VmwareRestClient):
             self.module.fail_json(msg="Failed to find the managed object for %s with type %s" % (self.object_name, self.object_type))
 
         self.tag_service = Tag(self.connect)
+        self.category_service = Category(self.connect)
         self.tag_association_svc = TagAssociation(self.connect)
 
         self.tag_names = self.params.get('tag_names')
 
-    def get_tags_for_object(self, dobj):
-        """
-        Return tags associated with an object
-        Args:
-            dobj: Dynamic object
-
-        Returns: List of tags associated with the given object
-
-        """
-        tag_ids = self.tag_association_svc.list_attached_tags(dobj)
-        tags = []
-        for tag_id in tag_ids:
-            tags.append(self.tag_service.get(tag_id))
-        return tags
+    def is_tag_category(self, cat_obj, tag_obj):
+        for tag in self.tag_service.list_tags_for_category(cat_obj.id):
+            if tag_obj.name == self.tag_service.get(tag).name:
+                return True
+        return False
 
     def ensure_state(self):
         """
@@ -161,50 +156,58 @@ class VmwareTagManager(VmwareRestClient):
             tag_status=dict(),
         )
         changed = False
-        action = self.params.get('action')
-        available_tag_obj = self.get_tags_for_object(self.dynamic_managed_object)
-        # Already existing tags from given object
+        action = self.params.get('state')
+        available_tag_obj = self.get_tags_for_object(tag_service=self.tag_service,
+                                                     tag_assoc_svc=self.tag_association_svc,
+                                                     dobj=self.dynamic_managed_object)
+        # Already existing tags from the given object
         avail_tag_obj_name_list = [tag.name for tag in available_tag_obj]
         results['tag_status']['previous_tags'] = avail_tag_obj_name_list
         results['tag_status']['desired_tags'] = self.tag_names
-        if action == 'add':
-            changed = set(self.tag_names) - set(avail_tag_obj_name_list)
-            if changed:
-                for tag_to_add in changed:
-                    tag_obj = self.search_svc_object_byname(self.tag_service, tag_to_add)
-                    if tag_obj:
-                        self.tag_association_svc.attach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
-                    else:
-                        self.module.fail_json(msg="Unable to find tag object for tag %s" % tag_to_add)
-        elif action == 'set':
-            # Remove all tags first
-            for av_tag in available_tag_obj:
-                self.tag_association_svc.detach(tag_id=av_tag.id, object_id=self.dynamic_managed_object)
 
-            # Add new tags
-            for user_tag in self.tag_names:
-                tag_obj = self.search_svc_object_byname(self.tag_service, user_tag)
-                if tag_obj:
+        # Check if category and tag combination exists as per user request
+        removed_tags_for_set = False
+        for tag in self.tag_names:
+            category_obj, category_name, tag_name = None, None, None
+            if ":" in tag:
+                # User specified category
+                category_name, tag_name = tag.split(":", 1)
+                category_obj = self.search_svc_object_by_name(self.category_service, category_name)
+                if not category_obj:
+                    self.module.fail_json(msg="Unable to find the category %s" % category_name)
+            else:
+                # User specified only tag
+                tag_name = tag
+
+            tag_obj = self.search_svc_object_by_name(self.tag_service, tag_name)
+            if not tag_obj:
+                self.module.fail_json(msg="Unable to find the tag %s" % tag_name)
+
+            if category_name and category_obj and not self.is_tag_category(category_obj, tag_obj):
+                self.module.fail_json(msg="Category %s does not contain tag %s" % (category_name, tag_name))
+
+            if action in ('add', 'present'):
+                if tag_obj not in available_tag_obj:
+                    # Tag is not already applied
                     self.tag_association_svc.attach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
                     changed = True
-                else:
-                    self.module.fail_json(msg="Unable to find tag object for tag %s" % user_tag)
-        elif action == 'remove':
-            # Remove all tags
-            for user_tag in self.tag_names:
-                if user_tag not in avail_tag_obj_name_list:
-                    changed = False
-                    continue
-                tag_obj = self.search_svc_object_byname(self.tag_service, user_tag)
-                if tag_obj:
+            elif action == 'set':
+                # Remove all tags first
+                if not removed_tags_for_set:
+                    for av_tag in available_tag_obj:
+                        self.tag_association_svc.detach(tag_id=av_tag.id, object_id=self.dynamic_managed_object)
+                    removed_tags_for_set = True
+                self.tag_association_svc.attach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
+                changed = True
+            elif action in ('remove', 'absent'):
+                if tag_obj in available_tag_obj:
                     self.tag_association_svc.detach(tag_id=tag_obj.id, object_id=self.dynamic_managed_object)
                     changed = True
-                else:
-                    self.module.fail_json(msg="Unable to find tag object for tag %s" % user_tag)
 
-        results['tag_status']['current_tags'] = [tag.name for tag in self.get_tags_for_object(self.dynamic_managed_object)]
+        results['tag_status']['current_tags'] = [tag.name for tag in self.get_tags_for_object(self.tag_service,
+                                                                                              self.tag_association_svc,
+                                                                                              self.dynamic_managed_object)]
         results['changed'] = changed
-
         self.module.exit_json(**results)
 
 
@@ -212,7 +215,7 @@ def main():
     argument_spec = VmwareRestClient.vmware_client_argument_spec()
     argument_spec.update(
         tag_names=dict(type='list', required=True),
-        action=dict(type='str', choices=['add', 'set', 'remove'], default='add'),
+        state=dict(type='str', choices=['absent', 'add', 'present', 'remove', 'set'], default='add'),
         object_name=dict(type='str', required=True),
         object_type=dict(type='str', required=True, choices=['VirtualMachine']),
     )

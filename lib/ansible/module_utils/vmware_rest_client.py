@@ -187,7 +187,7 @@ class VmwareRestClient(object):
         return tags
 
     @staticmethod
-    def search_svc_object_byname(service, svc_obj_name):
+    def search_svc_object_by_name(service, svc_obj_name=None):
         """
         Return service object by name
         Args:
@@ -197,6 +197,9 @@ class VmwareRestClient(object):
         Returns: Service object if found else None
 
         """
+        if not svc_obj_name:
+            return None
+
         for svc_object in service.list():
             svc_obj = service.get(svc_object)
             if svc_obj.name == svc_obj_name:
