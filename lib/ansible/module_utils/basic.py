@@ -171,6 +171,9 @@ from ansible.module_utils.six import (
     text_type,
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
+from ansible.module_utils.common.validation import (
+    count_terms,
+)
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
@@ -1591,13 +1594,9 @@ class AnsibleModule(object):
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
 
     def _count_terms(self, check, param=None):
-        count = 0
         if param is None:
             param = self.params
-        for term in check:
-            if term in param:
-                count += 1
-        return count
+        return count_terms(check, param)
 
     def _check_mutually_exclusive(self, spec, param=None):
         if spec is None:
