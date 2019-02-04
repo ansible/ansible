@@ -281,7 +281,7 @@ class PgClusterFacts(object):
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
                               "WHERE table_name = 'pg_replication_slots')")
-        if res[0] == 'f':
+        if not res[0][0]:
             return 0
 
         query = ("SELECT slot_name, plugin, slot_type, database, "
@@ -364,7 +364,7 @@ class PgClusterFacts(object):
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
                               "WHERE table_name = 'pg_stat_replication')")
-        if res[0] == 'f':
+        if not res[0][0]:
             return 0
 
         query = ("SELECT r.pid, a.rolname, r.application_name, r.client_addr, "
