@@ -1,0 +1,7 @@
+---
+scaleway_region: fr-par
+name: lb_backend_ansible_test
+description: Load-balancer used for testing scaleway_lb_backend ansible module
+backend_name: backend_name_ansible_test
+updated_description: Load-balancer used for testing scaleway_lb ansible module (Updated description)
+forward_port: 8080

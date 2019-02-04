@@ -1,0 +1,90 @@
+- name: Create load-balancer
+  scaleway_lb:
+    state: present
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scw_org }}'
+    description: '{{ description }}'
+    wait: true
+  register: lb_creation_task
+
+- debug: var=lb_creation_task
+
+- set_fact:
+    lb_id: '{{ lb_creation_task.scaleway_lb.id }}'
+
+- name: Create load-balancer backend (Check)
+  scaleway_lb_back:
+    state: present
+    lb_id: '{{ lb_id }}'
+    region: '{{ scaleway_region }}'
+    name: '{{ backend_name }}'
+    forward_port: '{{ forward_port }}'
+  register: lb_backend_creation_check_task
+
+- name: Create load-balancer backend
+  scaleway_lb_back:
+    state: present
+    lb_id: '{{ lb_id }}'
+    region: '{{ scaleway_region }}'
+    forward_port: '{{ forward_port }}'
+    name: '{{ backend_name }}'
+  register: lb_backend_creation_task
+
+- name: Create load-balancer backend (Confirmation)
+  scaleway_lb_back:
+    state: present
+    region: '{{ scaleway_region }}'
+    forward_port: '{{ forward_port }}'
+    lb_id: '{{ lb_id }}'
+    name: '{{ backend_name }}'
+  register: lb_backend_creation_confirmation_task
+
+- name: Delete load-balancer backend (Check)
+  check_mode: yes
+  scaleway_lb_back:
+    state: absent
+    lb_id: '{{ lb_id }}'
+    region: '{{ scaleway_region }}'
+    forward_port: '{{ forward_port }}'
+    name: '{{ backend_name }}'
+  register: lb_backend_deletion_check_task
+
+- name: Delete load-balancer backend
+  scaleway_lb_back:
+    state: absent
+    lb_id: '{{ lb_id }}'
+    region: '{{ scaleway_region }}'
+    forward_port: '{{ forward_port }}'
+    name: '{{ backend_name }}'
+  register: lb_backend_deletion_task
+
+- name: Delete load-balancer backend (Confirmation)
+  scaleway_lb_back:
+    state: absent
+    lb_id: '{{ lb_id }}'
+    forward_port: '{{ forward_port }}'
+    region: '{{ scaleway_region }}'
+    name: '{{ backend_name }}'
+  register: lb_backend_deletion_confirmation_task
+
+
+- name: Delete load-balancer
+  scaleway_lb:
+    state: absent
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    description: '{{ description }}'
+    organization_id: '{{ scw_org }}'
+    wait: true
+  register: lb_deletion_task
+
+- name: lb_deletion_task is success
+  assert:
+    that:
+      - lb_deletion_task is success
+
+- name: lb_deletion_task is changed
+  assert:
+    that:
+      - lb_deletion_task is changed
