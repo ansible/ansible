@@ -123,15 +123,15 @@ from ansible.module_utils.basic import human_to_bytes
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            bhard=dict(type='str', required=False, default=None),
-            bsoft=dict(type='str', required=False, default=None),
-            ihard=dict(type='int', required=False, default=None),
-            isoft=dict(type='int', required=False, default=None),
+            bhard=dict(type='str'),
+            bsoft=dict(type='str'),
+            ihard=dict(type='int'),
+            isoft=dict(type='int'),
             mountpoint=dict(type='str', required=True),
-            name=dict(type='str', required=False, default=None),
-            rtbhard=dict(type='str', required=False, default=None),
-            rtbsoft=dict(type='str', required=False, default=None),
-            state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
+            name=dict(type='str'),
+            rtbhard=dict(type='str'),
+            rtbsoft=dict(type='str'),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
             type=dict(type='str', required=True, choices=['user', 'group', 'project'])
         ),
         supports_check_mode=True
