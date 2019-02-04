@@ -59,14 +59,8 @@ namespace Ansible.WinUserProfile
 
 Function Get-LastWin32ExceptionMessage {
     param([int]$ErrorCode)
-
-    # Need to throw a Win32Exception with the error code to get the actual error message assigned to that code
-    try {
-        throw [System.ComponentModel.Win32Exception]$ErrorCode
-    } catch [System.ComponentModel.Win32Exception] {
-        $exp_msg = "{0} (Win32 ErrorCode {1} - 0x{1:X8})" -f $_.Exception.Message, $ErrorCode
-    }
-
+    $exp = New-Object -TypeName System.ComponentModel.Win32Exception -ArgumentList $ErrorCode
+    $exp_msg = "{0} (Win32 ErrorCode {1} - 0x{1:X8})" -f $exp.Message, $ErrorCode
     return $exp_msg
 }
 
@@ -75,12 +69,11 @@ Function Get-ExpectedProfilePath {
 
     # Environment.GetFolderPath does not have an enumeration to get the base profile dir, use PInvoke instead
     # and combine with the base name to return back to the user - best efforts
-    $raw_profile_path = New-Object -TypeName System.Text.StringBuilder -ArgumentList 0
     $profile_path_length = 0
-    [Ansible.WinUserProfile.NativeMethods]::GetProfilesDirectoryW($raw_profile_path,
+    [Ansible.WinUserProfile.NativeMethods]::GetProfilesDirectoryW($null,
         [ref]$profile_path_length) > $null
 
-    $raw_profile_path.EnsureCapacity($profile_path_length) > $null
+    $raw_profile_path = New-Object -TypeName System.Text.StringBuilder -ArgumentList $profile_path_length
     $res = [Ansible.WinUserProfile.NativeMethods]::GetProfilesDirectoryW($raw_profile_path,
         [ref]$profile_path_length)
 
