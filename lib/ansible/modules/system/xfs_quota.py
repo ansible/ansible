@@ -4,9 +4,6 @@
 # Copyright: (c) 2018, Emmanouil Kampitakis <info@kampitakis.de>
 # Copyright: (c) 2018, William Leemans <willie@elaba.net>
 
-# Contributors:
-# (c) 2018, Emmanouil Kampitakis <info@kampitakis.de>
-# (c) 2018, Nicolas Magliaro <nicolasmagliaro@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
