@@ -89,7 +89,7 @@ class PortMake(object):
     def __init__(self, module):
         self.module = module
         self.pkgng = None
-        
+
         # if pkg_info not found assume pkgng 
         if self.module.get_bin_path('pkg_info', False):
             self.pkg_info_path = self.module.get_bin_path('pkg_info', False)
@@ -107,7 +107,7 @@ class PortMake(object):
             pkg_delete_path = self.module.get_bin_path('pkg', True)
             self.pkg_delete_path = pkg_delete_path + " delete -y"
             self.pkgng = True
-            
+
         if self.module.get_bin_path('ports_glob', False):
             self.ports_glob_path = module.get_bin_path('ports_glob', False)
         else:
@@ -115,14 +115,14 @@ class PortMake(object):
             #self.install_packages("ports-mgmt/portupgrade", "","", "")
             self.ports_glob_path = module.get_bin_path('ports_glob', True)
 
-            
+
     def package_installed(self, package):
         """
         query the pkg system wether a package is installed
         """
 
         found = False
-        
+
         if not self.pkgng:
             rc, out, err = self.module.run_command("%s -e `ports_glob %s`"  % (self.pkg_info_path, shlex_quote(package)), use_unsafe_shell=True)
         else:
@@ -186,7 +186,7 @@ class PortMake(object):
         counts the number of packages found
         """
         #rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" %(package.split('/')[-1]))
-        
+
         rc, out, err = self.module.run_command("%s %s" % (self.ports_glob_path, package))
 
         occurrences = out.count('\n')
@@ -205,7 +205,7 @@ class PortMake(object):
         removes a single package using system's pkg
         """
         rc, out, err = self.module.run_command("%s %s" % (self.pkg_delete_path, shlex_quote(package)), use_unsafe_shell=True)
-                    
+        
         if self.package_installed(package):
             name_without_digits = re.sub('[0-9]', '', package)
             rc, out, err = self.module.run_command("%s %s" % (self.pkg_delete_path, shlex_quote(name_without_digits)), use_unsafe_shell=True)
@@ -215,7 +215,7 @@ class PortMake(object):
             mf = MakeFile(self.module)
             mf.remove_port_options(package)
 
-            
+    
     def remove_packages(self, packages):
         """
         removes a list of packages
@@ -282,7 +282,7 @@ class PortMake(object):
                 rc, out, err = self.module.run_command("make -C /usr/ports/%s clean" % (package))
                 rc, out, err = self.module.run_command("make -C /usr/ports/%s install %s BATCH=yes" % (package, compile_options))
                 rc, out, err = self.module.run_command("make -C /usr/ports/%s clean" % (package))
-                
+
                 if self.package_installed(package):
                     install_c += 1
                 else:
@@ -302,7 +302,7 @@ class PortMake(object):
 
 
 class MakeFile():
-    
+
     def __init__(self, module):
         self.module = module
         self.make_conf = "/etc/make.conf"
@@ -311,7 +311,7 @@ class MakeFile():
         fd, self.tempfile = mkstemp(dir=os.path.dirname(self.make_conf))
         self.make_config = []
 
-        
+
     def _read_make_conf(self):
         if os.path.isfile(self.make_conf):
             shutil.copy(self.make_conf, self.tempfile)
@@ -321,7 +321,7 @@ class MakeFile():
             for line in tempfile:
                 self.make_config.append(line)
 
-                
+
     def _write_make_conf(self):
         with open(self.tempfile, 'w') as tempfile:
             for line in self.make_config:
@@ -329,23 +329,23 @@ class MakeFile():
         # atomic operation
         os.rename(self.tempfile, self.make_conf)
 
-    
+
     def _port_option_is_set(self, option, value):
         option_value_pattern = "%s\+=%s" % (option, value)
         for line in self.make_config:
             if bool(re.match(option_value_pattern, line)):
                 return True
         return False
-    
-        
+
+
     def set_port_option(self, option, values):
         self._port_option(option, values, kind="SET")
 
-        
+
     def unset_port_option(self, option, values):
         self._port_option(option, values, kind="UNSET")
 
-        
+
     def _port_option(self, option, values, kind=None):
         self._read_make_conf()
         option_set = "%s_%s" % (option, kind)
@@ -353,8 +353,8 @@ class MakeFile():
             if not self._port_option_is_set(option_set, value):
                 self.make_config.append("%s+=%s\n" % (option_set, value))
         self._write_make_conf()
-        
-        
+
+
     def remove_port_options(self, package):
         self._read_make_conf()
 
@@ -373,7 +373,7 @@ class MakeFile():
         self._write_make_conf()
 
 
-        
+
 def main():
     module = AnsibleModule(
         argument_spec    = dict(
