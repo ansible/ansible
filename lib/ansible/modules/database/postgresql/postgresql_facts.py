@@ -375,7 +375,7 @@ class PgClusterFacts(object):
         repl_dict = {}
 
         # If there is no replication:
-        if not res:
+        if not res[0][0]:
             return True
 
         for i in res:
