@@ -314,11 +314,12 @@ def gather_vm_facts(content, vm):
             facts['hw_files'] = [files.vmPathName]
             for item in layout.snapshot:
                 for snap in item.snapshotFile:
-                    facts['hw_files'].append(files.snapshotDirectory + snap)
+                    if 'vmsn' in snap:
+                        facts['hw_files'].append(snap)
             for item in layout.configFile:
-                facts['hw_files'].append(os.path.dirname(files.vmPathName) + '/' + item)
+                facts['hw_files'].append(os.path.join(os.path.dirname(files.vmPathName), item))
             for item in vm.layout.logFile:
-                facts['hw_files'].append(files.logDirectory + item)
+                facts['hw_files'].append(os.path.join(files.logDirectory, item))
             for item in vm.layout.disk:
                 for disk in item.diskFile:
                     facts['hw_files'].append(disk)
