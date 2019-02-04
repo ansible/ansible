@@ -181,7 +181,7 @@ def convert_to_bytes(param):
     param = ''.join(param.split())
 
     # Convert to bytes:
-    if param[-3].lower() in ['k', 'm', 'g', 't', 'p']:
+    if len(param) > 3 and param[-3].lower() in ['k', 'm', 'g', 't', 'p']:
         return int(param[:-3]) * BYTES_MAP.get(param[-3:].lower(), 1)
     elif param.isdigit():
         return int(param) * 2**10
