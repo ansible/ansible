@@ -81,7 +81,7 @@ options:
   priv:
     description:
       - "Slash-separated PostgreSQL privileges string: C(priv1/priv2), where
-        priviliges can be defined for database ( allowed options - 'CREATE',
+        privileges can be defined for database ( allowed options - 'CREATE',
         'CONNECT', 'TEMPORARY', 'TEMP', 'ALL'. For example C(CONNECT) ) or
         for table ( allowed options - 'SELECT', 'INSERT', 'UPDATE', 'DELETE',
         'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL'. For example
