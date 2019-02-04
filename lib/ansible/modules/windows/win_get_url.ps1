@@ -23,6 +23,7 @@ $spec = @{
         proxy_username = @{ type='str' }
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
+        checksum = @{ type='str'; required=$true }
     }
     supports_check_mode = $true
 }
@@ -42,6 +43,7 @@ $proxy_url = $module.Params.proxy_url
 $proxy_username = $module.Params.proxy_username
 $proxy_password = $module.Params.proxy_password
 $force = $module.Params.force
+$checksum = $module.Params.checksum
 
 Add-CSharpType -AnsibleModule $module -References @'
     using System.Net;
@@ -129,6 +131,24 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
         $module.FailJson("The path '$dest_parent' does not exist for destination '$dest', or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs.")
     }
 
+    # Verify and parce 'checksum' parameter, if present
+    if ($checksum) {
+        $checksum_parameter_splited = $checksum.split(":")
+        if ($checksum_parameter_splited.Count -ne 2) {
+            $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum>. url for checksum currently not supported.")
+        }
+
+        $checksum_allowed_algorithms_list = 'SHA1', 'SHA256', 'SHA384', 'SHA512', 'MACTripleDES', 'MD5', 'RIPEMD160'
+
+        $checksum_algorithm = $checksum_parameter_splited[0]
+        $checksum_value = $checksum_parameter_splited[1]
+
+        if ( -Not ($checksum_allowed_algorithms_list -match $checksum_algorithm)) 
+        {
+            $module.FailJson("The checksum algorithm '$checksum_algorithm' is not supported.  Supported algorithms list: '$checksum_allowed_algorithms_list'.")
+        } 
+        
+    }
     # TODO: Replace this with WebRequest
     $extWebClient = New-Object ExtendedWebClient
 
@@ -166,6 +186,16 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
         } Catch {
             $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
+        }
+        # Checksum verification for downloaded file
+        if ($checksum) {
+            # TBD check '$dest' to be fuul path with name for downloaded file.
+            $hashFromFile = Get-FileHash -Path $dest -Algorithm $checksum_algorithm
+            # Check both hashes are the same
+            if ($hashFromFile.Hash -ne $checksum_value) {
+                # TBD: add to output variables with both checksums
+                $module.FailJson("The checksum of dowloaded file is not matched with: '$checksum_value'.")
+            }
         }
     }
 
