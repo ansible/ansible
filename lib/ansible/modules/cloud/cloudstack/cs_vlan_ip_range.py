@@ -31,18 +31,16 @@ options:
   end_ip:
     description:
       - The ending IPv4 address in the VLAN IP range.
-      - If not specified, value of C(start_ip) is used.
+      - If not specified, value of I(start_ip) is used.
       - Only considered on create.
   gateway:
     description:
       - The gateway of the VLAN IP range.
-      - Only considered on create.
-    required: true
+      - Required if I(state=present).
   netmask:
     description:
       - The netmask of the VLAN IP range.
-      - Only considered on create.
-    required: true
+      - Required if I(state=present).
   start_ipv6:
     description:
       - The beginning IPv6 address in the IPv6 network range.
@@ -50,7 +48,7 @@ options:
   end_ipv6:
     description:
       - The ending IPv6 address in the IPv6 network range.
-      - If not specified, value of C(start_ipv6) is used.
+      - If not specified, value of I(start_ipv6) is used.
       - Only considered on create.
   gateway_ipv6:
     description:
@@ -85,11 +83,6 @@ options:
       - true if VLAN is of Virtual type, false if Direct.
     type: bool
     default: false
-  for_systemvms:
-    description:
-      - true if IP range is set to system vms, false if not
-    type: bool
-    default: false
 extends_documentation_fragment: cloudstack
 '''
 
@@ -103,6 +96,15 @@ EXAMPLES = '''
     end_ip: 10.2.4.100
     gateway: 10.2.4.1
     netmask: 255.255.255.0
+    zone: zone-02
+
+- name: remove a VLAN IP range for network test
+  local_action:
+    module: cs_vlan_ip_range
+    state: absent
+    network: test
+    start_ip: 10.2.4.10
+    end_ip: 10.2.4.100
     zone: zone-02
 '''
 
@@ -224,6 +226,7 @@ class AnsibleCloudStackVlanIpRange(AnsibleCloudStack):
                 for ipr in ip_range_list:
                     if params['startip'] == ipr['startip'] and params['endip'] == ipr['endip']:
                         self.ip_range = ipr
+                        break
 
         return self.ip_range
 
@@ -287,8 +290,8 @@ def main():
         zone=dict(type='str'),
         start_ip=dict(type='str', required=True),
         end_ip=dict(type='str'),
-        gateway=dict(type='str', required=True),
-        netmask=dict(type='str', required=True),
+        gateway=dict(type='str'),
+        netmask=dict(type='str'),
         start_ipv6=dict(type='str'),
         end_ipv6=dict(type='str'),
         gateway_ipv6=dict(type='str'),
@@ -298,7 +301,6 @@ def main():
         account=dict(type='str'),
         project=dict(type='str'),
         for_virtual_network=dict(type='bool', default=False),
-        for_systemvms=dict(type='bool', default=False),
     ))
 
     module = AnsibleModule(
@@ -307,6 +309,7 @@ def main():
         mutually_exclusive=(
             ['account', 'project'],
         ),
+        required_if=(("state", "present", ("gateway", "netmask")),),
         supports_check_mode=True,
     )
 

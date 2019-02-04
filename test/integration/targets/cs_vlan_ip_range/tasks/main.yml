@@ -38,7 +38,7 @@
     that:
     - ipr is not successful
     - ipr is not changed
-    - 'ipr.msg == "missing required arguments: netmask"'
+    - 'ipr.msg == "state is present but all of the following are missing: netmask"'
 
 - name: test create a VLAN IP RANGE with conflicting params
   cs_vlan_ip_range:
@@ -161,11 +161,8 @@
 - name: test cleanup VLAN IP RANGE in check mode
   cs_vlan_ip_range:
     network: ipr_test_network
-    vlan: 98
     start_ip: 10.2.4.10
     end_ip: 10.2.4.100
-    gateway: 10.2.4.1
-    netmask: 255.255.255.0
     zone: "{{ cs_common_zone_adv }}"
     state: absent
   check_mode: true
@@ -179,11 +176,8 @@
 - name: test cleanup VLAN IP RANGE
   cs_vlan_ip_range:
     network: ipr_test_network
-    vlan: 98
     start_ip: 10.2.4.10
     end_ip: 10.2.4.100
-    gateway: 10.2.4.1
-    netmask: 255.255.255.0
     zone: "{{ cs_common_zone_adv }}"
     state: absent
   register: ipr
@@ -196,11 +190,8 @@
 - name: test cleanup VLAN IP RANGE idempotence
   cs_vlan_ip_range:
     network: ipr_test_network
-    vlan: 98
     start_ip: 10.2.4.10
     end_ip: 10.2.4.100
-    gateway: 10.2.4.1
-    netmask: 255.255.255.0
     zone: "{{ cs_common_zone_adv }}"
     state: absent
   register: ipr
@@ -213,11 +204,8 @@
 - name: cleanup second VLAN IP RANGE
   cs_vlan_ip_range:
     network: ipr_test_network
-    vlan: 98
     start_ip: 10.2.4.101
     end_ip: 10.2.4.150
-    gateway: 10.2.4.1
-    netmask: 255.255.255.0
     zone: "{{ cs_common_zone_adv }}"
     state: absent
   register: ipr2
