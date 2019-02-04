@@ -1305,6 +1305,7 @@ files:
   test/legacy/scaleway:
     <<: *scaleway
     support: community
+  test/units/module_utils/docker/: *docker
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
   test/units/modules/cloud/docker: *docker
   test/units/modules/network:
