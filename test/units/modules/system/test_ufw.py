@@ -137,7 +137,7 @@ class TestUFW(unittest.TestCase):
         self.mock_module_helper.start()
         self.addCleanup(self.mock_module_helper.stop)
 
-    def test_filter_line_that_contains_ipv4(self):
+    def test_get_lines_that_contains_ipv4(self):
         reg = module.compile_ipv4_regexp()
 
         self.assertTrue(reg.search("### tuple ### allow udp 5353 ::/0 any ff02::fb in") is None)
@@ -150,7 +150,7 @@ class TestUFW(unittest.TestCase):
         self.assertTrue(reg.match("::") is None)
         self.assertTrue(reg.match("any") is None)
 
-    def test_filter_line_that_contains_ipv6(self):
+    def test_get_lines_that_contains_ipv6(self):
         reg = module.compile_ipv6_regexp()
         self.assertTrue(reg.search("### tuple ### allow udp 5353 ::/0 any ff02::fb in") is not None)
         self.assertTrue(reg.search("### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251 in") is None)

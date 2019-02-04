@@ -275,6 +275,310 @@ from operator import itemgetter
 from ansible.module_utils.basic import AnsibleModule
 
 
+class UFWObj:
+
+    def __init__(self):
+
+        command_keys = ['state', 'default', 'rule', 'logging']
+
+        self.module = AnsibleModule(
+            argument_spec=dict(
+                state=dict(type='str', choices=['enabled', 'disabled', 'reloaded', 'reset']),
+                default=dict(type='str', aliases=['policy'], choices=['allow', 'deny', 'reject']),
+                logging=dict(type='str', choices=['full', 'high', 'low', 'medium', 'off', 'on']),
+                direction=dict(type='str', choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
+                delete=dict(type='bool', default=False),
+                route=dict(type='bool', default=False),
+                insert=dict(type='int'),
+                insert_relative_to=dict(choices=['zero', 'first-ipv4', 'last-ipv4', 'first-ipv6', 'last-ipv6'], default='zero'),
+                rule=dict(type='str', choices=['allow', 'deny', 'limit', 'reject']),
+                interface=dict(type='str', aliases=['if']),
+                log=dict(type='bool', default=False),
+                from_ip=dict(type='str', default='any', aliases=['from', 'src']),
+                from_port=dict(type='str'),
+                to_ip=dict(type='str', default='any', aliases=['dest', 'to']),
+                to_port=dict(type='str', aliases=['port']),
+                proto=dict(type='str', aliases=['protocol'], choices=['ah', 'any', 'esp', 'ipv6', 'tcp', 'udp', 'gre', 'igmp']),
+                app=dict(type='str', aliases=['name']),
+                comment=dict(type='str'),
+            ),
+            supports_check_mode=True,
+            mutually_exclusive=[
+                ['app', 'proto', 'logging'],
+            ],
+            required_one_of=([command_keys]),
+            required_by=dict(
+                interface=('direction', ),
+            ),
+        )
+
+        self.cmds = []
+
+        self.ipv4_regexp = compile_ipv4_regexp()
+        self.ipv6_regexp = compile_ipv6_regexp()
+        self.params = self.module.params
+
+        # Ensure at least one of the command arguments are given
+
+        self.commands = dict((key, self.params[key]) for key in command_keys if self.params[key])
+
+        # Ensure ufw is available
+        self.ufw_bin = self.module.get_bin_path('ufw', True)
+        self.grep_bin = self.module.get_bin_path('grep', True)
+
+        # Save the pre state and rules in order to recognize changes
+        self.pre_state = self.get_status_verbose()
+        self.pre_rules = self.get_current_rules()
+        self.changed = False
+
+    def rule(self, value):
+
+        if self.params['direction'] not in ['in', 'out', None]:
+            self.module.fail_json(msg='For rules, direction must be one of "in" and "out".')
+
+        # Rules are constructed according to the long format
+        #
+        # ufw [--dry-run] [route] [delete] [insert NUM] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
+        #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
+        #     [proto protocol] [app application] [comment COMMENT]
+        cmd = []
+        cmd.append([self.module.boolean(self.params['route']), 'route'])
+        cmd.append([self.module.boolean(self.params['delete']), 'delete'])
+        if self.params['insert'] is not None:
+            relative_to_cmd = self.params['insert_relative_to']
+            if relative_to_cmd == 'zero':
+                insert_to = self.params['insert']
+            else:
+                (_, numbered_state, _) = self.module.run_command([self.ufw_bin, 'status', 'numbered'])
+                numbered_line_re = re.compile(R'^\[ *([0-9]+)\] ')
+                lines = [(numbered_line_re.match(line), '(v6)' in line) for line in numbered_state.splitlines()]
+                lines = [(int(matcher.group(1)), ipv6) for (matcher, ipv6) in lines if matcher]
+                last_number = max([no for (no, ipv6) in lines]) if lines else 0
+                has_ipv4 = any([not ipv6 for (no, ipv6) in lines])
+                has_ipv6 = any([ipv6 for (no, ipv6) in lines])
+                if relative_to_cmd == 'first-ipv4':
+                    relative_to = 1
+                elif relative_to_cmd == 'last-ipv4':
+                    relative_to = max([no for (no, ipv6) in lines if not ipv6]) if has_ipv4 else 1
+                elif relative_to_cmd == 'first-ipv6':
+                    relative_to = max([no for (no, ipv6) in lines if not ipv6]) + 1 if has_ipv4 else 1
+                elif relative_to_cmd == 'last-ipv6':
+                    relative_to = last_number if has_ipv6 else last_number + 1
+                insert_to = self.params['insert'] + relative_to
+                if insert_to > last_number:
+                    # ufw does not like it when the insert number is larger than the
+                    # maximal rule number for IPv4/IPv6.
+                    insert_to = None
+            cmd.append([insert_to is not None, "insert %s" % insert_to])
+
+        cmd.append([value])
+        cmd.append([self.params['direction'], "%s" % self.params['direction']])
+        cmd.append([self.params['interface'], "on %s" % self.params['interface']])
+        cmd.append([self.module.boolean(self.params['log']), 'log'])
+
+        for (key, template) in [('from_ip', "from %s"), ('from_port', "port %s"),
+                                ('to_ip', "to %s"), ('to_port', "port %s"),
+                                ('proto', "proto %s"), ('app', "app '%s'")]:
+            value = self.params[key]
+            cmd.append([value, template % (value)])
+
+        ufw_major, ufw_minor, _ = self.ufw_version()
+        # comment is supported only in ufw version after 0.35
+        if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
+            cmd.append([self.params['comment'], "comment '%s'" % self.params['comment']])
+
+        rules_dry = self.ufw(cmd)
+
+        if self.is_check_mode():
+
+            nb_skipping_line = len(get_lines_that_contains("Skipping", rules_dry))
+
+            if not (nb_skipping_line > 0 and nb_skipping_line == len(rules_dry.splitlines(True))):
+
+                rules_dry = get_lines_that_start_with("### tuple", rules_dry)
+                # ufw dry-run doesn't send all rules so have to compare ipv4 or ipv6 rules
+                if self.is_starting_by_ipv4(self.params['from_ip']) or self.is_starting_by_ipv4(self.params['to_ip']):
+                    if self.get_lines_that_contains_ipv4(self.pre_rules) != self.get_lines_that_contains_ipv4(rules_dry):
+                        self.__setChanged()
+                elif self.is_starting_by_ipv6(self.params['from_ip']) or self.is_starting_by_ipv6(self.params['to_ip']):
+                    if self.get_lines_that_contains_ipv6(self.pre_rules) != self.get_lines_that_contains_ipv6(rules_dry):
+                        self.__setChanged()
+                elif self.pre_rules != rules_dry:
+                    self.__setChanged()
+
+    def __setChanged(seld):
+        seld.changed = True
+
+    def is_check_mode(self):
+        return self.module.check_mode
+
+    def run(self):
+
+        # Execute filter
+        for (command, value) in self.commands.items():
+
+            if command == 'state':
+                self.ufw_state(value)
+
+            elif command == 'logging':
+                self.ufw_logging(value)
+
+            elif command == 'default':
+                self.ufw_default(value, self.params['direction'])
+
+            elif command == 'rule':
+                self.rule(value)
+
+        # Get the new state
+        if self.is_check_mode():
+            return self.module.exit_json(changed=self.changed, commands=self.cmds)
+        else:
+            post_state = self.get_status_verbose()
+            if not self.changed:
+                post_rules = self.get_current_rules()
+                self.changed = (self.pre_state != post_state) or (self.pre_rules != post_rules)
+
+            return self.module.exit_json(changed=self.changed, commands=self.cmds, msg=post_state.rstrip())
+
+    def get_lines_that_contains_ipv4(self, content):
+        return get_lines_that_match_func(self.ipv4_regexp.search, content)
+
+    def get_lines_that_contains_ipv6(self, content):
+        return get_lines_that_match_func(self.ipv6_regexp.search, content)
+
+    def is_starting_by_ipv4(self, ip):
+        return self.ipv4_regexp.match(ip) is not None
+
+    def is_starting_by_ipv6(self, ip):
+        return self.ipv6_regexp.match(ip) is not None
+
+    def get_current_rules(self):
+        user_rules_files = ["/lib/ufw/user.rules",
+                            "/lib/ufw/user6.rules",
+                            "/etc/ufw/user.rules",
+                            "/etc/ufw/user6.rules",
+                            "/var/lib/ufw/user.rules",
+                            "/var/lib/ufw/user6.rules"]
+        cmd = [[self.grep_bin], ["-h"], ["'^### tuple'"]]
+
+        cmd.extend([[f] for f in user_rules_files])
+        return self.execute(cmd, ignore_error=True)
+
+    def ufw_version(self):
+        """
+        Returns the major and minor version of ufw installed on the system.
+        """
+        out = self.ufw([['--version']], skip_check_mode=True)
+
+        lines = [x for x in out.split('\n') if x.strip() != '']
+        if len(lines) == 0:
+            self.module.fail_json(msg="Failed to get ufw version.", rc=0, out=out)
+
+        matches = re.search(r'^ufw.+(\d+)\.(\d+)(?:\.(\d+))?.*$', lines[0])
+        if matches is None:
+            self.module.fail_json(msg="Failed to get ufw version.", rc=0, out=out)
+
+        # Convert version to numbers
+        major = int(matches.group(1))
+        minor = int(matches.group(2))
+        rev = 0
+        if matches.group(3) is not None:
+            rev = int(matches.group(3))
+
+        return major, minor, rev
+
+    def ufw_default(self, value, direction):
+
+        # A TESTER : le type est défini avec choice donc une autre valeur n'est pas posible (TEST U ?)
+        # if params['direction'] not in ['outgoing', 'incoming', 'routed']:
+        #    module.fail_json(msg='For default, direction must be one of "outgoing", "incoming" and "routed".')
+        if self.module.check_mode:
+            regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
+            extract = re.search(regexp, self.pre_state)
+            if extract is not None:
+                current_default_values = {}
+                current_default_values["incoming"] = extract.group(1)
+                current_default_values["outgoing"] = extract.group(2)
+                current_default_values["routed"] = extract.group(3)
+                if current_default_values[self.params['direction']] != value:
+                    self.__setChanged()
+            else:
+                self.__setChanged()
+        else:
+            self.ufw([["default"], [value], [self.params['direction']]])
+
+    def ufw_state(self, value):
+        states = {'enabled': 'enable', 'disabled': 'disable',
+                  'reloaded': 'reload', 'reset': 'reset'}
+
+        if value in ['reloaded', 'reset']:
+            self.__setChanged()
+
+        if self.is_check_mode():
+            # "active" would also match "inactive", hence the space
+            ufw_enabled = self.pre_state.find(" active") != -1
+            if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and not ufw_enabled):
+                self.__setChanged()
+        else:
+            self.ufw([['-f'], [states[value]]])
+
+    def ufw_logging(self, value):
+        extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', self.pre_state)
+        if extract:
+            current_level = extract.group(2)
+            current_on_off_value = extract.group(1)
+            if value != "off":
+                if value != "on" and (value != current_level):
+                    self.__setChanged()
+                elif current_on_off_value == "off":
+                    self.__setChanged()
+            elif current_on_off_value != "off":
+                self.__setChanged()
+        else:
+            self.__setChanged()
+
+        if not self.is_check_mode():
+            self.ufw([["logging"], [value]])
+
+    def get_status_verbose(self):
+        # ufw status verbose does not support --dry-run
+        return self.ufw([['status verbose']], skip_check_mode=True)
+
+    def ufw(self, args, ignore_error=False, skip_check_mode=False):
+        cmd = [[self.ufw_bin]]
+        if self.is_check_mode() and not skip_check_mode:
+            cmd += [['--dry-run']]
+        return self.execute(cmd + args, ignore_error)
+
+    def execute(self, args, ignore_error=False):
+
+        cmd = ' '.join(map(itemgetter(-1), filter(itemgetter(0), args)))
+
+        self.cmds.append(cmd)
+        (rc, out, err) = self.module.run_command(cmd, environ_update={"LANG": "C"})
+
+        if rc != 0 and not ignore_error:
+            self.module.fail_json(msg=err or out, commands=self.cmds)
+
+        return out
+
+
+def get_lines_that_start_with(pattern, content):
+    return ''.join([line for line in content.splitlines(True) if line.startswith(pattern)])
+
+
+def get_lines_that_contains(pattern, content):
+    return [line for line in content.splitlines(True) if pattern in line]
+
+
+def get_lines_that_not_contains(pattern, content):
+    return ''.join([line for line in content.splitlines(True) if not line.contains(pattern)])
+
+
+def get_lines_that_match_func(match_func, content):
+    return ''.join([line for line in content.splitlines(True) if match_func(line) is not None])
+
+
 def compile_ipv4_regexp():
     r = r"((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}"
     r += r"(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
@@ -301,263 +605,8 @@ def compile_ipv6_regexp():
 
 
 def main():
-    command_keys = ['state', 'default', 'rule', 'logging']
-
-    module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(type='str', choices=['enabled', 'disabled', 'reloaded', 'reset']),
-            default=dict(type='str', aliases=['policy'], choices=['allow', 'deny', 'reject']),
-            logging=dict(type='str', choices=['full', 'high', 'low', 'medium', 'off', 'on']),
-            direction=dict(type='str', choices=['in', 'incoming', 'out', 'outgoing', 'routed']),
-            delete=dict(type='bool', default=False),
-            route=dict(type='bool', default=False),
-            insert=dict(type='int'),
-            insert_relative_to=dict(choices=['zero', 'first-ipv4', 'last-ipv4', 'first-ipv6', 'last-ipv6'], default='zero'),
-            rule=dict(type='str', choices=['allow', 'deny', 'limit', 'reject']),
-            interface=dict(type='str', aliases=['if']),
-            log=dict(type='bool', default=False),
-            from_ip=dict(type='str', default='any', aliases=['from', 'src']),
-            from_port=dict(type='str'),
-            to_ip=dict(type='str', default='any', aliases=['dest', 'to']),
-            to_port=dict(type='str', aliases=['port']),
-            proto=dict(type='str', aliases=['protocol'], choices=['ah', 'any', 'esp', 'ipv6', 'tcp', 'udp', 'gre', 'igmp']),
-            app=dict(type='str', aliases=['name']),
-            comment=dict(type='str'),
-        ),
-        supports_check_mode=True,
-        mutually_exclusive=[
-            ['app', 'proto', 'logging'],
-        ],
-        required_one_of=([command_keys]),
-        required_by=dict(
-            interface=('direction', ),
-        ),
-    )
-
-    cmds = []
-
-    ipv4_regexp = compile_ipv4_regexp()
-    ipv6_regexp = compile_ipv6_regexp()
-
-    def filter_line_that_not_start_with(pattern, content):
-        return ''.join([line for line in content.splitlines(True) if line.startswith(pattern)])
-
-    def filter_line_that_contains(pattern, content):
-        return [line for line in content.splitlines(True) if pattern in line]
-
-    def filter_line_that_not_contains(pattern, content):
-        return ''.join([line for line in content.splitlines(True) if not line.contains(pattern)])
-
-    def filter_line_that_match_func(match_func, content):
-        return ''.join([line for line in content.splitlines(True) if match_func(line) is not None])
-
-    def filter_line_that_contains_ipv4(content):
-        return filter_line_that_match_func(ipv4_regexp.search, content)
-
-    def filter_line_that_contains_ipv6(content):
-        return filter_line_that_match_func(ipv6_regexp.search, content)
-
-    def is_starting_by_ipv4(ip):
-        return ipv4_regexp.match(ip) is not None
-
-    def is_starting_by_ipv6(ip):
-        return ipv6_regexp.match(ip) is not None
-
-    def execute(cmd, ignore_error=False):
-        cmd = ' '.join(map(itemgetter(-1), filter(itemgetter(0), cmd)))
-
-        cmds.append(cmd)
-        (rc, out, err) = module.run_command(cmd, environ_update={"LANG": "C"})
-
-        if rc != 0 and not ignore_error:
-            module.fail_json(msg=err or out, commands=cmds)
-
-        return out
-
-    def get_current_rules():
-        user_rules_files = ["/lib/ufw/user.rules",
-                            "/lib/ufw/user6.rules",
-                            "/etc/ufw/user.rules",
-                            "/etc/ufw/user6.rules",
-                            "/var/lib/ufw/user.rules",
-                            "/var/lib/ufw/user6.rules"]
-
-        cmd = [[grep_bin], ["-h"], ["'^### tuple'"]]
-
-        cmd.extend([[f] for f in user_rules_files])
-        return execute(cmd, ignore_error=True)
-
-    def ufw_version():
-        """
-        Returns the major and minor version of ufw installed on the system.
-        """
-        out = execute([[ufw_bin], ["--version"]])
-
-        lines = [x for x in out.split('\n') if x.strip() != '']
-        if len(lines) == 0:
-            module.fail_json(msg="Failed to get ufw version.", rc=0, out=out)
-
-        matches = re.search(r'^ufw.+(\d+)\.(\d+)(?:\.(\d+))?.*$', lines[0])
-        if matches is None:
-            module.fail_json(msg="Failed to get ufw version.", rc=0, out=out)
-
-        # Convert version to numbers
-        major = int(matches.group(1))
-        minor = int(matches.group(2))
-        rev = 0
-        if matches.group(3) is not None:
-            rev = int(matches.group(3))
-
-        return major, minor, rev
-
-    params = module.params
-
-    commands = dict((key, params[key]) for key in command_keys if params[key])
-
-    # Ensure ufw is available
-    ufw_bin = module.get_bin_path('ufw', True)
-    grep_bin = module.get_bin_path('grep', True)
-
-    # Save the pre state and rules in order to recognize changes
-    pre_state = execute([[ufw_bin], ['status verbose']])
-    pre_rules = get_current_rules()
-
-    changed = False
-
-    # Execute filter
-    for (command, value) in commands.items():
-
-        cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
-
-        if command == 'state':
-            states = {'enabled': 'enable', 'disabled': 'disable',
-                      'reloaded': 'reload', 'reset': 'reset'}
-
-            if value in ['reloaded', 'reset']:
-                changed = True
-
-            if module.check_mode:
-                # "active" would also match "inactive", hence the space
-                ufw_enabled = pre_state.find(" active") != -1
-                if (value == 'disabled' and ufw_enabled) or (value == 'enabled' and not ufw_enabled):
-                    changed = True
-            else:
-                execute(cmd + [['-f'], [states[value]]])
-
-        elif command == 'logging':
-            extract = re.search(r'Logging: (on|off) \(([a-z]+)\)', pre_state)
-            if extract:
-                current_level = extract.group(2)
-                current_on_off_value = extract.group(1)
-                if value != "off":
-                    if value != "on" and (value != current_level or current_on_off_value == "off"):
-                        changed = True
-                elif current_on_off_value != "off":
-                    changed = True
-            else:
-                changed = True
-
-            if not module.check_mode:
-                execute(cmd + [[command], [value]])
-
-        elif command == 'default':
-            if params['direction'] not in ['outgoing', 'incoming', 'routed']:
-                module.fail_json(msg='For default, direction must be one of "outgoing", "incoming" and "routed".')
-            if module.check_mode:
-                regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
-                extract = re.search(regexp, pre_state)
-                if extract is not None:
-                    current_default_values = {}
-                    current_default_values["incoming"] = extract.group(1)
-                    current_default_values["outgoing"] = extract.group(2)
-                    current_default_values["routed"] = extract.group(3)
-                    if current_default_values[params['direction']] != value:
-                        changed = True
-                else:
-                    changed = True
-            else:
-                execute(cmd + [[command], [value], [params['direction']]])
-
-        elif command == 'rule':
-            if params['direction'] not in ['in', 'out', None]:
-                module.fail_json(msg='For rules, direction must be one of "in" and "out".')
-            # Rules are constructed according to the long format
-            #
-            # ufw [--dry-run] [route] [delete] [insert NUM] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
-            #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
-            #     [proto protocol] [app application] [comment COMMENT]
-            cmd.append([module.boolean(params['route']), 'route'])
-            cmd.append([module.boolean(params['delete']), 'delete'])
-            if params['insert'] is not None:
-                relative_to_cmd = params['insert_relative_to']
-                if relative_to_cmd == 'zero':
-                    insert_to = params['insert']
-                else:
-                    (_, numbered_state, _) = module.run_command([ufw_bin, 'status', 'numbered'])
-                    numbered_line_re = re.compile(R'^\[ *([0-9]+)\] ')
-                    lines = [(numbered_line_re.match(line), '(v6)' in line) for line in numbered_state.splitlines()]
-                    lines = [(int(matcher.group(1)), ipv6) for (matcher, ipv6) in lines if matcher]
-                    last_number = max([no for (no, ipv6) in lines]) if lines else 0
-                    has_ipv4 = any([not ipv6 for (no, ipv6) in lines])
-                    has_ipv6 = any([ipv6 for (no, ipv6) in lines])
-                    if relative_to_cmd == 'first-ipv4':
-                        relative_to = 1
-                    elif relative_to_cmd == 'last-ipv4':
-                        relative_to = max([no for (no, ipv6) in lines if not ipv6]) if has_ipv4 else 1
-                    elif relative_to_cmd == 'first-ipv6':
-                        relative_to = max([no for (no, ipv6) in lines if not ipv6]) + 1 if has_ipv4 else 1
-                    elif relative_to_cmd == 'last-ipv6':
-                        relative_to = last_number if has_ipv6 else last_number + 1
-                    insert_to = params['insert'] + relative_to
-                    if insert_to > last_number:
-                        # ufw does not like it when the insert number is larger than the
-                        # maximal rule number for IPv4/IPv6.
-                        insert_to = None
-                cmd.append([insert_to is not None, "insert %s" % insert_to])
-            cmd.append([value])
-            cmd.append([params['direction'], "%s" % params['direction']])
-            cmd.append([params['interface'], "on %s" % params['interface']])
-            cmd.append([module.boolean(params['log']), 'log'])
-
-            for (key, template) in [('from_ip', "from %s"), ('from_port', "port %s"),
-                                    ('to_ip', "to %s"), ('to_port', "port %s"),
-                                    ('proto', "proto %s"), ('app', "app '%s'")]:
-                value = params[key]
-                cmd.append([value, template % (value)])
-
-            ufw_major, ufw_minor, _ = ufw_version()
-            # comment is supported only in ufw version after 0.35
-            if (ufw_major == 0 and ufw_minor >= 35) or ufw_major > 0:
-                cmd.append([params['comment'], "comment '%s'" % params['comment']])
-
-            rules_dry = execute(cmd)
-
-            if module.check_mode:
-
-                nb_skipping_line = len(filter_line_that_contains("Skipping", rules_dry))
-
-                if not (nb_skipping_line > 0 and nb_skipping_line == len(rules_dry.splitlines(True))):
-
-                    rules_dry = filter_line_that_not_start_with("### tuple", rules_dry)
-                    # ufw dry-run doesn't send all rules so have to compare ipv4 or ipv6 rules
-                    if is_starting_by_ipv4(params['from_ip']) or is_starting_by_ipv4(params['to_ip']):
-                        if filter_line_that_contains_ipv4(pre_rules) != filter_line_that_contains_ipv4(rules_dry):
-                            changed = True
-                    elif is_starting_by_ipv6(params['from_ip']) or is_starting_by_ipv6(params['to_ip']):
-                        if filter_line_that_contains_ipv6(pre_rules) != filter_line_that_contains_ipv6(rules_dry):
-                            changed = True
-                    elif pre_rules != rules_dry:
-                        changed = True
-
-    # Get the new state
-    if module.check_mode:
-        return module.exit_json(changed=changed, commands=cmds)
-    else:
-        post_state = execute([[ufw_bin], ['status'], ['verbose']])
-        if not changed:
-            post_rules = get_current_rules()
-            changed = (pre_state != post_state) or (pre_rules != post_rules)
-        return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
+    ufw = UFWObj()
+    return ufw.run()
 
 
 if __name__ == '__main__':
