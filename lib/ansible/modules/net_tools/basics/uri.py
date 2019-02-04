@@ -298,6 +298,11 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 JSON_CANDIDATES = ('text', 'json', 'javascript')
 
 
+def format_message(err, resp):
+    msg = resp.pop('msg')
+    return err + (' %s' % msg if msg else '')
+
+
 def write_file(module, url, dest, content, resp):
     # create a tempfile with some test content
     fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
@@ -306,8 +311,8 @@ def write_file(module, url, dest, content, resp):
         f.write(content)
     except Exception as e:
         os.remove(tmpsrc)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(e),
-                         exception=traceback.format_exc(), **resp)
+        msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
+        module.fail_json(msg=msg, exception=traceback.format_exc(), **resp)
     f.close()
 
     checksum_src = None
@@ -316,10 +321,12 @@ def write_file(module, url, dest, content, resp):
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source '%s' does not exist" % tmpsrc, **resp)
+        msg = format_message("Source '%s' does not exist" % tmpsrc, resp)
+        module.fail_json(msg=msg, **resp)
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source '%s' not readable" % tmpsrc, **resp)
+        msg = format_message("Source '%s' not readable" % tmpsrc, resp)
+        module.fail_json(msg=msg, **resp)
     checksum_src = module.sha1(tmpsrc)
 
     # check if there is no dest file
@@ -327,23 +334,26 @@ def write_file(module, url, dest, content, resp):
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination '%s' not writable" % dest, **resp)
+            msg = format_message("Destination '%s' not writable" % dest, resp)
+            module.fail_json(msg=msg, **resp)
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination '%s' not readable" % dest, **resp)
+            msg = format_message("Destination '%s' not readable" % dest, resp)
+            module.fail_json(msg=msg, **resp)
         checksum_dest = module.sha1(dest)
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination dir '%s' not writable" % os.path.dirname(dest), **resp)
+            msg = format_message("Destination dir '%s' not writable" % os.path.dirname(dest), resp)
+            module.fail_json(msg=msg, **resp)
 
     if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
         except Exception as e:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
-                             exception=traceback.format_exc(), **resp)
+            msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
+            module.fail_json(msg=msg, exception=traceback.format_exc(), **resp)
 
     os.remove(tmpsrc)
 

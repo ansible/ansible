@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "uri: fix TypeError when file can't be saved"
