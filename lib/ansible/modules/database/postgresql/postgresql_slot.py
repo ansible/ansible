@@ -32,9 +32,9 @@ options:
     description:
       - Name of the database where you're connecting in order to add or remove only the logical slot to/from
     required: false
-  decoder:
+  output_plugin:
     description:
-      - All logical slots must indicate which decoder they're using. This parameter does not apply to physical slots.
+      - All logical slots must indicate which output plugin decoder they're using. This parameter does not apply to physical slots.
     required: false
     default: "test_decoding"
   login_user:
@@ -81,7 +81,7 @@ EXAMPLES = '''
     slot_name: logical_slot_one
     slot_type: logical
     state: present
-    decoder: custom_decoder_one
+    output_plugin: custom_decoder_one
 '''
 
 RETURN = '''
@@ -174,7 +174,7 @@ def main():
     slot = module.params["slot_name"]
     slot_type = module.params["slot_type"]
     state = module.params["state"]
-    decoder = module.params["decoder"]
+    decoder = module.params["output_plugin"]
     changed = False
 
     # To use defaults values, keyword arguments must be absent, so
