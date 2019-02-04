@@ -1,21 +1,14 @@
 ---
-- name: a dummy variable to test the filter probe
-  set_fact:
-    some_var:
-      key1: begin
-      key2:
-        - foo
-        - bar
-        - subkey1: v1
-          subkey2: v2
-      key3: end
-
-- name: check that the value v2 is well reached
+- name: some checks on the probe() filter
+  some_var:
+    key1: begin
+    key2:
+      - foo
+      - bar
+      - subkey1: v1
+        subkey2: v2
+    key3: end
   assert:
     that:
       - some_var | probe('key2', 2, 'subkey2') == 'v2'
-
-- name: check it's OK with a bad path and the default() filter
-  assert:
-    that:
       - some_var | probe('key2', 4, 'subkey2') | default('N/A') == 'N/A'
