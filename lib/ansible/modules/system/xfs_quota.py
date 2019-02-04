@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 ---
 module: xfs_quota
 short_description: Set Quotas on XFS filesystems
-description:
+descrition:
   - Configure Quotas on XFS filesystems. /etc/projects and /etc/projid needs to be configured before calling this module when setting project quotas.
 version_added: "2.8"
 author: "William Leemans (@bushvin) <willie@elaba.net>"
@@ -34,29 +34,29 @@ options:
       - project
   name:
     description:
-      - the name of the user, group or project to apply the quota to, if other than default
+      - The name of the user, group or project to apply the quota to, if other than default.
   mountpoint:
     description:
       - the mountpoint on which to apply the quotas
     required: true
   bhard:
     description:
-      - hard blocks quota limit
+      - Hard blocks quota limit.
   bsoft:
     description:
-      - soft blocks quota limit
+      - Soft blocks quota limit.
   ihard:
     description:
-      - hard inodes quota limit
+      - Hard inodes quota limit.
   isoft:
     description:
-      - soft inodes quota limit
+      - Soft inodes quota limit.
   rtbhard:
     description:
-      - hard realtime blocks quota limit
+      - Hard realtime blocks quota limit.
   rtbsoft:
     description:
-      - soft realtime blocks quota limit
+      - Soft realtime blocks quota limit.
   state:
     description:
       - Whether to apply the limits or remove them.
