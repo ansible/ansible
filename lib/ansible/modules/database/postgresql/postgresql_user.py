@@ -80,7 +80,13 @@ options:
       - Path to a Unix domain socket for local connections.
   priv:
     description:
-      - "PostgreSQL privileges string in the format: C(table:priv1,priv2)."
+      - "Slash-separated PostgreSQL privileges string: C(priv1/priv2), where
+        privileges can be defined for database ( allowed options - 'CREATE',
+        'CONNECT', 'TEMPORARY', 'TEMP', 'ALL'. For example C(CONNECT) ) or
+        for table ( allowed options - 'SELECT', 'INSERT', 'UPDATE', 'DELETE',
+        'TRUNCATE', 'REFERENCES', 'TRIGGER', 'ALL'. For example
+        C(table:SELECT) ). Mixed example of this string:
+        C(CONNECT/CREATE/table1:SELECT/table2:INSERT)."
   role_attr_flags:
     description:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER."
