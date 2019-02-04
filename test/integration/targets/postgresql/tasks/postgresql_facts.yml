@@ -13,11 +13,11 @@
 
 - assert:
     that:
-      - 'result.ansible_facts.version != ""'
-      - 'result.ansible_facts.databases.{{ db_default }}.collate'
-      - 'result.ansible_facts.languages'
-      - 'result.ansible_facts.namespaces.information_schema'
-      - 'result.ansible_facts.settings'
+      - 'result.postgresql_facts.version != ""'
+      - 'result.postgresql_facts.databases.{{ db_default }}.collate'
+      - 'result.postgresql_facts.languages'
+      - 'result.postgresql_facts.namespaces.information_schema'
+      - 'result.postgresql_facts.settings'
 
 - name: "postgresql_facts - test check mode (for order, this module doesn't change anything)"
   become_user: "{{ pg_user }}"
@@ -44,9 +44,9 @@
 
 - assert:
     that:
-      - 'result.ansible_facts.version != ""'
-      - 'result.ansible_facts.roles'
-      - 'result.ansible_facts.namespaces == {}'
+      - 'result.postgresql_facts.version != ""'
+      - 'result.postgresql_facts.roles'
+      - 'result.postgresql_facts.namespaces == {}'
 
 - name: "postgresql_facts - check exclude_subset param"
   become_user: "{{ pg_user }}"
@@ -60,5 +60,5 @@
 
 - assert:
     that:
-      - 'result.ansible_facts.version == ""'
-      - 'result.ansible_facts.roles'
+      - 'result.postgresql_facts.version == ""'
+      - 'result.postgresql_facts.roles'

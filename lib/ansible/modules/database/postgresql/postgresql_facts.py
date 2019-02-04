@@ -192,9 +192,20 @@ class PgClusterFacts(object):
         """
         Get information about tablespaces.
         """
-        query = ("SELECT s.spcname, a.rolname, s.spcacl, s.spcoptions "
-                 "FROM pg_tablespace AS s "
-                 "JOIN pg_authid AS a ON s.spcowner = a.oid")
+        # Check spcoption exists:
+        opt = self.__exec_sql("SELECT column_name "
+                              "FROM information_schema.columns "
+                              "WHERE table_name = 'pg_tablespace' "
+                              "AND column_name = 'spcoptions'")
+        if not opt:
+            query = ("SELECT s.spcname, a.rolname, s.spcacl "
+                     "FROM pg_tablespace AS s "
+                     "JOIN pg_authid AS a ON s.spcowner = a.oid")
+        else:
+            query = ("SELECT s.spcname, a.rolname, s.spcacl, s.spcoptions "
+                     "FROM pg_tablespace AS s "
+                     "JOIN pg_authid AS a ON s.spcowner = a.oid")
+
         res = self.__exec_sql(query)
         ts_dict = {}
         for i in res:
@@ -206,10 +217,11 @@ class PgClusterFacts(object):
             else:
                 ts_info["spcacl"] = ""
 
-            if i[3]:
-                ts_info["spcoptions"] = i[3]
-            else:
-                ts_info["spcoptions"] = []
+            if opt:
+                if i[3]:
+                    ts_info["spcoptions"] = i[3]
+                else:
+                    ts_info["spcoptions"] = []
 
             ts_dict[ts_name] = ts_info
 
@@ -572,14 +584,14 @@ def main():
 
     if incl_subsets != "*":
         incl_subsets = [s.strip() for s in incl_subsets.split(',')]
-        kw['ansible_facts'] = pg_facts.collect(include=incl_subsets)
+        kw['postgresql_facts'] = pg_facts.collect(include=incl_subsets)
 
     elif excl_subsets:
         excl_subsets = [s.strip() for s in excl_subsets.split(',')]
-        kw['ansible_facts'] = pg_facts.collect(exclude=excl_subsets)
+        kw['postgresql_facts'] = pg_facts.collect(exclude=excl_subsets)
 
     else:
-        kw['ansible_facts'] = pg_facts.collect()
+        kw['postgresql_facts'] = pg_facts.collect()
 
     # Rollback transaction, if checkmode.
     # Otherwise, commit transaction:
