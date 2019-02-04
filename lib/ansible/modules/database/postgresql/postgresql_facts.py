@@ -17,22 +17,28 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: postgresql_facts
-short_description: Gathers facts about remote PostgreSQL servers.
+short_description: Gather facts about remote PostgreSQL servers
 description:
    - Gathers facts about remote PostgreSQL servers.
 version_added: "2.8"
 options:
-  include_subset:
+  incl_subset:
     description:
-      - Limit collected subsets by comma separated list. Allowable values are C(version),
+      - Limit collected subsets by comma separated string.
+      - Allowable values are C(version),
         C(databases), C(settings), C(tablespaces), C(languages), C(roles), C(namespaces),
-        C(replications), C(repl_slots), C(extensions). By default, collects all subsets.
-        You can use shell-style (fnmatch) wildcard to pass groups of values (see Examples).
-    default: '*'
-  exclude_subset:
+        C(replications), C(repl_slots), C(extensions).
+      - By default, collects all subsets.
+      - You can use shell-style (fnmatch) wildcard to pass groups of values (see Examples).
+    default: "*"
+    type: list
+  excl_subset:
     description:
-      - Exclude subsets from the collection. Allowable values are similar as in I(include_subset).
-        You can also use shell-style (fnmatch) wildcard. Mutually exclusive with include_subset.
+      - Exclude subsets from the collection.
+      - Allowable values are similar as in I(incl_subset).
+      - You can also use shell-style (fnmatch) wildcard.
+      - Mutually exclusive with incl_subset.
+    type: list
   db:
     description:
       - Name of database to connect.
@@ -65,7 +71,8 @@ options:
   ssl_rootcert:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA)
-        certificate(s). If the file exists, the server's certificate will be
+        certificate(s).
+      - If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
 notes:
    - The default authentication assumes that you are either logging in as or
@@ -77,7 +84,8 @@ notes:
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
 requirements: [ psycopg2 ]
-author: "Andrew Klychkov (@Andersson007)"
+author:
+- Andrew Klychkov (@Andersson007)
 '''
 
 EXAMPLES = '''
@@ -85,24 +93,323 @@ EXAMPLES = '''
 # ansible postgres -m postgresql_facts
 
 # Display only databases and roles facts from all hosts using shell-style wildcards:
-# ansible all -m postgresql_facts -a "include_subset=dat*,rol*"
+# ansible all -m postgresql_facts -a "incl_subset=dat*,rol*"
 
 # Display only replications and repl_slots facts from standby hosts using shell-style wildcards:
-# ansible standby -m postgresql_facts -a "include_subset=repl*"
+# ansible standby -m postgresql_facts -a "incl_subset=repl*"
 
 # Display all facts from databases hosts except settings:
-# ansible databases -m postgresql_facts -a "exclude_subset=settings"
+# ansible databases -m postgresql_facts -a "excl_subset=settings"
 
 - name: Collect PostgreSQL version and extensions
   postgresql_facts:
-    include_subset: ver*, ext*
+    incl_subset: ver*, ext*
 
 - name: Collect all subsets, excluding settings and roles
   postgresql_facts:
-    exclude_subset: settings, roles
+    excl_subset: settings, roles
+
+- name: Collect tablespaces and repl_slots facts
+  postgresql_facts:
+    incl_subset:
+      - tablespaces
+      - repl_s*
 '''
 
-RETURN = ''' # '''
+RETURN = '''
+ansible_facts:
+    description: Dictionary containing the detailed information about the PostgreSQL instance.
+    returned: always
+    type: complex
+    contains:
+        databases:
+            description: Information about databases.
+            returned: always
+            type: dict
+            contains:
+                database_name:
+                    description: Database name.
+                    returned: always
+                    type: dict
+                    sample: template0
+                    contains:
+                        access_priv:
+                            description: Database access privileges.
+                            returned: always
+                            type: str
+                            sample: "=c/postgres_npostgres=CTc/postgres"
+                        collate:
+                            description:
+                              - Database collation U(https://www.postgresql.org/docs/current/collation.html).
+                            returned: always
+                            type: str
+                            sample: en_US.UTF-8
+                        ctype:
+                            description:
+                              - Database LC_CTYPE U(https://www.postgresql.org/docs/current/multibyte.html).
+                            returned: always
+                            type: str
+                            sample: en_US.UTF-8
+                        encoding:
+                            description:
+                              - Database encoding U(https://www.postgresql.org/docs/current/multibyte.html).
+                            returned: always
+                            type: str
+                            sample: UTF8
+                        owner:
+                            description:
+                              - Database owner
+                                U(https://www.postgresql.org/docs/current/sql-createdatabase.html).
+                            returned: always
+                            type: str
+                            sample: postgres
+                        size:
+                            description: Database size.
+                            returned: always
+                            type: str
+                            sample: 7861 kB
+        extensions:
+            description:
+                - Extensions U(https://www.postgresql.org/docs/current/sql-createextension.html).
+            returned: always
+            type: dict
+            sample: plpgsql
+            contains:
+                description:
+                    description: Extension description.
+                    returned: if existent
+                    type: str
+                    sample: PL/pgSQL procedural language
+                extversion:
+                    description: Extension description.
+                    returned: always
+                    type: str
+                    sample: 1.0
+                nspname:
+                    description: Namecpase where the extension is.
+                    returned: always
+                    type: str
+                    sample: pg_catalog
+        languages:
+            description: Procedural languages U(https://www.postgresql.org/docs/current/xplang.html).
+            returned: always
+            type: dict
+            sample: sql
+            contains:
+                lanacl:
+                    description:
+                    - Language access privileges
+                      U(https://www.postgresql.org/docs/current/catalog-pg-language.html).
+                    returned: always
+                    type: str
+                    sample: "{postgres=UC/postgres,=U/postgres}"
+                lanowner:
+                    description:
+                      - Language owner U(https://www.postgresql.org/docs/current/catalog-pg-language.html).
+                    returned: always
+                    type: str
+                    sample: postgres
+        namespaces:
+            description:
+              - Namespaces (schema) U(https://www.postgresql.org/docs/current/sql-createschema.html).
+            returned: always
+            type: dict
+            sample: pg_catalog
+            contains:
+                nspacl:
+                    description:
+                      - Assess privileges U(https://www.postgresql.org/docs/current/catalog-pg-namespace.html).
+                    returned: always
+                    type: str
+                    sample: "{postgres=UC/postgres,=U/postgres}"
+                nspowner:
+                    description:
+                      - Schema owner U(https://www.postgresql.org/docs/current/catalog-pg-namespace.html).
+                    returned: always
+                    type: str
+                    sample: postgres
+        repl_slots:
+            description:
+              - Replication slots (available in 9.4 and later)
+                U(https://www.postgresql.org/docs/current/catalog-pg-replication-slots.html).
+            returned: if existent
+            type: dict
+            sample: slot0
+            contains:
+                active:
+                    description: True if this slot is currently actively being used.
+                    returned: always
+                    type: bool
+                    sample: true
+                database:
+                    description: Database name this slot is associated with, or null.
+                    returned: always
+                    type: str
+                    sample: acme
+                plugin:
+                    description:
+                      - The base name of the shared object containing the the output plugin
+                        this logical slot is using, or null for physical slots.
+                    returned: always
+                    type: str
+                    sample: pgoutput
+                slot_type:
+                    description: The slot type - physical or logical.
+                    returned: always
+                    type: str
+                    sample: logical
+        replications:
+            description:
+              - Information about the current replications by process PIDs
+                U(https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-STATS-VIEWS-TABLE).
+            returned: if pg_stat_replication view existent
+            type: dict
+            sample: 47823
+            contains:
+                usename:
+                    description: Name of the user logged into this WAL sender process.
+                    returned: always
+                    type: str
+                    sample: replication_user
+                app_name:
+                    description: Name of the application that is connected to this WAL sender.
+                    returned: if existent
+                    type: str
+                    sample: acme_srv
+                client_addr:
+                    description:
+                      - IP address of the client connected to this WAL sender.
+                      - If this field is null, it indicates that the client is connected
+                        via a Unix socket on the server machine.
+                    returned: always
+                    type: str
+                    sample: 10.0.0.101
+                client_hostname:
+                    description:
+                      - Host name of the connected client, as reported by a reverse DNS lookup of client_addr.
+                      - This field will only be non-null for IP connections, and only when log_hostname is enabled.
+                    returned: always
+                    type: str
+                    sample: dbsrv1
+                backend_start:
+                    description: Time when this process was started, i.e., when the client connected to this WAL sender.
+                    returned: always
+                    type: str
+                    sample: 2019-02-03 00:14:33.908593+03
+                state:
+                    description: Current WAL sender state.
+                    returned: always
+                    type: str
+                    sample: streaming
+        tablespaces:
+            description:
+              - Information about tablespaces
+                U(https://www.postgresql.org/docs/current/catalog-pg-tablespace.html).
+            returned: always
+            type: dict
+            sample: test
+            contains:
+                spcacl:
+                    description: Tablespace access privileges.
+                    returned: always
+                    type: str
+                    sample: "{postgres=C/postgres,andreyk=C/postgres}"
+                spcoptions:
+                    description: Tablespace-level options, as “keyword=value” strings.
+                    returned: always
+                    type: list
+                    sample: [ "seq_page_cost=1" ]
+                spcowner:
+                    description: Owner of the tablespace.
+                    returned: always
+                    type: str
+                    sample: test_user
+        roles:
+            description:
+              - Information about roles U(https://www.postgresql.org/docs/current/user-manag.html).
+            returned: always
+            type: dict
+            sample: test_role
+            contains:
+                canlogin:
+                    description: Login privilege U(https://www.postgresql.org/docs/current/role-attributes.html).
+                    returned: always
+                    type: bool
+                    sample: true
+                member_of:
+                    description: Role membership U(https://www.postgresql.org/docs/current/role-membership.html).
+                    returned: always
+                    type: list
+                    sample: [ "read_only_users" ]
+                superuser:
+                    description: User is a superuser or not.
+                    returned: always
+                    type: bool
+                    sample: false
+                valid_until:
+                    description: Password expiration date U(https://www.postgresql.org/docs/current/sql-alterrole.html).
+                    returned: always
+                    type: str
+                    sample: "9999-12-31T23:59:59.999999+00:00"
+        settings:
+            description:
+              - Information about run-time server parameters
+                U(https://www.postgresql.org/docs/current/view-pg-settings.html).
+            returned: always
+            type: dict
+            sample: work_mem
+            contains:
+                setting:
+                    description: Current value of the parameter.
+                    returned: always
+                    type: str
+                    sample: 49152
+                unit:
+                    description: Implicit unit of the parameter.
+                    returned: always
+                    type: str
+                    sample: kB
+                boot_val:
+                    description:
+                      - Parameter value assumed at server startup if the parameter is not otherwise set.
+                    returned: always
+                    type: str
+                    sample: 4096
+                min_val:
+                    description:
+                      - Minimum allowed value of the parameter (null for non-numeric values).
+                    returned: always
+                    type: str
+                    sample: 64
+                max_val:
+                    description:
+                      - Maximum allowed value of the parameter (null for non-numeric values).
+                    returned: always
+                    type: str
+                    sample: 2147483647
+                sourcefile:
+                    description:
+                      - Configuration file the current value was set in.
+                      - Null for values set from sources other than configuration files,
+                        or when examined by a user who is neither a superuser or a member of pg_read_all_settings.
+                      - Helpful when using include directives in configuration files.
+                    returned: always
+                    type: str
+                    sample: /var/lib/pgsql/10/data/postgresql.auto.conf
+                context:
+                    description:
+                      - Context required to set the parameter's value.
+                      - For more information see U(https://www.postgresql.org/docs/current/view-pg-settings.html).
+                    returned: always
+                    type: str
+                    sample: user
+                vartype:
+                    description:
+                      - Parameter type (bool, enum, integer, real, or string).
+                    returned: always
+                    type: str
+                    sample: integer
+'''
 
 
 import traceback
@@ -231,6 +538,13 @@ class PgClusterFacts(object):
         """
         Get information about existing extensions.
         """
+        # Check that pg_extension exists:
+        res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
+                              "information_schema.tables "
+                              "WHERE table_name = 'pg_extension')")
+        if not res[0][0]:
+            return True
+
         query = ("SELECT e.extname, e.extversion, n.nspname, c.description "
                  "FROM pg_catalog.pg_extension AS e "
                  "LEFT JOIN pg_catalog.pg_namespace AS n "
@@ -388,7 +702,7 @@ class PgClusterFacts(object):
         for i in res:
             repl_pid = i[0]
             repl_info = {}
-            repl_info["usesysid"] = i[1]
+            repl_info["usename"] = i[1]
             if i[2]:
                 repl_info["app_name"] = i[2]
             else:
@@ -515,8 +829,8 @@ def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
         db=dict(default=''),
-        include_subset=dict(default='*'),
-        exclude_subset=dict(default=''),
+        incl_subset=dict(default="*"),
+        excl_subset=dict(default=""),
         ssl_mode=dict(default='prefer', choices=[
             'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(default=None),
@@ -529,12 +843,12 @@ def main():
     if not HAS_PSYCOPG2:
         module.fail_json(msg="The python psycopg2 module is required")
 
-    incl_subsets = module.params["include_subset"]
-    excl_subsets = module.params["exclude_subset"]
+    incl_subsets = module.params["incl_subset"]
+    excl_subsets = module.params["excl_subset"]
     sslrootcert = module.params["ssl_rootcert"]
 
     if incl_subsets != "*" and excl_subsets:
-        module.fail_json(msg="include_subset and exclude_subset parameters "
+        module.fail_json(msg="incl_subset and excl_subset parameters "
                              "are mutually exclusive")
 
     # To use defaults values, keyword arguments must be absent, so
@@ -558,50 +872,43 @@ def main():
         kw["host"] = module.params["login_unix_socket"]
 
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(
-            msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
 
     try:
         db_connection = psycopg2.connect(**kw)
 
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(
-                msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
         module.fail_json(msg="unable to connect to database: %s" % to_native(e),
                          exception=traceback.format_exc())
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e),
                          exception=traceback.format_exc())
 
-    # Set defaults:
-    changed = False
-
     # Do job:
     pg_facts = PgClusterFacts(module, cursor)
 
     if incl_subsets != "*":
-        incl_subsets = [s.strip() for s in incl_subsets.split(',')]
-        kw['postgresql_facts'] = pg_facts.collect(include=incl_subsets)
+        incl_subsets = [s.strip(" \'][") for s in incl_subsets.split(',')]
+        kw['ansible_facts'] = pg_facts.collect(include=incl_subsets)
 
     elif excl_subsets:
-        excl_subsets = [s.strip() for s in excl_subsets.split(',')]
-        kw['postgresql_facts'] = pg_facts.collect(exclude=excl_subsets)
+        excl_subsets = [s.strip(" \'][") for s in excl_subsets.split(',')]
+        kw['ansible_facts'] = pg_facts.collect(exclude=excl_subsets)
 
     else:
-        kw['postgresql_facts'] = pg_facts.collect()
+        kw['ansible_facts'] = pg_facts.collect()
 
     # Rollback transaction, if checkmode.
     # Otherwise, commit transaction:
-    if changed:
-        if module.check_mode:
-            db_connection.rollback()
-        else:
-            db_connection.commit()
+    # (It doesn't make sense in this praticular case, just for order)
+    if module.check_mode:
+        db_connection.rollback()
+    else:
+        db_connection.commit()
 
-    kw['changed'] = changed
     module.exit_json(**kw)
 
 
