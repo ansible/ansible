@@ -34,10 +34,6 @@ user_rules_with_ipv6 = """### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251
 ### tuple ### allow udp 5353 ::/0 any ff02::fb in
 """
 
-
-# result of
-# sudo ufw allow in from ff02::fb port 5353 proto udp
-# ufw allow in from 224.0.0.251 port 5353 proto udp
 ufw_status_verbose_with_ipv6 = ufw_verbose_header + """
 5353/udp                   ALLOW IN    224.0.0.251
 5353/udp                   ALLOW IN    ff02::fb
@@ -59,6 +55,11 @@ dry_mode_cmd_with_port_700 = {
     grep_config_cli: user_rules_with_port_7000
 }
 
+# setup configuration :
+# ufw reset
+# ufw enable
+# ufw allow proto udp to any port 5353 from 224.0.0.251
+# ufw allow proto udp to any port 5353 from ff02::fb
 dry_mode_cmd_with_ipv6 = {
     "ufw status verbose": ufw_status_verbose_with_ipv6,
     "ufw --version": ufw_version_35,
@@ -68,7 +69,8 @@ dry_mode_cmd_with_ipv6 = {
     "ufw --dry-run allow from ff02::fb to any port 5353 proto udp": skippg_adding_existing_rules,
     "ufw --dry-run allow from 224.0.0.252 to any port 5353 proto udp": """### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.251 in
 ### tuple ### allow udp 5353 0.0.0.0/0 any 224.0.0.252 in
-"""
+""",
+    "ufw --dry-run allow from 10.0.0.0/24 to any port 1577 proto udp": "### tuple ### allow udp 1577 0.0.0.0/0 any 10.0.0.0/24 in"
 }
 
 dry_mode_cmd_nothing = {
@@ -143,6 +145,8 @@ class TestUFW(unittest.TestCase):
 
         self.assertTrue(reg.match("ff02::fb") is None)
         self.assertTrue(reg.match("224.0.0.251") is not None)
+        self.assertTrue(reg.match("10.0.0.0/8") is not None)
+        self.assertTrue(reg.match("somethingElse") is None)
         self.assertTrue(reg.match("::") is None)
         self.assertTrue(reg.match("any") is None)
 
@@ -258,7 +262,17 @@ class TestUFW(unittest.TestCase):
         })
         self.assertFalse(self.__getResult(do_nothing_func_ipv6).exception.args[0]['changed'])
 
-    def test_ipv6_add(self):
+    def test_add_not_existing_ipv4_submask(self):
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'udp',
+            'port': '1577',
+            'from': '10.0.0.0/24',
+            '_ansible_check_mode': True,
+        })
+        self.assertTrue(self.__getResult(do_nothing_func_ipv6).exception.args[0]['changed'])
+
+    def test_ipv4_add_with_existing_ipv6(self):
         set_module_args({
             'rule': 'allow',
             'proto': 'udp',
