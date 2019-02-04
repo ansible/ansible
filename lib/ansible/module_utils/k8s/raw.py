@@ -156,15 +156,18 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         })
 
     def validate(self, resource):
+        def _prepend_resource_info(resource, msg):
+            return "%s %s: %s" % (resource['kind'], resource['metadata']['name'], msg)
+
         try:
             warnings, errors = self.client.validate(resource, self.params['validate'].get('version'), self.params['validate'].get('strict'))
         except KubernetesValidateMissing:
             self.fail_json(msg="kubernetes-validate python library is required to validate resources")
 
         if errors and self.params['validate']['fail_on_error']:
-            self.fail_json(msg="\n".join(errors))
+            self.fail_json(msg="\n".join([_prepend_resource_info(resource, error) for error in errors]))
         else:
-            return warnings + errors
+            return [_prepend_resource_info(resource, msg) for msg in warnings + errors]
 
     def set_defaults(self, resource, definition):
         definition['kind'] = resource.kind
