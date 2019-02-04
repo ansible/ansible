@@ -278,7 +278,7 @@ class PgClusterFacts(object):
         """
         Get information about replication slots if exist.
         """
-        query = ("SELECT slot_name, plugin, slot_type, database, temporary, "
+        query = ("SELECT slot_name, plugin, slot_type, database, "
                  "active FROM pg_replication_slots")
         res = self.__exec_sql(query)
 
@@ -293,8 +293,7 @@ class PgClusterFacts(object):
             rslot_info["plugin"] = i[1]
             rslot_info["slot_type"] = i[2]
             rslot_info["database"] = i[3]
-            rslot_info["temporaty"] = i[4]
-            rslot_info["active"] = i[5]
+            rslot_info["active"] = i[4]
 
             rslot_dict[rslot_name] = rslot_info
 
