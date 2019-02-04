@@ -214,17 +214,17 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def compile_ipv4_regexp():
-    """
-    validation pattern provided by :
-    https://stackoverflow.com/questions/53497/regular-expression-that-matches-
-    valid-ipv6-addresses#answer-17871737
-    """
     r = r"((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}"
     r += r"(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
     return re.compile(r)
 
 
 def compile_ipv6_regexp():
+    """
+    validation pattern provided by :
+    https://stackoverflow.com/questions/53497/regular-expression-that-matches-
+    valid-ipv6-addresses#answer-17871737
+    """
     r = r"(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:"
     r += r"|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}"
     r += r"(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4})"
@@ -288,10 +288,10 @@ def main():
     def filter_line_that_contains_ipv6(content):
         return filter_line_that_match_func(ipv6_regexp.search, content)
 
-    def is_match_ipv4(ip):
+    def is_starting_by_ipv4(ip):
         return ipv4_regexp.match(ip) is not None
 
-    def is_match_ipv6(ip):
+    def is_starting_by_ipv6(ip):
         return ipv6_regexp.match(ip) is not None
 
     def execute(cmd, ignore_error=False):
@@ -450,10 +450,10 @@ def main():
 
                     rules_dry = filter_line_that_not_start_with("### tuple", rules_dry)
                     # ufw dry-run doesn't send all rules so have to compare ipv4 or ipv6 rules
-                    if is_match_ipv4(params['from_ip']) or is_match_ipv4(params['to_ip']):
+                    if is_starting_by_ipv4(params['from_ip']) or is_starting_by_ipv4(params['to_ip']):
                         if filter_line_that_contains_ipv4(pre_rules) != filter_line_that_contains_ipv4(rules_dry):
                             changed = True
-                    elif is_match_ipv6(params['from_ip']) or is_match_ipv6(params['to_ip']):
+                    elif is_starting_by_ipv6(params['from_ip']) or is_starting_by_ipv6(params['to_ip']):
                         if filter_line_that_contains_ipv6(pre_rules) != filter_line_that_contains_ipv6(rules_dry):
                             changed = True
                     elif pre_rules != rules_dry:
