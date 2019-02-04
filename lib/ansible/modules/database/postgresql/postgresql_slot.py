@@ -217,10 +217,9 @@ def main():
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
-       
+
     module.exit_json(changed=changed, db=db, slot_name=slot)
 
 if __name__ == '__main__':
     main()
 
-  
