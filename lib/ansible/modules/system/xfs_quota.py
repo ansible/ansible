@@ -42,9 +42,11 @@ options:
   bhard:
     description:
       - Hard blocks quota limit.
+      - This argument supports human readable sizes.
   bsoft:
     description:
       - Soft blocks quota limit.
+      - This argument supports human readable sizes.
   ihard:
     description:
       - Hard inodes quota limit.
@@ -54,9 +56,11 @@ options:
   rtbhard:
     description:
       - Hard realtime blocks quota limit.
+      - This argument supports human readable sizes.
   rtbsoft:
     description:
       - Soft realtime blocks quota limit.
+      - This argument supports human readable sizes.
   state:
     description:
       - Whether to apply the limits or remove them.
