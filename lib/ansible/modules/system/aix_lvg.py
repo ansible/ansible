@@ -312,7 +312,7 @@ def state_vg(module, vg, state, vg_validation):
             rc, varyonvg_out, stderr = module.run_command("%s %s" % (varyonvg_cmd, vg))
             if rc != 0:
                 module.fail_json(msg="Command 'varyoffvg' failed.", rc=rc, stdout=varyonvg_out, stderr=stderr)
-        
+
         msg = "Varyoff volume group %s completed." % vg
         return changed, msg
 
