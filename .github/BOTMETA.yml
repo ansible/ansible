@@ -584,6 +584,7 @@ files:
     maintainers: $team_windows_core
     support: core
   $module_utils/docker_common.py: *docker
+  $module_utils/docker_swarm.py: *docker
   $module_utils/ec2.py:
     support: core
     labels:
@@ -1337,7 +1338,7 @@ macros:
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
   team_digital_ocean: aluvenko, BondAnthony, mgregson
-  team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet
+  team_docker: akshay196 danihodovic dariko DBendit felixfontein jwitko kassiansun tbouvet WojciechowskiPiotr
   team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
