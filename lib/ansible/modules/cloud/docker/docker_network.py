@@ -265,7 +265,7 @@ import re
 
 from distutils.version import LooseVersion
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.docker_common import (
     AnsibleDockerClient,
     DockerBaseClass,
     docker_version,
@@ -279,7 +279,7 @@ try:
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.docker_common
     pass
 
 

@@ -143,16 +143,16 @@ node_facts:
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.docker_common
     pass
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.docker_common import (
     DockerBaseClass,
 )
 
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.docker_swarm import AnsibleDockerSwarmClient
+from ansible.module_utils.docker.docker_swarm import AnsibleDockerSwarmClient
 
 
 class TaskParameters(DockerBaseClass):

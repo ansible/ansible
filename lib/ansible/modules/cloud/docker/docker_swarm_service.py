@@ -529,7 +529,7 @@ EXAMPLES = '''
 import time
 import shlex
 import operator
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.docker_common import (
     AnsibleDockerClient,
     DifferenceTracker,
     DockerBaseClass,

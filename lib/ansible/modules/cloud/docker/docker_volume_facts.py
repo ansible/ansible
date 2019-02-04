@@ -91,10 +91,10 @@ docker_volume:
 try:
     from docker.errors import NotFound
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.docker_common
     pass
 
-from ansible.module_utils.docker_common import AnsibleDockerClient
+from ansible.module_utils.docker.docker_common import AnsibleDockerClient
 
 
 def get_existing_volume(client, volume_name):

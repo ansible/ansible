@@ -114,7 +114,7 @@ docker_container:
     }'
 '''
 
-from ansible.module_utils.docker_common import AnsibleDockerClient
+from ansible.module_utils.docker.docker_common import AnsibleDockerClient
 
 
 def main():

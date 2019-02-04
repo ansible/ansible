@@ -219,10 +219,10 @@ from time import sleep
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.docker_common
     pass
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.docker_common import (
     AnsibleDockerClient,
     DockerBaseClass,
     docker_version,

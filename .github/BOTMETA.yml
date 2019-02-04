@@ -583,8 +583,7 @@ files:
     labels: windows
     maintainers: $team_windows_core
     support: core
-  $module_utils/docker_common.py: *docker
-  $module_utils/docker_swarm.py: *docker
+  $module_utils/docker/: *docker
   $module_utils/ec2.py:
     support: core
     labels:
@@ -1290,6 +1289,7 @@ files:
   test/integration/targets/postgresql: *postgresql
   test/integration/targets/setup_acme:
     maintainers: resmo felixfontein
+  test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_mysql_db: *mysql
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi

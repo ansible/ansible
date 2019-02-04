@@ -5,7 +5,7 @@ import json
 import pytest
 
 from ansible.modules.cloud.docker import docker_volume
-from ansible.module_utils import docker_common
+from ansible.module_utils.docker import docker_common
 
 pytestmark = pytest.mark.usefixtures('patch_ansible_module')
 

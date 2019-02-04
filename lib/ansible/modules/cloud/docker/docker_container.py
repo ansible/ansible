@@ -875,7 +875,7 @@ from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.docker_common import (
     AnsibleDockerClient,
     DockerBaseClass, sanitize_result, is_image_name_id,
     compare_generic, DifferenceTracker,
@@ -884,7 +884,7 @@ from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
-    from ansible.module_utils.docker_common import docker_version
+    from ansible.module_utils.docker.docker_common import docker_version
     if LooseVersion(docker_version) >= LooseVersion('1.10.0'):
         from docker.types import Ulimit, LogConfig
     else:

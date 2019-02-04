@@ -276,7 +276,7 @@ image:
 import os
 import re
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.docker_common import (
     HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
 )
 from ansible.module_utils._text import to_native

@@ -134,7 +134,7 @@ import os
 import re
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.docker_common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
+from ansible.module_utils.docker.docker_common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
 
 
 class LoginManager(DockerBaseClass):
