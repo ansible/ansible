@@ -281,7 +281,7 @@ class PgClusterFacts(object):
         res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
                               "information_schema.tables "
                               "WHERE table_name = 'pg_replication_slots')")
-        if not res[0][0]:
+        if not res[0]:
             return 0
 
         query = ("SELECT slot_name, plugin, slot_type, database, "
@@ -375,7 +375,7 @@ class PgClusterFacts(object):
         repl_dict = {}
 
         # If there is no replication:
-        if not res[0][0]:
+        if not res:
             return True
 
         for i in res:
