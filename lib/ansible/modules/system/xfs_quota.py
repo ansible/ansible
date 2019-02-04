@@ -160,7 +160,9 @@ def main():
     if rtbsoft is not None:
         rtbsoft = human_to_bytes(rtbsoft)
 
-    changed = False
+    result = dict(
+        changed = False
+    )
 
     if os.getuid() != 0:
         module.fail_json(msg='You need to be root to run this module')
@@ -244,11 +246,11 @@ def main():
             if r['rc'] != 0:
                 module.fail_json(msg='Could not get quota realtime block report.', cmd=cmd, retval=r)
             else:
-                changed = True
+                result['changed'] = True
         elif not prj_set and module.check_mode:
-            changed = True
+            result['changed'] = True
 
-    changed = False
+    result['changed'] = False
 
     # Set limits
     if state == 'absent':
@@ -297,11 +299,11 @@ def main():
         if r['rc'] != 0:
             module.fail_json(msg='Could not set limits.', cmd=cmd, retval=r)
         else:
-            changed = True
+            result['changed'] = True
     elif len(limit) > 0 and module.check_mode:
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed)
+    module.exit_json(**result)
 
     return True
 
