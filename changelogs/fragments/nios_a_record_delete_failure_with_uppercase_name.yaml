@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixes bug where nios_a_record wasn't getting deleted if an uppercase named a_record was being passed. (https://github.com/ansible/ansible/pull/51539)
