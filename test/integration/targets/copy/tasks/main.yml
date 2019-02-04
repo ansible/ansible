@@ -55,8 +55,8 @@
 
     # execute tests tasks using an unprivileged user, this is useful to avoid
     # local/remote ambiguity when controller and managed hosts are identical.
-    #- import_tasks: tests.yml
-    #  remote_user: '{{ remote_unprivileged_user }}'
+    - import_tasks: tests.yml
+      remote_user: '{{ remote_unprivileged_user }}'
 
     - include: "acls.yml remote_src_toggle={{ item }}"
       loop:
