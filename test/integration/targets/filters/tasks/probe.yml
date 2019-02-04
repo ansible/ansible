@@ -13,9 +13,9 @@
 - name: check that the value v2 is well reached
   assert:
     that:
-      - "some_var | probe('key2', 2, 'subkey2') == 'v2'"
+      - some_var | probe('key2', 2, 'subkey2') == 'v2'
 
 - name: check it's OK with a bad path and the default() filter
   assert:
     that:
-      - "some_var | probe('key2', 4, 'subkey2') | default('N/A') == 'N/A'"
+      - some_var | probe('key2', 4, 'subkey2') | default('N/A') == 'N/A'
