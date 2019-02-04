@@ -288,4 +288,6 @@ class Connection(NetworkConnectionBase):
         # Try to assign a new auth token if one is given
         self._auth = self.update_auth(response, response_buffer) or self._auth
 
+        response_buffer.seek(0)
+
         return response, response_buffer
