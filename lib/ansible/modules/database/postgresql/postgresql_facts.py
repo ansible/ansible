@@ -310,8 +310,8 @@ class PgClusterFacts(object):
         Get server settings.
         """
         query = ("SELECT name, setting, unit, context, vartype, "
-                 "boot_val, min_val, max_val, sourcefile, "
-                 "pending_restart FROM pg_settings")
+                 "boot_val, min_val, max_val, sourcefile "
+                 "FROM pg_settings")
         res = self.__exec_sql(query)
 
         set_dict = {}
@@ -346,11 +346,6 @@ class PgClusterFacts(object):
                 set_info["sourcefile"] = i[8]
             else:
                 set_info["sourcefile"] = ""
-
-            if i[9]:
-                set_info["pending_restart"] = i[9]
-            else:
-                set_info["pending_restart"] = ""
 
             set_dict[set_name] = set_info
 
