@@ -67,13 +67,12 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                     # if device is available (not in defined state), get its WWN
                     if 'Available' in line:
                         data = line.split(' ')
-                        fcsdev = data[0]
-                        # get device configuration
-                        rc, lscfg_out, err = module.run_command("/usr/sbin/lscfg -vpl %s | grep 'Network Address'" % (fcsdev))
+                        cmd="/usr/sbin/lscfg -vl %s | grep 'Network Address'" % data[0]
+                        rc, lscfg_out, err = module.run_command(cmd, use_unsafe_shell=True)
                         # example output
                         # lscfg -vpl fcs3 | grep "Network Address"
                         #        Network Address.............10000090FA551509
                         if lscfg_out:
                             data = lscfg_out.split('.')
-                            fc_facts['fibre_channel_wwn'].append(data[-1])
+                            fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         return fc_facts
