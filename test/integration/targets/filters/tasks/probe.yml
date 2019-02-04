@@ -16,4 +16,6 @@
       - "some_var | probe('key2', 2, 'subkey2') == 'v2'"
 
 - name: check it's OK with a bad path and the default() filter
+  assert:
+    that:
       - "some_var | probe('key2', 4, 'subkey2') | default('N/A') == 'N/A'"
