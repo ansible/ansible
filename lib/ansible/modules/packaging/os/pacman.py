@@ -176,7 +176,7 @@ def get_version(pacman_output):
     return None
 
 
-def get_name(pacman_output):
+def get_name(module, pacman_output):
     """Take pacman -Qi or pacman -Si output and get the package name"""
     lines = pacman_output.split('\n')
     for line in lines:
