@@ -30,6 +30,7 @@ notes:
 version_added: 2.8
 author: "Samy Coenen (@SamyCoenen)"
 requirements:
+  - python >= 2.7
   - python-gitlab python module
 options:
   server_url:

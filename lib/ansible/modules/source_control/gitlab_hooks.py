@@ -18,9 +18,11 @@ module: gitlab_hooks
 short_description: Manages GitLab project hooks.
 description:
      - Adds, updates and removes project hooks
-requirements:
-  - python-gitlab python module
 version_added: "2.6"
+author: "Marcus Watkins (@marwatk)"
+requirements:
+  - python >= 2.7
+  - python-gitlab python module
 options:
   server_url:
     description:
@@ -114,7 +116,6 @@ options:
       - If this is present it will always result in a change as it cannot be retrieved from GitLab.
       - Will show up in the X-Gitlab-Token HTTP request header
     required: false
-author: "Marcus Watkins (@marwatk)"
 '''
 
 EXAMPLES = '''

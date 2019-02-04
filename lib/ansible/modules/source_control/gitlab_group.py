@@ -20,6 +20,7 @@ description:
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
+  - python >= 2.7
   - python-gitlab python module
 options:
   server_url:
