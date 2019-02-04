@@ -355,8 +355,8 @@ class PgClusterFacts(object):
         Get information about replication if the server is a master.
         """
         query = ("SELECT r.pid, a.rolname, r.application_name, r.client_addr, "
-                 "r.client_hostname, r.backend_start::text, r.state, "
-                 "r.replay_lag::text FROM pg_stat_replication AS r "
+                 "r.client_hostname, r.backend_start::text, r.state "
+                 "FROM pg_stat_replication AS r "
                  "JOIN pg_authid AS a ON r.usesysid = a.oid")
         res = self.__exec_sql(query)
         repl_dict = {}
@@ -382,7 +382,6 @@ class PgClusterFacts(object):
 
             repl_info["backend_start"] = i[5]
             repl_info["state"] = i[6]
-            repl_info["reply_lag"] = i[7]
 
             repl_dict[repl_pid] = repl_info
 
