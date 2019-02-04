@@ -68,7 +68,6 @@ options:
         certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
 notes:
-   - PostgreSQL server must be 9.4 version or later.
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
    - This module uses psycopg2, a Python PostgreSQL database adapter. You must
@@ -278,6 +277,13 @@ class PgClusterFacts(object):
         """
         Get information about replication slots if exist.
         """
+        # Check that pg_replication_slots exists:
+        res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
+                              "information_schema.tables "
+                              "WHERE table_name = 'pg_replication_slots')")
+        if not res:
+            return 0
+
         query = ("SELECT slot_name, plugin, slot_type, database, "
                  "active FROM pg_replication_slots")
         res = self.__exec_sql(query)
@@ -354,6 +360,13 @@ class PgClusterFacts(object):
         """
         Get information about replication if the server is a master.
         """
+        # Check that pg_replication_slots exists:
+        res = self.__exec_sql("SELECT EXISTS (SELECT 1 FROM "
+                              "information_schema.tables "
+                              "WHERE table_name = 'pg_stat_replication')")
+        if not res:
+            return 0
+
         query = ("SELECT r.pid, a.rolname, r.application_name, r.client_addr, "
                  "r.client_hostname, r.backend_start::text, r.state "
                  "FROM pg_stat_replication AS r "
