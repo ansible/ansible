@@ -451,7 +451,12 @@ class Interfaces(FactsBase):
 
     def populate_structured_interfaces(self, data):
         interfaces = dict()
-        for item in data['TABLE_interface']['ROW_interface']:
+        data = data['TABLE_interface']['ROW_interface']
+
+        if isinstance(data, dict):
+            data = [data]
+
+        for item in data:
             name = item['interface']
 
             intf = dict()
