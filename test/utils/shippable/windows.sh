@@ -93,5 +93,5 @@ for version in "${python_versions[@]}"; do
     ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         "${platforms[@]}" --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}" \
         --docker default --python "${version}" \
-        --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
+        --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}" --continue-on-error
 done
