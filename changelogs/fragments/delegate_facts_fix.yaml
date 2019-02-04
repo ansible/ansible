@@ -1,0 +1,2 @@
+bugfixes:
+- delegate_facts - fix to work properly under block and include_role (https://github.com/ansible/ansible/pull/51553)
