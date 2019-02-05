@@ -51,7 +51,8 @@ options:
   etype:
     description:
     - The entity type of the ACL to apply, see C(setfacl) documentation for more info.
-    choices: [ group, mask, other, user ]
+    - owner@, group@, everyone@ - NFSv4 definitions of POSIX counterparts (valid for FreeBSD/FreeNAS ZFS ACLs)
+    choices: [ user, group, other, mask, owner@, group@, everyone@ ]
     version_added: '1.5'
   permissions:
     description:
@@ -89,7 +90,6 @@ options:
     - the base ACL entries of the owner, group and others are retained.
     type: bool
     default: 'no'
-    version_added: '2.8'
   use_nfsv4_acls:
     description:
     - Use NFSv4 ACLs instead of POSIX ACLs.
@@ -208,7 +208,7 @@ def split_entry(entry):
 def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
     '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
     if use_nfsv4_acls:
-        if get_platform().lower() == 'freebsd' and etype in ('owner@','group@','everyone@'):
+        if get_platform().lower() == 'freebsd' and etype in ('owner@', 'group@', 'everyone@'):
             return ':'.join([etype, permissions, 'allow'])
         else:
             return ':'.join([etype, entity, permissions, 'allow'])
@@ -221,8 +221,8 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
 
 def build_command(module, mode, path, follow, default, recursive, recalculate_mask, reset, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
-    if mode in ('set','rm'):
-        cmd = [module.get_bin_path('setfacl',True)]
+    if mode in ('set', 'rm'):
+        cmd = [module.get_bin_path('setfacl', True)]
 
         if recursive:
             '''starting from FreeBSD 12 setfacl supports recursive option (-R)'''
@@ -313,7 +313,7 @@ def main():
             entity=dict(type='str', default=''),
             etype=dict(
                 type='str',
-                choices=['other', 'user', 'group', 'mask', 'owner@', 'group@', 'everyone@'],
+                choices=['user', 'group', 'other', 'mask', 'owner@', 'group@', 'everyone@'],
             ),
             permissions=dict(type='str'),
             state=dict(
