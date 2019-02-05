@@ -828,12 +828,12 @@ class PgClusterFacts(object):
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
-        db=dict(default=''),
-        incl_subset=dict(default="*"),
-        excl_subset=dict(default=""),
+        db=dict(default='', type=str),
+        incl_subset=dict(default="*", type=str),
+        excl_subset=dict(default="", type=str),
         ssl_mode=dict(default='prefer', choices=[
             'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(default=None),
+        ssl_rootcert=dict(default=None, type=str),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
